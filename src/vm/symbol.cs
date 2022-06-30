@@ -1814,6 +1814,7 @@ public class SymbolsStorage : marshall.IMarshallable
 
 public class TypeSet<T> : marshall.IMarshallable where T : IType
 {
+  //TODO: since TypeProxy implements custom Equals we could use HashSet here
   List<TypeProxy> list = new List<TypeProxy>();
 
   public int Count
@@ -1846,8 +1847,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   {
     foreach(var item in list)
     {
-      //TODO: this is quite arguable
-      if(item.spec == tp.spec)
+      if(item.Equals(tp))
         return false;
     }
     list.Add(tp);

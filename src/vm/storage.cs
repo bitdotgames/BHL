@@ -292,11 +292,21 @@ public class Val
       _num2 == o._num2 &&
       _num3 == o._num3 &&
       _num4 == o._num4 &&
-      //TODO: delegate comparison to type?
-      (type == Types.String ? (string)_obj == (string)o._obj : _obj == o._obj)
+      (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj)
       ;
 
     return res;
+  }
+
+  public int GetValueHashCode(Val o)
+  {
+    return 
+      _num.GetHashCode()
+      ^ _num2.GetHashCode()
+      ^ _num3.GetHashCode()
+      ^ _num4.GetHashCode()
+      ^ (int)_obj?.GetHashCode()
+      ;
   }
 
   public override string ToString() 
@@ -498,7 +508,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 {
   //NOTE: Exposed to allow low-level optimal manipulations. 
   //      Use with caution.
-  public Dictionary<Val,Val> map = new Dictionary<Val,Val>();
+  public Dictionary<Val,Val> map = new Dictionary<Val,Val>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
@@ -659,6 +669,24 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
     if(map.vm.vmaps_pool.stack.Count > map.vm.vmaps_pool.miss)
       throw new Exception("Unbalanced New/Del");
+  }
+
+  class Comparer : IEqualityComparer<Val>
+  {
+    public bool Equals(Val a, Val b)
+    {
+      if(a == null && b == null)
+        return true;
+      else if(a == null || b == null)
+        return false;
+
+      return a.IsValueEqual(b);
+    }
+
+    public int GetHashCode(Val v)
+    {
+      return 0;
+    }
   }
 }
 

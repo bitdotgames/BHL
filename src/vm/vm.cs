@@ -178,7 +178,7 @@ public class Const : IEquatable<Const>
     return type == o.type && 
            num == o.num && 
            str == o.str &&
-           tproxy.spec == o.tproxy.spec
+           tproxy.Equals(o.tproxy)
            ;
   }
 }
