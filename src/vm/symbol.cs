@@ -834,12 +834,12 @@ public abstract class MapTypeSymbol : ClassSymbol
     //  this.Define(fn);
     //}
 
-    //{
-    //  var fn = new FuncSymbolNative("RemoveAt", Types.Void, RemoveAt,
-    //    new FuncArgSymbol("idx", Types.Int)
-    //  );
-    //  this.Define(fn);
-    //}
+    {
+      var fn = new FuncSymbolNative("Remove", Types.Void, Remove,
+        new FuncArgSymbol("idx", key_type)
+      );
+      this.Define(fn);
+    }
 
     {
       var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
@@ -864,10 +864,9 @@ public abstract class MapTypeSymbol : ClassSymbol
 
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  //public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  //public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
@@ -938,6 +937,17 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   {
     var m = AsMap(ctx);
     v.SetNum(m.Count);
+  }
+
+  public override ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var idx = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    map.Remove(idx);
+    idx.Release();
+    v.Release();
+    return null;
   }
 
   public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)

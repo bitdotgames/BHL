@@ -320,8 +320,8 @@ public class Val
     str += " num2:" + _num2;
     str += " num3:" + _num3;
     str += " num4:" + _num4;
-    str += " obj.type:" + _obj?.GetType().Name;
     str += " obj:" + _obj;
+    str += " obj.type:" + _obj?.GetType().Name;
     str += " (refs:" + _refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
@@ -506,9 +506,10 @@ public class ValList : IList<Val>, IValRefcounted
 
 public class ValMap : IDictionary<Val,Val>, IValRefcounted
 {
-  //NOTE: Exposed to allow low-level optimal manipulations. 
-  //      Use with caution.
-  public Dictionary<Val,Val> map = new Dictionary<Val,Val>(new Comparer());
+  //NOTE: since we track the lifetime of the key as well as of a value
+  //      we need to efficiently access the added key, for this reason
+  //      we store the key alongside with the value in a KeyValuePair
+  Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
@@ -524,7 +525,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public ICollection<Val> Keys { get { return map.Keys; } }
 
-  public ICollection<Val> Values { get { return map.Values; } }
+  public ICollection<Val> Values { get { throw new NotImplementedException(); } }
 
   public void Add(KeyValuePair<Val,Val> p)
   {
@@ -541,7 +542,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
     foreach(var kv in map)
     {
       kv.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      kv.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      kv.Value.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
     map.Clear();
   }
@@ -549,16 +550,16 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   public Val this[Val k]
   {
     get {
-      return map[k];
+      return map[k].Value;
     }
     set {
-      Val prev;
+      KeyValuePair<Val,Val> prev;
       if(!map.TryGetValue(k, out prev))
         k.RefMod(RefOp.INC | RefOp.USR_INC);
       else
-        prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
+        prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
       value.RefMod(RefOp.INC | RefOp.USR_INC);
-      map[k] = value;
+      map[k] = new KeyValuePair<Val,Val>(k, value);
     }
   }
 
@@ -579,14 +580,15 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public bool Remove(Val k)
   {
-    Val v;
-    map.TryGetValue(k, out v);
-    if(v != null)
+    KeyValuePair<Val,Val> prev;
+    bool existed = map.TryGetValue(k, out prev);
+    bool removed = map.Remove(k);
+    if(existed)
     {
-      k.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      v.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      prev.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
-    return map.Remove(k);
+    return removed;
   }
 
   public bool Remove(KeyValuePair<Val,Val> p)

@@ -98,6 +98,44 @@ public class TestMaps : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestRemoveNonExisting()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      [string]int m = {}
+      m.Remove(""hey"")
+      return m.Count
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestRemove()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      [string]int m = {}
+      m[""foo""] = 42
+      m[""hey""] = 14
+      m.Remove(""foo"")
+      return m.Count
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestClear()
   {
     string bhl = @"
