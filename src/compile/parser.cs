@@ -796,7 +796,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       type = map_type.val_type.Get();
 
-      var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
+      var ast = new AST_Call(write ? EnumCall.MAP_IDXW : EnumCall.MAP_IDX, line, null);
       PeekAST().AddChild(ast);
     }
     else

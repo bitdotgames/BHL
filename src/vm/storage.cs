@@ -519,13 +519,14 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   public void Add(KeyValuePair<Val,Val> p)
   {
     throw new NotImplementedException();
-    //dv.RefMod(RefOp.INC | RefOp.USR_INC);
-    //map.Add(dv);
   }
 
   public void Add(Val k, Val v)
   {
     throw new NotImplementedException();
+    //map.Add(k, v);
+    //k.RefMod(RefOp.INC | RefOp.USR_INC);
+    //v.RefMod(RefOp.INC | RefOp.USR_INC);
   }
 
   public void Clear()
@@ -539,14 +540,14 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   {
     get {
       throw new NotImplementedException();
-      //return lst[i];
+      //return map[k];
     }
     set {
       throw new NotImplementedException();
-      //var prev = lst[i];
+      //var prev = map[k];
       //prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
       //value.RefMod(RefOp.INC | RefOp.USR_INC);
-      //lst[i] = value;
+      //map[k] = value;
     }
   }
 
@@ -568,17 +569,15 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   public bool Remove(Val k)
   {
     throw new NotImplementedException();
-    //var dv = lst[idx];
-    //dv.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    //lst.RemoveAt(idx); 
+    //var v = map[k];
+    //k.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    //v.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    //map.RemoveAt(k); 
   }
 
   public bool Remove(KeyValuePair<Val,Val> p)
   {
     throw new NotImplementedException();
-    //var dv = lst[idx];
-    //dv.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    //lst.RemoveAt(idx); 
   }
 
   public void CopyTo(KeyValuePair<Val,Val>[] arr, int len)

@@ -75,6 +75,8 @@ public enum Opcodes
   ArrIdxW            = 83,
   ArrAddInplace      = 84,  //TODO: used for json alike array initialization,   
                            //      can be replaced with more low-level opcodes?
+  MapIdx             = 90,
+  MapIdxW            = 91,
 }
 
 public enum BlockType 
@@ -1285,6 +1287,22 @@ public class VM : ISymbolResolver
         var status = BHS.SUCCESS;
         ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
         curr_frame.stack.Push(self);
+      }
+      break;
+      case Opcodes.MapIdx:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((MapTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncMapIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
+      }
+      break;
+      case Opcodes.MapIdxW:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((MapTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncMapIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.Add:
