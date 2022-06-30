@@ -298,7 +298,7 @@ public class Val
     return res;
   }
 
-  public int GetValueHashCode(Val o)
+  public int GetValueHashCode()
   {
     return 
       _num.GetHashCode()
@@ -534,30 +534,31 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   public void Add(Val k, Val v)
   {
     throw new NotImplementedException();
-    //map.Add(k, v);
-    //k.RefMod(RefOp.INC | RefOp.USR_INC);
-    //v.RefMod(RefOp.INC | RefOp.USR_INC);
   }
 
   public void Clear()
   {
-    //for(int i=0;i<Count;++i)
-    //  lst[i].RefMod(RefOp.DEC | RefOp.USR_DEC);
+    foreach(var kv in map)
+    {
+      kv.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      kv.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
     map.Clear();
   }
 
   public Val this[Val k]
   {
     get {
-      throw new NotImplementedException();
-      //return map[k];
+      return map[k];
     }
     set {
-      throw new NotImplementedException();
-      //var prev = map[k];
-      //prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      //value.RefMod(RefOp.INC | RefOp.USR_INC);
-      //map[k] = value;
+      Val prev;
+      if(!map.TryGetValue(k, out prev))
+        k.RefMod(RefOp.INC | RefOp.USR_INC);
+      else
+        prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      value.RefMod(RefOp.INC | RefOp.USR_INC);
+      map[k] = value;
     }
   }
 
@@ -578,11 +579,14 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public bool Remove(Val k)
   {
-    throw new NotImplementedException();
-    //var v = map[k];
-    //k.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    //v.RefMod(RefOp.DEC | RefOp.USR_DEC);
-    //map.RemoveAt(k); 
+    Val v;
+    map.TryGetValue(k, out v);
+    if(v != null)
+    {
+      k.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      v.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
+    return map.Remove(k);
   }
 
   public bool Remove(KeyValuePair<Val,Val> p)
@@ -685,7 +689,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
     public int GetHashCode(Val v)
     {
-      return 0;
+      return v.GetValueHashCode();
     }
   }
 }
