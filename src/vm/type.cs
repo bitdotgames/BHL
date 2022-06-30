@@ -79,23 +79,11 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
       if(!ctx.is_read)
       {   
         var resolved = Get();
-        //TODO: make this check more robust
-        bool is_weak_ref = 
-          resolved is Symbol symb && 
-          (symb is BuiltInSymbolType ||
-           symb is ClassSymbolNative ||
-           symb is ClassSymbolScript ||
-           symb is InterfaceSymbolNative ||
-           symb is InterfaceSymbolScript ||
-           symb is EnumSymbol ||
-           (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
-           (/*symb is MapTypeSymbol && */!(symb is GenericMapTypeSymbol))
-           );
 
         //NOTE: we want to marshall only those types which are not
         //      defined elsewhere otherwise we just want to keep
         //      string reference at them
-        if(!is_weak_ref)
+        if(!IsIndependent(resolved))
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
@@ -107,6 +95,22 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
       type = (IType)mg;
+  }
+
+  static bool IsIndependent(IType t)
+  {
+    //TODO: make this check more robust
+    return 
+      t is Symbol symb && 
+      (symb is BuiltInSymbolType ||
+       symb is ClassSymbolNative ||
+       symb is ClassSymbolScript ||
+       symb is InterfaceSymbolNative ||
+       symb is InterfaceSymbolScript ||
+       symb is EnumSymbol ||
+       (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
+       (symb is MapTypeSymbol && !(symb is GenericMapTypeSymbol))
+      );
   }
 
   public override string ToString() 
@@ -618,8 +622,7 @@ public class Types : ISymbolResolver
   {
     if(a == b)
       return true;
-    //TODO: looks a bit like a hack, e.g. what about namespace short names clashing?
-    else if(a.GetName() == b.GetName())
+    else if(a.Equals(b))
       return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {

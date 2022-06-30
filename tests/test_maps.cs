@@ -41,7 +41,6 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
   //[IsTested()]
   public void TestSimpleReadWrite()
   {

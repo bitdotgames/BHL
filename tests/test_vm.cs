@@ -5751,7 +5751,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "accessing not an array type 'func bool(int)'"
+      "accessing not an array/map type 'func bool(int)'"
     );
   }
 

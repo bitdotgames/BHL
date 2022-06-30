@@ -773,21 +773,34 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
   {
-    var arr_type = type as ArrayTypeSymbol;
-    if(arr_type == null)
-      FireError(arracc, "accessing not an array type '" + type.GetName() + "'");
+    if(type is ArrayTypeSymbol arr_type)
+    {
+      var arr_exp = arracc.exp();
+      Visit(arr_exp);
 
-    var arr_exp = arracc.exp();
-    Visit(arr_exp);
+      if(Wrap(arr_exp).eval_type != Types.Int)
+        FireError(arr_exp, "array index expression is not of type int");
 
-    if(Wrap(arr_exp).eval_type != Types.Int)
-      FireError(arr_exp, "array index expression is not of type int");
+      type = arr_type.item_type.Get();
 
-    type = arr_type.item_type.Get();
+      var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
+      PeekAST().AddChild(ast);
+    }
+    else if(type is MapTypeSymbol map_type)
+    {
+      var arr_exp = arracc.exp();
+      Visit(arr_exp);
 
-    var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
+      if(!Wrap(arr_exp).eval_type.Equals(map_type.key_type.Get()))
+        FireError(arr_exp, "not compatible map key types");
 
-    PeekAST().AddChild(ast);
+      type = map_type.val_type.Get();
+
+      var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
+      PeekAST().AddChild(ast);
+    }
+    else
+      FireError(arracc, "accessing not an array/map type '" + type.GetName() + "'");
   }
 
   class NormCallArg

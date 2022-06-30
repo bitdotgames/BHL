@@ -811,14 +811,12 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 }
 
-public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol>
+public abstract class MapTypeSymbol : ClassSymbol
 {
-  public const uint CLASS_ID = 21; 
-
   public TypeProxy key_type;
   public TypeProxy val_type;
 
-  public GenericMapTypeSymbol(TypeProxy key_type, TypeProxy val_type)     
+  public MapTypeSymbol(TypeProxy key_type, TypeProxy val_type)     
     : base("[" + key_type.spec + "]" + val_type.spec, super_class: null)
   {
     this.key_type = key_type;
@@ -860,22 +858,9 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
     //  FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", Types.Void, ArrIdxW);
     //}
   }
-  
-  //marshall factory version
-  public GenericMapTypeSymbol()
-    : this(new TypeProxy(), new TypeProxy())
-  {}
 
-  static IDictionary<Val,Val> AsMap(Val arr)
-  {
-    var map = arr.obj as IDictionary<Val,Val>;
-    if(map == null)
-      throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
-    return map;
-  }
-
-  //public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
-  //public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
+  public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   //public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -883,9 +868,32 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
   //public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 
+}
+
+public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>
+{
+  public const uint CLASS_ID = 21; 
+
+  public GenericMapTypeSymbol(TypeProxy key_type, TypeProxy val_type)     
+    : base(key_type, val_type)
+  {}
+  
+  //marshall factory version
+  public GenericMapTypeSymbol()
+    : this(new TypeProxy(), new TypeProxy())
+  {}
+
   public override uint ClassId()
   {
     return CLASS_ID;
+  }
+
+  static IDictionary<Val,Val> AsMap(Val arr)
+  {
+    var map = arr.obj as IDictionary<Val,Val>;
+    if(map == null)
+      throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return map;
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -919,12 +927,12 @@ public class GenericMapTypeSymbol : ClassSymbol, IEquatable<GenericMapTypeSymbol
     return name.GetHashCode();
   }
 
-  public void CreateMap(VM.Frame frm, ref Val v, IType type)
+  public override void CreateMap(VM.Frame frm, ref Val v, IType type)
   {
     v.SetObj(ValMap.New(frm.vm), type);
   }
 
-  public void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = AsMap(ctx);
     v.SetNum(m.Count);
