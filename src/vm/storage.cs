@@ -575,7 +575,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public bool ContainsKey(Val k)
   {
-    throw new NotImplementedException();
+    return map.ContainsKey(k);
   }
 
   public bool Remove(Val k)

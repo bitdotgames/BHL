@@ -827,16 +827,9 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     this.creator = CreateMap;
 
-    //{
-    //  var fn = new FuncSymbolNative("Add", Types.Void, Add,
-    //    new FuncArgSymbol("o", item_type)
-    //  );
-    //  this.Define(fn);
-    //}
-
     {
       var fn = new FuncSymbolNative("Remove", Types.Void, Remove,
-        new FuncArgSymbol("idx", key_type)
+        new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
@@ -849,6 +842,13 @@ public abstract class MapTypeSymbol : ClassSymbol
     {
       var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
       this.Define(vs);
+    }
+
+    {
+      var fn = new FuncSymbolNative("Contains", Types.Bool, Contains,
+        new FuncArgSymbol("key", key_type)
+      );
+      this.Define(fn);
     }
 
     {
@@ -867,7 +867,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  //public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
@@ -941,12 +941,24 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
-    var idx = frame.stack.Pop();
+    var key = frame.stack.Pop();
     var v = frame.stack.Pop();
     var map = AsMap(v);
-    map.Remove(idx);
-    idx.Release();
+    map.Remove(key);
+    key.Release();
     v.Release();
+    return null;
+  }
+
+  public override ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    bool yes = map.ContainsKey(key);
+    key.Release();
+    v.Release();
+    frame.stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
 

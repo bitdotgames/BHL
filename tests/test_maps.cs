@@ -155,4 +155,90 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestContains()
+  {
+    {
+      string bhl = @"
+
+      func bool test() 
+      {
+        [string]int m = {}
+        return m.Contains(""hey"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func bool test() 
+      {
+        [string]int m = {}
+        m[""hey""] = 42
+        return m.Contains(""hey"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func bool test() 
+      {
+        [string]int m = {}
+        m[""hey""] = 42
+        m.Remove(""hey"")
+        return m.Contains(""hey"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func bool test() 
+      {
+        [string]int m = {}
+        m[""hey""] = 42
+        m.Remove(""bar"")
+        return m.Contains(""hey"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func bool test() 
+      {
+        [string]int m = {}
+        m[""hey""] = 42
+        m.Clear()
+        return m.Contains(""hey"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+  }
+
 }
