@@ -841,10 +841,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     //  this.Define(fn);
     //}
 
-    //{
-    //  var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
-    //  this.Define(fn);
-    //}
+    {
+      var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
+      this.Define(fn);
+    }
 
     {
       var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
@@ -869,7 +869,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   //public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  //public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>
@@ -885,17 +885,17 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     : this(new TypeProxy(), new TypeProxy())
   {}
 
-  public override uint ClassId()
-  {
-    return CLASS_ID;
-  }
-
   static IDictionary<Val,Val> AsMap(Val arr)
   {
     var map = arr.obj as IDictionary<Val,Val>;
     if(map == null)
       throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return map;
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -940,16 +940,25 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     v.SetNum(m.Count);
   }
 
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    map.Clear();
+    v.Release();
+    return null;
+  }
+
   //NOTE: follows special Opcodes.MapIdx conventions
   public override ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var idx = frame.stack.Pop();
-    var arr = frame.stack.Pop();
-    var map = AsMap(arr);
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
     var res = map[idx]; 
     frame.stack.PushRetain(res);
     idx.Release();
-    arr.Release();
+    v.Release();
     return null;
   }
 
@@ -957,13 +966,13 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var idx = frame.stack.Pop();
-    var arr = frame.stack.Pop();
+    var v = frame.stack.Pop();
     var val = frame.stack.Pop();
-    var map = AsMap(arr);
+    var map = AsMap(v);
     map[idx] = val;
     idx.Release();
     val.Release();
-    arr.Release();
+    v.Release();
     return null;
   }
 }
