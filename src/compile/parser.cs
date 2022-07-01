@@ -1569,37 +1569,38 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
   
-  public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
+  public override object VisitVarPostIncDec(bhlParser.VarPostIncDecContext ctx)
   {
-    CommonVisitCallPostOperators(ctx.callPostOperators());
+    CommonVisitPostIncDec(ctx.callPostIncDec());
     return null;
   }
 
-  void CommonVisitCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
-  {
-    var v = ctx.dotName().NAME();
-    var ast = new AST_Interim();
-    
-    var vs = curr_scope.ResolveWithFallback(v.GetText()) as VariableSymbol;
-    if(vs == null)
-      FireError(v, "symbol not resolved");
-    
-    bool is_negative = ctx.decrementOperator() != null;
-    
-    if(!Types.IsNumeric(vs.type.Get())) // only numeric types
-    {
-      FireError(v,
-        $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.spec} type"
-      );
+  bhlParser.ExpContext _one_literal_exp;
+  bhlParser.ExpContext one_literal_exp {
+    get {
+      if(_one_literal_exp == null)
+      {
+        _one_literal_exp = Stream2Parser("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
+      }
+      return _one_literal_exp;
     }
-    
-    if(is_negative)
-      ast.AddChild(new AST_Dec(vs));
+  }
+
+  void CommonVisitPostIncDec(bhlParser.CallPostIncDecContext ctx)
+  {
+    if(ctx.incrementOperator() != null)
+      CommonVisitBinOp(ctx, "+", ctx.callExp(), one_literal_exp);
+    else if(ctx.decrementOperator() != null)
+      CommonVisitBinOp(ctx, "-", ctx.callExp(), one_literal_exp);
     else
-      ast.AddChild(new AST_Inc(vs));
-    
-    Wrap(ctx).eval_type = Types.Void;
-    PeekAST().AddChild(ast);
+      FireError(ctx, "unknown operator");
+
+     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+     IType curr_type = null;
+     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), ctx.callExp().chainExp(), ref curr_type, ctx.Start.Line, write: true);
+
+    if(!Types.IsNumeric(curr_type))
+      FireError(ctx, "only numeric types supported");
   }
   
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
@@ -2985,9 +2986,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
         else
         {
-          var cpo = stmt.callPostOperators();
+          var cpo = stmt.callPostIncDec();
           if(cpo != null)
-            CommonVisitCallPostOperators(cpo);
+            CommonVisitPostIncDec(cpo);
         }
       }
     }
@@ -3030,9 +3031,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
         else
         {
-          var cpo = stmt.callPostOperators();
+          var cpo = stmt.callPostIncDec();
           if(cpo != null)
-            CommonVisitCallPostOperators(cpo);
+            CommonVisitPostIncDec(cpo);
         }
       }
       PopAST();

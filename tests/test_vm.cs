@@ -2650,7 +2650,6 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestParenthesisExpression()
   {
@@ -12027,7 +12026,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl2);
       },
-      "operator ++ is not supported for string type"
+      "incompatible types"
     );
 
     AssertError<Exception>(
@@ -12190,7 +12189,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl2);
       },
-      "operator -- is not supported for string type"
+      "incompatible types"
     );
 
     AssertError<Exception>(

@@ -741,7 +741,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBugPostOperators()
+  public void TestBugPostAssignOperators()
   {
     string bhl = @"
     namespace a {
@@ -758,6 +758,26 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
+  public void TestBugPostIncrement()
+  {
+    string bhl = @"
+    namespace a {
+      namespace b {
+        int test = 1
+      }
+    }
+
+    func int test() {
+      a.b.test++
+      return a.b.test
+    }
+  ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
   }
 
   [IsTested()]

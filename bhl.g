@@ -81,7 +81,7 @@ foreachExp
   ;
 
 forStmt
-  : (varsDeclareOrCallExps assignExp) | callPostOperators
+  : (varsDeclareOrCallExps assignExp) | callPostIncDec
   ;
 
 forStmts
@@ -108,8 +108,8 @@ varDeclareAssign
   : varDeclare assignExp?
   ;
 
-callPostOperators
-  : dotName (incrementOperator | decrementOperator)
+callPostIncDec
+  : callExp (incrementOperator | decrementOperator)
   ;
 
 incrementOperator
@@ -126,9 +126,8 @@ statement
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | varDeclare                                                  #VarDecl
   | callExp operatorPostOpAssign exp                            #VarPostOpAssign
+  | callPostIncDec                                              #VarPostIncDec
   | callExp                                                     #SymbCall
-  //TODO:
-  | callPostOperators                                           #PostOperatorCall
   | mainIf elseIf* else?                                        #If
   | 'while' '(' exp ')' block                                   #While
   | 'do' block 'while' '(' exp ')'                              #DoWhile

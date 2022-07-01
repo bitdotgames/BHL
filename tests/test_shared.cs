@@ -42,7 +42,8 @@ public class BHL_TestRunner
     Run(names, new TestInterfaces(), verbose);
     Run(names, new TestTypeCasts(), verbose);
     Run(names, new TestNamespace(), verbose);
-    Run(names, new TestLSP(), verbose);
+    //TODO:
+    //Run(names, new TestLSP(), verbose);
   }
 
   static void Run(IList<string> names, BHL_TestBase test, bool verbose)

@@ -52,7 +52,7 @@ public partial class bhlParser : Parser {
 		RULE_explist = 9, RULE_exp = 10, RULE_ternaryIfExp = 11, RULE_newExp = 12, 
 		RULE_foreachExp = 13, RULE_forStmt = 14, RULE_forStmts = 15, RULE_forPre = 16, 
 		RULE_forCond = 17, RULE_forPostIter = 18, RULE_forExp = 19, RULE_varDeclareAssign = 20, 
-		RULE_callPostOperators = 21, RULE_incrementOperator = 22, RULE_decrementOperator = 23, 
+		RULE_callPostIncDec = 21, RULE_incrementOperator = 22, RULE_decrementOperator = 23, 
 		RULE_statement = 24, RULE_mainIf = 25, RULE_elseIf = 26, RULE_else = 27, 
 		RULE_callExp = 28, RULE_chainExp = 29, RULE_typeof = 30, RULE_arrAccess = 31, 
 		RULE_memberAccess = 32, RULE_callArgs = 33, RULE_callArg = 34, RULE_block = 35, 
@@ -74,7 +74,7 @@ public partial class bhlParser : Parser {
 		"program", "progblock", "imports", "mimport", "decls", "decl", "dotName", 
 		"nsName", "type", "explist", "exp", "ternaryIfExp", "newExp", "foreachExp", 
 		"forStmt", "forStmts", "forPre", "forCond", "forPostIter", "forExp", "varDeclareAssign", 
-		"callPostOperators", "incrementOperator", "decrementOperator", "statement", 
+		"callPostIncDec", "incrementOperator", "decrementOperator", "statement", 
 		"mainIf", "elseIf", "else", "callExp", "chainExp", "typeof", "arrAccess", 
 		"memberAccess", "callArgs", "callArg", "block", "extensions", "nsDecl", 
 		"classDecl", "classBlock", "classMembers", "classMember", "interfaceDecl", 
@@ -1766,8 +1766,8 @@ public partial class bhlParser : Parser {
 		public AssignExpContext assignExp() {
 			return GetRuleContext<AssignExpContext>(0);
 		}
-		public CallPostOperatorsContext callPostOperators() {
-			return GetRuleContext<CallPostOperatorsContext>(0);
+		public CallPostIncDecContext callPostIncDec() {
+			return GetRuleContext<CallPostIncDecContext>(0);
 		}
 		public ForStmtContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -1809,7 +1809,7 @@ public partial class bhlParser : Parser {
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 321; callPostOperators();
+				State = 321; callPostIncDec();
 				}
 				break;
 			}
@@ -2159,9 +2159,9 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class CallPostOperatorsContext : ParserRuleContext {
-		public DotNameContext dotName() {
-			return GetRuleContext<DotNameContext>(0);
+	public partial class CallPostIncDecContext : ParserRuleContext {
+		public CallExpContext callExp() {
+			return GetRuleContext<CallExpContext>(0);
 		}
 		public IncrementOperatorContext incrementOperator() {
 			return GetRuleContext<IncrementOperatorContext>(0);
@@ -2169,34 +2169,34 @@ public partial class bhlParser : Parser {
 		public DecrementOperatorContext decrementOperator() {
 			return GetRuleContext<DecrementOperatorContext>(0);
 		}
-		public CallPostOperatorsContext(ParserRuleContext parent, int invokingState)
+		public CallPostIncDecContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_callPostOperators; } }
+		public override int RuleIndex { get { return RULE_callPostIncDec; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterCallPostOperators(this);
+			if (typedListener != null) typedListener.EnterCallPostIncDec(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitCallPostOperators(this);
+			if (typedListener != null) typedListener.ExitCallPostIncDec(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitCallPostOperators(this);
+			if (typedVisitor != null) return typedVisitor.VisitCallPostIncDec(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public CallPostOperatorsContext callPostOperators() {
-		CallPostOperatorsContext _localctx = new CallPostOperatorsContext(Context, State);
-		EnterRule(_localctx, 42, RULE_callPostOperators);
+	public CallPostIncDecContext callPostIncDec() {
+		CallPostIncDecContext _localctx = new CallPostIncDecContext(Context, State);
+		EnterRule(_localctx, 42, RULE_callPostIncDec);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 354; dotName();
+			State = 354; callExp();
 			State = 357;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
@@ -2338,25 +2338,6 @@ public partial class bhlParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitSymbCall(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class PostOperatorCallContext : StatementContext {
-		public CallPostOperatorsContext callPostOperators() {
-			return GetRuleContext<CallPostOperatorsContext>(0);
-		}
-		public PostOperatorCallContext(StatementContext context) { CopyFrom(context); }
-		public override void EnterRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterPostOperatorCall(this);
-		}
-		public override void ExitRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitPostOperatorCall(this);
-		}
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitPostOperatorCall(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -2581,6 +2562,25 @@ public partial class bhlParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class VarPostIncDecContext : StatementContext {
+		public CallPostIncDecContext callPostIncDec() {
+			return GetRuleContext<CallPostIncDecContext>(0);
+		}
+		public VarPostIncDecContext(StatementContext context) { CopyFrom(context); }
+		public override void EnterRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.EnterVarPostIncDec(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.ExitVarPostIncDec(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitVarPostIncDec(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class ForeachContext : StatementContext {
 		public ForeachExpContext foreachExp() {
 			return GetRuleContext<ForeachExpContext>(0);
@@ -2766,17 +2766,17 @@ public partial class bhlParser : Parser {
 				}
 				break;
 			case 5:
-				_localctx = new SymbCallContext(_localctx);
+				_localctx = new VarPostIncDecContext(_localctx);
 				EnterOuterAlt(_localctx, 5);
 				{
-				State = 372; callExp();
+				State = 372; callPostIncDec();
 				}
 				break;
 			case 6:
-				_localctx = new PostOperatorCallContext(_localctx);
+				_localctx = new SymbCallContext(_localctx);
 				EnterOuterAlt(_localctx, 6);
 				{
-				State = 373; callPostOperators();
+				State = 373; callExp();
 				}
 				break;
 			case 7:
@@ -6656,7 +6656,7 @@ public partial class bhlParser : Parser {
 		'\x162', '\x5', 'z', '>', '\x2', '\x161', '\x163', '\x5', '\x82', '\x42', 
 		'\x2', '\x162', '\x161', '\x3', '\x2', '\x2', '\x2', '\x162', '\x163', 
 		'\x3', '\x2', '\x2', '\x2', '\x163', '+', '\x3', '\x2', '\x2', '\x2', 
-		'\x164', '\x167', '\x5', '\xE', '\b', '\x2', '\x165', '\x168', '\x5', 
+		'\x164', '\x167', '\x5', ':', '\x1E', '\x2', '\x165', '\x168', '\x5', 
 		'.', '\x18', '\x2', '\x166', '\x168', '\x5', '\x30', '\x19', '\x2', '\x167', 
 		'\x165', '\x3', '\x2', '\x2', '\x2', '\x167', '\x166', '\x3', '\x2', '\x2', 
 		'\x2', '\x168', '-', '\x3', '\x2', '\x2', '\x2', '\x169', '\x16A', '\a', 
@@ -6668,7 +6668,7 @@ public partial class bhlParser : Parser {
 		'z', '>', '\x2', '\x172', '\x173', '\x5', ':', '\x1E', '\x2', '\x173', 
 		'\x174', '\x5', '\x8C', 'G', '\x2', '\x174', '\x175', '\x5', '\x16', '\f', 
 		'\x2', '\x175', '\x1AE', '\x3', '\x2', '\x2', '\x2', '\x176', '\x1AE', 
-		'\x5', ':', '\x1E', '\x2', '\x177', '\x1AE', '\x5', ',', '\x17', '\x2', 
+		'\x5', ',', '\x17', '\x2', '\x177', '\x1AE', '\x5', ':', '\x1E', '\x2', 
 		'\x178', '\x17C', '\x5', '\x34', '\x1B', '\x2', '\x179', '\x17B', '\x5', 
 		'\x36', '\x1C', '\x2', '\x17A', '\x179', '\x3', '\x2', '\x2', '\x2', '\x17B', 
 		'\x17E', '\x3', '\x2', '\x2', '\x2', '\x17C', '\x17A', '\x3', '\x2', '\x2', 

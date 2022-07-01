@@ -320,11 +320,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.callPostOperators"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.callPostIncDec"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitCallPostOperators([NotNull] bhlParser.CallPostOperatorsContext context);
+	Result VisitCallPostIncDec([NotNull] bhlParser.CallPostIncDecContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
 	/// </summary>
@@ -366,19 +366,19 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarPostOpAssign([NotNull] bhlParser.VarPostOpAssignContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>VarPostIncDec</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>SymbCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitSymbCall([NotNull] bhlParser.SymbCallContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PostOperatorCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPostOperatorCall([NotNull] bhlParser.PostOperatorCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>If</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

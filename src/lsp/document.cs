@@ -492,9 +492,9 @@ namespace bhlsp
             }
             else
             {
-              var callPostOperators = forStmt.callPostOperators();
+              var callPostOperators = forStmt.callPostIncDec();
               if(callPostOperators != null)
-                CommonCallPostOperators(callPostOperators);
+                CommonPostIncDec(callPostOperators);
             }
           }
         }
@@ -531,9 +531,9 @@ namespace bhlsp
             }
             else
             {
-              var callPostOperators = forPostIterStmt.callPostOperators();
+              var callPostOperators = forPostIterStmt.callPostIncDec();
               if(callPostOperators != null)
-                CommonCallPostOperators(callPostOperators);
+                CommonPostIncDec(callPostOperators);
             }
           }
         }
@@ -954,27 +954,27 @@ namespace bhlsp
       return null;
     }
     
-    public override object VisitPostOperatorCall(bhlParser.PostOperatorCallContext ctx)
+    public override object VisitVarPostIncDec(bhlParser.VarPostIncDecContext ctx)
     {
-      CommonCallPostOperators(ctx.callPostOperators());
+      CommonPostIncDec(ctx.callPostIncDec());
       return null;
     }
 
-    void CommonCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
+    void CommonPostIncDec(bhlParser.CallPostIncDecContext ctx)
     {
-      //TODO: take into account the whole name
-      var callPostOperatorName = ctx.dotName().NAME();
-      if(callPostOperatorName != null)
-        AddSemanticToken(callPostOperatorName, SemanticTokenTypes.variable);
-      
-      var decrementOperator = ctx.decrementOperator();
-      var incrementOperator = ctx.incrementOperator();
-      
-      if(decrementOperator != null)
-        AddSemanticToken(decrementOperator.Start.StartIndex, decrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
-      
-      if(incrementOperator != null)
-        AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
+      ////TODO: take into account the whole name
+      //var callPostOperatorName = ctx.dotName().NAME();
+      //if(callPostOperatorName != null)
+      //  AddSemanticToken(callPostOperatorName, SemanticTokenTypes.variable);
+      //
+      //var decrementOperator = ctx.decrementOperator();
+      //var incrementOperator = ctx.incrementOperator();
+      //
+      //if(decrementOperator != null)
+      //  AddSemanticToken(decrementOperator.Start.StartIndex, decrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
+      //
+      //if(incrementOperator != null)
+      //  AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, SemanticTokenTypes.@operator);
     }
 
     public override object VisitContinue(bhlParser.ContinueContext ctx)
