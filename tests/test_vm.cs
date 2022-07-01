@@ -1459,7 +1459,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"mismatched input '(' expecting '}'"
+      @"mismatched input"
     );
   }
 
@@ -1511,7 +1511,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input '(' expecting '}'"
+      "mismatched input"
     );
   }
 
@@ -2619,27 +2619,6 @@ public class TestVM : BHL_TestBase
     {
       string k
       k /= ""foo""
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
-  }
-
-  [IsTested()]
-  public void TestPostOpAssignExpIncompatibleTypesNotAllowed()
-  {
-    string bhl = @"
-      
-    func test() 
-    {
-      int k
-      float a
-      k += a
     }
     ";
 

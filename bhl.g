@@ -24,8 +24,12 @@ decl
   : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
   ;
 
+dotName
+ : NAME memberAccess*
+ ;
+
 nsName
-  : DOT? NAME memberAccess*
+  : DOT? dotName
   ;
 
 type
@@ -105,7 +109,7 @@ varDeclareAssign
   ;
 
 callPostOperators
-  : NAME (incrementOperator | decrementOperator)
+  : dotName (incrementOperator | decrementOperator)
   ;
 
 incrementOperator
@@ -121,8 +125,9 @@ statement
   : funcLambda                                                  #LambdaCall
   | varsDeclareOrCallExps assignExp                             #DeclAssign
   | varDeclare                                                  #VarDecl
-  | NAME operatorPostOpAssign exp                               #VarPostOpAssign
+  | callExp operatorPostOpAssign exp                            #VarPostOpAssign
   | callExp                                                     #SymbCall
+  //TODO:
   | callPostOperators                                           #PostOperatorCall
   | mainIf elseIf* else?                                        #If
   | 'while' '(' exp ')' block                                   #While

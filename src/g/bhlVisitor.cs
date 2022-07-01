@@ -68,6 +68,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitDecl([NotNull] bhlParser.DeclContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.dotName"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDotName([NotNull] bhlParser.DotNameContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.nsName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -1538,28 +1538,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   public override object VisitVarPostOpAssign(bhlParser.VarPostOpAssignContext ctx)
   {
-    var lhs = ctx.NAME().GetText();
-    var vlhs = curr_scope.ResolveWithFallback(lhs) as VariableSymbol;
+    string post_op = ctx.operatorPostOpAssign().GetText();
+    CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.callExp(), ctx.exp());
 
-    if(vlhs == null)
-      FireError(ctx.NAME(), "symbol not resolved");
+     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+     IType curr_type = null;
+     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), ctx.callExp().chainExp(), ref curr_type, ctx.Start.Line, write: true);
 
-    if(!Types.IsRtlOpCompatible(vlhs.type.Get()))
-      FireError(ctx.NAME(), "incompatible types");
-
-    var op = $"{ctx.operatorPostOpAssign().GetText()[0]}";
-    var op_type = GetBinaryOpType(op);
-    AST_Tree bin_op_ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
-
-    PushAST(bin_op_ast);
-    bin_op_ast.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, vlhs));
-    Visit(ctx.exp());
-    PopAST();
-
-    types.CheckAssign(vlhs.type.Get(), Wrap(ctx.exp()));
-
-    PeekAST().AddChild(bin_op_ast);
-    PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, vlhs));
+    if(!Types.IsNumeric(curr_type))
+      FireError(ctx, "incompatible types");
 
     return null;
   }
@@ -1590,7 +1577,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   void CommonVisitCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
   {
-    var v = ctx.NAME();
+    var v = ctx.dotName().NAME();
     var ast = new AST_Interim();
     
     var vs = curr_scope.ResolveWithFallback(v.GetText()) as VariableSymbol;
@@ -1599,7 +1586,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     
     bool is_negative = ctx.decrementOperator() != null;
     
-    if(!Types.IsRtlOpCompatible(vs.type.Get())) // only numeric types
+    if(!Types.IsNumeric(vs.type.Get())) // only numeric types
     {
       FireError(v,
         $"operator {(is_negative ? "--" : "++")} is not supported for {vs.type.spec} type"

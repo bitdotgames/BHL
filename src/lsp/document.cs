@@ -172,7 +172,7 @@ namespace bhlsp
         for(int i=0;i<ctx.extensions().nsName().Length;++i)
         {
           var ext_name = ctx.extensions().nsName()[i];
-          AddSemanticToken(ext_name.NAME(), SemanticTokenTypes.@class);
+          AddSemanticToken(ext_name.dotName().NAME(), SemanticTokenTypes.@class);
         }
       }
       
@@ -910,7 +910,7 @@ namespace bhlsp
     public override object VisitType(bhlParser.TypeContext ctx)
     {
       //TODO: parse the whole nsName()
-      AddSemanticTokenTypeName(ctx.nsName()?.NAME());
+      AddSemanticTokenTypeName(ctx.nsName()?.dotName().NAME());
 
       var fnType = ctx.funcType();
       if(fnType != null && fnType.types() is bhlParser.TypesContext types)
@@ -919,7 +919,7 @@ namespace bhlsp
         {
           var refNameIsRef = refType.isRef();
           //TODO: parse the whole nsName()
-          var refNameName = refType.type()?.nsName()?.NAME();
+          var refNameName = refType.type()?.nsName()?.dotName().NAME();
           if(refNameName != null)
           {
             if(refNameIsRef != null)
@@ -962,7 +962,8 @@ namespace bhlsp
 
     void CommonCallPostOperators(bhlParser.CallPostOperatorsContext ctx)
     {
-      var callPostOperatorName = ctx.NAME();
+      //TODO: take into account the whole name
+      var callPostOperatorName = ctx.dotName().NAME();
       if(callPostOperatorName != null)
         AddSemanticToken(callPostOperatorName, SemanticTokenTypes.variable);
       

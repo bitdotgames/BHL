@@ -526,7 +526,7 @@ namespace bhlsp
           }
           else if(nsName != null)
           {
-            var nsNameStr = nsName.NAME()?.GetText();
+            var nsNameStr = nsName.dotName()?.NAME()?.GetText();
             if(nsNameStr != null)
               classTypeName = nsNameStr;
           }

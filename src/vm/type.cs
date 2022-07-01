@@ -644,7 +644,7 @@ public class Types : ISymbolResolver
            type == Float;
   }
 
-  static public bool IsRtlOpCompatible(IType type)
+  static public bool IsNumeric(IType type)
   {
     return type == Int ||
            type == Float;
@@ -739,10 +739,10 @@ public class Types : ISymbolResolver
 
   public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 
   {
-    if(!IsRtlOpCompatible(a.eval_type))
+    if(!IsNumeric(a.eval_type))
       throw new SemanticError(a, "operator is not overloaded");
 
-    if(!IsRtlOpCompatible(b.eval_type))
+    if(!IsNumeric(b.eval_type))
       throw new SemanticError(b, "operator is not overloaded");
 
     MatchTypes(rtl_op_res_type, a, b);

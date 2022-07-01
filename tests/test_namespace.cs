@@ -741,6 +741,26 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBugPostOperators()
+  {
+    string bhl = @"
+    namespace a {
+      namespace b {
+        int test = 1
+      }
+    }
+
+    func int test() {
+      a.b.test += 10
+      return a.b.test
+    }
+  ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
   public void TestCallGlobalVersion()
   {
     string bhl = @"
