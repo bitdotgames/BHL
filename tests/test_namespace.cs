@@ -712,6 +712,35 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCompilationBugIBarNotFound()
+  {
+    string bhl = @"
+  namespace foo {
+    namespace bar {
+      enum EnumBar {
+        ONE = 1
+      }
+
+      interface IBar {
+        func IBar Init()
+      }
+
+      func IBar CreateBar(EnumBar id) {
+        return null
+      }
+
+      class Bar : IBar {
+        func IBar Init() {
+          return this
+        }
+      }
+    }
+  }
+";
+    Compile(bhl);
+  }
+
+  [IsTested()]
   public void TestCallGlobalVersion()
   {
     string bhl = @"

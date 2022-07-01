@@ -2094,11 +2094,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
+    PushScope(pass.scope);
+
     pass.func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
     Wrap(pass.func_ctx).eval_type = pass.func_ast.symbol.GetReturnType();
+    PopScope();
   }
 
   void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
@@ -2158,6 +2161,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.iface_ctx == null)
       return;
 
+    PushScope(pass.scope);
+
     for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
     {
       var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
@@ -2187,6 +2192,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         }
       }
     }
+
+    PopScope();
   }
 
   void Pass_AddInterfaceExtensions(ParserPass pass)
@@ -2287,6 +2294,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
+    PushScope(pass.scope);
+
     //class members
     for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -2306,12 +2315,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }
     }
+
+    PopScope();
   }
 
   void Pass_AddClassExtensions(ParserPass pass)
   {
     if(pass.class_ctx == null)
       return;
+
+    PushScope(pass.scope);
 
     if(pass.class_ctx.extensions() != null)
     {
@@ -2352,6 +2365,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(implements.Count > 0)
         pass.class_symb.SetImplementedInterfaces(implements);
     }
+
+    PopScope();
   }
 
   void Pass_FinalizeClass(ParserPass pass)
