@@ -237,6 +237,14 @@ public class AST_ClassDecl : IAST
   {
     this.symbol = symbol;
   }
+
+  public AST_FuncDecl FindFuncDecl(FuncSymbolScript fs)
+  {
+    foreach(var decl in func_decls)
+      if(decl.symbol == fs)
+        return decl;
+    return null;
+  }
 }
 
 public class AST_UpVal : IAST

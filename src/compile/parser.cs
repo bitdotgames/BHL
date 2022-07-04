@@ -81,6 +81,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     public bhlParser.ClassDeclContext class_ctx;
     public ClassSymbolScript class_symb;
+    public AST_ClassDecl class_ast;
 
     public bhlParser.InterfaceDeclContext iface_ctx;
     public InterfaceSymbolScript iface_symb;
@@ -2102,14 +2103,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    PushScope(pass.scope);
-
     pass.func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
     Wrap(pass.func_ctx).eval_type = pass.func_ast.symbol.GetReturnType();
-    PopScope();
   }
 
   void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
@@ -2260,6 +2258,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var name = pass.class_ctx.NAME().GetText();
 
     pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name, null, null);
+
+    pass.class_ast = new AST_ClassDecl(pass.class_symb);
+
     //class members
     for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -2287,8 +2288,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         );
         func_symb.ReserveThisArgument(pass.class_symb);
         pass.class_symb.tmp_members.Add(func_symb);
+
+        var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
+
+        pass.class_ast.func_decls.Add(func_ast);
       }
     }
+
+    pass.ast.AddChild(pass.class_ast);
 
     pass.scope.Define(pass.class_symb);
   }
@@ -2313,7 +2320,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
+
         func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
+
+        var func_ast = pass.class_ast.FindFuncDecl(func_symb);
+        ParseFuncParams(fd, func_ast);
+
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }
     }
@@ -2381,8 +2393,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    var ast_class = new AST_ClassDecl(pass.class_symb);
-
     //class methods bodies
     for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
     {
@@ -2391,17 +2401,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.Resolve(fd.NAME().GetText());
-
-        var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
-
-        ParseFuncParams(fd, func_ast);
+        var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncBlock(fd, func_ast);
-
-        ast_class.func_decls.Add(func_ast);
       }
     }
-
-    pass.ast.AddChild(ast_class);
   }
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)

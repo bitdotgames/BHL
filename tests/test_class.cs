@@ -596,6 +596,11 @@ public class TestClasses : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Foo")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -603,11 +608,6 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.SetAttr, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -678,6 +678,31 @@ public class TestClasses : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPassArgToClassMethodFromAnotherMethod()
+  {
+    string bhl = @"
+
+    class Foo {
+      func Bar() {
+        this.Wow(0)
+      }
+      func Wow(float t) {
+      }
+    }
+
+    func test()
+    {
+      Foo f = {}
+      f.Bar()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
     CommonChecks(vm);
   }
 
