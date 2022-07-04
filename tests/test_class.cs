@@ -9,38 +9,59 @@ public class TestClasses : BHL_TestBase
   [IsTested()]
   public void TestEmptyUserClass()
   {
-    string bhl = @"
-
-    class Foo {}
-      
-    func bool test() 
     {
-      Foo f = new Foo
-      return f != null
+      string bhl = @"
+
+      class Foo {}
+        
+      func bool test() 
+      {
+        Foo f = new Foo
+        return f != null
+      }
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+        .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Foo")) }) 
+        .EmitThen(Opcodes.SetVar, new int[] { 0 })
+        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+        .EmitThen(Opcodes.Constant, new int[] { 1 })
+        .EmitThen(Opcodes.NotEqual)
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      var fb = vm.Start("test");
+      AssertFalse(vm.Tick());
+      AssertTrue(fb.result.PopRelease().bval);
+      CommonChecks(vm);
     }
-    ";
 
-    var c = Compile(bhl);
+    {
+      string bhl = @"
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Foo")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { 1 })
-      .EmitThen(Opcodes.NotEqual)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
+      class Foo { }
+        
+      func bool test() 
+      {
+        Foo f = new Foo
+        return f != null
+      }
+      ";
 
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
-    AssertTrue(fb.result.PopRelease().bval);
-    CommonChecks(vm);
+      var vm = MakeVM(bhl);
+      var fb = vm.Start("test");
+      AssertFalse(vm.Tick());
+      AssertTrue(fb.result.PopRelease().bval);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]
@@ -48,7 +69,7 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { }
+    class Foo {}
       
     func test() 
     {
@@ -72,8 +93,9 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { }
-    class Bar { }
+    class Foo {}
+    class Bar{
+    }
 
     func bool test() 
     {
@@ -92,9 +114,7 @@ public class TestClasses : BHL_TestBase
   public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
-    class Foo : Foo
-    {
-    }
+    class Foo : Foo {}
     ";
 
     AssertError<Exception>(
