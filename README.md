@@ -275,7 +275,7 @@ You can run unit tests by executing the following command:
 3. ~~Better runtime errors reporting~~
 4. ~~More robust type system~~
 5. ~~Interfaces support~~
-6. Namespaces support
+6. ~~Namespaces support~~
 7. Virtual class methods
 8. Static class members support
 9. Maps support
