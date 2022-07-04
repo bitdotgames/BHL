@@ -500,15 +500,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
   public TypeProxy item_type;
 
-  IType _item_type;
-  public IType ItemType {
-    get {
-      if(_item_type == null)
-        _item_type = item_type.Get();
-      return _item_type;
-    }
-  }
-
   public ArrayTypeSymbol(string name, TypeProxy item_type)     
     : base(name, super_class: null)
   {
@@ -559,7 +550,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   }
 
   public ArrayTypeSymbol(TypeProxy item_type) 
-    : this(item_type.spec + "[]", item_type)
+    : this("[]" + item_type.spec, item_type)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -578,9 +569,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 
   public GenericArrayTypeSymbol(TypeProxy item_type) 
     : base(item_type)
-  {
-    name = "[]" + item_type.spec;
-  }
+  {}
 
   //marshall factory version
   public GenericArrayTypeSymbol()
@@ -730,7 +719,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 
   public ArrayTypeSymbolT(TypeProxy item_type, CreatorCb creator) 
-    : base(item_type.spec + "[]", item_type)
+    : base("[]" + item_type.spec, item_type)
   {}
 
   public override void CreateArr(VM.Frame frm, ref Val v, IType type)
@@ -819,6 +808,194 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
+  }
+}
+
+public abstract class MapTypeSymbol : ClassSymbol
+{
+  public readonly FuncSymbolNative FuncMapIdx = null;
+  public readonly FuncSymbolNative FuncMapIdxW = null;
+
+  public TypeProxy key_type;
+  public TypeProxy val_type;
+
+  public MapTypeSymbol(TypeProxy key_type, TypeProxy val_type)     
+    : base("[" + key_type.spec + "]" + val_type.spec, super_class: null)
+  {
+    this.key_type = key_type;
+    this.val_type = val_type;
+
+    this.creator = CreateMap;
+
+    {
+      var fn = new FuncSymbolNative("Remove", Types.Void, Remove,
+        new FuncArgSymbol("key", key_type)
+      );
+      this.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
+      this.Define(fn);
+    }
+
+    {
+      var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
+      this.Define(vs);
+    }
+
+    {
+      var fn = new FuncSymbolNative("Contains", Types.Bool, Contains,
+        new FuncArgSymbol("key", key_type)
+      );
+      this.Define(fn);
+    }
+
+    {
+      //hidden system method not available directly
+      FuncMapIdx = new FuncSymbolNative("$MapIdx", val_type, MapIdx);
+    }
+
+    {
+      //hidden system method not available directly
+      FuncMapIdxW = new FuncSymbolNative("$MapIdxW", Types.Void, MapIdxW);
+    }
+  }
+
+  public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
+  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
+  public abstract ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+}
+
+public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>
+{
+  public const uint CLASS_ID = 21; 
+
+  public GenericMapTypeSymbol(TypeProxy key_type, TypeProxy val_type)     
+    : base(key_type, val_type)
+  {}
+  
+  //marshall factory version
+  public GenericMapTypeSymbol()
+    : this(new TypeProxy(), new TypeProxy())
+  {}
+
+  static IDictionary<Val,Val> AsMap(Val arr)
+  {
+    var map = arr.obj as IDictionary<Val,Val>;
+    if(map == null)
+      throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return map;
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    marshall.Marshall.Sync(ctx, ref key_type);
+    marshall.Marshall.Sync(ctx, ref val_type);
+
+    if(ctx.is_read)
+      name = "[" + key_type.spec + "]" + val_type.spec;
+  }
+
+  public override bool Equals(object o)
+  {
+    if(!(o is GenericMapTypeSymbol))
+      return false;
+    return this.Equals((GenericMapTypeSymbol)o);
+  }
+
+  public bool Equals(GenericMapTypeSymbol o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    return key_type.Equals(o.key_type) && 
+           val_type.Equals(o.val_type);
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
+  }
+
+  public override void CreateMap(VM.Frame frm, ref Val v, IType type)
+  {
+    v.SetObj(ValMap.New(frm.vm), type);
+  }
+
+  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    var m = AsMap(ctx);
+    v.SetNum(m.Count);
+  }
+
+  public override ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    map.Remove(key);
+    key.Release();
+    v.Release();
+    return null;
+  }
+
+  public override ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    bool yes = map.ContainsKey(key);
+    key.Release();
+    v.Release();
+    frame.stack.Push(Val.NewBool(frame.vm, yes));
+    return null;
+  }
+
+  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    map.Clear();
+    v.Release();
+    return null;
+  }
+
+  //NOTE: follows special Opcodes.MapIdx conventions
+  public override ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var idx = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    var res = map[idx]; 
+    frame.stack.PushRetain(res);
+    idx.Release();
+    v.Release();
+    return null;
+  }
+
+  //NOTE: follows special Opcodes.MapIdxW conventions
+  public override ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var idx = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var val = frame.stack.Pop();
+    var map = AsMap(v);
+    map[idx] = val;
+    idx.Release();
+    val.Release();
+    v.Release();
+    return null;
   }
 }
 
@@ -1668,6 +1845,7 @@ public class SymbolsStorage : marshall.IMarshallable
 
 public class TypeSet<T> : marshall.IMarshallable where T : IType
 {
+  //TODO: since TypeProxy implements custom Equals we could use HashSet here
   List<TypeProxy> list = new List<TypeProxy>();
 
   public int Count
@@ -1700,8 +1878,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   {
     foreach(var item in list)
     {
-      //TODO: this is quite arguable
-      if(item.spec == tp.spec)
+      if(item.Equals(tp))
         return false;
     }
     list.Add(tp);
@@ -1786,6 +1963,8 @@ public class SymbolFactory : marshall.IFactory
         return new FieldSymbolScript(); 
       case GenericArrayTypeSymbol.CLASS_ID:
         return new GenericArrayTypeSymbol(); 
+      case GenericMapTypeSymbol.CLASS_ID:
+        return new GenericMapTypeSymbol(); 
       case ClassSymbolScript.CLASS_ID:
         return new ClassSymbolScript();
       case InterfaceSymbolScript.CLASS_ID:

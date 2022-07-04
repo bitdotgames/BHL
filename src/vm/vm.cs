@@ -75,6 +75,8 @@ public enum Opcodes
   ArrIdxW            = 83,
   ArrAddInplace      = 84,  //TODO: used for json alike array initialization,   
                            //      can be replaced with more low-level opcodes?
+  MapIdx             = 90,
+  MapIdxW            = 91,
 }
 
 public enum BlockType 
@@ -176,7 +178,7 @@ public class Const : IEquatable<Const>
     return type == o.type && 
            num == o.num && 
            str == o.str &&
-           tproxy.spec == o.tproxy.spec
+           tproxy.Equals(o.tproxy)
            ;
   }
 }
@@ -802,6 +804,7 @@ public class VM : ISymbolResolver
 
   public ValPool vals_pool = new ValPool();
   public Pool<ValList> vlsts_pool = new Pool<ValList>();
+  public Pool<ValMap> vmaps_pool = new Pool<ValMap>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
   public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
@@ -1284,6 +1287,22 @@ public class VM : ISymbolResolver
         var status = BHS.SUCCESS;
         ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
         curr_frame.stack.Push(self);
+      }
+      break;
+      case Opcodes.MapIdx:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((MapTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncMapIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
+      }
+      break;
+      case Opcodes.MapIdxW:
+      {
+        var self = curr_frame.stack[curr_frame.stack.Count - 2];
+        var class_type = ((MapTypeSymbol)self.type);
+        var status = BHS.SUCCESS;
+        class_type.FuncMapIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.Add:

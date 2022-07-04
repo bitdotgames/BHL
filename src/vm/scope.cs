@@ -578,6 +578,11 @@ public static class ScopeExtensions
     return self.T(new GenericArrayTypeSymbol(self.T(tn)));
   }
 
+  public static TypeProxy TMap(this ISymbolResolver self, TypeArg kt, TypeArg vt)
+  {           
+    return self.T(new GenericMapTypeSymbol(self.T(kt), self.T(vt)));
+  }
+
   public static TypeProxy TFunc(this ISymbolResolver self, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(self.T(ret_type));

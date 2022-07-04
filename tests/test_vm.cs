@@ -5729,7 +5729,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "accessing not an array type 'func bool(int)'"
+      "accessing not an array/map type 'func bool(int)'"
     );
   }
 
@@ -8316,8 +8316,7 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var expected = 
       new ModuleCompiler()
@@ -8348,7 +8347,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(num, 5);
     CommonChecks(vm);
@@ -12061,7 +12060,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl7);
       },
-      "extraneous input '++' expecting ']'"
+      "no viable alternative at input '[i++'"
     );
 
     AssertError<Exception>(
@@ -12217,7 +12216,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "extraneous input '--' expecting ']'"
+      "no viable alternative at input '[i--'"
     );
 
     AssertError<Exception>(

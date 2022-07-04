@@ -694,6 +694,16 @@ public class ModuleCompiler : AST_Visitor
         Opcodes.ArrAddInplace
       )
     );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.MapIdx
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.MapIdxW
+      )
+    );
   }
 
   static void DeclareOpcode(Definition def)
@@ -1283,6 +1293,16 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.ARR_IDXW:
       {
         Emit(Opcodes.ArrIdxW, null, ast.line_num);
+      }
+      break;
+      case EnumCall.MAP_IDX:
+      {
+        Emit(Opcodes.MapIdx, null, ast.line_num);
+      }
+      break;
+      case EnumCall.MAP_IDXW:
+      {
+        Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
       break;
       case EnumCall.LMBD:

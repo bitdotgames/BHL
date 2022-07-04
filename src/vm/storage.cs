@@ -292,11 +292,21 @@ public class Val
       _num2 == o._num2 &&
       _num3 == o._num3 &&
       _num4 == o._num4 &&
-      //TODO: delegate comparison to type?
-      (type == Types.String ? (string)_obj == (string)o._obj : _obj == o._obj)
+      (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj)
       ;
 
     return res;
+  }
+
+  public int GetValueHashCode()
+  {
+    return 
+      _num.GetHashCode()
+      ^ _num2.GetHashCode()
+      ^ _num3.GetHashCode()
+      ^ _num4.GetHashCode()
+      ^ (int)_obj?.GetHashCode()
+      ;
   }
 
   public override string ToString() 
@@ -310,8 +320,8 @@ public class Val
     str += " num2:" + _num2;
     str += " num3:" + _num3;
     str += " num4:" + _num4;
-    str += " obj.type:" + _obj?.GetType().Name;
     str += " obj:" + _obj;
+    str += " obj.type:" + _obj?.GetType().Name;
     str += " (refs:" + _refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
@@ -491,6 +501,198 @@ public class ValList : IList<Val>, IValRefcounted
 
     if(lst.vm.vlsts_pool.stack.Count > lst.vm.vlsts_pool.miss)
       throw new Exception("Unbalanced New/Del");
+  }
+}
+
+public class ValMap : IDictionary<Val,Val>, IValRefcounted
+{
+  //NOTE: since we track the lifetime of the key as well as of a value
+  //      we need to efficiently access the added key, for this reason
+  //      we store the key alongside with the value in a KeyValuePair
+  Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
+
+  //NOTE: -1 means it's in released state,
+  //      public only for inspection
+  public int refs;
+
+  public VM vm;
+
+  //////////////////IDictionary//////////////////
+
+  public int Count { get { return map.Count; } }
+
+  public bool IsReadOnly { get { return false; } }
+
+  public ICollection<Val> Keys { get { return map.Keys; } }
+
+  public ICollection<Val> Values { get { throw new NotImplementedException(); } }
+
+  public void Add(KeyValuePair<Val,Val> p)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Add(Val k, Val v)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Clear()
+  {
+    foreach(var kv in map)
+    {
+      kv.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      kv.Value.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
+    map.Clear();
+  }
+
+  public Val this[Val k]
+  {
+    get {
+      return map[k].Value;
+    }
+    set {
+      KeyValuePair<Val,Val> prev;
+      if(!map.TryGetValue(k, out prev))
+        k.RefMod(RefOp.INC | RefOp.USR_INC);
+      else
+        prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      value.RefMod(RefOp.INC | RefOp.USR_INC);
+      map[k] = new KeyValuePair<Val,Val>(k, value);
+    }
+  }
+
+  public bool TryGetValue(Val k, out Val v)
+  {
+    throw new NotImplementedException();
+  }
+
+  public bool Contains(KeyValuePair<Val, Val> p)
+  {
+    throw new NotImplementedException();
+  }
+
+  public bool ContainsKey(Val k)
+  {
+    return map.ContainsKey(k);
+  }
+
+  public bool Remove(Val k)
+  {
+    KeyValuePair<Val,Val> prev;
+    bool existed = map.TryGetValue(k, out prev);
+    bool removed = map.Remove(k);
+    if(existed)
+    {
+      prev.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
+    return removed;
+  }
+
+  public bool Remove(KeyValuePair<Val,Val> p)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void CopyTo(KeyValuePair<Val,Val>[] arr, int len)
+  {
+    throw new NotImplementedException();
+  }
+
+  public IEnumerator<KeyValuePair<Val,Val>> GetEnumerator()
+  {
+    throw new NotImplementedException();
+  }
+
+  IEnumerator IEnumerable.GetEnumerator()
+  {
+    return GetEnumerator();
+  }
+
+  ///////////////////////////////////////
+
+  public void Retain()
+  {
+    //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
+    if(refs == -1)
+      throw new Exception("Invalid state(-1)");
+    ++refs;
+  }
+
+  public void Release()
+  {
+    //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
+
+    if(refs == -1)
+      throw new Exception("Invalid state(-1)");
+    if(refs == 0)
+      throw new Exception("Double free(0)");
+
+    --refs;
+    if(refs == 0)
+      Del(this);
+  }
+
+  ///////////////////////////////////////
+
+  //NOTE: use New() instead
+  internal ValMap(VM vm)
+  {
+    this.vm = vm;
+  }
+
+  public static ValMap New(VM vm)
+  {
+    ValMap map;
+    if(vm.vmaps_pool.stack.Count == 0)
+    {
+      ++vm.vmaps_pool.miss;
+      map = new ValMap(vm);
+    }
+    else
+    {
+      ++vm.vmaps_pool.hit;
+      map = vm.vmaps_pool.stack.Pop();
+
+      if(map.refs != -1)
+        throw new Exception("Expected to be released, refs " + map.refs);
+    }
+    map.refs = 1;
+
+    return map;
+  }
+
+  static void Del(ValMap map)
+  {
+    if(map.refs != 0)
+      throw new Exception("Freeing invalid object, refs " + map.refs);
+
+    map.refs = -1;
+    map.Clear();
+    map.vm.vmaps_pool.stack.Push(map);
+
+    if(map.vm.vmaps_pool.stack.Count > map.vm.vmaps_pool.miss)
+      throw new Exception("Unbalanced New/Del");
+  }
+
+  class Comparer : IEqualityComparer<Val>
+  {
+    public bool Equals(Val a, Val b)
+    {
+      if(a == null && b == null)
+        return true;
+      else if(a == null || b == null)
+        return false;
+
+      return a.IsValueEqual(b);
+    }
+
+    public int GetHashCode(Val v)
+    {
+      return v.GetValueHashCode();
+    }
   }
 }
 
