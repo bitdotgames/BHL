@@ -25,6 +25,34 @@ public class TestMaps : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCanBeNull()
+  {
+    {
+      string bhl = @"
+      func bool test() {
+        [string]int m
+        return m == null
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() {
+        [string]int m = {}
+        return m == null
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestCountEmpty()
   {
     string bhl = @"
