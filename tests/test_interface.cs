@@ -707,4 +707,91 @@ public class TestInterfaces : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestBugPassThisAsInterfaceArgToFreeFunc()
+  {
+    string bhl1 = @"
+    import ""bhl2""
+    namespace a {
+      namespace c {
+        interface IKlass {
+          func Test()
+        }
+      }
+      namespace b {
+        func Foo(a.c.IKlass v) { 
+        }
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""
+    namespace a {
+      namespace c {
+        class Klass : IKlass {
+          func Test() {
+            a.b.Foo(this)
+          }
+        }
+      }
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestBugCircularDependencyInModules()
+  {
+    string bhl1 = @"
+    import ""bhl2""
+    namespace a {
+      namespace b {
+        func Foo(a.c.IKlass v) { 
+        }
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""
+    namespace a {
+      namespace c {
+        interface IKlass {
+          func Test()
+        }
+        class Klass : IKlass {
+          func Test() {
+            a.b.Foo(this)
+          }
+        }
+      }
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+
+    vm.LoadModule("bhl2");
+    CommonChecks(vm);
+  }
 }
