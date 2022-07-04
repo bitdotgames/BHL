@@ -1039,6 +1039,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncOverride([NotNull] bhlParser.FuncOverrideContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncOverride([NotNull] bhlParser.FuncOverrideContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

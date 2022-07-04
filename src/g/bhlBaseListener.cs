@@ -1227,6 +1227,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncOverride([NotNull] bhlParser.FuncOverrideContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncOverride([NotNull] bhlParser.FuncOverrideContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

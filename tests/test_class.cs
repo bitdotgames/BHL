@@ -1819,4 +1819,46 @@ public class TestClasses : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestUserChildClassMethodOverrideBase()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+      int b
+
+      func virtual int getA() {
+        return this.a
+      }
+
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Bar : Foo {
+      int new_a
+
+      func override int getA() {
+        return this.new_a
+      }
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return b.getA() + b.getB()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(110, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
