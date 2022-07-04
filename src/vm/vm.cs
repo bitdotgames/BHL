@@ -1953,7 +1953,7 @@ public class VM : ISymbolResolver
 
   void HandleTypeAs(Frame curr_frame, IType type)
   {
-    var val = curr_frame.stack.PopRelease();
+    var val = curr_frame.stack.Pop();
 
     if(type != null && val.type != null && Types.Is(val.type, type))
     {
@@ -1964,17 +1964,19 @@ public class VM : ISymbolResolver
     }
     else
       curr_frame.stack.Push(Val.NewObj(this, null, Types.Any));
+    val.Release();
   }
 
   void HandleTypeIs(Frame curr_frame, IType type)
   {
-    var val = curr_frame.stack.PopRelease();
+    var val = curr_frame.stack.Pop();
     curr_frame.stack.Push(Val.NewBool(this, 
           type != null && 
           val.type != null && 
           Types.Is(val.type, type)
         )
     );
+    val.Release();
   }
 
   void HandleNew(Frame curr_frame, IType type)

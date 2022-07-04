@@ -363,35 +363,65 @@ public class TestTypeCasts : BHL_TestBase
   [IsTested()]
   public void TestAsForChildClassObjReturnedFromMethod()
   {
-    string bhl = @"
-    class GameObject {
-      func Component GetComponentByName(string name) {
-        if(name == ""Canvas"") {
-          return new Canvas
-        } else {
-          return null
+    {
+      string bhl = @"
+      class GameObject {
+        func Component GetComponentByName(string name) {
+          if(name == ""Canvas"") {
+            return new Canvas
+          } else {
+            return null
+          }
         }
       }
+
+      class Component {
+      }
+
+      class Canvas : Component {
+      }
+
+      func bool test() {
+        GameObject go = {}
+        Canvas wcanvas = go.GetComponentByName(""Canvas"") as Canvas
+        return wcanvas is Canvas
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
     }
 
-    class Component {
-    }
+    {
+      string bhl = @"
+      class GameObject {
+        func Component GetComponentByName(string name) {
+          if(name == ""Canvas"") {
+            return new Canvas
+          } else {
+            return null
+          }
+        }
+      }
 
-    class Canvas : Component {
-    }
+      class Component {
+      }
 
-    func bool test() {
-      GameObject go = {}
-      Canvas wcanvas = go.GetComponentByName(""Canvas"") as Canvas
-      return wcanvas is Canvas
-    }
-    ";
+      class Canvas : Component {
+      }
 
-    var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
+      func bool test() {
+        GameObject go = {}
+        return go.GetComponentByName(""Canvas"") is Canvas
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
   }
-
 
   [IsTested()]
   public void TestIsForChildClassAndInterface()
