@@ -226,6 +226,96 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyFuncBody()
+  {
+    {
+      string bhl = @"
+      func test() {}
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      vm.Start("test");
+      AssertFalse(vm.Tick());
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func test(){}
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      vm.Start("test");
+      AssertFalse(vm.Tick());
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func test(){
+      }
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      vm.Start("test");
+      AssertFalse(vm.Tick());
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func test() {
+      }
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqual(c, expected);
+
+      var vm = MakeVM(c);
+      vm.Start("test");
+      AssertFalse(vm.Tick());
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
   public void TestStrConcat()
   {
     string bhl = @"

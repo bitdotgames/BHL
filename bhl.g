@@ -255,6 +255,11 @@ funcType
 
 funcBlock
   : block
+  | emptyBlock
+  ;
+
+emptyBlock
+  : '{}'
   ;
 
 interfaceFuncDecl
@@ -363,7 +368,8 @@ jsonObject
   ;
 
 jsonEmptyObj
-  : OBJ
+  : '{' '}'
+  | '{}'
   ;
 
 jsonPair
@@ -393,10 +399,6 @@ NAME
 
 ARR
   : '[' ']'
-  ;
-
-OBJ
-  : '{' '}'
   ;
 
 DOT
@@ -446,19 +448,6 @@ HexDigit
   : [0-9a-fA-F]
   ;
 
-//white space
-WS
-  : [ \t]+ -> channel(HIDDEN)
-  ;
-
-//line terminators
-NL
-    : ( '\r' '\n'?
-        |   '\n'
-      )
-   -> channel(HIDDEN)
-  ;
-
 //comments
 SINGLE_LINE_COMMENT 
   : '//' ~[\r\n]* -> channel(HIDDEN)
@@ -467,3 +456,9 @@ SINGLE_LINE_COMMENT
 DELIMITED_COMMENT 
   :   '/*' .*? '*/' -> channel(HIDDEN)
   ;
+
+//white space
+WS
+  : [ \r\t\u000C\n]+ -> channel(HIDDEN)
+  ;
+

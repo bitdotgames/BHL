@@ -2756,7 +2756,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
+    if(ctx.block() != null)
+      CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
+    else
+      CommonVisitBlock(BlockType.FUNC, new IParseTree[0]);
     return null;
   }
 
