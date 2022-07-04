@@ -318,8 +318,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  Dictionary<InterfaceSymbol, List<int>> _vtable = null;
-  public Dictionary<InterfaceSymbol, List<int>> vtable {
+  Dictionary<IInstanceType, List<int>> _vtable = null;
+  public Dictionary<IInstanceType, List<int>> vtable {
     get {
       if(_vtable == null) {
         UpdateVTable();
@@ -447,7 +447,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public void UpdateVTable()
   {
-    _vtable = new Dictionary<InterfaceSymbol, List<int>>();
+    _vtable = new Dictionary<IInstanceType, List<int>>();
 
     var all = new HashSet<IInstanceType>();
     if(super_class != null)
