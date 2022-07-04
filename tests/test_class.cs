@@ -100,7 +100,8 @@ public class TestClasses : BHL_TestBase
     func bool test() 
     {
       Foo f = {}
-      Bar b = {}
+      Bar b = { 
+      }
       return f != null && b != null
     }
     ";
