@@ -3386,6 +3386,28 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyIfBody()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      if(1 > 2) 
+      {}
+      
+      return x1
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 100);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfElseCondition()
   {
     string bhl = @"

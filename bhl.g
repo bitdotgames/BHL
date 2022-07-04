@@ -191,6 +191,7 @@ callArg
 
 block 
   : '{' (statement SEPARATOR*)* '}'
+  | '{}'
   ;
 
 extensions
@@ -257,7 +258,6 @@ funcType
 
 funcBlock
   : block
-  | emptyBlock
   ;
 
 emptyBlock
