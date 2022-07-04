@@ -3537,6 +3537,29 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyElseBody()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      if(1 > 2) {
+        x1 = 200
+      } else {}
+      
+      return x1
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 100);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestIfFalseComplexCondition()
   {
     string bhl = @"
@@ -3849,6 +3872,27 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestEmptyWhileBody()
+  {
+    string bhl = @"
+    func int test()
+    {
+      int x1 = 100
+
+      while(false) {}
+
+      return x1
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
