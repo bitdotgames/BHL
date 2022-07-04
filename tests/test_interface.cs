@@ -10,7 +10,7 @@ public class TestInterfaces : BHL_TestBase
   public void TestEmptyUserInterface()
   {
     string bhl = @"
-    interface Foo { }
+    interface Foo {}
     ";
 
     var vm = MakeVM(bhl);

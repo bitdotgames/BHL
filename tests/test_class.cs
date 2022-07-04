@@ -11,7 +11,7 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { }
+    class Foo {}
       
     func bool test() 
     {

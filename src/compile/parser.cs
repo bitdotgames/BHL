@@ -2182,32 +2182,35 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.iface_ctx == null)
       return;
 
-    for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
+    if(pass.iface_ctx.interfaceBlock().emptyBlock() == null)
     {
-      var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
-
-      var fd = ib.interfaceFuncDecl();
-      if(fd != null)
+      for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember().Length;++i)
       {
-        int default_args_num;
-        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
-        if(default_args_num != 0)
-          FireError(ib, "default value is not allowed in this context");
+        var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
 
-        var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
-        pass.iface_symb.Define(func_symb);
-
-        var func_params = fd.funcParams();
-        if(func_params != null)
+        var fd = ib.interfaceFuncDecl();
+        if(fd != null)
         {
-          PushScope(func_symb);
-          //NOTE: we push some dummy interim AST and later
-          //      simply discard it since we don't care about
-          //      func args related AST for interfaces
-          PushAST(new AST_Interim());
-          Visit(func_params);
-          PopAST();
-          PopScope();
+          int default_args_num;
+          var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+          if(default_args_num != 0)
+            FireError(ib, "default value is not allowed in this context");
+
+          var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
+          pass.iface_symb.Define(func_symb);
+
+          var func_params = fd.funcParams();
+          if(func_params != null)
+          {
+            PushScope(func_symb);
+            //NOTE: we push some dummy interim AST and later
+            //      simply discard it since we don't care about
+            //      func args related AST for interfaces
+            PushAST(new AST_Interim());
+            Visit(func_params);
+            PopAST();
+            PopScope();
+          }
         }
       }
     }
@@ -2277,36 +2280,39 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
+    if(pass.class_ctx.classBlock().emptyBlock() == null)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var vd = cm.varDeclare();
-      if(vd != null)
+      for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
       {
-        if(vd.NAME().GetText() == "this")
-          FireError(vd.NAME(), "the keyword \"this\" is reserved");
+        var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+        var vd = cm.varDeclare();
+        if(vd != null)
+        {
+          if(vd.NAME().GetText() == "this")
+            FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TypeProxy());
-        pass.class_symb.tmp_members.Add(fld_symb);
-      }
+          var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TypeProxy());
+          pass.class_symb.tmp_members.Add(fld_symb);
+        }
 
-      var fd = cm.funcDecl();
-      if(fd != null)
-      {
-        if(fd.NAME().GetText() == "this")
-          FireError(fd.NAME(), "the keyword \"this\" is reserved");
+        var fd = cm.funcDecl();
+        if(fd != null)
+        {
+          if(fd.NAME().GetText() == "this")
+            FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
-        var func_symb = new FuncSymbolScript(
-          Wrap(fd), 
-          new FuncSignature(),
-          fd.NAME().GetText()
-        );
-        func_symb.ReserveThisArgument(pass.class_symb);
-        pass.class_symb.tmp_members.Add(func_symb);
+          var func_symb = new FuncSymbolScript(
+            Wrap(fd), 
+            new FuncSignature(),
+            fd.NAME().GetText()
+          );
+          func_symb.ReserveThisArgument(pass.class_symb);
+          pass.class_symb.tmp_members.Add(func_symb);
 
-        var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
+          var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
 
-        pass.class_ast.func_decls.Add(func_ast);
+          pass.class_ast.func_decls.Add(func_ast);
+        }
       }
     }
 
@@ -2321,27 +2327,30 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return;
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
+    if(pass.class_ctx.classBlock().emptyBlock() == null)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var vd = cm.varDeclare();
-      if(vd != null)
+      for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
       {
-        var fld_symb = (FieldSymbolScript)pass.class_symb.tmp_members.Find(vd.NAME().GetText());
-        fld_symb.type = ParseType(vd.type());
-      }
+        var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+        var vd = cm.varDeclare();
+        if(vd != null)
+        {
+          var fld_symb = (FieldSymbolScript)pass.class_symb.tmp_members.Find(vd.NAME().GetText());
+          fld_symb.type = ParseType(vd.type());
+        }
 
-      var fd = cm.funcDecl();
-      if(fd != null)
-      {
-        var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
+        var fd = cm.funcDecl();
+        if(fd != null)
+        {
+          var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
 
-        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
+          func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
 
-        var func_ast = pass.class_ast.FindFuncDecl(func_symb);
-        ParseFuncParams(fd, func_ast);
+          var func_ast = pass.class_ast.FindFuncDecl(func_symb);
+          ParseFuncParams(fd, func_ast);
 
-        Wrap(fd).eval_type = func_symb.GetReturnType(); 
+          Wrap(fd).eval_type = func_symb.GetReturnType(); 
+        }
       }
     }
   }
@@ -2409,15 +2418,18 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return;
 
     //class methods bodies
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
+    if(pass.class_ctx.classBlock().emptyBlock() == null)
     {
-      var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var fd = cm.funcDecl();
-      if(fd != null)
+      for(int i=0;i<pass.class_ctx.classBlock().classMembers().classMember().Length;++i)
       {
-        var func_symb = (FuncSymbolScript)pass.class_symb.Resolve(fd.NAME().GetText());
-        var func_ast = pass.class_ast.FindFuncDecl(func_symb);
-        ParseFuncBlock(fd, func_ast);
+        var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
+        var fd = cm.funcDecl();
+        if(fd != null)
+        {
+          var func_symb = (FuncSymbolScript)pass.class_symb.Resolve(fd.NAME().GetText());
+          var func_ast = pass.class_ast.FindFuncDecl(func_symb);
+          ParseFuncBlock(fd, func_ast);
+        }
       }
     }
   }

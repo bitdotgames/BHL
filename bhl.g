@@ -207,6 +207,7 @@ classDecl
 
 classBlock
   : '{' classMembers '}'
+  | emptyBlock
   ;
 
 classMembers
@@ -223,6 +224,7 @@ interfaceDecl
 
 interfaceBlock
   : '{' interfaceMembers '}'
+  | emptyBlock
   ;
 
 interfaceMembers
