@@ -265,6 +265,9 @@ You can run unit tests by executing the following command:
 
 # Roadmap
 
+## Version 3.0
+1. Generics support
+
 ## Version 2.0
 
 1. ~~Byte code optimization~~
@@ -273,9 +276,11 @@ You can run unit tests by executing the following command:
 4. ~~More robust type system~~
 5. ~~Interfaces support~~
 6. Namespaces support
-7. Maps support
-8. Debugger support
-9. LSP integration
+7. Virtual class methods
+8. Static class members support
+9. Maps support
+10. Debugger support
+11. LSP integration
 
 ## Version 1.0
 
