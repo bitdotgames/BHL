@@ -127,13 +127,12 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
 
   public bool Equals(TypeProxy o)
   {
-    if(o.type != null && type != null)
-      return o.type.Equals(type);
-     
-    //Console.WriteLine(o._spec + " VS " + _spec + " : " + o.resolver?.GetType().Name + " VS " + resolver?.GetType().Name);
     if(o.resolver == resolver && o._spec == _spec)
       return true;
 
+    if(o.type != null && type != null)
+      return o.type.Equals(type);
+     
     var r = Get();
     if(r != null)
       return r.Equals(o.Get());

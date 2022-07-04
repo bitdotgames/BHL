@@ -852,6 +852,13 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
+      var fn = new FuncSymbolNative("TryGet", new TypeProxy(new TupleType(Types.Bool, val_type)), TryGet,
+        new FuncArgSymbol("key", key_type)
+      );
+      this.Define(fn);
+    }
+
+    {
       //hidden system method not available directly
       FuncMapIdx = new FuncSymbolNative("$MapIdx", val_type, MapIdx);
     }
@@ -868,6 +875,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine TryGet(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
@@ -959,6 +967,23 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     key.Release();
     v.Release();
     frame.stack.Push(Val.NewBool(frame.vm, yes));
+    return null;
+  }
+
+  public override ICoroutine TryGet(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = frame.stack.Pop();
+    var v = frame.stack.Pop();
+    var map = AsMap(v);
+    Val val;
+    bool yes = map.TryGetValue(key, out val);
+    key.Release();
+    v.Release();
+    frame.stack.Push(Val.NewBool(frame.vm, yes));
+    if(yes)
+      frame.stack.PushRetain(val);
+    else
+      frame.stack.Push(Val.New(frame.vm)); /*just dummy value*/
     return null;
   }
 

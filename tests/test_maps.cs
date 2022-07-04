@@ -241,4 +241,70 @@ public class TestMaps : BHL_TestBase
     }
   }
 
+  [IsTested()]
+  public void TestTryGetNoValue()
+  {
+    {
+      string bhl = @"
+
+      func bool,int test() 
+      {
+        [string]int m = {}
+        return m.TryGet(""bar"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var result =  Execute(vm, "test").result;
+      var num = result.PopRelease().num;
+      bool ok = result.PopRelease().bval;
+      AssertFalse(ok);
+      AssertEqual(0, num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func bool,int test() 
+      {
+        [string]int m = {}
+        m[""hey""] = 14
+        return m.TryGet(""bar"")
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var result =  Execute(vm, "test").result;
+      var num = result.PopRelease().num;
+      bool ok = result.PopRelease().bval;
+      AssertFalse(ok);
+      AssertEqual(0, num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
+  public void TestTryGetOk()
+  {
+    string bhl = @"
+
+    func bool,int test() 
+    {
+      [string]int m = {}
+      m[""hey""] = 14
+      m[""bar""] = 4
+      return m.TryGet(""hey"")
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var result =  Execute(vm, "test").result;
+    var num = result.PopRelease().num;
+    bool ok = result.PopRelease().bval;
+    AssertTrue(ok);
+    AssertEqual(14, num);
+    CommonChecks(vm);
+  }
+
 }

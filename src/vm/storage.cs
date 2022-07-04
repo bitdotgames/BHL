@@ -565,7 +565,10 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public bool TryGetValue(Val k, out Val v)
   {
-    throw new NotImplementedException();
+    KeyValuePair<Val, Val> p;
+    bool yes = map.TryGetValue(k, out p);
+    v = p.Value;
+    return yes;
   }
 
   public bool Contains(KeyValuePair<Val, Val> p)
