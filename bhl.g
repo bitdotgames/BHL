@@ -208,7 +208,7 @@ classDecl
 
 classBlock
   : '{' classMembers '}'
-  | emptyBlock
+  | '{}'
   ;
 
 classMembers
@@ -225,7 +225,7 @@ interfaceDecl
 
 interfaceBlock
   : '{' interfaceMembers '}'
-  | emptyBlock
+  | '{}'
   ;
 
 interfaceMembers
@@ -258,10 +258,6 @@ funcType
 
 funcBlock
   : block
-  ;
-
-emptyBlock
-  : '{}'
   ;
 
 interfaceFuncDecl

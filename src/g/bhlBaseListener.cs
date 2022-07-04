@@ -1263,18 +1263,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncBlock([NotNull] bhlParser.FuncBlockContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.emptyBlock"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterEmptyBlock([NotNull] bhlParser.EmptyBlockContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.emptyBlock"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitEmptyBlock([NotNull] bhlParser.EmptyBlockContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.interfaceFuncDecl"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
