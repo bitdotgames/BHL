@@ -1270,8 +1270,12 @@ public class ModuleCompiler : AST_Visitor
             else
               Emit(Opcodes.CallMethodImported, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           }
-          else
+          else if(mfunc is FuncSymbolScriptVirtual)
+            Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          else if(mfunc is FuncSymbolNative)
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          else
+            throw new Exception("Unsupported type: " + mfunc.GetType().Name);
         }
       }
       break;

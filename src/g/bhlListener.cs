@@ -1039,15 +1039,35 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFuncOverride([NotNull] bhlParser.FuncOverrideContext context);
+	void EnterVirtualFlag([NotNull] bhlParser.VirtualFlagContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFuncOverride([NotNull] bhlParser.FuncOverrideContext context);
+	void ExitVirtualFlag([NotNull] bhlParser.VirtualFlagContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterOverrideFlag([NotNull] bhlParser.OverrideFlagContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitOverrideFlag([NotNull] bhlParser.OverrideFlagContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>

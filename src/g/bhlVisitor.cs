@@ -628,11 +628,23 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitEnumMember([NotNull] bhlParser.EnumMemberContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitFuncOverride([NotNull] bhlParser.FuncOverrideContext context);
+	Result VisitVirtualFlag([NotNull] bhlParser.VirtualFlagContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOverrideFlag([NotNull] bhlParser.OverrideFlagContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>

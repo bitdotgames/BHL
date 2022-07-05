@@ -332,6 +332,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public SymbolsStorage members;
 
+  public List<FuncSymbol> method_overrides = new List<FuncSymbol>();
+
   public VM.ClassCreator creator;
 
 #if BHL_FRONT
@@ -349,29 +351,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     : this(name, super_class, implements, creator)
   {
     this.parsed = parsed;
-  }
-
-  public void FinalizeClass()
-  {
-    DoDefineMembers(this);
-  }
-
-  void DoDefineMembers(ClassSymbol tmp_class)
-  {
-    if(tmp_class.super_class != null)
-      DoDefineMembers(tmp_class.super_class);
-
-    for(int i=0;i<tmp_class.tmp_members.Count;++i)
-    {
-      var sym = tmp_class.tmp_members[i];
-      //NOTE: we need to recalculate attribute index taking account all 
-      //      parent classes
-      if(sym is IScopeIndexed si)
-        si.scope_idx = members.Count; 
-      //NOTE: we want to skip super class check here,
-      //      hence skipping the Define
-      members.Add(sym);
-    }
   }
 
 #endif
@@ -1173,6 +1152,18 @@ public class FieldSymbolScript : FieldSymbol
   }
 }
 
+[System.Flags]
+public enum FuncFlags : byte
+{
+  None        = 0,
+  Virtual     = 1,
+  Override    = 2,
+  //TODO:?
+  //Abstract  = 4,
+  //Private   = 8,
+  //Protected = 16,
+}
+
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsStorage
 {
   public FuncSignature signature;
@@ -1186,6 +1177,16 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _scope_idx = value;
+    }
+  }
+
+  protected byte _flags = 0;
+  public FuncFlags flags {
+    get {
+      return (FuncFlags)_flags;
+    }
+    set {
+      _flags = (byte)value;
     }
   }
 
@@ -1255,7 +1256,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
     var args = new SymbolsStorage(this);
     for(int i=0;i<signature.arg_types.Count;++i)
-      args.Add((FuncArgSymbol)members[i + this_offset]);
+      args.Add((FuncArgSymbol)members[this_offset + i]);
     return args;
   }
 
@@ -1320,16 +1321,16 @@ public class FuncSymbolScript : FuncSymbol
   }
 #endif
 
+  //symbol factory version
+  public FuncSymbolScript()
+    : base(null, new FuncSignature())
+  {}
+
   public void ReserveThisArgument(ClassSymbolScript class_scope)
   {
     var this_symb = new FuncArgSymbol("this", new TypeProxy(class_scope));
     Define(this_symb);
   }
-
-  //symbol factory version
-  public FuncSymbolScript()
-    : base(null, new FuncSignature())
-  {}
 
   public override void Define(Symbol sym) 
   {
@@ -1352,11 +1353,78 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
+    marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
   }
+}
 
+public class FuncSymbolScriptVirtual : FuncSymbol
+{
+  public const uint CLASS_ID = 19; 
+
+  int default_args_num;
+
+  public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
+
+#if BHL_FRONT
+  public FuncSymbolScriptVirtual(
+    WrappedParseTree parsed, 
+    FuncSignature sig,
+    string name,
+    int default_args_num = 0
+  ) 
+    : base(name, sig)
+  {
+    this.name = name;
+    this.default_args_num = default_args_num;
+    this.parsed = parsed;
+  }
+#endif
+
+  //symbol factory version
+  public FuncSymbolScriptVirtual()
+    : base(null, new FuncSignature())
+  {}
+
+  public override void Define(Symbol sym) 
+  {
+    throw new NotImplementedException();
+  }
+
+  public void AddOverride(ClassSymbol dest, ClassSymbol origin, FuncSymbolScript fs)
+  {
+    fs.scope = origin;
+
+    overrides.Add(fs);
+    dest.method_overrides.Add(fs);
+  }
+
+  public FuncSymbolScript FindOverride(ClassSymbol owner)
+  {
+    for(int i=0;i<overrides.Count;++i)
+    {
+      var m = overrides[i];
+      if(m is FuncSymbolScript fss && m.scope == owner)
+        return fss; 
+    }
+    return null;
+  }
+
+  public override int GetDefaultArgsNum() { return default_args_num; }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    marshall.Marshall.Sync(ctx, ref default_args_num);
+  }
 }
 
 #if BHL_FRONT
@@ -2000,6 +2068,8 @@ public class SymbolFactory : marshall.IFactory
         return new EnumItemSymbol();
       case FuncSymbolScript.CLASS_ID:
         return new FuncSymbolScript();
+      case FuncSymbolScriptVirtual.CLASS_ID:
+        return new FuncSymbolScriptVirtual();
       case FuncSignature.CLASS_ID:
         return new FuncSignature();
       case RefType.CLASS_ID:

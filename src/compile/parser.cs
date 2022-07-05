@@ -2301,11 +2301,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           new FuncSignature(),
           fd.NAME().GetText()
         );
+
+        if(fd.funcFlags()?.virtualFlag() != null)
+          func_symb.flags |= FuncFlags.Virtual;
+        else if(fd.funcFlags()?.overrideFlag() != null)
+          func_symb.flags |= FuncFlags.Override;
+
         func_symb.ReserveThisArgument(pass.class_symb);
         pass.class_symb.tmp_members.Add(func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
-
         pass.class_ast.func_decls.Add(func_ast);
       }
     }
@@ -2397,10 +2402,44 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    pass.class_symb.FinalizeClass();
+    FinalizeClassMembers(pass.class_symb, pass.class_symb);
 
     for(int i=0;i<pass.class_symb.implements.Count;++i)
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
+  }
+
+  void FinalizeClassMembers(ClassSymbol self, ClassSymbol tmp_class)
+  {
+    if(tmp_class.super_class != null)
+      FinalizeClassMembers(self, tmp_class.super_class);
+
+    for(int i=0;i<tmp_class.tmp_members.Count;++i)
+    {
+      var sym = tmp_class.tmp_members[i];
+      //NOTE: we need to recalculate attribute index taking account all 
+      //      parent classes
+      if(sym is IScopeIndexed si)
+        si.scope_idx = self.members.Count; 
+
+      if(sym is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
+      {
+        var vsym = new FuncSymbolScriptVirtual(
+          fssv.parsed, 
+          fssv.signature, 
+          fssv.name, 
+          fssv.default_args_num
+        );
+        vsym.AddOverride(self, tmp_class, fssv);
+        self.members.Add(vsym);
+      }
+      else if(sym is FuncSymbolScript fsso && fsso.flags.HasFlag(FuncFlags.Override))
+      {
+        var vsym = (FuncSymbolScriptVirtual)self.members.Find(sym.name);
+        vsym.AddOverride(self, tmp_class, fsso); 
+      }
+      else
+        self.members.Add(sym);
+    }
   }
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
@@ -2415,8 +2454,11 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbolScript)pass.class_symb.Resolve(fd.NAME().GetText());
-        var func_ast = pass.class_ast.FindFuncDecl(func_symb);
+        var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
+        if(func_symb is FuncSymbolScriptVirtual fsv) 
+          func_symb = fsv.FindOverride(pass.class_symb);
+
+        var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
         ParseFuncBlock(fd, func_ast);
       }
     }

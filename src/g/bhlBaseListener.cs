@@ -1227,17 +1227,41 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterFuncOverride([NotNull] bhlParser.FuncOverrideContext context) { }
+	public virtual void EnterVirtualFlag([NotNull] bhlParser.VirtualFlagContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcOverride"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitFuncOverride([NotNull] bhlParser.FuncOverrideContext context) { }
+	public virtual void ExitVirtualFlag([NotNull] bhlParser.VirtualFlagContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterOverrideFlag([NotNull] bhlParser.OverrideFlagContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitOverrideFlag([NotNull] bhlParser.OverrideFlagContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncFlags([NotNull] bhlParser.FuncFlagsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncFlags([NotNull] bhlParser.FuncFlagsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// <para>The default implementation does nothing.</para>

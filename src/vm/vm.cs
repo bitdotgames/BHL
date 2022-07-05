@@ -1644,8 +1644,8 @@ public class VM : ISymbolResolver
       break;
       case Opcodes.CallMethodVirt:
       {
-        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int iface_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
@@ -1654,9 +1654,9 @@ public class VM : ISymbolResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_idx].tproxy.Get(); 
+        var inst_symb = (IInstanceType)curr_frame.constants[type_idx].tproxy.Get(); 
         var class_type = (ClassSymbol)self.type;
-        int func_idx = class_type.vtable[iface_symb][iface_func_idx];
+        int func_idx = class_type.vtable[inst_symb][virt_func_idx];
 
         var field_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = field_symb.ip_addr;

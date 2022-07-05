@@ -248,13 +248,20 @@ enumMember
   : NAME '=' INT
   ;
 
-funcOverride
+virtualFlag
   : 'virtual'
-  | 'override'
+  ;
+
+overrideFlag
+  : 'override'
+  ;
+
+funcFlags
+  : (virtualFlag | overrideFlag)
   ;
 
 funcDecl
-  : 'func' funcOverride? retType? NAME '(' funcParams? ')' funcBlock
+  : 'func' funcFlags? retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
