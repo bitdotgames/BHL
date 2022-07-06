@@ -34,7 +34,8 @@ public enum Opcodes
   CallMethod         = 26,
   CallMethodNative   = 27,
   CallMethodImported = 28,
-  CallMethodVirt     = 29,
+  CallMethodIface    = 29,
+  CallMethodVirt     = 30,
   CallPtr            = 38,
   GetFunc            = 39,
   GetFuncNative      = 40,
@@ -1642,10 +1643,10 @@ public class VM : ISymbolResolver
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
-      case Opcodes.CallMethodVirt:
+      case Opcodes.CallMethodIface:
       {
-        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
@@ -1654,12 +1655,38 @@ public class VM : ISymbolResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var inst_symb = (IInstanceType)curr_frame.constants[type_idx].tproxy.Get(); 
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].tproxy.Get(); 
         var class_type = (ClassSymbol)self.type;
-        int func_idx = class_type.vtable[inst_symb][virt_func_idx];
+        int func_idx = class_type.itable[iface_symb][iface_func_idx];
 
-        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
-        int func_ip = field_symb.ip_addr;
+        var func_symb = (FuncSymbolScript)class_type.members[func_idx];
+        int func_ip = func_symb.ip_addr;
+
+        var frm = Frame.New(this);
+        frm.Init(curr_frame.fb, curr_frame, modules[((Namespace)class_type.scope).module_name], func_ip);
+
+        frm.locals[0] = self;
+
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodVirt:
+      {
+        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
+
+        var class_type = (ClassSymbol)self.type;
+        var func_virt = (FuncSymbolScriptVirtual)class_type.members[virt_func_idx];
+
+        var func_symb = func_virt.vtable[class_type];
+
+        int func_ip = func_symb.ip_addr;
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, modules[((Namespace)class_type.scope).module_name], func_ip);

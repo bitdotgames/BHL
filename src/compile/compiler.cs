@@ -545,8 +545,14 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallMethodVirt,
+        Opcodes.CallMethodIface,
         2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethodVirt,
+        2/*class member idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1259,7 +1265,7 @@ public class ModuleCompiler : AST_Visitor
         
         if(instance_type is InterfaceSymbol)
         {
-          Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
         }
         else
         {
@@ -1271,7 +1277,9 @@ public class ModuleCompiler : AST_Visitor
               Emit(Opcodes.CallMethodImported, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           }
           else if(mfunc is FuncSymbolScriptVirtual)
-            Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          {
+            Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          }
           else if(mfunc is FuncSymbolNative)
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else

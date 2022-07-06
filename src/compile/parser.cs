@@ -2408,14 +2408,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
   }
 
-  void FinalizeClassMembers(ClassSymbol self, ClassSymbol tmp_class)
+  void FinalizeClassMembers(ClassSymbol self, ClassSymbol curr_class)
   {
-    if(tmp_class.super_class != null)
-      FinalizeClassMembers(self, tmp_class.super_class);
+    if(curr_class.super_class != null)
+      FinalizeClassMembers(self, curr_class.super_class);
 
-    for(int i=0;i<tmp_class.tmp_members.Count;++i)
+    for(int i=0;i<curr_class.tmp_members.Count;++i)
     {
-      var sym = tmp_class.tmp_members[i];
+      var sym = curr_class.tmp_members[i];
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if(sym is IScopeIndexed si)
@@ -2429,13 +2429,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           fssv.name, 
           fssv.default_args_num
         );
-        vsym.AddOverride(self, tmp_class, fssv);
+        vsym.AddOverride(curr_class, fssv);
         self.members.Add(vsym);
       }
       else if(sym is FuncSymbolScript fsso && fsso.flags.HasFlag(FuncFlags.Override))
       {
         var vsym = (FuncSymbolScriptVirtual)self.members.Find(sym.name);
-        vsym.AddOverride(self, tmp_class, fsso); 
+        vsym.AddOverride(self, fsso); 
       }
       else
         self.members.Add(sym);

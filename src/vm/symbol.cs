@@ -318,21 +318,19 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  Dictionary<IInstanceType, List<int>> _vtable = null;
-  public Dictionary<IInstanceType, List<int>> vtable {
+  Dictionary<InterfaceSymbol, List<int>> _itable = null;
+  public Dictionary<InterfaceSymbol, List<int>> itable {
     get {
-      if(_vtable == null) {
+      if(_itable == null) {
         UpdateVTable();
       }
-      return _vtable;
+      return _itable;
     }
   }
 
   HashSet<IInstanceType> related_types;
 
   public SymbolsStorage members;
-
-  public List<FuncSymbol> method_overrides = new List<FuncSymbol>();
 
   public VM.ClassCreator creator;
 
@@ -426,7 +424,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public void UpdateVTable()
   {
-    _vtable = new Dictionary<IInstanceType, List<int>>();
+    _itable = new Dictionary<InterfaceSymbol, List<int>>();
 
     var all = new HashSet<IInstanceType>();
     if(super_class != null)
@@ -436,12 +434,12 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     }
     for(int i=0;i<implements.Count;++i)
       all.UnionWith(implements[i].GetAllRelatedTypesSet());
-    
+
     foreach(var imp in all)
     {
       var ifs2idx = new List<int>();
       var ifs = (InterfaceSymbol)imp;
-      _vtable.Add(ifs, ifs2idx);
+      _itable.Add(ifs, ifs2idx);
 
       for(int midx=0;midx<ifs.members.Count;++midx)
       {
@@ -1367,6 +1365,17 @@ public class FuncSymbolScriptVirtual : FuncSymbol
   int default_args_num;
 
   public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
+  public List<TypeProxy> owners = new List<TypeProxy>(); 
+
+  Dictionary<ClassSymbol, FuncSymbolScript> _vtable = null;
+  public Dictionary<ClassSymbol, FuncSymbolScript> vtable {
+    get {
+      if(_vtable == null) {
+        UpdateVTable();
+      }
+      return _vtable;
+    }
+  }
 
 #if BHL_FRONT
   public FuncSymbolScriptVirtual(
@@ -1388,26 +1397,34 @@ public class FuncSymbolScriptVirtual : FuncSymbol
     : base(null, new FuncSignature())
   {}
 
+  public void UpdateVTable()
+  {
+    _vtable = new Dictionary<ClassSymbol, FuncSymbolScript>();
+
+    for(int i=0;i<overrides.Count;++i)
+      _vtable[(ClassSymbol)owners[i].Get()] = overrides[i];
+  }
+
   public override void Define(Symbol sym) 
   {
     throw new NotImplementedException();
   }
 
-  public void AddOverride(ClassSymbol dest, ClassSymbol origin, FuncSymbolScript fs)
+  public void AddOverride(ClassSymbol owner, FuncSymbolScript fs)
   {
-    fs.scope = origin;
+    //let's reset it
+    _vtable = null;
 
+    owners.Add(new TypeProxy(owner));
     overrides.Add(fs);
-    dest.method_overrides.Add(fs);
   }
 
   public FuncSymbolScript FindOverride(ClassSymbol owner)
   {
-    for(int i=0;i<overrides.Count;++i)
+    for(int i=0;i<owners.Count;++i)
     {
-      var m = overrides[i];
-      if(m is FuncSymbolScript fss && m.scope == owner)
-        return fss; 
+      if(owners[i].Get() == owner)
+        return overrides[i];
     }
     return null;
   }
@@ -1424,6 +1441,10 @@ public class FuncSymbolScriptVirtual : FuncSymbol
     base.Sync(ctx);
 
     marshall.Marshall.Sync(ctx, ref default_args_num);
+
+    marshall.Marshall.SyncGeneric(ctx, overrides);
+
+    marshall.Marshall.Sync(ctx, owners);
   }
 }
 
