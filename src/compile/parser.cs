@@ -1094,7 +1094,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var ret_type = ParseType(ret_ctx);
 
-    var arg_types = new List<TypeProxy>();
+    var arg_types = new List<TProxy>();
     if(types_ctx != null)
     {
       for(int i=0;i<types_ctx.refType().Length;++i)
@@ -1115,7 +1115,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return ParseFuncSignature(ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(TProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
     var sig = new FuncSignature(ret_type);
@@ -1136,15 +1136,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(TypeProxy ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(TProxy ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
     return ParseFuncSignature(ret_type, fparams, out default_args_num);
   }
 
-  TypeProxy ParseType(bhlParser.RetTypeContext parsed)
+  TProxy ParseType(bhlParser.RetTypeContext parsed)
   {
-    TypeProxy tp;
+    TProxy tp;
 
     //convenience special case
     if(parsed == null)
@@ -1165,9 +1165,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return tp;
   }
 
-  TypeProxy ParseType(bhlParser.TypeContext ctx)
+  TProxy ParseType(bhlParser.TypeContext ctx)
   {
-    TypeProxy tp;
+    TProxy tp;
     if(ctx.funcType() != null)
       tp = curr_scope.S2R().T(ParseFuncSignature(ctx.funcType()));
     else
@@ -2225,7 +2225,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
-        var ext = ns.ResolveSymbolByPath(ext_full_path);
+        var ext = ns.ResolveNamedByPath(ext_full_path);
         if(ext is InterfaceSymbol ifs)
         {
           if(ext == pass.iface_symb)
@@ -2286,7 +2286,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TypeProxy());
+        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TProxy());
         pass.class_symb.tmp_members.Add(fld_symb);
       }
 
@@ -3166,7 +3166,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var vod = ctx.foreachExp().varOrDeclare();
     var vd = vod.varDeclare();
-    TypeProxy iter_type;
+    TProxy iter_type;
     string iter_str_name = "";
     AST_Tree iter_ast_decl = null;
     VariableSymbol iter_symb = null;

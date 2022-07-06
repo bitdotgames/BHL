@@ -23,9 +23,9 @@ public interface ISymbolsStorage
   SymbolsStorage GetMembers();
 }
 
-public interface ISymbolResolver
+public interface INamedResolver
 {
-  Symbol ResolveSymbolByPath(string path);
+  INamed ResolveNamedByPath(string path);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -120,7 +120,7 @@ public class LocalScope : IScope, ISymbolsStorage
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage, ISymbolResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -130,7 +130,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
 
   public List<Namespace> links = new List<Namespace>();
 
-  public Symbol2Index gindex;
+  public Named2Index gindex;
 
   public override uint ClassId()
   {
@@ -142,7 +142,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
     : this(null, name, "")
   {}
 
-  public Namespace(Symbol2Index gindex, string name, string module_name)
+  public Namespace(Named2Index gindex, string name, string module_name)
     : base(name)
   {
     this.gindex = gindex;
@@ -151,11 +151,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
   }
 
   //marshall version 
-  public Namespace(Symbol2Index gindex = null)
+  public Namespace(Named2Index gindex = null)
     : this(gindex, "", "")
   {}
 
-  public Symbol ResolveSymbolByPath(string path)
+  public INamed ResolveNamedByPath(string path)
   {
     return ((IScope)this).ResolveSymbolByPath(path);
   }
@@ -515,37 +515,37 @@ public static class ScopeExtensions
   public struct TypeArg
   {
     public string name;
-    public TypeProxy tp;
+    public TProxy tp;
 
     public static implicit operator TypeArg(string name)
     {
       return new TypeArg(name);
     }
 
-    public static implicit operator TypeArg(TypeProxy tp)
+    public static implicit operator TypeArg(TProxy tp)
     {
       return new TypeArg(tp);
     }
 
     public static implicit operator TypeArg(BuiltInSymbolType s)
     {
-      return new TypeArg(new TypeProxy(s));
+      return new TypeArg(new TProxy(s));
     }
 
     public TypeArg(string name)
     {
       this.name = name;
-      this.tp = default(TypeProxy);
+      this.tp = default(TProxy);
     }
 
-    public TypeArg(TypeProxy tp)
+    public TypeArg(TProxy tp)
     {
       this.name = null;
       this.tp = tp;
     }
   }
 
-  public struct IScope2ISymbolResolver : ISymbolResolver
+  public struct IScope2ISymbolResolver : INamedResolver
   {
     public IScope scope;
 
@@ -554,7 +554,7 @@ public static class ScopeExtensions
       this.scope = scope;
     }
 
-    public Symbol ResolveSymbolByPath(string path)
+    public INamed ResolveNamedByPath(string path)
     {
       return scope.ResolveSymbolByPath(path);
     }
@@ -565,17 +565,17 @@ public static class ScopeExtensions
     return new IScope2ISymbolResolver(s);
   }
 
-  public static TypeProxy T(this ISymbolResolver self, IType t)
+  public static TProxy T(this INamedResolver self, IType t)
   {
-    return new TypeProxy(t);
+    return new TProxy(t);
   }
 
-  public static TypeProxy T(this ISymbolResolver self, string name)
+  public static TProxy T(this INamedResolver self, string name)
   {
-    return new TypeProxy(self, name);
+    return new TProxy(self, name);
   }
 
-  public static TypeProxy T(this ISymbolResolver self, TypeArg tn)
+  public static TProxy T(this INamedResolver self, TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
@@ -583,22 +583,22 @@ public static class ScopeExtensions
       return self.T(tn.name);
   }
 
-  public static TypeProxy TRef(this ISymbolResolver self, TypeArg tn)
+  public static TProxy TRef(this INamedResolver self, TypeArg tn)
   {           
     return self.T(new RefType(self.T(tn)));
   }
 
-  public static TypeProxy TArr(this ISymbolResolver self, TypeArg tn)
+  public static TProxy TArr(this INamedResolver self, TypeArg tn)
   {           
     return self.T(new GenericArrayTypeSymbol(self.T(tn)));
   }
 
-  public static TypeProxy TMap(this ISymbolResolver self, TypeArg kt, TypeArg vt)
+  public static TProxy TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
   {           
     return self.T(new GenericMapTypeSymbol(self.T(kt), self.T(vt)));
   }
 
-  public static TypeProxy TFunc(this ISymbolResolver self, TypeArg ret_type, params TypeArg[] arg_types)
+  public static TProxy TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(self.T(ret_type));
     foreach(var arg_type in arg_types)
@@ -606,7 +606,7 @@ public static class ScopeExtensions
     return self.T(sig);
   }
 
-  public static TypeProxy T(this ISymbolResolver self, TypeArg tn, params TypeArg[] types)
+  public static TProxy T(this INamedResolver self, TypeArg tn, params TypeArg[] types)
   {
     var tuple = new TupleType();
     tuple.Add(self.T(tn));

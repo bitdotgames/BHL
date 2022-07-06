@@ -136,20 +136,20 @@ public class TestNamespace : BHL_TestBase
       AssertEqual(0, wow.GetMembers().Count);
     }
 
-    AssertEqual("foo", ns2.ResolveSymbolByPath("foo").name);
-    AssertEqual("foo_sub", ns2.ResolveSymbolByPath("foo.foo_sub").name);
-    AssertEqual("Hey", ns2.ResolveSymbolByPath("foo.foo_sub.Hey").name);
-    AssertEqual("Wow", ns2.ResolveSymbolByPath("foo.foo_sub.Wow").name);
-    AssertEqual("wow", ns2.ResolveSymbolByPath("wow").name);
-    AssertEqual("bar", ns2.ResolveSymbolByPath("bar").name);
+    AssertEqual("foo", ns2.ResolveNamedByPath("foo").GetName());
+    AssertEqual("foo_sub", ns2.ResolveNamedByPath("foo.foo_sub").GetName());
+    AssertEqual("Hey", ns2.ResolveNamedByPath("foo.foo_sub.Hey").GetName());
+    AssertEqual("Wow", ns2.ResolveNamedByPath("foo.foo_sub.Wow").GetName());
+    AssertEqual("wow", ns2.ResolveNamedByPath("wow").GetName());
+    AssertEqual("bar", ns2.ResolveNamedByPath("bar").GetName());
 
-    AssertTrue(ns2.ResolveSymbolByPath("") == null);
-    AssertTrue(ns2.ResolveSymbolByPath(".") == null);
-    AssertTrue(ns2.ResolveSymbolByPath("foo.") == null);
-    AssertTrue(ns2.ResolveSymbolByPath(".foo.") == null);
-    AssertTrue(ns2.ResolveSymbolByPath("foo..") == null);
-    AssertTrue(ns2.ResolveSymbolByPath("foo.bar") == null);
-    AssertTrue(ns2.ResolveSymbolByPath(".foo.foo_sub..") == null);
+    AssertTrue(ns2.ResolveNamedByPath("") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo.") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".foo.") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo..") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo.bar") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".foo.foo_sub..") == null);
   }
 
   [IsTested()]
@@ -479,12 +479,12 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbolByPath("foo") as Namespace;
+    var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(1, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
-    var bar = vm.ResolveSymbolByPath("bar") as Namespace;
+    var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
@@ -518,13 +518,13 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbolByPath("foo") as Namespace;
+    var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(2, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
-    var bar = vm.ResolveSymbolByPath("bar") as Namespace;
+    var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(1, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -572,14 +572,14 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var foo = vm.ResolveSymbolByPath("foo") as Namespace;
+    var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
     AssertEqual(3, foo.GetMembers().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
-    var bar = vm.ResolveSymbolByPath("bar") as Namespace;
+    var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
     AssertEqual(2, bar.GetMembers().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
@@ -1259,8 +1259,8 @@ public class TestNamespace : BHL_TestBase
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ResolveSymbolByPath("foo.sub.Sub") == null);
-    AssertTrue(vm.ResolveSymbolByPath("foo.sub.Sub") is ClassSymbol);
+    AssertTrue(ts.ResolveNamedByPath("foo.sub.Sub") == null);
+    AssertTrue(vm.ResolveNamedByPath("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
 }

@@ -540,7 +540,7 @@ public class BHL_TestBase
   {
     public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public CompiledModule Load(string name, ISymbolResolver resolver, System.Action<string> on_import)
+    public CompiledModule Load(string name, INamedResolver resolver, System.Action<string> on_import)
     {
       return mods[name];
     }
@@ -605,7 +605,7 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int ConstIdx(CompiledModule cm, TypeProxy v)
+  public static int ConstIdx(CompiledModule cm, TProxy v)
   {
     for(int i=0;i<cm.constants.Count;++i)
     {

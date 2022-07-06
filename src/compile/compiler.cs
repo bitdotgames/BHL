@@ -303,7 +303,7 @@ public class ModuleCompiler : AST_Visitor
 
   int AddConstant(IType itype)
   {
-    return AddConstant(new Const(new TypeProxy(itype)));
+    return AddConstant(new Const(new TProxy(itype)));
   }
 
   static void DeclareOpcodes()

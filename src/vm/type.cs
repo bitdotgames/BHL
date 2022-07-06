@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
+// Denotes any named entity which can be located by this name
 public interface INamed
 {
   string GetName();
@@ -12,10 +13,9 @@ public interface IType : INamed
 {}
 
 // For lazy evaluation of types and forward declarations
-// TypeProxy is used instead of IType
-public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
+public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
 {
-  ISymbolResolver resolver;
+  INamedResolver resolver;
   IType type;
   string _spec;
   public string spec 
@@ -24,7 +24,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     private set { _spec = value; }
   }
 
-  public TypeProxy(ISymbolResolver resolver, string spec)
+  public TProxy(INamedResolver resolver, string spec)
   {
     if(spec.Length == 0)
       throw new Exception("Type spec is empty");
@@ -36,7 +36,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     _spec = spec;
   }
 
-  public TypeProxy(IType type)
+  public TProxy(IType type)
   {
     resolver = null;
     if(type != null)
@@ -46,9 +46,9 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     this.type = type;
   }
 
-  public static implicit operator TypeProxy(BuiltInSymbolType s)
+  public static implicit operator TProxy(BuiltInSymbolType s)
   {
-    return new TypeProxy((IType)s);
+    return new TProxy((IType)s);
   }
 
   public bool IsEmpty()
@@ -65,7 +65,7 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
     if(string.IsNullOrEmpty(_spec))
       return null;
 
-    type = (bhl.IType)resolver.ResolveSymbolByPath(_spec);
+    type = (bhl.IType)resolver.ResolveNamedByPath(_spec);
     return type;
   }
 
@@ -123,12 +123,12 @@ public struct TypeProxy : marshall.IMarshallable, IEquatable<TypeProxy>
 
   public override bool Equals(object o)
   {
-    if(!(o is TypeProxy))
+    if(!(o is TProxy))
       return false;
-    return this.Equals((TypeProxy)o);
+    return this.Equals((TProxy)o);
   }
 
-  public bool Equals(TypeProxy o)
+  public bool Equals(TProxy o)
   {
     if(o.resolver == resolver && o._spec == _spec)
       return true;
@@ -153,12 +153,12 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public TypeProxy subj; 
+  public TProxy subj; 
 
   string name;
   public string GetName() { return name; }
 
-  public RefType(TypeProxy subj)
+  public RefType(TProxy subj)
   {
     this.subj = subj;
     name = "ref " + subj.spec;
@@ -206,7 +206,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
 
   string name;
 
-  List<TypeProxy> items = new List<TypeProxy>();
+  List<TProxy> items = new List<TProxy>();
 
   public string GetName() { return name; }
 
@@ -216,7 +216,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
     }
   }
 
-  public TupleType(params TypeProxy[] items)
+  public TupleType(params TProxy[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
@@ -227,14 +227,14 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   public TupleType()
   {}
 
-  public TypeProxy this[int index]
+  public TProxy this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(TypeProxy item)
+  public void Add(TProxy item)
   {
     items.Add(item);
     Update();
@@ -299,15 +299,15 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   //full type name
   string name;
 
-  public TypeProxy ret_type;
+  public TProxy ret_type;
   //TODO: include arg names as well since we support named args?
-  public List<TypeProxy> arg_types = new List<TypeProxy>();
+  public List<TProxy> arg_types = new List<TProxy>();
 
   public int default_args_num;
 
   public string GetName() { return name; }
 
-  public FuncSignature(TypeProxy ret_type, params TypeProxy[] arg_types)
+  public FuncSignature(TProxy ret_type, params TProxy[] arg_types)
   {
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
@@ -315,14 +315,14 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     Update();
   }
 
-  public FuncSignature(TypeProxy ret_type, List<TypeProxy> arg_types)
+  public FuncSignature(TProxy ret_type, List<TProxy> arg_types)
   {
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncSignature(TypeProxy ret_type)
+  public FuncSignature(TProxy ret_type)
   {
     this.ret_type = ret_type;
     Update();
@@ -332,7 +332,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   public FuncSignature()
   {}
 
-  public void AddArg(TypeProxy arg_type)
+  public void AddArg(TProxy arg_type)
   {
     arg_types.Add(arg_type);
     Update();
@@ -395,7 +395,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   }
 }
 
-public class Types : ISymbolResolver
+public class Types : INamedResolver
 {
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
@@ -472,7 +472,7 @@ public class Types : ISymbolResolver
   public Namespace ns;
 
   //NOTE: used for global symbol indices (e.g native funcs)
-  public Symbol2Index gindex = new Symbol2Index();
+  public Named2Index gindex = new Named2Index();
 
   static Types()
   {
@@ -507,15 +507,15 @@ public class Types : ISymbolResolver
     std.Init(this);
   }
 
-  Types(Symbol2Index native_indices, Namespace ns)
+  Types(Named2Index native_indices, Namespace ns)
   {
     this.gindex = native_indices;
     this.ns = ns;
   }
 
-  public Symbol ResolveSymbolByPath(string name)
+  public INamed ResolveNamedByPath(string name)
   {
-    return ns.ResolveSymbolByPath(name);
+    return ns.ResolveNamedByPath(name);
   }
 
   public Types Clone()

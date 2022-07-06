@@ -109,7 +109,7 @@ public class Const : IEquatable<Const>
   public ConstType type;
   public double num;
   public string str;
-  public TypeProxy tproxy;
+  public TProxy tproxy;
 
   public Const(ConstType type, double num, string str)
   {
@@ -146,7 +146,7 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Const(TypeProxy tp)
+  public Const(TProxy tp)
   {
     type = ConstType.TPROXY;
     this.tproxy = tp;
@@ -183,7 +183,7 @@ public class Const : IEquatable<Const>
   }
 }
 
-public class VM : ISymbolResolver
+public class VM : INamedResolver
 {
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
@@ -1038,7 +1038,7 @@ public class VM : ISymbolResolver
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveSymbolByPath(name) as FuncSymbolScript;
+    var fs = ResolveNamedByPath(name) as FuncSymbolScript;
     if(fs == null)
       return false;
 
@@ -1055,7 +1055,7 @@ public class VM : ISymbolResolver
 
   FuncAddr GetFuncAddr(string name)
   {
-    var fs = (FuncSymbolScript)ResolveSymbolByPath(name);
+    var fs = (FuncSymbolScript)ResolveNamedByPath(name);
     var cm = modules[((Namespace)fs.scope).module_name];
     return new FuncAddr() {
       module = cm,
@@ -1064,11 +1064,11 @@ public class VM : ISymbolResolver
     };
   }
 
-  public Symbol ResolveSymbolByPath(string name)
+  public INamed ResolveNamedByPath(string name)
   {
     foreach(var kv in modules)
     {
-      var s = kv.Value.ns.ResolveSymbolByPath(name);
+      var s = kv.Value.ns.ResolveNamedByPath(name);
       if(s != null)
         return s;
     }
@@ -2300,7 +2300,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, ISymbolResolver resolver = null, System.Action<string> on_import = null)
+  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<string> on_import = null)
   {
     var ns = new Namespace(types.gindex);
     //NOTE: it's assumed types.ns is always linked by each module, 
@@ -2401,7 +2401,7 @@ public class CompiledModule
           cn = new Const(cn_type, r.ReadDouble(), "");
         else if(cn_type == ConstType.TPROXY)
         {
-          var tp = marshall.Marshall.Stream2Obj<TypeProxy>(src, symb_factory);
+          var tp = marshall.Marshall.Stream2Obj<TProxy>(src, symb_factory);
           if(string.IsNullOrEmpty(tp.spec))
             throw new Exception("Missing name");
           cn = new Const(tp);

@@ -24,7 +24,7 @@ public enum ModuleBinaryFormat
 
 public interface IModuleLoader
 {
-  CompiledModule Load(string module_name, ISymbolResolver resolver, System.Action<string> on_import);
+  CompiledModule Load(string module_name, INamedResolver resolver, System.Action<string> on_import);
 }
 
 public class ModuleLoader : IModuleLoader
@@ -96,7 +96,7 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public CompiledModule Load(string module_name, ISymbolResolver resolver, System.Action<string> on_import)
+  public CompiledModule Load(string module_name, INamedResolver resolver, System.Action<string> on_import)
   {
     Entry ent;
     if(!name2entry.TryGetValue(module_name, out ent))
