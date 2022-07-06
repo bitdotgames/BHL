@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public abstract class Symbol : marshall.IMarshallableGeneric 
+public abstract class Symbol : INamed, marshall.IMarshallableGeneric 
 {
   public string name;
 
@@ -17,6 +17,11 @@ public abstract class Symbol : marshall.IMarshallableGeneric
   public Symbol(string name) 
   { 
     this.name = name; 
+  }
+
+  public string GetName()
+  {
+    return name;
   }
 
   public override string ToString() 
@@ -34,8 +39,6 @@ public abstract class BuiltInSymbolType : Symbol, IType
   public BuiltInSymbolType(string name) 
     : base(name) 
   {}
-
-  public string GetName() { return name; }
 
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
@@ -176,8 +179,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
   public InterfaceSymbol()
     : this(null, null)
   {}
-
-  public string GetName() { return name; }
 
   public void Define(Symbol sym)
   {
@@ -374,8 +375,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     tmp_members = new SymbolsStorage(this);
 #endif
   }
-
-  public string GetName() { return name; }
 
   public SymbolsStorage GetMembers() { return members; }
 
@@ -1710,8 +1709,6 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorage
     this.members = new SymbolsStorage(this);
   }
 
-  public string GetName() { return name; }
-
   public IScope GetFallbackScope() { return scope; }
 
   public Symbol Resolve(string name) 
@@ -1823,9 +1820,6 @@ public class EnumItemSymbol : Symbol, IType
   public EnumItemSymbol() 
     : base(null)
   {}
-
-  //type name
-  public string GetName() { return owner.name; }
 
   public override uint ClassId()
   {

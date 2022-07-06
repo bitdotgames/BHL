@@ -3,10 +3,13 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface IType 
+public interface INamed
 {
   string GetName();
 }
+
+public interface IType : INamed
+{}
 
 // For lazy evaluation of types and forward declarations
 // TypeProxy is used instead of IType
