@@ -876,6 +876,9 @@ public class VM : ISymbolResolver
 
   void Prepare(CompiledModule cm)
   {
+    //Console.WriteLine(cm.name);
+    //Console.WriteLine(cm.ns.DumpMembers());
+
     cm.ns.ForAllSymbols(delegate(Symbol s)
       {
         if(s is ClassSymbol cs)
@@ -1531,9 +1534,9 @@ public class VM : ISymbolResolver
       break;
       case Opcodes.GetFuncImported:
       {
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int func_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
-        string func_name = curr_frame.constants[func_idx].str;
+        string func_name = curr_frame.constants[func_name_idx].str;
         var faddr = GetFuncAddr(func_name);
 
         var ptr = FuncPtr.New(this);
@@ -1585,32 +1588,16 @@ public class VM : ISymbolResolver
       break;
       case Opcodes.CallImported:
       {
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int func_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string func_name = curr_frame.constants[func_idx].str;
+        string func_name = curr_frame.constants[func_name_idx].str;
         //TODO: during final compilation phase we can replace 'func names' with actual addresses
         var maddr = GetFuncAddr(func_name);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
-      }
-      break;
-      case Opcodes.CallMethodNative:
-      {
-        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = curr_frame.stack.Count - args_num - 1;
-        var self = curr_frame.stack[self_idx];
-
-        var class_type = ((ClassSymbol)self.type);
-
-        BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
-          return status;
       }
       break;
       case Opcodes.CallMethod:
@@ -1635,6 +1622,22 @@ public class VM : ISymbolResolver
         frm.locals[0] = self;
 
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodNative:
+      {
+        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+
+        var class_type = ((ClassSymbol)self.type);
+
+        BHS status;
+        if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
+          return status;
       }
       break;
       case Opcodes.CallMethodIface:
