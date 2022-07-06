@@ -16,7 +16,7 @@ public interface IType : INamed
 public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
 {
   INamedResolver resolver;
-  IType type;
+  INamed named;
   string _spec;
   public string spec 
   { 
@@ -32,41 +32,41 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
       throw new Exception("Type spec contains illegal characters: '" + spec + "'");
     
     this.resolver = resolver;
-    type = null;
+    named = null;
     _spec = spec;
   }
 
-  public TProxy(IType type)
+  public TProxy(INamed named)
   {
     resolver = null;
-    if(type != null)
-      _spec = (type is Symbol sym) ? sym.GetFullPath() : type.GetName();
+    if(named != null)
+      _spec = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
     else 
       _spec = null;
-    this.type = type;
+    this.named = named;
   }
 
   public static implicit operator TProxy(BuiltInSymbolType s)
   {
-    return new TProxy((IType)s);
+    return new TProxy(s);
   }
 
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(_spec) && 
-           type == null;
+           named == null;
   }
 
-  public IType Get()
+  public INamed Get()
   {
-    if(type != null)
-      return type;
+    if(named != null)
+      return named;
 
     if(string.IsNullOrEmpty(_spec))
       return null;
 
-    type = (bhl.IType)resolver.ResolveNamedByPath(_spec);
-    return type;
+    named = (bhl.IType)resolver.ResolveNamedByPath(_spec);
+    return named;
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -97,14 +97,14 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
 
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
-      type = (IType)mg;
+      named = (IType)mg;
   }
 
-  static bool IsIndependent(IType t)
+  static bool IsIndependent(INamed named)
   {
     //TODO: make this check more robust
     return 
-      t is Symbol symb && 
+      named is Symbol symb && 
       (symb is BuiltInSymbolType ||
        symb is ClassSymbolNative ||
        symb is ClassSymbolScript ||
@@ -133,8 +133,8 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
     if(o.resolver == resolver && o._spec == _spec)
       return true;
 
-    if(o.type != null && type != null)
-      return o.type.Equals(type);
+    if(o.named != null && named != null)
+      return o.named.Equals(named);
      
     var r = Get();
     if(r != null)
@@ -739,7 +739,7 @@ public class Types : INamedResolver
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg_type = op_func.signature.arg_types[0];
-    CheckAssign(op_func_arg_type.Get(), b);
+    CheckAssign((IType)op_func_arg_type.Get(), b);
     return op_func.GetReturnType();
   }
 

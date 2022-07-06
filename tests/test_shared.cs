@@ -206,7 +206,7 @@ public class BHL_TestBase
           newc.r = c.r + k;
           newc.g = c.g + k;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = Val.NewObj(frm.vm, newc, (IType)ts.T("Color").Get());
           frm.stack.Push(v);
 
           return null;
@@ -238,7 +238,7 @@ public class BHL_TestBase
             var r = frm.stack.PopRelease().num;
             var c = new Color();
             c.r = (float)r;
-            var v = Val.NewObj(frm.vm, c, ts.T("Color").Get());
+            var v = Val.NewObj(frm.vm, c, (IType)ts.T("Color").Get());
             frm.stack.Push(v);
             return null;
           },
@@ -351,7 +351,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.colors, fld.type.Get());
+          v.SetObj(f.colors, (IType)fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -363,7 +363,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          v.SetObj(f.sub_color, fld.type.Get());
+          v.SetObj(f.sub_color, (IType)fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -610,7 +610,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == ConstType.TPROXY && cn.tproxy.Equals(v))
+      if(cn.type == ConstType.TPROXY && cn.named.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);

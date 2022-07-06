@@ -737,7 +737,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
+    var res = Val.NewObj(frame.vm, lst[idx], (IType)item_type.Get());
     frame.stack.Push(res);
     arr.Release();
     return null;
@@ -1048,7 +1048,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   
   public IType GetIType()
   {
-    return type.Get();
+    return (IType)type.Get();
   }
 
   public override uint ClassId()
@@ -1243,7 +1243,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public IType GetReturnType()
   {
-    return signature.ret_type.Get();
+    return (IType)signature.ret_type.Get();
   }
 
   public SymbolsStorage GetArgs()
@@ -1662,7 +1662,7 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol vs)
       {
-        var mtype = vs.type.Get();
+        var mtype = (IType)vs.type.Get();
         var v = frm.vm.MakeDefaultVal(mtype);
         //adding directly, bypassing Retain call
         vl.lst.Add(v);
