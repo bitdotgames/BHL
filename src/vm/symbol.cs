@@ -144,7 +144,7 @@ public class NullSymbol : BuiltInSymbolType
   }
 }
 
-public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsStorage
+public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsStorageAccess
 {
   public SymbolsStorage members;
 
@@ -303,7 +303,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStorage
+public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStorageAccess
 {
   public ClassSymbol super_class {
     get {
@@ -1161,7 +1161,7 @@ public enum FuncFlags : byte
   //Protected = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsStorage
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsStorageAccess
 {
   public FuncSignature signature;
 
@@ -1691,7 +1691,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorage
+public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
 {
   public SymbolsStorage members;
 

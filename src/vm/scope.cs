@@ -16,7 +16,7 @@ public interface IScope
   IScope GetFallbackScope();
 }
 
-public interface ISymbolsStorage
+public interface ISymbolsStorageAccess
 {
   // Collection of members, depending on concrete implementation may be
   // a readonly one
@@ -33,7 +33,7 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolsStorage 
+public class LocalScope : IScope, ISymbolsStorageAccess 
 {
   bool is_paral;
   int next_idx;
@@ -120,7 +120,7 @@ public class LocalScope : IScope, ISymbolsStorage
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage, INamedResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorageAccess, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -481,7 +481,7 @@ public static class ScopeExtensions
   public static string DumpMembers(this IScope scope, int level = 0)
   {
     string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
-    if(scope is ISymbolsStorage iss)
+    if(scope is ISymbolsStorageAccess iss)
     {
       var ms = iss.GetMembers();
       for(int i=0;i<ms.Count;++i)
@@ -499,7 +499,7 @@ public static class ScopeExtensions
 
   public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
   {
-    if(!(scope is ISymbolsStorage iss))
+    if(!(scope is ISymbolsStorageAccess iss))
       return;
     
     var ms = iss.GetMembers();
