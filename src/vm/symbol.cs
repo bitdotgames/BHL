@@ -1622,6 +1622,8 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
+  internal CompiledModule _module;
+
   public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
     : base(name, super_class, implements)
   {

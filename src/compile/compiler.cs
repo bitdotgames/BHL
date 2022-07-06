@@ -539,12 +539,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallMethodImported,
-        2/*class member idx*/, 4/*args bits*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.CallMethodIface,
         2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
       )
@@ -1269,17 +1263,10 @@ public class ModuleCompiler : AST_Visitor
         }
         else
         {
-          if(mfunc is FuncSymbolScript fss)
-          {
-            if(((Namespace)((ClassSymbol)fss.scope).scope).module_name == module.name)
-              Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-            else
-              Emit(Opcodes.CallMethodImported, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          }
+          if(mfunc is FuncSymbolScript)
+            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else if(mfunc is FuncSymbolScriptVirtual)
-          {
             Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          }
           else if(mfunc is FuncSymbolNative)
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else

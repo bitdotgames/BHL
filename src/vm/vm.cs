@@ -33,7 +33,6 @@ public enum Opcodes
   CallImported       = 25,
   CallMethod         = 26,
   CallMethodNative   = 27,
-  CallMethodImported = 28,
   CallMethodIface    = 29,
   CallMethodVirt     = 30,
   CallPtr            = 38,
@@ -881,7 +880,11 @@ public class VM : ISymbolResolver
       {
         if(s is ClassSymbol cs)
           cs.UpdateITable();
-        else if(s is FuncSymbolScriptVirtual fsv)
+
+        if(s is ClassSymbolScript css)
+          css._module = modules[((Namespace)css.scope).module_name];
+
+        if(s is FuncSymbolScriptVirtual fsv)
           fsv.UpdateVTable();
       }
     );
@@ -1627,31 +1630,7 @@ public class VM : ISymbolResolver
         int func_ip = field_symb.ip_addr;
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame, func_ip);
-
-        frm.locals[0] = self;
-
-        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
-      }
-      break;
-      case Opcodes.CallMethodImported:
-      {
-        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-        //TODO: use a simpler schema where 'self' is passed on the top
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = curr_frame.stack.Count - args_num - 1;
-        var self = curr_frame.stack[self_idx];
-        curr_frame.stack.RemoveAt(self_idx);
-
-        var class_type = ((ClassSymbolScript)self.type);
-
-        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
-        int func_ip = field_symb.ip_addr;
-
-        var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, modules[((Namespace)class_type.scope).module_name], func_ip);
+        frm.Init(curr_frame.fb, curr_frame, class_type._module, func_ip);
 
         frm.locals[0] = self;
 
