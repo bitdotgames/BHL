@@ -863,13 +863,28 @@ public class VM : ISymbolResolver
     LoadModule(module_name);
   }
 
+  //NOTE: this method is public only for testing convenience
   public void RegisterModule(CompiledModule cm)
   {
     if(modules.ContainsKey(cm.name))
       return;
     modules.Add(cm.name, cm);
 
+    Prepare(cm);
+
     ExecInit(cm);
+  }
+
+  void Prepare(CompiledModule cm)
+  {
+    cm.ns.ForAllSymbols(delegate(Symbol s)
+      {
+        if(s is ClassSymbol cs)
+          cs.UpdateITable();
+        else if(s is FuncSymbolScriptVirtual fsv)
+          fsv.UpdateVTable();
+      }
+    );
   }
 
   public void UnloadModule(string module_name)
@@ -1657,7 +1672,7 @@ public class VM : ISymbolResolver
 
         var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].tproxy.Get(); 
         var class_type = (ClassSymbol)self.type;
-        int func_idx = class_type.itable[iface_symb][iface_func_idx];
+        int func_idx = class_type._itable[iface_symb][iface_func_idx];
 
         var func_symb = (FuncSymbolScript)class_type.members[func_idx];
         int func_ip = func_symb.ip_addr;
@@ -1684,7 +1699,7 @@ public class VM : ISymbolResolver
         var class_type = (ClassSymbol)self.type;
         var func_virt = (FuncSymbolScriptVirtual)class_type.members[virt_func_idx];
 
-        var func_symb = func_virt.vtable[class_type];
+        var func_symb = func_virt._vtable[class_type];
 
         int func_ip = func_symb.ip_addr;
 

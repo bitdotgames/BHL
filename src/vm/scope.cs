@@ -497,6 +497,21 @@ public static class ScopeExtensions
     return str;
   }
 
+  public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
+  {
+    if(!(scope is ISymbolsStorage iss))
+      return;
+    
+    var ms = iss.GetMembers();
+    for(int i=0;i<ms.Count;++i)
+    {
+      var m = ms[i];
+      cb(m);
+      if(m is IScope s)
+        s.ForAllSymbols(cb);
+    }
+  }
+
   public struct TypeArg
   {
     public string name;

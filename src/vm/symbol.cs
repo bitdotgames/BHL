@@ -318,11 +318,11 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  Dictionary<InterfaceSymbol, List<int>> _itable = null;
+  internal Dictionary<InterfaceSymbol, List<int>> _itable = null;
   public Dictionary<InterfaceSymbol, List<int>> itable {
     get {
       if(_itable == null) {
-        UpdateVTable();
+        UpdateITable();
       }
       return _itable;
     }
@@ -422,7 +422,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
       this.implements.Add(imp);
   }
 
-  public void UpdateVTable()
+  public void UpdateITable()
   {
     _itable = new Dictionary<InterfaceSymbol, List<int>>();
 
@@ -1367,7 +1367,7 @@ public class FuncSymbolScriptVirtual : FuncSymbol
   public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
   public List<TypeProxy> owners = new List<TypeProxy>(); 
 
-  Dictionary<ClassSymbol, FuncSymbolScript> _vtable = null;
+  internal Dictionary<ClassSymbol, FuncSymbolScript> _vtable = null;
   public Dictionary<ClassSymbol, FuncSymbolScript> vtable {
     get {
       if(_vtable == null) {
