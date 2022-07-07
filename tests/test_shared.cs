@@ -610,7 +610,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == ConstType.PROXY && cn.proxy.Equals(v))
+      if(cn.type == ConstType.INAMED && cn.inamed.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);
@@ -621,7 +621,7 @@ public class BHL_TestBase
     for(int i=0;i<cm.constants.Count;++i)
     {
       var cn = cm.constants[i];
-      if(cn.type == ConstType.PROXY && cn.proxy.Equals(new Proxy<INamed>(v.Get())))
+      if(cn.type == ConstType.ITYPE && cn.itype.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);
