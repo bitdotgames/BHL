@@ -1207,6 +1207,8 @@ public class ModuleCompiler : AST_Visitor
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb; 
+          //let's check if we can optimize the local func call to a very
+          //fast opcode version
           if(((Namespace)fsymb.scope).module_name == module.name)
           {
             //NOTE: let's remove the last added constant if it points

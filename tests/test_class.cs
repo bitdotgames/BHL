@@ -1821,7 +1821,7 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserChildClassMethodOverrideBase()
+  public void TestUserChildClassMethodOverridesBase()
   {
     string bhl = @"
 
@@ -1847,7 +1847,7 @@ public class TestClasses : BHL_TestBase
       }
     }
 
-    func int test()
+    func int test1()
     {
       Bar b = {}
       b.a = 1
@@ -1855,10 +1855,20 @@ public class TestClasses : BHL_TestBase
       b.new_a = 100
       return b.getA() + b.getB()
     }
+
+    func int test2()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return ((Foo)b).getA() + b.getB()
+    }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(110, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

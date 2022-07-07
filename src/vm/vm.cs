@@ -1955,6 +1955,7 @@ public class VM : INamedResolver
     else
     {
       new_val.ValueCopyFrom(val);
+      new_val.type = cast_type;
       new_val.RefMod(RefOp.USR_INC);
     }
 
