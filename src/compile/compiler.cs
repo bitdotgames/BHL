@@ -1209,6 +1209,12 @@ public class ModuleCompiler : AST_Visitor
           var fsymb = (FuncSymbolScript)ast.symb; 
           if(((Namespace)fsymb.scope).module_name == module.name)
           {
+            //NOTE: let's remove the last added constant if it points
+            //      to our function - we don't need to serialize it 
+            //      since we simplify the call
+            if(constants[constants.Count-1].inamed.named == fsymb)
+              constants.RemoveAt(constants.Count-1);
+
             var call_op = Emit(Opcodes.CallByIP, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
             PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
           }
