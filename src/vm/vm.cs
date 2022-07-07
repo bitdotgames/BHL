@@ -882,13 +882,10 @@ public class VM : INamedResolver
     cm.ns.ForAllSymbols(delegate(Symbol s)
       {
         if(s is ClassSymbol cs)
-          cs.UpdateITable();
+          cs.UpdateVTable();
 
         if(s is ClassSymbolScript css)
           css._module = modules[((Namespace)css.scope).module_name];
-
-        if(s is FuncSymbolScriptVirtual fsv)
-          fsv.UpdateVTable();
       }
     );
   }
@@ -1678,15 +1675,13 @@ public class VM : INamedResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var class_type = (ClassSymbol)self.type;
-        var func_virt = (FuncSymbolScriptVirtual)class_type.members[virt_func_idx];
-
-        var func_symb = func_virt._vtable[class_type];
+        var class_type = (ClassSymbolScript)self.type;
+        var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
         int func_ip = func_symb.ip_addr;
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, modules[((Namespace)class_type.scope).module_name], func_ip);
+        frm.Init(curr_frame.fb, curr_frame, class_type._module, func_ip);
 
         frm.locals[0] = self;
 

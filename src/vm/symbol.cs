@@ -319,15 +319,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  internal Dictionary<InterfaceSymbol, List<int>> _itable = null;
-  public Dictionary<InterfaceSymbol, List<int>> itable {
-    get {
-      if(_itable == null) {
-        UpdateITable();
-      }
-      return _itable;
-    }
-  }
+  internal Dictionary<InterfaceSymbol, List<int>> _itable;
+
+  internal Dictionary<int, FuncSymbol> _vtable;
 
   HashSet<IInstanceType> related_types;
 
@@ -421,8 +415,16 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
       this.implements.Add(imp);
   }
 
-  public void UpdateITable()
+  public void UpdateVTable()
   {
+    _vtable = new Dictionary<int, FuncSymbol>();
+    
+    for(int i=0;i<members.Count;++i)
+    {
+      if(members[i] is FuncSymbolScriptVirtual fssv)
+        _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
+    }
+
     _itable = new Dictionary<InterfaceSymbol, List<int>>();
 
     var all = new HashSet<IInstanceType>();
@@ -1366,16 +1368,6 @@ public class FuncSymbolScriptVirtual : FuncSymbol
   public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
   public List<TProxy> owners = new List<TProxy>(); 
 
-  internal Dictionary<ClassSymbol, FuncSymbolScript> _vtable = null;
-  public Dictionary<ClassSymbol, FuncSymbolScript> vtable {
-    get {
-      if(_vtable == null) {
-        UpdateVTable();
-      }
-      return _vtable;
-    }
-  }
-
 #if BHL_FRONT
   public FuncSymbolScriptVirtual(
     WrappedParseTree parsed, 
@@ -1396,14 +1388,6 @@ public class FuncSymbolScriptVirtual : FuncSymbol
     : base(null, new FuncSignature())
   {}
 
-  public void UpdateVTable()
-  {
-    _vtable = new Dictionary<ClassSymbol, FuncSymbolScript>();
-
-    for(int i=0;i<overrides.Count;++i)
-      _vtable[(ClassSymbol)owners[i].Get()] = overrides[i];
-  }
-
   public override void Define(Symbol sym) 
   {
     throw new NotImplementedException();
@@ -1411,9 +1395,6 @@ public class FuncSymbolScriptVirtual : FuncSymbol
 
   public void AddOverride(ClassSymbol owner, FuncSymbolScript fs)
   {
-    //let's reset it
-    _vtable = null;
-
     owners.Add(new TProxy(owner));
     overrides.Add(fs);
   }
@@ -1621,6 +1602,7 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
+  //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
 
   public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
