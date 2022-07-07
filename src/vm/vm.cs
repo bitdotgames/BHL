@@ -1521,7 +1521,7 @@ public class VM : INamedResolver
         var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
 
         var ptr = FuncPtr.New(this);
-        ptr.Init(curr_frame, func_symb.ip_addr);
+        ptr.Init(func_symb._module, func_symb.ip_addr);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;

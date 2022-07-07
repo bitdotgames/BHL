@@ -15,8 +15,9 @@ public interface IType : INamed
 // For lazy evaluation of types and forward declarations
 public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : INamed
 {
-  public INamedResolver resolver;
   public T named;
+
+  public INamedResolver resolver;
 
   string _path;
   public string path 
