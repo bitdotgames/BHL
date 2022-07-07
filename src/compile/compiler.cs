@@ -301,6 +301,11 @@ public class ModuleCompiler : AST_Visitor
     return AddConstant(new Const(str));
   }
 
+  int AddConstant(INamed inamed)
+  {
+    return AddConstant(new Const(new Proxy<INamed>(inamed)));
+  }
+
   int AddConstant(IType itype)
   {
     return AddConstant(new Const(new Proxy<IType>(itype)));
@@ -480,7 +485,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFunc,
-        3/*func module idx*/
+        3/*func named idx*/
       )
     );
     DeclareOpcode(
@@ -503,13 +508,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetFuncImported,
-        3/*func name idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.Call,
+        Opcodes.CallByIP,
         3/*func ip*/, 4/*args bits*/
       )
     );
@@ -521,7 +520,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallImported,
+        Opcodes.CallFunc,
         3/*func name idx*/, 4/*args bits*/
       )
     );
@@ -1208,18 +1207,18 @@ public class ModuleCompiler : AST_Visitor
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb; 
-          var call_op = Emit(Opcodes.Call, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
-          PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
+          if(((Namespace)fsymb.scope).module_name == module.name)
+          {
+            var call_op = Emit(Opcodes.CallByIP, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+            PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
+          }
+          else
+            Emit(Opcodes.CallFunc, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNative)
         {
           Pop();
           Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
-        }
-        else if(instr.op == Opcodes.GetFuncImported)
-        {
-          Pop();
-          Emit(Opcodes.CallImported, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else
           Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
@@ -1343,12 +1342,10 @@ public class ModuleCompiler : AST_Visitor
 
     if(func_symb is FuncSymbolNative)
       return Emit(Opcodes.GetFuncNative, new int[] { func_symb.scope_idx }, ast.line_num);
-    else if(((Namespace)func_symb.scope).module_name == module.name)
-      return Emit(Opcodes.GetFunc, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
-      int full_name_idx = AddConstant(ast.symb.GetFullPath());
-      return Emit(Opcodes.GetFuncImported, new int[] { full_name_idx }, ast.line_num);
+      int named_idx = AddConstant((INamed)ast.symb);
+      return Emit(Opcodes.GetFunc, new int[] { named_idx }, ast.line_num);
     }
   }
 

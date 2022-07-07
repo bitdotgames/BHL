@@ -934,10 +934,45 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserFuncPtr()
+  {
+    string bhl = @"
+    namespace foo {
+      func int Bar() {
+        return 100
+      }
+
+      func int Foo() {
+        return 10
+      }
+    }
+
+    func int Foo() {
+      return 1
+    }
+
+    func int test() 
+    {
+      func int() p1 = foo.Foo
+      func int() p2 = Foo
+      return p1() + p2()
+    }
+    ";
+      
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportUserFuncPtr()
   {
     string bhl1 = @"
     namespace foo {
+      func int Bar() {
+        return 100
+      }
+
       func int Foo() {
         return 10
       }

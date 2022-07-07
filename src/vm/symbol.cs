@@ -543,7 +543,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   }
 
   public ArrayTypeSymbol(Proxy<IType> item_type) 
-    : this("[]" + item_type.spec, item_type)
+    : this("[]" + item_type.path, item_type)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -675,7 +675,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     marshall.Marshall.Sync(ctx, ref item_type);
 
     if(ctx.is_read)
-      name = "[]" + item_type.spec;
+      name = "[]" + item_type.path;
   }
 
   public override bool Equals(object o)
@@ -712,7 +712,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   }
 
   public ArrayTypeSymbolT(Proxy<IType> item_type, CreatorCb creator) 
-    : base("[]" + item_type.spec, item_type)
+    : base("[]" + item_type.path, item_type)
   {}
 
   public override void CreateArr(VM.Frame frm, ref Val v, IType type)
@@ -813,7 +813,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public Proxy<IType> val_type;
 
   public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base("[" + key_type.spec + "]" + val_type.spec, super_class: null)
+    : base("[" + key_type.path + "]" + val_type.path, super_class: null)
   {
     this.key_type = key_type;
     this.val_type = val_type;
@@ -904,7 +904,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     marshall.Marshall.Sync(ctx, ref val_type);
 
     if(ctx.is_read)
-      name = "[" + key_type.spec + "]" + val_type.spec;
+      name = "[" + key_type.path + "]" + val_type.path;
   }
 
   public override bool Equals(object o)
@@ -1305,7 +1305,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     s += name;
     s += "(";
     foreach(var arg in signature.arg_types)
-      s += arg.spec + ",";
+      s += arg.path + ",";
     s = s.TrimEnd(',');
     s += ")";
     return s;
@@ -1315,6 +1315,9 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13; 
+
+  //cached value of CompiledModule, it's set upon module loading in VM and 
+  internal CompiledModule _module;
 
   public int local_vars_num;
 
@@ -1978,7 +1981,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
       var tp = list[index];
       var s = tp.Get();
       if(s == null)
-        throw new Exception("Type not found: " + tp.spec);
+        throw new Exception("Type not found: " + tp.path);
       return s;
     }
   }

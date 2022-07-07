@@ -15,42 +15,41 @@ public interface IType : INamed
 // For lazy evaluation of types and forward declarations
 public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : INamed
 {
-  INamedResolver resolver;
+  public INamedResolver resolver;
+  public T named;
 
-  T named;
-
-  string _spec;
-  public string spec 
+  string _path;
+  public string path 
   { 
-    get { return _spec; } 
-    private set { _spec = value; }
+    get { return _path; } 
+    private set { _path = value; }
   }
 
-  public Proxy(INamedResolver resolver, string spec)
+  public Proxy(INamedResolver resolver, string path)
   {
-    if(spec.Length == 0)
-      throw new Exception("Type spec is empty");
-    if(Types.IsCompoundType(spec))
-      throw new Exception("Type spec contains illegal characters: '" + spec + "'");
+    if(path.Length == 0)
+      throw new Exception("Type path is empty");
+    if(Types.IsCompoundType(path))
+      throw new Exception("Type spec contains illegal characters: '" + path + "'");
     
     this.resolver = resolver;
     named = default(T);
-    _spec = spec;
+    _path = path;
   }
 
   public Proxy(T named)
   {
     resolver = null;
     if(named != null)
-      _spec = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
+      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
     else 
-      _spec = null;
+      _path = null;
     this.named = named;
   }
 
   public bool IsEmpty()
   {
-    return string.IsNullOrEmpty(_spec) && 
+    return string.IsNullOrEmpty(_path) && 
            named == null;
   }
 
@@ -59,10 +58,10 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(named != null)
       return named;
 
-    if(string.IsNullOrEmpty(_spec))
+    if(string.IsNullOrEmpty(_path))
       return default(T);
 
-    named = (T)resolver.ResolveNamedByPath(_spec);
+    named = (T)resolver.ResolveNamedByPath(_path);
     return named;
   }
 
@@ -71,10 +70,10 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
 
-    marshall.Marshall.Sync(ctx, ref _spec);
+    marshall.Marshall.Sync(ctx, ref _path);
 
     marshall.IMarshallableGeneric mg = null;
-    if(!string.IsNullOrEmpty(_spec))
+    if(!string.IsNullOrEmpty(_path))
     {
       if(!ctx.is_read)
       {   
@@ -87,7 +86,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
-            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _spec);
+            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _path);
         }
       }
     }
@@ -103,6 +102,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     return 
       named is Symbol symb && 
       (symb is BuiltInSymbolType ||
+       symb is FuncSymbolScript ||
        symb is ClassSymbolNative ||
        symb is ClassSymbolScript ||
        symb is InterfaceSymbolNative ||
@@ -115,7 +115,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
   public override string ToString() 
   {
-    return _spec;
+    return _path;
   }
 
   public override bool Equals(object o)
@@ -127,7 +127,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
   public bool Equals(Proxy<T> o)
   {
-    if(o.resolver == resolver && o._spec == _spec)
+    if(o.resolver == resolver && o._path == _path)
       return true;
 
     if(o.named != null && named != null)
@@ -142,7 +142,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
   public override int GetHashCode()
   {
-    return _spec.GetHashCode();
+    return _path.GetHashCode();
   }
 }
 
@@ -158,7 +158,7 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
   public RefType(Proxy<IType> subj)
   {
     this.subj = subj;
-    name = "ref " + subj.spec;
+    name = "ref " + subj.path;
   }
 
   //marshall factory version
@@ -244,7 +244,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
     {
       if(i > 0)
         tmp += ",";
-      tmp += items[i].spec;
+      tmp += items[i].path;
     }
 
     name = tmp;
@@ -337,12 +337,12 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   void Update()
   {
-    string tmp = "func " + ret_type.spec + "("; 
+    string tmp = "func " + ret_type.path + "("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
         tmp += ",";
-      tmp += arg_types[i].spec;
+      tmp += arg_types[i].path;
     }
     tmp += ")";
 

@@ -28,9 +28,9 @@ public enum Opcodes
   Break              = 20,
   Continue           = 21,
   Pop                = 22,
-  Call               = 23,
+  CallByIP           = 23,
   CallNative         = 24,
-  CallImported       = 25,
+  CallFunc           = 25,
   CallMethod         = 26,
   CallMethodNative   = 27,
   CallMethodIface    = 29,
@@ -39,7 +39,6 @@ public enum Opcodes
   GetFunc            = 39,
   GetFuncNative      = 40,
   GetFuncFromVar     = 41,
-  GetFuncImported    = 42,
   LastArgToTop       = 43,
   GetAttr            = 44,
   RefAttr            = 45,
@@ -892,11 +891,17 @@ public class VM : INamedResolver
 
     cm.ns.ForAllSymbols(delegate(Symbol s)
       {
+        if(s.scope.GetRootScope() != cm.ns)
+          return;
+
         if(s is ClassSymbol cs)
           cs.UpdateVTable();
 
         if(s is ClassSymbolScript css)
           css._module = modules[((Namespace)css.scope).module_name];
+
+        if(s is FuncSymbolScript fss && fss.scope is Namespace ns)
+          fss._module = modules[ns.module_name];
       }
     );
   }
@@ -1059,17 +1064,6 @@ public class VM : INamedResolver
     };
 
     return true;
-  }
-
-  FuncAddr GetFuncAddr(string path)
-  {
-    var fs = (FuncSymbolScript)ResolveNamedByPath(path);
-    var cm = modules[((Namespace)fs.scope).module_name];
-    return new FuncAddr() {
-      module = cm,
-      fs = fs,
-      ip = fs.ip_addr
-    };
   }
 
   public INamed ResolveNamedByPath(string path)
@@ -1523,9 +1517,9 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetFunc:
       {
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        //TODO: consider namespaces
-        var func_symb = (FuncSymbolScript)curr_frame.module.ns.members[func_idx];
+        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
+
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, func_symb.ip_addr);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1538,18 +1532,6 @@ public class VM : INamedResolver
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
-      }
-      break;
-      case Opcodes.GetFuncImported:
-      {
-        int func_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-        string func_name = curr_frame.constants[func_name_idx].str;
-        var faddr = GetFuncAddr(func_name);
-
-        var ptr = FuncPtr.New(this);
-        ptr.Init(faddr.module, faddr.ip);
-        curr_frame.stack.Push(Val.NewObj(this, ptr, faddr.fs.signature));
       }
       break;
       case Opcodes.GetFuncFromVar:
@@ -1572,7 +1554,7 @@ public class VM : INamedResolver
         curr_frame.stack.Push(arg);
       }
       break;
-      case Opcodes.Call:
+      case Opcodes.CallByIP:
       {
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip); 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
@@ -1594,17 +1576,15 @@ public class VM : INamedResolver
           return status;
       }
       break;
-      case Opcodes.CallImported:
+      case Opcodes.CallFunc:
       {
-        int func_name_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        string func_name = curr_frame.constants[func_name_idx].str;
-        //TODO: during final compilation phase we can replace 'func names' with actual addresses
-        var maddr = GetFuncAddr(func_name);
+        var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, maddr.module, maddr.ip);
+        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
@@ -2410,15 +2390,15 @@ public class CompiledModule
         else if(cn_type == ConstType.INAMED)
         {
           var tp = marshall.Marshall.Stream2Obj<Proxy<INamed>>(src, symb_factory);
-          if(string.IsNullOrEmpty(tp.spec))
-            throw new Exception("Missing name");
+          if(string.IsNullOrEmpty(tp.path))
+            throw new Exception("Missing path");
           cn = new Const(tp);
         }
         else if(cn_type == ConstType.ITYPE)
         {
           var tp = marshall.Marshall.Stream2Obj<Proxy<IType>>(src, symb_factory);
-          if(string.IsNullOrEmpty(tp.spec))
-            throw new Exception("Missing name");
+          if(string.IsNullOrEmpty(tp.path))
+            throw new Exception("Missing path");
           cn = new Const(tp);
         }
         else

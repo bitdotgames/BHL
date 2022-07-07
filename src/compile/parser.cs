@@ -962,7 +962,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        FireError(next_arg, "missing argument of type '" + arg_type_ref.spec + "'");
+        FireError(next_arg, "missing argument of type '" + arg_type_ref.path + "'");
       }
 
       var ca = cargs.callArg()[i];
@@ -1160,7 +1160,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       tp = ParseType(parsed.type()[0]);
 
     if(tp.Get() == null)
-      FireError(parsed, "type '" + tp.spec + "' not found");
+      FireError(parsed, "type '" + tp.path + "' not found");
 
     return tp;
   }
@@ -1179,7 +1179,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       tp = curr_scope.TMap(curr_scope.T(ctx.mapType().nsName().GetText()), tp);
 
     if(tp.Get() == null)
-      FireError(ctx, "type '" + tp.spec + "' not found");
+      FireError(ctx, "type '" + tp.path + "' not found");
 
    return tp;
   }
@@ -1330,7 +1330,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var arr_type = curr_type as ArrayTypeSymbol;
     var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
-      FireError(ctx,  "type '" + arr_type.item_type.spec + "' not found");
+      FireError(ctx,  "type '" + arr_type.item_type.path + "' not found");
     PushJsonType(orig_type);
 
     var ast = new AST_JsonArr(arr_type, ctx.Start.Line);

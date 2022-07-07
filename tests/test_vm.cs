@@ -2994,7 +2994,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Call, new int[] { 0, 0 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -5659,10 +5659,10 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.JumpZ, new int[] { 13 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 0 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Jump, new int[] { 10 })
-      .EmitThen(Opcodes.Call, new int[] { 9, 0 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 9, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -5718,10 +5718,10 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.GT)
       .EmitThen(Opcodes.JumpZ, new int[] { 13 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 0 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Jump, new int[] { 10 })
-      .EmitThen(Opcodes.Call, new int[] { 9, 0 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 9, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -7632,7 +7632,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.Call, new int[] { 0, 130 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 130 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -8014,7 +8014,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 1 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
@@ -8494,7 +8494,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.RefAttr, new int[] { 0 })
       .EmitThen(Opcodes.RefAttr, new int[] { 0 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 1 })
+      .EmitThen(Opcodes.CallByIP, new int[] { 0, 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
@@ -16596,7 +16596,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.CallImported, new int[] { 1, 1 })
+      .EmitThen(Opcodes.CallFunc, new int[] { 1, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
@@ -16606,7 +16606,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.CallImported, new int[] { 0, 1 })
+      .EmitThen(Opcodes.CallFunc, new int[] { 0, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
     );
@@ -19059,7 +19059,7 @@ public class TestVM : BHL_TestBase
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertEqual(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).spec, Test.signature.GetName());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).path, Test.signature.GetName());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
