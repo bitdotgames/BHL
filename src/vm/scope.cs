@@ -3,7 +3,12 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface IScope
+public interface INamedResolver
+{
+  INamed ResolveNamedByPath(string path);
+}
+
+public interface IScope : INamedResolver
 {
   // Look up name in this scope without fallback!
   Symbol Resolve(string name);
@@ -21,11 +26,6 @@ public interface ISymbolsStorageAccess
   // Collection of members, depending on concrete implementation may be
   // a readonly one
   SymbolsStorage GetMembers();
-}
-
-public interface INamedResolver
-{
-  INamed ResolveNamedByPath(string path);
 }
 
 public interface IInstanceType : IType, IScope 
@@ -87,6 +87,11 @@ public class LocalScope : IScope, ISymbolsStorageAccess
     EnsureNotDefinedInEnclosingScopes(sym);
 
     DefineWithoutEnclosingChecks(sym);
+  }
+
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
   }
 
   void EnsureNotDefinedInEnclosingScopes(Symbol sym)
@@ -543,26 +548,6 @@ public static class ScopeExtensions
       this.name = null;
       this.tp = tp;
     }
-  }
-
-  public struct IScope2ISymbolResolver : INamedResolver
-  {
-    public IScope scope;
-
-    public IScope2ISymbolResolver(IScope scope)
-    {
-      this.scope = scope;
-    }
-
-    public INamed ResolveNamedByPath(string path)
-    {
-      return scope.ResolveSymbolByPath(path);
-    }
-  }
-
-  public static IScope2ISymbolResolver S2R(this IScope s)
-  {
-    return new IScope2ISymbolResolver(s);
   }
 
   public static Proxy<IType> T(this INamedResolver self, IType t)

@@ -416,7 +416,7 @@ public class AST_VarDecl : AST_Tree
   public bool is_ref;
 
   public AST_VarDecl(VariableSymbol symb, bool is_ref)
-    : this(symb.name, is_ref, symb is FuncArgSymbol, (IType)symb.type.Get(), symb.scope_idx)
+    : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
   {}
 
   public AST_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)

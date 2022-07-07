@@ -193,6 +193,11 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
     members.Add(sym);
   }
 
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
+  }
+
   public Symbol Resolve(string name) 
   {
     return members.Find(name);
@@ -393,6 +398,11 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   public Symbol Resolve(string name) 
   {
     return members.Find(name);
+  }
+
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
   }
 
   public void SetSuperClass(ClassSymbol super_class)
@@ -1231,6 +1241,11 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     return members.Find(name);
   }
 
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
+  }
+
   public virtual void Define(Symbol sym)
   {
     members.Add(sym);
@@ -1706,6 +1721,11 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
   public void Define(Symbol sym)
   {
     members.Add(sym);
+  }
+
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
   }
 
   public SymbolsStorage GetMembers() { return members; }
