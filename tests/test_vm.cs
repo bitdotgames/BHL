@@ -11329,7 +11329,7 @@ public class TestVM : BHL_TestBase
         var m = new FuncSymbolNative("self", ts.T("Bar"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) {
             var obj = frm.stack.PopRelease().obj;
-            frm.stack.Push(Val.NewObj(frm.vm, obj, (IType)ts.T("Bar").Get()));
+            frm.stack.Push(Val.NewObj(frm.vm, obj, ts.T("Bar").Get()));
             return null;
           }
         );
@@ -14632,7 +14632,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
-          v.SetObj(cn.c, (IType)ts.T("Color").Get());
+          v.SetObj(cn.c, ts.T("Color").Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -15502,7 +15502,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc, (IType)ts.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15544,7 +15544,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc, (IType)ts.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15588,7 +15588,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r * k;
         newc.g = c.g * k;
 
-        var v = Val.NewObj(frm.vm, newc, (IType)ts.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -15609,7 +15609,7 @@ public class TestVM : BHL_TestBase
         newc.r = c.r + r.r;
         newc.g = c.g + r.g;
 
-        var v = Val.NewObj(frm.vm, newc, (IType)ts.T("Color").Get());
+        var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         frm.stack.Push(v);
 
         return null;
@@ -19322,7 +19322,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child, (IType)fld.type.Get());
+          v.SetObj(c.child, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19336,7 +19336,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child2, (IType)fld.type.Get());
+          v.SetObj(c.child2, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19350,7 +19350,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct, (IType)fld.type.Get());
+          IntStruct.Encode(v, c.child_struct, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -19366,7 +19366,7 @@ public class TestVM : BHL_TestBase
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(v, c.child_struct2, (IType)fld.type.Get());
+          IntStruct.Encode(v, c.child_struct2, fld.type.Get());
         },
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {

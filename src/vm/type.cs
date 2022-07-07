@@ -13,10 +13,12 @@ public interface IType : INamed
 {}
 
 // For lazy evaluation of types and forward declarations
-public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
+public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : INamed
 {
   INamedResolver resolver;
-  INamed named;
+
+  T named;
+
   string _spec;
   public string spec 
   { 
@@ -24,7 +26,7 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
     private set { _spec = value; }
   }
 
-  public TProxy(INamedResolver resolver, string spec)
+  public Proxy(INamedResolver resolver, string spec)
   {
     if(spec.Length == 0)
       throw new Exception("Type spec is empty");
@@ -32,11 +34,11 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
       throw new Exception("Type spec contains illegal characters: '" + spec + "'");
     
     this.resolver = resolver;
-    named = null;
+    named = default(T);
     _spec = spec;
   }
 
-  public TProxy(INamed named)
+  public Proxy(T named)
   {
     resolver = null;
     if(named != null)
@@ -46,26 +48,21 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
     this.named = named;
   }
 
-  public static implicit operator TProxy(BuiltInSymbolType s)
-  {
-    return new TProxy(s);
-  }
-
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(_spec) && 
            named == null;
   }
 
-  public INamed Get()
+  public T Get()
   {
     if(named != null)
       return named;
 
     if(string.IsNullOrEmpty(_spec))
-      return null;
+      return default(T);
 
-    named = (bhl.IType)resolver.ResolveNamedByPath(_spec);
+    named = (T)resolver.ResolveNamedByPath(_spec);
     return named;
   }
 
@@ -97,7 +94,7 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
 
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
-      named = (IType)mg;
+      named = (T)mg;
   }
 
   static bool IsIndependent(INamed named)
@@ -123,12 +120,12 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
 
   public override bool Equals(object o)
   {
-    if(!(o is TProxy))
+    if(!(o is Proxy<T>))
       return false;
-    return this.Equals((TProxy)o);
+    return this.Equals((Proxy<T>)o);
   }
 
-  public bool Equals(TProxy o)
+  public bool Equals(Proxy<T> o)
   {
     if(o.resolver == resolver && o._spec == _spec)
       return true;
@@ -140,7 +137,7 @@ public struct TProxy : marshall.IMarshallable, IEquatable<TProxy>
     if(r != null)
       return r.Equals(o.Get());
     else
-      return r == o.Get();
+      return null == o.Get();
   }
 
   public override int GetHashCode()
@@ -153,12 +150,12 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public TProxy subj; 
+  public Proxy<IType> subj; 
 
   string name;
   public string GetName() { return name; }
 
-  public RefType(TProxy subj)
+  public RefType(Proxy<IType> subj)
   {
     this.subj = subj;
     name = "ref " + subj.spec;
@@ -206,7 +203,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
 
   string name;
 
-  List<TProxy> items = new List<TProxy>();
+  List<Proxy<IType>> items = new List<Proxy<IType>>();
 
   public string GetName() { return name; }
 
@@ -216,7 +213,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
     }
   }
 
-  public TupleType(params TProxy[] items)
+  public TupleType(params Proxy<IType>[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
@@ -227,14 +224,14 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   public TupleType()
   {}
 
-  public TProxy this[int index]
+  public Proxy<IType> this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(TProxy item)
+  public void Add(Proxy<IType> item)
   {
     items.Add(item);
     Update();
@@ -299,15 +296,15 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   //full type name
   string name;
 
-  public TProxy ret_type;
+  public Proxy<IType> ret_type;
   //TODO: include arg names as well since we support named args?
-  public List<TProxy> arg_types = new List<TProxy>();
+  public List<Proxy<IType>> arg_types = new List<Proxy<IType>>();
 
   public int default_args_num;
 
   public string GetName() { return name; }
 
-  public FuncSignature(TProxy ret_type, params TProxy[] arg_types)
+  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
   {
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
@@ -315,14 +312,14 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     Update();
   }
 
-  public FuncSignature(TProxy ret_type, List<TProxy> arg_types)
+  public FuncSignature(Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
   {
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncSignature(TProxy ret_type)
+  public FuncSignature(Proxy<IType> ret_type)
   {
     this.ret_type = ret_type;
     Update();
@@ -332,7 +329,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   public FuncSignature()
   {}
 
-  public void AddArg(TProxy arg_type)
+  public void AddArg(Proxy<IType> arg_type)
   {
     arg_types.Add(arg_type);
     Update();
@@ -739,7 +736,7 @@ public class Types : INamedResolver
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
   {
     var op_func_arg_type = op_func.signature.arg_types[0];
-    CheckAssign((IType)op_func_arg_type.Get(), b);
+    CheckAssign(op_func_arg_type.Get(), b);
     return op_func.GetReturnType();
   }
 

@@ -44,6 +44,11 @@ public abstract class BuiltInSymbolType : Symbol, IType
   public override void Sync(marshall.SyncContext ctx)
   {
   }
+
+  public static implicit operator Proxy<IType>(BuiltInSymbolType s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
 public class IntSymbol : BuiltInSymbolType
@@ -307,11 +312,11 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 {
   public ClassSymbol super_class {
     get {
-      return (ClassSymbol)_super_class.Get();
+      return _super_class.Get();
     }
   }
 
-  protected TProxy _super_class;
+  protected Proxy<ClassSymbol> _super_class;
 
   public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
@@ -405,7 +410,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
       Define(mem);
     }
 
-    _super_class = new TProxy(super_class);
+    _super_class = new Proxy<ClassSymbol>(super_class);
   }
 
   public void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
@@ -476,9 +481,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public readonly FuncSymbolNative FuncArrIdx = null;
   public readonly FuncSymbolNative FuncArrIdxW = null;
 
-  public TProxy item_type;
+  public Proxy<IType> item_type;
 
-  public ArrayTypeSymbol(string name, TProxy item_type)     
+  public ArrayTypeSymbol(string name, Proxy<IType> item_type)     
     : base(name, super_class: null)
   {
     this.item_type = item_type;
@@ -527,7 +532,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
   }
 
-  public ArrayTypeSymbol(TProxy item_type) 
+  public ArrayTypeSymbol(Proxy<IType> item_type) 
     : this("[]" + item_type.spec, item_type)
   {}
 
@@ -545,13 +550,13 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 {
   public const uint CLASS_ID = 10; 
 
-  public GenericArrayTypeSymbol(TProxy item_type) 
+  public GenericArrayTypeSymbol(Proxy<IType> item_type) 
     : base(item_type)
   {}
 
   //marshall factory version
   public GenericArrayTypeSymbol()
-    : this(new TProxy())
+    : this(new Proxy<IType>())
   {}
 
   static IList<Val> AsList(Val arr)
@@ -690,13 +695,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(string name, TProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(string name, Proxy<IType> item_type, CreatorCb creator) 
     : base(name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(TProxy item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Proxy<IType> item_type, CreatorCb creator) 
     : base("[]" + item_type.spec, item_type)
   {}
 
@@ -739,7 +744,7 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     int idx = (int)frame.stack.PopRelease().num;
     var arr = frame.stack.Pop();
     var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], (IType)item_type.Get());
+    var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
     frame.stack.Push(res);
     arr.Release();
     return null;
@@ -794,10 +799,10 @@ public abstract class MapTypeSymbol : ClassSymbol
   public readonly FuncSymbolNative FuncMapIdx = null;
   public readonly FuncSymbolNative FuncMapIdxW = null;
 
-  public TProxy key_type;
-  public TProxy val_type;
+  public Proxy<IType> key_type;
+  public Proxy<IType> val_type;
 
-  public MapTypeSymbol(TProxy key_type, TProxy val_type)     
+  public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base("[" + key_type.spec + "]" + val_type.spec, super_class: null)
   {
     this.key_type = key_type;
@@ -830,7 +835,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative("TryGet", new TProxy(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative("TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -861,13 +866,13 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 {
   public const uint CLASS_ID = 21; 
 
-  public GenericMapTypeSymbol(TProxy key_type, TProxy val_type)     
+  public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(key_type, val_type)
   {}
   
   //marshall factory version
   public GenericMapTypeSymbol()
-    : this(new TProxy(), new TProxy())
+    : this(new Proxy<IType>(), new Proxy<IType>())
   {}
 
   static IDictionary<Val,Val> AsMap(Val arr)
@@ -1017,7 +1022,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
 
-  public TProxy type;
+  public Proxy<IType> type;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -1030,14 +1035,14 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public VariableSymbol(WrappedParseTree parsed, string name, TProxy type) 
+  public VariableSymbol(WrappedParseTree parsed, string name, Proxy<IType> type) 
     : this(name, type) 
   {
     this.parsed = parsed;
   }
 #endif
 
-  public VariableSymbol(string name, TProxy type) 
+  public VariableSymbol(string name, Proxy<IType> type) 
     : base(name) 
   {
     this.type = type;
@@ -1050,7 +1055,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   
   public IType GetIType()
   {
-    return (IType)type.Get();
+    return type.Get();
   }
 
   public override uint ClassId()
@@ -1071,14 +1076,14 @@ public class FuncArgSymbol : VariableSymbol
   public bool is_ref;
 
 #if BHL_FRONT
-  public FuncArgSymbol(WrappedParseTree parsed, string name, TProxy type, bool is_ref = false)
+  public FuncArgSymbol(WrappedParseTree parsed, string name, Proxy<IType> type, bool is_ref = false)
     : this(name, type, is_ref)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public FuncArgSymbol(string name, TProxy type, bool is_ref = false)
+  public FuncArgSymbol(string name, Proxy<IType> type, bool is_ref = false)
     : base(name, type)
   {
     this.is_ref = is_ref;
@@ -1095,7 +1100,7 @@ public class FieldSymbol : VariableSymbol
   public FieldSetter setter;
   public FieldRef getref;
 
-  public FieldSymbol(string name, TProxy type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+  public FieldSymbol(string name, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(name, type)
   {
     this.getter = getter;
@@ -1108,7 +1113,7 @@ public class FieldSymbolScript : FieldSymbol
 {
   new public const uint CLASS_ID = 9;
 
-  public FieldSymbolScript(string name, TProxy type) 
+  public FieldSymbolScript(string name, Proxy<IType> type) 
     : base(name, type, null, null, null)
   {
     this.getter = Getter;
@@ -1118,7 +1123,7 @@ public class FieldSymbolScript : FieldSymbol
 
   //marshall factory version
   public FieldSymbolScript()
-    : this("", new TProxy())
+    : this("", new Proxy<IType>())
   {}
 
   void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -1245,7 +1250,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public IType GetReturnType()
   {
-    return (IType)signature.ret_type.Get();
+    return signature.ret_type.Get();
   }
 
   public SymbolsStorage GetArgs()
@@ -1327,7 +1332,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public void ReserveThisArgument(ClassSymbolScript class_scope)
   {
-    var this_symb = new FuncArgSymbol("this", new TProxy(class_scope));
+    var this_symb = new FuncArgSymbol("this", new Proxy<IType>(class_scope));
     Define(this_symb);
   }
 
@@ -1366,7 +1371,7 @@ public class FuncSymbolScriptVirtual : FuncSymbol
   int default_args_num;
 
   public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
-  public List<TProxy> owners = new List<TProxy>(); 
+  public List<Proxy<ClassSymbol>> owners = new List<Proxy<ClassSymbol>>(); 
 
 #if BHL_FRONT
   public FuncSymbolScriptVirtual(
@@ -1395,7 +1400,7 @@ public class FuncSymbolScriptVirtual : FuncSymbol
 
   public void AddOverride(ClassSymbol owner, FuncSymbolScript fs)
   {
-    owners.Add(new TProxy(owner));
+    owners.Add(new Proxy<ClassSymbol>(owner));
     overrides.Add(fs);
   }
 
@@ -1526,7 +1531,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TProxy ret_type, 
+    Proxy<IType> ret_type, 
     Cb cb,
     params FuncArgSymbol[] args
   ) 
@@ -1535,7 +1540,7 @@ public class FuncSymbolNative : FuncSymbol
 
   public FuncSymbolNative(
     string name, 
-    TProxy ret_type, 
+    Proxy<IType> ret_type, 
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
@@ -1644,7 +1649,7 @@ public class ClassSymbolScript : ClassSymbol
       //      Maybe we should track data members and methods separately someday. 
       if(m is VariableSymbol vs)
       {
-        var mtype = (IType)vs.type.Get();
+        var mtype = vs.type.Get();
         var v = frm.vm.MakeDefaultVal(mtype);
         //adding directly, bypassing Retain call
         vl.lst.Add(v);
@@ -1938,7 +1943,7 @@ public class SymbolsStorage : marshall.IMarshallable
 public class TypeSet<T> : marshall.IMarshallable where T : IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
-  List<TProxy> list = new List<TProxy>();
+  List<Proxy<T>> list = new List<Proxy<T>>();
 
   public int Count
   {
@@ -1951,7 +1956,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   {
     get {
       var tp = list[index];
-      var s = (T)tp.Get();
+      var s = tp.Get();
       if(s == null)
         throw new Exception("Type not found: " + tp.spec);
       return s;
@@ -1963,10 +1968,10 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
 
   public bool Add(T t)
   {
-    return Add(new TProxy(t));
+    return Add(new Proxy<T>(t));
   }
 
-  public bool Add(TProxy tp)
+  public bool Add(Proxy<T> tp)
   {
     foreach(var item in list)
     {

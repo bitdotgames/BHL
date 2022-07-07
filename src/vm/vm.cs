@@ -99,7 +99,7 @@ public enum ConstType
   BOOL       = 3,
   STR        = 4,
   NIL        = 5,
-  TPROXY     = 6,
+  PROXY      = 6,
 }
 
 public class Const : IEquatable<Const>
@@ -109,7 +109,7 @@ public class Const : IEquatable<Const>
   public ConstType type;
   public double num;
   public string str;
-  public TProxy named;
+  public Proxy<INamed> proxy;
 
   public Const(ConstType type, double num, string str)
   {
@@ -146,10 +146,10 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Const(TProxy tp)
+  public Const(Proxy<INamed> tp)
   {
-    type = ConstType.TPROXY;
-    this.named = tp;
+    type = ConstType.PROXY;
+    this.proxy = tp;
   }
 
   public Val ToVal(VM vm)
@@ -164,8 +164,8 @@ public class Const : IEquatable<Const>
       return Val.NewStr(vm, str);
     else if(type == ConstType.NIL)
       return vm.Null;
-    else if(type == ConstType.TPROXY)
-      return Val.NewObj(vm, named, Types.Any/*TODO: must be Types.Type*/);
+    else if(type == ConstType.PROXY)
+      return Val.NewObj(vm, proxy, Types.Any/*TODO: must be Types.Type*/);
     else
       throw new Exception("Bad type");
   }
@@ -178,7 +178,7 @@ public class Const : IEquatable<Const>
     return type == o.type && 
            num == o.num && 
            str == o.str &&
-           named.Equals(o.named)
+           proxy.Equals(o.proxy)
            ;
   }
 }
@@ -937,7 +937,7 @@ public class VM : INamedResolver
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var type = (IType)constants[type_idx].named.Get();
+          var type = (IType)constants[type_idx].proxy.Get();
 
           module.gvars.Resize(var_idx+1);
           module.gvars[var_idx] = MakeDefaultVal(type);
@@ -964,7 +964,7 @@ public class VM : INamedResolver
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var type = (IType)constants[type_idx].named.Get();
+          var type = (IType)constants[type_idx].proxy.Get();
           HandleNew(init_frame, type);
         }
         break;
@@ -1241,7 +1241,7 @@ public class VM : INamedResolver
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var cast_type = (IType)curr_frame.constants[cast_type_idx].named.Get();
+        var cast_type = (IType)curr_frame.constants[cast_type_idx].proxy.Get();
 
         HandleTypeCast(curr_frame, cast_type);
       }
@@ -1249,7 +1249,7 @@ public class VM : INamedResolver
       case Opcodes.TypeAs:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var as_type = (IType)curr_frame.constants[cast_type_idx].named.Get();
+        var as_type = (IType)curr_frame.constants[cast_type_idx].proxy.Get();
 
         HandleTypeAs(curr_frame, as_type);
       }
@@ -1257,7 +1257,7 @@ public class VM : INamedResolver
       case Opcodes.TypeIs:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var as_type = (IType)curr_frame.constants[cast_type_idx].named.Get();
+        var as_type = (IType)curr_frame.constants[cast_type_idx].proxy.Get();
 
         HandleTypeIs(curr_frame, as_type);
       }
@@ -1265,7 +1265,7 @@ public class VM : INamedResolver
       case Opcodes.Typeof:
       {
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var type = curr_frame.constants[type_idx].named.Get();
+        var type = curr_frame.constants[type_idx].proxy.Get();
 
         curr_frame.stack.Push(Val.NewObj(this, type, Types.ClassType));
       }
@@ -1384,7 +1384,7 @@ public class VM : INamedResolver
       {
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip);
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var type = (IType)curr_frame.constants[type_idx].named.Get();
+        var type = (IType)curr_frame.constants[type_idx].proxy.Get();
 
         var curr = curr_frame.locals[local_idx];
         //NOTE: handling case when variables are 're-declared' within the nested loop
@@ -1649,7 +1649,7 @@ public class VM : INamedResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].named.Get(); 
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].proxy.Get(); 
         var class_type = (ClassSymbol)self.type;
         int func_idx = class_type._itable[iface_symb][iface_func_idx];
 
@@ -1826,7 +1826,7 @@ public class VM : INamedResolver
       case Opcodes.New:
       {
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var type = (IType)curr_frame.constants[type_idx].named.Get();
+        var type = (IType)curr_frame.constants[type_idx].proxy.Get();
         HandleNew(curr_frame, type);
       }
       break;
@@ -2394,9 +2394,9 @@ public class CompiledModule
                 cn_type == ConstType.BOOL ||
                 cn_type == ConstType.NIL)
           cn = new Const(cn_type, r.ReadDouble(), "");
-        else if(cn_type == ConstType.TPROXY)
+        else if(cn_type == ConstType.PROXY)
         {
-          var tp = marshall.Marshall.Stream2Obj<TProxy>(src, symb_factory);
+          var tp = marshall.Marshall.Stream2Obj<Proxy<INamed>>(src, symb_factory);
           if(string.IsNullOrEmpty(tp.spec))
             throw new Exception("Missing name");
           cn = new Const(tp);
@@ -2465,9 +2465,9 @@ public class CompiledModule
             cn.type == ConstType.BOOL ||
             cn.type == ConstType.NIL)
           w.Write(cn.num);
-        else if(cn.type == ConstType.TPROXY)
+        else if(cn.type == ConstType.PROXY)
         {
-          marshall.Marshall.Obj2Stream(cn.named, dst);
+          marshall.Marshall.Obj2Stream(cn.proxy, dst);
         }
         else
           throw new Exception("Unknown type: " + cn.type);

@@ -710,14 +710,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = (IType)ftype.ret_type.Get();
+            type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line, null);
             AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-            type = (IType)ftype.ret_type.Get();
+            type = ftype.ret_type.Get();
           }
         }
         else if(func_symb != null)
@@ -753,7 +753,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
               FireError(name, "getting field by 'ref' not supported for this class");
             ast.type = EnumCall.MVARREF; 
           }
-          type = (IType)var_symb.type.Get();
+          type = var_symb.type.Get();
         }
         else if(func_symb != null)
         {
@@ -782,7 +782,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       
       ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast, ref pre_call);
-      type = (IType)ftype.ret_type.Get();
+      type = ftype.ret_type.Get();
     }
 
     if(ast != null)
@@ -802,7 +802,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(Wrap(arr_exp).eval_type != Types.Int)
         FireError(arr_exp, "array index expression is not of type int");
 
-      type = (IType)arr_type.item_type.Get();
+      type = arr_type.item_type.Get();
 
       var ast = new AST_Call(write ? EnumCall.ARR_IDXW : EnumCall.ARR_IDX, line, null);
       PeekAST().AddChild(ast);
@@ -815,7 +815,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(!Wrap(arr_exp).eval_type.Equals(map_type.key_type.Get()))
         FireError(arr_exp, "not compatible map key types");
 
-      type = (IType)map_type.val_type.Get();
+      type = map_type.val_type.Get();
 
       var ast = new AST_Call(write ? EnumCall.MAP_IDXW : EnumCall.MAP_IDX, line, null);
       PeekAST().AddChild(ast);
@@ -913,7 +913,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           FireError(ca, "max arguments reached");
 
         var func_arg_symb = (FuncArgSymbol)func_args[i];
-        var func_arg_type = func_arg_symb.parsed == null ? (IType)func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
+        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         bool is_ref = ca.isRef() != null;
         if(!is_ref && func_arg_symb.is_ref)
@@ -937,7 +937,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         {
           if(func_arg_symb.type.Get() == null)
             FireError(ca, "invalid type");
-          types.CheckAssign((IType)func_arg_symb.type.Get(), wca);
+          types.CheckAssign(func_arg_symb.type.Get(), wca);
         }
         else
           types.CheckAssign(func_arg_symb.parsed, wca);
@@ -971,7 +971,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(ca_name != null)
         FireError(ca_name, "named arguments not supported for function pointers");
 
-      var arg_type = (IType)arg_type_ref.Get();
+      var arg_type = arg_type_ref.Get();
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
@@ -980,7 +980,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       PopJsonType();
 
       var wca = Wrap(ca);
-      types.CheckAssign(arg_type is RefType rt ? (IType)rt.subj.Get() : arg_type, wca);
+      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, wca);
 
       if(arg_type_ref.Get() is RefType && ca.isRef() == null)
         FireError(ca, "'ref' is missing");
@@ -1094,7 +1094,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var ret_type = ParseType(ret_ctx);
 
-    var arg_types = new List<TProxy>();
+    var arg_types = new List<Proxy<IType>>();
     if(types_ctx != null)
     {
       for(int i=0;i<types_ctx.refType().Length;++i)
@@ -1115,7 +1115,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return ParseFuncSignature(ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(TProxy ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
     var sig = new FuncSignature(ret_type);
@@ -1136,15 +1136,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(TProxy ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
     return ParseFuncSignature(ret_type, fparams, out default_args_num);
   }
 
-  TProxy ParseType(bhlParser.RetTypeContext parsed)
+  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
   {
-    TProxy tp;
+    Proxy<IType> tp;
 
     //convenience special case
     if(parsed == null)
@@ -1165,9 +1165,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return tp;
   }
 
-  TProxy ParseType(bhlParser.TypeContext ctx)
+  Proxy<IType> ParseType(bhlParser.TypeContext ctx)
   {
-    TProxy tp;
+    Proxy<IType> tp;
     if(ctx.funcType() != null)
       tp = curr_scope.S2R().T(ParseFuncSignature(ctx.funcType()));
     else
@@ -1287,7 +1287,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(new_exp != null)
     {
       var tp = ParseType(new_exp.type());
-      PushJsonType((IType)tp.Get());
+      PushJsonType(tp.Get());
     }
 
     var curr_type = PeekJsonType();
@@ -1328,7 +1328,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       FireError(ctx, "[..] is not expected, need '" + curr_type + "'");
 
     var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = (IType)arr_type.item_type.Get();
+    var orig_type = arr_type.item_type.Get();
     if(orig_type == null)
       FireError(ctx,  "type '" + arr_type.item_type.spec + "' not found");
     PushJsonType(orig_type);
@@ -1370,7 +1370,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx);
 
-    PushJsonType((IType)member.type.Get());
+    PushJsonType(member.type.Get());
 
     var jval = ctx.jsonValue(); 
     PushAST(ast);
@@ -1379,7 +1379,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     PopJsonType();
 
-    Wrap(ctx).eval_type = (IType)member.type.Get();
+    Wrap(ctx).eval_type = member.type.Get();
 
     PeekAST().AddChild(ast);
     return null;
@@ -1413,7 +1413,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = Types.ClassType;
 
-    PeekAST().AddChild(new AST_Typeof((IType)tp.Get()));
+    PeekAST().AddChild(new AST_Typeof(tp.Get()));
 
     return null;
   }
@@ -1430,9 +1430,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
-    Wrap(ctx).eval_type = (IType)tp.Get();
+    Wrap(ctx).eval_type = tp.Get();
 
-    var ast = new AST_New((IType)tp.Get(), ctx.Start.Line);
+    var ast = new AST_New(tp.Get(), ctx.Start.Line);
     PeekAST().AddChild(ast);
 
     return null;
@@ -1451,13 +1451,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeCast((IType)tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeCast(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = (IType)tp.Get();
+    Wrap(ctx).eval_type = tp.Get();
 
     types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
@@ -1470,13 +1470,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeAs((IType)tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = (IType)tp.Get();
+    Wrap(ctx).eval_type = tp.Get();
 
     //TODO: do we need to pre-check absolutely unrelated types?
     //types.CheckCast(Wrap(ctx), Wrap(exp)); 
@@ -1490,7 +1490,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeIs((IType)tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);
@@ -1998,7 +1998,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         for(int i=0;i<explen;++i)
         {
           var exp = explist.exp()[i];
-          types.CheckAssign((IType)fmret_type[i].Get(), Wrap(exp));
+          types.CheckAssign(fmret_type[i].Get(), Wrap(exp));
         }
 
         Wrap(ctx).eval_type = ret_type;
@@ -2286,7 +2286,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new TProxy());
+        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new Proxy<IType>());
         pass.class_symb.tmp_members.Add(fld_symb);
       }
 
@@ -2527,7 +2527,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
         exp_ast = new AST_Interim();
         PushAST(exp_ast);
-        PushJsonType((IType)tp.Get());
+        PushJsonType(tp.Get());
         Visit(assign_exp);
         PopJsonType();
         PopAST();
@@ -2568,7 +2568,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(found_default_arg)
       {
         var tp = ParseType(fp.type());
-        PushJsonType((IType)tp.Get());
+        PushJsonType(tp.Get());
         pop_json_type = true;
       }
 
@@ -2628,7 +2628,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           var vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
           if(vd_symb == null)
             FireError(vd, "symbol not resolved");
-          curr_type = (IType)vd_symb.type.Get();
+          curr_type = vd_symb.type.Get();
 
           ptree = Wrap(vd.NAME());
           ptree.eval_type = curr_type;
@@ -2716,7 +2716,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var tuple = assign_type as TupleType;
         if(tuple != null)
-          types.CheckAssign(ptree, (IType)tuple[i].Get());
+          types.CheckAssign(ptree, tuple[i].Get());
         else
           types.CheckAssign(ptree, Wrap(assign_exp));
       }
@@ -2773,7 +2773,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var tp = ParseType(type_ctx);
 
     var var_tree = Wrap(name); 
-    var_tree.eval_type = (IType)tp.Get();
+    var_tree.eval_type = tp.Get();
 
     if(is_ref && !func_arg)
       FireError(name, "'ref' is only allowed in function declaration");
@@ -3166,7 +3166,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     var vod = ctx.foreachExp().varOrDeclare();
     var vd = vod.varDeclare();
-    TProxy iter_type;
+    Proxy<IType> iter_type;
     string iter_str_name = "";
     AST_Tree iter_ast_decl = null;
     VariableSymbol iter_symb = null;
