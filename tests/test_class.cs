@@ -1821,7 +1821,7 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestUserChildClassMethodOverridesBase()
+  public void TestBasicVirtualMethodsSupport()
   {
     string bhl = @"
 
@@ -1867,6 +1867,70 @@ public class TestClasses : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
+    AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportedClassVirtualMethodsSupport()
+  {
+    string bhl1 = @"
+    class Foo {
+      
+      int b
+      int a
+
+      func virtual int getA() {
+        return this.a
+      }
+
+      func int getB() {
+        return this.b
+      }
+    }
+  ";
+
+  string bhl2 = @"
+    import ""bhl1""  
+
+    class Bar : Foo {
+      int new_a
+
+      func override int getA() {
+        return this.new_a
+      }
+    }
+
+    func int test1()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return b.getA() + b.getB()
+    }
+
+    func int test2()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return ((Foo)b).getA() + b.getB()
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+    
+    vm.LoadModule("bhl2");
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);

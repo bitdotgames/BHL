@@ -900,8 +900,8 @@ public class VM : INamedResolver
         if(s is ClassSymbolScript css)
           css._module = modules[((Namespace)css.scope).module_name];
 
-        if(s is FuncSymbolScript fss && fss.scope is Namespace ns)
-          fss._module = modules[ns.module_name];
+        if(s is FuncSymbolScript fss)
+          fss._module = modules[((Namespace)fss.scope.GetRootScope()).module_name];
       }
     );
   }
@@ -1601,11 +1601,10 @@ public class VM : INamedResolver
 
         var class_type = ((ClassSymbolScript)self.type);
 
-        var field_symb = (FuncSymbolScript)class_type.members[func_idx];
-        int func_ip = field_symb.ip_addr;
+        var func_symb = (FuncSymbolScript)class_type.members[func_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, class_type._module, func_ip);
+        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
         frm.locals[0] = self;
 
@@ -1645,10 +1644,9 @@ public class VM : INamedResolver
         int func_idx = class_type._itable[iface_symb][iface_func_idx];
 
         var func_symb = (FuncSymbolScript)class_type.members[func_idx];
-        int func_ip = func_symb.ip_addr;
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, class_type._module, func_ip);
+        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
         frm.locals[0] = self;
 
@@ -1669,10 +1667,8 @@ public class VM : INamedResolver
         var class_type = (ClassSymbolScript)self.type;
         var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
-        int func_ip = func_symb.ip_addr;
-
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, class_type._module, func_ip);
+        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
         frm.locals[0] = self;
 

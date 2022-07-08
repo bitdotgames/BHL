@@ -2390,7 +2390,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       }
 
       if(super_class != null)
-        pass.class_symb.SetSuperClass(super_class);
+        pass.class_symb._super_class = new Proxy<ClassSymbol>(super_class);
 
       if(implements.Count > 0)
         pass.class_symb.SetImplementedInterfaces(implements);

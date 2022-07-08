@@ -321,7 +321,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     }
   }
 
-  protected Proxy<ClassSymbol> _super_class;
+  internal Proxy<ClassSymbol> _super_class;
 
   public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
@@ -405,11 +405,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     return this.ResolveSymbolByPath(path);
   }
 
-  public void SetSuperClass(ClassSymbol super_class)
+  void SetSuperClass(ClassSymbol super_class)
   {
-    if(this.super_class == super_class)
-      return;
-
     //NOTE: we define parent members in the current class
     //      scope as well. We do this since we want to  
     //      address its members simply by int index
@@ -423,7 +420,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     _super_class = new Proxy<ClassSymbol>(super_class);
   }
 
-  public void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
+  internal void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
   {
     this.implements.Clear();
     foreach(var imp in implements)
