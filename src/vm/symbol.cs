@@ -1315,6 +1315,8 @@ public class FuncSymbolScript : FuncSymbol
 
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
+  //TODO: store it in a more optimal way
+  internal string _module_name;
 
   public int local_vars_num;
 
@@ -1326,6 +1328,7 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
+    string module_name,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1333,6 +1336,7 @@ public class FuncSymbolScript : FuncSymbol
   ) 
     : base(name, sig)
   {
+    _module_name = module_name;
     this.name = name;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
@@ -1372,6 +1376,7 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
+    marshall.Marshall.Sync(ctx, ref _module_name);
     marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
@@ -1457,12 +1462,13 @@ public class LambdaSymbol : FuncSymbolScript
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
+    string module_name,
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
     List<FuncSymbolScript> fdecl_stack
   ) 
-    : base(parsed, sig, name, 0, 0)
+    : base(parsed, module_name, sig, name, 0, 0)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -1621,9 +1627,6 @@ public class ClassSymbolNative : ClassSymbol
 public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
-
-  //cached value of CompiledModule, it's set upon module loading in VM and 
-  internal CompiledModule _module;
 
   public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
     : base(name, super_class, implements)
@@ -1948,6 +1951,7 @@ public class SymbolsStorage : marshall.IMarshallable
   public void Sync(marshall.SyncContext ctx) 
   {
     marshall.Marshall.SyncGeneric(ctx, list);
+
     if(ctx.is_read)
       foreach(var tmp in list)
         tmp.scope = scope;

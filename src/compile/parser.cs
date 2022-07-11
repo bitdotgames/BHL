@@ -1192,6 +1192,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
+      module.name,
       func_name,
       ParseFuncSignature(tp, funcLambda.funcParams()),
       upvals,
@@ -2104,6 +2105,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
+      module.name,
       new FuncSignature(),
       name
     );
@@ -2194,7 +2196,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         if(default_args_num != 0)
           FireError(ib, "default value is not allowed in this context");
 
-        var func_symb = new FuncSymbolScript(null, sig, fd.NAME().GetText(), 0, 0);
+        var func_symb = new FuncSymbolScript(
+          null, 
+          module.name, 
+          sig, 
+          fd.NAME().GetText(), 
+          0, 0
+        );
         pass.iface_symb.Define(func_symb);
 
         var func_params = fd.funcParams();
@@ -2298,6 +2306,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
         var func_symb = new FuncSymbolScript(
           Wrap(fd), 
+          module.name,
           new FuncSignature(),
           fd.NAME().GetText()
         );
@@ -2416,6 +2425,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     for(int i=0;i<curr_class.tmp_members.Count;++i)
     {
       var sym = curr_class.tmp_members[i];
+
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if(sym is IScopeIndexed si)

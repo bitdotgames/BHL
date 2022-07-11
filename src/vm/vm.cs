@@ -886,22 +886,23 @@ public class VM : INamedResolver
 
   void Prepare(CompiledModule cm)
   {
-    //Console.WriteLine(cm.name);
+    //Console.WriteLine("FINALIZE " + cm.name);
     //Console.WriteLine(cm.ns.DumpMembers());
 
     cm.ns.ForAllSymbols(delegate(Symbol s)
       {
-        if(s.scope.GetRootScope() != cm.ns)
-          return;
-
-        if(s is ClassSymbol cs)
+        if(s is ClassSymbol cs && cs._vtable == null)
+        {
           cs.UpdateVTable();
+          foreach(var kv in cs._vtable)
+          {
+            if(kv.Value is FuncSymbolScript vfss && vfss._module == null)
+              vfss._module = modules[vfss._module_name];
+          }
+        }
 
-        if(s is ClassSymbolScript css)
-          css._module = modules[((Namespace)css.scope).module_name];
-
-        if(s is FuncSymbolScript fss)
-          fss._module = modules[((Namespace)fss.scope.GetRootScope()).module_name];
+        if(s is FuncSymbolScript fss && fss._module == null)
+          fss._module = modules[fss._module_name];
       }
     );
   }
