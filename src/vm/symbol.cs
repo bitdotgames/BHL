@@ -1315,8 +1315,6 @@ public class FuncSymbolScript : FuncSymbol
 
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
-  //TODO: store it in a more optimal way
-  internal string _module_name;
 
   public int local_vars_num;
 
@@ -1328,15 +1326,13 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
-    string module_name,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
-    int ip_addr = 0
+    int ip_addr = -1
   ) 
     : base(name, sig)
   {
-    _module_name = module_name;
     this.name = name;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
@@ -1376,11 +1372,53 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref _module_name);
     marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
+  }
+}
+
+public class FuncSymbolScriptImported : FuncSymbolScript
+{
+  new public const uint CLASS_ID = 22; 
+
+  //TODO: store it in a more optimal way?
+  internal string _module_name;
+  internal string _full_path;
+
+#if BHL_FRONT
+  public FuncSymbolScriptImported(
+    WrappedParseTree parsed, 
+    string module_name,
+    string full_path,
+    FuncSignature sig,
+    string name,
+    int default_args_num = 0,
+    int ip_addr = -1
+  ) 
+    : base(parsed, sig, name, default_args_num, ip_addr)
+  {
+    _module_name = module_name;
+    _full_path = full_path;
+  }
+#endif
+
+  //symbol factory version
+  public FuncSymbolScriptImported()
+  {}
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    marshall.Marshall.Sync(ctx, ref _module_name);
+    marshall.Marshall.Sync(ctx, ref _full_path);
   }
 }
 
@@ -1462,13 +1500,12 @@ public class LambdaSymbol : FuncSymbolScript
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
-    string module_name,
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
     List<FuncSymbolScript> fdecl_stack
   ) 
-    : base(parsed, module_name, sig, name, 0, 0)
+    : base(parsed, sig, name, 0, -1)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -2096,6 +2133,8 @@ public class SymbolFactory : marshall.IFactory
         return new EnumItemSymbol();
       case FuncSymbolScript.CLASS_ID:
         return new FuncSymbolScript();
+      case FuncSymbolScriptImported.CLASS_ID:
+        return new FuncSymbolScriptImported();
       case FuncSymbolScriptVirtual.CLASS_ID:
         return new FuncSymbolScriptVirtual();
       case FuncSignature.CLASS_ID:

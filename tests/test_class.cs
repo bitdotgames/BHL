@@ -1872,7 +1872,7 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestImportedClassVirtualMethodsSupport()
   {
     string bhl1 = @"
@@ -1881,6 +1881,10 @@ public class TestClasses : BHL_TestBase
       int b
       int a
 
+      func int DummyGarbage0() {
+        return 42
+      }
+
       func virtual int getA() {
         return this.a
       }
@@ -1888,7 +1892,6 @@ public class TestClasses : BHL_TestBase
       func int getB() {
         return this.b
       }
-      func DummyGarbage0() {}
     }
   ";
 

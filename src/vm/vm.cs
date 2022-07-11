@@ -894,17 +894,28 @@ public class VM : INamedResolver
         if(s is ClassSymbol cs && cs._vtable == null)
         {
           cs.UpdateVTable();
-          foreach(var kv in cs._vtable)
-          {
-            if(kv.Value is FuncSymbolScript vfss && vfss._module == null)
-              vfss._module = modules[vfss._module_name];
-          }
-        }
 
-        if(s is FuncSymbolScript fss && fss._module == null)
-          fss._module = modules[fss._module_name];
+          foreach(var kv in cs._vtable)
+            PrepareFuncSymbol(cm, kv.Value);
+        }
+        else
+          PrepareFuncSymbol(cm, s);
       }
     );
+  }
+
+  void PrepareFuncSymbol(CompiledModule cm, Symbol s)
+  {
+    if(s is FuncSymbolScript fss && fss._module == null)
+    {
+      if(fss is FuncSymbolScriptImported fssi)
+      {
+        fssi._module = modules[fssi._module_name];
+        fssi.ip_addr = ((FuncSymbolScript)fssi._module.ns.ResolveNamedByPath(fssi._full_path)).ip_addr;
+      }
+      else
+        fss._module = cm;
+    }
   }
 
   public void UnloadModule(string module_name)

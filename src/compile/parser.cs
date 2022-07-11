@@ -1192,7 +1192,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
-      module.name,
       func_name,
       ParseFuncSignature(tp, funcLambda.funcParams()),
       upvals,
@@ -2103,12 +2102,19 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    pass.func_symb = new FuncSymbolScript(
+    pass.func_symb = being_imported ? 
+    new FuncSymbolScriptImported(
       Wrap(pass.func_ctx), 
       module.name,
+      pass.scope.GetFullPath(name),
       new FuncSignature(),
       name
-    );
+    ) : 
+    new FuncSymbolScript(
+      Wrap(pass.func_ctx), 
+      new FuncSignature(),
+      name
+    ); 
     pass.scope.Define(pass.func_symb);
 
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
@@ -2198,10 +2204,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
         var func_symb = new FuncSymbolScript(
           null, 
-          module.name, 
           sig, 
-          fd.NAME().GetText(), 
-          0, 0
+          fd.NAME().GetText()
         );
         pass.iface_symb.Define(func_symb);
 
@@ -2304,12 +2308,19 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         if(fd.NAME().GetText() == "this")
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
-        var func_symb = new FuncSymbolScript(
-          Wrap(fd), 
-          module.name,
-          new FuncSignature(),
-          fd.NAME().GetText()
-        );
+        var func_symb = being_imported ? 
+          new FuncSymbolScriptImported(
+            Wrap(fd), 
+            module.name,
+            pass.class_symb.GetFullPath(fd.NAME().GetText()),
+            new FuncSignature(),
+            fd.NAME().GetText()
+          ) :
+          new FuncSymbolScript(
+            Wrap(fd), 
+            new FuncSignature(),
+            fd.NAME().GetText()
+          );
 
         if(fd.funcFlags()?.virtualFlag() != null)
           func_symb.flags |= FuncFlags.Virtual;
