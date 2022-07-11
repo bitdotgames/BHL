@@ -716,14 +716,11 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -761,14 +758,11 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     CommonChecks(vm);
@@ -804,14 +798,11 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     CommonChecks(vm);

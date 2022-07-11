@@ -919,14 +919,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
@@ -994,14 +991,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
@@ -1029,14 +1023,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -1074,14 +1065,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -1120,14 +1108,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -1161,14 +1146,11 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
 
     vm.LoadModule("bhl2");
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
@@ -1200,16 +1182,12 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-    NewTestFile("bhl3.bhl", bhl3, ref files);
-
-    var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files));
-
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3}
+      }
+    );
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
@@ -1234,14 +1212,13 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-
     AssertError<Exception>(
       delegate() { 
-        CompileFiles(files);
+        MakeVM(new Dictionary<string, string>() {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2},
+          }
+        );
       },
       @"symbol 'foo.Foo' is already declared in module 'bhl1'"
     );
@@ -1282,15 +1259,14 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    CleanTestDir();
-    var files = new List<string>();
-    NewTestFile("bhl1.bhl", bhl1, ref files);
-    NewTestFile("bhl2.bhl", bhl2, ref files);
-    NewTestFile("bhl3.bhl", bhl3, ref files);
-
     var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
-    var vm = new VM(ts, loader);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3}
+      },
+      ts
+    );
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);

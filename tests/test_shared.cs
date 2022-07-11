@@ -503,6 +503,22 @@ public class BHL_TestBase
     return vm;
   }
 
+  public VM MakeVM(Dictionary<string, string> file2src, Types ts = null)
+  {
+    CleanTestDir();
+
+    if(ts == null)
+      ts = new Types();
+
+    var files = new List<string>();
+    foreach(var kv in file2src)
+      NewTestFile(kv.Key, kv.Value, ref files);
+
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var vm = new VM(ts, loader);
+    return vm;
+  }
+
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
     return Execute(vm, fn_name, 0, args);
