@@ -584,11 +584,32 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     ITerminalNode curr_name = root_name;
 
-    int ns_offset = 0;
+    int chain_offset = 0;
 
     if(root_name != null)
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+
+      if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
+      {
+        if(name_symb != null)
+          FireError(root_name, "keyword 'base' is reserved");
+        else
+        {
+          name_symb = cs.super_class; 
+          scope = cs.super_class;
+          var ch = chain[chain_offset];
+          var macc = ch.memberAccess();
+          if(macc == null)
+            FireError(ch, "bad base call");
+          curr_name = macc.NAME(); 
+          ++chain_offset;
+
+          PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
+          PeekAST().AddChild(new AST_TypeCast(cs.super_class, line));
+        }
+      }
+
       if(name_symb == null)
         FireError(root_name, "symbol not resolved");
 
@@ -596,9 +617,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(name_symb is Namespace ns && chain != null)
       {
         scope = ns;
-        for(ns_offset=0;ns_offset<chain.Length;)
+        for(chain_offset=0;chain_offset<chain.Length;)
         {
-          var ch = chain[ns_offset];
+          var ch = chain[chain_offset];
           var macc = ch.memberAccess();
           if(macc == null)
             FireError(ch, "bad chain call");
@@ -606,7 +627,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           if(name_symb == null)
             FireError(macc.NAME(), "symbol not resolved");
            curr_name = macc.NAME(); 
-          ++ns_offset;
+          ++chain_offset;
           if(name_symb is Namespace name_ns)
             scope = name_ns;
           else
@@ -624,7 +645,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         FireError(root_name, "bad chain call");
     }
 
-    int c = ns_offset;
+    int c = chain_offset;
     if(chain != null)
     {
       for(;c<chain.Length;++c)

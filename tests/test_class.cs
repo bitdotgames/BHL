@@ -1943,6 +1943,48 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVirtualMethodsSupportBaseCall()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+      int b
+
+      func virtual int getA() {
+        return this.a
+      }
+
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Bar : Foo {
+      int new_a
+
+      func override int getA() {
+        return base.getA() + this.new_a
+      }
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return b.getA() + b.getB()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportedClassVirtualMethodsSupport()
   {
     string bhl1 = @"
