@@ -1870,6 +1870,79 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVirtualOverrideIn3dChild()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+      int b
+
+      func int getB() {
+        return this.b
+      }
+
+      func virtual int getA() {
+        return this.a
+      }
+    }
+
+    class Bar : Foo {
+      int bar_a
+
+      func override int getA() {
+        return this.bar_a
+      }
+    }
+
+    class Hey : Bar {
+      int hey_a
+
+      func override int getA() {
+        return this.hey_a
+      }
+    }
+
+    func int test1()
+    {
+      Hey h = {}
+      h.a = 1
+      h.b = 10
+      h.bar_a = 100
+      h.hey_a = 200
+      return h.getA() + h.getB()
+    }
+
+    func int test2()
+    {
+      Hey h = {}
+      h.a = 1
+      h.b = 10
+      h.bar_a = 100
+      h.hey_a = 200
+      return ((Foo)h).getA() + h.getB()
+    }
+
+    func int test3()
+    {
+      Hey h = {}
+      h.a = 1
+      h.b = 10
+      h.bar_a = 100
+      h.hey_a = 200
+      return ((Bar)h).getA() + h.getB()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(210, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test3").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportedClassVirtualMethodsSupport()
   {
     string bhl1 = @"

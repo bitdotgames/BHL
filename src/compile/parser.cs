@@ -2322,6 +2322,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
             fd.NAME().GetText()
           );
 
+        //TODO: add validation here
         if(fd.funcFlags()?.virtualFlag() != null)
           func_symb.flags |= FuncFlags.Virtual;
         else if(fd.funcFlags()?.overrideFlag() != null)
@@ -2456,7 +2457,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       else if(sym is FuncSymbolScript fsso && fsso.flags.HasFlag(FuncFlags.Override))
       {
         var vsym = (FuncSymbolScriptVirtual)self.members.Find(sym.name);
-        vsym.AddOverride(self, fsso); 
+        vsym.AddOverride(curr_class, fsso); 
       }
       else
         self.members.Add(sym);
@@ -2480,6 +2481,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           func_symb = fsv.FindOverride(pass.class_symb);
 
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
+        if(func_ast == null)
+          throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
         ParseFuncBlock(fd, func_ast);
       }
     }
