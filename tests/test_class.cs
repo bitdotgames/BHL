@@ -673,6 +673,51 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBaseNotAllowedInRootClass()
+  {
+    string bhl = @"
+
+    class Foo {
+      int a
+      func int getA()
+      {
+        return base.a
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no base class"
+    );
+  }
+
+  [IsTested()]
+  public void TestBaseKeywordIsReserved()
+  {
+    string bhl = @"
+    class Hey {}
+
+    class Foo : Hey {
+      func int getA()
+      {
+        int base = 1
+        return base
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "keyword 'base' is reserved"
+    );
+  }
+
+  [IsTested()]
   public void TestPassArgToClassMethod()
   {
     string bhl = @"

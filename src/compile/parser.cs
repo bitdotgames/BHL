@@ -592,12 +592,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
       {
-        if(name_symb != null)
-          FireError(root_name, "keyword 'base' is reserved");
+        if(cs.super_class == null)
+          FireError(curr_name, "no base class found");
         else
         {
           name_symb = cs.super_class; 
           scope = cs.super_class;
+          if(chain.Length <= chain_offset)
+            FireError(curr_name, "bad base call");
           var ch = chain[chain_offset];
           var macc = ch.memberAccess();
           if(macc == null)
@@ -2815,6 +2817,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
+    if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
+      FireError(name, "keyword 'base' is reserved");
+
     var tp = ParseType(type_ctx);
 
     var var_tree = Wrap(name); 
