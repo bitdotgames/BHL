@@ -703,6 +703,11 @@ public class ModuleCompiler : AST_Visitor
         Opcodes.MapIdxW
       )
     );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.MapAddInplace
+      )
+    );
   }
 
   static void DeclareOpcode(Definition def)
@@ -1568,6 +1573,35 @@ public class ModuleCompiler : AST_Visitor
   }
 
   public override void DoVisit(bhl.AST_JsonArrAddItem ast)
+  {
+    //NOTE: it's handled above
+  }
+
+  public override void DoVisit(bhl.AST_JsonMap ast)
+  {
+    var map_symb = ast.type as MapTypeSymbol;
+    if(map_symb == null)
+      throw new Exception("Could not find class binding: " + ast.type.GetName());
+
+    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+
+    for(int i=0;i<ast.children.Count;++i)
+    {
+      var c = ast.children[i];
+
+      //checking if there's an explicit add to array operand
+      if(c is AST_JsonMapAddItem)
+        Emit(Opcodes.MapAddInplace);
+      else
+        Visit(c);
+    }
+
+    //adding last item item
+    if(ast.children.Count > 0)
+      Emit(Opcodes.MapAddInplace);
+  }
+
+  public override void DoVisit(bhl.AST_JsonMapAddItem ast)
   {
     //NOTE: it's handled above
   }

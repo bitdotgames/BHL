@@ -31,6 +31,8 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonObj ast);
   public abstract void DoVisit(AST_JsonArr ast);
   public abstract void DoVisit(AST_JsonArrAddItem ast);
+  public abstract void DoVisit(AST_JsonMap ast);
+  public abstract void DoVisit(AST_JsonMapAddItem ast);
   public abstract void DoVisit(AST_JsonPair ast);
 
   public void Visit(IAST ast)
@@ -93,6 +95,10 @@ public abstract class AST_Visitor
       DoVisit(_27);
     else if(ast is AST_Typeof _28)
       DoVisit(_28);
+    else if(ast is AST_JsonMap _29)
+      DoVisit(_29);
+    else if(ast is AST_JsonMapAddItem _30)
+      DoVisit(_30);
     else 
       throw new Exception("Not known type: " + ast.GetType().Name);
   }
@@ -466,6 +472,21 @@ public class AST_JsonArr : AST_Tree
 public class AST_JsonArrAddItem : IAST
 {}
 
+public class AST_JsonMap : AST_Tree 
+{
+  public IType type;
+  public int line_num;
+
+  public AST_JsonMap(IType type, int line_num)
+  {
+    this.type = type;
+    this.line_num = line_num;
+  }
+}
+
+public class AST_JsonMapAddItem : IAST
+{}
+
 public class AST_JsonPair : AST_Tree 
 {
   public IType scope_type;
@@ -673,6 +694,13 @@ public class AST_Dumper : AST_Visitor
     Console.Write(")");
   }
 
+  public override void DoVisit(AST_JsonMap node)
+  {
+    Console.Write("(JMAP ");
+    VisitChildren(node);
+    Console.Write(")");
+  }
+
   public override void DoVisit(AST_JsonPair node)
   {
     Console.Write("(JPAIR " + node.name);
@@ -683,6 +711,11 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_JsonArrAddItem node)
   {
     Console.Write("(JARDD)");
+  }
+
+  public override void DoVisit(AST_JsonMapAddItem node)
+  {
+    Console.Write("(JMADD)");
   }
 
   public static void Dump(AST_Tree ast)

@@ -397,8 +397,6 @@ jsonEmptyArr
 
 jsonValue
   :  exp
-  |  jsonObject  // recursion
-  |  jsonArray   // recursion
   ;
 
 ////////////////////////////// lexer /////////////////////////////

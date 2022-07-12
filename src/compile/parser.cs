@@ -1381,9 +1381,36 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
     else if(curr_type is MapTypeSymbol map_type)
     {
-      var ast = new AST_JsonObj(curr_type, ctx.Start.Line);
+      var key_type = map_type.key_type.Get();
+      if(key_type == null)
+        FireError(ctx,  "type '" + map_type.key_type.path + "' not found");
+      var val_type = map_type.val_type.Get();
+      if(val_type == null)
+        FireError(ctx,  "type '" + map_type.val_type.path + "' not found");
+      var ast = new AST_JsonMap(curr_type, ctx.Start.Line);
+
       PushAST(ast);
+      var vals = ctx.jsonValue();
+      for(int i=0;i<vals.Length;++i)
+      {
+        var val = vals[i].exp() as bhlParser.ExpJsonArrContext;
+        if(val?.jsonArray()?.jsonValue()?.Length != 2)
+          FireError(ctx,  "[k, v] expected");
+
+        PushJsonType(key_type);
+        Visit(val.jsonArray().jsonValue()[0]);
+        PopJsonType();
+
+        PushJsonType(val_type);
+        Visit(val.jsonArray().jsonValue()[1]);
+        PopJsonType();
+
+        //the last item is added implicitely
+        if(i+1 < vals.Length)
+          ast.AddChild(new AST_JsonMapAddItem());
+      }
       PopAST();
+
 
       Wrap(ctx).eval_type = map_type;
 
@@ -1425,21 +1452,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   public override object VisitJsonValue(bhlParser.JsonValueContext ctx)
   {
     var exp = ctx.exp();
-    var jobj = ctx.jsonObject();
-    var jarr = ctx.jsonArray();
 
-    if(exp != null)
-    {
-      var curr_type = PeekJsonType();
-      Visit(exp);
-      Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    var curr_type = PeekJsonType();
+    Visit(exp);
+    Wrap(ctx).eval_type = Wrap(exp).eval_type;
 
-      types.CheckAssign(curr_type, Wrap(exp));
-    }
-    else if(jobj != null)
-      Visit(jobj);
-    else
-      Visit(jarr);
+    types.CheckAssign(curr_type, Wrap(exp));
 
     return null;
   }
