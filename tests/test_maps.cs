@@ -158,6 +158,49 @@ public class TestMaps : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInitErrorsWithJson()
+  {
+    {
+      string bhl = @"
+      [string]int m = [[""hey""]]
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"[k, v] expected"
+      );
+    }
+
+    {
+      string bhl = @"
+      [string]int m = [[""hey"", 1], [""hey""]]
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"[k, v] expected"
+      );
+    }
+
+    {
+      string bhl = @"
+      [string]int m = [[1, ""hey""]]
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"incompatible types"
+      );
+    }
+  }
+
+  [IsTested()]
   public void TestCountSeveral()
   {
     string bhl = @"
