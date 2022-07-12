@@ -61,7 +61,7 @@ class Color4 : Color3 {
   float a
 }
 
-Color4 c = new Color4
+Color4 c = {}
 c.r = 0.9
 c.g = 0.5
 c.b = 0.7
@@ -170,7 +170,7 @@ func Attack(Unit u) {
 
 ```go
 func Selector([]func bool() fns) {
-  foreach(fns as func bool() fn) {
+  foreach(func bool() fn in fns) {
     if(!fn()) {
       continue
     } else {
@@ -276,7 +276,7 @@ You can run unit tests by executing the following command:
 4. ~~More robust type system~~
 5. ~~Interfaces support~~
 6. ~~Namespaces support~~
-7. Virtual class methods
+7. ~~Virtual class methods~~
 8. Static class members support
 9. Maps support
 10. Debugger support
