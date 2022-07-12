@@ -1960,6 +1960,71 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVirtualMethodsChecks()
+  {
+    {
+      string bhl = @"
+      class Foo {
+        func override int getA() {
+          return 42
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "no base virtual method to override"
+      );
+    }
+
+    {
+      string bhl = @"
+      class Hey {
+        func int getA() {
+          return 42
+        }
+      }
+      class Foo : Hey {
+        func override int getA() {
+          return 42
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "no base virtual method to override"
+      );
+    }
+
+    {
+      string bhl = @"
+      class Hey {
+        func int getA() {
+          return 42
+        }
+      }
+      class Foo : Hey {
+        func virtual int getA() {
+          return 42
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "already defined symbol 'getA'"
+      );
+    }
+  }
+
+  [IsTested()]
   public void TestVirtualOverrideIn3dChild()
   {
     string bhl = @"
