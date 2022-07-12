@@ -1018,6 +1018,16 @@ public class VM : INamedResolver
           stack.Push(self);
         }
         break;
+        case Opcodes.MapAddInplace:
+        {
+          var self = stack[stack.Count - 3];
+          self.Retain();
+          var class_type = ((MapTypeSymbol)self.type);
+          var status = BHS.SUCCESS;
+          ((FuncSymbolNative)class_type.members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          stack.Push(self);
+        }
+        break;
         default:
           throw new Exception("Not supported opcode: " + opcode);
       }
