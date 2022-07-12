@@ -969,11 +969,11 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     bool yes = map.TryGetValue(key, out val);
     key.Release();
     v.Release();
-    frame.stack.Push(Val.NewBool(frame.vm, yes));
     if(yes)
       frame.stack.PushRetain(val);
     else
       frame.stack.Push(Val.New(frame.vm)); /*just dummy value*/
+    frame.stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
 

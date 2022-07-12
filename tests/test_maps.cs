@@ -284,8 +284,8 @@ public class TestMaps : BHL_TestBase
 
       var vm = MakeVM(bhl);
       var result =  Execute(vm, "test").result;
-      var num = result.PopRelease().num;
       bool ok = result.PopRelease().bval;
+      var num = result.PopRelease().num;
       AssertFalse(ok);
       AssertEqual(0, num);
       CommonChecks(vm);
@@ -304,8 +304,8 @@ public class TestMaps : BHL_TestBase
 
       var vm = MakeVM(bhl);
       var result =  Execute(vm, "test").result;
-      var num = result.PopRelease().num;
       bool ok = result.PopRelease().bval;
+      var num = result.PopRelease().num;
       AssertFalse(ok);
       AssertEqual(0, num);
       CommonChecks(vm);
@@ -328,11 +328,36 @@ public class TestMaps : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var result =  Execute(vm, "test").result;
-    var num = result.PopRelease().num;
     bool ok = result.PopRelease().bval;
+    var num = result.PopRelease().num;
     AssertTrue(ok);
     AssertEqual(14, num);
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestTryGetInSubCall()
+  {
+    string bhl = @"
+
+    func bool,int get() {
+      [string]int m = {}
+      m[""hey""] = 10
+      return m.TryGet(""hey"")
+    }
+
+    func int test() {
+      bool ok,int v = get()
+      if(ok){
+        return v+1
+      } else {
+        return 0
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
