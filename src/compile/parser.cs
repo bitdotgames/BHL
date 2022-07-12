@@ -1318,7 +1318,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(ctx, "{..} not expected");
 
-    if(!(curr_type is ClassSymbol) || (curr_type is ArrayTypeSymbol))
+    if(!(curr_type is ClassSymbol) || 
+        (curr_type is ArrayTypeSymbol) ||
+        (curr_type is MapTypeSymbol)
+        )
       FireError(ctx, "type '" + curr_type + "' can't be specified with {..}");
 
     Wrap(ctx).eval_type = curr_type;
@@ -1347,34 +1350,45 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(curr_type == null)
       FireError(ctx, "[..] not expected");
 
-    if(!(curr_type is ArrayTypeSymbol))
-      FireError(ctx, "[..] is not expected, need '" + curr_type + "'");
+    if(!(curr_type is ArrayTypeSymbol) && !(curr_type is MapTypeSymbol))
+      FireError(ctx, "type '" + curr_type + "' can't be specified with [..]");
 
-    var arr_type = curr_type as ArrayTypeSymbol;
-    var orig_type = arr_type.item_type.Get();
-    if(orig_type == null)
-      FireError(ctx,  "type '" + arr_type.item_type.path + "' not found");
-    PushJsonType(orig_type);
-
-    var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
-
-    PushAST(ast);
-    var vals = ctx.jsonValue();
-    for(int i=0;i<vals.Length;++i)
+    if(curr_type is ArrayTypeSymbol arr_type)
     {
-      Visit(vals[i]);
-      //the last item is added implicitely
-      if(i+1 < vals.Length)
-        ast.AddChild(new AST_JsonArrAddItem());
+      var orig_type = arr_type.item_type.Get();
+      if(orig_type == null)
+        FireError(ctx,  "type '" + arr_type.item_type.path + "' not found");
+      PushJsonType(orig_type);
+
+      var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
+
+      PushAST(ast);
+      var vals = ctx.jsonValue();
+      for(int i=0;i<vals.Length;++i)
+      {
+        Visit(vals[i]);
+        //the last item is added implicitely
+        if(i+1 < vals.Length)
+          ast.AddChild(new AST_JsonArrAddItem());
+      }
+      PopAST();
+
+      PopJsonType();
+
+      Wrap(ctx).eval_type = arr_type;
+
+      PeekAST().AddChild(ast);
     }
-    PopAST();
+    else if(curr_type is MapTypeSymbol map_type)
+    {
+      var ast = new AST_JsonObj(curr_type, ctx.Start.Line);
+      PushAST(ast);
+      PopAST();
 
-    PopJsonType();
+      Wrap(ctx).eval_type = map_type;
 
-    Wrap(ctx).eval_type = arr_type;
-
-    PeekAST().AddChild(ast);
-
+      PeekAST().AddChild(ast);
+    }
     return null;
   }
 

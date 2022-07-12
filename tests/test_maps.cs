@@ -9,7 +9,7 @@ public class TestMaps : BHL_TestBase
   public void TestSimpleDeclare()
   {
     string bhl = @"
-    [string]int m = {}
+    [string]int m = []
     ";
 
     var c = Compile(bhl);
@@ -42,7 +42,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
       func bool test() {
-        [string]int m = {}
+        [string]int m = []
         return m == null
       }
       ";
@@ -59,7 +59,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       return m.Count
     }
     ";
@@ -76,8 +76,25 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 42
+      return m[""hey""]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestSimpleInitWithJson()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      [string]int m = [[""hey"", 42]]
       return m[""hey""]
     }
     ";
@@ -94,7 +111,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 42
       m[""bar""] = 14
       return m.Count
@@ -113,7 +130,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 42
       m[""hey""] = 14
       return m[""hey""]
@@ -132,7 +149,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m.Remove(""hey"")
       return m.Count
     }
@@ -150,7 +167,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""foo""] = 42
       m[""hey""] = 14
       m.Remove(""foo"")
@@ -170,7 +187,7 @@ public class TestMaps : BHL_TestBase
 
     func int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 42
       m[""bar""] = 14
       m.Clear()
@@ -191,7 +208,7 @@ public class TestMaps : BHL_TestBase
 
       func bool test() 
       {
-        [string]int m = {}
+        [string]int m = []
         return m.Contains(""hey"")
       }
       ";
@@ -206,7 +223,7 @@ public class TestMaps : BHL_TestBase
 
       func bool test() 
       {
-        [string]int m = {}
+        [string]int m = []
         m[""hey""] = 42
         return m.Contains(""hey"")
       }
@@ -222,7 +239,7 @@ public class TestMaps : BHL_TestBase
 
       func bool test() 
       {
-        [string]int m = {}
+        [string]int m = []
         m[""hey""] = 42
         m.Remove(""hey"")
         return m.Contains(""hey"")
@@ -239,7 +256,7 @@ public class TestMaps : BHL_TestBase
 
       func bool test() 
       {
-        [string]int m = {}
+        [string]int m = []
         m[""hey""] = 42
         m.Remove(""bar"")
         return m.Contains(""hey"")
@@ -256,7 +273,7 @@ public class TestMaps : BHL_TestBase
 
       func bool test() 
       {
-        [string]int m = {}
+        [string]int m = []
         m[""hey""] = 42
         m.Clear()
         return m.Contains(""hey"")
@@ -277,7 +294,7 @@ public class TestMaps : BHL_TestBase
 
       func bool,int test() 
       {
-        [string]int m = {}
+        [string]int m = []
         return m.TryGet(""bar"")
       }
       ";
@@ -296,7 +313,7 @@ public class TestMaps : BHL_TestBase
 
       func bool,int test() 
       {
-        [string]int m = {}
+        [string]int m = []
         m[""hey""] = 14
         return m.TryGet(""bar"")
       }
@@ -319,7 +336,7 @@ public class TestMaps : BHL_TestBase
 
     func bool,int test() 
     {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 14
       m[""bar""] = 4
       return m.TryGet(""hey"")
@@ -341,7 +358,7 @@ public class TestMaps : BHL_TestBase
     string bhl = @"
 
     func bool,int get() {
-      [string]int m = {}
+      [string]int m = []
       m[""hey""] = 10
       return m.TryGet(""hey"")
     }
