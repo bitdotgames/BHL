@@ -695,6 +695,31 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestMemberNotFoundInBaseClass()
+  {
+    string bhl = @"
+
+    class Bar {
+    }
+    class Foo : Bar {
+      int b
+      func int getA()
+      {
+        return base.b
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol not resolved"
+    );
+  }
+
+
+  [IsTested()]
   public void TestBaseKeywordIsReserved()
   {
     string bhl = @"
