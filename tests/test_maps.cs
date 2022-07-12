@@ -90,17 +90,70 @@ public class TestMaps : BHL_TestBase
   [IsTested()]
   public void TestSimpleInitWithJson()
   {
+    {
+      string bhl = @"
+
+      func int test() 
+      {
+        [string]int m = [[""hey"", 42]]
+        return m[""hey""]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func int test() 
+      {
+        [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
+        return m[""hey""]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+
+      func int test() 
+      {
+        [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
+        return m[""foo""]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+
+  [IsTested()]
+  public void TestComplexInitWithJson()
+  {
     string bhl = @"
 
-    func int test() 
-    {
-      [string]int m = [[""hey"", 42]]
+    [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
+
+    func int test1() {
       return m[""hey""]
+    }
+    func int test2() {
+      return m[""foo""]
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(43, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(14, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 
