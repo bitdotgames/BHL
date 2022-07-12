@@ -2481,6 +2481,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         var vsym = self.members.Find(sym.name) as FuncSymbolScriptVirtual;
         if(vsym == null)
           FireError(sym.parsed.tree, "no base virtual method to override");
+
+        if(!vsym.signature.Equals(fsso.signature))
+          FireError(sym.parsed.tree, "signature doesn't match the base one");
+
         vsym.AddOverride(curr_class, fsso); 
       }
       else

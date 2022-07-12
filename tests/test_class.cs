@@ -2022,6 +2022,28 @@ public class TestClasses : BHL_TestBase
         "already defined symbol 'getA'"
       );
     }
+
+    {
+      string bhl = @"
+      class Hey {
+        func virtual int getA() {
+          return 4
+        }
+      }
+      class Foo : Hey {
+        func override float getA() {
+          return 42
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "signature doesn't match the base one"
+      );
+    }
   }
 
   [IsTested()]
