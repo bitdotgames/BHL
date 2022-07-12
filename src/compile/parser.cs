@@ -3251,7 +3251,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     PushScope(local_scope);
     local_scope.Enter();
 
-    var vod = ctx.foreachExp().varOrDeclare();
+    var vod = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
     var vd = vod.varDeclare();
     Proxy<IType> iter_type;
     string iter_str_name = "";

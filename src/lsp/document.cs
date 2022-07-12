@@ -348,7 +348,8 @@ namespace bhlsp
         if(exp != null)
           Visit(exp);
         
-        var varOrDeclare = foreachExp.varOrDeclare();
+        //TODO: support multi-declares
+        var varOrDeclare = foreachExp.varOrDeclares().varOrDeclare()[0];
         var varDeclare = varOrDeclare?.varDeclare();
         var varOrDeclareName = varOrDeclare?.NAME();
         

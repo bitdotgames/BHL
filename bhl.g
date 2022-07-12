@@ -81,7 +81,7 @@ newExp
   ;
 
 foreachExp
-  : '(' varOrDeclare 'in' exp ')' 
+  : '(' varOrDeclares 'in' exp ')' 
   ;
 
 forStmt
@@ -308,8 +308,13 @@ varDeclare
   : type NAME
   ;
 
+
 varOrDeclare
   : NAME | varDeclare
+  ;
+
+varOrDeclares
+  : varOrDeclare (',' varOrDeclare)*
   ;
 
 varsDeclareOrCallExps

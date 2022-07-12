@@ -1199,6 +1199,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVarOrDeclare([NotNull] bhlParser.VarOrDeclareContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.varOrDeclares"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVarOrDeclares([NotNull] bhlParser.VarOrDeclaresContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.varOrDeclares"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVarOrDeclares([NotNull] bhlParser.VarOrDeclaresContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varsDeclareOrCallExps"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
