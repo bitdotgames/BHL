@@ -162,6 +162,32 @@ public class TestMaps : BHL_TestBase
   {
     {
       string bhl = @"
+      [string]int m = [""hey""]
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"[k, v] expected"
+      );
+    }
+
+    {
+      string bhl = @"
+      [string]int m = [""hey"", 1]
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"[k, v] expected"
+      );
+    }
+
+    {
+      string bhl = @"
       [string]int m = [[""hey""]]
       ";
 
