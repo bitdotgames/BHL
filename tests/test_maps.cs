@@ -1,6 +1,7 @@
 using System;           
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 using bhl;
 
 public class TestMaps : BHL_TestBase
@@ -497,6 +498,28 @@ public class TestMaps : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //[IsTested()]
+  public void TestSimpleForeach()
+  {
+    string bhl = @"
+    func test() 
+    {
+      [string]int m = [[""hey"", 14], [""bar"", 4]]
+      foreach(string k,int v in m) {
+        trace(k + "":"" + (string)v + "";"")
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl);
+    AssertEqual(log.ToString(), "hey:14;bar:4;");
     CommonChecks(vm);
   }
 }

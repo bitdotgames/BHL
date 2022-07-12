@@ -3236,108 +3236,187 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
   public override object VisitForeach(bhlParser.ForeachContext ctx)
   {
-    //NOTE: we're going to generate the following code
-    //
-    //$foreach_tmp = arr
-    //$foreach_cnt = 0
-    //while($foreach_cnt < $foreach_tmp.Count)
-    //{
-    // arr_it = $foreach_tmp[$foreach_cnt]
-    // ...
-    // $foreach_cnt++
-    //}
-    
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
 
-    var vod = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
-    var vd = vod.varDeclare();
-    Proxy<IType> iter_type;
-    string iter_str_name = "";
-    AST_Tree iter_ast_decl = null;
-    VariableSymbol iter_symb = null;
-    if(vod.NAME() != null)
+    if(ctx.foreachExp().varOrDeclares().varOrDeclare().Length == 1)
     {
-      iter_str_name = vod.NAME().GetText();
-      iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
-      if(iter_symb == null)
-        FireError(vod.NAME(), "symbol is not a valid variable");
-      iter_type = iter_symb.type;
+      //NOTE: we're going to generate the following code
+      //
+      //$foreach_tmp = arr
+      //$foreach_cnt = 0
+      //while($foreach_cnt < $foreach_tmp.Count)
+      //{
+      // arr_it = $foreach_tmp[$foreach_cnt]
+      // ...
+      // $foreach_cnt++
+      //}
+    
+      var vod = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
+      var vd = vod.varDeclare();
+      Proxy<IType> iter_type;
+      string iter_str_name = "";
+      AST_Tree iter_ast_decl = null;
+      VariableSymbol iter_symb = null;
+      if(vod.NAME() != null)
+      {
+        iter_str_name = vod.NAME().GetText();
+        iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
+        if(iter_symb == null)
+          FireError(vod.NAME(), "symbol is not a valid variable");
+        iter_type = iter_symb.type;
+      }
+      else
+      {
+        iter_str_name = vd.NAME().GetText();
+        iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
+        iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
+        iter_type = iter_symb.type;
+      }
+      var arr_type = (ArrayTypeSymbol)curr_scope.TArr(iter_type).Get();
+
+      PushJsonType(arr_type);
+      var exp = ctx.foreachExp().exp();
+      //evaluating array expression
+      Visit(exp);
+      PopJsonType();
+      types.CheckAssign(Wrap(exp), arr_type);
+
+      var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
+      var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
+      if(arr_tmp_symb == null)
+      {
+        arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, curr_scope.T(iter_type));
+        curr_scope.Define(arr_tmp_symb);
+      }
+
+      var arr_cnt_name = "$foreach_cnt" + exp.Start.Line + "_" + exp.Start.Column;
+      var arr_cnt_symb = curr_scope.ResolveWithFallback(arr_cnt_name) as VariableSymbol;
+      if(arr_cnt_symb == null)
+      {
+        arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, Types.Int);
+        curr_scope.Define(arr_cnt_symb);
+      }
+
+      PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
+      //declaring counter var
+      PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, is_ref: false));
+
+      //declaring iterating var
+      if(iter_ast_decl != null)
+        PeekAST().AddChild(iter_ast_decl);
+
+      var ast = new AST_Block(BlockType.WHILE);
+
+      ++loops_stack;
+
+      //adding while condition
+      var cond = new AST_Block(BlockType.SEQ);
+      var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
+      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+      bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, arr_type.Resolve("Count")));
+      cond.AddChild(bin_op);
+      ast.AddChild(cond);
+
+      PushAST(ast);
+      var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+      //prepending filling of the iterator var
+      block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
+      var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
+      block.children.Insert(0, arr_at);
+      block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
+      block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
+
+      block.AddChild(new AST_Continue(jump_marker: true));
+      //appending counter increment
+      block.AddChild(new AST_Inc(arr_cnt_symb));
+      PopAST();
+
+      --loops_stack;
+
+      PeekAST().AddChild(ast);
+
+      local_scope.Exit();
+      PopScope();
     }
+    //else if(ctx.foreachExp().varOrDeclares().varOrDeclare().Length == 2)
+    //{
+    //  //NOTE: we're going to generate the following code
+    //  //
+    //  //$foreach_en = map.GetEnumerator() 
+    //  //while($foreach_en.MoveNext())
+    //  //{
+    //  // map_key = $foreach_en.Current.Key
+    //  // map_val = $foreach_en.Current.Value
+    //  // ...
+    //  //}
+
+    //  var vod_key = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
+    //  var vd_key = vod_key.varDeclare();
+    //  var vod_val = ctx.foreachExp().varOrDeclares().varOrDeclare()[1];
+    //  var vd_val = vod_val.varDeclare();
+
+    //  Proxy<IType> key_iter_type;
+    //  string key_iter_str_name = "";
+    //  AST_Tree key_iter_ast_decl = null;
+    //  VariableSymbol key_iter_symb = null;
+    //  if(vod_key.NAME() != null)
+    //  {
+    //    key_iter_str_name = vod_key.NAME().GetText();
+    //    key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
+    //    if(key_iter_symb == null)
+    //      FireError(vod_key.NAME(), "symbol is not a valid variable");
+    //    key_iter_type = key_iter_symb.type;
+    //  }
+    //  else
+    //  {
+    //    key_iter_str_name = vd_key.NAME().GetText();
+    //    key_iter_ast_decl = CommonDeclVar(curr_scope, vd_key.NAME(), vd_key.type(), is_ref: false, func_arg: false, write: false);
+    //    key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
+    //    key_iter_type = key_iter_symb.type;
+    //  }
+
+    //  Proxy<IType> val_iter_type;
+    //  string val_iter_str_name = "";
+    //  AST_Tree val_iter_ast_decl = null;
+    //  VariableSymbol val_iter_symb = null;
+    //  if(vod_val.NAME() != null)
+    //  {
+    //    val_iter_str_name = vod_val.NAME().GetText();
+    //    val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
+    //    if(val_iter_symb == null)
+    //      FireError(vod_val.NAME(), "symbol is not a valid variable");
+    //    val_iter_type = val_iter_symb.type;
+    //  }
+    //  else
+    //  {
+    //    val_iter_str_name = vd_val.NAME().GetText();
+    //    val_iter_ast_decl = CommonDeclVar(curr_scope, vd_val.NAME(), vd_val.type(), is_ref: false, func_arg: false, write: false);
+    //    val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
+    //    val_iter_type = val_iter_symb.type;
+    //  }
+    //  var map_type = (MapTypeSymbol)curr_scope.TMap(key_iter_type, val_iter_type).Get();
+
+    //  PushJsonType(map_type);
+    //  var exp = ctx.foreachExp().exp();
+    //  //evaluating array expression
+    //  Visit(exp);
+    //  PopJsonType();
+    //  types.CheckAssign(Wrap(exp), map_type);
+
+    //  var map_tmp_en_name = "$foreach_en" + exp.Start.Line + "_" + exp.Start.Column;
+    //  var map_tmp_en_symb = curr_scope.ResolveWithFallback(map_tmp_en_name) as VariableSymbol;
+    //  if(map_tmp_en_symb == null)
+    //  {
+    //    map_tmp_en_symb = new VariableSymbol(Wrap(exp), map_tmp_en_name, Types.Any);
+    //    curr_scope.Define(map_tmp_en_symb);
+    //  }
+
+    //}
     else
-    {
-      iter_str_name = vd.NAME().GetText();
-      iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
-      iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
-      iter_type = iter_symb.type;
-    }
-    var arr_type = (ArrayTypeSymbol)curr_scope.TArr(iter_type).Get();
-
-    PushJsonType(arr_type);
-    var exp = ctx.foreachExp().exp();
-    //evaluating array expression
-    Visit(exp);
-    PopJsonType();
-    types.CheckAssign(Wrap(exp), arr_type);
-
-    var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
-    var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
-    if(arr_tmp_symb == null)
-    {
-      arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, curr_scope.T(iter_type));
-      curr_scope.Define(arr_tmp_symb);
-    }
-
-    var arr_cnt_name = "$foreach_cnt" + exp.Start.Line + "_" + exp.Start.Column;
-    var arr_cnt_symb = curr_scope.ResolveWithFallback(arr_cnt_name) as VariableSymbol;
-    if(arr_cnt_symb == null)
-    {
-      arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, Types.Int);
-      curr_scope.Define(arr_cnt_symb);
-    }
-
-    PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
-    //declaring counter var
-    PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, is_ref: false));
-
-    //declaring iterating var
-    if(iter_ast_decl != null)
-      PeekAST().AddChild(iter_ast_decl);
-
-    var ast = new AST_Block(BlockType.WHILE);
-
-    ++loops_stack;
-
-    //adding while condition
-    var cond = new AST_Block(BlockType.SEQ);
-    var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
-    bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-    bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-    bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, arr_type.Resolve("Count")));
-    cond.AddChild(bin_op);
-    ast.AddChild(cond);
-
-    PushAST(ast);
-    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
-    //prepending filling of the iterator var
-    block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
-    var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
-    block.children.Insert(0, arr_at);
-    block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
-    block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-
-    block.AddChild(new AST_Continue(jump_marker: true));
-    //appending counter increment
-    block.AddChild(new AST_Inc(arr_cnt_symb));
-    PopAST();
-
-    --loops_stack;
-
-    PeekAST().AddChild(ast);
-
-    local_scope.Exit();
-    PopScope();
+      FireError(ctx.foreachExp().varOrDeclares(), "invalid 'foreach' syntax");
 
     return null;
   }
