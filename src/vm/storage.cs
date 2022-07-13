@@ -330,8 +330,7 @@ public class Val
 
 public class ValList : IList<Val>, IValRefcounted
 {
-  //NOTE: Exposed to allow low-level optimal manipulations. 
-  //      Use with caution.
+  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
   public List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
@@ -506,16 +505,66 @@ public class ValList : IList<Val>, IValRefcounted
 
 public class ValMap : IDictionary<Val,Val>, IValRefcounted
 {
-  //NOTE: since we track the lifetime of the key as well as of a value
+  //NOTE: Since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason
   //      we store the key alongside with the value in a KeyValuePair
-  public Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
+  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
+  Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
   public int refs;
 
   public VM vm;
+
+  //TODO: make it 'poolable' in the future
+  public class Enumerator : IDictionaryEnumerator
+  {
+    Dictionary<Val,KeyValuePair<Val, Val>>.Enumerator en;
+
+    public Enumerator(ValMap m)
+      : this(m.map.GetEnumerator())
+    {}
+
+    public Enumerator(Dictionary<Val,KeyValuePair<Val, Val>>.Enumerator en)
+    {
+      this.en = en;
+    }
+
+    public DictionaryEntry Entry {
+      get {
+        throw new NotImplementedException();
+      }
+    }
+
+    public object Current {
+      get {
+        throw new NotImplementedException();
+      }
+    }
+
+    public object Value {
+      get {
+        return en.Current.Value.Value;
+      }
+    }
+
+    public object Key {
+      get {
+        return en.Current.Key;
+      }
+    }
+
+    public bool MoveNext()
+    {
+      return en.MoveNext();
+    }
+
+    public void Reset()
+    {
+      throw new NotImplementedException();
+    }
+  }
 
   //////////////////IDictionary//////////////////
 
@@ -612,7 +661,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   IEnumerator IEnumerable.GetEnumerator()
   {
-    return GetEnumerator();
+    return new Enumerator(map.GetEnumerator());
   }
 
   ///////////////////////////////////////

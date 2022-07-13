@@ -978,7 +978,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override void GetEnumerator(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = AsMap(ctx);
-    v.SetObj(m.map.GetEnumerator(), enumerator_type);
+    v.SetObj(new ValMap.Enumerator(m), enumerator_type);
   }
 
   public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
@@ -1073,7 +1073,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
-    var en = (System.Collections.IDictionaryEnumerator)ctx._obj;
+    var en = (ValMap.Enumerator)ctx._obj;
     bool ok = en.MoveNext();
     v.SetBool(ok);
   }
@@ -1081,9 +1081,9 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var v = frame.stack.Pop();
-    var en = (System.Collections.IDictionaryEnumerator)v._obj;
+    var en = (ValMap.Enumerator)v._obj;
     var key = (Val)en.Key; 
-    var val = ((KeyValuePair<Val,Val>)en.Value).Value; 
+    var val = (Val)en.Value; 
     frame.stack.PushRetain(val);
     frame.stack.PushRetain(key);
     v.Release();
