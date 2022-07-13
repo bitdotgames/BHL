@@ -2312,7 +2312,7 @@ public class TestClasses : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(12/*???*/, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }
