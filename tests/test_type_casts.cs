@@ -23,7 +23,7 @@ public class TestTypeCasts : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("int")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("int")), 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -56,7 +56,7 @@ public class TestTypeCasts : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;

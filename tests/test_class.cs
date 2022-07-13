@@ -169,12 +169,12 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.SetAttr, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -1750,12 +1750,12 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.SetAttr, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")) })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
@@ -1974,13 +1974,15 @@ public class TestClasses : BHL_TestBase
       b.a = 1
       b.b = 10
       b.new_a = 100
+      Foo f = b
+      //NOTE: Bar.getA() will be called anyway!
       return ((Foo)b).getA() + b.getB()
     }
     ";
 
     var vm = MakeVM(bhl);
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
-    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2123,6 +2125,7 @@ public class TestClasses : BHL_TestBase
       h.b = 10
       h.bar_a = 100
       h.hey_a = 200
+      //NOTE: Hey.getA() will called anyway
       return ((Foo)h).getA() + h.getB()
     }
 
@@ -2133,14 +2136,15 @@ public class TestClasses : BHL_TestBase
       h.b = 10
       h.bar_a = 100
       h.hey_a = 200
+      //NOTE: Hey.getA() will called anyway
       return ((Bar)h).getA() + h.getB()
     }
     ";
 
     var vm = MakeVM(bhl);
     AssertEqual(210, Execute(vm, "test1").result.PopRelease().num);
-    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
-    AssertEqual(110, Execute(vm, "test3").result.PopRelease().num);
+    AssertEqual(210, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(210, Execute(vm, "test3").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2237,6 +2241,7 @@ public class TestClasses : BHL_TestBase
       b.a = 1
       b.b = 10
       b.new_a = 100
+      //NOTE: Bar.getA() will called anyway
       return ((Foo)b).getA() + b.getB()
     }
     ";
@@ -2249,7 +2254,7 @@ public class TestClasses : BHL_TestBase
     
     vm.LoadModule("bhl2");
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
-    AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2285,7 +2290,7 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestMixInterfaceWithVirtualMethodWithArgs()
+  public void TestMixInterfaceWithVirtualMethodAndCasting()
   {
     string bhl = @"
     func IBar MakeIBar() {
@@ -2304,15 +2309,24 @@ public class TestClasses : BHL_TestBase
       func override int test(int v) { return v+2 }
     }
 
-    func int test() {
+    func int test1() {
       IBar bar = MakeIBar()
       BaseBar bbar = bar as BaseBar
+      //NOTE: Bar.test() implementation is called
+      return bbar.test(10)
+    }
+
+    func int test2() {
+      IBar bar = MakeIBar()
+      BaseBar bbar = (BaseBar)bar
+      //NOTE: Bar.test() implementation is called
       return bbar.test(10)
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(12, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(12, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

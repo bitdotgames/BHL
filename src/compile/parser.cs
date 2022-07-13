@@ -608,7 +608,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           ++chain_offset;
 
           PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
-          PeekAST().AddChild(new AST_TypeCast(cs.super_class, line));
+          PeekAST().AddChild(new AST_TypeCast(cs.super_class, true/*force type*/, line));
         }
       }
 
@@ -1506,7 +1506,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeCast(tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeCast(tp.Get(), false/*don't force type*/, ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     Visit(exp);

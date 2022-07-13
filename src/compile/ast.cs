@@ -282,11 +282,13 @@ public class AST_LambdaDecl : AST_FuncDecl
 public class AST_TypeCast : AST_Tree 
 {
   public IType type;
+  public bool force_type;
   public int line_num;
 
-  public AST_TypeCast(IType type, int line_num)
+  public AST_TypeCast(IType type, bool force_type, int line_num)
   {
     this.type = type;
+    this.force_type = force_type;
     this.line_num = line_num;
   }
 }

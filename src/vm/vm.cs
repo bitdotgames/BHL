@@ -1269,9 +1269,11 @@ public class VM : INamedResolver
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        bool force_type = (int)Bytecode.Decode8(curr_frame.bytecode, ref ip) == 1;
+
         var cast_type = curr_frame.constants[cast_type_idx].itype.Get();
 
-        HandleTypeCast(curr_frame, cast_type);
+        HandleTypeCast(curr_frame, cast_type, force_type);
       }
       break;
       case Opcodes.TypeAs:
@@ -1970,7 +1972,7 @@ public class VM : INamedResolver
   }
 
   //TODO: make it more universal and robust
-  void HandleTypeCast(Frame curr_frame, IType cast_type)
+  void HandleTypeCast(Frame curr_frame, IType cast_type, bool force_type)
   {
     var new_val = Val.New(this);
     var val = curr_frame.stack.PopRelease();
@@ -1982,7 +1984,8 @@ public class VM : INamedResolver
     else
     {
       new_val.ValueCopyFrom(val);
-      new_val.type = cast_type;
+      if(force_type)
+        new_val.type = cast_type;
       new_val.RefMod(RefOp.USR_INC);
     }
 
