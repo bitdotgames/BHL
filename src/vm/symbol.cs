@@ -879,6 +879,17 @@ public abstract class MapTypeSymbol : ClassSymbol
       //hidden system method not available directly
       FuncMapIdxW = new FuncSymbolNative("$MapIdxW", Types.Void, MapIdxW);
     }
+
+    {
+      var vs = new FieldSymbol("Next", Types.Bool, EnumeratorNext, null);
+      enumerator_type.Define(vs);
+    }
+
+    {
+      var fn = new FuncSymbolNative("Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
+      );
+      enumerator_type.Define(fn);
+    }
   }
 
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
@@ -891,6 +902,9 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine TryGet(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+
+  public abstract void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld);
+  public abstract ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>
@@ -899,18 +913,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(key_type, val_type)
-  {
-    {
-      var vs = new FieldSymbol("Next", Types.Bool, EnumeratorNext, null);
-      enumerator_type.Define(vs);
-    }
-
-    {
-      var fn = new FuncSymbolNative("Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
-      );
-      enumerator_type.Define(fn);
-    }
-  }
+  {}
   
   //marshall factory version
   public GenericMapTypeSymbol()
@@ -1068,14 +1071,14 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     return null;
   }
 
-  public void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  public override void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     var en = (System.Collections.IDictionaryEnumerator)ctx._obj;
     bool ok = en.MoveNext();
     v.SetBool(ok);
   }
 
-  public ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
   {
     var v = frame.stack.Pop();
     var en = (System.Collections.IDictionaryEnumerator)v._obj;
