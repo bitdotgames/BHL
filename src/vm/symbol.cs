@@ -329,7 +329,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   //to actual class method indices:
   //  [IFoo][3,1,0]
   //  [IBar][2,0]
-  internal Dictionary<InterfaceSymbol, List<int>> _itable;
+  internal Dictionary<InterfaceSymbol, List<FuncSymbol>> _itable;
 
   internal Dictionary<int, FuncSymbol> _vtable;
 
@@ -429,6 +429,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public void UpdateVTable()
   {
+    //virtual methods lookup table
     _vtable = new Dictionary<int, FuncSymbol>();
     
     for(int i=0;i<members.Count;++i)
@@ -437,7 +438,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
         _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
     }
 
-    _itable = new Dictionary<InterfaceSymbol, List<int>>();
+    //interfaces lookup table
+    _itable = new Dictionary<InterfaceSymbol, List<FuncSymbol>>();
 
     var all = new HashSet<IInstanceType>();
     if(super_class != null)
@@ -450,9 +452,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
     foreach(var imp in all)
     {
-      var ifs2idx = new List<int>();
+      var ifs2fn = new List<FuncSymbol>();
       var ifs = (InterfaceSymbol)imp;
-      _itable.Add(ifs, ifs2idx);
+      _itable.Add(ifs, ifs2fn);
 
       for(int midx=0;midx<ifs.members.Count;++midx)
       {
@@ -460,7 +462,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
         var symb = Resolve(m.name) as FuncSymbol;
         if(symb == null)
           throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
-        ifs2idx.Add(symb.scope_idx);
+        if(symb is FuncSymbolScriptVirtual fssv)
+          symb = fssv.overrides[fssv.overrides.Count-1];
+        ifs2fn.Add(symb);
       }
     }
   }

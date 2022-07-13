@@ -1674,9 +1674,7 @@ public class VM : INamedResolver
 
         var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
         var class_type = (ClassSymbolScript)self.type;
-        int func_idx = class_type._itable[iface_symb][iface_func_idx];
-
-        var func_symb = (FuncSymbolScript)class_type.members[func_idx];
+        var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
