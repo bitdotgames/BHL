@@ -281,7 +281,7 @@ You can run unit tests by executing the following command:
 7. ~~Namespaces support~~
 8. ~~Virtual class methods~~
 9. Static class members support
-10. Maps support
+10. ~~Maps support~~
 11. Debugger support
 12. LSP integration
 
