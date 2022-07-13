@@ -1459,17 +1459,14 @@ public class FuncSymbolScriptVirtual : FuncSymbol
   public List<Proxy<ClassSymbol>> owners = new List<Proxy<ClassSymbol>>(); 
 
 #if BHL_FRONT
-  public FuncSymbolScriptVirtual(
-    WrappedParseTree parsed, 
-    FuncSignature sig,
-    string name,
-    int default_args_num = 0
-  ) 
-    : base(name, sig)
+  public FuncSymbolScriptVirtual(FuncSymbolScript proto) 
+    : base(proto.name, proto.signature)
   {
-    this.name = name;
-    this.default_args_num = default_args_num;
-    this.parsed = parsed;
+    this.default_args_num = proto.default_args_num;
+    this.parsed = proto.parsed;
+
+    for(int m=0;m<proto.members.Count;++m)
+      members.Add(proto.members[m]);
   }
 #endif
 
@@ -1485,6 +1482,9 @@ public class FuncSymbolScriptVirtual : FuncSymbol
 
   public void AddOverride(ClassSymbol owner, FuncSymbolScript fs)
   {
+    if(!signature.Equals(fs.signature))
+      throw new Exception("Incompatible func signature");
+
     owners.Add(new Proxy<ClassSymbol>(owner));
     overrides.Add(fs);
   }

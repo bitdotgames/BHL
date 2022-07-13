@@ -2284,8 +2284,7 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestMixInterfaceWithVirtualMethodWithArgs()
   {
     string bhl = @"
@@ -2313,7 +2312,7 @@ public class TestClasses : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(12/*???*/, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

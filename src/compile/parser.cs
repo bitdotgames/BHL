@@ -2499,12 +2499,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       if(sym is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
       {
-        var vsym = new FuncSymbolScriptVirtual(
-          fssv.parsed, 
-          fssv.signature, 
-          fssv.name, 
-          fssv.default_args_num
-        );
+        var vsym = new FuncSymbolScriptVirtual(fssv);
         vsym.AddOverride(curr_class, fssv);
         self.members.Add(vsym);
       }
