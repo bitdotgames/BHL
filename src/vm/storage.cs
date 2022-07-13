@@ -305,7 +305,7 @@ public class Val
       ^ _num2.GetHashCode()
       ^ _num3.GetHashCode()
       ^ _num4.GetHashCode()
-      ^ (int)_obj?.GetHashCode()
+      ^ (int)(_obj == null ? 0 : _obj.GetHashCode())
       ;
   }
 

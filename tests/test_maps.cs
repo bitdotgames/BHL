@@ -581,4 +581,27 @@ public class TestMaps : BHL_TestBase
       );
     }
   }
+
+  [IsTested()]
+  public void TestEnumInMap()
+  {
+    string bhl = @"
+
+    enum Enum {
+      Bar = 1
+      Foo = 2
+    }
+
+    func int test() {
+      [Enum]int m = []
+      m[Enum.Bar] = 10
+      m[Enum.Foo] = 20
+      return m[Enum.Bar]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
