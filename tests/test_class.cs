@@ -2284,4 +2284,37 @@ public class TestClasses : BHL_TestBase
     AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  //TODO:
+  //[IsTested()]
+  public void TestMixInterfaceWithVirtualMethodWithArgs()
+  {
+    string bhl = @"
+    func IBar MakeIBar() {
+      return new Bar
+    }
+
+    interface IBar {
+      func int test(int v)
+    }
+
+    class BaseBar : IBar {
+      func virtual int test(int v) { return v+1 }
+    }
+
+    class Bar : BaseBar {
+      func override int test(int v) { return v+2 }
+    }
+
+    func int test() {
+      IBar bar = MakeIBar()
+      BaseBar bbar = bar as BaseBar
+      return bbar.test(10)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
