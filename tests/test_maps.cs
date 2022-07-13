@@ -523,4 +523,62 @@ public class TestMaps : BHL_TestBase
     AssertEqual(log.ToString(), "hey:14;bar:4;");
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestForeachChecks()
+  {
+    {
+      string bhl = @"
+      func test() 
+      {
+        [string]int m
+        foreach(int v in m) {
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"incompatible types"
+      );
+    }
+
+    {
+      string bhl = @"
+      func test() 
+      {
+        []int m
+        foreach(int k,int v in m) {
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"incompatible types"
+      );
+    }
+
+    {
+      string bhl = @"
+      func test() 
+      {
+        [string]int m
+        foreach(int k,string v in m) {
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"incompatible types"
+      );
+    }
+  }
 }
