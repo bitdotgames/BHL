@@ -539,10 +539,11 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public void Clear()
   {
-    foreach(var kv in map)
+    var en = map.GetEnumerator();
+    while(en.MoveNext())
     {
-      kv.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      kv.Value.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      en.Current.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      en.Current.Value.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
     }
     map.Clear();
   }
