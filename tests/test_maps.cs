@@ -501,7 +501,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestSimpleForeach()
   {
     string bhl = @"
@@ -518,7 +518,8 @@ public class TestMaps : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
     AssertEqual(log.ToString(), "hey:14;bar:4;");
     CommonChecks(vm);
   }

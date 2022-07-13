@@ -501,6 +501,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     this.creator = CreateArr;
 
+    //NOTE: must be first member of the class
     {
       var fn = new FuncSymbolNative("Add", Types.Void, Add,
         new FuncArgSymbol("o", item_type)
@@ -813,6 +814,8 @@ public abstract class MapTypeSymbol : ClassSymbol
   public Proxy<IType> key_type;
   public Proxy<IType> val_type;
 
+  public ClassSymbol enumerator_type = new ClassSymbolNative("Enumerator", null);
+
   public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base("[" + key_type.path + "]" + val_type.path, super_class: null)
   {
@@ -821,6 +824,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     this.creator = CreateMap;
 
+    //NOTE: must be first member of the class
     {
       var fn = new FuncSymbolNative("Add", Types.Void, Add,
         new FuncArgSymbol("key", key_type),
@@ -862,6 +866,12 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
+      var vs = new FieldSymbol("$Enumerator", new Proxy<IType>(enumerator_type), GetEnumerator, null);
+      this.Define(vs);
+    }
+
+    {
+      //hidden system method not available directly
       FuncMapIdx = new FuncSymbolNative("$MapIdx", val_type, MapIdx);
     }
 
@@ -873,6 +883,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
+  public abstract void GetEnumerator(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
   public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
@@ -888,16 +899,27 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(key_type, val_type)
-  {}
+  {
+    {
+      var vs = new FieldSymbol("Next", Types.Bool, EnumeratorNext, null);
+      enumerator_type.Define(vs);
+    }
+
+    {
+      var fn = new FuncSymbolNative("Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
+      );
+      enumerator_type.Define(fn);
+    }
+  }
   
   //marshall factory version
   public GenericMapTypeSymbol()
     : this(new Proxy<IType>(), new Proxy<IType>())
   {}
 
-  static IDictionary<Val,Val> AsMap(Val arr)
+  static ValMap AsMap(Val arr)
   {
-    var map = arr.obj as IDictionary<Val,Val>;
+    var map = arr.obj as ValMap;
     if(map == null)
       throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return map;
@@ -948,6 +970,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   {
     var m = AsMap(ctx);
     v.SetNum(m.Count);
+  }
+
+  public override void GetEnumerator(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    var m = AsMap(ctx);
+    v.SetObj(m.map.GetEnumerator(), enumerator_type);
   }
 
   public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
@@ -1036,6 +1064,25 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     map[key] = val;
     key.Release();
     val.Release();
+    v.Release();
+    return null;
+  }
+
+  public void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    var en = (System.Collections.IDictionaryEnumerator)ctx._obj;
+    bool ok = en.MoveNext();
+    v.SetBool(ok);
+  }
+
+  public ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  {
+    var v = frame.stack.Pop();
+    var en = (System.Collections.IDictionaryEnumerator)v._obj;
+    var key = (Val)en.Key; 
+    var val = ((KeyValuePair<Val,Val>)en.Value).Value; 
+    frame.stack.PushRetain(val);
+    frame.stack.PushRetain(key);
     v.Release();
     return null;
   }

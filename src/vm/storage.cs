@@ -509,7 +509,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   //NOTE: since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason
   //      we store the key alongside with the value in a KeyValuePair
-  Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
+  public Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for inspection
