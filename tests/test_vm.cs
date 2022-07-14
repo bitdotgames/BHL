@@ -14286,6 +14286,36 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullFuncPtrAsDefaultFuncArg()
+  {
+    string bhl = @"
+
+    func foo(int a, func int(int) fn = null) {
+      if(fn == null) {
+        trace(""NULL;"")
+      } else {
+        trace(""NOT NULL;"")
+      }
+    }
+      
+    func test() 
+    {
+      foo(1)
+      foo(2, func int(int a) { return a})
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("NULL;NOT NULL;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestWhileEmptyArrLoop()
   {
     string bhl = @"
