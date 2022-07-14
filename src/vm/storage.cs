@@ -137,6 +137,7 @@ public class Val
     _obj = null;
   }
 
+  //NOTE: doesn't affect refcounting
   public void ValueCopyFrom(Val dv)
   {
     type = dv.type;
@@ -145,6 +146,14 @@ public class Val
     _num3 = dv._num3;
     _num4 = dv._num4;
     _obj = dv._obj;
+  }
+
+  public Val CloneValue()
+  {
+    var copy = Val.New(vm);
+    copy.ValueCopyFrom(this);
+    copy.RefMod(RefOp.USR_INC);
+    return copy;
   }
 
   //NOTE: see RefOp for constants
@@ -350,8 +359,10 @@ public class ValList : IList<Val>, IValRefcounted
 
   public void Add(Val dv)
   {
-    dv.RefMod(RefOp.INC | RefOp.USR_INC);
-    lst.Add(dv);
+    //NOTE: we need to make a copy of the passed Val since
+    //      it can be a locally cleared afterwards variable and the same
+    //      time we need to increase the user payload refs counter
+    lst.Add(dv.CloneValue());
   }
 
   public void AddRange(IList<Val> list)
@@ -381,10 +392,13 @@ public class ValList : IList<Val>, IValRefcounted
       return lst[i];
     }
     set {
-      var prev = lst[i];
-      prev.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      value.RefMod(RefOp.INC | RefOp.USR_INC);
-      lst[i] = value;
+      var curr = lst[i];
+      //NOTE: we are going to re-use the existing Value,
+      //      thus we need to decrease/increase user payload
+      //      refcounts properly 
+      curr.RefMod(RefOp.USR_DEC);
+      curr.ValueCopyFrom(value);
+      curr.RefMod(RefOp.USR_INC);
     }
   }
 
@@ -603,13 +617,21 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       return map[k].Value;
     }
     set {
-      KeyValuePair<Val,Val> prev;
-      if(!map.TryGetValue(k, out prev))
-        k.RefMod(RefOp.INC | RefOp.USR_INC);
+      //NOTE: we are going to re-use the existing k/v,
+      //      thus we need to decrease/increase user payload
+      //      refcounts properly 
+      KeyValuePair<Val,Val> curr;
+      if(map.TryGetValue(k, out curr))
+      {
+        curr.Value.RefMod(RefOp.USR_DEC);
+        curr.Value.ValueCopyFrom(value);
+        curr.Value.RefMod(RefOp.USR_INC);
+      }
       else
-        prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      value.RefMod(RefOp.INC | RefOp.USR_INC);
-      map[k] = new KeyValuePair<Val,Val>(k, value);
+      {
+        k = k.CloneValue();
+        map[k] = new KeyValuePair<Val,Val>(k, value.CloneValue());
+      }
     }
   }
 

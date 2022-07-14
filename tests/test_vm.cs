@@ -9327,6 +9327,44 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestValueIsClonedOnceStoredInArray()
+  {
+    string bhl = @"
+    func test()
+    {
+      []int ints = []
+      for(int i=0;i<3;i++) {
+        ints.Add(i)
+      }
+      
+      int local_var_garbage = 10
+      for(int i=0;i<ints.Count;i++) {
+        trace((string)ints[i] + "";"")
+      }
+
+      for(int i=0;i<ints.Count;i++) {
+        ints[i] = i
+      }
+
+      int local_var_garbage2 = 20
+      for(int i=0;i<ints.Count;i++) {
+        trace((string)ints[i] + "";"")
+      }
+
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "0;1;2;0;1;2;");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestArrayPassedToFuncIsChanged()
   {
     string bhl = @"
@@ -18606,7 +18644,7 @@ public class TestVM : BHL_TestBase
     {
       var dv = Val.New(vm);
       lst.Add(dv);
-      AssertEqual(dv._refs, 2);
+      AssertEqual(dv._refs, 1);
 
       lst.Clear();
       AssertEqual(dv._refs, 1);
@@ -18616,7 +18654,7 @@ public class TestVM : BHL_TestBase
     {
       var dv = Val.New(vm);
       lst.Add(dv);
-      AssertEqual(dv._refs, 2);
+      AssertEqual(dv._refs, 1);
 
       lst.RemoveAt(0);
       AssertEqual(dv._refs, 1);
@@ -18631,11 +18669,11 @@ public class TestVM : BHL_TestBase
       var dv1 = Val.New(vm);
       lst.Add(dv0);
       lst.Add(dv1);
-      AssertEqual(dv0._refs, 2);
-      AssertEqual(dv1._refs, 2);
+      AssertEqual(dv0._refs, 1);
+      AssertEqual(dv1._refs, 1);
 
       lst.RemoveAt(1);
-      AssertEqual(dv0._refs, 2);
+      AssertEqual(dv0._refs, 1);
       AssertEqual(dv1._refs, 1);
 
       lst.Clear();

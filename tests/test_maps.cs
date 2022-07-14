@@ -612,4 +612,123 @@ public class TestMaps : BHL_TestBase
     AssertEqual(10, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestMixMapsAndLists()
+  {
+    string bhl = @"
+    enum Id {
+      Bar = 10
+      Foo = 20
+    }
+
+    [Id]int nums = []
+    [int]int nums2 = []
+
+    func test1() {
+      nums[Id.Bar] = 2
+      nums[Id.Foo] = 1
+
+      []Id ids = []
+      foreach(Id id, int n in nums) {
+        //NOTE: interested only in a specific item
+        if(n == 2) {
+          ids.Add(id)
+          trace(""add:"" + (string)ids[ids.Count-1] + "";"")
+        }
+      }
+
+      for(int i=0;i<ids.Count;i++) {
+        bool ok, int _ = nums.TryGet(ids[i])
+        if(ok) {
+          nums.Remove(ids[i])
+        }
+      }
+
+      foreach(Id id, int n in nums) {
+        trace(""map:"" + (string)id + ""->"" + (string)n + "";"")
+      }
+    }
+
+    func test2() {
+      nums2[10] = 2
+      nums2[20] = 1
+
+      []int ids = []
+      foreach(int id, int n in nums2) {
+        //NOTE: interested only in a specific item
+        if(n == 2) {
+          ids.Add(id)
+          trace(""add:"" + (string)ids[ids.Count-1] + "";"")
+        }
+      }
+
+      for(int i=0;i<ids.Count;i++) {
+        bool ok, int _ = nums2.TryGet(ids[i])
+        if(ok) {
+          nums2.Remove(ids[i])
+        }
+      }
+
+      foreach(int id, int n in nums2) {
+        trace(""map:"" + (string)id + ""->"" + (string)n + "";"")
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+    BindLog(ts);
+
+    var vm = MakeVM(bhl, ts);
+
+    Execute(vm, "test1");
+    AssertEqual(log.ToString(), "add:10;map:20->1;");
+    log.Clear();
+
+    Execute(vm, "test2");
+    AssertEqual(log.ToString(), "add:10;map:20->1;");
+    log.Clear();
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestValueIsClonedOnceStoredInMap()
+  {
+    string bhl = @"
+    func test()
+    {
+      [int]int m = []
+      for(int i=0;i<3;i++) {
+        m[i] = i
+      }
+      
+      int local_var_garbage = 10
+      foreach(int k,int v in m) {
+        trace((string)k + ""->"" + (string)v + "";"")
+      }
+
+      for(int i=0;i<m.Count;i++) {
+        m[i] = i
+      }
+
+      int local_var_garbage2 = 20
+      foreach(int k,int v in m) {
+        trace((string)k + ""->"" + (string)v + "";"")
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "0->0;1->1;2->2;0->0;1->1;2->2;");
+    CommonChecks(vm);
+  }
+
 }
