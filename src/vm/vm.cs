@@ -1714,11 +1714,9 @@ public class VM : INamedResolver
         int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
         int self_idx = curr_frame.stack.Count - args_num - 1;
         var self = curr_frame.stack[self_idx];
-        curr_frame.stack.RemoveAt(self_idx);
 
         var class_type = (ClassSymbol)self.type;
         var func_symb = (FuncSymbolNative)class_type._vtable[virt_func_idx];
