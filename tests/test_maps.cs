@@ -592,7 +592,14 @@ public class TestMaps : BHL_TestBase
       Foo = 2
     }
 
-    func int test() {
+    func int test1() {
+      [Enum]int m = []
+      m[Enum.Bar] = 10
+      m[Enum.Foo] = 20
+      return m[Enum.Foo]
+    }
+
+    func int test2() {
       [Enum]int m = []
       m[Enum.Bar] = 10
       m[Enum.Foo] = 20
@@ -601,7 +608,8 @@ public class TestMaps : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(20, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(10, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 }
