@@ -1156,6 +1156,41 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserClassAndLocalVariableOwnership()
+  {
+    string bhl = @"
+    class Foo {
+      int a
+    }
+
+    func int test1()
+    {
+      Foo f = {}
+      for(int i=0;i<2;i++) {
+        f.a = i
+      }
+      int local_var_garbage = 100
+      return f.a
+    }
+
+    func int test2()
+    {
+      Foo f = null
+      for(int i=0;i<2;i++) {
+        f = {a : i}
+      }
+      int local_var_garbage = 100
+      return f.a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(1, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethodsOrderIrrelevant()
   {
     string bhl = @"
