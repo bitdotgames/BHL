@@ -6,77 +6,78 @@ namespace bhl {
 
 public enum Opcodes
 {
-  Constant           = 1,
-  Add                = 2,
-  Sub                = 3,
-  Div                = 4,
-  Mul                = 5,
-  SetVar             = 6,
-  GetVar             = 7,
-  DeclVar            = 8,
-  ArgVar             = 9,
-  SetGVar            = 10,
-  GetGVar            = 11,
-  SetGVarImported    = 12,
-  GetGVarImported    = 13,
-  Return             = 14,
-  ReturnVal          = 15,
-  Jump               = 16,
-  JumpZ              = 17,
-  JumpPeekZ          = 18,
-  JumpPeekNZ         = 19,
-  Break              = 20,
-  Continue           = 21,
-  Pop                = 22,
-  CallByIP           = 23,
-  CallNative         = 24,
-  CallFunc           = 25,
-  CallMethod         = 26,
-  CallMethodNative   = 27,
-  CallMethodIface    = 29,
-  CallMethodVirt     = 30,
-  CallPtr            = 38,
-  GetFunc            = 39,
-  GetFuncNative      = 40,
-  GetFuncFromVar     = 41,
-  LastArgToTop       = 43,
-  GetAttr            = 44,
-  RefAttr            = 45,
-  SetAttr            = 46,
-  SetAttrInplace     = 47,
-  ArgRef             = 48,
-  UnaryNot           = 49,
-  UnaryNeg           = 50,
-  And                = 51,
-  Or                 = 52,
-  Mod                = 53,
-  BitOr              = 54,
-  BitAnd             = 55,
-  Equal              = 56,
-  NotEqual           = 57,
-  LT                 = 59,
-  LTE                = 60,
-  GT                 = 61,
-  GTE                = 62,
-  DefArg             = 63, 
-  TypeCast           = 64,
-  TypeAs             = 65,
-  TypeIs             = 66,
-  Typeof             = 67,
-  Block              = 75,
-  New                = 76,
-  Lambda             = 77,
-  UseUpval           = 78,
-  InitFrame          = 79,
-  Inc                = 80,
-  Dec                = 81,
-  ArrIdx             = 82,
-  ArrIdxW            = 83,
-  ArrAddInplace      = 84,  //TODO: used for json alike array initialization,   
-                           //      can be replaced with more low-level opcodes?
-  MapIdx             = 90,
-  MapIdxW            = 91,
-  MapAddInplace      = 92,  //TODO: used for json alike array initialization,   
+  Constant              = 1,
+  Add                   = 2,
+  Sub                   = 3,
+  Div                   = 4,
+  Mul                   = 5,
+  SetVar                = 6,
+  GetVar                = 7,
+  DeclVar               = 8,
+  ArgVar                = 9,
+  SetGVar               = 10,
+  GetGVar               = 11,
+  SetGVarImported       = 12,
+  GetGVarImported       = 13,
+  Return                = 14,
+  ReturnVal             = 15,
+  Jump                  = 16,
+  JumpZ                 = 17,
+  JumpPeekZ             = 18,
+  JumpPeekNZ            = 19,
+  Break                 = 20,
+  Continue              = 21,
+  Pop                   = 22,
+  CallByIP              = 23,
+  CallNative            = 24,
+  CallFunc              = 25,
+  CallMethod            = 26,
+  CallMethodNative      = 27,
+  CallMethodIface       = 29,
+  CallMethodVirt        = 30,
+  CallMethodVirtNative  = 31,
+  CallPtr               = 38,
+  GetFunc               = 39,
+  GetFuncNative         = 40,
+  GetFuncFromVar        = 41,
+  LastArgToTop          = 43,
+  GetAttr               = 44,
+  RefAttr               = 45,
+  SetAttr               = 46,
+  SetAttrInplace        = 47,
+  ArgRef                = 48,
+  UnaryNot              = 49,
+  UnaryNeg              = 50,
+  And                   = 51,
+  Or                    = 52,
+  Mod                   = 53,
+  BitOr                 = 54,
+  BitAnd                = 55,
+  Equal                 = 56,
+  NotEqual              = 57,
+  LT                    = 59,
+  LTE                   = 60,
+  GT                    = 61,
+  GTE                   = 62,
+  DefArg                = 63, 
+  TypeCast              = 64,
+  TypeAs                = 65,
+  TypeIs                = 66,
+  Typeof                = 67,
+  Block                 = 75,
+  New                   = 76,
+  Lambda                = 77,
+  UseUpval              = 78,
+  InitFrame             = 79,
+  Inc                   = 80,
+  Dec                   = 81,
+  ArrIdx                = 82,
+  ArrIdxW               = 83,
+  ArrAddInplace         = 84,  //TODO: used for json alike array initialization,   
+                              //      can be replaced with more low-level opcodes?
+  MapIdx                = 90,
+  MapIdxW               = 91,
+  MapAddInplace         = 92,  //TODO: used for json alike array initialization,   
 }
 
 public enum BlockType 
@@ -1655,7 +1656,7 @@ public class VM : INamedResolver
         int self_idx = curr_frame.stack.Count - args_num - 1;
         var self = curr_frame.stack[self_idx];
 
-        var class_type = ((ClassSymbol)self.type);
+        var class_type = (ClassSymbol)self.type;
 
         BHS status;
         if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
@@ -1706,6 +1707,25 @@ public class VM : INamedResolver
         frm.locals[0] = self;
 
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodVirtNative:
+      {
+        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
+
+        var class_type = (ClassSymbol)self.type;
+        var func_symb = (FuncSymbolNative)class_type._vtable[virt_func_idx];
+
+        BHS status;
+        if(CallNative(curr_frame, func_symb, args_bits, out status, ref coroutine))
+          return status;
       }
       break;
       case Opcodes.CallPtr:

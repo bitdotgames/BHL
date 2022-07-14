@@ -689,7 +689,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  //TODO: this is quite contraversary
+  //NOTE: this is quite contraversary
   [IsTested()]
   public void TestPreferLocalVersion()
   {

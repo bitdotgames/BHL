@@ -378,6 +378,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
 
 public static class ScopeExtensions
 {
+  public static T Resolve<T>(this IScope scope, string name) where T : Symbol
+  {
+    return scope.Resolve(name) as T;
+  }
+
   public static string GetFullPath(this Symbol sym)
   {
     return sym.scope.GetFullPath(sym.name);

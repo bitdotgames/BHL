@@ -434,7 +434,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     
     for(int i=0;i<members.Count;++i)
     {
-      if(members[i] is FuncSymbolScriptVirtual fssv)
+      if(members[i] is FuncSymbolVirtual fssv)
         _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
     }
 
@@ -462,7 +462,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
         var symb = Resolve(m.name) as FuncSymbol;
         if(symb == null)
           throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
-        if(symb is FuncSymbolScriptVirtual fssv)
+        if(symb is FuncSymbolVirtual fssv)
           symb = fssv.overrides[fssv.overrides.Count-1];
         ifs2fn.Add(symb);
       }
@@ -1499,38 +1499,27 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   }
 }
 
-public class FuncSymbolScriptVirtual : FuncSymbol
+abstract public class FuncSymbolVirtual : FuncSymbol
 {
-  public const uint CLASS_ID = 19; 
+  protected int default_args_num;
 
-  int default_args_num;
-
-  public List<FuncSymbolScript> overrides = new List<FuncSymbolScript>();
+  public List<FuncSymbol> overrides = new List<FuncSymbol>();
   public List<Proxy<ClassSymbol>> owners = new List<Proxy<ClassSymbol>>(); 
 
-#if BHL_FRONT
-  public FuncSymbolScriptVirtual(FuncSymbolScript proto) 
-    : base(proto.name, proto.signature)
+  public FuncSymbolVirtual(string name, FuncSignature signature, int default_args_num = 0)
+    : base(name, signature)
   {
-    this.default_args_num = proto.default_args_num;
-    this.parsed = proto.parsed;
-
-    for(int m=0;m<proto.members.Count;++m)
-      members.Add(proto.members[m]);
+    this.default_args_num = default_args_num;
   }
-#endif
 
-  //symbol factory version
-  public FuncSymbolScriptVirtual()
-    : base(null, new FuncSignature())
-  {}
+  public override int GetDefaultArgsNum() { return default_args_num; }
 
   public override void Define(Symbol sym) 
   {
     throw new NotImplementedException();
   }
 
-  public void AddOverride(ClassSymbol owner, FuncSymbolScript fs)
+  public void AddOverride(ClassSymbol owner, FuncSymbol fs)
   {
     if(!signature.Equals(fs.signature))
       throw new Exception("Incompatible func signature");
@@ -1539,7 +1528,7 @@ public class FuncSymbolScriptVirtual : FuncSymbol
     overrides.Add(fs);
   }
 
-  public FuncSymbolScript FindOverride(ClassSymbol owner)
+  public FuncSymbol FindOverride(ClassSymbol owner)
   {
     for(int i=0;i<owners.Count;++i)
     {
@@ -1548,8 +1537,39 @@ public class FuncSymbolScriptVirtual : FuncSymbol
     }
     return null;
   }
+}
 
-  public override int GetDefaultArgsNum() { return default_args_num; }
+public class FuncSymbolVirtualNative : FuncSymbolVirtual
+{
+  public FuncSymbolVirtualNative(string name, Proxy<IType> ret_type, int default_args_num = 0)
+    : base(name, new FuncSignature(ret_type), default_args_num)
+  {}
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
+}
+
+public class FuncSymbolVirtualScript : FuncSymbolVirtual
+{
+  public const uint CLASS_ID = 19; 
+
+#if BHL_FRONT
+  public FuncSymbolVirtualScript(FuncSymbolScript proto) 
+    : base(proto.name, proto.signature, proto.default_args_num)
+  {
+    this.parsed = proto.parsed;
+
+    for(int m=0;m<proto.members.Count;++m)
+      members.Add(proto.members[m]);
+  }
+#endif
+
+  //symbol factory version
+  public FuncSymbolVirtualScript()
+    : base(null, new FuncSignature())
+  {}
 
   public override uint ClassId()
   {
@@ -2213,8 +2233,8 @@ public class SymbolFactory : marshall.IFactory
         return new FuncSymbolScript();
       case FuncSymbolScriptImported.CLASS_ID:
         return new FuncSymbolScriptImported();
-      case FuncSymbolScriptVirtual.CLASS_ID:
-        return new FuncSymbolScriptVirtual();
+      case FuncSymbolVirtualScript.CLASS_ID:
+        return new FuncSymbolVirtualScript();
       case FuncSignature.CLASS_ID:
         return new FuncSignature();
       case RefType.CLASS_ID:

@@ -2499,13 +2499,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       if(sym is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
       {
-        var vsym = new FuncSymbolScriptVirtual(fssv);
+        var vsym = new FuncSymbolVirtualScript(fssv);
         vsym.AddOverride(curr_class, fssv);
         self.members.Add(vsym);
       }
       else if(sym is FuncSymbolScript fsso && fsso.flags.HasFlag(FuncFlags.Override))
       {
-        var vsym = self.members.Find(sym.name) as FuncSymbolScriptVirtual;
+        var vsym = self.members.Find(sym.name) as FuncSymbolVirtualScript;
         if(vsym == null)
           FireError(sym.parsed.tree, "no base virtual method to override");
 
@@ -2532,7 +2532,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
-        if(func_symb is FuncSymbolScriptVirtual fsv) 
+        if(func_symb is FuncSymbolVirtualScript fsv) 
           func_symb = fsv.FindOverride(pass.class_symb);
 
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);

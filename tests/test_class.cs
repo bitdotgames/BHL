@@ -1974,7 +1974,6 @@ public class TestClasses : BHL_TestBase
       b.a = 1
       b.b = 10
       b.new_a = 100
-      Foo f = b
       //NOTE: Bar.getA() will be called anyway!
       return ((Foo)b).getA() + b.getB()
     }
@@ -2327,6 +2326,167 @@ public class TestClasses : BHL_TestBase
     var vm = MakeVM(bhl);
     AssertEqual(12, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(12, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  public class VirtFoo {
+    public int a;
+    public int b;
+
+    public virtual int getA() {
+      return a;
+    }
+
+    public int getB() {
+      return b;
+    }
+  }
+
+  public class VirtBar : VirtFoo {
+    public int new_a;
+
+    public override int getA() {
+      return new_a;
+    }
+  }
+
+  void BindVirtualFooBar(Types ts)
+  {
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new VirtFoo(), type);
+        }
+      );
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("a", Types.Int,
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var f = (VirtFoo)ctx.obj;
+          v.SetNum(f.a);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var f = (VirtFoo)ctx.obj;
+          f.a = (int)v.num; 
+          ctx.SetObj(f, ctx.type);
+        }
+      ));
+
+      cl.Define(new FieldSymbol("b", Types.Int,
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var f = (VirtFoo)ctx.obj;
+          v.SetNum(f.b);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var f = (VirtFoo)ctx.obj;
+          f.b = (int)v.num; 
+          ctx.SetObj(f, ctx.type);
+        }
+      ));
+
+      {
+        var virt = new FuncSymbolVirtualNative("getA", ts.T("int"));
+        cl.Define(virt);
+
+        var m = new FuncSymbolNative("getA", ts.T("int"),
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var f = (VirtFoo)frm.stack.PopRelease().obj;
+            var v = Val.NewNum(frm.vm, f.a);
+            frm.stack.Push(v);
+            return null;
+          }
+        );
+        virt.AddOverride(cl, m);
+      }
+
+      {
+        var m = new FuncSymbolNative("getB", ts.T("int"),
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var f = (VirtFoo)frm.stack.PopRelease().obj;
+            var v = Val.NewNum(frm.vm, f.b);
+            frm.stack.Push(v);
+            return null;
+          }
+        );
+        cl.Define(m);
+      }
+    }
+
+    {
+      var cl = new ClassSymbolNative("Bar", (ClassSymbol)ts.T("Foo").Get(),
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new VirtBar(), type);
+        }
+      );
+
+      cl.Define(new FieldSymbol("new_a", Types.Int,
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var b = (VirtBar)ctx.obj;
+          v.SetNum(b.new_a);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var b = (VirtBar)ctx.obj;
+          b.new_a = (int)v.num; 
+          ctx.SetObj(b, ctx.type);
+        }
+      ));
+      ts.ns.Define(cl);
+
+      {
+        var m = new FuncSymbolNative("getA", ts.T("int"),
+          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          {
+            var b = (VirtBar)frm.stack.PopRelease().obj;
+            var v = Val.NewNum(frm.vm, b.new_a);
+            frm.stack.Push(v);
+            return null;
+          }
+        );
+        cl.Resolve<FuncSymbolVirtualNative>("getA").AddOverride(cl, m);
+      }
+    }
+  }
+
+  [IsTested()]
+  public void TestNativeVirtualMethodsSupport()
+  {
+    string bhl = @"
+    func int test1()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return b.getA() + b.getB()
+    }
+
+    func int test2()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      //NOTE: Bar.getA() will be called anyway!
+      return ((Foo)b).getA() + b.getB()
+    }
+    ";
+
+    var ts = new Types();
+    BindVirtualFooBar(ts);
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 }
