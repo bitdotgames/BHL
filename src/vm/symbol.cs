@@ -1622,7 +1622,8 @@ public class LambdaSymbol : FuncSymbolScript
       var decl = fdecl_stack[i];
 
       var res = decl.current_scope.ResolveWithFallback(name);
-      if(res is VariableSymbol vs)
+      //checking if it's a variable and not a global one
+      if(res is VariableSymbol vs && !(vs.scope is Namespace))
         return AssignUpValues(vs, i+1, my_idx);
     }
 

@@ -18401,6 +18401,31 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestGlobalVarInLambda()
+  {
+    string bhl = @"
+
+    class Foo { 
+      float b
+    }
+
+    Foo foo = {b : 100}
+      
+    func float test() 
+    {
+      float a = 1
+      return func float() {
+        return foo.b + a
+      }()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(101, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   //TODO: do we really need this?
   //[IsTested()]
   public void TestGlobalVariableInitWithSubCall()
