@@ -28,14 +28,15 @@ public enum Opcodes
   Break                 = 20,
   Continue              = 21,
   Pop                   = 22,
-  CallByIP              = 23,
+  Call                  = 23,
   CallNative            = 24,
   CallFunc              = 25,
   CallMethod            = 26,
   CallMethodNative      = 27,
   CallMethodIface       = 29,
-  CallMethodVirt        = 30,
-  CallMethodVirtNative  = 31,
+  CallMethodIfaceNative = 30,
+  CallMethodVirt        = 31,
+  CallMethodVirtNative  = 32,
   CallPtr               = 38,
   GetFunc               = 39,
   GetFuncNative         = 40,
@@ -1590,7 +1591,7 @@ public class VM : INamedResolver
         curr_frame.stack.Push(arg);
       }
       break;
-      case Opcodes.CallByIP:
+      case Opcodes.Call:
       {
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip); 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
@@ -1663,30 +1664,6 @@ public class VM : INamedResolver
           return status;
       }
       break;
-      case Opcodes.CallMethodIface:
-      {
-        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-        //TODO: use a simpler schema where 'self' is passed on the top
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = curr_frame.stack.Count - args_num - 1;
-        var self = curr_frame.stack[self_idx];
-        curr_frame.stack.RemoveAt(self_idx);
-
-        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
-        var class_type = (ClassSymbolScript)self.type;
-        var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
-
-        var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
-
-        frm.locals[0] = self;
-
-        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
-      }
-      break;
       case Opcodes.CallMethodVirt:
       {
         int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -1720,6 +1697,49 @@ public class VM : INamedResolver
 
         var class_type = (ClassSymbol)self.type;
         var func_symb = (FuncSymbolNative)class_type._vtable[virt_func_idx];
+
+        BHS status;
+        if(CallNative(curr_frame, func_symb, args_bits, out status, ref coroutine))
+          return status;
+      }
+      break;
+      case Opcodes.CallMethodIface:
+      {
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        //TODO: use a simpler schema where 'self' is passed on the top
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+        curr_frame.stack.RemoveAt(self_idx);
+
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
+        var class_type = (ClassSymbolScript)self.type;
+        var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
+
+        var frm = Frame.New(this);
+        frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
+
+        frm.locals[0] = self;
+
+        Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
+      }
+      break;
+      case Opcodes.CallMethodIfaceNative:
+      {
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
+
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int self_idx = curr_frame.stack.Count - args_num - 1;
+        var self = curr_frame.stack[self_idx];
+
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
+        var class_type = (ClassSymbol)self.type;
+        var func_symb = (FuncSymbolNative)class_type._itable[iface_symb][iface_func_idx];
 
         BHS status;
         if(CallNative(curr_frame, func_symb, args_bits, out status, ref coroutine))

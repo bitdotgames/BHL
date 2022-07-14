@@ -508,7 +508,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallByIP,
+        Opcodes.Call,
         3/*func ip*/, 4/*args bits*/
       )
     );
@@ -539,6 +539,12 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodIface,
+        2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallMethodIfaceNative,
         2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
       )
     );
@@ -1228,7 +1234,7 @@ public class ModuleCompiler : AST_Visitor
             if(constants[constants.Count-1].inamed.named == fsymb)
               constants.RemoveAt(constants.Count-1);
 
-            var call_op = Emit(Opcodes.CallByIP, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+            var call_op = Emit(Opcodes.Call, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
             PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
           }
           else
@@ -1275,10 +1281,10 @@ public class ModuleCompiler : AST_Visitor
 
         VisitChildren(ast);
         
-        if(instance_type is InterfaceSymbol)
-        {
+        if(instance_type is InterfaceSymbolScript)
           Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
-        }
+        else if(instance_type is InterfaceSymbolNative)
+          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
         else
         {
           if(mfunc is FuncSymbolScript)

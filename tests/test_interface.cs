@@ -620,19 +620,13 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestBindNativeInterface()
+  public void TestImplementingNativeInterfaceNotSupported()
   {
     string bhl = @"
     class Foo : IFoo {
       func int bar(int i) {
         return i+1
       }
-    }
-
-    func int test() {
-      Foo foo = {}
-      IFoo ifoo = foo
-      return ifoo.bar(42)
     }
     ";
     var ts = new Types();
@@ -646,13 +640,16 @@ public class TestInterfaces : BHL_TestBase
     );
     ts.ns.Define(ifs);
 
-    var vm = MakeVM(bhl, ts);
-    AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "implementing native interfaces is not supported"
+    );
   }
 
   [IsTested()]
-  public void TestMixNativeAndScriptInterfaces()
+  public void TestMixNativeAndScriptInterfacesNotSupported()
   {
     string bhl = @"
     interface IFoo { 
@@ -668,13 +665,6 @@ public class TestInterfaces : BHL_TestBase
         return i+1
       }
     }
-
-    func int test() {
-      Foo f = {}
-      IBar ifb = f;
-      IFoo iff = f;
-      return iff.foo(1) + ifb.bar(10)
-    }
     ";
 
     var ts = new Types();
@@ -688,9 +678,12 @@ public class TestInterfaces : BHL_TestBase
     );
     ts.ns.Define(ifs);
 
-    var vm = MakeVM(bhl, ts);
-    AssertEqual(12, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "implementing native interfaces is not supported"
+    );
   }
 
   [IsTested()]
@@ -765,6 +758,64 @@ public class TestInterfaces : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
+    CommonChecks(vm);
+  }
+
+  public interface INativeFoo {
+    int foo(int n);
+  }
+
+  public class NativeFoo : INativeFoo{
+    public int foo(int n) {
+      return n;
+    }
+  }
+
+  [IsTested()]
+  public void TestNativeClassAndInterface()
+  {
+    string bhl = @"
+    func int test() {
+      Foo foo = {}
+      IFoo ifoo = foo
+      return ifoo.bar(42)
+    }
+    ";
+    var ts = new Types();
+
+    {
+      var ifs = new InterfaceSymbolNative(
+          "IFoo", 
+          null, 
+          new FuncSymbolNative("bar", ts.T("int"), null, 
+            new FuncArgSymbol("int", ts.T("int")) 
+          )
+      );
+      ts.ns.Define(ifs);
+
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new NativeFoo(), type);
+        },
+        new List<InterfaceSymbol>(){ ifs }
+      );
+      ts.ns.Define(cl);
+
+      var m = new FuncSymbolNative("bar", ts.T("int"),
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          var n = (int)frm.stack.PopRelease().num;
+          var f = (NativeFoo)frm.stack.PopRelease().obj;
+          frm.stack.Push(Val.NewInt(frm.vm, n));
+          return null;
+        }
+      );
+      cl.Define(m);
+    }
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

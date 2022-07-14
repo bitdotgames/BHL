@@ -814,7 +814,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public Proxy<IType> key_type;
   public Proxy<IType> val_type;
 
-  public ClassSymbol enumerator_type = new ClassSymbolNative("Enumerator", null);
+  public ClassSymbol enumerator_type = new ClassSymbolNative("Enumerator");
 
   public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base("[" + key_type.path + "]" + val_type.path, super_class: null)
@@ -1730,11 +1730,10 @@ public class FuncSymbolNative : FuncSymbol
     throw new NotImplementedException();
   }
 }
-
 public class ClassSymbolNative : ClassSymbol
 {
-  public ClassSymbolNative(string name, ClassSymbol super_class, VM.ClassCreator creator = null)
-    : base(name, super_class, null, creator)
+  public ClassSymbolNative(string name, ClassSymbol super_class = null, VM.ClassCreator creator = null, IList<InterfaceSymbol> implements = null)
+    : base(name, super_class, implements, creator)
   {}
 
   public void OverloadBinaryOperator(FuncSymbol s)

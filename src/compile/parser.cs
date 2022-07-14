@@ -2458,6 +2458,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         {
           if(implements.IndexOf(ifs) != -1)
             FireError(ext_name, "interface is implemented already");
+
+          if(ifs is InterfaceSymbolNative)
+            FireError(ext_name, "implementing native interfaces is not supported");
+
           implements.Add(ifs);
         }
         else
