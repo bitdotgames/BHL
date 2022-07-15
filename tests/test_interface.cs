@@ -819,7 +819,7 @@ public class TestInterfaces : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestCircularDependencyInModules()
   {
     string bhl1 = @"

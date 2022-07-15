@@ -429,6 +429,8 @@ public static class ScopeExtensions
     return tmp;
   }
 
+  //NOTE: the first item of the resolved path is tried to be resolved
+  //      with fallback (e.g. trying the 'upper' scopes)
   public static Symbol ResolveSymbolByPath(this IScope scope, string path)
   {
     int start_idx = 0;

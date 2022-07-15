@@ -622,15 +622,13 @@ public class Types : INamedResolver
 
   static public bool Is(IType a, IType b) 
   {
-    if(a == b)
-      return true;
-    else if(a.Equals(b))
+    if(a.Equals(b))
       return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
-      
+
       return aset.IsSupersetOf(bset);
     }
     else
@@ -685,7 +683,7 @@ public class Types : INamedResolver
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
     if(!CanAssignTo(rhs.eval_type, lhs)) 
-      throw new SemanticError(rhs, "incompatible types");
+      throw new SemanticError(rhs, "incompatible types " + lhs + " = " + rhs.eval_type);
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 

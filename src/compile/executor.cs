@@ -532,24 +532,28 @@ public class CompilationExecutor
       w.file2path.Clear();
       w.file2compiled.Clear();
 
-      var imp = new ANTLR_Parser.Importer();
-      imp.SetParsedCache(w.cache);
+      var importer = new ANTLR_Parser.Importer();
+      importer.SetParsedCache(w.cache);
       if(!string.IsNullOrEmpty(w.inc_dir))
-        imp.AddToIncludePath(w.inc_dir);
+        importer.AddToIncludePath(w.inc_dir);
 
-      int i = w.start;
 
       int cache_hit = 0;
       int cache_miss = 0;
 
+      int i = -1;
+      var parsers = new List<ANTLR_Parser>();
+
       try
       {
+        i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
           var file = w.files[i]; 
 
-          var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
-          var file_module = new Module(w.ts, imp.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts, importer.FilePath2ModuleName(file), file);
+
+          ANTLR_Parser parser = null;
 
           InterimResult interim;
           if(w.cache.file2interim.TryGetValue(file, out interim) 
@@ -563,22 +567,45 @@ public class CompilationExecutor
           {
             ++cache_miss;
 
-            ANTLR_Parser.Result front_res = null;
-
             if(interim.parsed != null)
-              front_res = ANTLR_Parser.ProcessParsed(file_module, interim.parsed, w.ts, imp);
+              parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, importer);
             else
-              front_res = ANTLR_Parser.ProcessFile(file, w.ts, imp);
+              parser = ANTLR_Parser.MakeParser(file, w.ts, importer);
 
-            front_res = w.postproc.Patch(front_res, file);
-
-            w.file2path.Add(file, file_module.path);
-            w.file2ns.Add(file, front_res.module.ns);
-
-            var c  = new ModuleCompiler(front_res);
-            var cm = c.Compile();
-            CompiledModule.ToFile(cm, compiled_file);
+            parser.Phase1_Outline();
           }
+
+          parsers.Add(parser);
+        }
+
+        foreach(var kv in importer.requested_imports)
+          kv.Value.Item1?.Phase1_Outline();
+
+        i = w.start;
+        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        {
+          var parser = parsers[cnt];
+
+          parser.Phase2_ResolveImports();
+        }
+
+        i = w.start;
+        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        {
+          var parser = parsers[cnt];
+
+          var file = w.files[i]; 
+          var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
+
+          var front_res = parser.Phase3_Finalize();
+          front_res = w.postproc.Patch(front_res, file);
+
+          w.file2path.Add(file, front_res.module.path);
+          w.file2ns.Add(file, front_res.module.ns);
+
+          var c  = new ModuleCompiler(front_res);
+          var cm = c.Compile();
+          CompiledModule.ToFile(cm, compiled_file);
 
           w.file2compiled.Add(file, compiled_file);
         }

@@ -29,7 +29,7 @@ public class Module
     }
   }
   public ModulePath path;
-  public Dictionary<string, Module> imports = new Dictionary<string, Module>(); 
+  public HashSet<string> imports = new HashSet<string>(); 
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)

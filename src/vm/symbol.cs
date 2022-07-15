@@ -1318,8 +1318,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public INamed ResolveNamedByPath(string path)
   {
     return this.ResolveSymbolByPath(path);
-    //TODO:???
-    //throw new NotImplementedException();
   }
 
   public virtual void Define(Symbol sym)
@@ -1331,8 +1329,9 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public IScope GetFallbackScope() 
   { 
-    //NOTE: we forbid resolving class members 
-    //      inside methods without 'this.' prefix on purpose
+    //NOTE: If declared as a class method we force the fallback
+    //      scope to be the class symbol's scope. This way we
+    //      force the class members to be prefixed with 'this.'
     if(scope is ClassSymbolScript cs)
       return cs.scope;
     else

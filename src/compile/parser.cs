@@ -41,6 +41,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
+  AST_Module root_ast;
   Result result;
 
   ANTLR_Result parsed;
@@ -73,6 +74,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     public IAST ast;
     public IScope scope;
 
+    public bhlParser.ImportsContext imps_ctx;
+
     public bhlParser.VarDeclareAssignContext gvar_ctx;
 
     public bhlParser.FuncDeclContext func_ctx;
@@ -90,6 +93,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       this.ast = ast;
       this.scope = scope;
+      this.imps_ctx = ctx as bhlParser.ImportsContext;
       this.gvar_ctx = ctx as bhlParser.VarDeclareAssignContext;
       this.func_ctx = ctx as bhlParser.FuncDeclContext;
       this.class_ctx = ctx as bhlParser.ClassDeclContext;
@@ -155,12 +159,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static Result ProcessFile(string file, Types ts, ANTLR_Parser.Importer imp)
+  public static ANTLR_Parser MakeParser(string file, Types ts, ANTLR_Parser.Importer importer)
   {
     using(var sfs = File.OpenRead(file))
     {
-      var mod = new Module(ts, imp.FilePath2ModuleName(file), file);
-      return ProcessStream(mod, sfs, ts, imp);
+      var mod = new Module(ts, importer.FilePath2ModuleName(file), file);
+      return MakeParser(mod, sfs, ts, importer);
     }
   }
 
@@ -173,21 +177,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return p;
   }
   
-  public static Result ProcessStream(Module module, Stream src, Types ts, ANTLR_Parser.Importer imp = null, bool being_imported = false)
+  public static ANTLR_Parser MakeParser(Module module, Stream src, Types ts, ANTLR_Parser.Importer importer = null, bool being_imported = false)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Result(p.TokenStream, p.program());
-    return ProcessParsed(module, parsed, ts, imp, being_imported);
+    return MakeParser(module, parsed, ts, importer, being_imported);
   }
 
-  public static Result ProcessParsed(Module module, ANTLR_Result parsed, Types ts, ANTLR_Parser.Importer imp = null, bool being_imported = false)
+  public static ANTLR_Parser MakeParser(Module module, ANTLR_Result parsed, Types ts, ANTLR_Parser.Importer importer = null, bool being_imported = false)
   {
-    //var sw1 = System.Diagnostics.Stopwatch.StartNew();
-    var f = new ANTLR_Parser(parsed, module, ts, imp, being_imported);
-    var res = f.Process();
-    //sw1.Stop();
-    //Console.WriteLine("Module {0} ({1} sec)", module.norm_path, Math.Round(sw1.ElapsedMilliseconds/1000.0f,2));
-    return res;
+    return new ANTLR_Parser(parsed, module, ts, importer, being_imported);
   }
 
   public interface IParsedCache
@@ -199,6 +198,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     List<string> include_path = new List<string>();
     Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+    public Dictionary<string, Tuple<ANTLR_Parser, Module>> requested_imports = new Dictionary<string, Tuple<ANTLR_Parser, Module>>();
     IParsedCache parsed_cache = null;
 
     public void SetParsedCache(IParsedCache cache)
@@ -228,52 +228,47 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       modules.Add(m.file_path, m);
     }
 
-    public Module ImportModule(Module curr_module, Types ts, string path)
+    //NOTE: returns normalized imported module path
+    public string RequestImport(Module from_module, Types ts, string path)
     {
       string full_path;
       string norm_path;
-      ResolvePath(curr_module.file_path, path, out full_path, out norm_path);
+      ResolvePath(from_module.file_path, path, out full_path, out norm_path);
 
-      //Console.WriteLine("IMPORT: " + full_path + " FROM:" + curr_module.file_path);
-
-      //1. checking repeated imports
-      if(curr_module.imports.ContainsKey(full_path))
+      if(!requested_imports.ContainsKey(full_path))
       {
-        //Console.WriteLine("HIT: " + full_path);
-        return null;
+        var m = TryGet(full_path);
+        ANTLR_Parser parser = null;
+        if(m == null)
+        {
+          m = new Module(ts, norm_path, full_path);
+          parser = MakeParser(full_path, m, ts);
+        }
+        requested_imports.Add(full_path, new Tuple<ANTLR_Parser, Module>(parser, m));
       }
 
-      //2. checking if already exists
-      Module m = TryGet(full_path);
-      if(m != null)
-      {
-        curr_module.imports.Add(full_path, m);
-        return m;
-      }
+      from_module.imports.Add(full_path);
 
-      //3. Ok, let's parse it otherwise
-      m = new Module(ts, norm_path, full_path);
-     
-      //Console.WriteLine("ADDING: " + full_path + " TO:" + curr_module.file_path);
-      curr_module.imports.Add(full_path, m);
-      Register(m);
+      return full_path;
+    }
 
+    ANTLR_Parser MakeParser(string full_path, Module m, Types ts)
+    {
+      ANTLR_Parser parser = null;
       ANTLR_Result parsed;
-      //4. Let's try the parsed cache if it's present
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        ANTLR_Parser.ProcessParsed(m, parsed, ts, this, being_imported: true);
+        parser = ANTLR_Parser.MakeParser(m, parsed, ts, this, being_imported: true);
       }
       else
       {
-        var stream = File.OpenRead(full_path);
         //Console.WriteLine("MISS " + full_path);
-        ANTLR_Parser.ProcessStream(m, stream, ts, this, being_imported: true);
+        var stream = File.OpenRead(full_path);
+        parser = ANTLR_Parser.MakeParser(m, stream, ts, this, being_imported: true);
         stream.Close();
       }
-
-      return m;
+      return parser;
     }
 
     void ResolvePath(string self_path, string path, out string full_path, out string norm_path)
@@ -327,11 +322,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     PushScope(ns);
 
+    this.being_imported = being_imported;
+
     if(importer == null)
       importer = new Importer();
     this.importer = importer;
-
-    this.being_imported = being_imported;
+    //NOTE: in order to properly handle circular dependencies let's add ourself
+    if(!being_imported)
+      this.importer.Register(module);
   }
 
   void FireError(IParseTree place, string msg) 
@@ -405,48 +403,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return w;
   }
 
-  public Result Process()
+  public void Phase1_Outline()
   {
-    if(result == null)
-    {
-      var root_ast = new AST_Module(module.name);
-      PushAST(root_ast);
-      VisitProgram(parsed.prog);
-      PopAST();
+    root_ast = new AST_Module(module.name);
 
-      result = new Result(module, root_ast);
-    }
-    return result;
-  }
+    passes.Clear();
 
-  public override object VisitProgram(bhlParser.ProgramContext ctx)
-  {
-    for(int i=0;i<ctx.progblock().Length;++i)
-      Visit(ctx.progblock()[i]);
+    PushAST(root_ast);
+    VisitProgram(parsed.prog);
+    PopAST();
 
-    VisitPasses();
-
-    return null;
-  }
-
-  public override object VisitProgblock(bhlParser.ProgblockContext ctx)
-  {
-    var imps = ctx.imports();
-    if(imps != null)
-      Visit(imps);
-    
-    Visit(ctx.decls()); 
-
-    return null;
-  }
-
-  void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)
-  {
-    passes.Add(new ParserPass(ast, scope, ctx));
-  }
-
-  void VisitPasses()
-  {
     foreach(var pass in passes)
     {
       PushScope(pass.scope);
@@ -457,9 +423,23 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       Pass_OutlineFuncDecl(pass);
 
+      Pass_RequestImports(pass);
+
       PopScope();
     }
+  }
 
+  public void Phase2_ResolveImports()
+  {
+    foreach(var import in module.imports)
+    {
+      var tuple = importer.requested_imports[import];
+      ns.Link(tuple.Item2.ns);
+    }
+  }
+
+  public Result Phase3_Finalize()
+  {
     foreach(var pass in passes)
     {
       PushScope(pass.scope);
@@ -505,33 +485,61 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       PopScope();
     }
+
+    return new Result(module, root_ast);
   }
 
-  public override object VisitImports(bhlParser.ImportsContext ctx)
+  public Result Process()
   {
-    var ast = new AST_Import();
+    if(result == null)
+    {
+      Phase1_Outline();
 
-    var imps = ctx.mimport();
-    for(int i=0;i<imps.Length;++i)
-      AddImport(ast, imps[i]);
+      Phase2_ResolveImports();
 
-    PeekAST().AddChild(ast);
+      result = Phase3_Finalize();
+      return result;
+    }
+    return result;
+  }
+
+  public override object VisitProgram(bhlParser.ProgramContext ctx)
+  {
+    for(int i=0;i<ctx.progblock().Length;++i)
+      Visit(ctx.progblock()[i]);
+
     return null;
   }
 
-  public void AddImport(AST_Import ast, bhlParser.MimportContext ctx)
+  public override object VisitProgblock(bhlParser.ProgblockContext ctx)
+  {
+    if(!being_imported)
+    {
+      var imps = ctx.imports();
+      if(imps != null)
+        AddPass(imps, null, PeekAST());
+    }
+    
+    Visit(ctx.decls()); 
+
+    return null;
+  }
+
+  void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)
+  {
+    passes.Add(new ParserPass(ast, scope, ctx));
+  }
+
+  void RequestImport(AST_Import ast, bhlParser.MimportContext ctx)
   {
     var name = ctx.NORMALSTRING().GetText();
     //removing quotes
     name = name.Substring(1, name.Length-2);
-    
-    var imported = importer.ImportModule(this.module, types, name);
-    //NOTE: null means module is already imported
-    if(imported != null)
-    {
-      ns.Link(imported.ns);
-      ast.module_names.Add(imported.name);
-    }
+
+    var norm_path = importer.RequestImport(module, types, name);
+
+    if(!ast.module_names.Contains(norm_path))
+      ast.module_names.Add(norm_path);
   }
 
   public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
@@ -2143,6 +2151,20 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
 
     return null;
+  }
+
+  void Pass_RequestImports(ParserPass pass)
+  {
+    if(pass.imps_ctx == null)
+      return;
+
+    var ast = new AST_Import();
+
+    var imps = pass.imps_ctx.mimport();
+    for(int i=0;i<imps.Length;++i)
+      RequestImport(ast, imps[i]);
+
+    pass.ast.AddChild(ast);
   }
 
   void Pass_OutlineFuncDecl(ParserPass pass)

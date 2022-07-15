@@ -799,7 +799,8 @@ public class BHL_TestBase
 
     var mdl = new bhl.Module(ts, "", "");
 
-    var front_res = ANTLR_Parser.ProcessStream(mdl, bhl.ToStream(), ts);
+    var parser = ANTLR_Parser.MakeParser(mdl, bhl.ToStream(), ts);
+    var front_res = parser.Process();
 
     if(show_ast)
       AST_Dumper.Dump(front_res.ast);
