@@ -955,15 +955,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
         var wca = Wrap(ca);
 
-        //NOTE: if symbol is from bindings we don't have a parse tree attached to it
-        if(func_arg_symb.parsed == null)
-        {
-          if(func_arg_symb.type.Get() == null)
-            FireError(ca, "invalid type");
-          types.CheckAssign(func_arg_symb.type.Get(), wca);
-        }
-        else
-          types.CheckAssign(func_arg_symb.parsed, wca);
+        if(func_arg_symb.type.Get() == null)
+          FireError(ca, "unresolved type " + func_arg_symb.type);
+        types.CheckAssign(func_arg_symb.type.Get(), wca);
+
       }
     }
 
@@ -1182,7 +1177,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     else
       tp = ParseType(parsed.type()[0]);
 
-    if(tp.Get() == null)
+    if(tp.Get() == null && !being_imported)
       FireError(parsed, "type '" + tp.path + "' not found");
 
     return tp;
@@ -1201,7 +1196,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     else if(ctx.mapType() != null)
       tp = curr_scope.TMap(curr_scope.T(ctx.mapType().nsName().GetText()), tp);
 
-    if(tp.Get() == null)
+    if(tp.Get() == null && !being_imported)
       FireError(ctx, "type '" + tp.path + "' not found");
 
    return tp;
@@ -2616,7 +2611,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         PopAST();
       }
 
-      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: true, write: assign_exp != null);
+      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: assign_exp != null);
 
       if(exp_ast != null)
         PeekAST().AddChild(exp_ast);

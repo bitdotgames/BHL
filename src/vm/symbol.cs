@@ -1318,6 +1318,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public INamed ResolveNamedByPath(string path)
   {
     return this.ResolveSymbolByPath(path);
+    //TODO:???
+    //throw new NotImplementedException();
   }
 
   public virtual void Define(Symbol sym)

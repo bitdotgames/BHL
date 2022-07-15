@@ -16,11 +16,12 @@ public static class ErrorUtils
 #if BHL_FRONT
   public static string ToJson(ICompileError ie)
   {
-    return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3} }}", 
+    return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3}, ""stack_trace"" : {4} }}", 
       MakeJsonSafe(ie.text),
       ie.file.Replace("\\", "/"),
       ie.line, 
-      ie.char_pos
+      ie.char_pos,
+      MakeJsonSafe(ie.stack_trace)
     );
   }
 #endif
@@ -51,6 +52,8 @@ public static class ErrorUtils
 
   static string MakeJsonSafe(string msg)
   {
+    if(string.IsNullOrEmpty(msg))
+      return "";
     msg = msg.Replace("\\", " ");
     msg = msg.Replace("\n", " ");
     msg = msg.Replace("\r", " ");
@@ -67,6 +70,8 @@ public class SymbolError : Exception
   public Symbol symbol { get; }
 
   public string text { get; }
+
+  public string stack_trace { get { return StackTrace; } }
 
   public int line { 
     get { 

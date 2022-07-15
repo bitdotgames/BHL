@@ -63,6 +63,8 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
       return default(T);
 
     named = (T)resolver.ResolveNamedByPath(_path);
+    //if(_path == "a.c.IKlass" && named == null)
+    //  Console.WriteLine("RES " + resolver.GetType().Name);
     return named;
   }
 

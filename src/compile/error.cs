@@ -12,6 +12,7 @@ namespace bhl {
 public interface ICompileError
 {
   string text { get; }
+  string stack_trace { get; }
   string file { get; }
   int line { get; }
   int char_pos { get; }
@@ -20,6 +21,7 @@ public interface ICompileError
 public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }
+  public string stack_trace { get { return StackTrace; } }
   public int line { get; }
   public int char_pos { get; }
   public string file { get; }
@@ -37,6 +39,7 @@ public class SyntaxError : Exception, ICompileError
 public class BuildError : Exception, ICompileError
 {
   public string text { get; }
+  public string stack_trace { get { return StackTrace; } }
   public int line { get { return 0; } }
   public int char_pos { get { return 0; } }
   public string file { get; }
@@ -59,6 +62,7 @@ public class BuildError : Exception, ICompileError
 public class SemanticError : Exception, ICompileError
 {
   public string text { get; }
+  public string stack_trace { get { return StackTrace; } }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
   public int char_pos { get { return tokens.Get(place.SourceInterval.a).Column; } }
   public string file { get { return module.file_path; } }

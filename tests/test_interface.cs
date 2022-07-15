@@ -819,9 +819,8 @@ public class TestInterfaces : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
   //[IsTested()]
-  public void TestBugCircularDependencyInModules()
+  public void TestCircularDependencyInModules()
   {
     string bhl1 = @"
     import ""bhl2""
