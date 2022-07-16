@@ -622,23 +622,14 @@ public class Types : INamedResolver
 
   static public bool Is(IType a, IType b) 
   {
-    if(a.Equals(b))
+    if(a != null && a.Equals(b))
       return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
 
-      bool ok = aset.IsSupersetOf(bset);
-      //if(!ok)
-      //{
-      //  foreach(var aitem in aset)
-      //    Console.WriteLine("A " + aitem.GetName() + " " + aitem.GetHashCode());
-      //  foreach(var bitem in bset)
-      //    Console.WriteLine("B " + bitem.GetName() + " " + bitem.GetHashCode());
-
-      //}
-      return ok;
+      return aset.IsSupersetOf(bset);
     }
     else
       return false;
