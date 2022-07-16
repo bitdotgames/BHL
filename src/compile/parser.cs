@@ -198,7 +198,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     List<string> include_path = new List<string>();
     Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-    public Dictionary<string, Tuple<ANTLR_Parser, Module>> requested_imports = new Dictionary<string, Tuple<ANTLR_Parser, Module>>();
+    Dictionary<string, Tuple<ANTLR_Parser, Module>> requested_imports = new Dictionary<string, Tuple<ANTLR_Parser, Module>>();
     IParsedCache parsed_cache = null;
 
     public void SetParsedCache(IParsedCache cache)
@@ -250,6 +250,17 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       from_module.imports.Add(full_path);
 
       return full_path;
+    }
+
+    public void ResolveImportRequests()
+    {
+      foreach(var kv in requested_imports)
+        kv.Value.Item1?.Phase_Outline();
+    }
+
+    public Module GetImportedModule(string import_path)
+    {
+      return requested_imports[import_path].Item2;
     }
 
     ANTLR_Parser MakeParser(string full_path, Module m, Types ts)
@@ -403,7 +414,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return w;
   }
 
-  public void Phase1_Outline()
+  public void Phase_Outline()
   {
     root_ast = new AST_Module(module.name);
 
@@ -423,22 +434,28 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       Pass_OutlineFuncDecl(pass);
 
-      Pass_RequestImports(pass);
-
       PopScope();
     }
   }
 
-  public void Phase2_ResolveImports()
+  public void Phase_RequestImports()
   {
-    foreach(var import in module.imports)
+    foreach(var pass in passes)
     {
-      var tuple = importer.requested_imports[import];
-      ns.Link(tuple.Item2.ns);
+      Pass_RequestImports(pass);
     }
   }
 
-  public Result Phase3_Finalize()
+  public void Phase_ResolveImports()
+  {
+    foreach(var import_path in module.imports)
+    {
+      var imported = importer.GetImportedModule(import_path);
+      ns.Link(imported.ns);
+    }
+  }
+
+  public Result Phase_Finalize()
   {
     foreach(var pass in passes)
     {
@@ -489,15 +506,21 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new Result(module, root_ast);
   }
 
+  //NOTE: Convenience method which includes all phases,
+  //      used in tests.
   public Result Process()
   {
     if(result == null)
     {
-      Phase1_Outline();
+      Phase_Outline();
 
-      Phase2_ResolveImports();
+      Phase_ResolveImports();
 
-      result = Phase3_Finalize();
+      importer.ResolveImportRequests();
+
+      Phase_ResolveImports();
+
+      result = Phase_Finalize();
       return result;
     }
     return result;

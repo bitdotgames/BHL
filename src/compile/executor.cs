@@ -572,21 +572,28 @@ public class CompilationExecutor
             else
               parser = ANTLR_Parser.MakeParser(file, w.ts, importer);
 
-            parser.Phase1_Outline();
+            parser.Phase_Outline();
           }
 
           parsers.Add(parser);
         }
-
-        foreach(var kv in importer.requested_imports)
-          kv.Value.Item1?.Phase1_Outline();
 
         i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
           var parser = parsers[cnt];
 
-          parser.Phase2_ResolveImports();
+          parser.Phase_RequestImports();
+        }
+
+        importer.ResolveImportRequests();
+
+        i = w.start;
+        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        {
+          var parser = parsers[cnt];
+
+          parser.Phase_ResolveImports();
         }
 
         i = w.start;
@@ -597,7 +604,7 @@ public class CompilationExecutor
           var file = w.files[i]; 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
 
-          var front_res = parser.Phase3_Finalize();
+          var front_res = parser.Phase_Finalize();
           front_res = w.postproc.Patch(front_res, file);
 
           w.file2path.Add(file, front_res.module.path);

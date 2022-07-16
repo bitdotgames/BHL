@@ -629,7 +629,16 @@ public class Types : INamedResolver
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
 
-      return aset.IsSupersetOf(bset);
+      bool ok = aset.IsSupersetOf(bset);
+      //if(!ok)
+      //{
+      //  foreach(var aitem in aset)
+      //    Console.WriteLine("A " + aitem.GetName() + " " + aitem.GetHashCode());
+      //  foreach(var bitem in bset)
+      //    Console.WriteLine("B " + bitem.GetName() + " " + bitem.GetHashCode());
+
+      //}
+      return ok;
     }
     else
       return false;
@@ -680,10 +689,15 @@ public class Types : INamedResolver
       throw new SemanticError(lhs, "incompatible types");
   }
 
+  //NOTE: SemanticError(..) is attached to rhs, not lhs. 
+  //      Usually this is the case when expression (rhs) is passed
+  //      to a func arg (lhs) and it this case it makes sense
+  //      to report about the site where it's actually passed (rhs),
+  //      not where it's defined (lhs)
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
     if(!CanAssignTo(rhs.eval_type, lhs)) 
-      throw new SemanticError(rhs, "incompatible types " + lhs + " = " + rhs.eval_type);
+      throw new SemanticError(rhs, "incompatible types");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
