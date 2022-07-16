@@ -244,10 +244,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           m = new Module(ts, norm_path, full_path);
           parser = MakeParser(full_path, m, ts);
         }
-        requested_imports.Add(full_path, new Tuple<ANTLR_Parser, Module>(parser, m));
+        requested_imports.Add(norm_path, new Tuple<ANTLR_Parser, Module>(parser, m));
       }
 
-      from_module.imports.Add(full_path);
+      from_module.imports.Add(norm_path);
 
       return full_path;
     }
