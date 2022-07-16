@@ -216,16 +216,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return include_path;
     }
 
-    public Module TryGet(string path)
+    public Module TryGetRegistered(string norm_path)
     {
       Module m = null;
-      modules.TryGetValue(path, out m);
+      modules.TryGetValue(norm_path, out m);
       return m;
     }
 
     public void Register(Module m)
     {
-      modules.Add(m.file_path, m);
+      modules.Add(m.name, m);
     }
 
     //NOTE: returns normalized imported module path
@@ -235,10 +235,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       string norm_path;
       ResolvePath(from_module.file_path, path, out full_path, out norm_path);
 
-      if(!requested_imports.ContainsKey(full_path))
+      if(!requested_imports.ContainsKey(norm_path))
       {
-        var m = TryGet(full_path);
+        var m = TryGetRegistered(norm_path);
         ANTLR_Parser parser = null;
+        //NOTE: If a module wasn't registered (by some parser) we create a module and parser for it.
+        //      Otherwise we re-use the already registerd module. This way we share symbols across  
+        //      all the parsed/imported modules and don't do any 'double work'
         if(m == null)
         {
           m = new Module(ts, norm_path, full_path);
@@ -249,7 +252,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       from_module.imports.Add(norm_path);
 
-      return full_path;
+      return norm_path;
     }
 
     public void ResolveImportRequests()
