@@ -542,9 +542,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       importer.ResolveImportRequests2();
 
-      Phase_ResolveImports();
-
       Phase_ParseTypes();
+
+      Phase_ResolveImports();
 
       result = Phase_ParseFuncBodies();
       return result;
@@ -2249,24 +2249,24 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     pass.func_symb.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
-    ParseFuncParams(pass.func_ctx, pass.func_ast, pass.func_symb);
+    ParseFuncParams(pass.func_ctx, pass.func_ast);
 
     Wrap(pass.func_ctx).eval_type = pass.func_symb.GetReturnType();
   }
 
-  void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast, FuncSymbolScript func_symb)
+  void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
     var func_params = ctx.funcParams();
     if(func_params != null)
     {
-      PushScope(func_symb);
+      PushScope(func_ast.symbol);
       PushAST(func_ast.fparams());
       VisitFuncParams(func_params);
       PopAST();
       PopScope();
     }
 
-    func_symb.default_args_num = func_ast.GetDefaultArgsNum();
+    func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
   }
 
   void Pass_ParseFuncBlock(ParserPass pass)
@@ -2485,7 +2485,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
 
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
-        ParseFuncParams(fd, func_ast, func_symb);
+        ParseFuncParams(fd, func_ast);
 
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }

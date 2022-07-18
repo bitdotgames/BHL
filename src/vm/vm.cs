@@ -364,9 +364,9 @@ public class VM : INamedResolver
 
         if(frm.module != null)
         {
-          item.file = frm.module.name + ".bhl";
           var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
-
+          if(fsymb != null) 
+            item.file = fsymb._module.name + ".bhl";
           item.func = fsymb == null ? "?" : fsymb.name;
           item.line = frm.module.ip2src_line.TryMap(item.ip);
         }
@@ -1102,16 +1102,14 @@ public class VM : INamedResolver
     return null;
   }
 
-  static FuncSymbol TryMapIp2Func(CompiledModule cm, int ip)
+  static FuncSymbolScript TryMapIp2Func(CompiledModule cm, int ip)
   {
-    //TODO: we need to recursively traverse all namespaces
-    for(int i=0;i<cm.ns.members.Count; ++i)
-    {
-      var fsymb = cm.ns.members[i] as FuncSymbolScript;
-      if(fsymb != null && fsymb.ip_addr == ip)
-        return fsymb;
-    }
-    return null;
+    FuncSymbolScript fsymb = null;
+    cm.ns.ForAllSymbols(delegate(Symbol s) {
+      if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
+        fsymb = ftmp;
+    });
+    return fsymb;
   }
 
   //NOTE: adding special bytecode which makes the fake Frame to exit
