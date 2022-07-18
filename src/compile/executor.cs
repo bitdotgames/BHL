@@ -297,8 +297,8 @@ public class CompilationExecutor
       file_ns.UnlinkAll();
 
       var conflict = ns.TryLink(file_ns);
-      if(conflict != null)
-        w.error = new BuildError(file, "symbol '" + conflict.GetFullPath() + "' is already declared in module '" + (conflict.scope as Namespace)?.module_name + "'");
+      if(!conflict.Ok)
+        w.error = new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullPath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module_name + "'");
     }
   }
 
@@ -586,7 +586,9 @@ public class CompilationExecutor
           parser.Phase_RequestImports();
         }
 
-        importer.ResolveImportRequests();
+        importer.ResolveImportRequests1();
+
+        importer.ResolveImportRequests2();
 
         i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
@@ -594,6 +596,8 @@ public class CompilationExecutor
           var parser = parsers[cnt];
 
           parser.Phase_ResolveImports();
+
+          parser.Phase_ParseTypes();
         }
 
         i = w.start;
@@ -604,7 +608,7 @@ public class CompilationExecutor
           var file = w.files[i]; 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
 
-          var front_res = parser.Phase_Finalize();
+          var front_res = parser.Phase_ParseFuncBodies();
           front_res = w.postproc.Patch(front_res, file);
 
           w.file2path.Add(file, front_res.module.path);

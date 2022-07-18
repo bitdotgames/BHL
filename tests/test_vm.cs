@@ -16992,7 +16992,7 @@ public class TestVM : BHL_TestBase
           }
         );
       },
-      @"already defined symbol 'foo'"
+      @"symbol 'foo' is already declared"
     );
   }
 

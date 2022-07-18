@@ -195,18 +195,33 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
 
   public void Link(Namespace other)
   {
-    var conflict_symb = TryLink(other);
-    if(conflict_symb != null)
-      throw new SymbolError(conflict_symb, "already defined symbol '" + conflict_symb.name + "'");
+    var conflict = TryLink(other);
+    if(!conflict.Ok)
+      throw new SymbolError(conflict.local, "already defined symbol '" + conflict.local.name + "'");
   }
 
-  //NOTE: returns conflicting symbol or null
+  public struct LinkConflict
+  {
+    public Symbol local;
+    public Symbol other;
+
+    public bool Ok { 
+      get { return local == null && other == null; } 
+    } 
+
+    public LinkConflict(Symbol local, Symbol other)
+    {
+      this.local = local;
+      this.other = other;
+    }
+  }
+
   //NOTE: here we link only namespaces named similar but we don't
   //      add symbols from them
-  public Symbol TryLink(Namespace other)
+  public LinkConflict TryLink(Namespace other)
   {
     if(links.Contains(other))
-      return null;
+      return default(LinkConflict);
 
     for(int i=0;i<other.members.Count;++i)
     {
@@ -219,18 +234,19 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
         if(this_symb is Namespace this_ns)
         {
           var conflict = this_ns.TryLink(other_ns);
-          if(conflict != null)
+          if(!conflict.Ok)
             return conflict;
         }
         else if(this_symb != null)
-          return this_symb;
+          return new LinkConflict(this_symb, other_symb);
       }
       else if(this_symb != null)
-        return this_symb;
+        return new LinkConflict(this_symb, other_symb);
     }
 
     links.Add(other);
-    return null;
+
+    return default(LinkConflict);
   }
 
   public void Unlink(Namespace other)

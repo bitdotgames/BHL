@@ -255,10 +255,26 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return norm_path;
     }
 
-    public void ResolveImportRequests()
+    public void ResolveImportRequests1()
     {
       foreach(var kv in requested_imports)
-        kv.Value.Item1?.Phase_Outline();
+      {
+        var parser = kv.Value.Item1;
+        if(parser == null)
+          continue;
+        parser.Phase_Outline();
+      }
+    }
+
+    public void ResolveImportRequests2()
+    {
+      foreach(var kv in requested_imports)
+      {
+        var parser = kv.Value.Item1;
+        if(parser == null)
+          continue;
+        parser.Phase_ParseTypes();
+      }
     }
 
     public Module GetImportedModule(string import_path)
@@ -458,7 +474,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public Result Phase_Finalize()
+  public void Phase_ParseTypes()
   {
     foreach(var pass in passes)
     {
@@ -494,7 +510,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       PopScope();
     }
+  }
 
+  public Result Phase_ParseFuncBodies()
+  {
     foreach(var pass in passes)
     {
       PushScope(pass.scope);
@@ -517,13 +536,17 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       Phase_Outline();
 
+      Phase_RequestImports();
+
+      importer.ResolveImportRequests1();
+
+      importer.ResolveImportRequests2();
+
       Phase_ResolveImports();
 
-      importer.ResolveImportRequests();
+      Phase_ParseTypes();
 
-      Phase_ResolveImports();
-
-      result = Phase_Finalize();
+      result = Phase_ParseFuncBodies();
       return result;
     }
     return result;
@@ -2215,8 +2238,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     ); 
     pass.scope.Define(pass.func_symb);
 
-    pass.func_symb.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType(), strict: false), pass.func_ctx.funcParams(), strict: false));
-
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
   }
@@ -2226,24 +2247,26 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    ParseFuncParams(pass.func_ctx, pass.func_ast);
+    pass.func_symb.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
-    Wrap(pass.func_ctx).eval_type = pass.func_ast.symbol.GetReturnType();
+    ParseFuncParams(pass.func_ctx, pass.func_ast, pass.func_symb);
+
+    Wrap(pass.func_ctx).eval_type = pass.func_symb.GetReturnType();
   }
 
-  void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast, FuncSymbolScript func_symb)
   {
     var func_params = ctx.funcParams();
     if(func_params != null)
     {
-      PushScope(func_ast.symbol);
+      PushScope(func_symb);
       PushAST(func_ast.fparams());
-      Visit(func_params);
+      VisitFuncParams(func_params);
       PopAST();
       PopScope();
     }
 
-    func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
+    func_symb.default_args_num = func_ast.GetDefaultArgsNum();
   }
 
   void Pass_ParseFuncBlock(ParserPass pass)
@@ -2280,6 +2303,14 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name, null);
 
+    pass.scope.Define(pass.iface_symb);
+  }
+
+  void Pass_ParseInterfaceMethods(ParserPass pass)
+  {
+    if(pass.iface_ctx == null)
+      return;
+
     for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers()?.interfaceMember().Length;++i)
     {
       var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
@@ -2298,24 +2329,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           fd.NAME().GetText()
         );
         pass.iface_symb.Define(func_symb);
-      }
-    }
 
-    pass.scope.Define(pass.iface_symb);
-  }
-
-  void Pass_ParseInterfaceMethods(ParserPass pass)
-  {
-    if(pass.iface_ctx == null)
-      return;
-
-    for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers()?.interfaceMember().Length;++i)
-    {
-      var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
-
-      var fd = ib.interfaceFuncDecl();
-      if(fd != null)
-      {
         var func_params = fd.funcParams();
         if(func_params != null)
         {
@@ -2429,8 +2443,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
             fd.NAME().GetText()
           );
 
-        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType(), strict: false), fd.funcParams(), strict: false));
-
         if(fd.funcFlags()?.virtualFlag() != null)
           func_symb.flags |= FuncFlags.Virtual;
         else if(fd.funcFlags()?.overrideFlag() != null)
@@ -2470,8 +2482,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
 
+        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
+
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
-        ParseFuncParams(fd, func_ast);
+        ParseFuncParams(fd, func_ast, func_symb);
 
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }

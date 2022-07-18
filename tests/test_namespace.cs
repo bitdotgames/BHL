@@ -453,8 +453,8 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(foo);
     }
 
-    var conflict_symb = ns2.TryLink(ns1);
-    AssertEqual("Wow", conflict_symb.name);
+    var conflict = ns2.TryLink(ns1);
+    AssertEqual("Wow", conflict.local.name);
 
   }
 
