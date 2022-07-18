@@ -82,6 +82,9 @@ public class CompilationExecutor
 
     var args_changed = CheckArgsSignatureFile(conf);
 
+    //TODO: for now let's forbid any caching
+    conf.use_cache = false;
+
     if(conf.use_cache && 
        !args_changed && 
        !BuildUtil.NeedToRegen(conf.res_file, conf.files)
@@ -586,9 +589,7 @@ public class CompilationExecutor
           parser.Phase_RequestImports();
         }
 
-        importer.ResolveImportRequests1();
-
-        importer.ResolveImportRequests2();
+        importer.ProcessParsers();
 
         i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)

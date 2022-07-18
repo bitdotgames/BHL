@@ -255,25 +255,21 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return norm_path;
     }
 
-    public void ResolveImportRequests1()
+    public void ProcessParsers()
     {
-      foreach(var kv in requested_imports)
-      {
-        var parser = kv.Value.Item1;
-        if(parser == null)
-          continue;
-        parser.Phase_Outline();
-      }
+      ForeachImportedParser(p => p.Phase_Outline());
+
+      ForeachImportedParser(p => p.Phase_ParseTypes());
     }
 
-    public void ResolveImportRequests2()
+    void ForeachImportedParser(System.Action<ANTLR_Parser> cb)
     {
       foreach(var kv in requested_imports)
       {
         var parser = kv.Value.Item1;
         if(parser == null)
           continue;
-        parser.Phase_ParseTypes();
+        cb(parser);
       }
     }
 
@@ -538,9 +534,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
       Phase_RequestImports();
 
-      importer.ResolveImportRequests1();
-
-      importer.ResolveImportRequests2();
+      importer.ProcessParsers();
 
       Phase_ParseTypes();
 
