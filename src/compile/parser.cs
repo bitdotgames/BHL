@@ -42,7 +42,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   }
 
   AST_Module root_ast;
-  Result result;
+  public Result result;
 
   ANTLR_Result parsed;
 
@@ -429,7 +429,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return w;
   }
 
-  public void Phase_Outline()
+  internal void Phase_Outline()
   {
     root_ast = new AST_Module(module.name);
 
@@ -453,7 +453,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void Phase_RequestImports()
+  internal void Phase_RequestImports()
   {
     foreach(var pass in passes)
     {
@@ -461,7 +461,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void Phase_ResolveImports()
+  internal void Phase_ResolveImports()
   {
     foreach(var import_path in module.imports)
     {
@@ -470,7 +470,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public void Phase_ParseTypes()
+  internal void Phase_ParseTypes()
   {
     foreach(var pass in passes)
     {
@@ -508,7 +508,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public Result Phase_ParseFuncBodies()
+  internal void Phase_ParseFuncBodies()
   {
     foreach(var pass in passes)
     {
@@ -521,29 +521,36 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       PopScope();
     }
 
-    return new Result(module, root_ast);
+    result = new Result(module, root_ast);
   }
 
   //NOTE: Convenience method which includes all phases,
   //      used in tests.
   public Result Process()
   {
-    if(result == null)
-    {
-      Phase_Outline();
-
-      Phase_RequestImports();
-
-      importer.ProcessParsers();
-
-      Phase_ParseTypes();
-
-      Phase_ResolveImports();
-
-      result = Phase_ParseFuncBodies();
-      return result;
-    }
+    var ps = new List<ANTLR_Parser>() { this };
+    ProcessAll(ps, importer);
     return result;
+  }
+
+  static public void ProcessAll(List<ANTLR_Parser> parsers, Importer importer)
+  {
+    foreach(var parser in parsers)
+      parser.Phase_Outline();
+
+    foreach(var parser in parsers)
+      parser.Phase_RequestImports();
+
+    importer.ProcessParsers();
+
+    foreach(var parser in parsers)
+    {
+      parser.Phase_ResolveImports();
+      parser.Phase_ParseTypes();
+    }
+
+    foreach(var parser in parsers)
+      parser.Phase_ParseFuncBodies();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

@@ -556,8 +556,6 @@ public class CompilationExecutor
 
           var file_module = new Module(w.ts, importer.FilePath2ModuleName(file), file);
 
-          ANTLR_Parser parser = null;
-
           InterimResult interim;
           if(w.cache.file2interim.TryGetValue(file, out interim) 
               && interim.use_file_cache)
@@ -570,36 +568,16 @@ public class CompilationExecutor
           {
             ++cache_miss;
 
+            ANTLR_Parser parser = null;
             if(interim.parsed != null)
               parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, importer);
             else
               parser = ANTLR_Parser.MakeParser(file, w.ts, importer);
-
-            parser.Phase_Outline();
+            parsers.Add(parser);
           }
-
-          parsers.Add(parser);
         }
 
-        i = w.start;
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
-        {
-          var parser = parsers[cnt];
-
-          parser.Phase_RequestImports();
-        }
-
-        importer.ProcessParsers();
-
-        i = w.start;
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
-        {
-          var parser = parsers[cnt];
-
-          parser.Phase_ResolveImports();
-
-          parser.Phase_ParseTypes();
-        }
+        ANTLR_Parser.ProcessAll(parsers, importer);
 
         i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
@@ -609,8 +587,7 @@ public class CompilationExecutor
           var file = w.files[i]; 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
 
-          var front_res = parser.Phase_ParseFuncBodies();
-          front_res = w.postproc.Patch(front_res, file);
+          var front_res = w.postproc.Patch(parser.result, file);
 
           w.file2path.Add(file, front_res.module.path);
           w.file2ns.Add(file, front_res.module.ns);
