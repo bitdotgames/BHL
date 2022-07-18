@@ -1142,9 +1142,9 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
+  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx, bool strict = true)
   {
-    var ret_type = ParseType(ret_ctx);
+    var ret_type = ParseType(ret_ctx, strict);
 
     var arg_types = new List<Proxy<IType>>();
     if(types_ctx != null)
@@ -1152,7 +1152,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       for(int i=0;i<types_ctx.refType().Length;++i)
       {
         var refType = types_ctx.refType()[i];
-        var arg_type = ParseType(refType.type());
+        var arg_type = ParseType(refType.type(), strict);
         if(refType.isRef() != null)
           arg_type = curr_scope.TRef(arg_type);
         arg_types.Add(arg_type);
@@ -1162,12 +1162,12 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new FuncSignature(ret_type, arg_types);
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
+  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx, bool strict = true)
   {
-    return ParseFuncSignature(ctx.retType(), ctx.types());
+    return ParseFuncSignature(ctx.retType(), ctx.types(), strict);
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num, bool strict = true)
   {
     default_args_num = 0;
     var sig = new FuncSignature(ret_type);
@@ -1177,7 +1177,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       {
         var vd = fparams.funcParamDeclare()[i];
 
-        var tp = ParseType(vd.type());
+        var tp = ParseType(vd.type(), strict);
         if(vd.isRef() != null)
           tp = curr_scope.T(new RefType(tp));
         if(vd.assignExp() != null)
@@ -1188,13 +1188,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, bool strict = true)
   {
     int default_args_num;
-    return ParseFuncSignature(ret_type, fparams, out default_args_num);
+    return ParseFuncSignature(ret_type, fparams, out default_args_num, strict);
   }
 
-  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
+  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed, bool strict = true)
   {
     Proxy<IType> tp;
 
@@ -1205,23 +1205,23 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     {
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(ParseType(parsed.type()[i]));
+        tuple.Add(ParseType(parsed.type()[i], strict));
       tp = curr_scope.T(tuple);
     }
     else
-      tp = ParseType(parsed.type()[0]);
+      tp = ParseType(parsed.type()[0], strict);
 
-    if(tp.Get() == null && !being_imported)
+    if(tp.Get() == null && strict)
       FireError(parsed, "type '" + tp.path + "' not found");
 
     return tp;
   }
 
-  Proxy<IType> ParseType(bhlParser.TypeContext ctx)
+  Proxy<IType> ParseType(bhlParser.TypeContext ctx, bool strict = true)
   {
     Proxy<IType> tp;
     if(ctx.funcType() != null)
-      tp = curr_scope.T(ParseFuncSignature(ctx.funcType()));
+      tp = curr_scope.T(ParseFuncSignature(ctx.funcType(), strict));
     else
       tp = curr_scope.T(ctx.nsName().GetText());
 
@@ -1230,7 +1230,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     else if(ctx.mapType() != null)
       tp = curr_scope.TMap(curr_scope.T(ctx.mapType().nsName().GetText()), tp);
 
-    if(tp.Get() == null && !being_imported)
+    if(tp.Get() == null && strict)
       FireError(ctx, "type '" + tp.path + "' not found");
 
    return tp;
@@ -2215,6 +2215,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     ); 
     pass.scope.Define(pass.func_symb);
 
+    pass.func_symb.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType(), strict: false), pass.func_ctx.funcParams(), strict: false));
+
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
   }
@@ -2223,8 +2225,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   {
     if(pass.func_ctx == null)
       return;
-
-    pass.func_ast.symbol.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
@@ -2280,6 +2280,27 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name, null);
 
+    for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers()?.interfaceMember().Length;++i)
+    {
+      var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
+
+      var fd = ib.interfaceFuncDecl();
+      if(fd != null)
+      {
+        int default_args_num;
+        var sig = ParseFuncSignature(ParseType(fd.retType(), strict: false), fd.funcParams(), out default_args_num, strict: false);
+        if(default_args_num != 0)
+          FireError(ib, "default value is not allowed in this context");
+
+        var func_symb = new FuncSymbolScript(
+          null, 
+          sig, 
+          fd.NAME().GetText()
+        );
+        pass.iface_symb.Define(func_symb);
+      }
+    }
+
     pass.scope.Define(pass.iface_symb);
   }
 
@@ -2295,22 +2316,10 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       var fd = ib.interfaceFuncDecl();
       if(fd != null)
       {
-        int default_args_num;
-        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
-        if(default_args_num != 0)
-          FireError(ib, "default value is not allowed in this context");
-
-        var func_symb = new FuncSymbolScript(
-          null, 
-          sig, 
-          fd.NAME().GetText()
-        );
-        pass.iface_symb.Define(func_symb);
-
         var func_params = fd.funcParams();
         if(func_params != null)
         {
-          PushScope(func_symb);
+          PushScope(pass.iface_symb);
           //NOTE: we push some dummy interim AST and later
           //      simply discard it since we don't care about
           //      func args related AST for interfaces
@@ -2420,6 +2429,8 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
             fd.NAME().GetText()
           );
 
+        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType(), strict: false), fd.funcParams(), strict: false));
+
         if(fd.funcFlags()?.virtualFlag() != null)
           func_symb.flags |= FuncFlags.Virtual;
         else if(fd.funcFlags()?.overrideFlag() != null)
@@ -2458,8 +2469,6 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
-
-        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
 
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);

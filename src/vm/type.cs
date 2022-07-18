@@ -622,7 +622,9 @@ public class Types : INamedResolver
 
   static public bool Is(IType a, IType b) 
   {
-    if(a != null && a.Equals(b))
+    if(a == null || b == null)
+      return false;
+    else if(a.Equals(b))
       return true;
     else if(a is IInstanceType ai && b is IInstanceType bi)
     {
@@ -665,6 +667,9 @@ public class Types : INamedResolver
 
   static public bool CanAssignTo(IType rhs, IType lhs) 
   {
+    if(rhs == null || lhs == null)
+      return false;
+
     return rhs == lhs || 
            lhs == Any ||
            (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
