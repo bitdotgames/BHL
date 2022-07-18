@@ -889,7 +889,7 @@ public class VM : INamedResolver
 
   void Prepare(CompiledModule cm)
   {
-    //Console.WriteLine("FINALIZE " + cm.name);
+    //Console.WriteLine("=== FINALIZE " + cm.name);
     //Console.WriteLine(cm.ns.DumpMembers());
 
     cm.ns.ForAllSymbols(delegate(Symbol s)
@@ -911,13 +911,11 @@ public class VM : INamedResolver
   {
     if(s is FuncSymbolScript fss && fss._module == null)
     {
+      fss._module = modules[fss._module_name];
       if(fss is FuncSymbolScriptImported fssi)
       {
-        fssi._module = modules[fssi._module_name];
         fssi.ip_addr = ((FuncSymbolScript)fssi._module.ns.ResolveNamedByPath(fssi._full_path)).ip_addr;
       }
-      else
-        fss._module = cm;
     }
   }
 

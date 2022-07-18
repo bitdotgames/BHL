@@ -19033,17 +19033,17 @@ public class TestVM : BHL_TestBase
 
       ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, "", new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
+      ns.Define(new FuncSymbolScript(null, "", new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
-      Foo.Define(new FuncSymbolScript(null, new FuncSignature(Types.Void), "Hey", 0, 3));
+      Foo.Define(new FuncSymbolScript(null, "", new FuncSignature(Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(null, "", new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");

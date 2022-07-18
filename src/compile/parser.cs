@@ -1267,6 +1267,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
+      module.name,
       func_name,
       ParseFuncSignature(tp, funcLambda.funcParams()),
       upvals,
@@ -2233,6 +2234,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     ) : 
     new FuncSymbolScript(
       Wrap(pass.func_ctx), 
+      module.name,
       new FuncSignature(),
       name
     ); 
@@ -2325,6 +2327,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
         var func_symb = new FuncSymbolScript(
           null, 
+          module.name,
           sig, 
           fd.NAME().GetText()
         );
@@ -2439,6 +2442,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           ) :
           new FuncSymbolScript(
             Wrap(fd), 
+            module.name,
             new FuncSignature(),
             fd.NAME().GetText()
           );

@@ -1393,6 +1393,8 @@ public class FuncSymbolScript : FuncSymbol
 
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
+  //TODO: store it in a more optimal way?
+  internal string _module_name;
 
   public int local_vars_num;
 
@@ -1404,6 +1406,7 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
+    string module_name,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1412,6 +1415,7 @@ public class FuncSymbolScript : FuncSymbol
     : base(name, sig)
   {
     this.name = name;
+    _module_name = module_name;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
     this.parsed = parsed;
@@ -1450,6 +1454,8 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
+    marshall.Marshall.Sync(ctx, ref _module_name);
+
     marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
@@ -1462,7 +1468,6 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   new public const uint CLASS_ID = 22; 
 
   //TODO: store it in a more optimal way?
-  internal string _module_name;
   internal string _full_path;
 
 #if BHL_FRONT
@@ -1475,9 +1480,8 @@ public class FuncSymbolScriptImported : FuncSymbolScript
     int default_args_num = 0,
     int ip_addr = -1
   ) 
-    : base(parsed, sig, name, default_args_num, ip_addr)
+    : base(parsed, module_name, sig, name, default_args_num, ip_addr)
   {
-    _module_name = module_name;
     _full_path = full_path;
   }
 #endif
@@ -1495,7 +1499,6 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref _module_name);
     marshall.Marshall.Sync(ctx, ref _full_path);
   }
 }
@@ -1598,12 +1601,13 @@ public class LambdaSymbol : FuncSymbolScript
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
+    string module_name, 
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
     List<FuncSymbolScript> fdecl_stack
   ) 
-    : base(parsed, sig, name, 0, -1)
+    : base(parsed, module_name, sig, name, 0, -1)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
