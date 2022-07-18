@@ -188,7 +188,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
   public void Define(Symbol sym)
   {
     if(!(sym is FuncSymbol))
-      throw new Exception("Only function symbols supported");
+      throw new Exception("Only function symbols supported, given " + sym?.GetType().Name);
     
     members.Add(sym);
   }

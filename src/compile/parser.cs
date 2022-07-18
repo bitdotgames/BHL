@@ -2333,7 +2333,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         var func_params = fd.funcParams();
         if(func_params != null)
         {
-          PushScope(pass.iface_symb);
+          PushScope(func_symb);
           //NOTE: we push some dummy interim AST and later
           //      simply discard it since we don't care about
           //      func args related AST for interfaces

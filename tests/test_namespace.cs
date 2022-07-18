@@ -1220,7 +1220,7 @@ public class TestNamespace : BHL_TestBase
           }
         );
       },
-      @"symbol 'foo.Foo' is already declared in module 'bhl1'"
+      @"symbol 'foo.Foo' is already declared in module 'bhl2'"
     );
   }
 
