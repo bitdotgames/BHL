@@ -237,7 +237,7 @@ public class CompilationExecutor
 
           return w.error;
         }
-        total_modules += w.file2path.Count;
+        total_modules += w.file2modpath.Count;
       }
       mwriter.Write(total_modules);
 
@@ -250,7 +250,7 @@ public class CompilationExecutor
         {
           if(file_idx >= w.start && file_idx < w.start + w.count) 
           {
-            var path = w.file2path[file];
+            var path = w.file2modpath[file];
             var compiled_file = w.file2compiled[file];
 
             mwriter.Write((byte)conf.module_fmt);
@@ -510,7 +510,7 @@ public class CompilationExecutor
     public IFrontPostProcessor postproc;
     public ICompileError error = null;
     public Cache cache;
-    public Dictionary<string, ModulePath> file2path = new Dictionary<string, ModulePath>();
+    public Dictionary<string, ModulePath> file2modpath = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
 
@@ -532,71 +532,71 @@ public class CompilationExecutor
       sw.Start();
 
       var w = (CompilerWorker)data;
-      w.file2path.Clear();
-      w.file2compiled.Clear();
 
       var importer = new ANTLR_Parser.Importer();
       importer.SetParsedCache(w.cache);
       if(!string.IsNullOrEmpty(w.inc_dir))
         importer.AddToIncludePath(w.inc_dir);
 
-
       int cache_hit = 0;
       int cache_miss = 0;
 
-      int i = -1;
       var parsers = new List<ANTLR_Parser>();
+      var files = new List<string>();
+      string current_file = "";
 
       try
       {
-        i = w.start;
+        int i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
-          var file = w.files[i]; 
+          current_file = w.files[i]; 
 
-          var file_module = new Module(w.ts, importer.FilePath2ModuleName(file), file);
+          var file_module = new Module(w.ts, importer.FilePath2ModuleName(current_file), current_file);
 
           InterimResult interim;
-          if(w.cache.file2interim.TryGetValue(file, out interim) 
+          if(w.cache.file2interim.TryGetValue(current_file, out interim) 
               && interim.use_file_cache)
           {
             ++cache_hit;
 
-            w.file2path.Add(file, file_module.path);
+            w.file2modpath.Add(current_file, file_module.path);
+            w.file2compiled.Add(current_file, GetCompiledCacheFile(w.cache_dir, current_file));
           }
           else
           {
             ++cache_miss;
 
             ANTLR_Parser parser = null;
+            //let's try parsed cache if it'e present
             if(interim.parsed != null)
               parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, importer);
             else
-              parser = ANTLR_Parser.MakeParser(file, w.ts, importer);
+              parser = ANTLR_Parser.MakeParser(current_file, w.ts, importer);
+
             parsers.Add(parser);
+            files.Add(current_file);
           }
         }
 
         ANTLR_Parser.ProcessAll(parsers, importer);
 
-        i = w.start;
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        for(int p=0;p<parsers.Count;++p)
         {
-          var parser = parsers[cnt];
+          var parser = parsers[p];
+          current_file = files[p]; 
 
-          var file = w.files[i]; 
-          var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
+          var front_res = w.postproc.Patch(parser.result, current_file);
 
-          var front_res = w.postproc.Patch(parser.result, file);
-
-          w.file2path.Add(file, front_res.module.path);
-          w.file2ns.Add(file, front_res.module.ns);
+          var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
 
           var c  = new ModuleCompiler(front_res);
           var cm = c.Compile();
           CompiledModule.ToFile(cm, compiled_file);
 
-          w.file2compiled.Add(file, compiled_file);
+          w.file2modpath.Add(current_file, front_res.module.path);
+          w.file2compiled.Add(current_file, compiled_file);
+          w.file2ns.Add(current_file, front_res.module.ns);
         }
       }
       catch(Exception e)
@@ -607,7 +607,7 @@ public class CompilationExecutor
         {
           //let's log unexpected exceptions immediately
           Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(w.files[i], e);
+          w.error = new BuildError(current_file, e);
         }
       }
 
