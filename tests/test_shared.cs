@@ -492,7 +492,7 @@ public class BHL_TestBase
       ts = ts.Clone();
 
     //let's serialize/unserialize the compiled module so that
-    //it's going to go thru the full compilation cycle
+    //it's going to go through the full compilation cycle
     var ms = new MemoryStream();
     CompiledModule.ToStream(orig_cm, ms);
 

@@ -82,9 +82,6 @@ public class CompilationExecutor
 
     var args_changed = CheckArgsSignatureFile(conf);
 
-    //TODO: for now let's forbid any caching
-    conf.use_cache = false;
-
     if(conf.use_cache && 
        !args_changed && 
        !BuildUtil.NeedToRegen(conf.res_file, conf.files)
@@ -554,16 +551,30 @@ public class CompilationExecutor
 
           var file_module = new Module(w.ts, importer.FilePath2ModuleName(current_file), current_file);
 
+          bool file_cache_ok = false;
+
           InterimResult interim;
           if(w.cache.file2interim.TryGetValue(current_file, out interim) 
               && interim.use_file_cache)
           {
-            ++cache_hit;
 
-            w.file2modpath.Add(current_file, file_module.path);
-            w.file2compiled.Add(current_file, GetCompiledCacheFile(w.cache_dir, current_file));
+            var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
+
+            try
+            {
+              var cm = CompiledModule.FromFile(compiled_file, w.ts);
+              w.file2modpath.Add(current_file, file_module.path);
+              w.file2compiled.Add(current_file, compiled_file);
+              w.file2ns.Add(current_file, cm.ns);
+
+              ++cache_hit;
+              file_cache_ok = true;
+            }
+            catch(Exception)
+            {}
           }
-          else
+
+          if(!file_cache_ok)
           {
             ++cache_miss;
 
@@ -586,17 +597,18 @@ public class CompilationExecutor
           var parser = parsers[p];
           current_file = files[p]; 
 
-          var front_res = w.postproc.Patch(parser.result, current_file);
+          var parser_result = w.postproc.Patch(parser.result, current_file);
+
+
+          var c  = new ModuleCompiler(parser_result);
+          var cm = c.Compile();
 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
-
-          var c  = new ModuleCompiler(front_res);
-          var cm = c.Compile();
           CompiledModule.ToFile(cm, compiled_file);
 
-          w.file2modpath.Add(current_file, front_res.module.path);
+          w.file2modpath.Add(current_file, parser_result.module.path);
           w.file2compiled.Add(current_file, compiled_file);
-          w.file2ns.Add(current_file, front_res.module.ns);
+          w.file2ns.Add(current_file, parser_result.module.ns);
         }
       }
       catch(Exception e)

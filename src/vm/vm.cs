@@ -2548,6 +2548,14 @@ public class CompiledModule
       ToStream(cm, wfs);
     }
   }
+
+  static public CompiledModule FromFile(string file, Types types)
+  {
+    using(FileStream rfs = new FileStream(file, FileMode.Open, System.IO.FileAccess.Read))
+    {
+      return FromStream(types, rfs);
+    }
+  }
 }
 
 public interface ICoroutine
