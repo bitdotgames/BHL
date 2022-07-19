@@ -560,7 +560,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
-public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>
+public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeral
 {
   public const uint CLASS_ID = 10; 
 
@@ -909,7 +909,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
 }
 
-public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>
+public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeral
 {
   public const uint CLASS_ID = 21; 
 

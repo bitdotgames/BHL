@@ -12,6 +12,10 @@ public interface INamed
 public interface IType : INamed
 {}
 
+// Denotes named entities which are created 'on the fly'
+public interface IEphemeral : INamed
+{}
+
 // For lazy evaluation of types and forward declarations
 public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : INamed
 {
@@ -85,7 +89,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
         //NOTE: we want to marshall only those types which are not
         //      defined elsewhere otherwise we just want to keep
         //      string reference at them
-        if(IsGeneric(resolved))
+        if(resolved is IEphemeral)
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
@@ -97,24 +101,6 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
       named = (T)mg;
-  }
-
-  static bool IsGeneric(INamed named)
-  {
-    //TODO: make this check more robust
-    return !(
-        named is Symbol symb && 
-        (symb is BuiltInSymbolType ||
-         symb is FuncSymbolScript ||
-         symb is ClassSymbolNative ||
-         symb is ClassSymbolScript ||
-         symb is InterfaceSymbolNative ||
-         symb is InterfaceSymbolScript ||
-         symb is EnumSymbol ||
-         (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
-         (symb is MapTypeSymbol && !(symb is GenericMapTypeSymbol))
-        )
-      );
   }
 
   public override string ToString() 
@@ -150,7 +136,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   }
 }
 
-public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
+public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>, IEphemeral
 {
   public const uint CLASS_ID = 17;
 
@@ -201,7 +187,7 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
   }
 }
 
-public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleType>
+public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleType>, IEphemeral
 {
   public const uint CLASS_ID = 16;
 
@@ -293,7 +279,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   }
 }
 
-public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>
+public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>, IEphemeral
 {
   public const uint CLASS_ID = 14; 
 
