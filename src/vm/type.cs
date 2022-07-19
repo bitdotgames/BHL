@@ -85,7 +85,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
         //NOTE: we want to marshall only those types which are not
         //      defined elsewhere otherwise we just want to keep
         //      string reference at them
-        if(!IsIndependent(resolved))
+        if(IsGeneric(resolved))
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
@@ -99,20 +99,21 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
       named = (T)mg;
   }
 
-  static bool IsIndependent(INamed named)
+  static bool IsGeneric(INamed named)
   {
     //TODO: make this check more robust
-    return 
-      named is Symbol symb && 
-      (symb is BuiltInSymbolType ||
-       symb is FuncSymbolScript ||
-       symb is ClassSymbolNative ||
-       symb is ClassSymbolScript ||
-       symb is InterfaceSymbolNative ||
-       symb is InterfaceSymbolScript ||
-       symb is EnumSymbol ||
-       (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
-       (symb is MapTypeSymbol && !(symb is GenericMapTypeSymbol))
+    return !(
+        named is Symbol symb && 
+        (symb is BuiltInSymbolType ||
+         symb is FuncSymbolScript ||
+         symb is ClassSymbolNative ||
+         symb is ClassSymbolScript ||
+         symb is InterfaceSymbolNative ||
+         symb is InterfaceSymbolScript ||
+         symb is EnumSymbol ||
+         (symb is ArrayTypeSymbol && !(symb is GenericArrayTypeSymbol)) ||
+         (symb is MapTypeSymbol && !(symb is GenericMapTypeSymbol))
+        )
       );
   }
 

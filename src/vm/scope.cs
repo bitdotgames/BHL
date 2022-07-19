@@ -406,7 +406,7 @@ public static class ScopeExtensions
 
   public static string GetFullPath(this IScope scope, string name)
   {
-    if(string.IsNullOrEmpty(name) || name.IndexOf('.') != -1)
+    if(name == null || name.IndexOf('.') != -1)
       return name;
 
     while(scope != null)

@@ -1468,13 +1468,22 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   new public const uint CLASS_ID = 22; 
 
   //TODO: store it in a more optimal way?
-  internal string _full_path;
+  internal string _path_prefix;
+
+  internal string _full_path { 
+    get {
+      if(string.IsNullOrEmpty(_path_prefix))
+        return name;
+      else
+        return _path_prefix + '.' + name;
+    }
+  }
 
 #if BHL_FRONT
   public FuncSymbolScriptImported(
     WrappedParseTree parsed, 
     string module_name,
-    string full_path,
+    string path_prefix,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1482,7 +1491,7 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   ) 
     : base(parsed, module_name, sig, name, default_args_num, ip_addr)
   {
-    _full_path = full_path;
+    _path_prefix = path_prefix;
   }
 #endif
 
@@ -1499,7 +1508,7 @@ public class FuncSymbolScriptImported : FuncSymbolScript
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref _full_path);
+    marshall.Marshall.Sync(ctx, ref _path_prefix);
   }
 }
 

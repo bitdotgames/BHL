@@ -2229,7 +2229,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     new FuncSymbolScriptImported(
       Wrap(pass.func_ctx), 
       module.name,
-      pass.scope.GetFullPath(name),
+      pass.scope.GetFullPath("").TrimEnd('.'),
       new FuncSignature(),
       name
     ) : 
@@ -2437,7 +2437,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
           new FuncSymbolScriptImported(
             Wrap(fd), 
             module.name,
-            pass.class_symb.GetFullPath(fd.NAME().GetText()),
+            pass.class_symb.GetFullPath("").TrimEnd('.'),
             new FuncSignature(),
             fd.NAME().GetText()
           ) :
