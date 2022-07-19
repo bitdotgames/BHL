@@ -37,14 +37,14 @@ public class CompilationExecutor
   public struct InterimResult
   {
     public bool use_file_cache;
-    public ANTLR_Result parsed;
+    public ANTLR_Parsed parsed;
   }
 
-  public class Cache : ANTLR_Parser.IParsedCache
+  public class Cache : ANTLR_Processor.IParsedCache
   {
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
 
-    public bool TryFetch(string file, out ANTLR_Result parsed)
+    public bool TryFetch(string file, out ANTLR_Parsed parsed)
     {
       parsed = null;
       InterimResult interim;
@@ -370,8 +370,8 @@ public class CompilationExecutor
 
             if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
             {
-              var parser = ANTLR_Parser.Stream2Parser(file, sfs);
-              var parsed = new ANTLR_Result(parser.TokenStream, parser.program());
+              var proc = ANTLR_Processor.Stream2Processor(file, sfs);
+              var parsed = new ANTLR_Parsed(proc.TokenStream, proc.program());
 
               interim.parsed = parsed;
 
@@ -530,7 +530,7 @@ public class CompilationExecutor
 
       var w = (CompilerWorker)data;
 
-      var coordinator = new ANTLR_Parser.Coordinator();
+      var coordinator = new ANTLR_Processor.Coordinator();
       coordinator.SetParsedCache(w.cache);
       if(!string.IsNullOrEmpty(w.inc_dir))
         coordinator.AddToIncludePath(w.inc_dir);
@@ -538,7 +538,7 @@ public class CompilationExecutor
       int cache_hit = 0;
       int cache_miss = 0;
 
-      var parsers = new List<ANTLR_Parser>();
+      var processors = new List<ANTLR_Processor>();
       var files = new List<string>();
       string current_file = "";
 
@@ -578,37 +578,37 @@ public class CompilationExecutor
           {
             ++cache_miss;
 
-            ANTLR_Parser parser = null;
+            ANTLR_Processor proc = null;
             //let's try parsed cache if it'e present
             if(interim.parsed != null)
-              parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, coordinator);
+              proc = ANTLR_Processor.MakeProcessor(file_module, interim.parsed, w.ts, coordinator);
             else
-              parser = ANTLR_Parser.MakeParser(current_file, w.ts, coordinator);
+              proc = ANTLR_Processor.MakeProcessor(current_file, w.ts, coordinator);
 
-            parsers.Add(parser);
+            processors.Add(proc);
             files.Add(current_file);
           }
         }
 
-        ANTLR_Parser.ProcessAll(parsers, coordinator);
+        ANTLR_Processor.ProcessAll(processors, coordinator);
 
-        for(int p=0;p<parsers.Count;++p)
+        for(int p=0;p<processors.Count;++p)
         {
-          var parser = parsers[p];
+          var proc = processors[p];
           current_file = files[p]; 
 
-          var parser_result = w.postproc.Patch(parser.result, current_file);
+          var proc_result = w.postproc.Patch(proc.result, current_file);
 
 
-          var c  = new ModuleCompiler(parser_result);
+          var c  = new ModuleCompiler(proc_result);
           var cm = c.Compile();
 
           var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
           CompiledModule.ToFile(cm, compiled_file);
 
-          w.file2modpath.Add(current_file, parser_result.module.path);
+          w.file2modpath.Add(current_file, proc_result.module.path);
           w.file2compiled.Add(current_file, compiled_file);
-          w.file2ns.Add(current_file, parser_result.module.ns);
+          w.file2ns.Add(current_file, proc_result.module.ns);
         }
       }
       catch(Exception e)
@@ -670,13 +670,13 @@ public class CompilationExecutor
 public interface IFrontPostProcessor
 {
   //NOTE: returns patched result
-  ANTLR_Parser.Result Patch(ANTLR_Parser.Result fres, string src_file);
+  ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file);
   void Tally();
 }
 
 public class EmptyPostProcessor : IFrontPostProcessor 
 {
-  public ANTLR_Parser.Result Patch(ANTLR_Parser.Result fres, string src_file) { return fres; }
+  public ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file) { return fres; }
   public void Tally() {}
 }
 

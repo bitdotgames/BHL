@@ -342,7 +342,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
 #if BHL_FRONT
   //used for a temporary storage of class members during 
-  //parser multipasses
+  //parsing multipasses
   public SymbolsStorage tmp_members;
 
   public ClassSymbol(

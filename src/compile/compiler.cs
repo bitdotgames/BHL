@@ -192,7 +192,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(ANTLR_Parser.Result fres)
+  public ModuleCompiler(ANTLR_Processor.Result fres)
   {
     module = fres.module;
     ast = fres.ast;

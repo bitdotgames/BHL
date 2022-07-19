@@ -7,12 +7,12 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
-public class ANTLR_Result
+public class ANTLR_Parsed
 {
   public ITokenStream tokens { get; private set; }
   public bhlParser.ProgramContext prog { get; private set; }
 
-  public ANTLR_Result(ITokenStream tokens, bhlParser.ProgramContext prog)
+  public ANTLR_Parsed(ITokenStream tokens, bhlParser.ProgramContext prog)
   {
     this.tokens = tokens;
     this.prog = prog;
@@ -27,7 +27,7 @@ public class WrappedParseTree
   public IType eval_type;
 }
 
-public class ANTLR_Parser : bhlBaseVisitor<object>
+public class ANTLR_Processor : bhlBaseVisitor<object>
 {
   public class Result
   {
@@ -44,7 +44,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   AST_Module root_ast;
   public Result result;
 
-  ANTLR_Result parsed;
+  ANTLR_Parsed parsed;
 
   static int lambda_id = 0;
 
@@ -159,7 +159,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static ANTLR_Parser MakeParser(string file, Types ts, ANTLR_Parser.Coordinator coordinator)
+  public static ANTLR_Processor MakeProcessor(string file, Types ts, ANTLR_Processor.Coordinator coordinator)
   {
     using(var sfs = File.OpenRead(file))
     {
@@ -168,7 +168,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public static bhlParser Stream2Parser(string file, Stream src)
+  public static bhlParser Stream2Processor(string file, Stream src)
   {
     var tokens = Stream2Tokens(file, src);
     var p = new bhlParser(tokens);
@@ -177,21 +177,21 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     return p;
   }
   
-  public static ANTLR_Parser MakeParser(Module module, Stream src, Types ts, ANTLR_Parser.Coordinator coordinator = null, bool being_imported = false)
+  public static ANTLR_Processor MakeParser(Module module, Stream src, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
   {
-    var p = Stream2Parser(module.file_path, src);
-    var parsed = new ANTLR_Result(p.TokenStream, p.program());
-    return MakeParser(module, parsed, ts, coordinator, being_imported);
+    var p = Stream2Processor(module.file_path, src);
+    var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
+    return MakeProcessor(module, parsed, ts, coordinator, being_imported);
   }
 
-  public static ANTLR_Parser MakeParser(Module module, ANTLR_Result parsed, Types ts, ANTLR_Parser.Coordinator coordinator = null, bool being_imported = false)
+  public static ANTLR_Processor MakeProcessor(Module module, ANTLR_Parsed parsed, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
   {
-    return new ANTLR_Parser(parsed, module, ts, coordinator, being_imported);
+    return new ANTLR_Processor(parsed, module, ts, coordinator, being_imported);
   }
 
   public interface IParsedCache
   {
-    bool TryFetch(string file, out ANTLR_Result parsed);
+    bool TryFetch(string file, out ANTLR_Parsed parsed);
   }
 
   public class Coordinator
@@ -201,15 +201,15 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
 
     public struct ImportRequest 
     {
-      //NOTE: if parser is null it means an existing module registered by some parser
-      //      is going to be used and it means we don't need to parse anything and do
-      //      any 'double work' because it was done elsewhere
-      public ANTLR_Parser parser;
+      //NOTE: if processor is null it means an existing module registered by some 
+      //      already existing processor is going to be used and it means we don't 
+      //      need to process anything and do any 'double work' because it was done elsewhere
+      public ANTLR_Processor processor;
       public Module module;
 
-      public ImportRequest(ANTLR_Parser parser, Module module)
+      public ImportRequest(ANTLR_Processor processor, Module module)
       {
-        this.parser = parser;
+        this.processor = processor;
         this.module = module;
       }
     }
@@ -254,16 +254,16 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       if(!requested_imports.ContainsKey(norm_path))
       {
         var m = TryGetParsedModule(norm_path);
-        ANTLR_Parser parser = null;
-        //NOTE: If a module wasn't registered (by some parser) we create a module and parser for it.
+        ANTLR_Processor processor = null;
+        //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
         //      Otherwise we re-use the already registerd module. This way we share symbols across  
         //      all the parsed/imported modules and don't do any 'double work'
         if(m == null)
         {
           m = new Module(ts, norm_path, full_path); 
-          parser = MakeParser(full_path, m, ts);
+          processor = MakeProcessor(full_path, m, ts);
         }
-        requested_imports.Add(norm_path, new ImportRequest(parser, m));
+        requested_imports.Add(norm_path, new ImportRequest(processor, m));
       }
 
       origin.imports.Add(norm_path);
@@ -271,13 +271,13 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return norm_path;
     }
 
-    public void ProcessImportedParsers()
+    public void ProcessImported()
     {
       foreach(var kv in requested_imports)
-        kv.Value.parser?.Phase_Outline();
+        kv.Value.processor?.Phase_Outline();
 
       foreach(var kv in requested_imports)
-        kv.Value.parser?.Phase_ParseTypes();
+        kv.Value.processor?.Phase_ParseTypes();
     }
 
     public Module GetImportedModule(string import_path)
@@ -285,22 +285,22 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
       return requested_imports[import_path].module;
     }
 
-    ANTLR_Parser MakeParser(string full_path, Module m, Types ts)
+    ANTLR_Processor MakeProcessor(string full_path, Module m, Types ts)
     {
-      ANTLR_Parser parser = null;
-      ANTLR_Result parsed;
+      ANTLR_Processor proc = null;
+      ANTLR_Parsed parsed;
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        parser = ANTLR_Parser.MakeParser(m, parsed, ts, this, being_imported: true);
+        proc = ANTLR_Processor.MakeProcessor(m, parsed, ts, this, being_imported: true);
       }
       else
       {
         //Console.WriteLine("MISS " + full_path);
         using(var fs = File.OpenRead(full_path))
-          parser = ANTLR_Parser.MakeParser(m, fs, ts, this, being_imported: true);
+          proc = ANTLR_Processor.MakeParser(m, fs, ts, this, being_imported: true);
       }
-      return parser;
+      return proc;
     }
 
     void ResolvePath(string self_path, string path, out string full_path, out string norm_path)
@@ -341,7 +341,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     }
   }
 
-  public ANTLR_Parser(ANTLR_Result parsed, Module module, Types types, Coordinator coordinator, bool being_imported = false)
+  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, Types types, Coordinator coordinator, bool being_imported = false)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -534,29 +534,29 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
   //      used in tests.
   public Result Process()
   {
-    var ps = new List<ANTLR_Parser>() { this };
+    var ps = new List<ANTLR_Processor>() { this };
     ProcessAll(ps, coordinator);
     return result;
   }
 
-  static public void ProcessAll(List<ANTLR_Parser> parsers, Coordinator coordinator)
+  static public void ProcessAll(List<ANTLR_Processor> procs, Coordinator coordinator)
   {
-    foreach(var parser in parsers)
-      parser.Phase_Outline();
+    foreach(var proc in procs)
+      proc.Phase_Outline();
 
-    foreach(var parser in parsers)
-      parser.Phase_RequestImports();
+    foreach(var proc in procs)
+      proc.Phase_RequestImports();
 
-    coordinator.ProcessImportedParsers();
+    coordinator.ProcessImported();
 
-    foreach(var parser in parsers)
+    foreach(var proc in procs)
     {
-      parser.Phase_ResolveImports();
-      parser.Phase_ParseTypes();
+      proc.Phase_ResolveImports();
+      proc.Phase_ParseTypes();
     }
 
-    foreach(var parser in parsers)
-      parser.Phase_ParseFuncBodies();
+    foreach(var proc in procs)
+      proc.Phase_ParseFuncBodies();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
@@ -1711,7 +1711,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
     get {
       if(_one_literal_exp == null)
       {
-        _one_literal_exp = Stream2Parser("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
+        _one_literal_exp = Stream2Processor("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
       }
       return _one_literal_exp;
     }
