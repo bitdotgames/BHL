@@ -206,7 +206,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
   public IScope GetFallbackScope() { return scope; }
 
   public ISymbolsIndex GetSymbolsIndex() { return members; }
-  public SymbolsStorage GetMembers() { return members; }
+  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -382,7 +382,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
   }
 
   public ISymbolsIndex GetSymbolsIndex() { return members; }
-  public SymbolsStorage GetMembers() { return members; }
+  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public IScope GetFallbackScope() 
   {
@@ -1328,7 +1328,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   }
 
   public ISymbolsIndex GetSymbolsIndex() { return members; }
-  public SymbolsStorage GetMembers() { return members; }
+  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public IScope GetFallbackScope() 
   { 
@@ -1883,7 +1883,7 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
   }
 
   public ISymbolsIndex GetSymbolsIndex() { return members; }
-  public SymbolsStorage GetMembers() { return members; }
+  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {

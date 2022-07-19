@@ -2827,7 +2827,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         VariableSymbol subst_symbol = null;
         if(is_decl)
         {
-          var symbols = ((ISymbolsStorageAccess)curr_scope).GetMembers();
+          var symbols = ((ISymbolsStorageAccess)curr_scope).GetSymbolsStorage();
           disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
           subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
           symbols.Replace(disabled_symbol, subst_symbol);
@@ -2846,7 +2846,7 @@ public class ANTLR_Parser : bhlBaseVisitor<object>
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
         {
-          var symbols = ((ISymbolsStorageAccess)curr_scope).GetMembers();
+          var symbols = ((ISymbolsStorageAccess)curr_scope).GetSymbolsStorage();
           symbols.Replace(subst_symbol, disabled_symbol);
         }
 

@@ -29,13 +29,14 @@ public interface ISymbolsIndex
 
 public interface ISymbolsIndexable
 {
+  // A read-only symbols accessing interface 
   ISymbolsIndex GetSymbolsIndex();
 }
 
 public interface ISymbolsStorageAccess : ISymbolsIndexable
 {
   // Low level collection of members which can be changed 
-  SymbolsStorage GetMembers();
+  SymbolsStorage GetSymbolsStorage();
 }
 
 public interface IInstanceType : IType, IScope 
@@ -86,7 +87,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
   }
 
   public ISymbolsIndex GetSymbolsIndex() { return members; }
-  public SymbolsStorage GetMembers() { return members; }
+  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public Symbol Resolve(string name) 
   {
