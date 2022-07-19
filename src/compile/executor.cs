@@ -530,10 +530,10 @@ public class CompilationExecutor
 
       var w = (CompilerWorker)data;
 
-      var importer = new ANTLR_Parser.Importer();
-      importer.SetParsedCache(w.cache);
+      var coordinator = new ANTLR_Parser.Coordinator();
+      coordinator.SetParsedCache(w.cache);
       if(!string.IsNullOrEmpty(w.inc_dir))
-        importer.AddToIncludePath(w.inc_dir);
+        coordinator.AddToIncludePath(w.inc_dir);
 
       int cache_hit = 0;
       int cache_miss = 0;
@@ -549,7 +549,7 @@ public class CompilationExecutor
         {
           current_file = w.files[i]; 
 
-          var file_module = new Module(w.ts, importer.FilePath2ModuleName(current_file), current_file);
+          var file_module = new Module(w.ts, coordinator.FilePath2ModuleName(current_file), current_file);
 
           bool file_cache_ok = false;
 
@@ -581,16 +581,16 @@ public class CompilationExecutor
             ANTLR_Parser parser = null;
             //let's try parsed cache if it'e present
             if(interim.parsed != null)
-              parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, importer);
+              parser = ANTLR_Parser.MakeParser(file_module, interim.parsed, w.ts, coordinator);
             else
-              parser = ANTLR_Parser.MakeParser(current_file, w.ts, importer);
+              parser = ANTLR_Parser.MakeParser(current_file, w.ts, coordinator);
 
             parsers.Add(parser);
             files.Add(current_file);
           }
         }
 
-        ANTLR_Parser.ProcessAll(parsers, importer);
+        ANTLR_Parser.ProcessAll(parsers, coordinator);
 
         for(int p=0;p<parsers.Count;++p)
         {
