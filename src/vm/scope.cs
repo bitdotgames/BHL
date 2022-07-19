@@ -21,10 +21,20 @@ public interface IScope : INamedResolver
   IScope GetFallbackScope();
 }
 
-public interface ISymbolsStorageAccess
+public interface ISymbolsIndex
 {
-  // Collection of members, depending on concrete implementation may be
-  // a readonly one
+  int Count { get; }
+  Symbol this[int index] { get; }
+}
+
+public interface ISymbolsIndexable
+{
+  ISymbolsIndex GetSymbolsIndex();
+}
+
+public interface ISymbolsStorageAccess : ISymbolsIndexable
+{
+  // Low level collection of members which can be changed 
   SymbolsStorage GetMembers();
 }
 
@@ -75,6 +85,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
     }
   }
 
+  public ISymbolsIndex GetSymbolsIndex() { return members; }
   public SymbolsStorage GetMembers() { return members; }
 
   public Symbol Resolve(string name) 
@@ -125,7 +136,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorageAccess, INamedResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexable, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -321,7 +332,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsStorage
 
   public IScope GetFallbackScope() { return scope; }
 
-  public SymbolsStorage GetMembers() 
+  public ISymbolsIndex GetSymbolsIndex() 
   { 
     var all = new SymbolsStorage(this);
     var it = GetIterator();
@@ -509,12 +520,12 @@ public static class ScopeExtensions
   public static string DumpMembers(this IScope scope, int level = 0)
   {
     string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
-    if(scope is ISymbolsStorageAccess iss)
+    if(scope is ISymbolsIndexable isi)
     {
-      var ms = iss.GetMembers();
-      for(int i=0;i<ms.Count;++i)
+      var idx = isi.GetSymbolsIndex();
+      for(int i=0;i<idx.Count;++i)
       {
-        var m = ms[i];
+        var m = idx[i];
         if(m is IScope s)
           str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
         else
@@ -527,13 +538,13 @@ public static class ScopeExtensions
 
   public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
   {
-    if(!(scope is ISymbolsStorageAccess iss))
+    if(!(scope is ISymbolsIndexable isi))
       return;
     
-    var ms = iss.GetMembers();
-    for(int i=0;i<ms.Count;++i)
+    var idx = isi.GetSymbolsIndex();
+    for(int i=0;i<idx.Count;++i)
     {
-      var m = ms[i];
+      var m = idx[i];
       cb(m);
       if(m is IScope s)
         s.ForAllSymbols(cb);

@@ -19065,7 +19065,7 @@ public class TestVM : BHL_TestBase
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
-      AssertEqual(8 + ts.ns.members.Count, ns.GetMembers().Count);
+      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIndex().Count);
       AssertEqual(8, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
