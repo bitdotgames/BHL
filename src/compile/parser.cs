@@ -197,23 +197,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public class Coordinator
   {
     List<string> include_path = new List<string>();
-    Dictionary<string, Module> parsed_modules = new Dictionary<string, Module>(); 
 
-    public struct ImportRequest 
-    {
-      //NOTE: if processor is null it means an existing module registered by some 
-      //      already existing processor is going to be used and it means we don't 
-      //      need to process anything and do any 'double work' because it was done elsewhere
-      public ANTLR_Processor processor;
-      public Module module;
-
-      public ImportRequest(ANTLR_Processor processor, Module module)
-      {
-        this.processor = processor;
-        this.module = module;
-      }
-    }
-    Dictionary<string, ImportRequest> requested_imports = new Dictionary<string, ImportRequest>();
+    //Every processor is obliged to register its module
+    Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+    //All import requests and their processors
+    Dictionary<string, ANTLR_Processor> imports = new Dictionary<string, ANTLR_Processor>();
 
     IParsedCache parsed_cache = null;
 
@@ -232,16 +220,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return include_path;
     }
 
-    public void RegisterParsedModule(Module m)
+    public void RegisterModule(Module m)
     {
-      parsed_modules.Add(m.name, m);
+      modules.Add(m.name, m);
     }
 
-    public Module TryGetParsedModule(string norm_path)
+    public Module GetModule(string norm_path)
     {
-      Module m = null;
-      parsed_modules.TryGetValue(norm_path, out m);
-      return m;
+      return modules[norm_path];
     }
 
     //NOTE: returns normalized imported module path
@@ -251,19 +237,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       string norm_path;
       ResolvePath(origin.file_path, path, out full_path, out norm_path);
 
-      if(!requested_imports.ContainsKey(norm_path))
+      if(!imports.ContainsKey(norm_path))
       {
-        var m = TryGetParsedModule(norm_path);
-        ANTLR_Processor processor = null;
         //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
-        //      Otherwise we re-use the already registerd module. This way we share symbols across  
+        //      Otherwise we re-use the already registered module. This way we share symbols across  
         //      all the parsed/imported modules and don't do any 'double work'
-        if(m == null)
+        if(!modules.ContainsKey(norm_path))
         {
-          m = new Module(ts, norm_path, full_path); 
-          processor = MakeProcessor(full_path, m, ts);
+          var m = new Module(ts, norm_path, full_path); 
+          RegisterModule(m);
+
+          var proc = MakeProcessor(full_path, m, ts);
+          imports.Add(norm_path, proc);
         }
-        requested_imports.Add(norm_path, new ImportRequest(processor, m));
       }
 
       origin.imports.Add(norm_path);
@@ -271,18 +257,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return norm_path;
     }
 
-    public void ProcessImported()
+    public void ProcessImportRequests()
     {
-      foreach(var kv in requested_imports)
-        kv.Value.processor?.Phase_Outline();
+      foreach(var kv in imports)
+        kv.Value.Phase_Outline();
 
-      foreach(var kv in requested_imports)
-        kv.Value.processor?.Phase_ParseTypes();
-    }
-
-    public Module GetImportedModule(string import_path)
-    {
-      return requested_imports[import_path].module;
+      foreach(var kv in imports)
+        kv.Value.Phase_ParseTypes();
     }
 
     ANTLR_Processor MakeProcessor(string full_path, Module m, Types ts)
@@ -361,7 +342,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     this.coordinator = coordinator;
     //NOTE: in order to properly handle circular dependencies let's add ourself
     if(!being_imported)
-      this.coordinator.RegisterParsedModule(module);
+      this.coordinator.RegisterModule(module);
   }
 
   void FireError(IParseTree place, string msg) 
@@ -471,7 +452,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     foreach(var import_path in module.imports)
     {
-      var imported = coordinator.GetImportedModule(import_path);
+      var imported = coordinator.GetModule(import_path);
       ns.Link(imported.ns);
     }
   }
@@ -547,7 +528,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var proc in procs)
       proc.Phase_RequestImports();
 
-    coordinator.ProcessImported();
+    coordinator.ProcessImportRequests();
 
     foreach(var proc in procs)
     {

@@ -899,23 +899,24 @@ public class VM : INamedResolver
           cs.UpdateVTable();
 
           foreach(var kv in cs._vtable)
-            PrepareFuncSymbol(cm, kv.Value);
+          {
+            if(kv.Value is FuncSymbolScript vfs)
+              PrepareFuncSymbol(cm, vfs);
+          }
         }
-        else
-          PrepareFuncSymbol(cm, s);
+        else if(s is FuncSymbolScript fs)
+          PrepareFuncSymbol(cm, fs);
       }
     );
   }
 
-  void PrepareFuncSymbol(CompiledModule cm, Symbol s)
+  void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
-    if(s is FuncSymbolScript fss && fss._module == null)
+    if(fss._module == null)
     {
       fss._module = modules[fss._module_name];
       if(fss is FuncSymbolScriptImported fssi)
-      {
         fssi.ip_addr = ((FuncSymbolScript)fssi._module.ns.ResolveNamedByPath(fssi._full_path)).ip_addr;
-      }
     }
   }
 
