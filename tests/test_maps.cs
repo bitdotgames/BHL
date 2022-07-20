@@ -583,6 +583,38 @@ public class TestMaps : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVarInMap()
+  {
+    string bhl = @"
+    func int test1() {
+      [string]int m = []
+      string s1 = ""hey""
+      string s2 = ""wow""
+      m[s1] = 10
+      m[s2] = 20
+      return m[s2]
+    }
+
+    class Foo {
+    }
+
+    func int test2() {
+      [Foo]int m = []
+      Foo f1 = {}
+      Foo f2 = {}
+      m[f1] = 10
+      m[f2] = 20
+      return m[f1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(20, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(10, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestEnumInMap()
   {
     string bhl = @"
