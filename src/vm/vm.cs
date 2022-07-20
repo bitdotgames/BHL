@@ -915,6 +915,10 @@ public class VM : INamedResolver
     if(fss._module == null)
     {
       fss._module = modules[fss._module_name];
+      //NOTE: This is quite a rare case when imported method from another module 
+      //      was added to the inherited class and we have to take that into account.
+      //      Probably we need to review the logic where interited class members are
+      //      added to the final class.
       if(fss is FuncSymbolScriptImported fssi)
         fssi.ip_addr = ((FuncSymbolScript)fssi._module.ns.ResolveNamedByPath(fssi._full_path)).ip_addr;
     }
