@@ -712,6 +712,64 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEnum()
+  {
+    string bhl = @"
+    namespace foo {
+      namespace bar {
+        enum E {
+          V = 1
+          W = 2
+        }
+      }
+
+      func int V() {
+        return (int)bar.E.V
+      }
+    }
+
+    func int test() {
+      return (int)foo.bar.E.W + foo.bar.V()
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
+  public void TestEnumImported()
+  {
+    string bhl1 = @"
+    namespace foo {
+      namespace bar {
+        enum E {
+          V = 1
+          W = 2
+        }
+      }
+
+      func int V() {
+        return (int)bar.E.V
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    func int test() {
+      return (int)foo.bar.E.W + foo.bar.V()
+    }
+    ";
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+    vm.LoadModule("bhl2");
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
   public void TestCompilationBugIBarNotFound()
   {
     string bhl = @"
