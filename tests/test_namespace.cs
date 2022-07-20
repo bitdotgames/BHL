@@ -723,13 +723,13 @@ public class TestNamespace : BHL_TestBase
         }
       }
 
-      func int V() {
-        return (int)bar.E.V
+      func int ToInt(bar.E e) {
+        return (int)e
       }
     }
 
     func int test() {
-      return (int)foo.bar.E.W + foo.bar.V()
+      return (int)foo.bar.E.W + foo.ToInt(foo.bar.E.V)
     }
     ";
     var vm = MakeVM(bhl);
@@ -748,8 +748,8 @@ public class TestNamespace : BHL_TestBase
         }
       }
 
-      func int V() {
-        return (int)bar.E.V
+      func int ToInt(bar.E e) {
+        return (int)e
       }
     }
     ";
@@ -757,7 +757,7 @@ public class TestNamespace : BHL_TestBase
     string bhl2 = @"
     import ""bhl1""
     func int test() {
-      return (int)foo.bar.E.W + foo.bar.V()
+      return (int)foo.bar.E.W + foo.bar.ToInt(foo.bar.E.V)
     }
     ";
     var vm = MakeVM(new Dictionary<string, string>() {

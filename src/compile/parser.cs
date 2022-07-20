@@ -1267,7 +1267,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
 
-    //NOTE: all lambdas are defined in a global scope...
+    //NOTE: all lambdas are defined in a module ns scope...
     ns.Define(lmb_symb);
 
     var fparams = funcLambda.funcParams();
@@ -2625,7 +2625,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
     var symb = new EnumSymbolScript(enum_name);
-    ns.Define(symb);
+    curr_scope.Define(symb);
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
     {
