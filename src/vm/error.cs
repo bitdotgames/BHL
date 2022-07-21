@@ -16,7 +16,7 @@ public static class ErrorUtils
 #if BHL_FRONT
   public static string ToJson(ICompileError ie)
   {
-    return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3}, ""stack_trace"" : {4} }}", 
+    return string.Format(@"{{""error"": ""{0}"", ""file"": ""{1}"", ""line"": {2}, ""column"" : {3}, ""stack_trace"" : ""{4}"" }}", 
       MakeJsonSafe(ie.text),
       ie.file.Replace("\\", "/"),
       ie.line, 
