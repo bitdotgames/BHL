@@ -18253,10 +18253,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseInit()
-      .EmitThen(Opcodes.DeclVar, new int[] { 1, ConstIdx(c, ts.T("float")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 1+1/*std namespace*/, ConstIdx(c, ts.T("float")) })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 2 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -18287,12 +18287,12 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetVar, new int[] { 1+1/*std namespace*/ })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
-      .EmitThen(Opcodes.SetGVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetGVar, new int[] { 2 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 2 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -18322,10 +18322,10 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetVar, new int[] { 1+1/*std namespace*/ })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 2 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -19066,26 +19066,26 @@ public class TestVM : BHL_TestBase
       Marshall.Stream2Obj(s, ns, factory);
 
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIndex().Count);
-      AssertEqual(8, ns.members.Count);
+      AssertEqual(8 + 1/*std namespace*/ + 1/*extra std bug*/, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
       AssertEqual(foo.name, "foo");
       AssertEqual(foo.type.Get(), Types.Int);
       AssertEqual(foo.scope, ns);
-      AssertEqual(foo.scope_idx, 0);
+      AssertEqual(foo.scope_idx, 0+1/*std namespace*/);
 
       var bar = (VariableSymbol)ns.Resolve("bar");
       AssertEqual(bar.name, "bar");
       AssertEqual(bar.type.Get(), Types.String);
       AssertEqual(bar.scope, ns);
-      AssertEqual(bar.scope_idx, 1);
+      AssertEqual(bar.scope_idx, 1+1/*std namespace*/);
 
       var wow = (VariableSymbol)ns.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), ns.TArr(Types.Bool).Get().GetName());
       AssertEqual(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
       AssertEqual(wow.scope, ns);
-      AssertEqual(wow.scope_idx, 2);
+      AssertEqual(wow.scope_idx, 2+1/*std namespace*/);
 
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
@@ -19094,7 +19094,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(1, Test.default_args_num);
       AssertEqual(0, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
-      AssertEqual(3, Test.scope_idx);
+      AssertEqual(3+1/*std namespace*/, Test.scope_idx);
 
       var Make = (FuncSymbolScript)ns.Resolve("Make");
       AssertEqual(Make.name, "Make");
@@ -19105,7 +19105,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(3, Make.default_args_num);
       AssertEqual(0, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
-      AssertEqual(4, Make.scope_idx);
+      AssertEqual(4+1/*std namespace*/, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ns.Resolve("Foo");
       AssertEqual(Foo.scope, ns);

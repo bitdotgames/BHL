@@ -251,6 +251,15 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexab
         }
         else if(this_symb != null)
           return new LinkConflict(this_symb, other_symb);
+        else
+        {
+          //NOTE: let's create a local version of the linked namespace
+          //      which might be changed
+          var ns = new Namespace(gindex, other_ns.name, module_name);
+          ns.links.Add(other_ns);
+          members.Add(ns);
+        }
+
       }
       else if(this_symb != null)
         return new LinkConflict(this_symb, other_symb);
@@ -355,27 +364,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexab
   public Symbol Resolve(string name)
   {
     var it = GetIterator();
-    int c = 0;
     while(it.Next())
     {
       var s = it.current.members.Find(name);
       if(s != null)
-      {
-        //NOTE: let's create a local version of the linked namespace,
-        //      we create it here assuming it might be changed 'on demand',
-        //      since we want to prevent changing of the linked namespace
-        if(c > 0 && s is Namespace ons)
-        {
-          var ns = new Namespace(gindex, s.name, module_name);
-          ns.links.Add(ons);
-          members.Add(ns);
-          return ns;
-        }
-        else
           return s;
       }
-      ++c;
-    }
     return null;
   }
 
@@ -520,19 +514,32 @@ public static class ScopeExtensions
 
   public static string DumpMembers(this IScope scope, int level = 0)
   {
-    string str = new String(' ', level) + (scope is Symbol sym ? "'" + sym.name + "' : " : "") + scope.GetType().Name + " {\n";
+    string str = new String(' ', level) + (scope is INamed named ? named.GetName() + " : " : "") + scope.GetType().Name;
+
+    if(scope is FuncSymbol)
+      str += "(";
+    else
+      str += " {\n";
+
     if(scope is ISymbolsIndexable isi)
     {
       var idx = isi.GetSymbolsIndex();
       for(int i=0;i<idx.Count;++i)
       {
         var m = idx[i];
-        if(m is IScope s)
-          str += new String(' ', level) + s.DumpMembers(level+1) + "\n";
+        if(scope is FuncSymbol)
+          str += m.name + " : " + ((ITyped)m).GetIType().GetName() + (i < idx.Count-1 ? ", " : "");
+        else if(m is IScope s)
+          str += s.DumpMembers(level+1) + "\n";
+        else if(m is ITyped typed)
+          str += new String(' ', level+1) + m.name + " : " + typed.GetIType().GetName() + "(" + m.GetType().Name + ")\n";
         else
-          str += new String(' ', level+1) + "'" + m.name + "' : " + m.GetType().Name + "\n";
+          str += new String(' ', level+1) + m.name + " : " + m.GetType().Name + "\n";
       }
     }
+    if(scope is FuncSymbol)
+      str += ")";
+    else
     str += new String(' ', level) + "}";
     return str;
   }

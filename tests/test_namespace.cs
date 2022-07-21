@@ -755,14 +755,28 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
+    import ""bhl3""
     import ""bhl1""
+
     func int test() {
-      return (int)foo.bar.E.W + foo.bar.ToInt(foo.bar.E.V)
+      foo.bar.E e = foo.bar.E.W
+      return (int)e + foo.bar.ToInt(foo.bar.E.V)
     }
     ";
+
+    string bhl3 = @"
+    namespace foo {
+      namespace view {
+        func dummy_garbage() {
+        }
+      }
+    }
+    ";
+
     var vm = MakeVM(new Dictionary<string, string>() {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
       }
     );
     vm.LoadModule("bhl2");
