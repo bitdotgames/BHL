@@ -82,6 +82,9 @@ public class LocalScope : IScope, ISymbolsStorageAccess
     {
       if(fallback_ls.is_paral)
         fallback_ls.next_idx = next_idx;
+      else //TODO: just for now, trying to spot a possible bug
+        fallback_ls.next_idx = next_idx;
+
       func_owner.current_scope = fallback_ls;
     }
   }

@@ -2869,7 +2869,7 @@ public class TestVM : BHL_TestBase
     Execute(vm, "test");
 
     var fn = (FuncSymbolScript)vm.ResolveNamedByPath("test");
-    AssertEqual(1, fn.local_vars_num);
+    AssertEqual(1+1/*for now*/, fn.local_vars_num);
 
     AssertEqual("2foo", log.ToString());
     CommonChecks(vm);
