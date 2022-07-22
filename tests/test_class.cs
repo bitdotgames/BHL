@@ -714,7 +714,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 'b' not resolved"
     );
   }
 
@@ -896,7 +896,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 'a' not resolved"
     );
   }
 

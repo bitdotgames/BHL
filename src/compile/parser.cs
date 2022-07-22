@@ -658,7 +658,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
 
       if(name_symb == null)
-        FireError(root_name, "symbol not resolved");
+        FireError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
 
       //let's figure out the namespace offset
       if(name_symb is Namespace ns && chain != null)
@@ -672,7 +672,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             FireError(ch, "bad chain call");
           name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
           if(name_symb == null)
-            FireError(macc.NAME(), "symbol not resolved");
+            FireError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
            curr_name = macc.NAME(); 
           ++chain_offset;
           if(name_symb is Namespace name_ns)
@@ -756,7 +756,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(name.GetText());
       if(name_symb == null)
-        FireError(name, "symbol not resolved");
+        FireError(name, "symbol '" + name.GetText() + "' not resolved");
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
@@ -2768,7 +2768,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           string vd_name = vd.NAME().GetText(); 
           var vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
           if(vd_symb == null)
-            FireError(vd, "symbol not resolved");
+            FireError(vd, "symbol '" + vd_name + "' not resolved");
           curr_type = vd_symb.type.Get();
 
           ptree = Wrap(vd.NAME());

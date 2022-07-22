@@ -205,7 +205,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsIndex GetSymbolsIndex() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
@@ -381,7 +381,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 #endif
   }
 
-  public ISymbolsIndex GetSymbolsIndex() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public IScope GetFallbackScope() 
@@ -1327,7 +1327,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     members.Add(sym);
   }
 
-  public ISymbolsIndex GetSymbolsIndex() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public IScope GetFallbackScope() 
@@ -1882,7 +1882,7 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
     return this.ResolveSymbolByPath(path);
   }
 
-  public ISymbolsIndex GetSymbolsIndex() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public EnumItemSymbol FindValue(string name)
@@ -1995,7 +1995,7 @@ public class EnumItemSymbol : Symbol, IType
   }
 }
 
-public class SymbolsStorage : marshall.IMarshallable, ISymbolsIndex
+public class SymbolsStorage : marshall.IMarshallable, ISymbolsEnumerator
 {
   IScope scope;
   List<Symbol> list = new List<Symbol>();

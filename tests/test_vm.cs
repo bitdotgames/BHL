@@ -878,7 +878,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 's' not resolved"
     );
   }
 
@@ -1760,7 +1760,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 'k' not resolved"
     );
   }
 
@@ -2935,7 +2935,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 'i' not resolved"
     );
   }
 
@@ -2966,7 +2966,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol not resolved"
+      "symbol 'i' not resolved"
     );
   }
 
@@ -12239,7 +12239,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "symbol not resolved"
+      "symbol 'j' not resolved"
     );
 
     AssertError<Exception>(
@@ -18442,7 +18442,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"symbol not resolved"
+      @"symbol 'foo' not resolved"
     );
   }
 
@@ -19065,7 +19065,7 @@ public class TestVM : BHL_TestBase
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
-      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIndex().Count);
+      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
       AssertEqual(8 + 1/*std namespace*/ + 1/*extra std bug*/, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");

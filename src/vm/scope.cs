@@ -21,19 +21,19 @@ public interface IScope : INamedResolver
   IScope GetFallbackScope();
 }
 
-public interface ISymbolsIndex
+public interface ISymbolsEnumerator
 {
   int Count { get; }
   Symbol this[int index] { get; }
 }
 
-public interface ISymbolsIndexable
+public interface ISymbolsEnumerable
 {
   // A read-only symbols accessing interface 
-  ISymbolsIndex GetSymbolsIndex();
+  ISymbolsEnumerator GetSymbolsEnumerator();
 }
 
-public interface ISymbolsStorageAccess : ISymbolsIndexable
+public interface ISymbolsStorageAccess : ISymbolsEnumerable
 {
   // Low level collection of members which can be changed 
   SymbolsStorage GetSymbolsStorage();
@@ -89,7 +89,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
     }
   }
 
-  public ISymbolsIndex GetSymbolsIndex() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public Symbol Resolve(string name) 
@@ -140,7 +140,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexable, INamedResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumerable, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -257,12 +257,10 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexab
         else
         {
           //NOTE: let's create a local version of the linked namespace
-          //      which might be changed
           var ns = new Namespace(gindex, other_ns.name, module_name);
           ns.links.Add(other_ns);
           members.Add(ns);
         }
-
       }
       else if(this_symb != null)
         return new LinkConflict(this_symb, other_symb);
@@ -345,7 +343,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexab
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsIndex GetSymbolsIndex() 
+  public ISymbolsEnumerator GetSymbolsEnumerator() 
   { 
     var all = new SymbolsStorage(this);
     var it = GetIterator();
@@ -371,8 +369,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIndexab
     {
       var s = it.current.members.Find(name);
       if(s != null)
-          return s;
-      }
+        return s;
+    }
     return null;
   }
 
@@ -524,9 +522,9 @@ public static class ScopeExtensions
     else
       str += " {\n";
 
-    if(scope is ISymbolsIndexable isi)
+    if(scope is ISymbolsEnumerable isi)
     {
-      var idx = isi.GetSymbolsIndex();
+      var idx = isi.GetSymbolsEnumerator();
       for(int i=0;i<idx.Count;++i)
       {
         var m = idx[i];
@@ -549,10 +547,10 @@ public static class ScopeExtensions
 
   public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
   {
-    if(!(scope is ISymbolsIndexable isi))
+    if(!(scope is ISymbolsEnumerable isi))
       return;
     
-    var idx = isi.GetSymbolsIndex();
+    var idx = isi.GetSymbolsEnumerator();
     for(int i=0;i<idx.Count;++i)
     {
       var m = idx[i];
