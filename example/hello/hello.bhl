@@ -1,3 +1,4 @@
+import "std"
 
 func main([]string argv) {
   paral {

@@ -461,6 +461,8 @@ public class Types : INamedResolver
   //NOTE: used for global symbol indices (e.g native funcs)
   public Named2Index gindex = new Named2Index();
 
+  Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+
   static Types()
   {
     {
@@ -491,7 +493,19 @@ public class Types : INamedResolver
 
     InitBuiltins();
 
-    std.Init(this);
+    RegisterModule(std.MakeModule(this)); 
+  }
+
+  public void RegisterModule(Module m)
+  {
+    modules.Add(m.name, m);
+  }
+
+  public Module FindRegisteredModule(string name)
+  {
+    Module m;
+    modules.TryGetValue(name, out m);
+    return m;
   }
 
   Types(Named2Index native_indices, Namespace ns)

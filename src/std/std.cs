@@ -4,9 +4,11 @@ namespace bhl {
 
 public static class std 
 {
-  static public void Init(Types ts)
+  static public Module MakeModule(Types ts)
   {
-    var io = ts.ns.Nest("std").Nest("io");
+    var m = new Module(ts, "std", null);
+
+    var io = m.ns.Nest("std").Nest("io");
 
     {
       var fn = new FuncSymbolNative("Write", ts.T("void"),
@@ -33,6 +35,7 @@ public static class std
       );
       io.Define(fn);
     }
+    return m;
   }
 }
 

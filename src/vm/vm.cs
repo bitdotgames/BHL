@@ -196,6 +196,45 @@ public class Const : IEquatable<Const>
   }
 }
 
+public class ModulePath
+{
+  public string name;
+  public string file_path;
+
+  public ModulePath(string name, string file_path)
+  {
+    this.name = name;
+    this.file_path = file_path;
+  }
+}
+
+public class Module
+{
+  public string name {
+    get {
+      return path.name;
+    }
+  }
+  public string file_path {
+    get {
+      return path.file_path;
+    }
+  }
+  public ModulePath path;
+  public HashSet<string> imports = new HashSet<string>(); 
+  public Namespace ns;
+
+  public Module(Types ts, ModulePath path)
+  {
+    this.path = path;
+    ns = new Namespace(ts.gindex, "", name);
+  }
+
+  public Module(Types ts, string name, string file_path)
+    : this(ts, new ModulePath(name, file_path))
+  {}
+}
+
 public class VM : INamedResolver
 {
   public const int MAX_IP = int.MaxValue;

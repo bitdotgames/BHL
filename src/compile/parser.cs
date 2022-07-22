@@ -231,24 +231,38 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     //NOTE: returns normalized imported module path
+    //TODO: the code below is kinda 'fishy' but works
     public string RequestImport(Module origin, Types ts, string path)
     {
-      string full_path;
       string norm_path;
-      ResolvePath(origin.file_path, path, out full_path, out norm_path);
 
-      if(!imports.ContainsKey(norm_path))
+      //1. check pre-registered module
+      Module m = ts.FindRegisteredModule(path);
+      if(m != null)
       {
-        //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
-        //      Otherwise we re-use the already registered module. This way we share symbols across  
-        //      all the parsed/imported modules and don't do any 'double work'
-        if(!modules.ContainsKey(norm_path))
-        {
-          var m = new Module(ts, norm_path, full_path); 
+        norm_path = m.name;
+        if(!imports.ContainsKey(norm_path))
           RegisterModule(m);
+      }
+      //2. try filesystem
+      else
+      {
+        string file_path;
+        ResolvePath(origin.file_path, path, out file_path, out norm_path);
 
-          var proc = MakeProcessor(full_path, m, ts);
-          imports.Add(norm_path, proc);
+        if(!imports.ContainsKey(norm_path))
+        {
+          //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
+          //      Otherwise we re-use the already registered module. This way we share symbols across  
+          //      all the parsed/imported modules and don't do any 'double work'
+          if(!modules.ContainsKey(norm_path))
+          {
+            m = new Module(ts, norm_path, file_path); 
+            RegisterModule(m);
+
+            var proc = MakeProcessor(file_path, m, ts);
+            imports.Add(norm_path, proc);
+          }
         }
       }
 
@@ -284,16 +298,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return proc;
     }
 
-    void ResolvePath(string self_path, string path, out string full_path, out string norm_path)
+    void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
     {
-      full_path = "";
+      file_path = "";
       norm_path = "";
 
       if(path.Length == 0)
         throw new Exception("Bad path");
 
-      full_path = Util.ResolveImportPath(include_path, self_path, path);
-      norm_path = FilePath2ModuleName(full_path);
+      file_path = Util.ResolveImportPath(include_path, self_path, path);
+      norm_path = FilePath2ModuleName(file_path);
     }
 
     public string FilePath2ModuleName(string full_path)
