@@ -17214,9 +17214,6 @@ public class TestVM : BHL_TestBase
     NewTestFile("test.bhl", file_test, ref files);
     NewTestFile("garbage.bhl", file_garbage, ref files);
 
-    foreach(var file in files)
-      System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
-
     {
       var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
@@ -17234,6 +17231,7 @@ public class TestVM : BHL_TestBase
     ";
     files.RemoveAt(0);
     NewTestFile("unit.bhl", new_file_unit, ref files);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
