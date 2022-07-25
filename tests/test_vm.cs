@@ -17185,6 +17185,68 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportInvalidateCachesAfterChange()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""garbage"";import ""unit"";  
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    string file_garbage = @"
+      func garbage() {}
+    ";
+
+    CleanTestDir();
+    BuildUtil.ClearCaches();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("garbage.bhl", file_garbage, ref files);
+
+    //foreach(var file in files)
+    //  System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+
+    string new_file_unit = @"
+      class Unit {
+        string new_field
+        int test
+      }
+      Unit u = {test: 32}
+    ";
+    BuildUtil.ClearCaches();
+    files.RemoveAt(0);
+    NewTestFile("unit.bhl", new_file_unit, ref files);
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+    }
+  }
+
+  [IsTested()]
   public void TestStartLambdaInScriptMgr()
   {
     string bhl = @"

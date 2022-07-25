@@ -503,9 +503,10 @@ public class BHL_TestBase
     return vm;
   }
 
-  public VM MakeVM(Dictionary<string, string> file2src, Types ts = null)
+  public VM MakeVM(Dictionary<string, string> file2src, Types ts = null, bool clean_dir = true, bool use_cache = false)
   {
-    CleanTestDir();
+    if(clean_dir)
+      CleanTestDir();
 
     if(ts == null)
       ts = new Types();
@@ -514,7 +515,7 @@ public class BHL_TestBase
     foreach(var kv in file2src)
       NewTestFile(kv.Key, kv.Value, ref files);
 
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache));
     var vm = new VM(ts, loader);
     return vm;
   }
@@ -763,7 +764,7 @@ public class BHL_TestBase
     AssertTrue(idx != -1, "Error message is: " + err);
   }
 
-  public Stream CompileFiles(List<string> files, Types ts = null)
+  public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false)
   {
     if(ts == null)
       ts = new Types();
@@ -779,7 +780,7 @@ public class BHL_TestBase
     conf.inc_dir = TestDirPath();
     conf.tmp_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
-    conf.use_cache = false;
+    conf.use_cache = use_cache;
 
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);

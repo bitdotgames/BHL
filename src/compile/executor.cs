@@ -37,6 +37,7 @@ public class CompilationExecutor
   public struct InterimResult
   {
     public bool use_file_cache;
+    public string compiled_file;
     public ANTLR_Parsed parsed;
   }
 
@@ -364,11 +365,12 @@ public class CompilationExecutor
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var cache_file = GetCompiledCacheFile(w.cache_dir, file);
+            var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
 
             var interim = new InterimResult();
+            interim.compiled_file = compiled_file;
 
-            if(!w.use_cache || BuildUtil.NeedToRegen(cache_file, deps))
+            if(!w.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
               var proc = ANTLR_Processor.Stream2Processor(file, sfs);
               var parsed = new ANTLR_Parsed(proc.TokenStream, proc.program());
@@ -556,18 +558,15 @@ public class CompilationExecutor
 
           bool file_cache_ok = false;
 
-          InterimResult interim;
-          if(w.cache.file2interim.TryGetValue(current_file, out interim) 
-              && interim.use_file_cache)
+          var interim = w.cache.file2interim[current_file];
+          w.file2compiled.Add(current_file, interim.compiled_file);
+          w.file2modpath.Add(current_file, file_module.path);
+
+          if(interim.use_file_cache)
           {
-
-            var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
-
             try
             {
-              var cm = CompiledModule.FromFile(compiled_file, w.ts);
-              w.file2modpath.Add(current_file, file_module.path);
-              w.file2compiled.Add(current_file, compiled_file);
+              var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
               w.file2ns.Add(current_file, cm.ns);
 
               ++cache_hit;
@@ -602,15 +601,12 @@ public class CompilationExecutor
 
           var proc_result = w.postproc.Patch(proc.result, current_file);
 
-
           var c  = new ModuleCompiler(proc_result);
           var cm = c.Compile();
 
-          var compiled_file = GetCompiledCacheFile(w.cache_dir, current_file);
+          var compiled_file = w.file2compiled[current_file];
           CompiledModule.ToFile(cm, compiled_file);
 
-          w.file2modpath.Add(current_file, proc_result.module.path);
-          w.file2compiled.Add(current_file, compiled_file);
           w.file2ns.Add(current_file, proc_result.module.ns);
         }
       }
@@ -687,6 +683,12 @@ public static class BuildUtil
 {
   static ConcurrentDictionary<string, DateTime> mtimes = new ConcurrentDictionary<string, DateTime>();
   static ConcurrentDictionary<string, bool> exists = new ConcurrentDictionary<string, bool>();
+
+  static public void ClearCaches()
+  {
+    mtimes.Clear();
+    exists.Clear();
+  }
 
   static public bool NeedToRegen(string file, List<string> deps)
   {
