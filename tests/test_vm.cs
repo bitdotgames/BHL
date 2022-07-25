@@ -17216,7 +17216,6 @@ public class TestVM : BHL_TestBase
 
     foreach(var file in files)
       System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
-    BuildUtil.ClearCaches();
 
     {
       var ts = new Types();
@@ -17233,7 +17232,6 @@ public class TestVM : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    BuildUtil.ClearCaches();
     files.RemoveAt(0);
     NewTestFile("unit.bhl", new_file_unit, ref files);
 
