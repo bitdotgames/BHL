@@ -17208,15 +17208,15 @@ public class TestVM : BHL_TestBase
     ";
 
     CleanTestDir();
-    BuildUtil.ClearCaches();
 
     var files = new List<string>();
     NewTestFile("unit.bhl", file_unit, ref files);
     NewTestFile("test.bhl", file_test, ref files);
     NewTestFile("garbage.bhl", file_garbage, ref files);
 
-    //foreach(var file in files)
-    //  System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
+    foreach(var file in files)
+      System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
+    BuildUtil.ClearCaches();
 
     {
       var ts = new Types();
