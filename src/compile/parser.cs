@@ -230,7 +230,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return modules[norm_path];
     }
 
-    //NOTE: returns normalized imported module path
+    //NOTE: returns normalized imported module path or null in case of error
     //TODO: the code below is kinda 'fishy' but works
     public string RequestImport(Module origin, Types ts, string path)
     {
@@ -260,8 +260,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             m = new Module(ts, norm_path, file_path); 
             RegisterModule(m);
 
-            var proc = MakeProcessor(file_path, m, ts);
-            imports.Add(norm_path, proc);
+            try
+            {
+              var proc = MakeProcessor(file_path, m, ts);
+              imports.Add(norm_path, proc);
+            }
+            catch(Exception)
+            {
+              return null;
+            }
           }
         }
       }
@@ -588,6 +595,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     name = name.Substring(1, name.Length-2);
 
     var norm_path = coordinator.RequestImport(module, types, name);
+    if(norm_path == null)
+      FireError(ctx, "invalid import");
 
     if(!ast.module_names.Contains(norm_path))
       ast.module_names.Add(norm_path);

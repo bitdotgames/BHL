@@ -16692,6 +16692,29 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBadImport()
+  {
+    string bhl1 = @"
+    import ""garbage""  
+    func float bhl1() 
+    {
+      return bhl2(23)
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(files);
+      },
+     "invalid import"
+    );
+  }
+
+  [IsTested()]
   public void TestImportUserClass()
   {
     string bhl1 = @"
