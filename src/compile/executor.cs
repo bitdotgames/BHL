@@ -469,21 +469,24 @@ public class CompilationExecutor
         if(line == null)
           break;
 
-        var import_idx = line.IndexOf("import");
-        if(import_idx != -1)
+        int import_idx = line.IndexOf("import");
+        while(import_idx != -1)
         {
-          var q1_idx = line.IndexOf('"', import_idx + 1);
+          int q1_idx = line.IndexOf('"', import_idx + 1);
           if(q1_idx != -1)
           {
-            var q2_idx = line.IndexOf('"', q1_idx + 1);
+            int q2_idx = line.IndexOf('"', q1_idx + 1);
             if(q2_idx != -1)
             {
-              var rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
-              var import = Util.ResolveImportPath(inc_paths, file, rel_import);
+              string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
+              string import = Util.ResolveImportPath(inc_paths, file, rel_import);
               if(imps.IndexOf(import) == -1)
                 imps.Add(import);
             }
+            import_idx = line.IndexOf("import", q2_idx + 1);
           }
+          else
+            break;
         }
       }
 
