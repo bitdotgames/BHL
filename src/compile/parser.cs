@@ -1292,6 +1292,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //NOTE: all lambdas are defined in a module ns scope...
     ns.Define(lmb_symb);
+    //NOTE: ...however as a symbol resolve fallback we set the scope to the one 
+    //         it's actually defined in during body parsing 
+    lmb_symb.scope = scope_backup;
 
     var fparams = funcLambda.funcParams();
     if(fparams != null)
@@ -1300,10 +1303,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Visit(fparams);
       PopAST();
     }
-
-    //NOTE: ...however as a symbol resolve fallback we set the scope to the one 
-    //         it's actually defined in during body parsing 
-    lmb_symb.scope = scope_backup;
 
     //NOTE: while we are inside lambda the eval type is its return type
     Wrap(ctx).eval_type = lmb_symb.GetReturnType();
@@ -1339,7 +1338,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
       PeekAST().AddChild(ast);
-
   }
   
   public override object VisitCallArg(bhlParser.CallArgContext ctx)

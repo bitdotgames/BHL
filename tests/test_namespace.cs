@@ -968,6 +968,41 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNamespaceVisibilityInLambdaFuncArg()
+  {
+    string bhl = @"
+    namespace a {
+
+      class A {}
+
+      class B {
+        func int Call()
+        {
+          return this.Choice(func bool(A a) {
+              return a == null ? false : true
+          })
+        }
+
+        func int Choice(func bool(A) fn) {
+          return fn(new A) ? 1 : 0
+        }
+      }
+
+    }
+
+    func int test() 
+    {
+      a.B b = {}
+      return b.Call()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportUserFunc()
   {
     string bhl1 = @"
