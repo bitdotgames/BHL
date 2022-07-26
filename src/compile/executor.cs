@@ -681,18 +681,9 @@ public class EmptyPostProcessor : IFrontPostProcessor
 
 public static class BuildUtil
 {
-  static ConcurrentDictionary<string, DateTime> mtimes = new ConcurrentDictionary<string, DateTime>();
-  static ConcurrentDictionary<string, bool> exists = new ConcurrentDictionary<string, bool>();
-
-  static public void ClearCaches()
-  {
-    mtimes.Clear();
-    exists.Clear();
-  }
-
   static public bool NeedToRegen(string file, List<string> deps)
   {
-    if(!FileExists(file))
+    if(!File.Exists(file))
     {
       //Console.WriteLine("Missing " + file);
       return true;
@@ -701,7 +692,7 @@ public static class BuildUtil
     var fmtime = GetLastWriteTime(file);
     foreach(var dep in deps)
     {
-      if(FileExists(dep) && GetLastWriteTime(dep) > fmtime)
+      if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
       {
         //Console.WriteLine("Stale " + dep + " " + file);
         return true;
@@ -715,11 +706,11 @@ public static class BuildUtil
   //optimized version for just one dependency
   static public bool NeedToRegen(string file, string dep)
   {
-    if(!FileExists(file))
+    if(!File.Exists(file))
       return true;
 
     var fmtime = GetLastWriteTime(file);
-    if(FileExists(dep) && GetLastWriteTime(dep) > fmtime)
+    if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
       return true;
 
     return false;
@@ -727,12 +718,7 @@ public static class BuildUtil
 
   static DateTime GetLastWriteTime(string file)
   {
-    return mtimes.GetOrAdd(file, (key) => new FileInfo(key).LastWriteTime);
-  }
-
-  static bool FileExists(string file)
-  {
-    return exists.GetOrAdd(file, (key) => File.Exists(key));
+    return new FileInfo(file).LastWriteTime;
   }
 }
 

@@ -17208,15 +17208,11 @@ public class TestVM : BHL_TestBase
     ";
 
     CleanTestDir();
-    BuildUtil.ClearCaches();
 
     var files = new List<string>();
     NewTestFile("unit.bhl", file_unit, ref files);
     NewTestFile("test.bhl", file_test, ref files);
     NewTestFile("garbage.bhl", file_garbage, ref files);
-
-    //foreach(var file in files)
-    //  System.IO.File.SetLastWriteTimeUtc(file, DateTime.Now.AddHours(-1));
 
     {
       var ts = new Types();
@@ -17233,9 +17229,9 @@ public class TestVM : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    BuildUtil.ClearCaches();
     files.RemoveAt(0);
     NewTestFile("unit.bhl", new_file_unit, ref files);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
