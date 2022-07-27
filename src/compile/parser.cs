@@ -284,7 +284,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         kv.Value.Phase_Outline();
 
       foreach(var kv in imports)
-        kv.Value.Phase_ParseTypes();
+      {
+        kv.Value.Phase_ParseTypes1();
+        kv.Value.Phase_ParseTypes2();
+      }
     }
 
     ANTLR_Processor MakeProcessor(string full_path, Module m, Types ts)
@@ -478,7 +481,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  internal void Phase_ParseTypes()
+  internal void Phase_ParseTypes1()
   {
     foreach(var pass in passes)
     {
@@ -494,7 +497,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PopScope();
     }
+  }
 
+  internal void Phase_ParseTypes2()
+  {
     foreach(var pass in passes)
     {
       PushScope(pass.scope);
@@ -554,8 +560,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var proc in procs)
     {
       proc.Phase_ResolveImports();
-      proc.Phase_ParseTypes();
+
+      proc.Phase_ParseTypes1();
     }
+
+    foreach(var proc in procs)
+      proc.Phase_ParseTypes2();
 
     foreach(var proc in procs)
       proc.Phase_ParseFuncBodies();
@@ -2593,7 +2603,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(sym.parsed.tree, "no base virtual method to override");
 
         if(!vsym.signature.Equals(fsso.signature))
-          FireError(sym.parsed.tree, "signature doesn't match the base one");
+        {
+          FireError(vsym.parsed.tree, "virtual method signature doesn't match the base one");
+        }
 
         vsym.AddOverride(curr_class, fsso); 
       }

@@ -2293,6 +2293,48 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportedClassVirtualMethodsOrderIsIrrelevant()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    namespace a {
+      class A : b.B {
+        func override int Foo(int v) {
+          return v + 1
+        }
+      }
+    }
+  ";
+
+  string bhl2 = @"
+    import ""bhl1""  
+    namespace b {
+      class B {
+        func virtual int Foo(int v) {
+          return v
+        }
+      }
+    }
+
+    func int test1()
+    {
+      a.A a = {}
+      return a.Foo(1)
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+    
+    vm.LoadModule("bhl2");
+    AssertEqual(2, Execute(vm, "test1").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestMixInterfaceWithVirtualMethod()
   {
     string bhl = @"
