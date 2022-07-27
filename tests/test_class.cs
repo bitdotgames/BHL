@@ -586,6 +586,32 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestSimpleNestedClass()
+  {
+    string bhl = @"
+
+    class Bar {
+       class Foo {
+         int f
+       }
+       int b
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo = {f: 1}
+      Bar bar = {b: 2}
+      return foo.f + bar.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestUserClassMethod()
   {
