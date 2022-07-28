@@ -641,6 +641,38 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleNestedClassMethods()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+         func int getF() {
+           return this.f
+         }
+       }
+       int c
+       func int getC() {
+        return this.c
+       }
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo = {f: 1}
+      Bar bar = {b: 10, c: 20}
+      return foo.getF() + bar.b + bar.getC()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassMethod()
   {
     string bhl = @"

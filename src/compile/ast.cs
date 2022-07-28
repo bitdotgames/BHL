@@ -237,7 +237,6 @@ public class AST_FuncDecl : AST_Tree
 public class AST_ClassDecl : AST_Tree
 {
   public ClassSymbolScript symbol;
-  public List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();
 
   public AST_ClassDecl(ClassSymbolScript symbol)
   {
@@ -246,9 +245,9 @@ public class AST_ClassDecl : AST_Tree
 
   public AST_FuncDecl FindFuncDecl(FuncSymbolScript fs)
   {
-    foreach(var decl in func_decls)
-      if(decl.symbol == fs)
-        return decl;
+    foreach(var c in children)
+      if(c is AST_FuncDecl fd && fd.symbol == fs)
+        return fd;
     return null;
   }
 }
@@ -554,8 +553,7 @@ public class AST_Dumper : AST_Visitor
   {
     Console.Write("(CLASS ");
     Console.Write(node.symbol.name);
-    for(int i=0;i<node.func_decls.Count;++i)
-      Visit(node.func_decls[i]);
+    VisitChildren(node);
     Console.Write(")");
   }
 

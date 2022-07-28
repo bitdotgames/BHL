@@ -907,8 +907,7 @@ public class ModuleCompiler : AST_Visitor
     var scope_bak = curr_scope;
     curr_scope = ast.symbol;
 
-    for(int i=0;i<ast.func_decls.Count;++i)
-      Visit(ast.func_decls[i]);
+    VisitChildren(ast);
 
     curr_scope = scope_bak;
   }

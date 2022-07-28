@@ -2487,7 +2487,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         pass.class_symb.tmp_members.Add(func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
-        pass.class_ast.func_decls.Add(func_ast);
+        pass.class_ast.AddChild(func_ast);
       }
 
       var sub_cldecl = cm.classDecl();
