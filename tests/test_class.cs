@@ -592,22 +592,51 @@ public class TestClasses : BHL_TestBase
     string bhl = @"
 
     class Bar {
+       int b
        class Foo {
          int f
        }
-       int b
+       int c
     }
 
     func int test() 
     {
       Bar.Foo foo = {f: 1}
-      Bar bar = {b: 2}
-      return foo.f + bar.b
+      Bar bar = {b: 10, c: 20}
+      return foo.f + bar.b + bar.c
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNestedClassIsAvailableWithoutPrefixInMasterMethod()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+       }
+       func int calc() {
+         Foo foo = {f: 1}
+         return this.b + foo.f
+       }
+    }
+
+    func int test() 
+    {
+      Bar bar = {b: 10}
+      return bar.calc()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

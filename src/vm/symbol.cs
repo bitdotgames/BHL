@@ -1330,13 +1330,51 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
   public SymbolsStorage GetSymbolsStorage() { return members; }
 
+  internal struct EnforceThisScope : IScope
+  {
+    ClassSymbol cs;
+
+    internal EnforceThisScope(ClassSymbolScript cs)
+    {
+      this.cs = cs;
+    }
+
+    public Symbol Resolve(string name)
+    {
+      var symb = cs.Resolve(name);
+
+      //NOTE: let's force members to be prefixed with 'this'
+      if(symb is VariableSymbol)
+        return null;
+      else if(symb is FuncSymbol)
+        return null;
+
+      return symb;
+    }
+
+    public INamed ResolveNamedByPath(string path)
+    {
+      throw new NotImplementedException();
+    }
+
+    public void Define(Symbol sym)
+    {
+      throw new NotImplementedException();
+    }
+
+    public IScope GetFallbackScope()
+    {
+      return cs.scope;
+    }
+  }
+
   public IScope GetFallbackScope() 
   { 
     //NOTE: If declared as a class method we force the fallback
-    //      scope to be the class symbol's scope. This way we
+    //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
     if(scope is ClassSymbolScript cs)
-      return cs.scope;
+      return new EnforceThisScope(cs);
     else
       return this.scope; 
   }
