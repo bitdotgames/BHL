@@ -943,9 +943,7 @@ public class VM : INamedResolver
               PrepareFuncSymbol(cm, vfs);
           }
         }
-        else if(s is FuncSymbolScript fs && 
-                !(fs.scope is InterfaceSymbol)
-                )
+        else if(s is FuncSymbolScript fs && !(fs.scope is InterfaceSymbol))
           PrepareFuncSymbol(cm, fs);
       }
     );
@@ -957,8 +955,17 @@ public class VM : INamedResolver
     {
       fss._module = modules[fss._module_name];
       if(fss.ip_addr == -1)
-        fss.ip_addr = ((FuncSymbolScript)fss._module.ns.ResolveNamedByPath(fss._module_path)).ip_addr;
+      {
+        var mfs = (FuncSymbol)fss._module.ns.ResolveNamedByPath(fss._module_path); 
+        if(mfs is FuncSymbolScript mfss)
+          fss.ip_addr = mfss.ip_addr;
+        else if(mfs is FuncSymbolVirtual mfssv)
+          fss.ip_addr = ((FuncSymbolScript)mfssv.overrides[mfssv.overrides.Count-1]).ip_addr; 
+        else
+          throw new Exception("Not supported func symbol");
+      }
     }
+
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
   }
