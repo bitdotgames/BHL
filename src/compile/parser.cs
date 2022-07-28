@@ -1321,10 +1321,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
 
-    //NOTE: all lambdas are defined in a module ns scope...
-    ns.Define(lmb_symb);
-    //NOTE: ...however as a symbol resolve fallback we set the scope to the one 
-    //         it's actually defined in during body parsing 
+    //NOTE: lambdas are not defined (persisted) in any scope, however as a symbol resolve 
+    //      fallback we set the scope to the one it's actually defined in during body parsing 
     lmb_symb.scope = scope_backup;
 
     var fparams = funcLambda.funcParams();
@@ -2264,17 +2262,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    pass.func_symb = being_imported ? 
-    new FuncSymbolScriptImported(
+    pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
       module.name,
       pass.scope.GetFullPath("").TrimEnd('.'),
-      new FuncSignature(),
-      name
-    ) : 
-    new FuncSymbolScript(
-      Wrap(pass.func_ctx), 
-      module.name,
       new FuncSignature(),
       name
     ); 
@@ -2368,6 +2359,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var func_symb = new FuncSymbolScript(
           null, 
           module.name,
+          "",
           sig, 
           fd.NAME().GetText()
         );
@@ -2472,17 +2464,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(fd.NAME().GetText() == "this")
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
-        var func_symb = being_imported ? 
-          new FuncSymbolScriptImported(
+        var func_symb = new FuncSymbolScript(
             Wrap(fd), 
             module.name,
-            pass.class_symb.GetFullPath("").TrimEnd('.'),
-            new FuncSignature(),
-            fd.NAME().GetText()
-          ) :
-          new FuncSymbolScript(
-            Wrap(fd), 
-            module.name,
+            "", //will be set during class finalization
             new FuncSignature(),
             fd.NAME().GetText()
           );
@@ -2617,24 +2602,31 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(sym is IScopeIndexed si)
         si.scope_idx = self.members.Count; 
 
-      if(sym is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
+      if(sym is FuncSymbolScript fss)
       {
-        var vsym = new FuncSymbolVirtualScript(fssv);
-        vsym.AddOverride(curr_class, fssv);
-        self.members.Add(vsym);
-      }
-      else if(sym is FuncSymbolScript fsso && fsso.flags.HasFlag(FuncFlags.Override))
-      {
-        var vsym = self.members.Find(sym.name) as FuncSymbolVirtualScript;
-        if(vsym == null)
-          FireError(sym.parsed.tree, "no base virtual method to override");
-
-        if(!vsym.signature.Equals(fsso.signature))
+        if(fss is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
         {
-          FireError(vsym.parsed.tree, "virtual method signature doesn't match the base one");
+          var vsym = new FuncSymbolVirtualScript(fssv);
+          vsym.AddOverride(curr_class, fssv);
+          self.members.Add(vsym);
         }
+        else if(fss.flags.HasFlag(FuncFlags.Override))
+        {
+          var vsym = self.members.Find(sym.name) as FuncSymbolVirtualScript;
+          if(vsym == null)
+            FireError(sym.parsed.tree, "no base virtual method to override");
 
-        vsym.AddOverride(curr_class, fsso); 
+          if(!vsym.signature.Equals(fss.signature))
+          {
+            FireError(vsym.parsed.tree, "virtual method signature doesn't match the base one");
+          }
+
+          vsym.AddOverride(curr_class, fss); 
+        }
+        else
+          self.members.Add(fss);
+
+        fss._path_prefix = curr_class.GetFullPath("").TrimEnd('.');
       }
       else
         self.members.Add(sym);

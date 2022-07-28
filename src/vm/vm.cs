@@ -943,7 +943,9 @@ public class VM : INamedResolver
               PrepareFuncSymbol(cm, vfs);
           }
         }
-        else if(s is FuncSymbolScript fs)
+        else if(s is FuncSymbolScript fs && 
+                !(fs.scope is InterfaceSymbol)
+                )
           PrepareFuncSymbol(cm, fs);
       }
     );
@@ -954,13 +956,11 @@ public class VM : INamedResolver
     if(fss._module == null)
     {
       fss._module = modules[fss._module_name];
-      //NOTE: This is quite a rare case when a method from the imported module 
-      //      was added to the inherited class and we have to take that into account.
-      //      Probably we need to review the logic where interited class members are
-      //      added(duplicated) to the final class.
-      if(fss is FuncSymbolScriptImported fssi)
-        fssi.ip_addr = ((FuncSymbolScript)fssi._module.ns.ResolveNamedByPath(fssi._full_path)).ip_addr;
+      if(fss.ip_addr == -1)
+        fss.ip_addr = ((FuncSymbolScript)fss._module.ns.ResolveNamedByPath(fss._module_path)).ip_addr;
     }
+    if(fss.ip_addr == -1)
+      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
   }
 
   public void UnloadModule(string module_name)

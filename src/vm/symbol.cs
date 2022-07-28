@@ -1434,8 +1434,20 @@ public class FuncSymbolScript : FuncSymbol
 
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
-  //TODO: store it in a more optimal way?
+
+  //TODO: should not be here
   internal string _module_name;
+  //TODO: should not be here
+  internal string _path_prefix;
+
+  internal string _module_path { 
+    get {
+      if(string.IsNullOrEmpty(_path_prefix))
+        return name;
+      else
+        return _path_prefix + '.' + name;
+    }
+  }
 
   public int local_vars_num;
 
@@ -1448,6 +1460,7 @@ public class FuncSymbolScript : FuncSymbol
   public FuncSymbolScript(
     WrappedParseTree parsed, 
     string module_name,
+    string path_prefix,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1457,6 +1470,7 @@ public class FuncSymbolScript : FuncSymbol
   {
     this.name = name;
     _module_name = module_name;
+    _path_prefix = path_prefix;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
     this.parsed = parsed;
@@ -1495,61 +1509,14 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
+    //TODO: should not be here
     marshall.Marshall.Sync(ctx, ref _module_name);
+    marshall.Marshall.Sync(ctx, ref _path_prefix);
 
     marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
-  }
-}
-
-public class FuncSymbolScriptImported : FuncSymbolScript
-{
-  new public const uint CLASS_ID = 22; 
-
-  //TODO: store it in a more optimal way?
-  internal string _path_prefix;
-
-  internal string _full_path { 
-    get {
-      if(string.IsNullOrEmpty(_path_prefix))
-        return name;
-      else
-        return _path_prefix + '.' + name;
-    }
-  }
-
-#if BHL_FRONT
-  public FuncSymbolScriptImported(
-    WrappedParseTree parsed, 
-    string module_name,
-    string path_prefix,
-    FuncSignature sig,
-    string name,
-    int default_args_num = 0,
-    int ip_addr = -1
-  ) 
-    : base(parsed, module_name, sig, name, default_args_num, ip_addr)
-  {
-    _path_prefix = path_prefix;
-  }
-#endif
-
-  //symbol factory version
-  public FuncSymbolScriptImported()
-  {}
-
-  public override uint ClassId()
-  {
-    return CLASS_ID;
-  }
-
-  public override void Sync(marshall.SyncContext ctx)
-  {
-    base.Sync(ctx);
-
-    marshall.Marshall.Sync(ctx, ref _path_prefix);
   }
 }
 
@@ -1657,7 +1624,7 @@ public class LambdaSymbol : FuncSymbolScript
     List<AST_UpVal> upvals,
     List<FuncSymbolScript> fdecl_stack
   ) 
-    : base(parsed, module_name, sig, name, 0, -1)
+    : base(parsed, module_name, "", sig, name, 0, -1)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -2286,8 +2253,6 @@ public class SymbolFactory : marshall.IFactory
         return new EnumItemSymbol();
       case FuncSymbolScript.CLASS_ID:
         return new FuncSymbolScript();
-      case FuncSymbolScriptImported.CLASS_ID:
-        return new FuncSymbolScriptImported();
       case FuncSymbolVirtualScript.CLASS_ID:
         return new FuncSymbolVirtualScript();
       case FuncSignature.CLASS_ID:

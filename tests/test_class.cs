@@ -2003,6 +2003,58 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCallImportedMemberMethodFromMethod()
+  {
+    string bhl1 = @"
+    import ""bhl2""
+    namespace a {
+      class A : b.B { 
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    namespace b {
+      class B { 
+        func int Foo() {
+          return 42
+        }
+      }
+    }
+  ";
+
+  string bhl3 = @"
+    import ""bhl1""  
+    import ""bhl2""  
+
+    class C {
+      a.A a
+      func int getAFoo() {
+        this.a = {}
+        return this.a.Foo()
+      }
+    }
+
+    func int test() {
+      C c = {}
+      return c.getAFoo()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3}
+      }
+    );
+
+    vm.LoadModule("bhl3");
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBasicVirtualMethodsSupport()
   {
     string bhl = @"
