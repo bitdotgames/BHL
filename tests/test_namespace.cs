@@ -908,6 +908,33 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNestedClass()
+  {
+    string bhl = @"
+    namespace bar {
+      class Hey {
+        class Hey_Sub {
+          int f
+          func int getF() {
+            return this.f
+          }
+        }
+      }
+    }
+
+    func int test() 
+    {
+      bar.Hey.Hey_Sub sub = {f: 10}
+      return sub.getF()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserInterface()
   {
     string bhl = @"
