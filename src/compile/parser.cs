@@ -680,52 +680,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
-      if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
-      {
-        if(cs.super_class == null)
-          FireError(curr_name, "no base class found");
-        else
-        {
-          name_symb = cs.super_class; 
-          scope = cs.super_class;
-          if(chain.Length <= chain_offset)
-            FireError(curr_name, "bad base call");
-          var ch = chain[chain_offset];
-          var macc = ch.memberAccess();
-          if(macc == null)
-            FireError(ch, "bad base call");
-          curr_name = macc.NAME(); 
-          ++chain_offset;
-
-          PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
-          PeekAST().AddChild(new AST_TypeCast(cs.super_class, true/*force type*/, line));
-        }
-      }
+      TryProcessBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
 
       if(name_symb == null)
         FireError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
 
-      //let's figure out the namespace offset
-      if(name_symb is Namespace ns && chain != null)
-      {
-        scope = ns;
-        for(chain_offset=0;chain_offset<chain.Length;)
-        {
-          var ch = chain[chain_offset];
-          var macc = ch.memberAccess();
-          if(macc == null)
-            FireError(ch, "bad chain call");
-          name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
-          if(name_symb == null)
-            FireError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
-           curr_name = macc.NAME(); 
-          ++chain_offset;
-          if(name_symb is Namespace name_ns)
-            scope = name_ns;
-          else
-            break;
-        }
-      }
+      TryApplyNamespaceOffset(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain);
 
       if(name_symb is IType)
         curr_type = (IType)name_symb;
@@ -782,6 +742,55 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pre_call != null)
       PeekAST().AddChildren(pre_call);
     PeekAST().AddChildren(chain_ast);
+  }
+
+  void TryProcessBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, bhlParser.ChainExpContext[] chain, int line)
+  {
+    if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
+    {
+      if(cs.super_class == null)
+        FireError(curr_name, "no base class found");
+      else
+      {
+        name_symb = cs.super_class; 
+        scope = cs.super_class;
+        if(chain.Length <= chain_offset)
+          FireError(curr_name, "bad base call");
+        var ch = chain[chain_offset];
+        var macc = ch.memberAccess();
+        if(macc == null)
+          FireError(ch, "bad base call");
+        curr_name = macc.NAME(); 
+        ++chain_offset;
+
+        PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
+        PeekAST().AddChild(new AST_TypeCast(cs.super_class, true/*force type*/, line));
+      }
+    }
+  }
+
+  void TryApplyNamespaceOffset(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, bhlParser.ChainExpContext[] chain)
+  {
+    if(name_symb is Namespace ns && chain != null)
+    {
+      scope = ns;
+      for(chain_offset=0;chain_offset<chain.Length;)
+      {
+        var ch = chain[chain_offset];
+        var macc = ch.memberAccess();
+        if(macc == null)
+          FireError(ch, "bad chain call");
+        name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
+        if(name_symb == null)
+          FireError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
+         curr_name = macc.NAME(); 
+        ++chain_offset;
+        if(name_symb is Namespace name_ns)
+          scope = name_ns;
+        else
+          break;
+      }
+    }
   }
 
   void ProcCallChainItem(
