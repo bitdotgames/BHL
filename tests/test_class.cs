@@ -2192,6 +2192,43 @@ public class TestClasses : BHL_TestBase
         "signature doesn't match the base one"
       );
     }
+
+    {
+      string bhl = @"
+      class Foo {
+        func virtual void getA(int b, int a = 1) {
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "virtual methods are not allowed to have default arguments"
+      );
+    }
+
+    {
+      string bhl = @"
+      class Foo {
+        func virtual void getA(int b, int a) {
+        }
+      }
+
+      class Bar : Foo {
+        func override void getA(int b, int a = 1) {
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "virtual methods are not allowed to have default arguments"
+      );
+    }
   }
 
   [IsTested()]

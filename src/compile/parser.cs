@@ -2604,14 +2604,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(sym is FuncSymbolScript fss)
       {
-        if(fss is FuncSymbolScript fssv && fssv.flags.HasFlag(FuncFlags.Virtual))
+        if(fss.flags.HasFlag(FuncFlags.Virtual))
         {
-          var vsym = new FuncSymbolVirtualScript(fssv);
-          vsym.AddOverride(curr_class, fssv);
+          if(fss.default_args_num > 0)
+            FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
+
+          var vsym = new FuncSymbolVirtualScript(fss);
+          vsym.AddOverride(curr_class, fss);
           self.members.Add(vsym);
         }
         else if(fss.flags.HasFlag(FuncFlags.Override))
         {
+          if(fss.default_args_num > 0)
+            FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
+
           var vsym = self.members.Find(sym.name) as FuncSymbolVirtualScript;
           if(vsym == null)
             FireError(sym.parsed.tree, "no base virtual method to override");
