@@ -587,92 +587,6 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSimpleNestedClass()
-  {
-    string bhl = @"
-
-    class Bar {
-       int b
-       class Foo {
-         int f
-       }
-       int c
-    }
-
-    func int test() 
-    {
-      Bar.Foo foo = {f: 1}
-      Bar bar = {b: 10, c: 20}
-      return foo.f + bar.b + bar.c
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestNestedClassIsAvailableWithoutPrefixInMasterMethod()
-  {
-    string bhl = @"
-
-    class Bar {
-       int b
-       class Foo {
-         int f
-       }
-       func int calc() {
-         Foo foo = {f: 1}
-         return this.b + foo.f
-       }
-    }
-
-    func int test() 
-    {
-      Bar bar = {b: 10}
-      return bar.calc()
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestSimpleNestedClassMethods()
-  {
-    string bhl = @"
-
-    class Bar {
-       int b
-       class Foo {
-         int f
-         func int getF() {
-           return this.f
-         }
-       }
-       int c
-       func int getC() {
-        return this.c
-       }
-    }
-
-    func int test() 
-    {
-      Bar.Foo foo = {f: 1}
-      Bar bar = {b: 10, c: 20}
-      return foo.getF() + bar.b + bar.getC()
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestUserClassMethod()
   {
     string bhl = @"
@@ -755,6 +669,41 @@ public class TestClasses : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserClassMethodCallMemberMethod()
+  {
+    string bhl = @"
+
+    class Bar {
+      int b
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Foo {
+      Bar bar
+
+      func int getBarB()
+      {
+        this.bar = new Bar
+        this.bar.b = 10
+        return this.bar.getB()
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      return f.getBarB()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2652,4 +2601,91 @@ public class TestClasses : BHL_TestBase
     AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestSimpleNestedClass()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+       }
+       int c
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo = {f: 1}
+      Bar bar = {b: 10, c: 20}
+      return foo.f + bar.b + bar.c
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNestedClassIsAvailableWithoutPrefixInMasterMethod()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+       }
+       func int calc() {
+         Foo foo = {f: 1}
+         return this.b + foo.f
+       }
+    }
+
+    func int test() 
+    {
+      Bar bar = {b: 10}
+      return bar.calc()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSimpleNestedClassMethods()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+         func int getF() {
+           return this.f
+         }
+       }
+       int c
+       func int getC() {
+        return this.c
+       }
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo = {f: 1}
+      Bar bar = {b: 10, c: 20}
+      return foo.getF() + bar.b + bar.getC()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(31, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
 }
