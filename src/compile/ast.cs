@@ -234,7 +234,7 @@ public class AST_FuncDecl : AST_Tree
   }
 }
 
-public class AST_ClassDecl : IAST
+public class AST_ClassDecl : AST_Tree
 {
   public ClassSymbolScript symbol;
   public List<AST_FuncDecl> func_decls = new List<AST_FuncDecl>();

@@ -450,8 +450,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     VisitProgram(parsed.prog);
     PopAST();
 
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       PushScope(pass.scope);
 
       Pass_OutlineInterfaceDecl(pass);
@@ -466,8 +468,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_RequestImports()
   {
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       Pass_RequestImports(pass);
     }
   }
@@ -483,8 +487,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_ParseTypes1()
   {
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       PushScope(pass.scope);
 
       Pass_ParseInterfaceMethods(pass);
@@ -501,8 +507,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_ParseTypes2()
   {
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       PushScope(pass.scope);
 
       Pass_AddInterfaceExtensions(pass);
@@ -510,8 +518,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopScope();
     }
 
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       PushScope(pass.scope);
 
       Pass_FinalizeClass(pass);
@@ -524,8 +534,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_ParseFuncBodies()
   {
-    foreach(var pass in passes)
+    for(int p=0;p<passes.Count;++p)
     {
+      var pass = passes[p];
+
       PushScope(pass.scope);
 
       Pass_ParseClassMethodsBlocks(pass);
@@ -2476,6 +2488,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.func_decls.Add(func_ast);
+      }
+
+      var sub_cldecl = cm.classDecl();
+      if(sub_cldecl != null)
+      {
+        AddPass(sub_cldecl, pass.class_symb, pass.class_ast);
       }
     }
 
