@@ -447,7 +447,6 @@ public class BHL_TestBase
     return cl;
   }
 
-
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative("trace", Types.Void,
@@ -490,6 +489,8 @@ public class BHL_TestBase
     else
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
+
+    ts.Setup();
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
@@ -798,9 +799,11 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
+    ts.Setup();
+
     var mdl = new bhl.Module(ts, "", "");
 
-    var proc = ANTLR_Processor.MakeParser(mdl, bhl.ToStream(), ts);
+    var proc = ANTLR_Processor.MakeProcessor(mdl, bhl.ToStream(), ts);
     var res = proc.Process();
 
     if(show_ast)

@@ -99,6 +99,8 @@ public class CompilationExecutor
 
     conf.userbindings.Register(ts);
 
+    ts.Setup();
+
     var parse_workers = StartParseWorkers(conf);
     var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
 
@@ -372,7 +374,7 @@ public class CompilationExecutor
 
             if(!w.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
-              var proc = ANTLR_Processor.Stream2Processor(file, sfs);
+              var proc = ANTLR_Processor.Stream2Parser(file, sfs);
               var parsed = new ANTLR_Parsed(proc.TokenStream, proc.program());
 
               interim.parsed = parsed;

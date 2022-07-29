@@ -227,6 +227,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
       }
     }
   }
+
   public FuncSymbol FindMethod(string name)
   {
     return Resolve(name) as FuncSymbol;
@@ -314,7 +315,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStorageAccess
+public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
 {
   public ClassSymbol super_class {
     get {
@@ -326,25 +327,23 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
-  //contains mapping of implemented interface method indices 
-  //to actual class method indices:
-  //  [IFoo][3,1,0]
-  //  [IBar][2,0]
+  //contains mapping of implemented interface methods indices 
+  //to actual class methods indices:
+  //  [IFoo][0=>3,1=>1,1=>0]
+  //  [IBar][0=>2,1=>0]
   internal Dictionary<InterfaceSymbol, List<FuncSymbol>> _itable;
-
   internal Dictionary<int, FuncSymbol> _vtable;
 
   HashSet<IInstanceType> related_types;
 
-  public SymbolsStorage members;
+  //contains only 'local' members without taking into account inheritance
+  internal SymbolsStorage members;
+  //all 'flattened' members, taking into account all parents
+  internal SymbolsStorage _members;
 
   public VM.ClassCreator creator;
 
 #if BHL_FRONT
-  //used for a temporary storage of class members during 
-  //parsing multipasses
-  public SymbolsStorage tmp_members;
-
   public ClassSymbol(
     WrappedParseTree parsed, 
     string name, 
@@ -368,25 +367,21 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
     : base(name)
   {
     this.members = new SymbolsStorage(this);
+
     this.creator = creator;
 
     if(super_class != null)
-      SetSuperClass(super_class);
+      _super_class = new Proxy<ClassSymbol>(super_class);
 
     if(implements != null)
       SetImplementedInterfaces(implements);
-
-#if BHL_FRONT
-    tmp_members = new SymbolsStorage(this);
-#endif
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
-  public SymbolsStorage GetSymbolsStorage() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return _members; }
 
   public IScope GetFallbackScope() 
   {
-    return super_class == null ? this.scope : super_class;
+    return this.scope;
   }
 
   public void Define(Symbol sym) 
@@ -399,27 +394,18 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
 
   public Symbol Resolve(string name) 
   {
+    if(super_class != null)
+    {
+      var tmp = super_class.Resolve(name);
+      if(tmp != null)
+        return tmp;
+    }
     return members.Find(name);
   }
 
   public INamed ResolveNamedByPath(string path)
   {
     return this.ResolveSymbolByPath(path);
-  }
-
-  void SetSuperClass(ClassSymbol super_class)
-  {
-    //NOTE: we define parent members in the current class
-    //      scope as well. We do this since we want to  
-    //      address its members simply by int index
-    var tmp_members = super_class.members;
-    for(int i=0;i<tmp_members.Count;++i)
-    {
-      var mem = tmp_members[i];
-      Define(mem);
-    }
-
-    _super_class = new Proxy<ClassSymbol>(super_class);
   }
 
   internal void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
@@ -429,14 +415,81 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsStora
       this.implements.Add(imp);
   }
 
-  public void UpdateVTable()
+  public void Setup()
   {
+    SetupAllMembers();
+
+    SetupVirtTables();
+  }
+
+  void SetupAllMembers()
+  {
+    if(_members != null)
+      return;
+
+    _members = new SymbolsStorage(this);
+
+    DoSetupMembers(this);
+  }
+
+  void DoSetupMembers(ClassSymbol curr_class)
+  {
+    if(curr_class.super_class != null)
+      DoSetupMembers(curr_class.super_class);
+
+    for(int i=0;i<curr_class.members.Count;++i)
+    {
+      var sym = curr_class.members[i];
+
+      //NOTE: we need to recalculate attribute index taking account all 
+      //      parent classes
+      if(sym is IScopeIndexed si)
+        si.scope_idx = _members.Count; 
+
+      if(sym is FuncSymbolScript fss)
+      {
+        if(fss.flags.HasFlag(FuncFlags.Virtual))
+        {
+          if(fss.default_args_num > 0)
+            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
+
+          var vsym = new FuncSymbolVirtualScript(fss);
+          vsym.AddOverride(curr_class, fss);
+          _members.Add(vsym);
+        }
+        else if(fss.flags.HasFlag(FuncFlags.Override))
+        {
+          if(fss.default_args_num > 0)
+            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
+
+          var vsym = _members.Find(sym.name) as FuncSymbolVirtualScript;
+          if(vsym == null)
+            throw new SymbolError(sym, "no base virtual method to override");
+
+          if(!vsym.signature.Equals(fss.signature))
+            throw new SymbolError(vsym, "virtual method signature doesn't match the base one");
+
+          vsym.AddOverride(curr_class, fss); 
+        }
+        else
+          _members.Add(fss);
+      }
+      else
+        _members.Add(sym);
+    }
+  }
+
+  void SetupVirtTables()
+  {
+    if(_vtable != null)
+      return;
+
     //virtual methods lookup table
     _vtable = new Dictionary<int, FuncSymbol>();
     
-    for(int i=0;i<members.Count;++i)
+    for(int i=0;i<_members.Count;++i)
     {
-      if(members[i] is FuncSymbolVirtual fssv)
+      if(_members[i] is FuncSymbolVirtual fssv)
         _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
     }
 
@@ -566,7 +619,11 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 
   public GenericArrayTypeSymbol(Proxy<IType> item_type) 
     : base(item_type)
-  {}
+  {
+    //NOTE: it's a generic symbol we need to setup it manually,
+    //      since it's not setup once the module is loaded
+    Setup();
+  }
 
   //marshall factory version
   public GenericArrayTypeSymbol()
@@ -915,7 +972,11 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(key_type, val_type)
-  {}
+  {
+    //NOTE: it's a generic symbol we need to setup it manually,
+    //      since it's not setup once the module is loaded
+    Setup();
+  }
   
   //marshall factory version
   public GenericMapTypeSymbol()
@@ -1435,20 +1496,6 @@ public class FuncSymbolScript : FuncSymbol
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
 
-  //TODO: should not be here
-  internal string _module_name;
-  //TODO: should not be here
-  internal string _path_prefix;
-
-  internal string _module_path { 
-    get {
-      if(string.IsNullOrEmpty(_path_prefix))
-        return name;
-      else
-        return _path_prefix + '.' + name;
-    }
-  }
-
   public int local_vars_num;
 
   public LocalScope current_scope;
@@ -1459,8 +1506,6 @@ public class FuncSymbolScript : FuncSymbol
 #if BHL_FRONT
   public FuncSymbolScript(
     WrappedParseTree parsed, 
-    string module_name,
-    string path_prefix,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1469,8 +1514,6 @@ public class FuncSymbolScript : FuncSymbol
     : base(name, sig)
   {
     this.name = name;
-    _module_name = module_name;
-    _path_prefix = path_prefix;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
     this.parsed = parsed;
@@ -1508,10 +1551,6 @@ public class FuncSymbolScript : FuncSymbol
   public override void Sync(marshall.SyncContext ctx)
   {
     base.Sync(ctx);
-
-    //TODO: should not be here
-    marshall.Marshall.Sync(ctx, ref _module_name);
-    marshall.Marshall.Sync(ctx, ref _path_prefix);
 
     marshall.Marshall.Sync(ctx, ref _flags);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
@@ -1618,13 +1657,12 @@ public class LambdaSymbol : FuncSymbolScript
 
   public LambdaSymbol(
     WrappedParseTree parsed, 
-    string module_name, 
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
     List<FuncSymbolScript> fdecl_stack
   ) 
-    : base(parsed, module_name, "", sig, name, 0, -1)
+    : base(parsed, sig, name, 0, -1)
   {
     this.upvals = upvals;
     this.fdecl_stack = fdecl_stack;
@@ -1785,7 +1823,7 @@ public class ClassSymbolScript : ClassSymbol
   public const uint CLASS_ID = 11;
 
   public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
-    : base(name, super_class, implements)
+    : base(name, super_class, implements, null)
   {
     this.creator = ClassCreator;
   }
@@ -1814,13 +1852,13 @@ public class ClassSymbolScript : ClassSymbol
     var vl = ValList.New(frm.vm);
     data.SetObj(vl, type);
     
-    for(int i=0;i<members.Count;++i)
+    for(int i=0;i<_members.Count;++i)
     {
-      var m = members[i];
+      var m = _members[i];
       //NOTE: Members contain all kinds of symbols: methods and attributes,
       //      however we need to properly setup attributes only. 
-      //      Methods will be initialized with special case 'nil' value.
-      //      Maybe we should track data members and methods separately someday. 
+      //      Other members will be initialized with special case 'nil' value.
+      //      Maybe we should store attributes and methods separately someday. 
       if(m is VariableSymbol vs)
       {
         var mtype = vs.type.Get();

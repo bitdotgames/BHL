@@ -524,6 +524,11 @@ public class Types : INamedResolver
     return clone;
   }
 
+  public void Setup()
+  {
+    ns.Setup();
+  }
+
   void InitBuiltins() 
   {
     ns.Define(Int);

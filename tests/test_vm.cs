@@ -4738,7 +4738,6 @@ public class TestVM : BHL_TestBase
     );
   }
 
-
   [IsTested()]
   public void TestForeachLoop()
   {
@@ -19114,17 +19113,17 @@ public class TestVM : BHL_TestBase
 
       ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
 
-      ns.Define(new FuncSymbolScript(null, "", "", new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ns.Define(new FuncSymbolScript(null, "", "", new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
-      Foo.Define(new FuncSymbolScript(null, "", "", new FuncSignature(Types.Void), "Hey", 0, 3));
+      Foo.Define(new FuncSymbolScript(null, new FuncSignature(Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, "", "", new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
@@ -19145,6 +19144,7 @@ public class TestVM : BHL_TestBase
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
+      ns.Setup();
 
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
       AssertEqual(8, ns.members.Count);
@@ -19192,7 +19192,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
-      AssertEqual(Foo.members.Count, 2);
+      AssertEqual(Foo.GetSymbolsEnumerator().Count, 2);
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       AssertEqual(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
@@ -19211,7 +19211,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      AssertEqual(Bar.members.Count, 2/*from parent*/+2);
+      AssertEqual(Bar.GetSymbolsEnumerator().Count, 2/*from parent*/+2);
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");

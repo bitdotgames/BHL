@@ -46,12 +46,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   ANTLR_Parsed parsed;
 
-  static int lambda_id = 0;
+  int lambda_id = 0;
 
-  static int NextLambdaId()
+  int NextLambdaId()
   {
-    Interlocked.Increment(ref lambda_id);
-    return lambda_id;
+    return ++lambda_id;
   }
 
   Types types;
@@ -164,11 +163,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     using(var sfs = File.OpenRead(file))
     {
       var mod = new Module(ts, coordinator.FilePath2ModuleName(file), file);
-      return MakeParser(mod, sfs, ts, coordinator);
+      return MakeProcessor(mod, sfs, ts, coordinator);
     }
   }
 
-  public static bhlParser Stream2Processor(string file, Stream src)
+  public static bhlParser Stream2Parser(string file, Stream src)
   {
     var tokens = Stream2Tokens(file, src);
     var p = new bhlParser(tokens);
@@ -177,9 +176,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return p;
   }
   
-  public static ANTLR_Processor MakeParser(Module module, Stream src, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
+  public static ANTLR_Processor MakeProcessor(Module module, Stream src, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
   {
-    var p = Stream2Processor(module.file_path, src);
+    var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
     return MakeProcessor(module, parsed, ts, coordinator, being_imported);
   }
@@ -303,7 +302,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         //Console.WriteLine("MISS " + full_path);
         using(var fs = File.OpenRead(full_path))
-          proc = ANTLR_Processor.MakeParser(m, fs, ts, this, being_imported: true);
+          proc = ANTLR_Processor.MakeProcessor(m, fs, ts, this, being_imported: true);
       }
       return proc;
     }
@@ -524,7 +523,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PushScope(pass.scope);
 
-      Pass_FinalizeClass(pass);
+      Pass_SetupClass(pass);
 
       Pass_ParseGlobalVar(pass);
 
@@ -1305,11 +1304,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var tp = ParseType(funcLambda.retType());
 
+    //TODO: we don't really need unique lambda names
     var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
-      module.name,
       func_name,
       ParseFuncSignature(tp, funcLambda.funcParams()),
       upvals,
@@ -1742,7 +1741,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     get {
       if(_one_literal_exp == null)
       {
-        _one_literal_exp = Stream2Processor("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
+        _one_literal_exp = Stream2Parser("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
       }
       return _one_literal_exp;
     }
@@ -2264,8 +2263,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
-      module.name,
-      pass.scope.GetFullPath("").TrimEnd('.'),
       new FuncSignature(),
       name
     ); 
@@ -2358,8 +2355,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var func_symb = new FuncSymbolScript(
           null, 
-          module.name,
-          "",
           sig, 
           fd.NAME().GetText()
         );
@@ -2455,7 +2450,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new Proxy<IType>());
-        pass.class_symb.tmp_members.Add(fld_symb);
+        pass.class_symb.members.Add(fld_symb);
       }
 
       var fd = cm.funcDecl();
@@ -2466,8 +2461,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var func_symb = new FuncSymbolScript(
             Wrap(fd), 
-            module.name,
-            "", //will be set during class finalization
             new FuncSignature(),
             fd.NAME().GetText()
           );
@@ -2478,7 +2471,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           func_symb.flags |= FuncFlags.Override;
 
         func_symb.ReserveThisArgument(pass.class_symb);
-        pass.class_symb.tmp_members.Add(func_symb);
+        pass.class_symb.members.Add(func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.AddChild(func_ast);
@@ -2508,14 +2501,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vd = cm.varDeclare();
       if(vd != null)
       {
-        var fld_symb = (FieldSymbolScript)pass.class_symb.tmp_members.Find(vd.NAME().GetText());
+        var fld_symb = (FieldSymbolScript)pass.class_symb.members.Find(vd.NAME().GetText());
         fld_symb.type = ParseType(vd.type());
       }
 
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbolScript)pass.class_symb.tmp_members.Find(fd.NAME().GetText());
+        var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
 
         func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
 
@@ -2577,12 +2570,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void Pass_FinalizeClass(ParserPass pass)
+  void Pass_SetupClass(ParserPass pass)
   {
     if(pass.class_ctx == null)
       return;
 
-    FinalizeClassMembers(pass.class_symb, pass.class_symb);
+    pass.class_symb.Setup();
 
     for(int i=0;i<pass.class_symb.implements.Count;++i)
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
@@ -2593,14 +2586,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(curr_class.super_class != null)
       FinalizeClassMembers(self, curr_class.super_class);
 
-    for(int i=0;i<curr_class.tmp_members.Count;++i)
+    for(int i=0;i<curr_class.members.Count;++i)
     {
-      var sym = curr_class.tmp_members[i];
+      var sym = curr_class.members[i];
 
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if(sym is IScopeIndexed si)
-        si.scope_idx = self.members.Count; 
+        si.scope_idx = self._members.Count; 
 
       if(sym is FuncSymbolScript fss)
       {
@@ -2611,14 +2604,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           var vsym = new FuncSymbolVirtualScript(fss);
           vsym.AddOverride(curr_class, fss);
-          self.members.Add(vsym);
+          self._members.Add(vsym);
         }
         else if(fss.flags.HasFlag(FuncFlags.Override))
         {
           if(fss.default_args_num > 0)
             FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
 
-          var vsym = self.members.Find(sym.name) as FuncSymbolVirtualScript;
+          var vsym = self._members.Find(sym.name) as FuncSymbolVirtualScript;
           if(vsym == null)
             FireError(sym.parsed.tree, "no base virtual method to override");
 
@@ -2630,12 +2623,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vsym.AddOverride(curr_class, fss); 
         }
         else
-          self.members.Add(fss);
-
-        fss._path_prefix = curr_class.GetFullPath("").TrimEnd('.');
+          self._members.Add(fss);
       }
       else
-        self.members.Add(sym);
+        self._members.Add(sym);
     }
   }
 

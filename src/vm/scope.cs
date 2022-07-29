@@ -175,6 +175,14 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     : this(gindex, "", "")
   {}
 
+  public void Setup()
+  {
+    this.ForAllSymbols(delegate(Symbol s) {
+      if(s is ClassSymbol cs)
+        cs.Setup();
+    });
+  }
+
   public INamed ResolveNamedByPath(string path)
   {
     return ((IScope)this).ResolveSymbolByPath(path);

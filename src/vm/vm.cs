@@ -930,13 +930,12 @@ public class VM : INamedResolver
   {
     //Console.WriteLine("=== FINALIZE " + cm.name);
     //Console.WriteLine(cm.ns.DumpMembers());
+    cm.ns.Setup();
 
     cm.ns.ForAllSymbols(delegate(Symbol s)
       {
-        if(s is ClassSymbol cs && cs._vtable == null)
+        if(s is ClassSymbol cs)
         {
-          cs.UpdateVTable();
-
           foreach(var kv in cs._vtable)
           {
             if(kv.Value is FuncSymbolScript vfs)
@@ -952,19 +951,7 @@ public class VM : INamedResolver
   void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
     if(fss._module == null)
-    {
-      fss._module = modules[fss._module_name];
-      if(fss.ip_addr == -1)
-      {
-        var mfs = (FuncSymbol)fss._module.ns.ResolveNamedByPath(fss._module_path); 
-        if(mfs is FuncSymbolScript mfss)
-          fss.ip_addr = mfss.ip_addr;
-        else if(mfs is FuncSymbolVirtual mfssv)
-          fss.ip_addr = ((FuncSymbolScript)mfssv.overrides[mfssv.overrides.Count-1]).ip_addr; 
-        else
-          throw new Exception("Not supported func symbol");
-      }
-    }
+      fss._module = modules[((Namespace)fss.scope.GetRootScope()).module_name];
 
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
@@ -1054,7 +1041,7 @@ public class VM : INamedResolver
           var val = stack.Pop();
           var obj = stack.Peek();
           var class_symb = (ClassSymbol)obj.type;
-          var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+          var field_symb = (FieldSymbol)class_symb._members[fld_idx];
           field_symb.setter(init_frame, ref obj, val, field_symb);
           val.Release();
         }
@@ -1065,7 +1052,7 @@ public class VM : INamedResolver
           self.Retain();
           var class_type = ((ArrayTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type.members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          ((FuncSymbolNative)class_type._members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
           stack.Push(self);
         }
         break;
@@ -1075,7 +1062,7 @@ public class VM : INamedResolver
           self.Retain();
           var class_type = ((MapTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type.members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          ((FuncSymbolNative)class_type._members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
           stack.Push(self);
         }
         break;
@@ -1383,7 +1370,7 @@ public class VM : INamedResolver
         self.Retain();
         var class_type = ((ArrayTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
+        ((FuncSymbolNative)class_type._members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
         curr_frame.stack.Push(self);
       }
       break;
@@ -1409,7 +1396,7 @@ public class VM : INamedResolver
         self.Retain();
         var class_type = ((MapTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        ((FuncSymbolNative)class_type.members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
+        ((FuncSymbolNative)class_type._members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
         curr_frame.stack.Push(self);
       }
       break;
@@ -1488,7 +1475,7 @@ public class VM : INamedResolver
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
         var res = Val.New(this);
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        var field_symb = (FieldSymbol)class_symb._members[fld_idx];
         field_symb.getter(curr_frame, obj, ref res, field_symb);
         //NOTE: we retain only the payload since we make the copy of the value 
         //      and the new res already has refs = 1 while payload's refcount 
@@ -1503,7 +1490,7 @@ public class VM : INamedResolver
         int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        var field_symb = (FieldSymbol)class_symb._members[fld_idx];
         Val res;
         field_symb.getref(curr_frame, obj, out res, field_symb);
         curr_frame.stack.PushRetain(res);
@@ -1517,7 +1504,7 @@ public class VM : INamedResolver
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
         var val = curr_frame.stack.Pop();
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        var field_symb = (FieldSymbol)class_symb._members[fld_idx];
         field_symb.setter(curr_frame, ref obj, val, field_symb);
         val.Release();
         obj.Release();
@@ -1529,7 +1516,7 @@ public class VM : INamedResolver
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
         var class_symb = (ClassSymbol)obj.type;
-        var field_symb = (FieldSymbol)class_symb.members[fld_idx];
+        var field_symb = (FieldSymbol)class_symb._members[fld_idx];
         field_symb.setter(curr_frame, ref obj, val, field_symb);
         val.Release();
       }
@@ -1685,7 +1672,7 @@ public class VM : INamedResolver
 
         var class_type = ((ClassSymbolScript)self.type);
 
-        var func_symb = (FuncSymbolScript)class_type.members[func_idx];
+        var func_symb = (FuncSymbolScript)class_type._members[func_idx];
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
@@ -1707,7 +1694,7 @@ public class VM : INamedResolver
         var class_type = (ClassSymbol)self.type;
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)class_type.members[func_idx], args_bits, out status, ref coroutine))
+        if(CallNative(curr_frame, (FuncSymbolNative)class_type._members[func_idx], args_bits, out status, ref coroutine))
           return status;
       }
       break;
