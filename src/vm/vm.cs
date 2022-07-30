@@ -923,12 +923,18 @@ public class VM : INamedResolver
     loading_modules.Add(lm);
 
     var module = loader.Load(module_name, this, OnImport);
+    //if no such a module let's remove it from the loading list
+    if(module == null)
+    {
+      loading_modules.Remove(lm);
+      return;
+    }
+
+    lm.module = module;
     //NOTE: for simplicity we add it to the modules at once,
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
     modules[module_name] = module;
-
-    lm.module = module;
   }
 
   void OnImport(Namespace dest_ns, string module_name)
