@@ -2602,7 +2602,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(fss.default_args_num > 0)
             FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
 
-          var vsym = new FuncSymbolVirtualScript(fss);
+          var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
           self._members.Add(vsym);
         }
@@ -2611,7 +2611,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(fss.default_args_num > 0)
             FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
 
-          var vsym = self._members.Find(sym.name) as FuncSymbolVirtualScript;
+          var vsym = self._members.Find(sym.name) as FuncSymbolVirtual;
           if(vsym == null)
             FireError(sym.parsed.tree, "no base virtual method to override");
 
@@ -2643,7 +2643,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
-        if(func_symb is FuncSymbolVirtualScript fsv) 
+        if(func_symb is FuncSymbolVirtual fsv) 
           func_symb = fsv.FindOverride(pass.class_symb);
 
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);

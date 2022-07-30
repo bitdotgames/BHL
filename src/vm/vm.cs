@@ -36,7 +36,6 @@ public enum Opcodes
   CallMethodIface       = 29,
   CallMethodIfaceNative = 30,
   CallMethodVirt        = 31,
-  CallMethodVirtNative  = 32,
   CallPtr               = 38,
   GetFunc               = 39,
   GetFuncNative         = 40,
@@ -787,6 +786,7 @@ public class VM : INamedResolver
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
   HashSet<string> loading_modules = new HashSet<string>();
+  List<CompiledModule> pending_register_modules = new List<CompiledModule>();
 
   Types types;
 
@@ -893,43 +893,59 @@ public class VM : INamedResolver
 
   public bool LoadModule(string module_name)
   {
-    if(loading_modules.Contains(module_name))
-      return true;
-    loading_modules.Add(module_name);
+    _LoadModule(module_name);
 
-    var loaded = loader.Load(module_name, this, OnImport);
-
-    loading_modules.Remove(module_name);
-
-    if(loaded == null)
+    if(pending_register_modules.Count == 0)
       return false;
 
-    RegisterModule(loaded);
+    foreach(var loaded in pending_register_modules)
+      RegisterModule(loaded);
+    pending_register_modules.Clear();
 
     return true;
   }
 
-  void OnImport(string module_name)
+  void _LoadModule(string module_name)
   {
-    LoadModule(module_name);
+    if(loading_modules.Contains(module_name))
+      return;
+    loading_modules.Add(module_name);
+
+    CompiledModule module;
+    if(modules.TryGetValue(module_name, out module))
+      return;
+
+    module = loader.Load(module_name, this, OnImport);
+    modules[module_name] = module;
+
+    loading_modules.Remove(module_name);
+
+    pending_register_modules.Add(module);
+  }
+
+  void OnImport(Namespace dest_ns, string module_name)
+  {
+    _LoadModule(module_name);
   }
 
   //NOTE: this method is public only for testing convenience
   public void RegisterModule(CompiledModule cm)
   {
-    if(modules.ContainsKey(cm.name))
-      return;
-    modules.Add(cm.name, cm);
+    modules[cm.name] = cm;
 
-    Prepare(cm);
+    Setup(cm);
 
     ExecInit(cm);
   }
 
-  void Prepare(CompiledModule cm)
+  void Setup(CompiledModule cm)
   {
-    //Console.WriteLine("=== FINALIZE " + cm.name);
+    //Console.WriteLine("=== SETUP " + cm.name);
     //Console.WriteLine(cm.ns.DumpMembers());
+
+    foreach(var imp in cm.imports)
+      cm.ns.Link(modules[imp].ns);
+
     cm.ns.Setup();
 
     cm.ns.ForAllSymbols(delegate(Symbol s)
@@ -1720,23 +1736,6 @@ public class VM : INamedResolver
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
       }
       break;
-      case Opcodes.CallMethodVirtNative:
-      {
-        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
-
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = curr_frame.stack.Count - args_num - 1;
-        var self = curr_frame.stack[self_idx];
-
-        var class_type = (ClassSymbol)self.type;
-        var func_symb = (FuncSymbolNative)class_type._vtable[virt_func_idx];
-
-        BHS status;
-        if(CallNative(curr_frame, func_symb, args_bits, out status, ref coroutine))
-          return status;
-      }
-      break;
       case Opcodes.CallMethodIface:
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -2391,7 +2390,7 @@ public class CompiledModule
     this.ip2src_line = ip2src_line;
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<string> on_import = null)
+  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<Namespace, string> on_import = null)
   {
     var ns = new Namespace(types.gindex);
     //NOTE: it's assumed types.ns is always linked by each module, 
@@ -2448,13 +2447,9 @@ public class CompiledModule
     }
 
     foreach(var import in imports)
-      on_import?.Invoke(import);
+      on_import?.Invoke(ns, import);
 
     marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
-    //NOTE: in order to avoid duplicate symbols error during un-marshalling we import
-    //      the global namespace only once the object is un-marshalled
-    //NOTE: we use lightweight importing without any validation
-    //ns.imports.Add(types.ns);
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);

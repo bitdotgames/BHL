@@ -394,6 +394,14 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   public Symbol Resolve(string name) 
   {
+    //NOTE: This looks a bit weird but kinda works for now.
+    //      If the class was already setup we want to access the
+    //      'flattened' members collection instead of 'local' one
+    //      since 'flattened' members contain the most relevant 
+    //      members (e.g virtual methods)
+    if(_members != null)
+      return _members.Find(name);
+
     if(super_class != null)
     {
       var tmp = super_class.Resolve(name);
@@ -453,7 +461,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
           if(fss.default_args_num > 0)
             throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
 
-          var vsym = new FuncSymbolVirtualScript(fss);
+          var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
           _members.Add(vsym);
         }
@@ -462,7 +470,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
           if(fss.default_args_num > 0)
             throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
 
-          var vsym = _members.Find(sym.name) as FuncSymbolVirtualScript;
+          var vsym = _members.Find(sym.name) as FuncSymbolVirtual;
           if(vsym == null)
             throw new SymbolError(sym, "no base virtual method to override");
 
@@ -1559,7 +1567,7 @@ public class FuncSymbolScript : FuncSymbol
   }
 }
 
-abstract public class FuncSymbolVirtual : FuncSymbol
+public class FuncSymbolVirtual : FuncSymbol
 {
   protected int default_args_num;
 
@@ -1572,7 +1580,16 @@ abstract public class FuncSymbolVirtual : FuncSymbol
     this.default_args_num = default_args_num;
   }
 
+  public FuncSymbolVirtual(FuncSymbolScript proto) 
+    : this(proto.name, proto.signature, proto.default_args_num)
+  {}
+
   public override int GetDefaultArgsNum() { return default_args_num; }
+
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
+  }
 
   public override void Define(Symbol sym) 
   {
@@ -1596,55 +1613,6 @@ abstract public class FuncSymbolVirtual : FuncSymbol
         return overrides[i];
     }
     return null;
-  }
-}
-
-public class FuncSymbolVirtualNative : FuncSymbolVirtual
-{
-  public FuncSymbolVirtualNative(string name, Proxy<IType> ret_type, int default_args_num = 0)
-    : base(name, new FuncSignature(ret_type), default_args_num)
-  {}
-
-  public override uint ClassId()
-  {
-    throw new NotImplementedException();
-  }
-}
-
-public class FuncSymbolVirtualScript : FuncSymbolVirtual
-{
-  public const uint CLASS_ID = 19; 
-
-#if BHL_FRONT
-  public FuncSymbolVirtualScript(FuncSymbolScript proto) 
-    : base(proto.name, proto.signature, proto.default_args_num)
-  {
-    this.parsed = proto.parsed;
-
-    for(int m=0;m<proto.members.Count;++m)
-      members.Add(proto.members[m]);
-  }
-#endif
-
-  //symbol factory version
-  public FuncSymbolVirtualScript()
-    : base(null, new FuncSignature())
-  {}
-
-  public override uint ClassId()
-  {
-    return CLASS_ID;
-  }
-
-  public override void Sync(marshall.SyncContext ctx)
-  {
-    base.Sync(ctx);
-
-    marshall.Marshall.Sync(ctx, ref default_args_num);
-
-    marshall.Marshall.SyncGeneric(ctx, overrides);
-
-    marshall.Marshall.Sync(ctx, owners);
   }
 }
 
@@ -2291,8 +2259,6 @@ public class SymbolFactory : marshall.IFactory
         return new EnumItemSymbol();
       case FuncSymbolScript.CLASS_ID:
         return new FuncSymbolScript();
-      case FuncSymbolVirtualScript.CLASS_ID:
-        return new FuncSymbolVirtualScript();
       case FuncSignature.CLASS_ID:
         return new FuncSignature();
       case RefType.CLASS_ID:

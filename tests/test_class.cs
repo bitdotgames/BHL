@@ -2643,19 +2643,16 @@ public class TestClasses : BHL_TestBase
       ));
 
       {
-        var virt = new FuncSymbolVirtualNative("getA", ts.T("int"));
-        cl.Define(virt);
-
         var m = new FuncSymbolNative("getA", ts.T("int"),
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var f = (VirtFoo)frm.stack.PopRelease().obj;
-            var v = Val.NewNum(frm.vm, f.a);
+            var v = Val.NewNum(frm.vm, f.getA());
             frm.stack.Push(v);
             return null;
           }
         );
-        virt.AddOverride(cl, m);
+        cl.Define(m);
       }
 
       {
@@ -2663,7 +2660,7 @@ public class TestClasses : BHL_TestBase
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             var f = (VirtFoo)frm.stack.PopRelease().obj;
-            var v = Val.NewNum(frm.vm, f.b);
+            var v = Val.NewNum(frm.vm, f.getB());
             frm.stack.Push(v);
             return null;
           }
@@ -2694,19 +2691,6 @@ public class TestClasses : BHL_TestBase
         }
       ));
       ts.ns.Define(cl);
-
-      {
-        var m = new FuncSymbolNative("getA", ts.T("int"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
-          {
-            var b = (VirtBar)frm.stack.PopRelease().obj;
-            var v = Val.NewNum(frm.vm, b.new_a);
-            frm.stack.Push(v);
-            return null;
-          }
-        );
-        cl.Resolve<FuncSymbolVirtualNative>("getA").AddOverride(cl, m);
-      }
     }
   }
 

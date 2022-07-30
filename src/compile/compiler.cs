@@ -517,12 +517,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallMethodVirtNative,
-        2/*class member idx*/, 4/*args bits*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.CallPtr,
         4/*args bits*/
       )
@@ -1249,10 +1243,8 @@ public class ModuleCompiler : AST_Visitor
         {
           if(mfunc is FuncSymbolScript)
             Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          else if(mfunc is FuncSymbolVirtualScript)
+          else if(mfunc is FuncSymbolVirtual)
             Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          else if(mfunc is FuncSymbolVirtualNative)
-            Emit(Opcodes.CallMethodVirtNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else if(mfunc is FuncSymbolNative)
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else
