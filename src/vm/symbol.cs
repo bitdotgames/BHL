@@ -1582,7 +1582,14 @@ public class FuncSymbolVirtual : FuncSymbol
 
   public FuncSymbolVirtual(FuncSymbolScript proto) 
     : this(proto.name, proto.signature, proto.default_args_num)
-  {}
+  {
+    //NOTE: directly adding arguments avoiding Define
+    for(int m=0;m<proto.members.Count;++m)
+      members.Add(proto.members[m]);
+#if BHL_FRONT
+    this.parsed = proto.parsed;
+#endif
+  }
 
   public override int GetDefaultArgsNum() { return default_args_num; }
 

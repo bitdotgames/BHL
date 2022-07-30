@@ -786,7 +786,7 @@ public class VM : INamedResolver
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
   HashSet<string> loading_modules = new HashSet<string>();
-  List<CompiledModule> pending_register_modules = new List<CompiledModule>();
+  List<CompiledModule> pending_new_modules = new List<CompiledModule>();
 
   Types types;
 
@@ -895,12 +895,12 @@ public class VM : INamedResolver
   {
     _LoadModule(module_name);
 
-    if(pending_register_modules.Count == 0)
+    if(pending_new_modules.Count == 0)
       return false;
 
-    foreach(var loaded in pending_register_modules)
-      RegisterModule(loaded);
-    pending_register_modules.Clear();
+    foreach(var module in pending_new_modules)
+      RegisterModule(module);
+    pending_new_modules.Clear();
 
     return true;
   }
@@ -916,11 +916,11 @@ public class VM : INamedResolver
       return;
 
     module = loader.Load(module_name, this, OnImport);
-    modules[module_name] = module;
+    modules.Add(module_name, module);
 
     loading_modules.Remove(module_name);
 
-    pending_register_modules.Add(module);
+    pending_new_modules.Add(module);
   }
 
   void OnImport(Namespace dest_ns, string module_name)
@@ -931,6 +931,7 @@ public class VM : INamedResolver
   //NOTE: this method is public only for testing convenience
   public void RegisterModule(CompiledModule cm)
   {
+    //TODO: get rid of modules register duplication logic
     modules[cm.name] = cm;
 
     Setup(cm);
