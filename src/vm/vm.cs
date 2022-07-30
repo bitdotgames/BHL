@@ -785,8 +785,12 @@ public class VM : INamedResolver
   }
 
   Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
-  HashSet<string> loading_modules = new HashSet<string>();
-  List<CompiledModule> pending_new_modules = new List<CompiledModule>();
+  internal class LoadingModule
+  {
+    internal string name;
+    internal CompiledModule module;
+  }
+  List<LoadingModule> loading_modules = new List<LoadingModule>();
 
   Types types;
 
@@ -893,45 +897,48 @@ public class VM : INamedResolver
 
   public bool LoadModule(string module_name)
   {
-    _LoadModule(module_name);
+    DoLoadModule(module_name);
 
-    if(pending_new_modules.Count == 0)
+    if(loading_modules.Count == 0)
       return false;
 
-    foreach(var module in pending_new_modules)
-      RegisterModule(module);
-    pending_new_modules.Clear();
+    foreach(var lm in loading_modules)
+      RegisterModule(lm.module);
+    loading_modules.Clear();
 
     return true;
   }
 
-  void _LoadModule(string module_name)
+  void DoLoadModule(string module_name)
   {
-    if(loading_modules.Contains(module_name))
-      return;
-    loading_modules.Add(module_name);
-
-    CompiledModule module;
-    if(modules.TryGetValue(module_name, out module))
+    if(modules.ContainsKey(module_name))
       return;
 
-    module = loader.Load(module_name, this, OnImport);
-    modules.Add(module_name, module);
+    foreach(var tmp in loading_modules)
+      if(tmp.name == module_name)
+        return;
 
-    loading_modules.Remove(module_name);
+    var lm = new LoadingModule();
+    lm.name = module_name;
+    loading_modules.Add(lm);
 
-    pending_new_modules.Add(module);
+    var module = loader.Load(module_name, this, OnImport);
+    //NOTE: for simplicity we add it to the modules at once,
+    //      this is probably a bit 'smelly' but makes further
+    //      symbols setup logic easier
+    modules[module_name] = module;
+
+    lm.module = module;
   }
 
   void OnImport(Namespace dest_ns, string module_name)
   {
-    _LoadModule(module_name);
+    DoLoadModule(module_name);
   }
 
   //NOTE: this method is public only for testing convenience
   public void RegisterModule(CompiledModule cm)
   {
-    //TODO: get rid of modules register duplication logic
     modules[cm.name] = cm;
 
     Setup(cm);
