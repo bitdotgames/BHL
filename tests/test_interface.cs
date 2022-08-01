@@ -841,7 +841,14 @@ public class TestInterfaces : BHL_TestBase
       var ifs = new InterfaceSymbolNative(
           "INativeFoo", 
           null, 
-          new FuncSymbolNative("foo", ts.T("int"), null, 
+          new FuncSymbolNative("foo", ts.T("int"),
+            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+            {
+              var n = (int)frm.stack.PopRelease().num;
+              var f = (INativeFoo)frm.stack.PopRelease().obj;
+              frm.stack.Push(Val.NewInt(frm.vm, f.foo(n)));
+              return null;
+            },
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );

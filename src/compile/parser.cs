@@ -2581,9 +2581,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    for(int i=0;i<pass.class_symb.implements.Count;++i)
-      ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
-
     pass.class_symb.Setup();
   }
 
@@ -2604,22 +2601,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(func_ast == null)
           throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
         ParseFuncBlock(fd, func_ast);
-      }
-    }
-  }
-
-  void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbol class_symb)
-  {
-    var set = iface.GetAllRelatedTypesSet();
-    foreach(var item in set)
-    {
-      var item_if = (InterfaceSymbol)item;
-      for(int i=0;i<item_if.members.Count;++i)
-      {
-        var m = (FuncSymbol)item_if.members[i];
-        var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-        if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
-          FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
       }
     }
   }

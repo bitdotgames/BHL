@@ -1796,13 +1796,8 @@ public class VM : INamedResolver
         int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int self_idx = curr_frame.stack.Count - args_num - 1;
-        var self = curr_frame.stack[self_idx];
-
         var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
-        var class_type = (ClassSymbol)self.type;
-        var func_symb = (FuncSymbolNative)class_type._itable[iface_symb][iface_func_idx];
+        var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
         BHS status;
         if(CallNative(curr_frame, func_symb, args_bits, out status, ref coroutine))
