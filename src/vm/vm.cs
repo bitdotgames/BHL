@@ -897,6 +897,9 @@ public class VM : INamedResolver
 
   public bool LoadModule(string module_name)
   {
+    if(loading_modules.Count > 0)
+      throw new Exception("Already loading modules");
+
     DoLoadModule(module_name);
 
     if(loading_modules.Count == 0)
@@ -911,9 +914,11 @@ public class VM : INamedResolver
 
   void DoLoadModule(string module_name)
   {
+    //let's check if it's already registered
     if(modules.ContainsKey(module_name))
       return;
 
+    //let's check if it's already loading
     foreach(var tmp in loading_modules)
       if(tmp.name == module_name)
         return;
