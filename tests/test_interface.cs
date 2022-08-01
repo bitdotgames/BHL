@@ -119,7 +119,7 @@ public class TestInterfaces : BHL_TestBase
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
-      AssertEqual(2, symb.GetSymbolsEnumerator().Count);
+      AssertEqual(1, symb.GetSymbolsEnumerator().Count);
 
       var hey = symb.FindMethod("hey").signature;
       AssertTrue(hey != null);

@@ -2418,8 +2418,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(inherits.Count > 0)
         pass.iface_symb.SetInherits(inherits);
     }
-
-    pass.iface_symb.Setup();
   }
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
@@ -2620,13 +2618,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
   {
-    var en = iface.GetSymbolsEnumerator();
-    for(int i=0;i<en.Count;++i)
+    var set = iface.GetAllRelatedTypesSet();
+    foreach(var item in set)
     {
-      var m = (FuncSymbol)en[i];
-      var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
-      if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
-        FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
+      var item_if = (InterfaceSymbol)item;
+      for(int i=0;i<item_if.members.Count;++i)
+      {
+        var m = (FuncSymbol)item_if.members[i];
+        var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
+        if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
+          FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
+      }
     }
   }
 

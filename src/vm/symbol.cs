@@ -153,8 +153,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 {
   internal SymbolsStorage members;
 
-  internal SymbolsStorage _all_members;
-
   public TypeSet<InterfaceSymbol> inherits = new TypeSet<InterfaceSymbol>();
 
   HashSet<IInstanceType> related_types;
@@ -213,7 +211,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return _all_members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -222,24 +220,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 
     foreach(var ext in inherits)
       this.inherits.Add(ext);
-  }
-
-  public void Setup()
-  {
-    if(_all_members != null)
-      return;
-
-    _all_members = new SymbolsStorage(this);
-
-    for(int i=0;i<members.Count;++i)
-      _all_members.Add(members[i]);
-
-    for(int i=0;i<inherits.Count;++i)
-    {
-      var ext_mems = inherits[i].members;
-      for(int e=0;e<ext_mems.Count;++e)
-        _all_members.Add(ext_mems[e]);
-    }
   }
 
   public FuncSymbol FindMethod(string name)

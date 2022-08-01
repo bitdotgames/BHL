@@ -173,8 +173,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     this.ForAllLocalSymbols(delegate(Symbol s) {
       if(s is ClassSymbol cs)
         cs.Setup();
-      else if(s is InterfaceSymbol ifs)
-        ifs.Setup();
     });
   }
 
