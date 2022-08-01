@@ -149,7 +149,7 @@ public class NullSymbol : BuiltInSymbolType
   }
 }
 
-public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsStorageAccess
+public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
 {
   public SymbolsStorage members;
 
@@ -206,7 +206,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsS
   public IScope GetFallbackScope() { return scope; }
 
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
-  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -1316,7 +1315,7 @@ public enum FuncFlags : byte
   //Protected = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsStorageAccess
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
 {
   public FuncSignature signature;
 
@@ -1392,7 +1391,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   }
 
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
-  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   internal struct EnforceThisScope : IScope
   {
@@ -1862,7 +1860,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
+public class EnumSymbol : Symbol, IScope, IType, ISymbolsEnumerable
 {
   public SymbolsStorage members;
 
@@ -1898,7 +1896,6 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsStorageAccess
   }
 
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
-  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {
