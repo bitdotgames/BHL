@@ -785,7 +785,7 @@ public class VM : INamedResolver
     }
   }
 
-  Dictionary<string, CompiledModule> modules = new Dictionary<string, CompiledModule>();
+  Dictionary<string, CompiledModule> compiled_mods = new Dictionary<string, CompiledModule>();
   internal class LoadingModule
   {
     internal string name;
@@ -916,8 +916,8 @@ public class VM : INamedResolver
 
   void DoLoadModule(string module_name)
   {
-    //let's check if it's already registered
-    if(modules.ContainsKey(module_name))
+    //let's check if it's already available
+    if(FindModuleNamespace(module_name) != null)
       return;
 
     //let's check if it's already loading
@@ -929,19 +929,19 @@ public class VM : INamedResolver
     lm.name = module_name;
     loading_modules.Add(lm);
 
-    var module = loader.Load(module_name, this, OnImport);
+    var loaded = loader.Load(module_name, this, OnImport);
     //if no such a module let's remove it from the loading list
-    if(module == null)
+    if(loaded == null)
     {
       loading_modules.Remove(lm);
       return;
     }
 
-    lm.module = module;
+    lm.module = loaded;
     //NOTE: for simplicity we add it to the modules at once,
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
-    modules[module_name] = module;
+    compiled_mods[module_name] = loaded;
   }
 
   void OnImport(Namespace dest_ns, string module_name)
@@ -952,24 +952,29 @@ public class VM : INamedResolver
   //NOTE: this method is public only for testing convenience
   public void RegisterModule(CompiledModule cm)
   {
-    modules[cm.name] = cm;
+    compiled_mods[cm.name] = cm;
 
     SetupModule(cm);
 
     ExecInit(cm);
   }
 
+  Namespace FindModuleNamespace(string module_name)
+  {
+    var rm = types.FindRegisteredModule(module_name);
+    if(rm != null)
+      return rm.ns;
+
+    CompiledModule cm;
+    if(compiled_mods.TryGetValue(module_name, out cm))
+      return cm.ns;
+    return null;
+  }
+
   void SetupModule(CompiledModule cm)
   {
     foreach(var imp in cm.imports)
-    {
-      //checking if there's already a registered module
-      var rm = types.FindRegisteredModule(imp);
-      if(rm != null)
-        cm.ns.Link(rm.ns);
-      else
-        cm.ns.Link(modules[imp].ns);
-    }
+      cm.ns.Link(FindModuleNamespace(imp));
 
     cm.ns.SetupSymbols();
 
@@ -992,7 +997,7 @@ public class VM : INamedResolver
   void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
     if(fss._module == null)
-      fss._module = modules[((Namespace)fss.scope.GetRootScope()).module_name];
+      fss._module = compiled_mods[((Namespace)fss.scope.GetRootScope()).module_name];
 
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
@@ -1001,7 +1006,7 @@ public class VM : INamedResolver
   public void UnloadModule(string module_name)
   {
     CompiledModule m;
-    if(!modules.TryGetValue(module_name, out m))
+    if(!compiled_mods.TryGetValue(module_name, out m))
       return;
 
     for(int i=0;i<m.gvars.Count;++i)
@@ -1012,13 +1017,13 @@ public class VM : INamedResolver
     }
     m.gvars.Clear();
 
-    modules.Remove(module_name);
+    compiled_mods.Remove(module_name);
   }
 
   public void UnloadModules()
   {
     var keys = new List<string>();
-    foreach(var kv in modules)
+    foreach(var kv in compiled_mods)
       keys.Add(kv.Key);
     foreach(string key in keys)
       UnloadModule(key);
@@ -1157,7 +1162,7 @@ public class VM : INamedResolver
     if(fs == null)
       return false;
 
-    var cm = modules[((Namespace)fs.scope).module_name];
+    var cm = compiled_mods[((Namespace)fs.scope).module_name];
 
     addr = new FuncAddr() {
       module = cm,
@@ -1170,7 +1175,7 @@ public class VM : INamedResolver
 
   public INamed ResolveNamedByPath(string path)
   {
-    foreach(var kv in modules)
+    foreach(var kv in compiled_mods)
     {
       var s = kv.Value.ns.ResolveNamedByPath(path);
       if(s != null)
@@ -1584,7 +1589,7 @@ public class VM : INamedResolver
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.modules[module_name];
+        var module = curr_frame.vm.compiled_mods[module_name];
         curr_frame.stack.PushRetain(module.gvars[var_idx]);
       }
       break;
@@ -1594,7 +1599,7 @@ public class VM : INamedResolver
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
 
         string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.modules[module_name];
+        var module = curr_frame.vm.compiled_mods[module_name];
         var new_val = curr_frame.stack.Pop();
         module.gvars.Assign(this, var_idx, new_val);
         new_val.Release();
