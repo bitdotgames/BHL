@@ -46,13 +46,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   ANTLR_Parsed parsed;
 
-  int lambda_id = 0;
-
-  int NextLambdaId()
-  {
-    return ++lambda_id;
-  }
-
   Types types;
 
   //NOTE: In this mode only top symbols declarations are inspected.
@@ -1318,8 +1311,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var tp = ParseType(funcLambda.retType());
 
-    //TODO: we don't really need unique lambda names
-    var func_name = Hash.CRC32(module.name) + "_lmb_" + NextLambdaId(); 
+    var func_name = Hash.CRC32(module.name) + "_lmb_" + funcLambda.Stop.Line;
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
