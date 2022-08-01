@@ -1242,9 +1242,12 @@ public class ModuleCompiler : AST_Visitor
         else
         {
           if(mfunc is FuncSymbolScript)
-            Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
-          else if(mfunc is FuncSymbolVirtual)
-            Emit(Opcodes.CallMethodVirt, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          {
+            if(mfunc._virtual != null)
+              Emit(Opcodes.CallMethodVirt, new int[] {mfunc._virtual.scope_idx, (int)ast.cargs_bits}, ast.line_num);
+            else
+              Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          }
           else if(mfunc is FuncSymbolNative)
             Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           else

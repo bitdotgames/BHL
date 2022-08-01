@@ -338,8 +338,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   //contains only 'local' members without taking into account inheritance
   internal SymbolsStorage members;
-  //all 'flattened' members, taking into account all parents
-  internal SymbolsStorage _members;
+  //all 'flattened' members including all parents
+  internal SymbolsStorage _all_members;
 
   public VM.ClassCreator creator;
 
@@ -377,7 +377,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       SetImplementedInterfaces(implements);
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return _members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return _all_members; }
 
   public IScope GetFallbackScope() 
   {
@@ -386,29 +386,23 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   public void Define(Symbol sym) 
   {
-    if(super_class != null && super_class.Resolve(sym.name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
-
+    //NOTE: we don't check if there are any parent symbols with the same name, 
+    //      they will be checked once the class is finally setup
     members.Add(sym);
   }
 
   public Symbol Resolve(string name) 
   {
-    //NOTE: This looks a bit weird but kinda works for now.
-    //      If the class was already setup we want to access the
-    //      'flattened' members collection instead of 'local' one
-    //      since 'flattened' members contain the most relevant 
-    //      members (e.g virtual methods)
-    if(_members != null)
-      return _members.Find(name);
-
+    var sym = members.Find(name);
+    if(sym != null)
+      return sym;
     if(super_class != null)
     {
-      var tmp = super_class.Resolve(name);
-      if(tmp != null)
-        return tmp;
+      var super_sym = super_class.Resolve(name);
+      if(super_sym != null)
+        return super_sym;
     }
-    return members.Find(name);
+    return null;
   }
 
   public INamed ResolveNamedByPath(string path)
@@ -432,10 +426,10 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   void SetupAllMembers()
   {
-    if(_members != null)
+    if(_all_members != null)
       return;
 
-    _members = new SymbolsStorage(this);
+    _all_members = new SymbolsStorage(this);
 
     DoSetupMembers(this);
   }
@@ -452,7 +446,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if(sym is IScopeIndexed si)
-        si.scope_idx = _members.Count; 
+        si.scope_idx = _all_members.Count; 
 
       if(sym is FuncSymbolScript fss)
       {
@@ -463,14 +457,14 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
           var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
-          _members.Add(vsym);
+          _all_members.Add(vsym);
         }
         else if(fss.flags.HasFlag(FuncFlags.Override))
         {
           if(fss.default_args_num > 0)
             throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
 
-          var vsym = _members.Find(sym.name) as FuncSymbolVirtual;
+          var vsym = _all_members.Find(sym.name) as FuncSymbolVirtual;
           if(vsym == null)
             throw new SymbolError(sym, "no base virtual method to override");
 
@@ -480,10 +474,10 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
           vsym.AddOverride(curr_class, fss); 
         }
         else
-          _members.Add(fss);
+          _all_members.Add(fss);
       }
       else
-        _members.Add(sym);
+        _all_members.Add(sym);
     }
   }
 
@@ -495,9 +489,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     //virtual methods lookup table
     _vtable = new Dictionary<int, FuncSymbol>();
     
-    for(int i=0;i<_members.Count;++i)
+    for(int i=0;i<_all_members.Count;++i)
     {
-      if(_members[i] is FuncSymbolVirtual fssv)
+      if(_all_members[i] is FuncSymbolVirtual fssv)
         _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
     }
 
@@ -525,8 +519,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
         var symb = Resolve(m.name) as FuncSymbol;
         if(symb == null)
           throw new Exception("No such method '" + m.name + "' in class '" + this.name + "'");
-        if(symb is FuncSymbolVirtual fssv)
-          symb = fssv.overrides[fssv.overrides.Count-1];
         ifs2fn.Add(symb);
       }
     }
@@ -1329,6 +1321,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public SymbolsStorage members;
 
+  internal FuncSymbolVirtual _virtual;
+
   int _scope_idx = -1;
   public int scope_idx {
     get {
@@ -1608,6 +1602,8 @@ public class FuncSymbolVirtual : FuncSymbol
     if(!signature.Equals(fs.signature))
       throw new Exception("Incompatible func signature");
 
+    fs._virtual = this;
+
     owners.Add(new Proxy<ClassSymbol>(owner));
     overrides.Add(fs);
   }
@@ -1827,9 +1823,9 @@ public class ClassSymbolScript : ClassSymbol
     var vl = ValList.New(frm.vm);
     data.SetObj(vl, type);
     
-    for(int i=0;i<_members.Count;++i)
+    for(int i=0;i<_all_members.Count;++i)
     {
-      var m = _members[i];
+      var m = _all_members[i];
       //NOTE: Members contain all kinds of symbols: methods and attributes,
       //      however we need to properly setup attributes only. 
       //      Other members will be initialized with special case 'nil' value.

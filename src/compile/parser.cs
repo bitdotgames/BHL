@@ -2593,7 +2593,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if(sym is IScopeIndexed si)
-        si.scope_idx = self._members.Count; 
+        si.scope_idx = self._all_members.Count; 
 
       if(sym is FuncSymbolScript fss)
       {
@@ -2604,14 +2604,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
-          self._members.Add(vsym);
+          self._all_members.Add(vsym);
         }
         else if(fss.flags.HasFlag(FuncFlags.Override))
         {
           if(fss.default_args_num > 0)
             FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
 
-          var vsym = self._members.Find(sym.name) as FuncSymbolVirtual;
+          var vsym = self._all_members.Find(sym.name) as FuncSymbolVirtual;
           if(vsym == null)
             FireError(sym.parsed.tree, "no base virtual method to override");
 
@@ -2623,10 +2623,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vsym.AddOverride(curr_class, fss); 
         }
         else
-          self._members.Add(fss);
+          self._all_members.Add(fss);
       }
       else
-        self._members.Add(sym);
+        self._all_members.Add(sym);
     }
   }
 
@@ -2643,9 +2643,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
-        if(func_symb is FuncSymbolVirtual fsv) 
-          func_symb = fsv.FindOverride(pass.class_symb);
-
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
         if(func_ast == null)
           throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
