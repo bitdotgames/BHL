@@ -33,18 +33,12 @@ public interface ISymbolsEnumerable
   ISymbolsEnumerator GetSymbolsEnumerator();
 }
 
-public interface ISymbolsStorageAccess : ISymbolsEnumerable
-{
-  // Low level collection of members which can be changed 
-  SymbolsStorage GetSymbolsStorage();
-}
-
 public interface IInstanceType : IType, IScope 
 {
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolsStorageAccess 
+public class LocalScope : IScope, ISymbolsEnumerable
 {
   bool is_paral;
   int next_idx;
@@ -53,7 +47,7 @@ public class LocalScope : IScope, ISymbolsStorageAccess
 
   IScope fallback;
 
-  SymbolsStorage members;
+  internal SymbolsStorage members;
 
   public LocalScope(bool is_paral, IScope fallback) 
   { 
@@ -90,7 +84,6 @@ public class LocalScope : IScope, ISymbolsStorageAccess
   }
 
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
-  public SymbolsStorage GetSymbolsStorage() { return members; }
 
   public Symbol Resolve(string name) 
   {
