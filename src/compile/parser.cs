@@ -630,6 +630,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var eval_type = Wrap(exp).eval_type;
     if(eval_type != null && eval_type != Types.Void)
     {
+      bool has_calls = false;
+      for(int c=0;c<exp.chainExp().Length;++c)
+      {
+        if(exp.chainExp()[c].callArgs() != null)
+        {
+          has_calls = true;
+          break;
+        }
+      }
+
+      if(!has_calls)
+        FireError(ctx, "useless statement");
+
       var tuple = eval_type as TupleType;
       if(tuple != null)
       {
@@ -650,6 +663,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), ctx.chainExp(), ref curr_type, ctx.Start.Line, write: false);
 
     Wrap(ctx).eval_type = curr_type;
+
     return null;
   }
 
@@ -679,7 +693,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
-      TryProcessBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
+      TryProcessClassBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
 
       if(name_symb == null)
         FireError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
@@ -743,7 +757,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PeekAST().AddChildren(chain_ast);
   }
 
-  void TryProcessBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, bhlParser.ChainExpContext[] chain, int line)
+  void TryProcessClassBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, bhlParser.ChainExpContext[] chain, int line)
   {
     if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
     {

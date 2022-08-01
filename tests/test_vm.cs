@@ -1184,7 +1184,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestVarValueNonConsumed()
+  public void TestVarValueIsUselessStatement()
   {
     string bhl = @"
 
@@ -1196,9 +1196,12 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"useless statement"
+    );
   }
 
   [IsTested()]
@@ -1222,6 +1225,26 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncPtrUselessStatement()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int a = 1
+      suspend
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"useless statement"
+    );
+  }
+
+  [IsTested()]
   public void TestFuncPtrArrReturnNonConsumed()
   {
     string bhl = @"
@@ -1242,7 +1265,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAttributeNonConsumed()
+  public void TestAttributeUselessStatement()
   {
     string bhl = @"
 
@@ -1258,9 +1281,12 @@ public class TestVM : BHL_TestBase
 
     BindColor(ts);
 
-    var vm = MakeVM(bhl, ts);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      @"useless statement"
+    );
   }
 
   [IsTested()]
