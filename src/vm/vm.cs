@@ -1755,7 +1755,7 @@ public class VM : INamedResolver
         var self = curr_frame.stack[self_idx];
         curr_frame.stack.RemoveAt(self_idx);
 
-        var class_type = (ClassSymbolScript)self.type;
+        var class_type = (ClassSymbol)self.type;
         var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
         var frm = Frame.New(this);
@@ -1779,7 +1779,7 @@ public class VM : INamedResolver
         curr_frame.stack.RemoveAt(self_idx);
 
         var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
-        var class_type = (ClassSymbolScript)self.type;
+        var class_type = (ClassSymbol)self.type;
         var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
         var frm = Frame.New(this);
