@@ -515,7 +515,7 @@ public class Types : INamedResolver
 
   public INamed ResolveNamedByPath(string name)
   {
-    return ns.ResolveNamedByPath(name);
+    return ns.ResolveSymbolByPath(name);
   }
 
   public Types Clone()

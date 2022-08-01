@@ -1172,7 +1172,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     PopAST();
 
-    var var_tmp_symb = new VariableSymbol(Wrap(ca), "$_tmp_" + ca.Start.Line + "_" + ca.Start.Column, curr_scope.T(func_arg_type));
+    var var_tmp_symb = new VariableSymbol(Wrap(ca), "$_tmp_" + ca.Start.Line + "_" + ca.Start.Column, curr_scope.R().T(func_arg_type));
     curr_scope.Define(var_tmp_symb);
 
     var var_tmp_decl = new AST_Call(EnumCall.VARW, ca.Start.Line, var_tmp_symb);
@@ -1218,7 +1218,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var refType = types_ctx.refType()[i];
         var arg_type = ParseType(refType.type(), strict);
         if(refType.isRef() != null)
-          arg_type = curr_scope.TRef(arg_type);
+          arg_type = curr_scope.R().TRef(arg_type);
         arg_types.Add(arg_type);
       }
     }
@@ -1243,7 +1243,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var tp = ParseType(vd.type(), strict);
         if(vd.isRef() != null)
-          tp = curr_scope.T(new RefType(tp));
+          tp = curr_scope.R().T(new RefType(tp));
         if(vd.assignExp() != null)
           ++default_args_num;
         sig.AddArg(tp);
@@ -1270,7 +1270,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
         tuple.Add(ParseType(parsed.type()[i], strict));
-      tp = curr_scope.T(tuple);
+      tp = curr_scope.R().T(tuple);
     }
     else
       tp = ParseType(parsed.type()[0], strict);
@@ -1285,14 +1285,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     Proxy<IType> tp;
     if(ctx.funcType() != null)
-      tp = curr_scope.T(ParseFuncSignature(ctx.funcType(), strict));
+      tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType(), strict));
     else
-      tp = curr_scope.T(ctx.nsName().GetText());
+      tp = curr_scope.R().T(ctx.nsName().GetText());
 
     if(ctx.ARR() != null)
-      tp = curr_scope.TArr(tp);
+      tp = curr_scope.R().TArr(tp);
     else if(ctx.mapType() != null)
-      tp = curr_scope.TMap(curr_scope.T(ctx.mapType().nsName().GetText()), tp);
+      tp = curr_scope.R().TMap(curr_scope.R().T(ctx.mapType().nsName().GetText()), tp);
 
     if(tp.Get() == null && strict)
       FireError(ctx, "type '" + tp.path + "' not found");
@@ -2136,7 +2136,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           var exp = explist.exp()[i];
           Visit(exp);
-          ret_type.Add(curr_scope.T(Wrap(exp).eval_type));
+          ret_type.Add(curr_scope.R().T(Wrap(exp).eval_type));
         }
 
         //type checking is in proper order
@@ -2388,7 +2388,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
-        var ext = ns.ResolveNamedByPath(ext_full_path);
+        var ext = ns.ResolveSymbolByPath(ext_full_path);
         if(ext is InterfaceSymbol ifs)
         {
           if(ext == pass.iface_symb)
@@ -3328,7 +3328,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
         iter_type = iter_symb.type;
       }
-      var arr_type = (ArrayTypeSymbol)curr_scope.TArr(iter_type).Get();
+      var arr_type = (ArrayTypeSymbol)curr_scope.R().TArr(iter_type).Get();
 
       PushJsonType(arr_type);
       var exp = ctx.foreachExp().exp();
@@ -3341,7 +3341,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
       if(arr_tmp_symb == null)
       {
-        arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, curr_scope.T(iter_type));
+        arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, curr_scope.R().T(iter_type));
         curr_scope.Define(arr_tmp_symb);
       }
 
@@ -3447,7 +3447,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
         val_iter_type = val_iter_symb.type;
       }
-      var map_type = (MapTypeSymbol)curr_scope.TMap(key_iter_type, val_iter_type).Get();
+      var map_type = (MapTypeSymbol)curr_scope.R().TMap(key_iter_type, val_iter_type).Get();
 
       PushJsonType(map_type);
       var exp = ctx.foreachExp().exp();

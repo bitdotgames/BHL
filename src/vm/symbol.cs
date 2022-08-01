@@ -193,11 +193,6 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
     members.Add(sym);
   }
 
-  public INamed ResolveNamedByPath(string path)
-  {
-    return this.ResolveSymbolByPath(path);
-  }
-
   public Symbol Resolve(string name) 
   {
     return members.Find(name);
@@ -402,11 +397,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
         return super_sym;
     }
     return null;
-  }
-
-  public INamed ResolveNamedByPath(string path)
-  {
-    return this.ResolveSymbolByPath(path);
   }
 
   internal void SetImplementedInterfaces(IList<InterfaceSymbol> implements)
@@ -1380,11 +1370,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     return members.Find(name);
   }
 
-  public INamed ResolveNamedByPath(string path)
-  {
-    return this.ResolveSymbolByPath(path);
-  }
-
   public virtual void Define(Symbol sym)
   {
     members.Add(sym);
@@ -1412,11 +1397,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
         return null;
 
       return symb;
-    }
-
-    public INamed ResolveNamedByPath(string path)
-    {
-      throw new NotImplementedException();
     }
 
     public void Define(Symbol sym)
@@ -1888,11 +1868,6 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsEnumerable
   public void Define(Symbol sym)
   {
     members.Add(sym);
-  }
-
-  public INamed ResolveNamedByPath(string path)
-  {
-    return this.ResolveSymbolByPath(path);
   }
 
   public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }

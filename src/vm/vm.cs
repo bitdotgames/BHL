@@ -1177,7 +1177,7 @@ public class VM : INamedResolver
   {
     foreach(var kv in compiled_mods)
     {
-      var s = kv.Value.ns.ResolveNamedByPath(path);
+      var s = kv.Value.ns.ResolveSymbolByPath(path);
       if(s != null)
         return s;
     }
@@ -2429,7 +2429,7 @@ public class CompiledModule
     ns.links.Add(types.ns);
 
     if(resolver == null)
-      resolver = ns;
+      resolver = ns.R();
 
     var symb_factory = new SymbolFactory(types, resolver);
 

@@ -3,12 +3,7 @@ using System.Collections.Generic;
 
 namespace bhl {
 
-public interface INamedResolver
-{
-  INamed ResolveNamedByPath(string path);
-}
-
-public interface IScope : INamedResolver
+public interface IScope
 {
   // Look up name in this scope without fallback!
   Symbol Resolve(string name);
@@ -19,6 +14,11 @@ public interface IScope : INamedResolver
 
   // Where to look next for symbols in case if not found (e.g super class) 
   IScope GetFallbackScope();
+}
+
+public interface INamedResolver
+{
+  INamed ResolveNamedByPath(string path);
 }
 
 public interface ISymbolsEnumerator
@@ -97,11 +97,6 @@ public class LocalScope : IScope, ISymbolsEnumerable
     DefineWithoutEnclosingChecks(sym);
   }
 
-  public INamed ResolveNamedByPath(string path)
-  {
-    return this.ResolveSymbolByPath(path);
-  }
-
   void EnsureNotDefinedInEnclosingScopes(Symbol sym)
   {
     IScope tmp = this;
@@ -168,6 +163,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     : this(native_func_index, "", "")
   {}
 
+  public INamed ResolveNamedByPath(string path)
+  {
+    return this.ResolveSymbolByPath(path);
+  }
+
   public void SetupSymbols()
   {
     this.ForAllLocalSymbols(delegate(Symbol s) {
@@ -187,11 +187,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
       else if(member is IScope s)
         s.ForAllSymbols(cb);
     }
-  }
-
-  public INamed ResolveNamedByPath(string path)
-  {
-    return ((IScope)this).ResolveSymbolByPath(path);
   }
 
   public Namespace Nest(string name)
@@ -415,6 +410,26 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
 public static class ScopeExtensions
 {
+  public struct Scope2Resolver : INamedResolver  
+  {
+    IScope scope;
+
+    public Scope2Resolver(IScope scope)
+    {
+      this.scope = scope;
+    }
+
+    public INamed ResolveNamedByPath(string path)
+    {
+      return scope.ResolveSymbolByPath(path);
+    }
+  }
+
+  public static Scope2Resolver R(this IScope scope)
+  {
+    return new Scope2Resolver(scope);
+  }
+
   public static T Resolve<T>(this IScope scope, string name) where T : Symbol
   {
     return scope.Resolve(name) as T;
