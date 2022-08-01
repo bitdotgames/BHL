@@ -2581,55 +2581,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.class_symb.Setup();
   }
 
-  void FinalizeClassMembers(ClassSymbol self, ClassSymbol curr_class)
-  {
-    if(curr_class.super_class != null)
-      FinalizeClassMembers(self, curr_class.super_class);
-
-    for(int i=0;i<curr_class.members.Count;++i)
-    {
-      var sym = curr_class.members[i];
-
-      //NOTE: we need to recalculate attribute index taking account all 
-      //      parent classes
-      if(sym is IScopeIndexed si)
-        si.scope_idx = self._all_members.Count; 
-
-      if(sym is FuncSymbolScript fss)
-      {
-        if(fss.flags.HasFlag(FuncFlags.Virtual))
-        {
-          if(fss.default_args_num > 0)
-            FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
-
-          var vsym = new FuncSymbolVirtual(fss);
-          vsym.AddOverride(curr_class, fss);
-          self._all_members.Add(vsym);
-        }
-        else if(fss.flags.HasFlag(FuncFlags.Override))
-        {
-          if(fss.default_args_num > 0)
-            FireError(sym.parsed.tree, "virtual methods are not allowed to have default arguments");
-
-          var vsym = self._all_members.Find(sym.name) as FuncSymbolVirtual;
-          if(vsym == null)
-            FireError(sym.parsed.tree, "no base virtual method to override");
-
-          if(!vsym.signature.Equals(fss.signature))
-          {
-            FireError(vsym.parsed.tree, "virtual method signature doesn't match the base one");
-          }
-
-          vsym.AddOverride(curr_class, fss); 
-        }
-        else
-          self._all_members.Add(fss);
-      }
-      else
-        self._all_members.Add(sym);
-    }
-  }
-
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
   {
     if(pass.class_ctx == null)
