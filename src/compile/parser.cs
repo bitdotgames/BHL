@@ -2608,7 +2608,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
+  void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbol class_symb)
   {
     var set = iface.GetAllRelatedTypesSet();
     foreach(var item in set)

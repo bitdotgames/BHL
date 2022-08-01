@@ -408,10 +408,35 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   public void Setup()
   {
+    ValidateInterfaces();
+
     SetupAllMembers();
 
     SetupVirtTables();
   }
+
+  void ValidateInterfaces()
+  {
+    for(int i=0;i<implements.Count;++i)
+      ValidateImplementation(implements[i]);
+  }
+
+  void ValidateImplementation(InterfaceSymbol iface)
+  {
+    var set = iface.GetAllRelatedTypesSet();
+    foreach(var item in set)
+    {
+      var item_if = (InterfaceSymbol)item;
+      for(int i=0;i<item_if.members.Count;++i)
+      {
+        var m = (FuncSymbol)item_if.members[i];
+        var func_symb = Resolve(m.name) as FuncSymbol;
+        if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
+          throw new SymbolError(this, "class '" + name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");
+      }
+    }
+  }
+
 
   void SetupAllMembers()
   {

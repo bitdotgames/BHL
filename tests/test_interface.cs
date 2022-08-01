@@ -830,24 +830,24 @@ public class TestInterfaces : BHL_TestBase
   {
     string bhl = @"
     func int test() {
-      Foo foo = {}
-      IFoo ifoo = foo
-      return ifoo.bar(42)
+      NativeFoo foo = {}
+      INativeFoo ifoo = foo
+      return ifoo.foo(42)
     }
     ";
     var ts = new Types();
 
     {
       var ifs = new InterfaceSymbolNative(
-          "IFoo", 
+          "INativeFoo", 
           null, 
-          new FuncSymbolNative("bar", ts.T("int"), null, 
+          new FuncSymbolNative("foo", ts.T("int"), null, 
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );
       ts.ns.Define(ifs);
 
-      var cl = new ClassSymbolNative("Foo", null,
+      var cl = new ClassSymbolNative("NativeFoo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeFoo(), type);
@@ -856,14 +856,15 @@ public class TestInterfaces : BHL_TestBase
       );
       ts.ns.Define(cl);
 
-      var m = new FuncSymbolNative("bar", ts.T("int"),
+      var m = new FuncSymbolNative("foo", ts.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var n = (int)frm.stack.PopRelease().num;
           var f = (NativeFoo)frm.stack.PopRelease().obj;
-          frm.stack.Push(Val.NewInt(frm.vm, n));
+          frm.stack.Push(Val.NewInt(frm.vm, f.foo(n)));
           return null;
-        }
+        },
+        new FuncArgSymbol("int", ts.T("int")) 
       );
       cl.Define(m);
     }
