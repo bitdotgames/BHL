@@ -156,6 +156,60 @@ public class TestInterfaces : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserInterfaceDeepInheritance()
+  {
+    string bhl = @"
+    interface A_sub : A {
+      func int a_sub()
+    }
+
+    interface AB : A, B_sub, A_sub {
+      func int ab()
+    }
+
+    class Imp : AB, B_sub { 
+      func int a() {
+        return 4
+      }
+      func int b() {
+        return 3
+      }
+      func int a_sub() {
+        return 40
+      }
+      func int b_sub() {
+        return 30
+      }
+      func int ab() {
+        return this.a() + this.b() + this.a_sub() + this.b_sub()
+      }
+    }
+
+    interface A {
+      func int a()
+    }
+
+    interface B_sub : B {
+      func int b_sub()
+    }
+
+    interface B {
+      func int b()
+    }
+
+    func int test() {
+      Imp imp = {}
+      return imp.ab()
+    }
+
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(4+3+40+30, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserInterfaceMethodDefaultValuesNotAllowed()
   {
     string bhl = @"
