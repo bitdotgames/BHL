@@ -19144,7 +19144,7 @@ public class TestVM : BHL_TestBase
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
-      ns.Setup();
+      ns.SetupSymbols();
 
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
       AssertEqual(8, ns.members.Count);

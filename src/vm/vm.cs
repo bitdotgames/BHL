@@ -905,8 +905,9 @@ public class VM : INamedResolver
     if(loading_modules.Count == 0)
       return false;
 
-    foreach(var lm in loading_modules)
-      RegisterModule(lm.module);
+    //NOTE: registering modules in reverse order
+    for(int i=loading_modules.Count;i-- > 0;)
+      RegisterModule(loading_modules[i].module);
     loading_modules.Clear();
 
     return true;
@@ -959,15 +960,12 @@ public class VM : INamedResolver
 
   void Setup(CompiledModule cm)
   {
-    //Console.WriteLine("=== SETUP " + cm.name);
-    //Console.WriteLine(cm.ns.DumpMembers());
-
     foreach(var imp in cm.imports)
       cm.ns.Link(modules[imp].ns);
 
-    cm.ns.Setup();
+    cm.ns.SetupSymbols();
 
-    cm.ns.ForAllSymbols(delegate(Symbol s)
+    cm.ns.ForAllLocalSymbols(delegate(Symbol s)
       {
         if(s is ClassSymbol cs)
         {
@@ -1176,7 +1174,7 @@ public class VM : INamedResolver
   static FuncSymbolScript TryMapIp2Func(CompiledModule cm, int ip)
   {
     FuncSymbolScript fsymb = null;
-    cm.ns.ForAllSymbols(delegate(Symbol s) {
+    cm.ns.ForAllLocalSymbols(delegate(Symbol s) {
       if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
         fsymb = ftmp;
     });

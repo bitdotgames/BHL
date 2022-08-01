@@ -526,7 +526,7 @@ public class Types : INamedResolver
 
   public void Setup()
   {
-    ns.Setup();
+    ns.SetupSymbols();
   }
 
   void InitBuiltins() 

@@ -175,12 +175,25 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     : this(gindex, "", "")
   {}
 
-  public void Setup()
+  public void SetupSymbols()
   {
-    this.ForAllSymbols(delegate(Symbol s) {
+    this.ForAllLocalSymbols(delegate(Symbol s) {
       if(s is ClassSymbol cs)
         cs.Setup();
     });
+  }
+
+  public void ForAllLocalSymbols(System.Action<Symbol> cb)
+  {
+    for(int m=0;m<members.Count;++m)
+    {
+      var member = members[m];
+      cb(member);
+      if(member is Namespace ns)
+        ns.ForAllLocalSymbols(cb);
+      else if(member is IScope s)
+        s.ForAllSymbols(cb);
+    }
   }
 
   public INamed ResolveNamedByPath(string path)
