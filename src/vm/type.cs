@@ -524,6 +524,11 @@ public class Types : INamedResolver
     return clone;
   }
 
+  //TODO: Get rid of this 'convenience' method. Every native binding
+  //      registration code must setup its symbols by itself. This method
+  //      is called before any parsing/compilation for convenience because 
+  //      we didn't want to break any existing bindings (which at the moment
+  //      don't do any setup for its symbols) 
   public void SetupSymbols()
   {
     ns.SetupSymbols();
