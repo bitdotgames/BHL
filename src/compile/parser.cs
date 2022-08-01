@@ -2575,10 +2575,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    pass.class_symb.Setup();
-
     for(int i=0;i<pass.class_symb.implements.Count;++i)
       ValidateInterfaceImplementation(pass.class_ctx, pass.class_symb.implements[i], pass.class_symb);
+
+    pass.class_symb.Setup();
   }
 
   void FinalizeClassMembers(ClassSymbol self, ClassSymbol curr_class)
