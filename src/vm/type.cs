@@ -458,7 +458,7 @@ public class Types : INamedResolver
   public Namespace ns;
 
   //NOTE: used for global symbol indices (e.g native funcs)
-  public Named2Index gindex = new Named2Index();
+  public Named2Index native_func_index = new Named2Index();
 
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
@@ -488,7 +488,7 @@ public class Types : INamedResolver
 
   public Types()
   {
-    ns = new Namespace(gindex, "", "");
+    ns = new Namespace(native_func_index, "", "");
 
     InitBuiltins();
 
@@ -507,9 +507,9 @@ public class Types : INamedResolver
     return m;
   }
 
-  Types(Named2Index native_indices, Namespace ns)
+  Types(Named2Index native_func_index, Namespace ns)
   {
-    this.gindex = native_indices;
+    this.native_func_index = native_func_index;
     this.ns = ns;
   }
 
@@ -520,11 +520,11 @@ public class Types : INamedResolver
 
   public Types Clone()
   {
-    var clone = new Types(gindex.Clone(), ns.Clone());
+    var clone = new Types(native_func_index.Clone(), ns.Clone());
     return clone;
   }
 
-  public void Setup()
+  public void SetupSymbols()
   {
     ns.SetupSymbols();
   }

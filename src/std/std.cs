@@ -35,6 +35,9 @@ public static class std
       );
       io.Define(fn);
     }
+
+    m.ns.SetupSymbols();
+
     return m;
   }
 }

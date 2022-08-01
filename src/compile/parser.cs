@@ -2413,7 +2413,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(types.gindex, name, module.name);
+      ns = new Namespace(types.native_func_index, name, module.name);
       curr_scope.Define(ns);
     }
     else if(ns.module_name != module.name)

@@ -43,6 +43,7 @@ public class BHL_TestRunner
     Run(names, new TestTypeCasts(), verbose);
     Run(names, new TestNamespace(), verbose);
     Run(names, new TestMaps(), verbose);
+    Run(names, new TestStd(), verbose);
     //TODO:
     //Run(names, new TestLSP(), verbose);
   }
@@ -490,7 +491,7 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
-    ts.Setup();
+    ts.SetupSymbols();
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
@@ -799,7 +800,7 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
-    ts.Setup();
+    ts.SetupSymbols();
 
     var mdl = new bhl.Module(ts, "", "");
 

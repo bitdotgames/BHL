@@ -150,7 +150,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   public List<Namespace> links = new List<Namespace>();
 
-  public Named2Index gindex;
+  public Named2Index native_func_index;
 
   public override uint ClassId()
   {
@@ -162,17 +162,17 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     : this(null, name, "")
   {}
 
-  public Namespace(Named2Index gindex, string name, string module_name)
+  public Namespace(Named2Index native_func_index, string name, string module_name)
     : base(name)
   {
-    this.gindex = gindex;
+    this.native_func_index = native_func_index;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
   //marshall version 
-  public Namespace(Named2Index gindex = null)
-    : this(gindex, "", "")
+  public Namespace(Named2Index native_func_index = null)
+    : this(native_func_index, "", "")
   {}
 
   public void SetupSymbols()
@@ -209,7 +209,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
     if(sym == null)
     {
-      sym = new Namespace(gindex, name, module_name);
+      sym = new Namespace(native_func_index, name, module_name);
       Define(sym);
     }
 
@@ -218,7 +218,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   public Namespace Clone()
   {
-    var copy = new Namespace(gindex, name, module_name);
+    var copy = new Namespace(native_func_index, name, module_name);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -278,7 +278,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
         else
         {
           //NOTE: let's create a local version of the linked namespace
-          var ns = new Namespace(gindex, other_ns.name, module_name);
+          var ns = new Namespace(native_func_index, other_ns.name, module_name);
           ns.links.Add(other_ns);
           members.Add(ns);
         }
@@ -405,7 +405,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     //      a function defined in a module. Likewise we have
     //      something similar for global variables.
     if(sym is FuncSymbolNative fsn && fsn.scope_idx == -1)
-      fsn.scope_idx = gindex.Add(sym);
+      fsn.scope_idx = native_func_index.Add(sym);
 
     members.Add(sym);
   }
