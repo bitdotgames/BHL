@@ -2404,6 +2404,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(inherits.Count > 0)
         pass.iface_symb.SetInherits(inherits);
     }
+
+    pass.iface_symb.Setup();
   }
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
@@ -2604,9 +2606,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ValidateInterfaceImplementation(bhlParser.ClassDeclContext ctx, InterfaceSymbol iface, ClassSymbolScript class_symb)
   {
-    for(int i=0;i<iface.members.Count;++i)
+    var en = iface.GetSymbolsEnumerator();
+    for(int i=0;i<en.Count;++i)
     {
-      var m = (FuncSymbol)iface.members[i];
+      var m = (FuncSymbol)en[i];
       var func_symb = class_symb.Resolve(m.name) as FuncSymbol;
       if(func_symb == null || !Types.Is(func_symb.signature, m.signature))
         FireError(ctx, "class '" + class_symb.name + "' doesn't implement interface '" + iface.name + "' method '" + m + "'");

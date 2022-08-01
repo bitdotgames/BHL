@@ -151,7 +151,9 @@ public class NullSymbol : BuiltInSymbolType
 
 public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
 {
-  public SymbolsStorage members;
+  internal SymbolsStorage members;
+
+  internal SymbolsStorage _all_members;
 
   public TypeSet<InterfaceSymbol> inherits = new TypeSet<InterfaceSymbol>();
 
@@ -195,12 +197,23 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 
   public Symbol Resolve(string name) 
   {
-    return members.Find(name);
+    var sym =  members.Find(name);
+    if(sym != null)
+      return sym;
+
+    for(int i=0;i<inherits.Count;++i)
+    {
+      var tmp = inherits[i].Resolve(name);
+      if(tmp != null)
+        return tmp;
+    }
+
+    return null;
   }
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
+  public ISymbolsEnumerator GetSymbolsEnumerator() { return _all_members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -208,17 +221,24 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
       return;
 
     foreach(var ext in inherits)
-    {
       this.inherits.Add(ext);
+  }
 
-      //NOTE: at the moment for resolving simplcity we add 
-      //      extension members right into the interface itself
-      var ext_members = ext.members;
-      for(int i=0;i<ext_members.Count;++i)
-      {
-        var mem = ext_members[i]; 
-        Define(mem);
-      }
+  public void Setup()
+  {
+    if(_all_members != null)
+      return;
+
+    _all_members = new SymbolsStorage(this);
+
+    for(int i=0;i<members.Count;++i)
+      _all_members.Add(members[i]);
+
+    for(int i=0;i<inherits.Count;++i)
+    {
+      var ext_mems = inherits[i].members;
+      for(int e=0;e<ext_mems.Count;++e)
+        _all_members.Add(ext_mems[e]);
     }
   }
 
