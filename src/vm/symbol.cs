@@ -976,6 +976,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     //NOTE: it's a generic symbol we need to setup it manually,
     //      since it's not setup once the module is loaded
     Setup();
+    enumerator_type.Setup();
   }
   
   //marshall factory version
