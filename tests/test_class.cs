@@ -3103,6 +3103,26 @@ public class TestClasses : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestStaticMethodNoThis()
+  {
+    string bhl = @"
+    class Bar {
+      int a
+      func static int foo() {
+        return this.a
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol 'this' not resolved"
+    );
+  }
+
   public class NativeFoo
   {
     public static int static_foo(int n) { return n; }
