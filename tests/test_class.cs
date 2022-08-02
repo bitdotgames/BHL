@@ -3052,6 +3052,33 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleStaticMethodMixed()
+  {
+    string bhl = @"
+    class Bar {
+      int b
+      func static int foo() {
+        return 42
+      }
+      func int getC() {
+        return this.c
+      }
+      int c
+    }
+
+    func int test() 
+    {
+      Bar bar = {b: 10, c:20}
+      return Bar.foo() + bar.b + bar.getC()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42+10+20, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStaticMethodCantBeCalledOnInstance()
   {
     string bhl = @"
