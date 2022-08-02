@@ -215,8 +215,12 @@ classMembers
   : classMember*
   ;
 
+attrDeclare
+  : staticFlag? varDeclare
+  ;
+
 classMember
-  : (varDeclare | funcDecl | classDecl | enumDecl | interfaceDecl)
+  : (attrDeclare | funcDecl | classDecl | enumDecl | interfaceDecl)
   ;
 
 interfaceDecl

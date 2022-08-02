@@ -2582,6 +2582,23 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInvalidFuncAttrubutes()
+  {
+    string bhl = @"
+    func override int getA() {
+      return 42
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "invalid usage of attributes"
+    );
+  }
+
+  [IsTested()]
   public void TestImportedClassVirtualMethodsOrderIsIrrelevant()
   {
     string bhl1 = @"
@@ -3160,6 +3177,27 @@ public class TestClasses : BHL_TestBase
     }
 
     var vm = MakeVM(bhl, ts);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestSimpleStaticAttribute()
+  {
+    string bhl = @"
+    class Bar {
+      static int foo
+    }
+
+    func int test() 
+    {
+      Bar.foo = 42
+      return Bar.foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }

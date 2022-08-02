@@ -2287,6 +2287,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
+    if(pass.func_ctx.funcFlags().Length > 0)
+      FireError(pass.func_ctx.funcFlags()[0], "invalid usage of attributes");
+
     pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
       new FuncSignature(),
@@ -2469,9 +2472,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var vd = cm.varDeclare();
-      if(vd != null)
+      var atrd = cm.attrDeclare();
+      if(atrd != null)
       {
+        var vd = atrd.varDeclare();
+
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
@@ -2490,7 +2495,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             new FuncSignature(),
             fd.NAME().GetText()
           );
-
 
         for(int f=0;f<fd.funcFlags().Length;++f)
         {
@@ -2548,9 +2552,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var vd = cm.varDeclare();
-      if(vd != null)
+      var atrd = cm.attrDeclare();
+      if(atrd != null)
       {
+        var vd = atrd.varDeclare();
         var fld_symb = (FieldSymbolScript)pass.class_symb.members.Find(vd.NAME().GetText());
         fld_symb.type = ParseType(vd.type());
       }

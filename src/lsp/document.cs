@@ -178,7 +178,7 @@ namespace bhlsp
       
       foreach(var classMember in ctx.classBlock().classMembers().classMember())
       {
-        var classMemberVarDeclare = classMember.varDeclare();
+        var classMemberVarDeclare = classMember.attrDeclare()?.varDeclare();
         if(classMemberVarDeclare != null)
         {
           Visit(classMemberVarDeclare.type());

@@ -612,9 +612,9 @@ namespace bhlsp
                     }
                   }
                   
-                  if(classMemberContext.varDeclare()?.NAME()?.GetText() != null)
+                  if(classMemberContext.attrDeclare()?.varDeclare()?.NAME()?.GetText() != null)
                   {
-                    if(classMemberContext.varDeclare().NAME().GetText() == memberClassName)
+                    if(classMemberContext.attrDeclare().varDeclare().NAME().GetText() == memberClassName)
                     {
                       classMember = classMemberContext;
                       break;
