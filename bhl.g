@@ -216,7 +216,7 @@ classMembers
   ;
 
 classMember
-  : (varDeclare | funcDecl | classDecl)
+  : (varDeclare | funcDecl | classDecl | enumDecl)
   ;
 
 interfaceDecl

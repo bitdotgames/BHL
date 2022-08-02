@@ -2813,4 +2813,74 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestSubNestedClassMethods()
+  {
+    string bhl = @"
+
+    class Bar {
+       int b
+       class Foo {
+         int f
+         func int getF() {
+           return this.f
+         }
+         class Wow {
+           int w
+           func int getW() {
+             return this.w
+           }
+         }
+       }
+       int c
+       func int getC() {
+        return this.c
+       }
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo = {f: 1}
+      Bar bar = {b: 10, c: 20}
+      Bar.Foo.Wow wow = {w: 50}
+      return foo.getF() + bar.b + bar.getC() + wow.getW()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(81, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
+  public void TestSimpleNestedEnum()
+  {
+    string bhl = @"
+
+    class Bar {
+       enum E {
+         E1 = 1
+         E2 = 2
+       }
+       int b
+       func E getE2() {
+         return E.E2
+       }
+       int c
+    }
+
+    func int test() 
+    {
+      Bar bar = {}
+      Bar.E e1 = Bar.E.E1 
+      Bar.E e2 = bar.getE2()
+      return (int)e1 + (int)e2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
