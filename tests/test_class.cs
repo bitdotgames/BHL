@@ -244,6 +244,119 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportUserClass()
+  {
+    string bhl1 = @"
+    class Foo { 
+      int Int
+      float Flt
+      string Str
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+    func test() 
+    {
+      Foo f = new Foo
+      f.Int = 10
+      f.Flt = 14.2
+      f.Str = ""Hey""
+      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      },
+      ts
+    );
+
+    vm.LoadModule("bhl2");
+    Execute(vm, "test");
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportClassMoreComplex()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float test(float k) 
+    {
+      Foo f = { x : k }
+      return bar(f)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    class Foo
+    {
+      float x
+    }
+
+    func float bar(Foo f)
+    {
+      return hey(f.x)
+    }
+    ";
+
+    string bhl3 = @"
+    func float hey(float k)
+    {
+      return k
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      }
+    );
+
+    vm.LoadModule("bhl1");
+    AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportClassConflict()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    class Bar { }
+
+    func test() { }
+    ";
+
+    string bhl2 = @"
+    class Bar { }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(new Dictionary<string, string>() {
+            {"bhl1.bhl", bhl1},
+            {"bhl2.bhl", bhl2},
+          }
+        );
+      },
+      @"already defined symbol 'Bar'"
+    );
+  }
+
+
+  [IsTested()]
   public void TestUserClassDefaultInit()
   {
     string bhl = @"

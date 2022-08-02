@@ -16740,118 +16740,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportUserClass()
-  {
-    string bhl1 = @"
-    class Foo { 
-      int Int
-      float Flt
-      string Str
-    }
-    ";
-      
-  string bhl2 = @"
-    import ""bhl1""  
-    func test() 
-    {
-      Foo f = new Foo
-      f.Int = 10
-      f.Flt = 14.2
-      f.Str = ""Hey""
-      trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
-    }
-    ";
-
-    var ts = new Types();
-    var log = new StringBuilder();
-    BindTrace(ts, log);
-
-    var vm = MakeVM(new Dictionary<string, string>() {
-        {"bhl1.bhl", bhl1},
-        {"bhl2.bhl", bhl2},
-      },
-      ts
-    );
-
-    vm.LoadModule("bhl2");
-    Execute(vm, "test");
-    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestImportClassMoreComplex()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-    func float test(float k) 
-    {
-      Foo f = { x : k }
-      return bar(f)
-    }
-    ";
-
-    string bhl2 = @"
-    import ""bhl3""  
-
-    class Foo
-    {
-      float x
-    }
-
-    func float bar(Foo f)
-    {
-      return hey(f.x)
-    }
-    ";
-
-    string bhl3 = @"
-    func float hey(float k)
-    {
-      return k
-    }
-    ";
-
-    var vm = MakeVM(new Dictionary<string, string>() {
-        {"bhl1.bhl", bhl1},
-        {"bhl2.bhl", bhl2},
-        {"bhl3.bhl", bhl3},
-      }
-    );
-
-    vm.LoadModule("bhl1");
-    AssertEqual(42, Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestImportClassConflict()
-  {
-    string bhl1 = @"
-    import ""bhl2""  
-
-    class Bar { }
-
-    func test() { }
-    ";
-
-    string bhl2 = @"
-    class Bar { }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
-            {"bhl1.bhl", bhl1},
-            {"bhl2.bhl", bhl2},
-          }
-        );
-      },
-      @"already defined symbol 'Bar'"
-    );
-  }
-
-  [IsTested()]
   public void TestImportEnum()
   {
     string bhl1 = @"
@@ -17261,6 +17149,64 @@ public class TestVM : BHL_TestBase
     {
       var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+    }
+  }
+
+  [IsTested()]
+  public void TestIncremetalBuildOfChangedFiles()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""garbage"";import ""unit"";  
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    string file_garbage = @"
+      func garbage() {}
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("garbage.bhl", file_garbage, ref files);
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+
+    string new_file_unit = @"
+      class Unit {
+        string new_field
+        int test
+      }
+      Unit u = {test: 32}
+    ";
+    files.RemoveAt(0);
+    NewTestFile("unit.bhl", new_file_unit, ref files);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);

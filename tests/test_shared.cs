@@ -766,7 +766,7 @@ public class BHL_TestBase
     AssertTrue(idx != -1, "Error message is: " + err);
   }
 
-  public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false)
+  public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
   {
     if(ts == null)
       ts = new Types();
@@ -775,6 +775,7 @@ public class BHL_TestBase
       ts = ts.Clone();
 
     var conf = new CompileConf();
+    conf.max_threads = max_threads;
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.ts = ts;
     conf.files = files;
