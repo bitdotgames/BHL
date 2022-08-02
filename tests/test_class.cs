@@ -2994,4 +2994,39 @@ public class TestClasses : BHL_TestBase
     AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestSimpleNestedInterface()
+  {
+    string bhl = @"
+    class Bar {
+      interface IFoo {
+        func int foo()
+      }
+
+      class Foo : IFoo {
+        func int foo() {
+          return 1
+        }
+      }
+    }
+
+    class Foo : Bar.IFoo {
+      func int foo() {
+        return 10
+      }
+    }
+
+    func int test() 
+    {
+      Bar.Foo foo1 = {}
+      Foo foo2 = {}
+      return foo1.foo() + foo2.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

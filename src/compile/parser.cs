@@ -2495,9 +2495,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(cm.classDecl() != null)
         AddPass(cm.classDecl(), pass.class_symb, pass.class_ast);
-
-      if(cm.enumDecl() != null)
+      else if(cm.enumDecl() != null)
         AddPass(cm.enumDecl(), pass.class_symb, pass.class_ast);
+      else if(cm.interfaceDecl() != null)
+        AddPass(cm.interfaceDecl(), pass.class_symb, pass.class_ast);
     }
 
     pass.ast.AddChild(pass.class_ast);
