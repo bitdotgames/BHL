@@ -997,7 +997,7 @@ public class VM : INamedResolver
   void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
     if(fss._module == null)
-      fss._module = compiled_mods[((Namespace)fss.scope.GetRootScope()).module_name];
+      fss._module = compiled_mods[fss.GetRootNamespace().module_name];
 
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());

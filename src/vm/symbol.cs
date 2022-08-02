@@ -1334,10 +1334,7 @@ public enum FuncFlags : byte
   None        = 0,
   Virtual     = 1,
   Override    = 2,
-  //TODO:?
-  //Abstract  = 4,
-  //Private   = 8,
-  //Protected = 16,
+  Static      = 4,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
@@ -1445,7 +1442,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     //NOTE: If declared as a class method we force the fallback
     //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
-    if(scope is ClassSymbolScript cs)
+    if(!flags.HasFlag(FuncFlags.Static) && scope is ClassSymbolScript cs)
       return new EnforceThisScope(cs);
     else
       return this.scope; 

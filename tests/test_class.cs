@@ -3029,4 +3029,25 @@ public class TestClasses : BHL_TestBase
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestSimpleStaticMethod()
+  {
+    string bhl = @"
+    class Bar {
+      func static int foo() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      return Bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

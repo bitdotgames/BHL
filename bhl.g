@@ -256,12 +256,16 @@ overrideFlag
   : 'override'
   ;
 
+staticFlag
+  : 'static'
+  ;
+
 funcFlags
-  : (virtualFlag | overrideFlag)
+  : (virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
-  : 'func' funcFlags? retType? NAME '(' funcParams? ')' funcBlock
+  : 'func' funcFlags* retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType

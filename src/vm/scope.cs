@@ -481,6 +481,11 @@ public static class ScopeExtensions
     return tmp;
   }
 
+  public static Namespace GetRootNamespace(this IScope scope)
+  {
+    return scope.GetRootScope() as Namespace;
+  }
+
   //NOTE: the first item of the resolved path is tried to be resolved
   //      with fallback (e.g. trying the 'upper' scopes)
   public static Symbol ResolveSymbolByPath(this IScope scope, string path)

@@ -856,7 +856,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
+          ast = new AST_Call(scope is IInstanceType && !func_symb.flags.HasFlag(FuncFlags.Static) ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -2481,12 +2481,27 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             fd.NAME().GetText()
           );
 
-        if(fd.funcFlags()?.virtualFlag() != null)
-          func_symb.flags |= FuncFlags.Virtual;
-        else if(fd.funcFlags()?.overrideFlag() != null)
-          func_symb.flags |= FuncFlags.Override;
 
-        func_symb.ReserveThisArgument(pass.class_symb);
+        for(int f=0;f<fd.funcFlags().Length;++f)
+        {
+          var flg = fd.funcFlags()[f];
+          var flg_type = FuncFlags.None;
+
+          if(flg.virtualFlag() != null)
+            flg_type = FuncFlags.Virtual;
+          else if(flg.overrideFlag() != null)
+            flg_type = FuncFlags.Override;
+          else if(flg.staticFlag() != null)
+            flg_type = FuncFlags.Static;
+
+          if(func_symb.flags.HasFlag(flg_type))
+            FireError(flg, "this attribute is set already");
+          func_symb.flags |= flg_type;
+        }
+
+        if(!func_symb.flags.HasFlag(FuncFlags.Static))
+          func_symb.ReserveThisArgument(pass.class_symb);
+
         pass.class_symb.members.Add(func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
