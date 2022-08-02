@@ -3164,7 +3164,7 @@ public class TestClasses : BHL_TestBase
       );
       ts.ns.Define(cl);
 
-      var m = new FuncSymbolNative("static_foo", FuncFlags.Static, ts.T("int"), 0,
+      var m = new FuncSymbolNative("static_foo", FuncAttrib.Static, ts.T("int"), 0,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
         {
           var n = (int)frm.stack.PopRelease().num;
@@ -3181,12 +3181,12 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestSimpleStaticAttribute()
+  [IsTested()]
+  public void TestSimpleStaticField()
   {
     string bhl = @"
     class Bar {
+      int b
       static int foo
     }
 
@@ -3199,6 +3199,7 @@ public class TestClasses : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    CommonChecks(vm, check_val_allocs: false);
+    AssertEqual(1, vm.vals_pool.Busy);
   }
 }

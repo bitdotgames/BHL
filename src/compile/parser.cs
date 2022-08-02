@@ -742,7 +742,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(!(macc_name_symb is ClassSymbol) && 
               scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
-              macc_fs.flags.HasFlag(FuncFlags.Static))
+              macc_fs.attribs.HasFlag(FuncAttrib.Static))
             FireError(macc, "calling static method on instance is forbidden");
 
           curr_name = macc.NAME();
@@ -864,7 +864,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType && !func_symb.flags.HasFlag(FuncFlags.Static) ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
+          ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
           AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
           type = func_symb.GetReturnType();
         }
@@ -878,18 +878,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           bool is_write = write && arracc == null;
           bool is_global = var_symb.scope is Namespace;
+          var fld_symb = var_symb as FieldSymbol;
+          if(fld_symb != null && fld_symb.attribs.HasFlag(FieldAttrib.Static))
+            is_global = true;
 
           if(scope is InterfaceSymbol)
             FireError(name, "attributes not supported by interfaces");
 
-          ast = new AST_Call(scope is IInstanceType ? 
+          ast = new AST_Call(fld_symb != null && !is_global ? 
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
             var_symb
           );
           //handling passing by ref for class fields
-          if(scope is IInstanceType && PeekCallByRef())
+          if(fld_symb != null && PeekCallByRef())
           {
             if(scope is ClassSymbolNative)
               FireError(name, "getting field by 'ref' not supported for this class");
@@ -2287,8 +2290,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcFlags().Length > 0)
-      FireError(pass.func_ctx.funcFlags()[0], "invalid usage of attributes");
+    if(pass.func_ctx.funcAttribs().Length > 0)
+      FireError(pass.func_ctx.funcAttribs()[0], "invalid usage of attributes");
 
     pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
@@ -2472,15 +2475,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var atrd = cm.attrDeclare();
-      if(atrd != null)
+      var fldd = cm.fldDeclare();
+      if(fldd != null)
       {
-        var vd = atrd.varDeclare();
+        var vd = fldd.varDeclare();
 
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
         var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new Proxy<IType>());
+
+        for(int f=0;f<fldd.fldAttribs().Length;++f)
+        {
+          var attr = fldd.fldAttribs()[f];
+          var attr_type = FieldAttrib.None;
+
+          if(attr.staticFlag() != null)
+            attr_type = FieldAttrib.Static;
+
+          if(fld_symb.attribs.HasFlag(attr_type))
+            FireError(attr, "this attribute is set already");
+          fld_symb.attribs |= attr_type;
+        }
+
         pass.class_symb.members.Add(fld_symb);
       }
 
@@ -2496,24 +2513,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             fd.NAME().GetText()
           );
 
-        for(int f=0;f<fd.funcFlags().Length;++f)
+        for(int f=0;f<fd.funcAttribs().Length;++f)
         {
-          var flg = fd.funcFlags()[f];
-          var flg_type = FuncFlags.None;
+          var attr = fd.funcAttribs()[f];
+          var attr_type = FuncAttrib.None;
 
-          if(flg.virtualFlag() != null)
-            flg_type = FuncFlags.Virtual;
-          else if(flg.overrideFlag() != null)
-            flg_type = FuncFlags.Override;
-          else if(flg.staticFlag() != null)
-            flg_type = FuncFlags.Static;
+          if(attr.virtualFlag() != null)
+            attr_type = FuncAttrib.Virtual;
+          else if(attr.overrideFlag() != null)
+            attr_type = FuncAttrib.Override;
+          else if(attr.staticFlag() != null)
+            attr_type = FuncAttrib.Static;
 
-          if(func_symb.flags.HasFlag(flg_type))
-            FireError(flg, "this attribute is set already");
-          func_symb.flags |= flg_type;
+          if(func_symb.attribs.HasFlag(attr_type))
+            FireError(attr, "this attribute is set already");
+          func_symb.attribs |= attr_type;
         }
 
-        if(!func_symb.flags.HasFlag(FuncFlags.Static))
+        if(!func_symb.attribs.HasFlag(FuncAttrib.Static))
           func_symb.ReserveThisArgument(pass.class_symb);
 
         pass.class_symb.members.Add(func_symb);
@@ -2552,10 +2569,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
-      var atrd = cm.attrDeclare();
-      if(atrd != null)
+      var fldd = cm.fldDeclare();
+      if(fldd != null)
       {
-        var vd = atrd.varDeclare();
+        var vd = fldd.varDeclare();
         var fld_symb = (FieldSymbolScript)pass.class_symb.members.Find(vd.NAME().GetText());
         fld_symb.type = ParseType(vd.type());
       }

@@ -580,11 +580,17 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitClassMembers([NotNull] bhlParser.ClassMembersContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.attrDeclare"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.fldAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitAttrDeclare([NotNull] bhlParser.AttrDeclareContext context);
+	Result VisitFldAttribs([NotNull] bhlParser.FldAttribsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.fldDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFldDeclare([NotNull] bhlParser.FldDeclareContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.classMember"/>.
 	/// </summary>
@@ -652,11 +658,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
+	Result VisitFuncAttribs([NotNull] bhlParser.FuncAttribsContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>

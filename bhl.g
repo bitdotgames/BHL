@@ -215,12 +215,16 @@ classMembers
   : classMember*
   ;
 
-attrDeclare
-  : staticFlag? varDeclare
+fldAttribs
+  : staticFlag
+  ;
+
+fldDeclare
+  : fldAttribs* varDeclare
   ;
 
 classMember
-  : (attrDeclare | funcDecl | classDecl | enumDecl | interfaceDecl)
+  : (fldDeclare | funcDecl | classDecl | enumDecl | interfaceDecl)
   ;
 
 interfaceDecl
@@ -264,12 +268,12 @@ staticFlag
   : 'static'
   ;
 
-funcFlags
+funcAttribs
   : (virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
-  : 'func' funcFlags* retType? NAME '(' funcParams? ')' funcBlock
+  : 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
@@ -315,7 +319,6 @@ varsDeclare
 varDeclare
   : type NAME
   ;
-
 
 varOrDeclare
   : NAME | varDeclare

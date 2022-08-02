@@ -474,7 +474,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
       if(sym is FuncSymbolScript fss)
       {
-        if(fss.flags.HasFlag(FuncFlags.Virtual))
+        if(fss.attribs.HasFlag(FuncAttrib.Virtual))
         {
           if(fss.default_args_num > 0)
             throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
@@ -483,7 +483,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
           vsym.AddOverride(curr_class, fss);
           _all_members.Add(vsym);
         }
-        else if(fss.flags.HasFlag(FuncFlags.Override))
+        else if(fss.attribs.HasFlag(FuncAttrib.Override))
         {
           if(fss.default_args_num > 0)
             throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
@@ -1262,6 +1262,13 @@ public class FuncArgSymbol : VariableSymbol
   }
 }
 
+[System.Flags]
+public enum FieldAttrib : byte
+{
+  None        = 0,
+  Static      = 1,
+}
+
 public class FieldSymbol : VariableSymbol
 {
   public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res, FieldSymbol fld);
@@ -1272,12 +1279,36 @@ public class FieldSymbol : VariableSymbol
   public FieldSetter setter;
   public FieldRef getref;
 
+  protected byte _attribs = 0;
+  public FieldAttrib attribs {
+    get {
+      return (FieldAttrib)_attribs;
+    }
+    set {
+      _attribs = (byte)value;
+    }
+  }
+
   public FieldSymbol(string name, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+    : this(name, 0, type, getter, setter, getref)
+  {
+  }
+
+  public FieldSymbol(string name, FieldAttrib attribs, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(name, type)
   {
+    this.attribs = attribs;
+
     this.getter = getter;
     this.setter = setter;
     this.getref = getref;
+  }
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    marshall.Marshall.Sync(ctx, ref _attribs);
   }
 }
 
@@ -1329,7 +1360,7 @@ public class FieldSymbolScript : FieldSymbol
 }
 
 [System.Flags]
-public enum FuncFlags : byte
+public enum FuncAttrib : byte
 {
   None        = 0,
   Virtual     = 1,
@@ -1355,13 +1386,13 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
   }
 
-  protected byte _flags = 0;
-  public FuncFlags flags {
+  protected byte _attribs = 0;
+  public FuncAttrib attribs {
     get {
-      return (FuncFlags)_flags;
+      return (FuncAttrib)_attribs;
     }
     set {
-      _flags = (byte)value;
+      _attribs = (byte)value;
     }
   }
 
@@ -1442,7 +1473,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     //NOTE: If declared as a class method we force the fallback
     //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
-    if(!flags.HasFlag(FuncFlags.Static) && scope is ClassSymbolScript cs)
+    if(!attribs.HasFlag(FuncAttrib.Static) && scope is ClassSymbolScript cs)
       return new EnforceThisScope(cs);
     else
       return this.scope; 
@@ -1560,7 +1591,7 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref _flags);
+    marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);
@@ -1738,12 +1769,12 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : this(name, FuncFlags.None, ret_type, def_args_num, cb, args)
+    : this(name, FuncAttrib.None, ret_type, def_args_num, cb, args)
   {}
 
   public FuncSymbolNative(
     string name, 
-    FuncFlags flags,
+    FuncAttrib attribs,
     Proxy<IType> ret_type, 
     int def_args_num,
     Cb cb,
@@ -1751,7 +1782,7 @@ public class FuncSymbolNative : FuncSymbol
   ) 
     : base(name, new FuncSignature(ret_type))
   {
-    this.flags = flags;
+    this.attribs = attribs;
 
     this.cb = cb;
     this.def_args_num = def_args_num;
@@ -1810,7 +1841,7 @@ public class ClassSymbolNative : ClassSymbol
 
   public override void Define(Symbol sym) 
   {
-    if(sym is FuncSymbolNative fs && fs.scope_idx == -1 && fs.flags.HasFlag(FuncFlags.Static))
+    if(sym is FuncSymbolNative fs && fs.scope_idx == -1 && fs.attribs.HasFlag(FuncAttrib.Static))
     {
       fs.scope_idx = this.GetRootNamespace().native_func_index.Add(sym);
     }
@@ -2304,9 +2335,10 @@ public static class SymbolExtensions
 {
   static public bool IsStatic(this Symbol symb)
   {
-    if(symb is FuncSymbol fs && fs.flags.HasFlag(FuncFlags.Static))
-      return true;
-    return false;
+    return 
+      (symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Static)) ||
+      (symb is FieldSymbol fds && fds.attribs.HasFlag(FieldAttrib.Static))
+      ;
   }
 }
 

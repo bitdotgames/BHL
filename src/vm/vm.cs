@@ -624,15 +624,15 @@ public class VM : INamedResolver
     static public FuncPtr New(VM vm)
     {
       FuncPtr ptr;
-      if(vm.ptrs_pool.stack.Count == 0)
+      if(vm.fptrs_pool.stack.Count == 0)
       {
-        ++vm.ptrs_pool.miss;
+        ++vm.fptrs_pool.miss;
         ptr = new FuncPtr(vm);
       }
       else
       {
-        ++vm.ptrs_pool.hit;
-        ptr = vm.ptrs_pool.stack.Pop();
+        ++vm.fptrs_pool.hit;
+        ptr = vm.fptrs_pool.stack.Pop();
 
         if(ptr.refs != -1)
           throw new Exception("Expected to be released, refs " + ptr.refs);
@@ -652,7 +652,7 @@ public class VM : INamedResolver
       ptr.refs = -1;
 
       ptr.Clear();
-      ptr.vm.ptrs_pool.stack.Push(ptr);
+      ptr.vm.fptrs_pool.stack.Push(ptr);
     }
 
     //NOTE: use New() instead
@@ -783,6 +783,11 @@ public class VM : INamedResolver
     {
       get { return stack.Count; }
     }
+
+    public int Busy
+    {
+      get { return Allocs - Free; }
+    }
   }
 
   Dictionary<string, CompiledModule> compiled_mods = new Dictionary<string, CompiledModule>();
@@ -864,7 +869,7 @@ public class VM : INamedResolver
   public Pool<ValMap> vmaps_pool = new Pool<ValMap>();
   public Pool<Frame> frames_pool = new Pool<Frame>();
   public Pool<Fiber> fibers_pool = new Pool<Fiber>();
-  public Pool<FuncPtr> ptrs_pool = new Pool<FuncPtr>();
+  public Pool<FuncPtr> fptrs_pool = new Pool<FuncPtr>();
   public CoroutinePool coro_pool = new CoroutinePool();
 
   //fake frame used for module's init code

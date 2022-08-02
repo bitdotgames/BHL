@@ -1131,17 +1131,29 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitClassMembers([NotNull] bhlParser.ClassMembersContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.attrDeclare"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.fldAttribs"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterAttrDeclare([NotNull] bhlParser.AttrDeclareContext context) { }
+	public virtual void EnterFldAttribs([NotNull] bhlParser.FldAttribsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.attrDeclare"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.fldAttribs"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitAttrDeclare([NotNull] bhlParser.AttrDeclareContext context) { }
+	public virtual void ExitFldAttribs([NotNull] bhlParser.FldAttribsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.fldDeclare"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFldDeclare([NotNull] bhlParser.FldDeclareContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.fldDeclare"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFldDeclare([NotNull] bhlParser.FldDeclareContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.classMember"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -1275,17 +1287,17 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterFuncFlags([NotNull] bhlParser.FuncFlagsContext context) { }
+	public virtual void EnterFuncAttribs([NotNull] bhlParser.FuncAttribsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitFuncFlags([NotNull] bhlParser.FuncFlagsContext context) { }
+	public virtual void ExitFuncAttribs([NotNull] bhlParser.FuncAttribsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// <para>The default implementation does nothing.</para>

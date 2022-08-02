@@ -959,15 +959,25 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitClassMembers([NotNull] bhlParser.ClassMembersContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.attrDeclare"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.fldAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterAttrDeclare([NotNull] bhlParser.AttrDeclareContext context);
+	void EnterFldAttribs([NotNull] bhlParser.FldAttribsContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.attrDeclare"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.fldAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitAttrDeclare([NotNull] bhlParser.AttrDeclareContext context);
+	void ExitFldAttribs([NotNull] bhlParser.FldAttribsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.fldDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFldDeclare([NotNull] bhlParser.FldDeclareContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.fldDeclare"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFldDeclare([NotNull] bhlParser.FldDeclareContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.classMember"/>.
 	/// </summary>
@@ -1079,15 +1089,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
+	void EnterFuncAttribs([NotNull] bhlParser.FuncAttribsContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.funcFlags"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFuncFlags([NotNull] bhlParser.FuncFlagsContext context);
+	void ExitFuncAttribs([NotNull] bhlParser.FuncAttribsContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcDecl"/>.
 	/// </summary>
