@@ -3096,6 +3096,44 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStaticMethodImported()
+  {
+    string bhl1 = @"
+    namespace a {
+      class Bar {
+        int b
+        func static int foo() {
+          return 42
+        }
+        func int getC() {
+          return this.c
+        }
+        int c
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    func int test() 
+    {
+      a.Bar bar = {b: 10, c:20}
+      return a.Bar.foo() + bar.b + bar.getC()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    AssertEqual(42+10+20, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestStaticMethodCantBeCalledOnInstance()
   {
     string bhl = @"
