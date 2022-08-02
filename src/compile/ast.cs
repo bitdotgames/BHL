@@ -349,7 +349,10 @@ public class AST_Call  : AST_Tree
   }
   public string module_name {
     get {
-      return symb?.scope is Namespace ? ((Namespace)symb.scope).module_name : "";
+      if(symb == null)
+        return "";
+      var ns = symb.scope.GetRootNamespace();
+      return ns == null ? "" : ns.module_name;
     }
   }
   public uint cargs_bits;

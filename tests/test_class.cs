@@ -3240,4 +3240,36 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm, check_val_allocs: false);
     AssertEqual(1, vm.vals_pool.Busy);
   }
+
+  [IsTested()]
+  public void TestStaticFieldImported()
+  {
+    string bhl1 = @"
+    namespace a {
+      class Bar {
+        int b
+        static int foo
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+    func int test() 
+    {
+      a.Bar.foo = 42
+      return a.Bar.foo
+    }
+    ";
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm, check_val_allocs: false);
+    AssertEqual(1, vm.vals_pool.Busy);
+  }
 }
