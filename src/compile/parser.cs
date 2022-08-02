@@ -81,6 +81,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bhlParser.InterfaceDeclContext iface_ctx;
     public InterfaceSymbolScript iface_symb;
 
+    public bhlParser.EnumDeclContext enum_ctx;
+
     public ParserPass(IAST ast, IScope scope, ParserRuleContext ctx)
     {
       this.ast = ast;
@@ -90,6 +92,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.func_ctx = ctx as bhlParser.FuncDeclContext;
       this.class_ctx = ctx as bhlParser.ClassDeclContext;
       this.iface_ctx = ctx as bhlParser.InterfaceDeclContext;
+      this.enum_ctx = ctx as bhlParser.EnumDeclContext;
     }
   }
 
@@ -453,6 +456,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Pass_OutlineClassDecl(pass);
 
       Pass_OutlineFuncDecl(pass);
+
+      Pass_OutlineEnumDecl(pass);
 
       PopScope();
     }
@@ -821,6 +826,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
       var enum_symb = name_symb as EnumSymbol;
+      var class_symb = name_symb as ClassSymbol;
       var enum_item = name_symb as EnumItemSymbol;
 
       //func or method call
@@ -897,6 +903,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var ast_literal = new AST_Literal(ConstType.INT);
           ast_literal.nval = enum_item.val;
           PeekAST().AddChild(ast_literal);
+        }
+        else if(class_symb != null)
+        {
+          type = class_symb;
         }
         else
           FireError(name, "symbol usage is not valid");
@@ -2238,7 +2248,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var edecl = decls[i].enumDecl();
       if(edecl != null)
       {
-        Visit(edecl);
+        AddPass(edecl, curr_scope, PeekAST());
         continue;
       }
     }
@@ -2483,11 +2493,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         pass.class_ast.AddChild(func_ast);
       }
 
-      var sub_cldecl = cm.classDecl();
-      if(sub_cldecl != null)
-      {
-        AddPass(sub_cldecl, pass.class_symb, pass.class_ast);
-      }
+      if(cm.classDecl() != null)
+        AddPass(cm.classDecl(), pass.class_symb, pass.class_ast);
+
+      if(cm.enumDecl() != null)
+        AddPass(cm.enumDecl(), pass.class_symb, pass.class_ast);
     }
 
     pass.ast.AddChild(pass.class_ast);
@@ -2499,6 +2509,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(pass.class_ctx == null)
       return;
+
+    PushScope(pass.class_symb);
+    //NOTE: we want to prevent resolving of attributes and methods at this point 
+    //      since they might collide with types. For example:
+    //      class Foo {
+    //        a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type  
+    //      }
+    pass.class_symb._resolve_only_decl_members = true;
 
     //class members
     for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
@@ -2524,6 +2542,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Wrap(fd).eval_type = func_symb.GetReturnType(); 
       }
     }
+
+    pass.class_symb._resolve_only_decl_members = false;
+    PopScope();
   }
 
   void Pass_AddClassExtensions(ParserPass pass)
@@ -2603,6 +2624,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         ParseFuncBlock(fd, func_ast);
       }
     }
+  }
+
+  void Pass_OutlineEnumDecl(ParserPass pass)
+  {
+    if(pass.enum_ctx == null)
+      return;
+
+    VisitEnumDecl(pass.enum_ctx);
   }
 
   public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)

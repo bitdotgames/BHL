@@ -2852,12 +2852,10 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestSimpleNestedEnum()
   {
     string bhl = @"
-
     class Bar {
        enum E {
          E1 = 1

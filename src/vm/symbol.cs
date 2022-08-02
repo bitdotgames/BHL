@@ -335,6 +335,8 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
   //all 'flattened' members including all parents
   internal SymbolsStorage _all_members;
 
+  internal bool _resolve_only_decl_members;
+
   public VM.ClassCreator creator;
 
 #if BHL_FRONT
@@ -386,6 +388,14 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
   }
 
   public Symbol Resolve(string name) 
+  {
+    var sym = DoResolve(name);
+    if(_resolve_only_decl_members && (sym is VariableSymbol || sym is FuncSymbol))
+      return null;
+    return sym;
+  }
+
+  Symbol DoResolve(string name)
   {
     var sym = members.Find(name);
     if(sym != null)
