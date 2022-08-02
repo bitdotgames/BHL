@@ -267,33 +267,36 @@ You can run unit tests by executing the following command:
 
 ## Version 3.0
 1. Generics support
-2. More optimal byte code
-3. More optimal runtime memory storage layout
+1. More optimal byte code
+1. More optimal runtime memory storage layout
 
 ## Version 2.0
 
 1. ~~Byte code optimization~~
-2. ~~More optimal executor (VM)~~
-3. ~~Better runtime errors reporting~~
-4. ~~More robust type system~~
-5. ~~User class methods~~
-6. ~~Interfaces support~~
-7. ~~Namespaces support~~
-8. ~~Virtual class methods~~
-9. Static class members support
-10. ~~Maps support~~
-11. Debugger support
-12. LSP integration
+1. ~~More optimal executor (VM)~~
+1. ~~Better runtime errors reporting~~
+1. ~~More robust type system~~
+1. ~~User class methods~~
+1. ~~Interfaces support~~
+1. ~~Namespaces support~~
+1. ~~Polymorphic class methods~~
+1. ~~Nested classes~~
+1. ~~Nested in classes enums~~
+1. Static class members support
+1. Variadic function arguments
+1. ~~Maps support~~
+1. Debugger support
+1. LSP integration
 
 ## Version 1.0
 
 1. ~~**ref** semantics similar to C#~~
-2. ~~Generic functors support~~
-3. ~~Generic initializers~~
-4. ~~Multiple return values support~~
-5. ~~**while** syntax sugar: **for(...) {}** support~~
-6. ~~**while** syntax sugar: **foreach(...) {}** support~~
-7. ~~Ternary operator support~~
-8. ~~User defined structs~~
-9. ~~User defined enums~~
-10. ~~Postfix increment/decrement~~
+1. ~~Generic functors support~~
+1. ~~Generic initializers~~
+1. ~~Multiple return values support~~
+1. ~~**while** syntax sugar: **for(...) {}** support~~
+1. ~~**while** syntax sugar: **foreach(...) {}** support~~
+1. ~~Ternary operator support~~
+1. ~~User defined structs~~
+1. ~~User defined enums~~
+1. ~~Postfix increment/decrement~~
