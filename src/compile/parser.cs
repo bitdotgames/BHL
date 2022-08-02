@@ -732,12 +732,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(macc != null)
         {
+          Symbol macc_name_symb = null;
           if(curr_name != null)
-            ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write: false);
+            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write: false);
 
           scope = curr_type as IScope;
           if(!(scope is IInstanceType) && !(scope is EnumSymbol))
             FireError(macc, "type doesn't support member access via '.'");
+
+          if(!(macc_name_symb is ClassSymbol) && 
+              scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
+              macc_fs.flags.HasFlag(FuncFlags.Static))
+            FireError(macc, "calling static method on instance is forbidden");
 
           curr_name = macc.NAME();
         }
@@ -804,7 +810,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void ProcCallChainItem(
+  Symbol ProcCallChainItem(
     IScope scope, 
     ITerminalNode name, 
     bhlParser.CallArgsContext cargs, 
@@ -817,17 +823,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     AST_Call ast = null;
 
+    Symbol name_symb = null;
+
     if(name != null)
     {
-      var name_symb = scope.ResolveWithFallback(name.GetText());
+      name_symb = scope.ResolveWithFallback(name.GetText());
       if(name_symb == null)
         FireError(name, "symbol '" + name.GetText() + "' not resolved");
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
       var enum_symb = name_symb as EnumSymbol;
-      var class_symb = name_symb as ClassSymbol;
       var enum_item = name_symb as EnumItemSymbol;
+      var class_symb = name_symb as ClassSymbol;
 
       //func or method call
       if(cargs != null)
@@ -928,6 +936,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(arracc != null)
       AddArrIndex(arracc, ref type, line, write);
+
+    return name_symb;
   }
 
   void AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)

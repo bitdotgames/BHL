@@ -380,7 +380,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     return this.scope;
   }
 
-  public void Define(Symbol sym) 
+  public virtual void Define(Symbol sym) 
   {
     //NOTE: we don't check if there are any parent symbols with the same name, 
     //      they will be checked once the class is finally setup
@@ -469,7 +469,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
-      if(sym is IScopeIndexed si)
+      if(sym is IScopeIndexed si && !sym.IsStatic())
         si.scope_idx = _all_members.Count; 
 
       if(sym is FuncSymbolScript fss)
@@ -1738,8 +1738,21 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
+    : this(name, FuncFlags.None, ret_type, def_args_num, cb, args)
+  {}
+
+  public FuncSymbolNative(
+    string name, 
+    FuncFlags flags,
+    Proxy<IType> ret_type, 
+    int def_args_num,
+    Cb cb,
+    params FuncArgSymbol[] args
+  ) 
     : base(name, new FuncSignature(ret_type))
   {
+    this.flags = flags;
+
     this.cb = cb;
     this.def_args_num = def_args_num;
 
@@ -1767,6 +1780,7 @@ public class FuncSymbolNative : FuncSymbol
     throw new NotImplementedException();
   }
 }
+
 public class ClassSymbolNative : ClassSymbol
 {
   public ClassSymbolNative(string name, ClassSymbol super_class = null, VM.ClassCreator creator = null, IList<InterfaceSymbol> implements = null)
@@ -1792,6 +1806,16 @@ public class ClassSymbolNative : ClassSymbol
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
+  }
+
+  public override void Define(Symbol sym) 
+  {
+    if(sym is FuncSymbolNative fs && fs.scope_idx == -1 && fs.flags.HasFlag(FuncFlags.Static))
+    {
+      fs.scope_idx = this.GetRootNamespace().native_func_index.Add(sym);
+    }
+
+    base.Define(sym);
   }
 }
 
@@ -2273,6 +2297,16 @@ public class SymbolFactory : marshall.IFactory
       default:
         return null;
     }
+  }
+}
+
+public static class SymbolExtensions
+{
+  static public bool IsStatic(this Symbol symb)
+  {
+    if(symb is FuncSymbol fs && fs.flags.HasFlag(FuncFlags.Static))
+      return true;
+    return false;
   }
 }
 

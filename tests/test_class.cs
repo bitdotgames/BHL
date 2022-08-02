@@ -3050,4 +3050,70 @@ public class TestClasses : BHL_TestBase
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestStaticMethodCantBeCalledOnInstance()
+  {
+    string bhl = @"
+    class Bar {
+      func static int foo() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      Bar b = {}
+      return b.foo()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "calling static method on instance is forbidden"
+    );
+  }
+
+  public class NativeFoo
+  {
+    public static int static_foo(int n) { return n; }
+  }
+
+  [IsTested()]
+  public void TestNativeClassStaticMethod()
+  {
+    string bhl = @"
+    func int test() {
+      return NativeFoo.static_foo(42)
+    }
+    ";
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("NativeFoo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new NativeFoo(), type);
+        }
+      );
+      ts.ns.Define(cl);
+
+      var m = new FuncSymbolNative("static_foo", FuncFlags.Static, ts.T("int"), 0,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          var n = (int)frm.stack.PopRelease().num;
+          frm.stack.Push(Val.NewInt(frm.vm, NativeFoo.static_foo(n)));
+          return null;
+        },
+        new FuncArgSymbol("int", ts.T("int")) 
+      );
+      cl.Define(m);
+    }
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

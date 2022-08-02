@@ -815,14 +815,14 @@ public class TestInterfaces : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public interface INativeFoo {
+  public interface INativeFoo 
+  {
     int foo(int n);
   }
 
-  public class NativeFoo : INativeFoo{
-    public int foo(int n) {
-      return n;
-    }
+  public class NativeFoo : INativeFoo
+  {
+    public int foo(int n) { return n; }
   }
 
   [IsTested()]
