@@ -1,4 +1,4 @@
-import "std"
+import "std/io"
 
 func main([]string argv) {
   paral {

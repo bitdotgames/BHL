@@ -493,6 +493,7 @@ public class Types : INamedResolver
     InitBuiltins();
 
     RegisterModule(std.MakeModule(this)); 
+    RegisterModule(std.io.MakeModule(this)); 
   }
 
   public void RegisterModule(Module m)

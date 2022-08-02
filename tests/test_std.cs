@@ -10,7 +10,7 @@ public class TestStd : BHL_TestBase
   public void TestSimpleIO()
   {
     string bhl = @"
-    import ""std""  
+    import ""std/io""  
     func test() {
       std.io.WriteLine(""Hello!"")
     }
