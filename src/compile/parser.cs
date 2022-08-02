@@ -2293,7 +2293,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    pass.func_symb.SetSignature(ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams()));
+    pass.func_symb.signature = ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams());
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
@@ -2534,7 +2534,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
 
-        func_symb.SetSignature(ParseFuncSignature(ParseType(fd.retType()), fd.funcParams()));
+        func_symb.signature = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams());
 
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);

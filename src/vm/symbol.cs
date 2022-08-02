@@ -1344,7 +1344,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 {
   public FuncSignature signature;
 
-  public SymbolsStorage members;
+  internal SymbolsStorage members;
 
   internal FuncSymbolVirtual _virtual;
 
@@ -1387,17 +1387,12 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     : base(name)
   {
     this.members = new SymbolsStorage(this);
-    SetSignature(signature);
+    this.signature = signature;
   }
 
   public IType GetIType()
   {
     return signature;
-  }
-
-  public void SetSignature(FuncSignature signature)
-  {
-    this.signature = signature;
   }
 
   public virtual Symbol Resolve(string name) 
