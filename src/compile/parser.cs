@@ -69,6 +69,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bhlParser.ImportsContext imps_ctx;
 
     public bhlParser.VarDeclareAssignContext gvar_ctx;
+    public VariableSymbol gvar_symb;
 
     public bhlParser.FuncDeclContext func_ctx;
     public AST_FuncDecl func_ast;
@@ -451,6 +452,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PushScope(pass.scope);
 
+      Pass_OutlineGlobalVar(pass);
+
       Pass_OutlineInterfaceDecl(pass);
 
       Pass_OutlineClassDecl(pass);
@@ -478,6 +481,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var import_path in module.imports)
     {
       var imported = coordinator.GetModule(import_path);
+      //NOTE: let's add imported global vars to module's global vars index
+      module.vars.index.AddRange(imported.vars.index);
       ns.Link(imported.ns);
     }
   }
@@ -2356,6 +2361,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
+  void Pass_OutlineGlobalVar(ParserPass pass)
+  {
+    if(pass.gvar_ctx == null)
+      return;
+
+    var vd = pass.gvar_ctx.varDeclare(); 
+
+    pass.gvar_symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+
+    curr_scope.Define(pass.gvar_symb);
+  }
+
   void Pass_OutlineInterfaceDecl(ParserPass pass)
   {
     if(pass.iface_ctx == null)
@@ -2445,7 +2462,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(types.native_func_index, name, module.name);
+      ns = new Namespace(types.nfunc_index, name, module.name, module.vars);
       curr_scope.Define(ns);
     }
     else if(ns.module_name != module.name)
@@ -2468,6 +2485,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var name = pass.class_ctx.NAME().GetText();
 
     pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name, null, null);
+    pass.scope.Define(pass.class_symb);
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
@@ -2495,10 +2513,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(fld_symb.attribs.HasFlag(attr_type))
             FireError(attr, "this attribute is set already");
+
           fld_symb.attribs |= attr_type;
         }
 
-        pass.class_symb.members.Add(fld_symb);
+        pass.class_symb.Define(fld_symb);
       }
 
       var fd = cm.funcDecl();
@@ -2533,7 +2552,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(!func_symb.attribs.HasFlag(FuncAttrib.Static))
           func_symb.ReserveThisArgument(pass.class_symb);
 
-        pass.class_symb.members.Add(func_symb);
+        pass.class_symb.Define(func_symb);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.AddChild(func_ast);
@@ -2548,8 +2567,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     pass.ast.AddChild(pass.class_ast);
-
-    pass.scope.Define(pass.class_symb);
   }
 
   void Pass_ParseClassMembersTypes(ParserPass pass)
@@ -2714,41 +2731,41 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.gvar_ctx == null)
       return;
 
-    PushAST((AST_Tree)pass.ast);
-
     var vd = pass.gvar_ctx.varDeclare(); 
 
+    pass.gvar_symb.type = ParseType(vd.type());
+    pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
+
     if(being_imported)
+      return;
+
+    PushAST((AST_Tree)pass.ast);
+
+    var assign_exp = pass.gvar_ctx.assignExp();
+
+    AST_Interim exp_ast = null;
+    if(assign_exp != null)
     {
-      var symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), ParseType(vd.type()));
-      curr_scope.Define(symb);
+      var tp = ParseType(vd.type());
+
+      exp_ast = new AST_Interim();
+      PushAST(exp_ast);
+      PushJsonType(tp.Get());
+      Visit(assign_exp);
+      PopJsonType();
+      PopAST();
     }
-    else
-    {
-      var assign_exp = pass.gvar_ctx.assignExp();
 
-      AST_Interim exp_ast = null;
-      if(assign_exp != null)
-      {
-        var tp = ParseType(vd.type());
+    AST_Tree ast = assign_exp != null ? 
+      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
+      (AST_Tree)new AST_VarDecl(pass.gvar_symb);
 
-        exp_ast = new AST_Interim();
-        PushAST(exp_ast);
-        PushJsonType(tp.Get());
-        Visit(assign_exp);
-        PopJsonType();
-        PopAST();
-      }
+    if(exp_ast != null)
+      PeekAST().AddChild(exp_ast);
+    PeekAST().AddChild(ast);
 
-      var ast = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: assign_exp != null);
-
-      if(exp_ast != null)
-        PeekAST().AddChild(exp_ast);
-      PeekAST().AddChild(ast);
-
-      if(assign_exp != null)
-        types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
-    }
+    if(assign_exp != null)
+      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
 
     PopAST();
   }

@@ -1145,28 +1145,12 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        if(ast.module_name != module.name)
-        {
-          int module_idx = AddConstant(ast.module_name);
-          Emit(Opcodes.GetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
-        }
-        else 
-        {
-          Emit(Opcodes.GetGVar, new int[] {ast.symb_idx}, ast.line_num);
-        }
+        Emit(Opcodes.GetGVar, new int[] {module.vars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
-        if(ast.module_name != module.name)
-        {
-          int module_idx = AddConstant(ast.module_name);
-          Emit(Opcodes.SetGVarImported, new int[] {module_idx, ast.symb_idx}, ast.line_num);
-        }
-        else 
-        {
-          Emit(Opcodes.SetGVar, new int[] {ast.symb_idx}, ast.line_num);
-        }
+        Emit(Opcodes.SetGVar, new int[] {module.vars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:
@@ -1180,7 +1164,7 @@ public class ModuleCompiler : AST_Visitor
           var fsymb = (FuncSymbolScript)ast.symb; 
           //let's check if we can optimize the local func call to a very
           //fast opcode version
-          if(fsymb.GetRootNamespace().module_name == module.name)
+          if(fsymb.GetNamespace().module_name == module.name)
           {
             //NOTE: let's remove the last added constant if it points
             //      to our function - we don't need to serialize it 

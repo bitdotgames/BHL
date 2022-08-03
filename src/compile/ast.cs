@@ -351,7 +351,7 @@ public class AST_Call  : AST_Tree
     get {
       if(symb == null)
         return "";
-      var ns = symb.scope.GetRootNamespace();
+      var ns = symb.scope.GetNamespace();
       return ns == null ? "" : ns.module_name;
     }
   }
@@ -425,7 +425,7 @@ public class AST_VarDecl : AST_Tree
   public bool is_func_arg;
   public bool is_ref;
 
-  public AST_VarDecl(VariableSymbol symb, bool is_ref)
+  public AST_VarDecl(VariableSymbol symb, bool is_ref = false)
     : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
   {}
 

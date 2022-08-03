@@ -222,12 +222,14 @@ public class Module
   public ModulePath path;
   public HashSet<string> imports = new HashSet<string>(); 
 
+  public VarIndex vars = new VarIndex();
+
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
-    ns = new Namespace(ts.native_func_index, "", name);
+    ns = new Namespace(ts.nfunc_index, "", name, vars);
   }
 
   public Module(Types ts, string name, string file_path)
@@ -1002,7 +1004,7 @@ public class VM : INamedResolver
   void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
     if(fss._module == null)
-      fss._module = compiled_mods[fss.GetRootNamespace().module_name];
+      fss._module = compiled_mods[fss.GetNamespace().module_name];
 
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
@@ -1650,7 +1652,7 @@ public class VM : INamedResolver
       case Opcodes.GetFuncNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        var func_symb = (FuncSymbolNative)types.native_func_index[func_idx];
+        var func_symb = (FuncSymbolNative)types.nfunc_index[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         curr_frame.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1691,7 +1693,7 @@ public class VM : INamedResolver
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref ip); 
 
-        var native = (FuncSymbolNative)types.native_func_index[func_idx];
+        var native = (FuncSymbolNative)types.nfunc_index[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, native, args_bits, out status, ref coroutine))
@@ -2422,7 +2424,7 @@ public class CompiledModule
 
   static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<Namespace, string> on_import = null)
   {
-    var ns = new Namespace(types.native_func_index);
+    var ns = new Namespace(types.nfunc_index);
     //NOTE: it's assumed types.ns is always linked by each module, 
     //      however we add it directly to links list in order
     //      avoid duplicate symbols error during un-marshalling

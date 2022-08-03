@@ -181,7 +181,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -1945,7 +1945,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -3269,6 +3269,43 @@ public class TestClasses : BHL_TestBase
 
     vm.LoadModule("bhl2");
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm, check_val_allocs: false);
+    AssertEqual(1, vm.vals_pool.Busy);
+  }
+
+  [IsTested()]
+  public void TestStaticFieldImportedMixWithGlobalVars()
+  {
+    string bhl1 = @"
+    int A = 10
+    namespace a {
+      int A = 20
+      class Bar {
+        int b
+        static int foo
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl1""
+
+    int B = 30
+
+    func int test() 
+    {
+      a.Bar.foo = 42
+      return A + a.A + B + a.Bar.foo
+    }
+    ";
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    AssertEqual(10+20+30+42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm, check_val_allocs: false);
     AssertEqual(1, vm.vals_pool.Busy);
   }

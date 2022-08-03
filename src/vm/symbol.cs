@@ -380,8 +380,13 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     return this.scope;
   }
 
-  public virtual void Define(Symbol sym) 
+  public void Define(Symbol sym) 
   {
+    if(sym is FuncSymbolNative fs && fs.attribs.HasFlag(FuncAttrib.Static))
+      this.GetNamespace().nfunc_index.Index(fs);
+    else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
+      this.GetNamespace().module_vars.Index(fld);
+
     //NOTE: we don't check if there are any parent symbols with the same name, 
     //      they will be checked once the class is finally setup
     members.Add(sym);
@@ -1838,16 +1843,6 @@ public class ClassSymbolNative : ClassSymbol
   {
     throw new NotImplementedException();
   }
-
-  public override void Define(Symbol sym) 
-  {
-    if(sym is FuncSymbolNative fs && fs.scope_idx == -1 && fs.attribs.HasFlag(FuncAttrib.Static))
-    {
-      fs.scope_idx = this.GetRootNamespace().native_func_index.Add(sym);
-    }
-
-    base.Define(sym);
-  }
 }
 
 public class ClassSymbolScript : ClassSymbol
@@ -2238,21 +2233,26 @@ public class TypeSet<T> : marshall.IMarshallable where T : IType
   }
 }
 
-public class Named2Index 
+public class Indexer<T> where T : INamed, IScopeIndexed 
 {
-  List<INamed> index = new List<INamed>();
+  internal List<T> index = new List<T>();
 
-  public int Add(INamed sym)
-  {
-    int idx = index.IndexOf(sym);
-    if(idx != -1)
-      return idx;
-    idx = index.Count;
-    index.Add(sym);
-    return idx;
+  public int Count {
+    get {
+      return index.Count;
+    }
   }
 
-  public INamed this[int i]
+  public void Index(T sym)
+  {
+    if(index.IndexOf(sym) != -1)
+      return;
+    if(sym.scope_idx == -1)
+      sym.scope_idx = index.Count;
+    index.Add(sym);
+  }
+
+  public T this[int i]
   {
     get {
       return index[i];
@@ -2261,14 +2261,28 @@ public class Named2Index
 
   public int IndexOf(INamed s)
   {
-    return index.IndexOf(s);
+    return index.IndexOf((T)s);
   }
 
-  public Named2Index Clone()
+  public int IndexOf(string name)
   {
-    var clone = new Named2Index();
-    clone.index.AddRange(index);
-    return clone;
+    for(int i=0;i<index.Count;++i)
+      if(index[i].GetName() == name)
+        return i;
+    return -1;
+  }
+}
+
+public class VarIndex : Indexer<VariableSymbol> {}
+
+public class NativeFuncIndex : Indexer<FuncSymbolNative> 
+{
+  public NativeFuncIndex()
+  {}
+
+  public NativeFuncIndex(NativeFuncIndex other)
+  {
+    index.AddRange(other.index);
   }
 }
 
@@ -2324,7 +2338,7 @@ public class SymbolFactory : marshall.IFactory
       case TupleType.CLASS_ID:
         return new TupleType();
       case Namespace.CLASS_ID:
-        return new Namespace(types.native_func_index);
+        return new Namespace(types.nfunc_index);
       default:
         return null;
     }

@@ -136,9 +136,10 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   public SymbolsStorage members;
 
-  public List<Namespace> links = new List<Namespace>();
+  internal List<Namespace> links = new List<Namespace>();
 
-  public Named2Index native_func_index;
+  internal VarIndex module_vars;
+  internal NativeFuncIndex nfunc_index;
 
   public override uint ClassId()
   {
@@ -147,20 +148,21 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   //for tests
   public Namespace(string name)
-    : this(null, name, "")
+    : this(null, name, "", null)
   {}
 
-  public Namespace(Named2Index native_func_index, string name, string module_name)
+  public Namespace(NativeFuncIndex nfunc_index, string name, string module_name, VarIndex module_vars = null)
     : base(name)
   {
-    this.native_func_index = native_func_index;
+    this.module_vars = module_vars;
+    this.nfunc_index = nfunc_index;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
   //marshall version 
-  public Namespace(Named2Index native_func_index = null)
-    : this(native_func_index, "", "")
+  public Namespace(NativeFuncIndex nfunc_index = null, VarIndex module_vars = null)
+    : this(nfunc_index, "", "", module_vars)
   {}
 
   public INamed ResolveNamedByPath(string path)
@@ -197,7 +199,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
     if(sym == null)
     {
-      sym = new Namespace(native_func_index, name, module_name);
+      sym = new Namespace(nfunc_index, name, module_name, module_vars);
       Define(sym);
     }
 
@@ -206,7 +208,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   public Namespace Clone()
   {
-    var copy = new Namespace(native_func_index, name, module_name);
+    var copy = new Namespace(nfunc_index, name, module_name, module_vars);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -266,7 +268,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
         else
         {
           //NOTE: let's create a local version of the linked namespace
-          var ns = new Namespace(native_func_index, other_ns.name, module_name);
+          var ns = new Namespace(nfunc_index, other_ns.name, module_name);
           ns.links.Add(other_ns);
           members.Add(ns);
         }
@@ -388,12 +390,10 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
-    //TODO: We need some abstraction here for all kinds of
-    //      symbols. For example, we need to know an index of 
-    //      a function defined in a module. Likewise we have
-    //      something similar for global variables.
-    if(sym is FuncSymbolNative fsn && fsn.scope_idx == -1)
-      fsn.scope_idx = native_func_index.Add(sym);
+    if(sym is FuncSymbolNative fsn)
+      nfunc_index.Index(fsn);
+    else if(sym is VariableSymbol vs)
+      module_vars.Index(vs);
 
     members.Add(sym);
   }
@@ -401,7 +401,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
   public override void Sync(marshall.SyncContext ctx) 
   {
     //NOTE: links are not persisted since it's assumed 
-    //      they are restored by code above
+    //      they are restored by explicit imports
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref module_name);
     marshall.Marshall.Sync(ctx, ref members);
@@ -479,6 +479,18 @@ public static class ScopeExtensions
     while(tmp.GetFallbackScope() != null)
       tmp = tmp.GetFallbackScope();
     return tmp;
+  }
+
+  public static Namespace GetNamespace(this IScope scope)
+  {
+    var tmp = scope;
+    while(tmp.GetFallbackScope() != null)
+    {
+      tmp = tmp.GetFallbackScope();
+      if(tmp is Namespace ns)
+        return ns;
+    }
+    return null;
   }
 
   public static Namespace GetRootNamespace(this IScope scope)

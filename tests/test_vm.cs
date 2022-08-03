@@ -3166,7 +3166,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -9747,7 +9747,7 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(ts.ResolveNamedByPath("suspend")), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -9781,7 +9781,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
@@ -9896,9 +9896,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(ts.ResolveNamedByPath("suspend")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0 })
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(ts.ResolveNamedByPath("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -9943,9 +9943,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(ts.ResolveNamedByPath("suspend")), 0})
+          .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0})
         .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
-          .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(ts.ResolveNamedByPath("yield")), 0 })
+          .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("yield"), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -11443,9 +11443,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-        .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
 
@@ -13245,7 +13245,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -13545,7 +13545,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -15121,7 +15121,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.native_func_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
