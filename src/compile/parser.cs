@@ -2747,45 +2747,47 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var vd = pass.gvar_ctx.varDeclare(); 
 
+    //NOTE: we want to temprarily 'disable' the symbol so that it doesn't
+    //      interfere with type lookups and invalid self assignments
+    var subst_symbol = DisableVar(((Namespace)curr_scope).members, pass.gvar_symb);
+
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
 
-    if(being_imported)
-      return;
-
-    PushAST((AST_Tree)pass.ast);
-
-    var assign_exp = pass.gvar_ctx.assignExp();
-
-    AST_Interim exp_ast = null;
-    if(assign_exp != null)
+    if(!being_imported)
     {
-      var subst_symbol = DisableVar(((Namespace)curr_scope).members, pass.gvar_symb);
+      PushAST((AST_Tree)pass.ast);
 
-      var tp = ParseType(vd.type());
+      var assign_exp = pass.gvar_ctx.assignExp();
 
-      exp_ast = new AST_Interim();
-      PushAST(exp_ast);
-      PushJsonType(tp.Get());
-      Visit(assign_exp);
-      PopJsonType();
+      AST_Interim exp_ast = null;
+      if(assign_exp != null)
+      {
+        var tp = ParseType(vd.type());
+
+        exp_ast = new AST_Interim();
+        PushAST(exp_ast);
+        PushJsonType(tp.Get());
+        Visit(assign_exp);
+        PopJsonType();
+        PopAST();
+      }
+
+      AST_Tree ast = assign_exp != null ? 
+        (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
+        (AST_Tree)new AST_VarDecl(pass.gvar_symb);
+
+      if(exp_ast != null)
+        PeekAST().AddChild(exp_ast);
+      PeekAST().AddChild(ast);
+
+      if(assign_exp != null)
+        types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+
       PopAST();
-
-      EnableVar(((Namespace)curr_scope).members, pass.gvar_symb, subst_symbol);
     }
 
-    AST_Tree ast = assign_exp != null ? 
-      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
-      (AST_Tree)new AST_VarDecl(pass.gvar_symb);
-
-    if(exp_ast != null)
-      PeekAST().AddChild(exp_ast);
-    PeekAST().AddChild(ast);
-
-    if(assign_exp != null)
-      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
-
-    PopAST();
+    EnableVar(((Namespace)curr_scope).members, pass.gvar_symb, subst_symbol);
   }
 
   public override object VisitFuncParams(bhlParser.FuncParamsContext ctx)
@@ -2908,7 +2910,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PushJsonType(curr_type);
         }
 
-        //TODO: below is quite an ugly hack, fix it traversing the expression first
         //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
         //      assignment expression in order to avoid error like: float k = k
         VariableSymbol disabled_symbol = null;
