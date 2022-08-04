@@ -391,13 +391,15 @@ public class FixedStack<T>
   public T this[int index]
   {
     get { 
-      //for extra debug
+#if BHL_FRONT
       //ValidateIndex(index);
+#endif
       return storage[index]; 
     }
     set { 
-      //for extra debug
+#if BHL_FRONT
       //ValidateIndex(index);
+#endif
       storage[index] = value; 
     }
   }
@@ -405,7 +407,7 @@ public class FixedStack<T>
   void ValidateIndex(int index)
   {
     if(index < 0 || index >= head)
-      throw new Exception("Out of index " + index + " vs " + head);
+      throw new Exception("Out of bounds: " + index + " vs " + head);
   }
 
   public bool TryGetAt(int index, out T v)
