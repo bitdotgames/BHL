@@ -481,8 +481,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var import_path in module.imports)
     {
       var imported = coordinator.GetModule(import_path);
+
       //NOTE: let's add imported global vars to module's global vars index
-      module.vars.index.AddRange(imported.vars.index);
+      if(module.local_gvars_mark == -1)
+        module.local_gvars_mark = module.gvars.Count;
+      if(module.init_gvars_mark == -1)
+        module.init_gvars_mark = module.gvars.Count + imported.local_gvars_num;
+      module.gvars.index.AddRange(imported.gvars.index);
       ns.Link(imported.ns);
     }
   }
@@ -2462,7 +2467,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ns = curr_scope.Resolve(name) as Namespace;
     if(ns == null)
     {
-      ns = new Namespace(types.nfunc_index, name, module.name, module.vars);
+      ns = new Namespace(types.nfunc_index, name, module.name, module.gvars);
       curr_scope.Define(ns);
     }
     else if(ns.module_name != module.name)
@@ -2668,6 +2673,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
 
     pass.class_symb.Setup();
+
+    //NOTE: let's declare static class variables as module global variables 
+    //      so that they are properly initialized upon module loading
+    for(int m=0;m<pass.class_symb.members.Count;++m)
+    {
+      if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
+        pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvars.IndexOf(fld)));
+
+    }
   }
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
@@ -2746,6 +2760,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     AST_Interim exp_ast = null;
     if(assign_exp != null)
     {
+      var subst_symbol = DisableVar(((Namespace)curr_scope).members, pass.gvar_symb);
+
       var tp = ParseType(vd.type());
 
       exp_ast = new AST_Interim();
@@ -2754,6 +2770,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Visit(assign_exp);
       PopJsonType();
       PopAST();
+
+      EnableVar(((Namespace)curr_scope).members, pass.gvar_symb, subst_symbol);
     }
 
     AST_Tree ast = assign_exp != null ? 
@@ -2899,8 +2917,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           var symbols = ((LocalScope)curr_scope).members;
           disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-          subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
-          symbols.Replace(disabled_symbol, subst_symbol);
+          subst_symbol = DisableVar(symbols, disabled_symbol);
         }
 
         //NOTE: need to put expression nodes first
@@ -2917,7 +2934,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(disabled_symbol != null)
         {
           var symbols = ((LocalScope)curr_scope).members;
-          symbols.Replace(subst_symbol, disabled_symbol);
+          EnableVar(symbols, disabled_symbol, subst_symbol);
         }
 
         if(pop_json_type)
@@ -2945,6 +2962,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           types.CheckAssign(ptree, Wrap(assign_exp));
       }
     }
+  }
+
+  static VariableSymbol DisableVar(SymbolsStorage members, VariableSymbol disabled_symbol)
+  {
+    var subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
+    members.Replace(disabled_symbol, subst_symbol);
+    return subst_symbol;
+  }
+
+  static void EnableVar(SymbolsStorage members, VariableSymbol disabled_symbol, VariableSymbol subst_symbol)
+  {
+    members.Replace(subst_symbol, disabled_symbol);
   }
 
   public override object VisitDeclAssign(bhlParser.DeclAssignContext ctx)

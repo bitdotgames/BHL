@@ -204,6 +204,8 @@ public class ModuleCompiler : AST_Visitor
         module.ns,
         imports,
         constants, 
+        module.init_gvars_num,
+        module.local_gvars_num,
         init_bytes,
         code_bytes,
         ip2src_line
@@ -399,18 +401,6 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.GetGVar,
         3/*idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.SetGVarImported,
-        3/*module name idx*/, 3/*idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.GetGVarImported,
-        3/*module name idx*/, 3/*idx*/
       )
     );
     DeclareOpcode(
@@ -1145,12 +1135,14 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        Emit(Opcodes.GetGVar, new int[] {module.vars.IndexOf(ast.symb)}, ast.line_num);
+        //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+        Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
-        Emit(Opcodes.SetGVar, new int[] {module.vars.IndexOf(ast.symb)}, ast.line_num);
+        //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+        Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:

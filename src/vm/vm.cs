@@ -17,8 +17,6 @@ public enum Opcodes
   ArgVar                = 9,
   SetGVar               = 10,
   GetGVar               = 11,
-  SetGVarImported       = 12,
-  GetGVarImported       = 13,
   Return                = 14,
   ReturnVal             = 15,
   Jump                  = 16,
@@ -222,14 +220,25 @@ public class Module
   public ModulePath path;
   public HashSet<string> imports = new HashSet<string>(); 
 
-  public VarIndex vars = new VarIndex();
-
+  public VarIndex gvars = new VarIndex();
+  public int local_gvars_mark = -1;
+  public int local_gvars_num {
+    get {
+      return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
+    }
+  }
+  public int init_gvars_mark = -1;
+  public int init_gvars_num {
+    get {
+      return init_gvars_mark == -1 ? gvars.Count : init_gvars_mark;
+    }
+  }
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
-    ns = new Namespace(ts.nfunc_index, "", name, vars);
+    ns = new Namespace(ts.nfunc_index, "", name, gvars);
   }
 
   public Module(Types ts, string name, string file_path)
@@ -905,6 +914,7 @@ public class VM : INamedResolver
 
   public bool LoadModule(string module_name)
   {
+    //Console.WriteLine("==START LOAD " + module_name);
     if(loading_modules.Count > 0)
       throw new Exception("Already loading modules");
 
@@ -917,6 +927,8 @@ public class VM : INamedResolver
     for(int i=loading_modules.Count;i-- > 0;)
       RegisterModule(loading_modules[i].module);
     loading_modules.Clear();
+
+    //Console.WriteLine("==END LOAD " + module_name);
 
     return true;
   }
@@ -937,23 +949,25 @@ public class VM : INamedResolver
     loading_modules.Add(lm);
 
     var loaded = loader.Load(module_name, this, OnImport);
+
     //if no such a module let's remove it from the loading list
     if(loaded == null)
     {
       loading_modules.Remove(lm);
-      return;
     }
-
-    lm.module = loaded;
-    //NOTE: for simplicity we add it to the modules at once,
-    //      this is probably a bit 'smelly' but makes further
-    //      symbols setup logic easier
-    compiled_mods[module_name] = loaded;
+    else
+    {
+      lm.module = loaded;
+      //NOTE: for simplicity we add it to the modules at once,
+      //      this is probably a bit 'smelly' but makes further
+      //      symbols setup logic easier
+      compiled_mods[module_name] = loaded;
+    }
   }
 
-  void OnImport(Namespace dest_ns, string module_name)
+  void OnImport(string origin_module, string import_name)
   {
-    DoLoadModule(module_name);
+    DoLoadModule(import_name);
   }
 
   //NOTE: this method is public only for testing convenience
@@ -981,7 +995,21 @@ public class VM : INamedResolver
   void SetupModule(CompiledModule cm)
   {
     foreach(var imp in cm.imports)
+    {
       cm.ns.Link(FindModuleNamespace(imp));
+    }
+
+    int gvars_offset = cm.local_gvars_num;
+    foreach(var imp in cm.imports)
+    {
+      var imp_mod = compiled_mods[imp];
+      for(int g=0;g<imp_mod.gvars.Count;++g)
+      {
+        cm.gvars[gvars_offset] = imp_mod.gvars[g];
+        cm.gvars[gvars_offset].Retain();
+        ++gvars_offset;
+      }
+    }
 
     cm.ns.SetupSymbols();
 
@@ -1053,21 +1081,21 @@ public class VM : INamedResolver
       //Util.Debug("EXEC INIT " + opcode);
       switch(opcode)
       {
+        //NOTE: operates on global vars
         case Opcodes.DeclVar:
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var type = constants[type_idx].itype.Get();
 
-          module.gvars.Resize(var_idx+1);
           module.gvars[var_idx] = MakeDefaultVal(type);
         }
         break;
+        //NOTE: operates on global vars
         case Opcodes.SetVar:
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
 
-          module.gvars.Resize(var_idx+1);
           var new_val = init_frame.stack.Pop();
           module.gvars.Assign(this, var_idx, new_val);
           new_val.Release();
@@ -1587,28 +1615,6 @@ public class VM : INamedResolver
 
         var new_val = curr_frame.stack.Pop();
         curr_frame.module.gvars.Assign(this, var_idx, new_val);
-        new_val.Release();
-      }
-      break;
-      case Opcodes.GetGVarImported:
-      {
-        int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-        string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.compiled_mods[module_name];
-        curr_frame.stack.PushRetain(module.gvars[var_idx]);
-      }
-      break;
-      case Opcodes.SetGVarImported:
-      {
-        int module_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref ip);
-
-        string module_name = curr_frame.constants[module_idx].str;
-        var module = curr_frame.vm.compiled_mods[module_name];
-        var new_val = curr_frame.stack.Pop();
-        module.gvars.Assign(this, var_idx, new_val);
         new_val.Release();
       }
       break;
@@ -2400,6 +2406,7 @@ public class CompiledModule
   public byte[] bytecode;
   public List<string> imports;
   public List<Const> constants;
+  public int local_gvars_num;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
 
@@ -2408,6 +2415,8 @@ public class CompiledModule
     Namespace ns,
     List<string> imports,
     List<Const> constants, 
+    int init_gvars_num,
+    int local_gvars_num,
     byte[] initcode,
     byte[] bytecode, 
     Ip2SrcLine ip2src_line = null
@@ -2420,9 +2429,12 @@ public class CompiledModule
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
+
+    this.local_gvars_num = local_gvars_num;
+    gvars.Resize(init_gvars_num);
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<Namespace, string> on_import = null)
+  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<string, string> on_import = null)
   {
     var ns = new Namespace(types.nfunc_index);
     //NOTE: it's assumed types.ns is always linked by each module, 
@@ -2438,6 +2450,8 @@ public class CompiledModule
     string name = "";
     var imports = new List<string>();
     int constants_len = 0;
+    int init_gvars_num = 0;
+    int local_gvars_num = 0;
     byte[] constant_bytes = null;
     var constants = new List<Const>();
     byte[] symb_bytes = null;
@@ -2473,13 +2487,16 @@ public class CompiledModule
       if(constants_len > 0)
         constant_bytes = r.ReadBytes(constants_len);
 
+      init_gvars_num = r.ReadInt32();
+      local_gvars_num = r.ReadInt32();
+
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
 
     foreach(var import in imports)
-      on_import?.Invoke(ns, import);
+      on_import?.Invoke(name, import);
 
     marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
 
@@ -2492,6 +2509,8 @@ public class CompiledModule
         ns, 
         imports,
         constants, 
+        init_gvars_num,
+        local_gvars_num,
         initcode, 
         bytecode, 
         ip2src_line
@@ -2567,7 +2586,11 @@ public class CompiledModule
 
       var constant_bytes = WriteConstants(cm.constants);
       w.Write(constant_bytes.Length);
-      w.Write(constant_bytes, 0, constant_bytes.Length);
+      if(constant_bytes.Length > 0)
+        w.Write(constant_bytes, 0, constant_bytes.Length);
+
+      w.Write(cm.gvars.Count);
+      w.Write(cm.local_gvars_num);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);

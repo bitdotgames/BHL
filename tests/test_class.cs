@@ -3237,8 +3237,7 @@ public class TestClasses : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm, check_val_allocs: false);
-    AssertEqual(1, vm.vals_pool.Busy);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -3269,14 +3268,20 @@ public class TestClasses : BHL_TestBase
 
     vm.LoadModule("bhl2");
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm, check_val_allocs: false);
-    AssertEqual(1, vm.vals_pool.Busy);
+    CommonChecks(vm);
   }
 
   [IsTested()]
   public void TestStaticFieldImportedMixWithGlobalVars()
   {
+    string bhl0 = @"
+      int G = 111
+      int F
+    ";
+
     string bhl1 = @"
+    import ""bhl0""
+
     int A = 10
     namespace a {
       int A = 20
@@ -3295,10 +3300,11 @@ public class TestClasses : BHL_TestBase
     func int test() 
     {
       a.Bar.foo = 42
-      return A + a.A + B + a.Bar.foo
+      return a.A + A + B + a.Bar.foo
     }
     ";
     var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl0.bhl", bhl0},
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -3307,6 +3313,6 @@ public class TestClasses : BHL_TestBase
     vm.LoadModule("bhl2");
     AssertEqual(10+20+30+42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm, check_val_allocs: false);
-    AssertEqual(1, vm.vals_pool.Busy);
+    AssertEqual(2, vm.vals_pool.Busy);
   }
 }

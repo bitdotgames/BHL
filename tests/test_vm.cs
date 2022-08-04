@@ -16928,7 +16928,7 @@ public class TestVM : BHL_TestBase
           }
         );
       },
-      @"symbol 'foo' is already declared"
+      @"already defined symbol 'foo'"
     );
   }
 
@@ -18305,10 +18305,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseInit()
-      .EmitThen(Opcodes.DeclVar, new int[] { 1, ConstIdx(c, ts.T("float")) })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, ts.T("float")) })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -18339,12 +18339,12 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
-      .EmitThen(Opcodes.SetGVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetGVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -18374,10 +18374,10 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseInit()
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.GetGVar, new int[] { 1 })
+      .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Return)
       ;
@@ -19076,7 +19076,7 @@ public class TestVM : BHL_TestBase
     {
       var ts = new Types();
 
-      var ns = new Namespace();
+      var ns = new Namespace(null, new VarIndex());
       ns.Link(ts.ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));

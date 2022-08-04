@@ -429,6 +429,11 @@ public class AST_VarDecl : AST_Tree
     : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
   {}
 
+  //class static field version
+  public AST_VarDecl(FieldSymbol symb, int global_idx)
+    : this(symb.name, false, false, symb.type.Get(), global_idx)
+  {}
+
   public AST_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
   {
     this.name = name;

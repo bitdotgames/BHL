@@ -559,7 +559,7 @@ public class BHL_TestBase
   {
     public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
 
-    public CompiledModule Load(string name, INamedResolver resolver, System.Action<Namespace, string> on_import)
+    public CompiledModule Load(string name, INamedResolver resolver, System.Action<string, string> on_import)
     {
       return mods[name];
     }
