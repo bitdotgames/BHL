@@ -1636,10 +1636,8 @@ public class VM : INamedResolver
 
         int stack_offset = curr_frame.stack.Count; 
         for(int i=0;i<ret_num;++i)
-        {
           curr_frame.origin.stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
-          curr_frame.stack.Dec();
-        }
+        curr_frame.stack.head -= ret_num;
 
         ip = curr_frame.return_ip;
         curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);

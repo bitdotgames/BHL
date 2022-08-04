@@ -375,8 +375,8 @@ public sealed class Crc32 : HashAlgorithm
 
 public class FixedStack<T>
 {
-  T[] storage;
-  int head = 0;
+  internal T[] storage;
+  internal int head = 0;
 
   public int Count
   {
@@ -392,13 +392,13 @@ public class FixedStack<T>
   {
     get { 
 #if BHL_FRONT
-      //ValidateIndex(index);
+      ValidateIndex(index);
 #endif
       return storage[index]; 
     }
     set { 
 #if BHL_FRONT
-      //ValidateIndex(index);
+      ValidateIndex(index);
 #endif
       storage[index] = value; 
     }

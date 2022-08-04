@@ -485,8 +485,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //NOTE: let's add imported global vars to module's global vars index
       if(module.local_gvars_mark == -1)
         module.local_gvars_mark = module.gvars.Count;
+
       if(module.init_gvars_mark == -1)
-        module.init_gvars_mark = module.gvars.Count + imported.local_gvars_num;
+        module.init_gvars_mark = module.gvars.Count;
+      module.init_gvars_mark += imported.local_gvars_num;
+
       module.gvars.index.AddRange(imported.gvars.index);
       ns.Link(imported.ns);
     }
