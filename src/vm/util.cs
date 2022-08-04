@@ -391,19 +391,17 @@ public class FixedStack<T>
   public T this[int index]
   {
     get { 
-#if BHL_FRONT
       ValidateIndex(index);
-#endif
       return storage[index]; 
     }
     set { 
-#if BHL_FRONT
       ValidateIndex(index);
-#endif
       storage[index] = value; 
     }
   }
 
+  //let's validate index during parsing
+  [System.Diagnostics.Conditional("BHL_FRONT")]
   void ValidateIndex(int index)
   {
     if(index < 0 || index >= head)

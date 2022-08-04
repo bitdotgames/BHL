@@ -1737,6 +1737,7 @@ public class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
+        frm.locals.head = 1;
         frm.locals[0] = self;
 
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
@@ -1775,6 +1776,7 @@ public class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
+        frm.locals.head = 1;
         frm.locals[0] = self;
 
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
@@ -1799,6 +1801,7 @@ public class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
 
+        frm.locals.head = 1;
         frm.locals[0] = self;
 
         Call(curr_frame, ctx_frames, frm, args_bits, ref ip);
