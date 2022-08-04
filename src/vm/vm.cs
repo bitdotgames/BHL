@@ -995,14 +995,15 @@ public class VM : INamedResolver
   void SetupModule(CompiledModule cm)
   {
     foreach(var imp in cm.imports)
-    {
       cm.ns.Link(FindModuleNamespace(imp));
-    }
 
     int gvars_offset = cm.local_gvars_num;
     foreach(var imp in cm.imports)
     {
-      var imp_mod = compiled_mods[imp];
+      CompiledModule imp_mod;
+      //TODO: what about 'native' modules?
+      if(!compiled_mods.TryGetValue(imp, out imp_mod))
+        continue;
       for(int g=0;g<imp_mod.gvars.Count;++g)
       {
         cm.gvars[gvars_offset] = imp_mod.gvars[g];
