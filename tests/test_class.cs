@@ -3312,7 +3312,6 @@ public class TestClasses : BHL_TestBase
 
     vm.LoadModule("bhl2");
     AssertEqual(10+20+30+42, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm, check_val_allocs: false);
-    AssertEqual(2, vm.vals_pool.Busy);
+    CommonChecks(vm);
   }
 }

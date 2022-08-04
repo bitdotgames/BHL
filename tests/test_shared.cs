@@ -657,17 +657,16 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true, bool check_val_allocs = true)
+  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)
   {
     //cleaning globals
     vm.UnloadModules();
 
     //for extra debug
-    if(check_val_allocs && vm.vals_pool.Allocs != vm.vals_pool.Free)
+    if(vm.vals_pool.Allocs != vm.vals_pool.Free)
       Console.WriteLine(vm.vals_pool.Dump());
 
-    if(check_val_allocs)
-      AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
+    AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
     AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
     AssertEqual(vm.fptrs_pool.Allocs, vm.fptrs_pool.Free);
     if(check_frames)

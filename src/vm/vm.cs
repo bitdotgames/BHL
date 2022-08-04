@@ -1004,10 +1004,13 @@ public class VM : INamedResolver
       //TODO: what about 'native' modules?
       if(!compiled_mods.TryGetValue(imp, out imp_mod))
         continue;
-      for(int g=0;g<imp_mod.gvars.Count;++g)
+      
+      //NOTE: taking only local module's gvars
+      for(int g=0;g<imp_mod.local_gvars_num;++g)
       {
-        cm.gvars[gvars_offset] = imp_mod.gvars[g];
-        cm.gvars[gvars_offset].Retain();
+        var imp_gvar = imp_mod.gvars[g];
+        imp_gvar.Retain();
+        cm.gvars[gvars_offset] = imp_gvar;
         ++gvars_offset;
       }
     }
@@ -1048,8 +1051,7 @@ public class VM : INamedResolver
     for(int i=0;i<m.gvars.Count;++i)
     {
       var val = m.gvars[i];
-      if(val != null)
-        val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      val.Release();
     }
     m.gvars.Clear();
 
