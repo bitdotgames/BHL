@@ -1135,14 +1135,22 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.GVAR:
       {
-        //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-        Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+        //NOTE: native static fields are implemented as native functions
+        if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
+        else
+          //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+          Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
-        //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-        Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+        //NOTE: native static fields are implemented as native functions
+        if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
+        else
+          //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+          Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:

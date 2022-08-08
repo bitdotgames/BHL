@@ -3310,7 +3310,7 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestStaticMethodNoThis()
+  public void TestStaticMethodNoThisAllowed()
   {
     string bhl = @"
     class Bar {
@@ -3331,6 +3331,8 @@ public class TestClasses : BHL_TestBase
 
   public class NativeFoo
   {
+    public static int static_bar;
+
     public static int static_foo(int n) { return n; }
   }
 
@@ -3486,6 +3488,43 @@ public class TestClasses : BHL_TestBase
 
     vm.LoadModule("bhl2");
     AssertEqual(10+20+30+42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeStaticField()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      NativeFoo.static_bar = 42
+      NativeFoo.static_bar++
+      return NativeFoo.static_bar
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("NativeFoo", null, null);
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("static_bar", FieldAttrib.Static, ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          v.SetInt(NativeFoo.static_bar);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          NativeFoo.static_bar = (int)v.num;
+        }
+      ));
+    }
+
+    var vm = MakeVM(bhl, ts);
+    NativeFoo.static_bar = 14;
+    AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(43, NativeFoo.static_bar);
     CommonChecks(vm);
   }
 }

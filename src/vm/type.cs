@@ -428,6 +428,7 @@ public class Types : INamedResolver
   {
     { new Tuple<IType, IType>(Int, Float) },
   };
+#endif
 
   static Dictionary<Tuple<IType, IType>, IType> cast_from_to = new Dictionary<Tuple<IType, IType>, IType>() 
   {
@@ -453,7 +454,6 @@ public class Types : INamedResolver
     { new Tuple<IType, IType>(Any,    Float),     Float  },
     { new Tuple<IType, IType>(Any,    Any),       Any    },
   };
-#endif
 
   public Namespace ns;
 

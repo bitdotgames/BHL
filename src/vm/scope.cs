@@ -132,14 +132,14 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 {
   public const uint CLASS_ID = 20;
 
-  public string module_name = "";
+  //TODO: probably these don't belong to this place
+  internal string module_name = "";
+  internal VarIndex module_vars;
+  internal NativeFuncIndex nfunc_index;
 
   public SymbolsStorage members;
 
   internal List<Namespace> links = new List<Namespace>();
-
-  internal VarIndex module_vars;
-  internal NativeFuncIndex nfunc_index;
 
   public override uint ClassId()
   {

@@ -380,12 +380,49 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     return this.scope;
   }
 
+  public string GetNativeStaticFieldGetFuncName(FieldSymbol fld)
+  {
+    return "$__" + name + "_get_" + fld.name;
+  }
+
+  public string GetNativeStaticFieldSetFuncName(FieldSymbol fld)
+  {
+    return "$__" + name + "_set_" + fld.name;
+  }
+
   public void Define(Symbol sym) 
   {
     if(sym is FuncSymbolNative fs && fs.attribs.HasFlag(FuncAttrib.Static))
       this.GetNamespace().nfunc_index.Index(fs);
     else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
-      this.GetNamespace().module_vars.Index(fld);
+    {
+      if(this is ClassSymbolNative)
+      {
+        //let's create fake static get/set native functions
+        var static_get = new FuncSymbolNative(GetNativeStaticFieldGetFuncName(fld), fld.type,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          var res = Val.New(frm.vm);
+          fld.getter(frm, null, ref res, fld);
+          frm.stack.Push(res);
+          return null;
+        });
+        this.GetNamespace().nfunc_index.Index(static_get);
+
+        var static_set = new FuncSymbolNative(GetNativeStaticFieldSetFuncName(fld), fld.type,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        {
+          Val ctx = null;
+          var val = frm.stack.Pop();
+          fld.setter(frm, ref ctx, val, fld);
+          val.Release();
+          return null;
+        });
+        this.GetNamespace().nfunc_index.Index(static_set);
+      }
+      else
+        this.GetNamespace().module_vars.Index(fld);
+    }
 
     //NOTE: we don't check if there are any parent symbols with the same name, 
     //      they will be checked once the class is finally setup
@@ -568,6 +605,18 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       }
     }
     return related_types;
+  }
+
+  //TODO: make it more generic
+  public void OverloadBinaryOperator(FuncSymbol s)
+  {
+    if(s.GetTotalArgsNum() != 1)
+      throw new SymbolError(s, "operator overload must have exactly one argument");
+
+    if(s.GetReturnType() == Types.Void)
+      throw new SymbolError(s, "operator overload return value can't be void");
+
+    Define(s);
   }
 }
 
@@ -1822,17 +1871,6 @@ public class ClassSymbolNative : ClassSymbol
   public ClassSymbolNative(string name, ClassSymbol super_class = null, VM.ClassCreator creator = null, IList<InterfaceSymbol> implements = null)
     : base(name, super_class, implements, creator)
   {}
-
-  public void OverloadBinaryOperator(FuncSymbol s)
-  {
-    if(s.GetTotalArgsNum() != 1)
-      throw new SymbolError(s, "operator overload must have exactly one argument");
-
-    if(s.GetReturnType() == Types.Void)
-      throw new SymbolError(s, "operator overload return value can't be void");
-
-    Define(s);
-  }
 
   public override uint ClassId()
   {
