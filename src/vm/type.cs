@@ -630,13 +630,13 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool Is(IType a, IType b) 
+  static public bool Is(IType type, IType dest_type) 
   {
-    if(a == null || b == null)
+    if(type == null || dest_type == null)
       return false;
-    else if(a.Equals(b))
+    else if(type.Equals(dest_type))
       return true;
-    else if(a is IInstanceType ai && b is IInstanceType bi)
+    else if(type is IInstanceType ai && dest_type is IInstanceType bi)
     {
       var aset = ai.GetAllRelatedTypesSet();
       var bset = bi.GetAllRelatedTypesSet();
@@ -645,6 +645,34 @@ public class Types : INamedResolver
     }
     else
       return false;
+  }
+
+  static public bool CheckCast(IType dest_type, IType from_type) 
+  {
+    if(dest_type == from_type)
+      return true;
+
+    //special case: we allow to cast from 'any' to any user type
+    if(dest_type == Any || from_type == Any)
+      return true;
+
+    if((from_type == Float || from_type == Int) && dest_type is EnumSymbol)
+      return true;
+    if((dest_type == Float || dest_type == Int) && from_type is EnumSymbol)
+      return true;
+
+    if(dest_type == String && from_type is EnumSymbol)
+      return true;
+
+    IType cast_type = null;
+    cast_from_to.TryGetValue(new Tuple<IType, IType>(from_type, dest_type), out cast_type);
+    if(cast_type == dest_type)
+      return true;
+
+    if(IsInSameHierarchy(from_type, dest_type))
+      return true;
+    
+    return false;
   }
 
   static public bool IsInSameHierarchy(IType a, IType b) 
@@ -712,35 +740,13 @@ public class Types : INamedResolver
       throw new SemanticError(lhs, "incompatible types");
   }
 
-  public void CheckCast(WrappedParseTree type, WrappedParseTree exp) 
+  static public void CheckCast(WrappedParseTree dest, WrappedParseTree from) 
   {
-    var ltype = type.eval_type;
-    var rtype = exp.eval_type;
+    var dest_type = dest.eval_type;
+    var from_type = from.eval_type;
 
-    if(ltype == rtype)
-      return;
-
-    //special case: we allow to cast from 'any' to any user type
-    if(ltype == Any || rtype == Any)
-      return;
-
-    if((rtype == Float || rtype == Int) && ltype is EnumSymbol)
-      return;
-    if((ltype == Float || ltype == Int) && rtype is EnumSymbol)
-      return;
-
-    if(ltype == String && rtype is EnumSymbol)
-      return;
-
-    IType cast_type = null;
-    cast_from_to.TryGetValue(new Tuple<IType, IType>(rtype, ltype), out cast_type);
-    if(cast_type == ltype)
-      return;
-
-    if(IsInSameHierarchy(rtype, ltype))
-      return;
-    
-    throw new SemanticError(type, "incompatible types for casting");
+    if(!CheckCast(dest_type, from_type))
+      throw new SemanticError(dest, "incompatible types for casting");
   }
 
   public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 

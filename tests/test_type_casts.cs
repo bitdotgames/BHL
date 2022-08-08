@@ -361,6 +361,258 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastToChildTypeAndCallMethod()
+  {
+    string bhl = @"
+    class Bar 
+    {
+      int bar
+    }
+
+    class Foo : Bar
+    {
+      int foo
+
+      func int getFoo() {
+        return this.foo
+      }
+    }
+
+    func Foo cast(Bar bar)
+    {
+      return (Foo)bar;
+    }
+
+    func int test() 
+    {
+      Foo f = {foo: 14, bar: 41}
+      return cast(f).getFoo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastAnyToChildTypeAndCallMethod()
+  {
+    string bhl = @"
+    class Bar 
+    {
+      int bar
+    }
+
+    class Foo : Bar
+    {
+      int foo
+
+      func int getFoo() {
+        return this.foo
+      }
+    }
+
+    func Foo cast(any bar)
+    {
+      return (Foo)bar;
+    }
+
+    func int test() 
+    {
+      Foo f = {foo: 14, bar: 41}
+      return cast(f).getFoo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBadCastInRuntime()
+  {
+    string bhl = @"
+    class Bar 
+    {
+      int bar
+    }
+
+    class Foo : Bar
+    {
+      int foo
+
+      func int getFoo() {
+        return this.foo
+      }
+    }
+
+    func Foo cast(any bar)
+    {
+      return (Foo)bar;
+    }
+
+    func int test() 
+    {
+      Bar b = {bar: 41}
+      return cast(b).getFoo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertError<Exception>(
+      delegate() { 
+        Execute(vm, "test");
+      },
+      "Invalid type cast"
+    );
+  }
+
+  [IsTested()]
+  public void TestNativeChildClassImplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeChildClassExplicitBaseCast()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      Color c = (Color)new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      return c.r + c.g
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBindChildClassExplicitDownCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha orig = new ColorAlpha
+      orig.a = 1000
+      Color tmp = (Color)orig
+      tmp.r = 1
+      tmp.g = 100
+      ColorAlpha c = (ColorAlpha)tmp
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 1101);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIncompatibleImplicitClassCast()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      Foo tmp = new Color
+      return 1
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColor(ts);
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null, type);
+        }
+      );
+      ts.ns.Define(cl);
+    }
+
+    AssertError<Exception>(
+       delegate() {
+         Compile(bhl, ts);
+       },
+      "incompatible types"
+    );
+  }
+
+  [IsTested()]
+  public void TestIncompatibleExplicitClassCast()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Foo tmp = (Foo)new Color
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColor(ts);
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null, type);
+        }
+      );
+      ts.ns.Define(cl);
+    }
+
+    AssertError<Exception>(
+       delegate() {
+         Compile(bhl, ts);
+       },
+      "incompatible types for casting"
+    );
+  }
+
+
+  [IsTested()]
   public void TestAsForChildClassObjReturnedFromMethod()
   {
     {

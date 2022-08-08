@@ -244,6 +244,157 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBindNativeChildClass()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = k*1
+      c.g = k*100
+      c.a = 1000
+      return c.r + c.g + c.a
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 1202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeChildClassCallParentMethod()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      return c.mult_summ(k)
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 60);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeChildClassCallOwnMethod()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      ColorAlpha c = new ColorAlpha
+      c.r = 10
+      c.g = 20
+      c.a = 3
+      return c.mult_summ_alpha()
+    }
+    ";
+
+    var ts = new Types();
+    
+    BindColorAlpha(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 90);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNestedMembersAccess()
+  {
+    string bhl = @"
+      
+    func float test(float k) 
+    {
+      ColorNested cn = new ColorNested
+      cn.c.r = k*1
+      cn.c.g = k*100
+      return cn.c.r + cn.c.g
+    }
+    ";
+
+    var ts = new Types();
+
+    BindColor(ts);
+
+    {
+      var cl = new ClassSymbolNative("ColorNested", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new ColorNested(), type);
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("c", ts.T("Color"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var cn = (ColorNested)ctx.obj;
+          v.SetObj(cn.c, ts.T("Color").Get());
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var cn = (ColorNested)ctx.obj;
+          cn.c = (Color)v.obj; 
+          ctx.SetObj(cn, ctx.type);
+        }
+      ));
+    }
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnNativeInstance()
+  {
+    string bhl = @"
+      
+    func Color MakeColor(float g)
+    {
+      Color c = new Color
+      c.g = g
+      return c
+    }
+
+    func float test(float k) 
+    {
+      return MakeColor(k).g + MakeColor(k).r
+    }
+    ";
+
+    var ts = new Types();
+    BindColor(ts);
+
+    var vm = MakeVM(bhl, ts);
+    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
+
+  [IsTested()]
   public void TestImportUserClass()
   {
     string bhl1 = @"

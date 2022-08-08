@@ -1646,7 +1646,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     Wrap(ctx).eval_type = tp.Get();
 
-    types.CheckCast(Wrap(ctx), Wrap(exp)); 
+    Types.CheckCast(Wrap(ctx), Wrap(exp)); 
 
     PeekAST().AddChild(ast);
 
