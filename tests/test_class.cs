@@ -3241,6 +3241,29 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStaticFieldInitNotAllowed()
+  {
+    string bhl = @"
+    class Bar {
+      int b
+      static int foo = 42
+    }
+
+    func int test() 
+    {
+      return Bar.foo
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input '='"
+    );
+  }
+
+  [IsTested()]
   public void TestStaticFieldImported()
   {
     string bhl1 = @"
