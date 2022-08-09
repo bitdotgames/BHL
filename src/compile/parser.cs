@@ -992,6 +992,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     public bhlParser.CallArgContext ca;
     public Symbol orig;
+    public bool variadic;
   }
 
   void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call, ref AST_Interim pre_call)
@@ -1011,6 +1012,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       norm_cargs.Add(arg); 
     }
 
+    var variadic_args = new List<bhlParser.CallArgContext>();
+
     //1. filling normalized call args
     for(int ci=0;ci<cargs.callArg().Length;++ci)
     {
@@ -1028,14 +1031,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(norm_cargs[idx].ca != null)
           FireError(ca_name, "argument already passed before");
       }
-      
-      if(idx >= func_args.Count)
+
+      if(func_symb.signature.has_variadic && idx >= func_args.Count-1)
+        variadic_args.Add(ca);
+      else if(idx >= func_args.Count)
         FireError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
+      else
+        norm_cargs[idx].ca = ca;
+    }
 
-      if(idx >= func_args.Count)
-        FireError(ca, "too many arguments for function");
-
-      norm_cargs[idx].ca = ca;
+    if(variadic_args.Count > 0)
+    {
+      norm_cargs[total_args_num-1].ca = variadic_args[variadic_args.Count-1];
+      norm_cargs[total_args_num-1].variadic = true;
     }
 
     PushAST(call);
@@ -1043,10 +1051,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //2. traversing normalized args
     for(int i=0;i<norm_cargs.Count;++i)
     {
-      var ca = norm_cargs[i].ca;
+      var na = norm_cargs[i];
 
       //NOTE: if call arg is not specified, try to find the default one
-      if(ca == null)
+      if(na.ca == null)
       {
         //this one is used for proper error reporting
         var next_arg = FindNextCallArg(cargs, prev_ca);
@@ -1072,34 +1080,57 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        prev_ca = ca;
+        prev_ca = na.ca;
         if(!args_info.IncArgsNum())
-          FireError(ca, "max arguments reached");
+          FireError(na.ca, "max arguments reached");
 
         var func_arg_symb = (FuncArgSymbol)func_args[i];
         var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
-        bool is_ref = ca.isRef() != null;
-        if(!is_ref && func_arg_symb.is_ref)
-          FireError(ca, "'ref' is missing");
-        else if(is_ref && !func_arg_symb.is_ref)
-          FireError(ca, "argument is not a 'ref'");
+        if(!na.variadic)
+        {
+          bool is_ref = na.ca.isRef() != null;
+          if(!is_ref && func_arg_symb.is_ref)
+            FireError(na.ca, "'ref' is missing");
+          else if(is_ref && !func_arg_symb.is_ref)
+            FireError(na.ca, "argument is not a 'ref'");
 
-        PushCallByRef(is_ref);
-        PushJsonType(func_arg_type);
-        PushAST(new AST_Interim());
-        Visit(ca);
-        TryProtectStackInterleaving(ca, func_arg_type, i, ref pre_call);
-        PopAddOptimizeAST();
-        PopJsonType();
-        PopCallByRef();
+          PushCallByRef(is_ref);
+          PushJsonType(func_arg_type);
+          PushAST(new AST_Interim());
+          Visit(na.ca);
+          TryProtectStackInterleaving(na.ca, func_arg_type, i, ref pre_call);
+          PopAddOptimizeAST();
+          PopJsonType();
+          PopCallByRef();
 
-        var wca = Wrap(ca);
+          var wca = Wrap(na.ca);
 
-        if(func_arg_symb.type.Get() == null)
-          FireError(ca, "unresolved type " + func_arg_symb.type);
-        types.CheckAssign(func_arg_symb.type.Get(), wca);
+          if(func_arg_symb.type.Get() == null)
+            FireError(na.ca, "unresolved type " + func_arg_symb.type);
+          types.CheckAssign(func_arg_symb.type.Get(), wca);
+        }
+        else
+        {
+          var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
+          var varg_type = varg_arr_type.item_type.Get();
 
+          var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
+
+          PushAST(varg_ast);
+          PushJsonType(varg_type);
+          for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
+          {
+            var vca = variadic_args[vidx];
+            Visit(vca);
+            //the last item is added implicitely
+            if(vidx+1 < variadic_args.Count)
+              varg_ast.AddChild(new AST_JsonArrAddItem());
+            TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
+          }
+          PopJsonType();
+          PopAddAST();
+        }
       }
     }
 
@@ -1287,6 +1318,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var tp = ParseType(vd.type(), strict);
         if(vd.isRef() != null)
           tp = curr_scope.R().T(new RefType(tp));
+        if(vd.VARIADIC() != null)
+          sig.has_variadic = true;
         if(vd.assignExp() != null)
           ++default_args_num;
         sig.AddArg(tp);

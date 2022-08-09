@@ -291,6 +291,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public int default_args_num;
 
+  public bool has_variadic;
+
   public string GetName() { return name; }
 
   public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
@@ -331,6 +333,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     {
       if(i > 0)
         tmp += ",";
+      if(has_variadic && i == arg_types.Count-1)
+        tmp += "...";
       tmp += arg_types[i].path;
     }
     tmp += ")";
@@ -348,6 +352,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     marshall.Marshall.Sync(ctx, ref ret_type);
     marshall.Marshall.Sync(ctx, arg_types);
     marshall.Marshall.Sync(ctx, ref default_args_num);
+    marshall.Marshall.Sync(ctx, ref has_variadic);
     if(ctx.is_read)
       Update();
   }

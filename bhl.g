@@ -309,7 +309,7 @@ funcParams
   ;
 
 funcParamDeclare
-  : isRef? type NAME assignExp?
+  : isRef? VARIADIC? type NAME assignExp?
   ;
 
 varsDeclare
@@ -427,6 +427,10 @@ ARR
 
 DOT
   : '.'
+  ;
+
+VARIADIC
+  : '...'
   ;
 
 SEPARATOR
