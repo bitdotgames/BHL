@@ -282,7 +282,7 @@ You can run unit tests by executing the following command:
 1. ~~Polymorphic class methods~~
 1. ~~Nested classes~~
 1. ~~Nested in classes enums~~
-1. Static class members support
+1. ~~Static class members support~~
 1. Variadic function arguments
 1. ~~Maps support~~
 1. Debugger support
