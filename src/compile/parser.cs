@@ -2849,7 +2849,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         found_default_arg = true;
       }
-      else if(found_default_arg)
+      else if(found_default_arg && fp.VARIADIC() == null)
         FireError(fp.NAME(), "missing default argument expression");
 
       bool pop_json_type = false;

@@ -59,4 +59,31 @@ public class TestVariadic : BHL_TestBase
     AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestCombineWithOtherDefaultArg()
+  {
+    string bhl = @"
+    func int sum(int k = 10, ...[]int ns) {
+      int s = k
+      foreach(int n in ns) {
+        s += n
+      }
+      return s
+    }
+
+    func int test1() {
+      return sum(30, 1, 2, 3)
+    }
+
+    func int test2() {
+      return sum()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(30+1+2+3, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(10, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
