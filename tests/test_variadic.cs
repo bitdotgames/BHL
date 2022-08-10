@@ -86,4 +86,24 @@ public class TestVariadic : BHL_TestBase
     AssertEqual(10, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestTypeMismatch()
+  {
+    string bhl = @"
+    func sum(...[]int ns) {
+    }
+
+    func test() {
+      sum(1, ""foo"", 2)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types"
+    );
+  }
 }

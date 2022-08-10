@@ -1117,6 +1117,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
         var varg_type = varg_arr_type.item_type.Get();
+        if(variadic_args.Count > 0 && varg_type == null)
+          FireError(na.ca, "unresolved type " + varg_arr_type.item_type);
 
         var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
 
@@ -1130,6 +1132,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(vidx+1 < variadic_args.Count)
             varg_ast.AddChild(new AST_JsonArrAddItem());
           TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
+
+          var wvca = Wrap(vca);
+
+          types.CheckAssign(varg_type, wvca);
         }
         PopJsonType();
         PopAddAST();
