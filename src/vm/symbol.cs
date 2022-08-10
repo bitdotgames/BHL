@@ -1805,7 +1805,7 @@ public class FuncSymbolNative : FuncSymbol
   public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
   public Cb cb;
 
-  int def_args_num;
+  int default_args_num;
 
   public FuncSymbolNative(
     string name, 
@@ -1830,7 +1830,7 @@ public class FuncSymbolNative : FuncSymbol
     string name, 
     FuncAttrib attribs,
     Proxy<IType> ret_type, 
-    int def_args_num,
+    int default_args_num,
     Cb cb,
     params FuncArgSymbol[] args
   ) 
@@ -1839,7 +1839,7 @@ public class FuncSymbolNative : FuncSymbol
     this.attribs = attribs;
 
     this.cb = cb;
-    this.def_args_num = def_args_num;
+    this.default_args_num = default_args_num;
 
     foreach(var arg in args)
     {
@@ -1848,7 +1848,7 @@ public class FuncSymbolNative : FuncSymbol
     }
   }
 
-  public override int GetDefaultArgsNum() { return def_args_num; }
+  public override int GetDefaultArgsNum() { return default_args_num; }
 
   public override void Define(Symbol sym) 
   {

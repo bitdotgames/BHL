@@ -1013,6 +1013,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     var variadic_args = new List<bhlParser.CallArgContext>();
+    if(func_symb.signature.has_variadic)
+      norm_cargs[total_args_num-1].variadic = true;
 
     //1. filling normalized call args
     for(int ci=0;ci<cargs.callArg().Length;++ci)
@@ -1040,12 +1042,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         norm_cargs[idx].ca = ca;
     }
 
-    if(variadic_args.Count > 0)
-    {
-      norm_cargs[total_args_num-1].ca = variadic_args[variadic_args.Count-1];
-      norm_cargs[total_args_num-1].variadic = true;
-    }
-
     PushAST(call);
     IParseTree prev_ca = null;
     //2. traversing normalized args
@@ -1053,42 +1049,42 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var na = norm_cargs[i];
 
-      //NOTE: if call arg is not specified, try to find the default one
-      if(na.ca == null)
+      if(!na.variadic)
       {
-        //this one is used for proper error reporting
-        var next_arg = FindNextCallArg(cargs, prev_ca);
-
-        if(i < required_args_num)
+        //NOTE: if call arg is not specified, try to find the default one
+        if(na.ca == null)
         {
-          FireError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
+          //this one is used for proper error reporting
+          var next_arg = FindNextCallArg(cargs, prev_ca);
+
+          if(i < required_args_num)
+          {
+            FireError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
+          }
+          else
+          {
+            //NOTE: for func native symbols we assume default arguments  
+            //      are specified manually in bindings
+            if(func_symb is FuncSymbolNative || 
+              (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
+            {
+              int default_arg_idx = i - required_args_num;
+              if(!args_info.UseDefaultArg(default_arg_idx, true))
+                FireError(next_arg, "max default arguments reached");
+            }
+            else
+              FireError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
+          }
         }
         else
         {
-          //NOTE: for func native symbols we assume default arguments  
-          //      are specified manually in bindings
-          if(func_symb is FuncSymbolNative || 
-            (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
-          {
-            int default_arg_idx = i - required_args_num;
-            if(!args_info.UseDefaultArg(default_arg_idx, true))
-              FireError(next_arg, "max default arguments reached");
-          }
-          else
-            FireError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
-        }
-      }
-      else
-      {
-        prev_ca = na.ca;
-        if(!args_info.IncArgsNum())
-          FireError(na.ca, "max arguments reached");
+          prev_ca = na.ca;
+          if(!args_info.IncArgsNum())
+            FireError(na.ca, "max arguments reached");
 
-        var func_arg_symb = (FuncArgSymbol)func_args[i];
-        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
+          var func_arg_symb = (FuncArgSymbol)func_args[i];
+          var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
-        if(!na.variadic)
-        {
           bool is_ref = na.ca.isRef() != null;
           if(!is_ref && func_arg_symb.is_ref)
             FireError(na.ca, "'ref' is missing");
@@ -1110,27 +1106,33 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             FireError(na.ca, "unresolved type " + func_arg_symb.type);
           types.CheckAssign(func_arg_symb.type.Get(), wca);
         }
-        else
+      }
+      else
+      {
+        if(!args_info.IncArgsNum())
+          FireError(na.ca, "max arguments reached");
+
+        var func_arg_symb = (FuncArgSymbol)func_args[i];
+        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
+
+        var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
+        var varg_type = varg_arr_type.item_type.Get();
+
+        var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
+
+        PushAST(varg_ast);
+        PushJsonType(varg_type);
+        for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
         {
-          var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
-          var varg_type = varg_arr_type.item_type.Get();
-
-          var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
-
-          PushAST(varg_ast);
-          PushJsonType(varg_type);
-          for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
-          {
-            var vca = variadic_args[vidx];
-            Visit(vca);
-            //the last item is added implicitely
-            if(vidx+1 < variadic_args.Count)
-              varg_ast.AddChild(new AST_JsonArrAddItem());
-            TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
-          }
-          PopJsonType();
-          PopAddAST();
+          var vca = variadic_args[vidx];
+          Visit(vca);
+          //the last item is added implicitely
+          if(vidx+1 < variadic_args.Count)
+            varg_ast.AddChild(new AST_JsonArrAddItem());
+          TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
         }
+        PopJsonType();
+        PopAddAST();
       }
     }
 
@@ -1319,8 +1321,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(vd.isRef() != null)
           tp = curr_scope.R().T(new RefType(tp));
         if(vd.VARIADIC() != null)
+        {
           sig.has_variadic = true;
-        if(vd.assignExp() != null)
+          ++default_args_num;
+        }
+        else if(vd.assignExp() != null)
           ++default_args_num;
         sig.AddArg(tp);
       }
@@ -2374,7 +2379,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopScope();
     }
 
+    //TODO: why not storing the amount of default arguments in signature?
     func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
+    if(func_ast.symbol.signature.has_variadic)
+      ++func_ast.symbol.default_args_num;
   }
 
   void Pass_ParseFuncBlock(ParserPass pass)

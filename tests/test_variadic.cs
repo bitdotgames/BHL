@@ -18,13 +18,40 @@ public class TestVariadic : BHL_TestBase
       return s
     }
 
-    func int test() {
+    func int test1() {
       return sum(1, 2, 3)
+    }
+
+    func int test2() {
+      return sum()
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(6, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCombineWithOtherArgs()
+  {
+    string bhl = @"
+    func int sum(int k, ...[]int ns) {
+      int s = 0
+      foreach(int n in ns) {
+        s += k*n
+      }
+      return s
+    }
+
+    func int test() {
+      return sum(3, 1, 2, 3)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3*1 + 3*2 + 3*3, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }
