@@ -144,4 +144,36 @@ public class TestVariadic : BHL_TestBase
       );
     }
   }
+
+  [IsTested()]
+  public void TestDefaultArgIsNotAllowed()
+  {
+    string bhl = @"
+    func sum(...[]int ns = [1, 2]) {
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "default argument is not allowed"
+    );
+  }
+
+  [IsTested()]
+  public void TestMustBeLast()
+  {
+    string bhl = @"
+    func sum(...[]int ns, int a) {
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "variadic argument must be last"
+    );
+  }
 }

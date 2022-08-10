@@ -1326,8 +1326,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var tp = ParseType(vd.type(), strict);
         if(vd.isRef() != null)
           tp = curr_scope.R().T(new RefType(tp));
+
         if(vd.VARIADIC() != null)
         {
+          if(i != fparams.funcParamDeclare().Length-1)
+            FireError(vd, "variadic argument must be last");
+
+          if(vd.assignExp() != null)
+            FireError(vd.assignExp(), "default argument is not allowed");
           sig.has_variadic = true;
           ++default_args_num;
         }
