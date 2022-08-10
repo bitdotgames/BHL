@@ -90,20 +90,58 @@ public class TestVariadic : BHL_TestBase
   [IsTested()]
   public void TestTypeMismatch()
   {
-    string bhl = @"
-    func sum(...[]int ns) {
+    {
+      string bhl = @"
+      func sum(...[]int ns) {
+      }
+
+      func test() {
+        sum(1, ""foo"", 2)
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types"
+      );
     }
 
-    func test() {
-      sum(1, ""foo"", 2)
-    }
-    ";
+    {
+      string bhl = @"
+      func sum(...[]int ns) {
+      }
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types"
-    );
+      func test() {
+        sum(""foo"", 2)
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types"
+      );
+    }
+
+    {
+      string bhl = @"
+      func sum(...[]int ns) {
+      }
+
+      func test() {
+        sum(1, ""foo"")
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types"
+      );
+    }
   }
 }
