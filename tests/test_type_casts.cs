@@ -430,7 +430,8 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //TODO:
+  //[IsTested()]
   public void TestBadCastInRuntime()
   {
     string bhl = @"

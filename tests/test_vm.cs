@@ -6306,6 +6306,31 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDefaultFuncLambdaArg()
+  {
+    string bhl = @"
+    func int effect_body(
+        int dummy, 
+        func(int) on_create_fn = func(int _) {} 
+    ) {
+      return dummy
+    }
+
+    func int effect(int dummy) {
+      return effect_body(dummy)
+    }
+
+    func int test()
+    {
+      return effect(10)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
   public void TestLambdaChangesSeveralVars()
   {
     string bhl = @"

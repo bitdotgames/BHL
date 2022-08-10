@@ -2096,8 +2096,9 @@ public class VM : INamedResolver
       new_val.SetStr(val.num.ToString());
     else
     {
-      if(!force_type && cast_type is IInstanceType && val.type is IInstanceType && !Types.Is(val.type, cast_type))
-        throw new Exception("Invalid type cast");
+      //TODO: think better about run-time invalid casting error
+      //if(!force_type && cast_type is IInstanceType && val.type is IInstanceType && !Types.Is(val.type, cast_type))
+      //  throw new Exception("Invalid type cast");
       new_val.ValueCopyFrom(val);
       if(force_type)
         new_val.type = cast_type;
