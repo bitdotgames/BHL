@@ -45,13 +45,18 @@ public class TestVariadic : BHL_TestBase
       return s
     }
 
-    func int test() {
+    func int test1() {
       return sum(3, 1, 2, 3)
+    }
+
+    func int test2() {
+      return sum(3)
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3*1 + 3*2 + 3*3, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(3*1 + 3*2 + 3*3, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 }
