@@ -1013,7 +1013,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     var variadic_args = new List<bhlParser.CallArgContext>();
-    if(func_symb.signature.has_variadic)
+    if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs))
       norm_cargs[total_args_num-1].variadic = true;
 
     //1. filling normalized call args
@@ -1034,7 +1034,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(ca_name, "argument already passed before");
       }
 
-      if(func_symb.signature.has_variadic && idx >= func_args.Count-1)
+      if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs) && idx >= func_args.Count-1)
         variadic_args.Add(ca);
       else if(idx >= func_args.Count)
         FireError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
@@ -2393,7 +2393,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //TODO: why not storing the amount of default arguments in signature?
     func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
-    if(func_ast.symbol.signature.has_variadic)
+    if(func_ast.symbol.attribs.HasFlag(FuncAttrib.VariadicArgs))
       ++func_ast.symbol.default_args_num;
   }
 

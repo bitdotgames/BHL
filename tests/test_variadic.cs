@@ -176,4 +176,40 @@ public class TestVariadic : BHL_TestBase
       "variadic argument must be last"
     );
   }
+
+  [IsTested()]
+  public void TestNativeBinding()
+  {
+    string bhl = @"
+    func int test1() {
+      return sum(1, 2, 3)
+    }
+
+    func int test2() {
+      return sum()
+    }
+    ";
+
+    var ts = new Types();
+    
+    var fn = new FuncSymbolNative("sum", FuncAttrib.VariadicArgs, Types.Int, 0,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          var ns = frm.stack.Pop();
+          var vs = (ValList)ns._obj;
+          int sum = 0;
+          for(int i=0;i<vs.Count;++i)
+            sum += (int)vs[i].num;
+          ns.Release();
+          frm.stack.Push(Val.NewInt(frm.vm, sum));
+          return null;
+        }, 
+        new FuncArgSymbol("ns", ts.TArr("int"))
+    );
+    ts.ns.Define(fn);
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(6, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

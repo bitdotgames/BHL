@@ -1420,11 +1420,24 @@ public enum FuncAttrib : byte
   Virtual     = 1,
   Override    = 2,
   Static      = 4,
+  VariadicArgs    = 8,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
 {
-  public FuncSignature signature;
+  FuncSignature _signature;
+  public FuncSignature signature {
+    get {
+      return _signature;
+    }
+    set {
+      _signature = value;
+      if(signature.has_variadic)
+        attribs |= FuncAttrib.VariadicArgs;
+      else
+        attribs &= ~FuncAttrib.VariadicArgs;
+    }
+  }
 
   internal SymbolsStorage members;
 
@@ -1447,6 +1460,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _attribs = (byte)value;
+      signature.has_variadic = attribs.HasFlag(FuncAttrib.VariadicArgs);
     }
   }
 
@@ -1563,7 +1577,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref signature);
+    marshall.Marshall.Sync(ctx, ref _signature);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 
