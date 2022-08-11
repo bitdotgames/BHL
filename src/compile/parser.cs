@@ -1329,6 +1329,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(vd.VARIADIC() != null)
         {
+          if(vd.isRef() != null)
+            FireError(vd.isRef(), "pass by ref not allowed");
+
           if(i != fparams.funcParamDeclare().Length-1)
             FireError(vd, "variadic argument must be last");
 

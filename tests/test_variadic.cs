@@ -178,6 +178,22 @@ public class TestVariadic : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNoRefAllowed()
+  {
+    string bhl = @"
+    func sum(ref ...[]int ns) {
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "pass by ref not allowed"
+    );
+  }
+
+  [IsTested()]
   public void TestNativeBinding()
   {
     string bhl = @"
