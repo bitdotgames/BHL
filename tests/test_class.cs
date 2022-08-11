@@ -358,6 +358,7 @@ public class TestClasses : BHL_TestBase
           ctx.SetObj(cn, ctx.type);
         }
       ));
+      cl.Setup();
     }
 
     var vm = MakeVM(bhl, ts);
@@ -2948,6 +2949,7 @@ public class TestClasses : BHL_TestBase
         );
         cl.Define(m);
       }
+      cl.Setup();
     }
 
     {
@@ -2971,6 +2973,7 @@ public class TestClasses : BHL_TestBase
           ctx.SetObj(b, ctx.type);
         }
       ));
+      cl.Setup();
       ts.ns.Define(cl);
     }
   }
@@ -3365,6 +3368,7 @@ public class TestClasses : BHL_TestBase
         new FuncArgSymbol("int", ts.T("int")) 
       );
       cl.Define(m);
+      cl.Setup();
     }
 
     var vm = MakeVM(bhl, ts);
@@ -3519,6 +3523,7 @@ public class TestClasses : BHL_TestBase
           NativeFoo.static_bar = (int)v.num;
         }
       ));
+      cl.Setup();
     }
 
     var vm = MakeVM(bhl, ts);

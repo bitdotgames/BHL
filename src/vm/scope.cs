@@ -170,14 +170,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     return this.ResolveSymbolByPath(path);
   }
 
-  public void SetupSymbols()
-  {
-    this.ForAllLocalSymbols(delegate(Symbol s) {
-      if(s is ClassSymbol cs)
-        cs.Setup();
-    });
-  }
-
   public void ForAllLocalSymbols(System.Action<Symbol> cb)
   {
     for(int m=0;m<members.Count;++m)

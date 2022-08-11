@@ -489,7 +489,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     }
   }
 
-
   void SetupAllMembers()
   {
     if(_all_members != null)
@@ -675,6 +674,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       //hidden system method not available directly
       FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", Types.Void, ArrIdxW);
     }
+
+    Setup();
   }
 
   public ArrayTypeSymbol(Proxy<IType> item_type) 
@@ -697,11 +698,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 
   public GenericArrayTypeSymbol(Proxy<IType> item_type) 
     : base(item_type)
-  {
-    //NOTE: it's a generic symbol we need to setup it manually,
-    //      since it's not setup once the module is loaded
-    Setup();
-  }
+  {}
 
   //marshall factory version
   public GenericArrayTypeSymbol()
@@ -1027,6 +1024,9 @@ public abstract class MapTypeSymbol : ClassSymbol
       );
       enumerator_type.Define(fn);
     }
+
+    Setup();
+    enumerator_type.Setup();
   }
 
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
@@ -1050,12 +1050,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(key_type, val_type)
-  {
-    //NOTE: it's a generic symbol we need to setup it manually,
-    //      since it's not setup once the module is loaded
-    Setup();
-    enumerator_type.Setup();
-  }
+  {}
   
   //marshall factory version
   public GenericMapTypeSymbol()
@@ -1964,8 +1959,6 @@ public class ClassSymbolScript : ClassSymbol
 
     marshall.Marshall.Sync(ctx, ref _super_class);
 
-    //NOTE: this includes super class members as well, maybe we
-    //      should make a copy which doesn't include parent members?
     marshall.Marshall.Sync(ctx, ref members);
 
     marshall.Marshall.Sync(ctx, ref implements); 

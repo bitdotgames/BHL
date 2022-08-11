@@ -11433,6 +11433,7 @@ public class TestVM : BHL_TestBase
           new FuncArgSymbol("ticks", Types.Int)
         );
         cl.Define(m);
+        cl.Setup();
       }
     }
 
@@ -15316,7 +15317,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts);
+    var cl = BindColor(ts, setup: false);
     var op = new FuncSymbolNative("+", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
@@ -15335,6 +15336,7 @@ public class TestVM : BHL_TestBase
       new FuncArgSymbol("r", ts.T("Color"))
     );
     cl.OverloadBinaryOperator(op);
+    cl.Setup();
 
     var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
@@ -15358,7 +15360,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts);
+    var cl = BindColor(ts, setup: false);
     var op = new FuncSymbolNative("*", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
@@ -15377,6 +15379,7 @@ public class TestVM : BHL_TestBase
       new FuncArgSymbol("k", ts.T("float"))
     );
     cl.OverloadBinaryOperator(op);
+    cl.Setup();
 
     var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
@@ -15401,7 +15404,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts);
+    var cl = BindColor(ts, setup: false);
     {
       var op = new FuncSymbolNative("*", ts.T("Color"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
@@ -15443,6 +15446,7 @@ public class TestVM : BHL_TestBase
       );
       cl.OverloadBinaryOperator(op);
     }
+    cl.Setup();
 
     var vm = MakeVM(bhl, ts);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
@@ -15474,7 +15478,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
     
-    var cl = BindColor(ts);
+    var cl = BindColor(ts, setup: false);
     var op = new FuncSymbolNative("==", ts.T("bool"),
       delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
       {
@@ -15489,6 +15493,7 @@ public class TestVM : BHL_TestBase
       new FuncArgSymbol("arg", ts.T("Color"))
     );
     cl.OverloadBinaryOperator(op);
+    cl.Setup();
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -18849,7 +18854,6 @@ public class TestVM : BHL_TestBase
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
-      ns.SetupSymbols();
 
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
       AssertEqual(8, ns.members.Count);
@@ -18894,6 +18898,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(4, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ns.Resolve("Foo");
+      Foo.Setup();
       AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
@@ -18913,6 +18918,7 @@ public class TestVM : BHL_TestBase
       AssertEqual(1, Foo_Hey.scope_idx);
 
       var Bar = (ClassSymbolScript)ns.Resolve("Bar");
+      Bar.Setup();
       AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
@@ -19073,6 +19079,7 @@ public class TestVM : BHL_TestBase
           IntStruct.Encode(ctx, s, ctx.type);
         }
       ));
+      cl.Setup();
     }
   }
 
@@ -19106,6 +19113,7 @@ public class TestVM : BHL_TestBase
           ctx.SetObj(c, ctx.type);
         }
       ));
+      cl.Setup();
     }
   }
 
@@ -19194,6 +19202,7 @@ public class TestVM : BHL_TestBase
           ctx.SetObj(c, ctx.type);
         }
       ));
+      cl.Setup();
 
     }
   }
@@ -19279,6 +19288,7 @@ public class TestVM : BHL_TestBase
         );
         cl.Define(vs);
       }
+      cl.Setup();
       ts.ns.Define(cl);
     }
   }

@@ -487,6 +487,7 @@ public class Types : INamedResolver
         );
         ClassType.Define(fld);
       }
+      ClassType.Setup();
     }
   }
 
@@ -527,16 +528,6 @@ public class Types : INamedResolver
   {
     var clone = new Types(new NativeFuncIndex(nfunc_index), ns.Clone());
     return clone;
-  }
-
-  //TODO: Get rid of this 'convenience' method. Every native binding
-  //      registration code must setup its symbols by itself. This method
-  //      is called before any parsing/compilation for convenience because 
-  //      we didn't want to break any existing bindings (which at the moment
-  //      don't do any setup for its symbols) 
-  public void SetupSymbols()
-  {
-    ns.SetupSymbols();
   }
 
   void InitBuiltins() 

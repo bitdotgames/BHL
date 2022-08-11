@@ -160,7 +160,7 @@ public class BHL_TestBase
     public Color c = new Color();
   }
 
-  public ClassSymbolNative BindColor(Types ts)
+  public ClassSymbolNative BindColor(Types ts, bool setup = true)
   {
     var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v, IType type) 
@@ -263,6 +263,8 @@ public class BHL_TestBase
 
     ts.ns.Define(new ArrayTypeSymbolT<Color>("ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
 
+    if(setup)
+      cl.Setup();
     return cl;
   }
 
@@ -307,6 +309,7 @@ public class BHL_TestBase
         );
 
         cl.Define(m);
+        cl.Setup();
       }
     }
   }
@@ -374,6 +377,7 @@ public class BHL_TestBase
           ctx.SetObj(f, ctx.type);
         }
       ));
+      cl.Setup();
     }
 
     {
@@ -446,6 +450,7 @@ public class BHL_TestBase
       }
     ));
 
+    cl.Setup();
     return cl;
   }
 
@@ -491,8 +496,6 @@ public class BHL_TestBase
     else
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
-
-    ts.SetupSymbols();
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
@@ -801,8 +804,6 @@ public class BHL_TestBase
     else
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
-
-    ts.SetupSymbols();
 
     var mdl = new bhl.Module(ts, "", "");
 

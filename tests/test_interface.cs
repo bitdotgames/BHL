@@ -874,6 +874,7 @@ public class TestInterfaces : BHL_TestBase
         new FuncArgSymbol("int", ts.T("int")) 
       );
       cl.Define(m);
+      cl.Setup();
     }
 
     var vm = MakeVM(bhl, ts);

@@ -1015,12 +1015,12 @@ public class VM : INamedResolver
       }
     }
 
-    cm.ns.SetupSymbols();
-
     cm.ns.ForAllLocalSymbols(delegate(Symbol s)
       {
         if(s is ClassSymbol cs)
         {
+          cs.Setup();
+
           foreach(var kv in cs._vtable)
           {
             if(kv.Value is FuncSymbolScript vfs)

@@ -7,7 +7,6 @@ public static class std
   static public Module MakeModule(Types ts)
   {
     var m = new Module(ts, "std", null);
-    m.ns.SetupSymbols();
     return m;
   }
 
@@ -44,9 +43,6 @@ public static class std
         );
         io.Define(fn);
       }
-
-      m.ns.SetupSymbols();
-
       return m;
     }
   }

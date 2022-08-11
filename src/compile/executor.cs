@@ -99,8 +99,6 @@ public class CompilationExecutor
 
     conf.userbindings.Register(ts);
 
-    ts.SetupSymbols();
-
     var parse_workers = StartParseWorkers(conf);
     var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
 
