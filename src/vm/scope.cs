@@ -398,6 +398,16 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     marshall.Marshall.Sync(ctx, ref module_name);
     marshall.Marshall.Sync(ctx, ref members);
   }
+
+  public void SetupSymbols()
+  {
+    ForAllLocalSymbols((s) => 
+      {
+        if(s is ClassSymbolScript cs)
+          cs.Setup();
+      }
+    );
+  }
 }
 
 public static class ScopeExtensions

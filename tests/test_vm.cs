@@ -18855,6 +18855,8 @@ public class TestVM : BHL_TestBase
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
+      ns.SetupSymbols();
+
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
       AssertEqual(8, ns.members.Count);
 
@@ -18898,7 +18900,6 @@ public class TestVM : BHL_TestBase
       AssertEqual(4, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ns.Resolve("Foo");
-      Foo.Setup();
       AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
@@ -18918,7 +18919,6 @@ public class TestVM : BHL_TestBase
       AssertEqual(1, Foo_Hey.scope_idx);
 
       var Bar = (ClassSymbolScript)ns.Resolve("Bar");
-      Bar.Setup();
       AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
