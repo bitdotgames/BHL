@@ -186,7 +186,7 @@ callArgs
   ;
 
 callArg
-  : (NAME ':')? isRef? exp
+  : VARIADIC? (NAME ':')? isRef? exp
   ;
 
 block 

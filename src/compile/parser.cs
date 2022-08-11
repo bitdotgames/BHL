@@ -1107,6 +1107,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           types.CheckAssign(func_arg_symb.type.Get(), wca);
         }
       }
+      //checking variadic argument
       else
       {
         if(!args_info.IncArgsNum())
@@ -1116,29 +1117,38 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
-        var varg_type = varg_arr_type.item_type.Get();
-        if(variadic_args.Count > 0 && varg_type == null)
-          FireError(na.ca, "unresolved type " + varg_arr_type.item_type);
 
-        var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
-
-        PushAST(varg_ast);
-        PushJsonType(varg_type);
-        for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
+        if(variadic_args.Count == 1 && variadic_args[0].VARIADIC() != null)
         {
-          var vca = variadic_args[vidx];
-          Visit(vca);
-          //the last item is added implicitely
-          if(vidx+1 < variadic_args.Count)
-            varg_ast.AddChild(new AST_JsonArrAddItem());
-          TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
-
-          var wvca = Wrap(vca);
-
-          types.CheckAssign(varg_type, wvca);
+          PushJsonType(varg_arr_type);
+          Visit(variadic_args[0]);
+          PopJsonType();
         }
-        PopJsonType();
-        PopAddAST();
+        else
+        {
+          var varg_type = varg_arr_type.item_type.Get();
+          if(variadic_args.Count > 0 && varg_type == null)
+            FireError(na.ca, "unresolved type " + varg_arr_type.item_type);
+            var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
+
+          PushAST(varg_ast);
+          PushJsonType(varg_type);
+          for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
+          {
+            var vca = variadic_args[vidx];
+            Visit(vca);
+            //the last item is added implicitely
+            if(vidx+1 < variadic_args.Count)
+              varg_ast.AddChild(new AST_JsonArrAddItem());
+            TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
+
+            var wvca = Wrap(vca);
+
+            types.CheckAssign(varg_type, wvca);
+          }
+          PopJsonType();
+          PopAddAST();
+        }
       }
     }
 
