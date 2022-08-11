@@ -16455,6 +16455,74 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLoadModuleTwice()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float bhl1() 
+    {
+      return bhl2(23)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    func float bhl2(float k)
+    {
+      return bhl3(k)
+    }
+    ";
+
+    string bhl3 = @"
+    func float bhl3(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    var vm = new VM(ts, loader);
+    AssertTrue(vm.LoadModule("bhl1"));
+    AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
+
+    AssertTrue(vm.LoadModule("bhl1"));
+    AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLoadNonExistingModule()
+  {
+    string bhl1 = @"
+    func float bhl1() 
+    {
+      return 42
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    var vm = new VM(ts, loader);
+    AssertFalse(vm.LoadModule("garbage"));
+    AssertTrue(vm.LoadModule("bhl1"));
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBadImport()
   {
     string bhl1 = @"

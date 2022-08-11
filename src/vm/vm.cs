@@ -915,6 +915,9 @@ public class VM : INamedResolver
   public bool LoadModule(string module_name)
   {
     //Console.WriteLine("==START LOAD " + module_name);
+    if(compiled_mods.ContainsKey(module_name))
+      return true;
+
     if(loading_modules.Count > 0)
       throw new Exception("Already loading modules");
 
