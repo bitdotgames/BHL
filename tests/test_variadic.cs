@@ -291,6 +291,41 @@ public class TestVariadic : BHL_TestBase
     }
   }
 
+  //[IsTested()]
+  public void TestInterleaveValuesStackInParalAll()
+  {
+    string bhl = @"
+    func foo(...[]int ns) {
+      trace((string)ns[0] + "" "" + (string)ns[1] + "";"")
+    }
+
+    func int ret_int(int val, int ticks) {
+      while(ticks > 0) {
+        yield()
+        ticks = ticks - 1
+      }
+      return val
+    }
+
+    func test() 
+    {
+      paral_all {
+        foo(1, ret_int(val: 2, ticks: 1))
+        foo(10, ret_int(val: 20, ticks: 2))
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts, true);
+    Execute(vm, "test");
+    AssertEqual("1 2;10 20;", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestNativeBinding()
   {

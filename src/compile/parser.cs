@@ -1145,7 +1145,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             //the last item is added implicitely
             if(vidx+1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
-            TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
+            TryProtectStackInterleaving(vca, varg_type, i+vidx, ref pre_call);
 
             types.CheckAssign(varg_type, Wrap(vca));
           }
