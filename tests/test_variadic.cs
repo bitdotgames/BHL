@@ -237,6 +237,61 @@ public class TestVariadic : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInvalidVariadicUnpacking()
+  {
+    {
+      string bhl = @"
+      func sum(int n, ...[]int ns){}
+
+      func test() {
+        sum(...1)
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "not variadic argument"
+      );
+    }
+
+    {
+      string bhl = @"
+      func sum(int n, ...[]int ns){}
+
+      func test() {
+        sum(...[])
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "not variadic argument"
+      );
+    }
+
+    {
+      string bhl = @"
+      func sum(int n, ...[]int ns){}
+
+      func test() {
+        sum(0, ...1)
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types"
+      );
+    }
+  }
+
+  [IsTested()]
   public void TestNativeBinding()
   {
     string bhl = @"

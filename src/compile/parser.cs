@@ -1078,6 +1078,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else
         {
+          if(na.ca.VARIADIC() != null)
+            FireError(na.ca, "not variadic argument");
+
           prev_ca = na.ca;
           if(!args_info.IncArgsNum())
             FireError(na.ca, "max arguments reached");
@@ -1123,6 +1126,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PushJsonType(varg_arr_type);
           Visit(variadic_args[0]);
           PopJsonType();
+
+          types.CheckAssign(varg_arr_type, Wrap(variadic_args[0]));
         }
         else
         {
@@ -1142,9 +1147,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
               varg_ast.AddChild(new AST_JsonArrAddItem());
             TryProtectStackInterleaving(vca, varg_type, total_args_num-1, ref pre_call);
 
-            var wvca = Wrap(vca);
-
-            types.CheckAssign(varg_type, wvca);
+            types.CheckAssign(varg_type, Wrap(vca));
           }
           PopJsonType();
           PopAddAST();
