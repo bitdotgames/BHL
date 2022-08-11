@@ -106,11 +106,17 @@ public class TestVariadic : BHL_TestBase
     func int test2() {
       return sum(...[])
     }
+
+    func int test3() {
+      []int ns = [1, 2, 3]
+      return sum(...ns)
+    }
     ";
 
     var vm = MakeVM(bhl);
     AssertEqual(6, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(6, Execute(vm, "test3").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -291,6 +297,7 @@ public class TestVariadic : BHL_TestBase
     }
   }
 
+  //TODO:
   //[IsTested()]
   public void TestInterleaveValuesStackInParalAll()
   {
