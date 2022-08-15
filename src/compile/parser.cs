@@ -3127,7 +3127,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
+    var func_ast = CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
+    if(defers2func.ContainsKey(PeekFuncDecl()))
+    {
+      var seq_ast = new AST_Block(BlockType.SEQ);
+      seq_ast.children.AddRange(func_ast.children);
+      func_ast.children.Clear();
+      func_ast.children.Add(seq_ast);
+    }
+    
     return null;
   }
 
@@ -3696,7 +3704,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Tree CommonVisitBlock(BlockType type, IParseTree[] sts)
+  AST_Block CommonVisitBlock(BlockType type, IParseTree[] sts)
   {
     bool is_paral = 
       type == BlockType.PARAL || 

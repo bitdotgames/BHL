@@ -32,7 +32,7 @@ public class ModuleCompiler : AST_Visitor
   Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
 
   Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
-  HashSet<AST_Block> block_has_defers = new HashSet<AST_Block>();
+  HashSet<AST_Block> ctrl_block_has_defers = new HashSet<AST_Block>();
 
   internal struct Offset
   {
@@ -1061,7 +1061,11 @@ public class ModuleCompiler : AST_Visitor
 
     ctrl_blocks.Pop();
 
-    bool need_block = is_paral || parent_is_paral || block_has_defers.Contains(ast) || HasOffsetsTo(block_op);
+    bool need_block = 
+      is_paral || 
+      parent_is_paral || 
+      ctrl_block_has_defers.Contains(ast) || 
+      HasOffsetsTo(block_op);
 
     if(need_block)
       AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
@@ -1073,7 +1077,7 @@ public class ModuleCompiler : AST_Visitor
   {
     var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
     if(parent_block != null)
-      block_has_defers.Add(parent_block);
+      ctrl_block_has_defers.Add(parent_block);
 
     var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
     VisitChildren(ast);

@@ -579,15 +579,15 @@ public class VM : INamedResolver
         defers.Clear();
     }
 
-    public void RegisterDefer(DeferBlock cb)
+    public void RegisterDefer(DeferBlock dfb)
     {
       if(defers == null)
         defers = new List<DeferBlock>();
 
-      defers.Add(cb);
+      defers.Add(dfb);
       //for debug
-      //if(cb.frm != this)
-      //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + cb.frm.GetHashCode() + " " + fb.GetStackTrace());
+      //if(dfb.frm != this)
+      //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + dfb.frm.GetHashCode() + " " + fb.GetStackTrace());
     }
 
     public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -2017,7 +2017,7 @@ public class VM : INamedResolver
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
     for(int i = 0; i < args_num; ++i)
       new_frame.stack.Push(curr_frame.stack.Pop());
-    new_frame.stack.Push(Val.NewFlt(this, args_bits));
+    new_frame.stack.Push(Val.NewInt(this, args_bits));
 
     //let's remember ip to return to
     new_frame.return_ip = ip;
@@ -2842,7 +2842,7 @@ public struct DeferBlock
 
     //2. let's create the execution context
     ctx_frames.Push(new VM.FrameContext(frm, null, is_call: false, min_ip: ip, max_ip: max_ip));
-    //Console.WriteLine("ENTER SCOPE " + ip + " " + end_ip + " " + ctx_frames.Count);
+    //Console.WriteLine("ENTER SCOPE " + ip + " " + max_ip + " " + ctx_frames.Count);
     //3. and execute it
     var status = frm.vm.Execute(
       ref ip, ctx_frames, 
@@ -2851,7 +2851,7 @@ public struct DeferBlock
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
-    //Console.WriteLine("~EXIT SCOPE " + ip + " " + end_ip);
+    //Console.WriteLine("~EXIT SCOPE " + ip + " " + max_ip);
 
     ip = ip_orig;
 
@@ -2879,8 +2879,14 @@ public struct DeferBlock
       CoroutinePool.Del(frm, ref ip, ctx_frames, coros[i]);
     coros.Clear();
   }
+
+  public override string ToString()
+  {
+    return "Defer block: " + ip + " " + max_ip;
+  }
 }
 
+//NOTE: it's a standalone sequence block, in paral ParalBranchBlock is used
 public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public int ip;
@@ -2928,11 +2934,11 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     ExitScope(frm, ref ip, ext_frames);
   }
 
-  public void RegisterDefer(DeferBlock cb)
+  public void RegisterDefer(DeferBlock dfb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
-    defers.Add(cb);
+    defers.Add(dfb);
   }
 
   public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -3008,11 +3014,11 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     ExitScope(frm, ref ip, ctx_frames);
   }
 
-  public void RegisterDefer(DeferBlock cb)
+  public void RegisterDefer(DeferBlock dfb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
-    defers.Add(cb);
+    defers.Add(dfb);
   }
 
   public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -3091,11 +3097,11 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     branches.Add(coro);
   }
 
-  public void RegisterDefer(DeferBlock cb)
+  public void RegisterDefer(DeferBlock dfb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
-    defers.Add(cb);
+    defers.Add(dfb);
   }
 
   public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
@@ -3182,11 +3188,11 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     branches.Add(coro);
   }
 
-  public void RegisterDefer(DeferBlock cb)
+  public void RegisterDefer(DeferBlock dfb)
   {
     if(defers == null)
       defers = new List<DeferBlock>();
-    defers.Add(cb);
+    defers.Add(dfb);
   }
 
   public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)

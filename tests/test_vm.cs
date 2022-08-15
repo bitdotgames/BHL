@@ -11467,6 +11467,7 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 28})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
         .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
@@ -12724,6 +12725,51 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("10", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDeferInSubParalFuncCall()
+  {
+    string bhl = @"
+    func wait_3() {
+      defer {
+        trace(""~wait_3"")
+      }
+
+      trace(""!wait_3"")
+      suspend()
+    }
+
+    func doer() {
+      defer {
+        trace(""~doer"")
+      }
+      paral {
+        {
+          wait_3()
+        }
+        {
+          yield()
+          trace(""!here"")
+          yield()
+        }
+      }
+    }
+
+    func test() 
+    {
+      doer()
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("!wait_3!here~wait_3~doer", log.ToString());
     CommonChecks(vm);
   }
 
