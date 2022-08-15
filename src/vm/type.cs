@@ -21,6 +21,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 {
   public T named;
 
+  //TODO: we need to serialize/unserialize the original resolver
   public INamedResolver resolver;
 
   string _path;
@@ -45,11 +46,8 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   public Proxy(T named)
   {
     resolver = null;
-    if(named != null)
-      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
-    else 
-      _path = null;
     this.named = named;
+    _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
   }
 
   public bool IsEmpty()
@@ -75,6 +73,11 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   {
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
+
+    //TODO: some controversary code below - when saving a symbol,
+    //      forcing its full path to be saved
+    if(!ctx.is_read && named != null)
+      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
 
     marshall.Marshall.Sync(ctx, ref _path);
 

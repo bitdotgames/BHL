@@ -533,9 +533,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
           if(vsym == null)
             throw new SymbolError(sym, "no base virtual method to override");
 
-          if(!vsym.signature.Equals(fss.signature))
-            throw new SymbolError(vsym, "virtual method signature doesn't match the base one");
-
           vsym.AddOverride(curr_class, fss); 
         }
         else
@@ -1697,10 +1694,10 @@ public class FuncSymbolVirtual : FuncSymbol
     throw new NotImplementedException();
   }
 
-  public void AddOverride(ClassSymbol owner, FuncSymbol fs)
+  public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
   {
     if(!signature.Equals(fs.signature))
-      throw new Exception("Incompatible func signature");
+      throw new SymbolError(this, "virtual method signature doesn't match the base one");
 
     fs._virtual = this;
 

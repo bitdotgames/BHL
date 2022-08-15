@@ -2734,6 +2734,68 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportedClassVirtualMethodsSupportInADifferentNamespace()
+  {
+    string bhl1 = @"
+    namespace fns {
+      class Item {
+        int a
+      }
+      class Foo {
+        
+        int b
+        int a
+
+        func int DummyGarbage0() {
+          return 42
+        }
+
+        func virtual int getA(Item item) {
+          return this.a + item.a
+        }
+
+        func int getB() {
+          return this.b
+        }
+      }
+    }
+  ";
+
+  string bhl2 = @"
+    import ""bhl1""  
+
+    class Bar : fns.Foo {
+      int new_a
+
+      func override int getA(fns.Item item) {
+        return this.new_a + item.a
+      }
+
+      func DummyGarbage1() {}
+    }
+
+    func int test()
+    {
+      Bar b = {}
+      b.a = 1
+      b.new_a = 100
+      fns.Item item = {a: 1000}
+      return b.getA(item)
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+    
+    vm.LoadModule("bhl2");
+    AssertEqual(100 + 1000, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInvalidFuncAttrubutes()
   {
     string bhl = @"
