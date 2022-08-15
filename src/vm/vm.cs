@@ -915,20 +915,19 @@ public class VM : INamedResolver
   public bool LoadModule(string module_name)
   {
     //Console.WriteLine("==START LOAD " + module_name);
-    if(compiled_mods.ContainsKey(module_name))
-      return true;
-
     if(loading_modules.Count > 0)
       throw new Exception("Already loading modules");
 
-    DoLoadModule(module_name);
+    //let's check if it's already loaded
+    if(!TryAddToLoadingList(module_name))
+      return true;
 
     if(loading_modules.Count == 0)
       return false;
 
     //NOTE: registering modules in reverse order
     for(int i=loading_modules.Count;i-- > 0;)
-      RegisterModule(loading_modules[i].module);
+      FinishRegistration(loading_modules[i].module);
     loading_modules.Clear();
 
     //Console.WriteLine("==END LOAD " + module_name);
@@ -936,16 +935,24 @@ public class VM : INamedResolver
     return true;
   }
 
-  void DoLoadModule(string module_name)
+  //NOTE: this method is public only for testing convenience
+  public void LoadModule(CompiledModule cm)
+  {
+    BeginRegistration(cm);
+    FinishRegistration(cm);
+  }
+
+  //NOTE: returns false is module is already loaded
+  bool TryAddToLoadingList(string module_name)
   {
     //let's check if it's already available
     if(FindModuleNamespace(module_name) != null)
-      return;
+      return false;
 
     //let's check if it's already loading
     foreach(var tmp in loading_modules)
       if(tmp.name == module_name)
-        return;
+        return false;
 
     var lm = new LoadingModule();
     lm.name = module_name;
@@ -961,25 +968,33 @@ public class VM : INamedResolver
     else
     {
       lm.module = loaded;
-      //NOTE: for simplicity we add it to the modules at once,
-      //      this is probably a bit 'smelly' but makes further
-      //      symbols setup logic easier
-      compiled_mods[module_name] = loaded;
+
+      BeginRegistration(loaded);
     }
+
+    return true;
   }
 
   void OnImport(string origin_module, string import_name)
   {
-    DoLoadModule(import_name);
+    TryAddToLoadingList(import_name);
   }
 
-  //NOTE: this method is public only for testing convenience
-  public void RegisterModule(CompiledModule cm)
+  void BeginRegistration(CompiledModule cm)
   {
+    //NOTE: for simplicity we add it to the modules at once,
+    //      this is probably a bit 'smelly' but makes further
+    //      symbols setup logic easier
     compiled_mods[cm.name] = cm;
 
-    SetupModule(cm);
+    //let's init all our own global variables
+    for(int g=0;g<cm.local_gvars_num;++g)
+      cm.gvars[g] = Val.New(this); 
+  }
 
+  void FinishRegistration(CompiledModule cm)
+  {
+    SetupModule(cm);
     ExecInit(cm);
   }
 
@@ -1094,7 +1109,7 @@ public class VM : INamedResolver
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var type = constants[type_idx].itype.Get();
 
-          module.gvars[var_idx] = MakeDefaultVal(type);
+          InitDefaultVal(type, module.gvars[var_idx]);
         }
         break;
         //NOTE: operates on global vars
@@ -1977,6 +1992,12 @@ public class VM : INamedResolver
   internal Val MakeDefaultVal(IType type)
   {
     var v = Val.New(this);
+    InitDefaultVal(type, v);
+    return v;
+  }
+
+  internal void InitDefaultVal(IType type, Val v)
+  {
     //TODO: make type responsible for default initialization 
     //      of the value
     if(type == Types.Int)
@@ -1989,8 +2010,6 @@ public class VM : INamedResolver
       v.SetBool(false);
     else
       v.type = type;
-
-    return v;
   }
 
   void Call(Frame curr_frame, FixedStack<FrameContext> ctx_frames, Frame new_frame, uint args_bits, ref int ip)

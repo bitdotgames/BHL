@@ -16378,7 +16378,7 @@ public class TestVM : BHL_TestBase
     var c = Compile(bhl);
 
     var vm = new VM();
-    vm.RegisterModule(c);
+    vm.LoadModule(c);
     AssertEqual(Execute(vm, "test").result.PopRelease().num, 123);
     CommonChecks(vm);
   }
@@ -16708,6 +16708,71 @@ public class TestVM : BHL_TestBase
 
     vm.LoadModule("bhl1");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImportGlobalObjectVarWithCycles()
+  {
+    string main_bhl = @"
+    import ""g""  
+    import ""input""  
+    import ""unit""  
+
+    func int test() {
+      return unit_count()
+    }
+    ";
+
+    string g_bhl = @"
+
+    class G
+    {
+      float x
+    }
+
+    ";
+
+    string input_bhl = @"
+    import ""unit""  
+
+    []int ins = []
+
+    func int unit_count() {
+      return ins.Count
+    }
+
+    ";
+
+    string unit_bhl = @"
+    import ""g""  
+    import ""ability""
+
+    func int garbage_func() {
+      return 1
+    }
+
+    []int units = []
+
+    ";
+
+    string ability_bhl = @"
+      import ""unit""
+
+      func abliity_dummy() {}
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"main.bhl", main_bhl},
+        {"g.bhl", g_bhl},
+        {"input.bhl", input_bhl},
+        {"ability.bhl", ability_bhl},
+        {"unit.bhl", unit_bhl},
+      }
+    );
+
+    vm.LoadModule("main");
+    AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

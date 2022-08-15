@@ -505,7 +505,7 @@ public class BHL_TestBase
     var cm = CompiledModule.FromStream(ts, new MemoryStream(ms.GetBuffer()));
 
     var vm = new VM(ts);
-    vm.RegisterModule(cm);
+    vm.LoadModule(cm);
     return vm;
   }
 
