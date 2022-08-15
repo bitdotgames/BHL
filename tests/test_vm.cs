@@ -10359,6 +10359,30 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSeqFailure2()
+  {
+    string bhl = @"
+    func foo()
+    {
+      fail()
+    }
+
+    func test() 
+    {
+      {
+        defer {
+        }
+        foo()
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeqReturn()
   {
     string bhl = @"

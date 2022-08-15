@@ -3130,10 +3130,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var func_ast = CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
     if(defers2func.ContainsKey(PeekFuncDecl()))
     {
-      var seq_ast = new AST_Block(BlockType.SEQ);
-      seq_ast.children.AddRange(func_ast.children);
-      func_ast.children.Clear();
-      func_ast.children.Add(seq_ast);
+      if(!(func_ast.children.Count == 1 && func_ast.children[0] is AST_Block))
+      {
+        var seq_ast = new AST_Block(BlockType.SEQ);
+        seq_ast.children.AddRange(func_ast.children);
+        func_ast.children.Clear();
+        func_ast.children.Add(seq_ast);
+      }
     }
     
     return null;

@@ -666,6 +666,8 @@ public class BHL_TestBase
     //cleaning globals
     vm.UnloadModules();
 
+    if(check_frames)
+      AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
     //for extra debug
     if(vm.vals_pool.Allocs != vm.vals_pool.Free)
       Console.WriteLine(vm.vals_pool.Dump());
@@ -673,8 +675,6 @@ public class BHL_TestBase
     AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
     AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
     AssertEqual(vm.fptrs_pool.Allocs, vm.fptrs_pool.Free);
-    if(check_frames)
-      AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
     if(check_fibers)
       AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
     if(check_instructions)
