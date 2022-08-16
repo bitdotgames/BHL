@@ -1646,9 +1646,8 @@ public class VM : INamedResolver
       break;
       case Opcodes.Return:
       {
-        ctx.exit_scope?.ExitScope(curr_frame, ref ip, ctx_frames);
+        ctx.exit_scope.ExitScope(curr_frame, ref ip, ctx_frames);
 
-        curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);
         ip = curr_frame.return_ip;
         curr_frame.Clear();
         curr_frame.Release();
@@ -1664,10 +1663,10 @@ public class VM : INamedResolver
           curr_frame.origin.stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
         curr_frame.stack.head -= ret_num;
 
-        ctx.exit_scope?.ExitScope(curr_frame, ref ip, ctx_frames);
+        ctx.exit_scope.ExitScope(curr_frame, ref ip, ctx_frames);
 
         ip = curr_frame.return_ip;
-        curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);
+        
         curr_frame.Clear();
         curr_frame.Release();
         ctx_frames.Pop();
