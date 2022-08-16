@@ -2065,10 +2065,15 @@ public class VM : INamedResolver
 
       curr_frame.ExitScope(curr_frame, ref ip, ctx_frames);
       ip = curr_frame.return_ip;
+      //TODO: check if it's really necessary
       if(curr_frame.refs != -1)
         curr_frame.Release();
       ctx_frames.Pop();
 
+      return status;
+    }
+    else if(status == BHS.STOP)
+    {
       return status;
     }
     else if(status == BHS.SUCCESS)

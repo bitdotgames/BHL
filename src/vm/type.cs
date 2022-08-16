@@ -595,6 +595,9 @@ public class Types : INamedResolver
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)frm.stack.PopRelease().num;
+          if(frm.fb.id == fid)
+            status = BHS.STOP;
+
           frm.vm.Stop(fid);
           return null;
         }, 
