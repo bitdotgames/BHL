@@ -3127,8 +3127,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
+    var func = PeekFuncDecl();
     var func_ast = CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
-    if(defers2func.ContainsKey(PeekFuncDecl()))
+
+    //let's force return to be always present
+    if(!(func_ast.children.Count > 0 && func_ast.children[func_ast.children.Count-1] is AST_Return))
+      func_ast.children.Add(new AST_Return(0));
+
+    if(defers2func.ContainsKey(func))
     {
       if(!(func_ast.children.Count == 1 && func_ast.children[0] is AST_Block))
       {

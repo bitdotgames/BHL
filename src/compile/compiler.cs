@@ -866,7 +866,6 @@ public class ModuleCompiler : AST_Visitor
 
     Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
     VisitChildren(ast);
-    Emit(Opcodes.Return, null, ast.last_line_num);
 
     func_decls.Pop();
 
@@ -1322,7 +1321,11 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.ReturnVal, new int[] { ast.num }, ast.line_num);
+    //using simpler version if there are no returned values
+    if(ast.num == 0)
+      Emit(Opcodes.Return, null, ast.line_num);
+    else
+      Emit(Opcodes.ReturnVal, new int[] { ast.num }, ast.line_num);
   }
 
   public override void DoVisit(AST_Break ast)

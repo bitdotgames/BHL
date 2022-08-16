@@ -459,6 +459,8 @@ public class BHL_TestBase
     var fn = new FuncSymbolNative("trace", Types.Void,
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
           string str = frm.stack.PopRelease().str;
+          //for extra debug
+          //Console.WriteLine(str);
           log.Append(str);
           return null;
         }, 
