@@ -18265,6 +18265,100 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetStackTraceInLambda()
+  {
+    string bhl3 = @"
+    func hey(func() cb)
+    {
+      cb()
+    }
+
+    func wow(func() cb)
+    {
+
+      paral {
+        hey(cb)
+      }
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func bar(func() cb)
+    {
+      paral_all {
+        wow(cb)
+      }
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func foo(func() cb)
+    {
+      bar(cb)
+    }
+
+    func test() 
+    {
+      foo(func() {
+
+            record_callstack()
+          }
+      )
+    }
+    ";
+
+    var ts = new Types();
+    var trace = new List<VM.TraceItem>();
+    {
+      var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
+          frm.fb.GetStackTrace(trace); 
+          return null;
+        });
+      ts.ns.Define(fn);
+    }
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      },
+      ts
+    );
+    vm.LoadModule("bhl1");
+    vm.Start("test");
+    AssertFalse(vm.Tick());
+
+    AssertEqual(6, trace.Count);
+
+    AssertEqual("?", trace[0].func);
+    AssertEqual("bhl1.bhl", trace[0].file);
+    AssertEqual(12, trace[0].line);
+
+    AssertEqual("hey", trace[1].func);
+    AssertEqual("bhl3.bhl", trace[1].file);
+    AssertEqual(4, trace[1].line);
+
+    AssertEqual("wow", trace[2].func);
+    AssertEqual("bhl3.bhl", trace[2].file);
+    AssertEqual(11, trace[2].line);
+
+    AssertEqual("bar", trace[3].func);
+    AssertEqual("bhl2.bhl", trace[3].file);
+    AssertEqual(6, trace[3].line);
+
+    AssertEqual("foo", trace[4].func);
+    AssertEqual("bhl1.bhl", trace[4].file);
+    AssertEqual(5, trace[4].line);
+
+    AssertEqual("test", trace[5].func);
+    AssertEqual("bhl1.bhl", trace[5].file);
+    AssertEqual(10, trace[5].line);
+  }
+
+  [IsTested()]
   public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"

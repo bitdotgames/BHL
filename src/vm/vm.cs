@@ -415,7 +415,10 @@ public class VM : INamedResolver
         if(frm.module != null)
         {
           var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
-          if(fsymb != null) 
+          //NOTE: if symbol is missing it's a lambda
+          if(fsymb == null) 
+            item.file = frm.module.name + ".bhl";
+          else
             item.file = fsymb._module.name + ".bhl";
           item.func = fsymb == null ? "?" : fsymb.name;
           item.line = frm.module.ip2src_line.TryMap(item.ip);
