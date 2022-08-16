@@ -373,7 +373,7 @@ public class VM : INamedResolver
 
     public bool IsStopped()
     {
-      return ip >= STOP_IP;
+      return status == BHS.STOP || ip >= STOP_IP;
     }
 
     static void GetCalls(FixedStack<VM.FrameContext> ctx_frames, List<VM.Frame> calls)
@@ -439,7 +439,14 @@ public class VM : INamedResolver
 
     static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
     {
-      if(i is SeqBlock bi)
+      if(i is SeqBlock si)
+      {
+        GetCalls(si.ctx_frames, calls);
+        if(!TryGetTraceInfo(si.coroutine, ref ip, calls))
+          ip = si.ip;
+        return true;
+      }
+      else if(i is ParalBranchBlock bi)
       {
         GetCalls(bi.ctx_frames, calls);
         if(!TryGetTraceInfo(bi.coroutine, ref ip, calls))
@@ -2194,9 +2201,18 @@ public class VM : INamedResolver
     }
     else if(type == BlockType.SEQ)
     {
-      var br = CoroutinePool.New<SeqBlock>(this);
-      br.Init(curr_frame, ip + 1, ip + size);
-      return br;
+      if(ex_scope is IBranchyCoroutine)
+      {
+        var br = CoroutinePool.New<ParalBranchBlock>(this);
+        br.Init(curr_frame, ip + 1, ip + size);
+        return br;
+      }
+      else
+      {
+        var seq = CoroutinePool.New<SeqBlock>(this);
+        seq.Init(curr_frame, ip + 1, ip + size);
+        return seq;
+      }
     }
     else if(type == BlockType.DEFER)
     {
@@ -2878,6 +2894,74 @@ public struct DeferBlock
 }
 
 public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
+{
+  public int ip;
+  public ICoroutine coroutine;
+  public FixedStack<VM.FrameContext> ctx_frames = new FixedStack<VM.FrameContext>(256);
+  public List<DeferBlock> defers;
+
+  public int Count {
+    get {
+      return 0;
+    }
+  }
+
+  public ICoroutine At(int i) 
+  {
+    return coroutine;
+  }
+
+  public void Init(VM.Frame frm, int min_ip, int max_ip)
+  {
+    this.ip = min_ip;
+    ctx_frames.Push(new VM.FrameContext(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
+  }
+
+  public void Tick(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
+  {
+    status = frm.vm.Execute(
+      ref ip, ctx_frames, 
+      ref coroutine
+    );
+    ext_ip = ip;
+  }
+
+  public void Cleanup(VM.Frame frm, ref int ext_ip, FixedStack<VM.FrameContext> ext_frames)
+  {
+    if(coroutine != null)
+    {
+      CoroutinePool.Del(frm, ref ip, ctx_frames, coroutine);
+      coroutine = null;
+    }
+
+    ExitScope(frm, ref ip, ctx_frames);
+  }
+
+  public void RegisterDefer(DeferBlock dfb)
+  {
+    if(defers == null)
+      defers = new List<DeferBlock>();
+    defers.Add(dfb);
+  }
+
+  public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
+  {
+    DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
+
+    //NOTE: Let's release frames which were allocated but due to 
+    //      some control flow abruption (e.g paral exited) should be 
+    //      explicitely released. We start from index 1 on purpose
+    //      since the frame at index 0 will be released 'above'.
+    for(int i=ctx_frames.Count;i-- > 1;)
+    {
+      var ctx_frm = ctx_frames[i];
+      ctx_frm.frame.Release();
+    }
+    ctx_frames.Clear();
+  }
+}
+
+public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public int ip;
   public int min_ip;
