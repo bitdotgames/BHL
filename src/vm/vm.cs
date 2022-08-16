@@ -2746,6 +2746,13 @@ public class CoroutinePool
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
+  static internal void Del(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames, List<ICoroutine> coros)
+  {
+    for(int i=0;i<coros.Count;++i)
+      Del(frm, ref ip, ctx_frames, coros[i]);
+    coros.Clear();
+  }
+
   static public void Dump(ICoroutine coro, int level = 0)
   {
     if(level == 0)
@@ -2887,13 +2894,6 @@ public struct DeferBlock
       d.Execute(ref dummy, ref ip, ctx_frames);
     }
     defers.Clear();
-  }
-
-  static internal void DelCoroutines(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames, List<ICoroutine> coros)
-  {
-    for(int i=0;i<coros.Count;++i)
-      CoroutinePool.Del(frm, ref ip, ctx_frames, coros[i]);
-    coros.Clear();
   }
 
   public override string ToString()
@@ -3106,7 +3106,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
 
   public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.DelCoroutines(frm, ref ip, ctx_frames, branches);
+    CoroutinePool.Del(frm, ref ip, ctx_frames, branches);
     ExitScope(frm, ref ip, ctx_frames);
   }
 
@@ -3197,7 +3197,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
 
   public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
   {
-    DeferBlock.DelCoroutines(frm, ref ip, ctx_frames, branches);
+    CoroutinePool.Del(frm, ref ip, ctx_frames, branches);
     ExitScope(frm, ref ip, ctx_frames);
   }
 
