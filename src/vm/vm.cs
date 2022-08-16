@@ -597,6 +597,8 @@ public class VM : INamedResolver
     public void ExitScope(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ctx_frames)
     {
       DeferBlock.ExitScope(frm, defers, ref ip, ctx_frames);
+
+      Clear();
     }
 
     public void Retain()
@@ -1649,7 +1651,6 @@ public class VM : INamedResolver
         ctx.exit_scope.ExitScope(curr_frame, ref ip, ctx_frames);
 
         ip = curr_frame.return_ip;
-        curr_frame.Clear();
         curr_frame.Release();
         ctx_frames.Pop();
       }
@@ -1667,7 +1668,6 @@ public class VM : INamedResolver
 
         ip = curr_frame.return_ip;
         
-        curr_frame.Clear();
         curr_frame.Release();
         ctx_frames.Pop();
       }
