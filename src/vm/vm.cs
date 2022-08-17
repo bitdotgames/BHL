@@ -227,12 +227,6 @@ public class Module
       return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
     }
   }
-  public int init_gvars_mark = -1;
-  public int init_gvars_num {
-    get {
-      return init_gvars_mark == -1 ? gvars.Count : init_gvars_mark;
-    }
-  }
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)

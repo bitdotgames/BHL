@@ -204,7 +204,7 @@ public class ModuleCompiler : AST_Visitor
         module.ns,
         imports,
         constants, 
-        module.init_gvars_num,
+        module.gvars.Count,
         module.local_gvars_num,
         init_bytes,
         code_bytes,

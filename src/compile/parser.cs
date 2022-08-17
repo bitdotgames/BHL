@@ -486,11 +486,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(module.local_gvars_mark == -1)
         module.local_gvars_mark = module.gvars.Count;
 
-      if(module.init_gvars_mark == -1)
-        module.init_gvars_mark = module.gvars.Count;
-      module.init_gvars_mark += imported.local_gvars_num;
+      for(int i=0;i<imported.local_gvars_num;++i)
+        module.gvars.index.Add(imported.gvars.index[i]);
 
-      module.gvars.index.AddRange(imported.gvars.index);
       ns.Link(imported.ns);
     }
   }
