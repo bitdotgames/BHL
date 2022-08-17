@@ -11577,6 +11577,92 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBugWithStartingFiberFromDeferInterruptedParal()
+  {
+    string bhl = @"
+
+    func doer() 
+    {
+      defer {
+        start(func() {})
+      }
+      suspend()
+    }
+
+    func wow()
+    {
+      paral {
+        {
+          doer()
+        }
+        {
+          return
+        }
+      }
+    }
+
+    func test() 
+    {
+      wow()
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("142", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestBugWithStartingFiberFromDeferInterruptedParalAndRefs()
+  {
+    string bhl = @"
+
+    func doer(ref int a) 
+    {
+      defer {
+        start(func() {})
+      }
+      a = 42
+      suspend()
+    }
+
+    func wow(ref int a)
+    {
+      paral {
+        {
+          doer(ref a)
+        }
+        {
+          yield()
+          return
+        }
+      }
+    }
+
+    func test() 
+    {
+      int a = 0
+      wow(ref a)
+      trace((string)a)
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("142", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestDeferScopes()
   {
     string bhl = @"
