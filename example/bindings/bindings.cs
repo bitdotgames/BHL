@@ -66,7 +66,7 @@ public class WaitNode : ICoroutine
   bool first_time = true;
   float time_left;
 
-  public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     if(first_time)
     {
@@ -82,7 +82,7 @@ public class WaitNode : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
+  public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     first_time = true;
   }
