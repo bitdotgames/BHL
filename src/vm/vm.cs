@@ -265,11 +265,11 @@ public class VM : INamedResolver
     }
   }
 
-  public class ExecStack : FixedStack<ExecCtx>
+  public class ExecState : FixedStack<ExecCtx>
   {
     public int ip;
 
-    public ExecStack(int max_capacity = 256)
+    public ExecState(int max_capacity = 256)
       : base(max_capacity)
     {}
   }
@@ -287,13 +287,13 @@ public class VM : INamedResolver
 
     internal int tick;
 
-    internal ExecStack exec_stack = new ExecStack();
+    internal ExecState exec = new ExecState();
 
     internal ICoroutine coroutine;
 
     public VM.Frame frame0 {
       get {
-        return exec_stack[0].frame;
+        return exec[0].frame;
       }
     }
     public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
@@ -315,7 +315,7 @@ public class VM : INamedResolver
       }
 
       //0 index frame used for return values consistency
-      fb.exec_stack.Push(new VM.ExecCtx(Frame.New(vm), null, is_call: false));
+      fb.exec.Push(new VM.ExecCtx(Frame.New(vm), null, is_call: false));
 
       return fb;
     }
@@ -336,7 +336,7 @@ public class VM : INamedResolver
     {
       if(coroutine != null)
       {
-        CoroutinePool.Del(exec_stack.Peek().frame, exec_stack, coroutine);
+        CoroutinePool.Del(exec.Peek().frame, exec, coroutine);
         coroutine = null;
       }
 
@@ -350,41 +350,41 @@ public class VM : INamedResolver
         frame0.stack.Clear();
       }
 
-      for(int i=exec_stack.Count;i-- > 0;)
+      for(int i=exec.Count;i-- > 0;)
       {
         //let's ignore temporary ctx.frames which are not calls
-        if(!exec_stack[i].is_call)
+        if(!exec[i].is_call)
           continue;
-        var frm = exec_stack[i].frame;
-        frm.ExitScope(frm, exec_stack);
+        var frm = exec[i].frame;
+        frm.ExitScope(frm, exec);
         frm.Release();
       }
 
       //let's explicitely release 0 index frame
       frame0.Release();
 
-      exec_stack.Clear();
+      exec.Clear();
 
       tick = 0;
     }
 
     public bool IsStopped()
     {
-      return status == BHS.STOP || exec_stack.ip >= STOP_IP;
+      return status == BHS.STOP || exec.ip >= STOP_IP;
     }
 
-    static void GetCalls(VM.ExecStack exec_stack, List<VM.Frame> calls)
+    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
     {
-      for(int i=0;i<exec_stack.Count;++i)
-        if(exec_stack[i].is_call)
-          calls.Add(exec_stack[i].frame);
+      for(int i=0;i<exec.Count;++i)
+        if(exec[i].is_call)
+          calls.Add(exec[i].frame);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
       var calls = new List<VM.Frame>();
       int coroutine_ip = -1; 
-      GetCalls(exec_stack, calls);
+      GetCalls(exec, calls);
       TryGetTraceInfo(coroutine, ref coroutine_ip, calls);
 
       for(int i=0;i<calls.Count;++i)
@@ -399,7 +399,7 @@ public class VM : INamedResolver
         //      coroutine
         if(i == calls.Count-1)
         {
-          item.ip = coroutine_ip == -1 ? frm.fb.exec_stack.ip : coroutine_ip;
+          item.ip = coroutine_ip == -1 ? frm.fb.exec.ip : coroutine_ip;
         }
         else
         {
@@ -441,16 +441,16 @@ public class VM : INamedResolver
     {
       if(i is SeqBlock si)
       {
-        GetCalls(si.exec_stack, calls);
+        GetCalls(si.exec, calls);
         if(!TryGetTraceInfo(si.coroutine, ref ip, calls))
-          ip = si.exec_stack.ip;
+          ip = si.exec.ip;
         return true;
       }
       else if(i is ParalBranchBlock bi)
       {
-        GetCalls(bi.exec_stack, calls);
+        GetCalls(bi.exec, calls);
         if(!TryGetTraceInfo(bi.coroutine, ref ip, calls))
-          ip = bi.exec_stack.ip;
+          ip = bi.exec.ip;
         return true;
       }
       else if(i is ParalBlock pi && pi.i < pi.branches.Count)
@@ -591,9 +591,9 @@ public class VM : INamedResolver
       //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + dfb.frm.GetHashCode() + " " + fb.GetStackTrace());
     }
 
-    public void ExitScope(VM.Frame frm, ExecStack exec_stack)
+    public void ExitScope(VM.Frame frm, ExecState exec)
     {
-      DeferBlock.ExitScope(defers, exec_stack);
+      DeferBlock.ExitScope(defers, exec);
 
       Clear();
     }
@@ -1276,7 +1276,7 @@ public class VM : INamedResolver
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
       if(fb.coroutine != null)
-        --fb.exec_stack.ip;
+        --fb.exec.ip;
     }
     else
     {
@@ -1296,9 +1296,9 @@ public class VM : INamedResolver
 
   void Attach(Fiber fb, Frame frm)
   {
-    fb.exec_stack.ip = frm.start_ip;
+    fb.exec.ip = frm.start_ip;
     frm.fb = fb;
-    fb.exec_stack.Push(new ExecCtx(frm, frm, is_call: true));
+    fb.exec.Push(new ExecCtx(frm, frm, is_call: true));
   }
 
   void Register(Fiber fb)
@@ -1315,7 +1315,7 @@ public class VM : INamedResolver
     Fiber.Del(fb);
     //NOTE: we assing Fiber ip to a special value which is just one value before MAX_IP,
     //      this way Fiber breaks its current Frame execution loop.
-    fb.exec_stack.ip = STOP_IP;
+    fb.exec.ip = STOP_IP;
   }
 
   public void Stop(int fid)
@@ -1355,37 +1355,34 @@ public class VM : INamedResolver
   }
 
   internal BHS Execute(
-    ExecStack exec_stack, 
+    ExecState exec, 
     ref ICoroutine coroutine, 
     int exec_waterline_idx = 0
   )
   {
     var status = BHS.SUCCESS;
     int exec_len = 0;
-    while((exec_len = exec_stack.Count) > exec_waterline_idx && status == BHS.SUCCESS)
+    while((exec_len = exec.Count) > exec_waterline_idx && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(
-        exec_stack,
+        exec,
         ref coroutine
       );
     }
     return status;
   }
 
-  BHS ExecuteOnce(
-    ExecStack exec_stack, 
-    ref ICoroutine coroutine
-  )
+  BHS ExecuteOnce(ExecState exec, ref ICoroutine coroutine)
   { 
-    var exec = exec_stack.Peek();
+    var item = exec.Peek();
 
-    if(exec_stack.ip < exec.min_ip || exec_stack.ip > exec.max_ip)
+    if(exec.ip < item.min_ip || exec.ip > item.max_ip)
     {
-      exec_stack.Pop();
+      exec.Pop();
       return BHS.SUCCESS;
     }
 
-    var curr_frame = exec.frame;
+    var curr_frame = item.frame;
 
 #if DEBUGGER
     Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec_stack.ip + "(min:" + exec.min_ip + ", max:" + exec.max_ip + ")" + (exec_stack.ip > -1 && exec_stack.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[ip] : " OP ? ") + " CORO " + coroutine?.GetType().Name + "(" + coroutine?.GetHashCode() + ")" + " EX.SCOPE " + exec.exit_scope?.GetType().Name + "(" + exec.exit_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
@@ -1393,15 +1390,15 @@ public class VM : INamedResolver
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(coroutine != null)
-      return ExecuteCoroutine(ref coroutine, curr_frame, exec_stack);
+      return ExecuteCoroutine(ref coroutine, curr_frame, exec);
 
-    var opcode = (Opcodes)curr_frame.bytecode[exec_stack.ip];
+    var opcode = (Opcodes)curr_frame.bytecode[exec.ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
     switch(opcode)
     {
       case Opcodes.Constant:
       {
-        int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int const_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var cn = curr_frame.constants[const_idx];
         var cv = cn.ToVal(this);
         curr_frame.stack.Push(cv);
@@ -1409,8 +1406,8 @@ public class VM : INamedResolver
       break;
       case Opcodes.TypeCast:
       {
-        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
-        bool force_type = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip) == 1;
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        bool force_type = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip) == 1;
 
         var cast_type = curr_frame.constants[cast_type_idx].itype.Get();
 
@@ -1419,7 +1416,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.TypeAs:
       {
-        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var as_type = curr_frame.constants[cast_type_idx].itype.Get();
 
         HandleTypeAs(curr_frame, as_type);
@@ -1427,7 +1424,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.TypeIs:
       {
-        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var as_type = curr_frame.constants[cast_type_idx].itype.Get();
 
         HandleTypeIs(curr_frame, as_type);
@@ -1435,7 +1432,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.Typeof:
       {
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var type = curr_frame.constants[type_idx].itype.Get();
 
         curr_frame.stack.Push(Val.NewObj(this, type, Types.ClassType));
@@ -1443,13 +1440,13 @@ public class VM : INamedResolver
       break;
       case Opcodes.Inc:
       {
-        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         ++curr_frame.locals[var_idx]._num;
       }
       break;
       case Opcodes.Dec:
       {
-        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         --curr_frame.locals[var_idx]._num;
       }
       break;
@@ -1532,13 +1529,13 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetVar:
       {
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         curr_frame.stack.PushRetain(curr_frame.locals[local_idx]);
       }
       break;
       case Opcodes.SetVar:
       {
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var new_val = curr_frame.stack.Pop();
         curr_frame.locals.Assign(this, local_idx, new_val);
         new_val.Release();
@@ -1546,7 +1543,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.ArgVar:
       {
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var arg_val = curr_frame.stack.Pop();
         var loc_var = Val.New(this);
         loc_var.ValueCopyFrom(arg_val);
@@ -1557,14 +1554,14 @@ public class VM : INamedResolver
       break;
       case Opcodes.ArgRef:
       {
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         curr_frame.locals[local_idx] = curr_frame.stack.Pop();
       }
       break;
       case Opcodes.DeclVar:
       {
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var type = curr_frame.constants[type_idx].itype.Get();
 
         var curr = curr_frame.locals[local_idx];
@@ -1576,7 +1573,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetAttr:
       {
-        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
         var res = Val.New(this);
@@ -1592,7 +1589,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.RefAttr:
       {
-        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
         var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
@@ -1604,7 +1601,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.SetAttr:
       {
-        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
 
         var obj = curr_frame.stack.Pop();
         var class_symb = (ClassSymbol)obj.type;
@@ -1617,7 +1614,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.SetAttrInplace:
       {
-        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        int fld_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var val = curr_frame.stack.Pop();
         var obj = curr_frame.stack.Peek();
         var class_symb = (ClassSymbol)obj.type;
@@ -1628,14 +1625,14 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetGVar:
       {
-        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
 
         curr_frame.stack.PushRetain(curr_frame.module.gvars[var_idx]);
       }
       break;
       case Opcodes.SetGVar:
       {
-        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
 
         var new_val = curr_frame.stack.Pop();
         curr_frame.module.gvars.Assign(this, var_idx, new_val);
@@ -1644,33 +1641,33 @@ public class VM : INamedResolver
       break;
       case Opcodes.Return:
       {
-        exec.exit_scope.ExitScope(curr_frame, exec_stack);
+        item.exit_scope.ExitScope(curr_frame, exec);
 
-        exec_stack.ip = curr_frame.return_ip;
+        exec.ip = curr_frame.return_ip;
         curr_frame.Release();
-        exec_stack.Pop();
+        exec.Pop();
       }
       break;
       case Opcodes.ReturnVal:
       {
-        int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
 
         int stack_offset = curr_frame.stack.Count; 
         for(int i=0;i<ret_num;++i)
           curr_frame.origin.stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
         curr_frame.stack.head -= ret_num;
 
-        exec.exit_scope.ExitScope(curr_frame, exec_stack);
+        item.exit_scope.ExitScope(curr_frame, exec);
 
-        exec_stack.ip = curr_frame.return_ip;
+        exec.ip = curr_frame.return_ip;
         
         curr_frame.Release();
-        exec_stack.Pop();
+        exec.Pop();
       }
       break;
       case Opcodes.GetFunc:
       {
-        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
 
         var ptr = FuncPtr.New(this);
@@ -1680,7 +1677,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetFuncNative:
       {
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var func_symb = (FuncSymbolNative)types.nfunc_index[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
@@ -1689,7 +1686,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.GetFuncFromVar:
       {
-        int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var val = curr_frame.locals[local_var_idx];
         val.Retain();
         curr_frame.stack.Push(val);
@@ -1699,7 +1696,7 @@ public class VM : INamedResolver
       {
         //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
         //      so that it fullfills Opcode.Call requirements 
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
         int arg_idx = curr_frame.stack.Count - args_num - 1; 
         var arg = curr_frame.stack[arg_idx];
@@ -1709,18 +1706,18 @@ public class VM : INamedResolver
       break;
       case Opcodes.Call:
       {
-        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip); 
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, func_ip);
-        Call(curr_frame, exec_stack, frm, args_bits);
+        Call(curr_frame, exec, frm, args_bits);
       }
       break;
       case Opcodes.CallNative:
       {
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         var native = (FuncSymbolNative)types.nfunc_index[func_idx];
 
@@ -1731,20 +1728,20 @@ public class VM : INamedResolver
       break;
       case Opcodes.CallFunc:
       {
-        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, func_symb._module, func_symb.ip_addr);
-        Call(curr_frame, exec_stack, frm, args_bits);
+        Call(curr_frame, exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethod:
       {
-        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
@@ -1762,13 +1759,13 @@ public class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec_stack, frm, args_bits);
+        Call(curr_frame, exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodNative:
       {
-        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
         int self_idx = curr_frame.stack.Count - args_num - 1;
@@ -1783,8 +1780,8 @@ public class VM : INamedResolver
       break;
       case Opcodes.CallMethodVirt:
       {
-        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
@@ -1801,14 +1798,14 @@ public class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec_stack, frm, args_bits);
+        Call(curr_frame, exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodIface:
       {
-        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         //TODO: use a simpler schema where 'self' is passed on the top
         int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
@@ -1826,14 +1823,14 @@ public class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec_stack, frm, args_bits);
+        Call(curr_frame, exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodIfaceNative:
       {
-        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
         var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
@@ -1845,7 +1842,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.CallPtr:
       {
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec_stack.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
         var val_ptr = curr_frame.stack.Pop();
         var ptr = (FuncPtr)val_ptr._obj;
@@ -1863,13 +1860,13 @@ public class VM : INamedResolver
         {
           var frm = ptr.MakeFrame(this, curr_frame);
           val_ptr.Release();
-          Call(curr_frame, exec_stack, frm, args_bits);
+          Call(curr_frame, exec, frm, args_bits);
         }
       }
       break;
       case Opcodes.InitFrame:
       {
-        int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var args_bits = curr_frame.stack.Pop(); 
         curr_frame.locals.Resize(local_vars_num);
         //NOTE: we need to store arg info bits locally so that
@@ -1880,18 +1877,18 @@ public class VM : INamedResolver
       break;
       case Opcodes.Lambda:
       {             
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var ptr = FuncPtr.New(this);
-        ptr.Init(curr_frame, exec_stack.ip+1);
+        ptr.Init(curr_frame, exec.ip+1);
         curr_frame.stack.Push(Val.NewObj(this, ptr, Types.Any));
 
-        exec_stack.ip += offset;
+        exec.ip += offset;
       }
       break;
       case Opcodes.UseUpval:
       {
-        int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
-        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
+        int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
 
         var addr = (FuncPtr)curr_frame.stack.Peek()._obj;
 
@@ -1914,60 +1911,60 @@ public class VM : INamedResolver
       break;
       case Opcodes.Jump:
       {
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        exec_stack.ip += offset;
+        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        exec.ip += offset;
       }
       break;
       case Opcodes.JumpZ:
       {
-        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         if(curr_frame.stack.PopRelease().bval == false)
-          exec_stack.ip += offset;
+          exec.ip += offset;
       }
       break;
       case Opcodes.JumpPeekZ:
       {
-        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var v = curr_frame.stack.Peek();
         if(v.bval == false)
-          exec_stack.ip += offset;
+          exec.ip += offset;
       }
       break;
       case Opcodes.JumpPeekNZ:
       {
-        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        ushort offset = Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var v = curr_frame.stack.Peek();
         if(v.bval == true)
-          exec_stack.ip += offset;
+          exec.ip += offset;
       }
       break;
       case Opcodes.Break:
       {
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        exec_stack.ip += offset;
+        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        exec.ip += offset;
       }
       break;
       case Opcodes.Continue:
       {
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
-        exec_stack.ip += offset;
+        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        exec.ip += offset;
       }
       break;
       case Opcodes.DefArg:
       {
-        byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref exec_stack.ip);
-        int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec_stack.ip);
+        byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num; 
         var args_info = new FuncArgsInfo(args_bits);
         //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
         //NOTE: if default argument is not used we need to jump out of default argument calculation code
         if(!args_info.IsDefaultArgUsed(def_arg_idx))
-          exec_stack.ip += jump_pos;
+          exec.ip += jump_pos;
       }
       break;
       case Opcodes.Block:
       {
-        var new_coroutine = VisitBlock(exec_stack, curr_frame, exec.exit_scope);
+        var new_coroutine = VisitBlock(exec, curr_frame, item.exit_scope);
         if(new_coroutine != null)
         {
           //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -1980,7 +1977,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.New:
       {
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec_stack.ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var type = curr_frame.constants[type_idx].itype.Get();
         HandleNew(curr_frame, type);
       }
@@ -1989,7 +1986,7 @@ public class VM : INamedResolver
         throw new Exception("Not supported opcode: " + opcode);
     }
 
-    ++exec_stack.ip;
+    ++exec.ip;
     return BHS.SUCCESS;
   }
 
@@ -2016,7 +2013,7 @@ public class VM : INamedResolver
       v.type = type;
   }
 
-  void Call(Frame curr_frame, ExecStack exec_stack, Frame new_frame, uint args_bits)
+  void Call(Frame curr_frame, ExecState exec, Frame new_frame, uint args_bits)
   {
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
     for(int i = 0; i < args_num; ++i)
@@ -2024,10 +2021,10 @@ public class VM : INamedResolver
     new_frame.stack.Push(Val.NewInt(this, args_bits));
 
     //let's remember ip to return to
-    new_frame.return_ip = exec_stack.ip;
-    exec_stack.Push(new ExecCtx(new_frame, new_frame, is_call: true));
+    new_frame.return_ip = exec.ip;
+    exec.Push(new ExecCtx(new_frame, new_frame, is_call: true));
     //since ip will be incremented below we decrement it intentionally here
-    exec_stack.ip = new_frame.start_ip - 1; 
+    exec.ip = new_frame.start_ip - 1; 
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
@@ -2053,31 +2050,31 @@ public class VM : INamedResolver
   static BHS ExecuteCoroutine(
     ref ICoroutine coroutine, 
     Frame curr_frame,
-    ExecStack exec_stack
+    ExecState exec
   )
   {
     var status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple  
     //      bindings you won't forget to do it
-    ++exec_stack.ip;
-    coroutine.Tick(curr_frame, exec_stack, ref status);
+    ++exec.ip;
+    coroutine.Tick(curr_frame, exec, ref status);
 
     if(status == BHS.RUNNING)
     {
-      --exec_stack.ip;
+      --exec.ip;
       return status;
     }
     else if(status == BHS.FAILURE)
     {
-      CoroutinePool.Del(curr_frame, exec_stack, coroutine);
+      CoroutinePool.Del(curr_frame, exec, coroutine);
       coroutine = null;
 
-      curr_frame.ExitScope(curr_frame, exec_stack);
-      exec_stack.ip = curr_frame.return_ip;
+      curr_frame.ExitScope(curr_frame, exec);
+      exec.ip = curr_frame.return_ip;
       //TODO: check if it's really necessary
       if(curr_frame.refs != -1)
         curr_frame.Release();
-      exec_stack.Pop();
+      exec.Pop();
 
       return status;
     }
@@ -2087,7 +2084,7 @@ public class VM : INamedResolver
     }
     else if(status == BHS.SUCCESS)
     {
-      CoroutinePool.Del(curr_frame, exec_stack, coroutine);
+      CoroutinePool.Del(curr_frame, exec, coroutine);
       coroutine = null;
       
       //NOTE: after coroutine successful execution we might be in a situation  
@@ -2107,7 +2104,7 @@ public class VM : INamedResolver
       //    and we should take this into account
       //
       if(curr_frame.refs == -1)
-        exec_stack.Pop();
+        exec.Pop();
 
       return status;
     }
@@ -2229,16 +2226,16 @@ public class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
 
-  ICoroutine VisitBlock(ExecStack exec_stack, Frame curr_frame, IExitableScope exit_scope)
+  ICoroutine VisitBlock(ExecState exec, Frame curr_frame, IExitableScope exit_scope)
   {
     int block_size;
-    var block_coro = TryMakeBlockCoroutine(ref exec_stack.ip, curr_frame, out block_size, exit_scope);
+    var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, out block_size, exit_scope);
 
     //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name + " " + block_coro?.GetHashCode());
     if(block_coro is IBranchyCoroutine bi) 
     {
-      int tmp_ip = exec_stack.ip;
-      while(tmp_ip < (exec_stack.ip + block_size))
+      int tmp_ip = exec.ip;
+      while(tmp_ip < (exec.ip + block_size))
       {
         ++tmp_ip;
 
@@ -2292,7 +2289,7 @@ public class VM : INamedResolver
 
       ++fb.tick;
       fb.status = Execute(
-        fb.exec_stack, 
+        fb.exec, 
         ref fb.coroutine, 
         //NOTE: we exclude the special case 0 frame
         1
@@ -2686,8 +2683,8 @@ public class CompiledModule
 
 public interface ICoroutine
 {
-  void Tick(VM.Frame frm, VM.ExecStack exec_stack, ref BHS status);
-  void Cleanup(VM.Frame frm, VM.ExecStack exec_stack);
+  void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status);
+  void Cleanup(VM.Frame frm, VM.ExecState exec);
 }
 
 public class CoroutinePool
@@ -2721,11 +2718,11 @@ public class CoroutinePool
     return (T)coro;
   }
 
-  static public void Del(VM.Frame frm, VM.ExecStack exec_stack, ICoroutine coro)
+  static public void Del(VM.Frame frm, VM.ExecState exec, ICoroutine coro)
   {
     //Console.WriteLine("DEL " + coro.GetType().Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
-    coro.Cleanup(frm, exec_stack);
+    coro.Cleanup(frm, exec);
 
     var t = coro.GetType();
 
@@ -2740,10 +2737,10 @@ public class CoroutinePool
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
-  static internal void Del(VM.Frame frm, VM.ExecStack exec_stack, List<ICoroutine> coros)
+  static internal void Del(VM.Frame frm, VM.ExecState exec, List<ICoroutine> coros)
   {
     for(int i=0;i<coros.Count;++i)
-      Del(frm, exec_stack, coros[i]);
+      Del(frm, exec, coros[i]);
     coros.Clear();
   }
 
@@ -2789,7 +2786,7 @@ public class CoroutinePool
 public interface IExitableScope
 {
   void RegisterDefer(DeferBlock cb);
-  void ExitScope(VM.Frame frm, VM.ExecStack exec_stack);
+  void ExitScope(VM.Frame frm, VM.ExecState exec);
 }
 
 public interface IBranchyCoroutine : ICoroutine
@@ -2807,12 +2804,12 @@ class CoroutineSuspend : ICoroutine
 {
   public static readonly ICoroutine Instance = new CoroutineSuspend();
 
-  public void Tick(VM.Frame frm, VM.ExecStack exec_stack, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     status = BHS.RUNNING;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack exec_stack)
+  public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {}
 }
 
@@ -2820,7 +2817,7 @@ class CoroutineYield : ICoroutine
 {
   bool first_time = true;
 
-  public void Tick(VM.Frame frm, VM.ExecStack exec_stack, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     if(first_time)
     {
@@ -2829,7 +2826,7 @@ class CoroutineYield : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack exec_stack)
+  public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     first_time = true;
   }
@@ -2848,33 +2845,33 @@ public struct DeferBlock
     this.max_ip = max_ip;
   }
 
-  BHS Execute(ref ICoroutine coro, VM.ExecStack exec_stack)
+  BHS Execute(ref ICoroutine coro, VM.ExecState exec)
   {
     //1. let's remeber the original ip in order to restore it once
     //   the execution of this block is done (defer block can be 
     //   located anywhere in the code)
-    int ip_orig = exec_stack.ip;
-    exec_stack.ip = this.ip;
+    int ip_orig = exec.ip;
+    exec.ip = this.ip;
 
     //2. let's create the execution context
-    exec_stack.Push(new VM.ExecCtx(frm, null, is_call: false, min_ip: ip, max_ip: max_ip));
+    exec.Push(new VM.ExecCtx(frm, null, is_call: false, min_ip: ip, max_ip: max_ip));
     //3. and execute it
     var status = frm.vm.Execute(
-      exec_stack, 
+      exec, 
       ref coro, 
       //NOTE: we re-use the existing exec.stack but limit the execution 
       //      only up to the defer code block
-      exec_stack.Count-1 
+      exec.Count-1 
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
 
-    exec_stack.ip = ip_orig;
+    exec.ip = ip_orig;
 
     return status;
   }
 
-  static internal void ExitScope(List<DeferBlock> defers, VM.ExecStack exec_stack)
+  static internal void ExitScope(List<DeferBlock> defers, VM.ExecState exec)
   {
     if(defers == null)
       return;
@@ -2884,7 +2881,7 @@ public struct DeferBlock
       var d = defers[i];
       ICoroutine dummy = null;
       //TODO: do we need ensure that status is SUCCESS?
-      d.Execute(ref dummy, exec_stack);
+      d.Execute(ref dummy, exec);
     }
     defers.Clear();
   }
@@ -2898,7 +2895,7 @@ public struct DeferBlock
 public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 {
   public ICoroutine coroutine;
-  public VM.ExecStack exec_stack = new VM.ExecStack();
+  public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
 
   public int Count {
@@ -2914,39 +2911,39 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void Init(VM.Frame frm, int min_ip, int max_ip)
   {
-    exec_stack.ip = min_ip;
-    exec_stack.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    exec.ip = min_ip;
+    exec.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
-  public void Tick(VM.Frame frm, VM.ExecStack ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     status = frm.vm.Execute(
-      exec_stack, 
+      exec, 
       ref coroutine
     );
-    ext_exec.ip = exec_stack.ip;
+    ext_exec.ip = exec.ip;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
   {
     if(coroutine != null)
     {
-      CoroutinePool.Del(frm, exec_stack, coroutine);
+      CoroutinePool.Del(frm, exec, coroutine);
       coroutine = null;
     }
 
-    ExitScope(frm, exec_stack);
+    ExitScope(frm, exec);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=exec_stack.Count;i-- > 1;)
+    for(int i=exec.Count;i-- > 1;)
     {
-      var ctx_frm = exec_stack[i];
+      var ctx_frm = exec[i];
       ctx_frm.frame.Release();
     }
-    exec_stack.Clear();
+    exec.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -2956,17 +2953,17 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecStack ext_exec)
+  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
   {
     //NOTE: let's exit scope for existing frames
-    for(int i=exec_stack.Count;i-- > 1;)
+    for(int i=exec.Count;i-- > 1;)
     {
-      var ctx_frm = exec_stack[i];
+      var ctx_frm = exec[i];
       if(ctx_frm.is_call)
-        ctx_frm.frame.ExitScope(frm, exec_stack);
+        ctx_frm.frame.ExitScope(frm, exec);
     }
 
-    DeferBlock.ExitScope(defers, exec_stack);
+    DeferBlock.ExitScope(defers, exec);
   }
 }
 
@@ -2975,7 +2972,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
   public int min_ip;
   public int max_ip;
   public ICoroutine coroutine;
-  public VM.ExecStack exec_stack = new VM.ExecStack();
+  public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
 
   public int Count {
@@ -2993,48 +2990,48 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
-    exec_stack.ip = min_ip;
-    exec_stack.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    exec.ip = min_ip;
+    exec.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
   }
 
-  public void Tick(VM.Frame frm, VM.ExecStack ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     status = frm.vm.Execute(
-      exec_stack, 
+      exec, 
       ref coroutine
     );
 
     if(status == BHS.SUCCESS)
     {
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
-      if(exec_stack.ip > min_ip && exec_stack.ip < max_ip)
+      if(exec.ip > min_ip && exec.ip < max_ip)
         ext_exec.ip = max_ip + 1;
       //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
       else
-        ext_exec.ip = exec_stack.ip;
+        ext_exec.ip = exec.ip;
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
   {
     if(coroutine != null)
     {
-      CoroutinePool.Del(frm, exec_stack, coroutine);
+      CoroutinePool.Del(frm, exec, coroutine);
       coroutine = null;
     }
 
-    ExitScope(frm, exec_stack);
+    ExitScope(frm, exec);
 
     //NOTE: Let's release frames which were allocated but due to 
     //      some control flow abruption (e.g paral exited) should be 
     //      explicitely released. We start from index 1 on purpose
     //      since the frame at index 0 will be released 'above'.
-    for(int i=exec_stack.Count;i-- > 1;)
+    for(int i=exec.Count;i-- > 1;)
     {
-      var ctx_frm = exec_stack[i];
+      var ctx_frm = exec[i];
       ctx_frm.frame.Release();
     }
-    exec_stack.Clear();
+    exec.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -3044,7 +3041,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecStack ext_exec)
+  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
   {
     //NOTE: let's exit scope for existing frames
     for(int i=ext_exec.Count;i-- > 1;)
@@ -3087,7 +3084,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecStack ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     ext_exec.ip = min_ip;
 
@@ -3109,7 +3106,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
   {
     CoroutinePool.Del(frm, ext_exec, branches);
     ExitScope(frm, ext_exec);
@@ -3127,7 +3124,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecStack ext_exec)
+  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
   {
     DeferBlock.ExitScope(defers, ext_exec);
   }
@@ -3162,7 +3159,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecStack ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     ext_exec.ip = min_ip;
     
@@ -3200,10 +3197,10 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
       ext_exec.ip = max_ip + 1;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecStack exec_stack)
+  public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
-    CoroutinePool.Del(frm, exec_stack, branches);
-    ExitScope(frm, exec_stack);
+    CoroutinePool.Del(frm, exec, branches);
+    ExitScope(frm, exec);
   }
 
   public void Attach(ICoroutine coro)
@@ -3218,9 +3215,9 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecStack exec_stack)
+  public void ExitScope(VM.Frame frm, VM.ExecState exec)
   {
-    DeferBlock.ExitScope(defers, exec_stack);
+    DeferBlock.ExitScope(defers, exec);
   }
 }
 
