@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+    
+        {
+            "name": "Attach to Mono",
+            "request": "attach",
+            "type": "mono",
+            "address": "localhost",
+            "port": 55555
+        }
+    ]
+}
