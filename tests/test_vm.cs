@@ -7229,7 +7229,7 @@ public class TestVM : BHL_TestBase
     bool first_time = true;
     public StringBuilder log;
 
-    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, VM.ExecStack exec, ref BHS status)
     {
       if(first_time)
       {
@@ -7240,7 +7240,7 @@ public class TestVM : BHL_TestBase
         log.Append("HERE");
     }
 
-    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
+    public void Cleanup(VM.Frame frm, ref int ip, VM.ExecStack exec)
     {
       first_time = true;
     }
@@ -11318,7 +11318,7 @@ public class TestVM : BHL_TestBase
     int ticks;
     int ret;
 
-    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> ext_frames, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, VM.ExecStack exec, ref BHS status)
     {
       if(first_time)
       {
@@ -11339,7 +11339,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
+    public void Cleanup(VM.Frame frm, ref int ip, VM.ExecStack exec)
     {
       first_time = true;
     }
@@ -19542,7 +19542,7 @@ public class TestVM : BHL_TestBase
     int c;
     int ticks_ttl;
 
-    public void Tick(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames, ref BHS status)
+    public void Tick(VM.Frame frm, ref int ip, VM.ExecStack exec, ref BHS status)
     {
       //first time
       if(c++ == 0)
@@ -19554,7 +19554,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm, ref int ip, FixedStack<VM.FrameContext> frames)
+    public void Cleanup(VM.Frame frm, ref int ip, VM.ExecStack exec)
     {
       c = 0;
       ticks_ttl = 0;
