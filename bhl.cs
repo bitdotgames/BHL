@@ -20,6 +20,8 @@ public static class Tasks
   [Task()]
   public static void build_front_dll(Taskman tm, string[] args)
   {
+    bool debugger = Environment.GetEnvironmentVariable("DEBUGGER") == "1";
+
     var front_src = new List<string>() {
       $"{BHL_ROOT}/src/compile/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
@@ -30,7 +32,7 @@ public static class Tasks
 
     MCSBuild(tm, front_src.ToArray(),
      $"{BHL_ROOT}/bhl_front.dll",
-     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library"
+     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + (debugger ? " -define:DEBUGGER" : "")
     );
   }
 
@@ -146,7 +148,11 @@ public static class Tasks
       "-define:BHL_FRONT -debug"
     );
 
-    MonoRun(tm, $"{BHL_ROOT}/test.exe", args, "--debug ");
+    string mono_opts = "--debug"; 
+    if(Environment.GetEnvironmentVariable("DEBUGGER") == "1")
+      mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55555";
+
+    MonoRun(tm, $"{BHL_ROOT}/test.exe", args, mono_opts);
   }
   
   [Task(deps: "build_front_dll")]
