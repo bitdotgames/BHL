@@ -2137,14 +2137,14 @@ public class VM : INamedResolver
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
-  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, out int size, IDeferSupport exit_scope)
+  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, out int size, IDeferSupport defer_support)
   {
     BlockType type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
 
     if(type == BlockType.SEQ)
     {
-      if(exit_scope is IBranchyCoroutine)
+      if(defer_support is IBranchyCoroutine)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
@@ -2172,7 +2172,7 @@ public class VM : INamedResolver
     else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
-      exit_scope.RegisterDefer(d);
+      defer_support.RegisterDefer(d);
       //NOTE: we need to skip defer block
       //Console.WriteLine("DEFER SKIP " + ip + " " + (ip+size) + " " + Environment.StackTrace);
       ip += size;
