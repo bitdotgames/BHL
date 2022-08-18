@@ -250,16 +250,16 @@ public class VM : INamedResolver
   public struct Region
   {
     public Frame frame;
-    public IExitableScope exit_scope;
+    public IDeferSupport defer_support;
     //NOTE: if current ip is not within *inclusive* range of these values 
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
-    public Region(Frame frame, IExitableScope exit_scope, int min_ip = -1, int max_ip = MAX_IP)
+    public Region(Frame frame, IDeferSupport defer_support, int min_ip = -1, int max_ip = MAX_IP)
     {
       this.frame = frame;
-      this.exit_scope = exit_scope;
+      this.defer_support = defer_support;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -453,7 +453,7 @@ public class VM : INamedResolver
     }
   }
 
-  public class Frame : IExitableScope
+  public class Frame : IDeferSupport
   {
     public const int MAX_LOCALS = 64;
     public const int MAX_STACK = 32;
@@ -1949,7 +1949,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.Block:
       {
-        var new_coroutine = VisitBlock(exec, curr_frame, item.exit_scope);
+        var new_coroutine = VisitBlock(exec, curr_frame, item.defer_support);
         if(new_coroutine != null)
         {
           //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -2137,7 +2137,7 @@ public class VM : INamedResolver
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
-  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, out int size, IExitableScope exit_scope)
+  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, out int size, IDeferSupport exit_scope)
   {
     BlockType type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
@@ -2182,10 +2182,10 @@ public class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
 
-  ICoroutine VisitBlock(ExecState exec, Frame curr_frame, IExitableScope exit_scope)
+  ICoroutine VisitBlock(ExecState exec, Frame curr_frame, IDeferSupport defer_support)
   {
     int block_size;
-    var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, out block_size, exit_scope);
+    var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, out block_size, defer_support);
 
     //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name + " " + block_coro?.GetHashCode());
     if(block_coro is IBranchyCoroutine bi) 
@@ -2196,7 +2196,7 @@ public class VM : INamedResolver
         ++tmp_ip;
 
         int tmp_size;
-        var branch = TryMakeBlockCoroutine(ref tmp_ip, curr_frame, out tmp_size, (IExitableScope)block_coro);
+        var branch = TryMakeBlockCoroutine(ref tmp_ip, curr_frame, out tmp_size, (IDeferSupport)block_coro);
 
        //Console.WriteLine("BRANCH INST " + tmp_ip + " " + branch?.GetType().Name);
 
@@ -2734,7 +2734,7 @@ public class CoroutinePool
   }
 }
 
-public interface IExitableScope
+public interface IDeferSupport
 {
   void RegisterDefer(DeferBlock cb);
 }
@@ -2843,7 +2843,7 @@ public struct DeferBlock
   }
 }
 
-public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
+public class SeqBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
@@ -2899,7 +2899,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   }
 }
 
-public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutine
+public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -2969,7 +2969,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
   }
 }
 
-public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCoroutine
+public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -3039,7 +3039,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   }
 }
 
-public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoroutine
+public class ParalAllBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
