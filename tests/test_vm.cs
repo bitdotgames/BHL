@@ -11728,7 +11728,6 @@ public class TestVM : BHL_TestBase
 
     func changer() {
       yield()
-      yield()
     }
 
     func doer(int i) {

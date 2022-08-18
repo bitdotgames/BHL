@@ -1,3 +1,4 @@
+//#define BHL_DEBUGGER
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -1369,7 +1370,7 @@ public class VM : INamedResolver
     var curr_frame = item.frame;
 
 #if BHL_DEBUGGER
-    Util.Debug("EXEC TICK " + curr_frame.fb.tick + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " EX.SCOPE " + item.exit_scope?.GetType().Name + "(" + item.exit_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
+    Util.Debug("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " SCOPE " + item.exit_scope?.GetType().Name + "(" + item.exit_scope?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
 #endif
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
@@ -2884,6 +2885,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].Release();
     exec.frames.Clear();
+    exec.regions.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -2958,6 +2960,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].Release();
     exec.frames.Clear();
+    exec.regions.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
