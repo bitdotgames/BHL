@@ -25,6 +25,24 @@ public class WrappedParseTree
   public Module module;
   public ITokenStream tokens;
   public IType eval_type;
+
+  public int line { 
+    get { 
+      return tokens.Get(tree.SourceInterval.a).Line;  
+    } 
+  }
+
+  public int char_pos { 
+    get { 
+      return tokens.Get(tree.SourceInterval.a).Column;  
+    } 
+  }
+
+  public string file { 
+    get { 
+      return module.file_path;
+    } 
+  }
 }
 
 public class ANTLR_Processor : bhlBaseVisitor<object>

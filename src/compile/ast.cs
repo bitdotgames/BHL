@@ -257,12 +257,14 @@ public class AST_UpVal : IAST
   public string name;
   public int symb_idx;
   public int upsymb_idx;
+  public int line_num;
 
-  public AST_UpVal(string name, int symb_idx, int upsymb_idx)
+  public AST_UpVal(string name, int symb_idx, int upsymb_idx, int line_num)
   {
     this.name = name;
     this.symb_idx = symb_idx;
     this.upsymb_idx = upsymb_idx;
+    this.line_num = line_num;
   }
 }
 

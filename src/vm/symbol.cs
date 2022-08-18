@@ -1744,7 +1744,13 @@ public class LambdaSymbol : FuncSymbolScript
     //      checks that's why we use a 'raw' version
     this.current_scope.DefineWithoutEnclosingChecks(local);
 
-    var up = new AST_UpVal(local.name, local.scope_idx, src.scope_idx); 
+    var up = new AST_UpVal(
+      local.name, 
+      local.scope_idx, 
+      src.scope_idx,
+      //TODO: should be the line of its usage
+      src.parsed.line
+    ); 
     upvals.Add(up);
 
     return local;

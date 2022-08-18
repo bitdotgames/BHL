@@ -77,7 +77,7 @@ public class SymbolError : Exception
     get { 
 #if BHL_FRONT
       if(symbol.parsed != null)
-        return symbol.parsed.tokens.Get(symbol.parsed.tree.SourceInterval.a).Line;  
+        return symbol.parsed.line;
 #endif
       return 0; 
     } 
@@ -86,7 +86,7 @@ public class SymbolError : Exception
     get { 
 #if BHL_FRONT
       if(symbol.parsed != null)
-        return symbol.parsed.tokens.Get(symbol.parsed.tree.SourceInterval.a).Column;  
+        return symbol.parsed.char_pos;
 #endif
       return 0; 
     } 
@@ -95,7 +95,7 @@ public class SymbolError : Exception
     get { 
 #if BHL_FRONT
       if(symbol.parsed != null)
-        return symbol.parsed.module.file_path;
+        return symbol.parsed.file;
 #endif
       return ""; 
     } 

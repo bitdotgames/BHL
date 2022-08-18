@@ -889,7 +889,7 @@ public class ModuleCompiler : AST_Visitor
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
-      Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx});
+      Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx}, p.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)

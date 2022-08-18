@@ -11722,6 +11722,42 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBugWithParalInWhile()
+  {
+    string bhl = @"
+
+    func changer() {
+      yield()
+      yield()
+    }
+
+    func doer(int i) {
+      suspend()
+    }
+
+    func test() 
+    {
+      int i = 0
+      while(i < 2) {
+        paral {
+          changer()
+          doer(i)
+        }
+        i++
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestDeferScopes()
   {
     string bhl = @"

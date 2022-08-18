@@ -501,7 +501,7 @@ public class VM : INamedResolver
       if(frm.refs != 0)
         throw new Exception("Freeing invalid object, refs " + frm.refs);
 
-      //Console.WriteLine("DEL " + frm.GetHashCode() + " " + Environment.StackTrace);
+      //Console.WriteLine("DEL " + frm.GetHashCode() + " "/* + Environment.StackTrace*/);
       frm.refs = -1;
 
       frm.Clear();
@@ -549,7 +549,7 @@ public class VM : INamedResolver
       this.return_ip = -1;
     }
 
-    public void Clear()
+    internal void Clear()
     {
       for(int i=locals.Count;i-- > 0;)
       {
@@ -584,8 +584,6 @@ public class VM : INamedResolver
     public void ExitScope(VM.Frame _, ExecState exec)
     {
       DeferBlock.ExitScope(defers, exec);
-
-      Clear();
     }
 
     public void Retain()
@@ -2873,7 +2871,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     ext_exec.ip = exec.ip;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState _)
   {
     if(exec.coroutine != null)
     {
@@ -2947,7 +2945,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState _)
   {
     if(exec.coroutine != null)
     {
@@ -3007,32 +3005,32 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
-    ext_exec.ip = min_ip;
+    exec.ip = min_ip;
 
     status = BHS.RUNNING;
 
     for(i=0;i<branches.Count;++i)
     {
       var branch = branches[i];
-      branch.Tick(frm, ext_exec, ref status);
+      branch.Tick(frm, exec, ref status);
       if(status != BHS.RUNNING)
       {
-        CoroutinePool.Del(frm, ext_exec, branch);
+        CoroutinePool.Del(frm, exec, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
-        if(ext_exec.ip > min_ip && ext_exec.ip < max_ip)
-          ext_exec.ip = max_ip + 1;
+        if(exec.ip > min_ip && exec.ip < max_ip)
+          exec.ip = max_ip + 1;
         break;
       }
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState ext_exec)
+  public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
-    CoroutinePool.Del(frm, ext_exec, branches);
-    ExitScope(frm, ext_exec);
+    CoroutinePool.Del(frm, exec, branches);
+    ExitScope(frm, exec);
   }
 
   public void Attach(ICoroutine coro)
@@ -3047,9 +3045,9 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
+  public void ExitScope(VM.Frame frm, VM.ExecState exec)
   {
-    DeferBlock.ExitScope(defers, ext_exec);
+    DeferBlock.ExitScope(defers, exec);
   }
 }
 
@@ -3082,30 +3080,30 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
+  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
-    ext_exec.ip = min_ip;
+    exec.ip = min_ip;
     
     for(i=0;i<branches.Count;)
     {
       var branch = branches[i];
-      branch.Tick(frm, ext_exec, ref status);
+      branch.Tick(frm, exec, ref status);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || ext_exec.ip < (min_ip-1) || ext_exec.ip > (max_ip+1))
+      if(frm.refs == -1 /*return executed*/ || exec.ip < (min_ip-1) || exec.ip > (max_ip+1))
       {
-        CoroutinePool.Del(frm, ext_exec, branch);
+        CoroutinePool.Del(frm, exec, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
         return;
       }
       if(status == BHS.SUCCESS)
       {
-        CoroutinePool.Del(frm, ext_exec, branch);
+        CoroutinePool.Del(frm, exec, branch);
         branches.RemoveAt(i);
       }
       else if(status == BHS.FAILURE)
       {
-        CoroutinePool.Del(frm, ext_exec, branch);
+        CoroutinePool.Del(frm, exec, branch);
         branches.RemoveAt(i);
         return;
       }
@@ -3116,8 +3114,8 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     if(branches.Count > 0)
       status = BHS.RUNNING;
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after this block
-    else if(ext_exec.ip > min_ip && ext_exec.ip < max_ip)
-      ext_exec.ip = max_ip + 1;
+    else if(exec.ip > min_ip && exec.ip < max_ip)
+      exec.ip = max_ip + 1;
   }
 
   public void Cleanup(VM.Frame frm, VM.ExecState exec)
