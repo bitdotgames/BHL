@@ -441,6 +441,7 @@ public class TestInterfaces : BHL_TestBase
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
         .EmitThen(Opcodes.Add)
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.ExitFrame)
         .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/})
         .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Foo")) }) 
         .EmitThen(Opcodes.SetVar, new int[] { 0 })
@@ -450,6 +451,7 @@ public class TestInterfaces : BHL_TestBase
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
         .EmitThen(Opcodes.CallMethodIface, new int[] { 0, ConstIdx(c, c.ns.T("IFoo")), 1 })
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.ExitFrame)
         ;
       AssertEqual(c, expected);
 

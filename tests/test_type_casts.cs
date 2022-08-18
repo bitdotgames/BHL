@@ -25,6 +25,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("int")), 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 
@@ -57,6 +58,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
       .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 
@@ -182,6 +184,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.TypeIs, new int[] { ConstIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 
@@ -300,6 +303,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.TypeAs, new int[] { ConstIdx(c, c.ns.T("Foo")) })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 

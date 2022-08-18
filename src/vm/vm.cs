@@ -364,9 +364,9 @@ public class VM : INamedResolver
       return status == BHS.STOP || exec.ip >= STOP_IP;
     }
 
-    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
+    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls, int offset = 0)
     {
-      for(int i=0;i<exec.frames.Count;++i)
+      for(int i=offset;i<exec.frames.Count;++i)
         calls.Add(exec.frames[i]);
     }
 
@@ -374,7 +374,7 @@ public class VM : INamedResolver
     {
       var calls = new List<VM.Frame>();
       int coroutine_ip = -1; 
-      GetCalls(exec, calls);
+      GetCalls(exec, calls, offset: 1/*let's skip 0 fake frame*/);
       TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
 
       for(int i=0;i<calls.Count;++i)
@@ -2049,15 +2049,14 @@ public class VM : INamedResolver
     }
     else if(status == BHS.FAILURE || status == BHS.STOP)
     {
-      throw new NotImplementedException();
-      //CoroutinePool.Del(curr_frame, exec, exec.coroutine);
-      //exec.coroutine = null;
+      CoroutinePool.Del(curr_frame, exec, exec.coroutine);
+      exec.coroutine = null;
 
       //proceed to exit
-      //exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
-      //exec.regions.Pop();
+      exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
+      exec.regions.Pop();
 
-      //return status;
+      return status;
     }
     else if(status == BHS.SUCCESS)
     {
