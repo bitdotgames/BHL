@@ -582,18 +582,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Break,
-        2 /*rel.offset*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.Continue,
-        2 /*rel.offset*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.DefArg,
         1/*local scope idx*/, 2/*jump out of def.arg calc pos*/
       )
@@ -1336,7 +1324,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Break ast)
   {
-    var jump_op = Emit(Opcodes.Break, new int[] { 0 /*patched later*/});
+    var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
     non_patched_breaks.Add(
       new BlockJump() 
         { block = loop_blocks.Peek(), 
@@ -1354,7 +1342,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      var jump_op = Emit(Opcodes.Continue, new int[] { 0 /*patched later*/});
+      var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
       non_patched_continues.Add(
         new BlockJump() 
           { block = loop_block, 

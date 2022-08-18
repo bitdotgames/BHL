@@ -26,8 +26,6 @@ public enum Opcodes
   JumpZ                 = 17,
   JumpPeekZ             = 18,
   JumpPeekNZ            = 19,
-  Break                 = 20,
-  Continue              = 21,
   Pop                   = 22,
   Call                  = 23,
   CallNative            = 24,
@@ -1921,18 +1919,6 @@ public class VM : INamedResolver
         var v = curr_frame.stack.Peek();
         if(v.bval == true)
           exec.ip += offset;
-      }
-      break;
-      case Opcodes.Break:
-      {
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        exec.ip += offset;
-      }
-      break;
-      case Opcodes.Continue:
-      {
-        short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        exec.ip += offset;
       }
       break;
       case Opcodes.DefArg:
