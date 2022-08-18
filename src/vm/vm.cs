@@ -2737,7 +2737,6 @@ public class CoroutinePool
 public interface IExitableScope
 {
   void RegisterDefer(DeferBlock cb);
-  void ExitScope(VM.Frame frm, VM.ExecState exec);
 }
 
 public interface IBranchyCoroutine : ICoroutine
@@ -2884,7 +2883,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].ExitScope(null, exec);
 
-    ExitScope(null, null);
+    DeferBlock.ExitScope(defers, exec);
 
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].Release();
@@ -2897,11 +2896,6 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     if(defers == null)
       defers = new List<DeferBlock>();
     defers.Add(dfb);
-  }
-
-  public void ExitScope(VM.Frame _1, VM.ExecState _2)
-  {
-    DeferBlock.ExitScope(defers, exec);
   }
 }
 
@@ -2959,7 +2953,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].ExitScope(null, exec);
 
-    ExitScope(null, null);
+    DeferBlock.ExitScope(defers, exec);
 
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].Release();
@@ -2972,11 +2966,6 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     if(defers == null)
       defers = new List<DeferBlock>();
     defers.Add(dfb);
-  }
-
-  public void ExitScope(VM.Frame _1, VM.ExecState _2)
-  {
-    DeferBlock.ExitScope(defers, exec);
   }
 }
 
@@ -3034,7 +3023,7 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
   public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     CoroutinePool.Del(frm, exec, branches);
-    ExitScope(frm, exec);
+    DeferBlock.ExitScope(defers, exec);
   }
 
   public void Attach(ICoroutine coro)
@@ -3047,11 +3036,6 @@ public class ParalBlock : IBranchyCoroutine, IExitableScope, IInspectableCorouti
     if(defers == null)
       defers = new List<DeferBlock>();
     defers.Add(dfb);
-  }
-
-  public void ExitScope(VM.Frame frm, VM.ExecState exec)
-  {
-    DeferBlock.ExitScope(defers, exec);
   }
 }
 
@@ -3125,7 +3109,7 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
   public void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     CoroutinePool.Del(frm, exec, branches);
-    ExitScope(frm, exec);
+    DeferBlock.ExitScope(defers, exec);
   }
 
   public void Attach(ICoroutine coro)
@@ -3138,11 +3122,6 @@ public class ParalAllBlock : IBranchyCoroutine, IExitableScope, IInspectableCoro
     if(defers == null)
       defers = new List<DeferBlock>();
     defers.Add(dfb);
-  }
-
-  public void ExitScope(VM.Frame frm, VM.ExecState exec)
-  {
-    DeferBlock.ExitScope(defers, exec);
   }
 }
 
