@@ -17,6 +17,8 @@ public enum Opcodes
   ArgVar                = 9,
   SetGVar               = 10,
   GetGVar               = 11,
+  InitFrame             = 12,
+  ExitFrame             = 13,
   Return                = 14,
   ReturnVal             = 15,
   Jump                  = 16,
@@ -66,7 +68,6 @@ public enum Opcodes
   New                   = 76,
   Lambda                = 77,
   UseUpval              = 78,
-  InitFrame             = 79,
   Inc                   = 80,
   Dec                   = 81,
   ArrIdx                = 82,
@@ -245,35 +246,30 @@ public class VM : INamedResolver
   public const int MAX_IP = int.MaxValue;
   public const int STOP_IP = MAX_IP - 1;
 
-  public struct ExecCtx
+  public struct Region
   {
     public Frame frame;
-    public bool is_call;
     public IExitableScope exit_scope;
     //NOTE: if current ip is not within *inclusive* range of these values 
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
-    public ExecCtx(Frame frame, IExitableScope exit_scope, bool is_call, int min_ip = -1, int max_ip = MAX_IP)
+    public Region(Frame frame, IExitableScope exit_scope, int min_ip = -1, int max_ip = MAX_IP)
     {
       this.frame = frame;
-      this.is_call = is_call;
       this.exit_scope = exit_scope;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
   }
 
-  public class ExecState : FixedStack<ExecCtx>
+  public class ExecState
   {
     internal int ip;
-
     internal ICoroutine coroutine;
-
-    public ExecState(int max_capacity = 256)
-      : base(max_capacity)
-    {}
+    internal FixedStack<Region> regions = new FixedStack<Region>(32);
+    internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
   }
 
   public class Fiber
@@ -293,7 +289,7 @@ public class VM : INamedResolver
 
     public VM.Frame frame0 {
       get {
-        return exec[0].frame;
+        return exec.frames[0];
       }
     }
     public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
@@ -315,7 +311,7 @@ public class VM : INamedResolver
       }
 
       //0 index frame used for return values consistency
-      fb.exec.Push(new VM.ExecCtx(Frame.New(vm), null, is_call: false));
+      fb.exec.frames.Push(Frame.New(vm));
 
       return fb;
     }
@@ -336,7 +332,7 @@ public class VM : INamedResolver
     {
       if(exec.coroutine != null)
       {
-        CoroutinePool.Del(exec.Peek().frame, exec, exec.coroutine);
+        CoroutinePool.Del(exec.frames.Peek(), exec, exec.coroutine);
         exec.coroutine = null;
       }
 
@@ -350,20 +346,15 @@ public class VM : INamedResolver
         frame0.stack.Clear();
       }
 
-      for(int i=exec.Count;i-- > 0;)
+      for(int i=exec.frames.Count;i-- > 0;)
       {
-        //let's ignore temporary ctx.frames which are not calls
-        if(!exec[i].is_call)
-          continue;
-        var frm = exec[i].frame;
-        frm.ExitScope(frm, exec);
+        var frm = exec.frames[i];
+        frm.ExitScope(null, exec);
         frm.Release();
       }
 
-      //let's explicitely release 0 index frame
-      frame0.Release();
-
-      exec.Clear();
+      exec.regions.Clear();
+      exec.frames.Clear();
 
       tick = 0;
     }
@@ -375,9 +366,8 @@ public class VM : INamedResolver
 
     static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
     {
-      for(int i=0;i<exec.Count;++i)
-        if(exec[i].is_call)
-          calls.Add(exec[i].frame);
+      for(int i=0;i<exec.frames.Count;++i)
+        calls.Add(exec.frames[i]);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
@@ -591,7 +581,7 @@ public class VM : INamedResolver
       //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + dfb.frm.GetHashCode() + " " + fb.GetStackTrace());
     }
 
-    public void ExitScope(VM.Frame frm, ExecState exec)
+    public void ExitScope(VM.Frame _, ExecState exec)
     {
       DeferBlock.ExitScope(defers, exec);
 
@@ -897,6 +887,8 @@ public class VM : INamedResolver
       return null_val;
     }
   }
+
+  public const int EXIT_OFFSET = 2;
 
   public VM(Types types = null, IModuleLoader loader = null)
   {
@@ -1255,7 +1247,7 @@ public class VM : INamedResolver
 
   //NOTE: adding special bytecode which makes the fake Frame to exit
   //      after executing the coroutine
-  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.Return};
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
@@ -1296,9 +1288,10 @@ public class VM : INamedResolver
 
   void Attach(Fiber fb, Frame frm)
   {
-    fb.exec.ip = frm.start_ip;
     frm.fb = fb;
-    fb.exec.Push(new ExecCtx(frm, frm, is_call: true));
+    fb.exec.ip = frm.start_ip;
+    fb.exec.frames.Push(frm);
+    fb.exec.regions.Push(new Region(frm, frm));
   }
 
   void Register(Fiber fb)
@@ -1358,7 +1351,7 @@ public class VM : INamedResolver
   {
     var status = BHS.SUCCESS;
     int exec_len = 0;
-    while((exec_len = exec.Count) > exec_waterline_idx && status == BHS.SUCCESS)
+    while((exec_len = exec.regions.Count) > exec_waterline_idx && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(exec);
     }
@@ -1367,11 +1360,11 @@ public class VM : INamedResolver
 
   BHS ExecuteOnce(ExecState exec)
   { 
-    var item = exec.Peek();
+    var item = exec.regions.Peek();
 
     if(exec.ip < item.min_ip || exec.ip > item.max_ip)
     {
-      exec.Pop();
+      exec.regions.Pop();
       return BHS.SUCCESS;
     }
 
@@ -1632,13 +1625,18 @@ public class VM : INamedResolver
         new_val.Release();
       }
       break;
+      case Opcodes.ExitFrame:
+      {
+        exec.ip = curr_frame.return_ip;
+        curr_frame.ExitScope(null, exec);
+        curr_frame.Release();
+        exec.frames.Pop();
+        exec.regions.Pop();
+      }
+      break;
       case Opcodes.Return:
       {
-        item.exit_scope.ExitScope(curr_frame, exec);
-
-        exec.ip = curr_frame.return_ip;
-        curr_frame.Release();
-        exec.Pop();
+        exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
       case Opcodes.ReturnVal:
@@ -1650,12 +1648,7 @@ public class VM : INamedResolver
           curr_frame.origin.stack.Push(curr_frame.stack[stack_offset-ret_num+i]);
         curr_frame.stack.head -= ret_num;
 
-        item.exit_scope.ExitScope(curr_frame, exec);
-
-        exec.ip = curr_frame.return_ip;
-        
-        curr_frame.Release();
-        exec.Pop();
+        exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
       case Opcodes.GetFunc:
@@ -2015,7 +2008,8 @@ public class VM : INamedResolver
 
     //let's remember ip to return to
     new_frame.return_ip = exec.ip;
-    exec.Push(new ExecCtx(new_frame, new_frame, is_call: true));
+    exec.frames.Push(new_frame);
+    exec.regions.Push(new Region(new_frame, new_frame));
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = new_frame.start_ip - 1; 
   }
@@ -2053,48 +2047,22 @@ public class VM : INamedResolver
       --exec.ip;
       return status;
     }
-    else if(status == BHS.FAILURE)
+    else if(status == BHS.FAILURE || status == BHS.STOP)
     {
-      CoroutinePool.Del(curr_frame, exec, exec.coroutine);
-      exec.coroutine = null;
+      throw new NotImplementedException();
+      //CoroutinePool.Del(curr_frame, exec, exec.coroutine);
+      //exec.coroutine = null;
 
-      curr_frame.ExitScope(curr_frame, exec);
-      exec.ip = curr_frame.return_ip;
-      //TODO: check if it's really necessary
-      if(curr_frame.refs != -1)
-        curr_frame.Release();
-      exec.Pop();
+      //proceed to exit
+      //exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
+      //exec.regions.Pop();
 
-      return status;
-    }
-    else if(status == BHS.STOP)
-    {
-      //TODO: do we really need this one?
-      return status;
+      //return status;
     }
     else if(status == BHS.SUCCESS)
     {
       CoroutinePool.Del(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
-      
-      //NOTE: after coroutine successful execution we might be in a situation  
-      //      that coroutine has already exited the current frame (e.g. after 'return')
-      //      and it's released, for example in the following case:
-      //
-      //      paral {
-      //         seq {
-      //           return
-      //         }
-      //         seq {
-      //          ...
-      //         }
-      //      }
-      //
-      //    ...after 'return' is executed the current frame will be in the released state 
-      //    and we should take this into account
-      //
-      if(curr_frame.refs == -1)
-        exec.Pop();
 
       return status;
     }
@@ -2278,11 +2246,7 @@ public class VM : INamedResolver
       last_fiber = fb;
 
       ++fb.tick;
-      fb.status = Execute(
-        fb.exec, 
-        //NOTE: we exclude the special case 0 frame
-        1
-      );
+      fb.status = Execute(fb.exec);
 
       if(fb.status != BHS.RUNNING)
         Stop(fb);
@@ -2842,14 +2806,14 @@ public struct DeferBlock
     int ip_orig = exec.ip;
     exec.ip = this.ip;
 
-    //2. let's create the execution context
-    exec.Push(new VM.ExecCtx(frm, null, is_call: false, min_ip: ip, max_ip: max_ip));
+    //2. let's create the execution region
+    exec.regions.Push(new VM.Region(frm, null, min_ip: ip, max_ip: max_ip));
     //3. and execute it
     var status = frm.vm.Execute(
       exec, 
       //NOTE: we re-use the existing exec.stack but limit the execution 
       //      only up to the defer code block
-      exec.Count-1 
+      exec.regions.Count-1 
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -2901,7 +2865,7 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
   public void Init(VM.Frame frm, int min_ip, int max_ip)
   {
     exec.ip = min_ip;
-    exec.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
   }
 
   public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
@@ -2918,15 +2882,11 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       exec.coroutine = null;
     }
 
-    ExitScope(frm, exec);
+    ExitScope(null, null);
 
-    //NOTE: Let's release frames which were allocated but due to 
-    //      some control flow abruption (e.g paral exited) should be 
-    //      explicitely released. We start from index 1 on purpose
-    //      since the frame at index 0 will be released 'above'.
-    for(int i=exec.Count;i-- > 1;)
-      exec[i].frame.Release();
-    exec.Clear();
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].Release();
+    exec.frames.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -2936,15 +2896,11 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
+  public void ExitScope(VM.Frame _1, VM.ExecState _2)
   {
     //NOTE: let's exit scope for existing frames
-    for(int i=exec.Count;i-- > 1;)
-    {
-      var item = exec[i];
-      if(item.is_call)
-        item.frame.ExitScope(frm, exec);
-    }
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].ExitScope(null, exec);
 
     DeferBlock.ExitScope(defers, exec);
   }
@@ -2973,7 +2929,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     this.min_ip = min_ip;
     this.max_ip = max_ip;
     exec.ip = min_ip;
-    exec.Push(new VM.ExecCtx(frm, this, is_call: false, min_ip: min_ip, max_ip: max_ip));
+    exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
   }
 
   public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
@@ -2982,6 +2938,7 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
     if(status == BHS.SUCCESS)
     {
+      //TODO: why doing this if there's a similar code in parent paral block
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
       if(exec.ip > min_ip && exec.ip < max_ip)
         ext_exec.ip = max_ip + 1;
@@ -2999,15 +2956,11 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
       exec.coroutine = null;
     }
 
-    ExitScope(frm, exec);
+    ExitScope(null, null);
 
-    //NOTE: Let's release frames which were allocated but due to 
-    //      some control flow abruption (e.g paral exited) should be 
-    //      explicitely released. We start from index 1 on purpose
-    //      since the frame at index 0 will be released 'above'.
-    for(int i=exec.Count;i-- > 1;)
-      exec[i].frame.Release();
-    exec.Clear();
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].Release();
+    exec.frames.Clear();
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -3017,17 +2970,12 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
     defers.Add(dfb);
   }
 
-  public void ExitScope(VM.Frame frm, VM.ExecState ext_exec)
+  public void ExitScope(VM.Frame _1, VM.ExecState _2)
   {
-    //NOTE: let's exit scope for existing frames
-    for(int i=ext_exec.Count;i-- > 1;)
-    {
-      var item = ext_exec[i];
-      if(item.is_call)
-        item.frame.ExitScope(frm, ext_exec);
-    }
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].ExitScope(null, exec);
 
-    DeferBlock.ExitScope(defers, ext_exec);
+    DeferBlock.ExitScope(defers, exec);
   }
 }
 

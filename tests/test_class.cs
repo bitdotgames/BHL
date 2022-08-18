@@ -181,7 +181,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 
@@ -2094,7 +2094,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
 
