@@ -10,7 +10,6 @@ public enum BHS
   SUCCESS = 1, 
   FAILURE = 2, 
   RUNNING = 3,
-  STOP    = 4,
 }
 
 public interface IBehaviorTreeNode

@@ -362,7 +362,7 @@ public class VM : INamedResolver
 
     public bool IsStopped()
     {
-      return status == BHS.STOP || exec.ip >= STOP_IP;
+      return exec.ip >= STOP_IP;
     }
 
     static void GetCalls(VM.ExecState exec, List<VM.Frame> calls, int offset = 0)
@@ -2046,7 +2046,7 @@ public class VM : INamedResolver
       --exec.ip;
       return status;
     }
-    else if(status == BHS.FAILURE || status == BHS.STOP)
+    else if(status == BHS.FAILURE)
     {
       CoroutinePool.Del(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
