@@ -2880,6 +2880,10 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
       exec.coroutine = null;
     }
 
+    //NOTE: we need to cleanup all dangling frames
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].ExitScope(null, exec);
+
     ExitScope(null, null);
 
     for(int i=exec.frames.Count;i-- > 0;)
@@ -2897,10 +2901,6 @@ public class SeqBlock : ICoroutine, IExitableScope, IInspectableCoroutine
 
   public void ExitScope(VM.Frame _1, VM.ExecState _2)
   {
-    //NOTE: let's exit scope for existing frames
-    for(int i=exec.frames.Count;i-- > 0;)
-      exec.frames[i].ExitScope(null, exec);
-
     DeferBlock.ExitScope(defers, exec);
   }
 }
@@ -2955,6 +2955,10 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
       exec.coroutine = null;
     }
 
+    //NOTE: we need to cleanup all dangling frames
+    for(int i=exec.frames.Count;i-- > 0;)
+      exec.frames[i].ExitScope(null, exec);
+
     ExitScope(null, null);
 
     for(int i=exec.frames.Count;i-- > 0;)
@@ -2972,9 +2976,6 @@ public class ParalBranchBlock : ICoroutine, IExitableScope, IInspectableCoroutin
 
   public void ExitScope(VM.Frame _1, VM.ExecState _2)
   {
-    for(int i=exec.frames.Count;i-- > 0;)
-      exec.frames[i].ExitScope(null, exec);
-
     DeferBlock.ExitScope(defers, exec);
   }
 }
