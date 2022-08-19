@@ -13220,6 +13220,27 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestBugEarlyReturnBeforeEnum()
+  {
+    string bhl = @"
+    enum Bar {
+      DUMMY = 1
+    }
+
+    func test() 
+    {
+      return
+      Bar bar = Bar.DUMMY
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestParalReturn()
   {
