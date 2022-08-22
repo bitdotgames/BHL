@@ -13222,17 +13222,20 @@ public class TestVM : BHL_TestBase
 
   //TODO:
   //[IsTested()]
-  public void TestBugEarlyReturnBeforeEnum()
+  public void TestBugEarlyReturnBeforeVarDecl()
   {
     string bhl = @"
     enum Bar {
       DUMMY = 1
     }
 
-    func test() 
+    func Bar test() 
     {
-      return
-      Bar bar = Bar.DUMMY
+      Bar bar
+      {
+        return
+        Bar bar = Bar.DUMMY
+      }
     }
     ";
 

@@ -2234,10 +2234,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Visit(exp_item);
         PopJsonType();
 
-        //NOTE: workaround for cases like: `return \n trace(...)`
-        //      where exp has void type, in this case
-        //      we simply ignore exp_node since return will take
-        //      effect right before it
         if(Wrap(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
