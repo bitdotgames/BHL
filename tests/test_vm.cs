@@ -13222,6 +13222,26 @@ public class TestVM : BHL_TestBase
 
   //TODO:
   //[IsTested()]
+  public void TestBugReturnTypeInsteadOfValue()
+  {
+    string bhl = @"
+    enum Bar {
+      DUMMY = 1
+    }
+
+    func Bar test() 
+    {
+      return Bar
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  //TODO:
+  //[IsTested()]
   public void TestBugEarlyReturnBeforeVarDecl()
   {
     string bhl = @"
