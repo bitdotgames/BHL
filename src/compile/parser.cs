@@ -2193,6 +2193,33 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitReturn(bhlParser.ReturnContext ctx)
   {
+    var ret_val = ctx.returnVal();
+
+    //NOTE: special handling of the following case:
+    //
+    //      return
+    //      string str
+    //
+    if(ret_val?.varDeclare() != null)
+    {
+      var vd = ret_val.varDeclare();
+      PeekAST().AddChild(CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+      return null;
+    }
+
+    //NOTE: special handling of the following case:
+    //
+    //      return
+    //      int foo = 1
+    //
+    if(ret_val?.varsDeclareAssign() != null)
+    {
+      var vdecls = ret_val.varsDeclareAssign().varsDeclareOrCallExps().varDeclareOrCallExp();
+      var assign_exp = ret_val.varsDeclareAssign().assignExp();
+      CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+      return null;
+    }
+
     if(defer_stack > 0)
       FireError(ctx, "return is not allowed in defer block");
 
@@ -2204,10 +2231,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var ret_ast = new AST_Return(ctx.Start.Line);
     
-    var explist = ctx.explist();
-    if(explist != null)
+    if(ret_val != null)
     {
-      int explen = explist.exp().Length;
+      int explen = ret_val.exps().exp().Length;
 
       var fret_type = func_symb.GetReturnType();
 
@@ -2229,7 +2255,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //      where foo has the following signature: func int,string foo() {..}
       if(explen == 1)
       {
-        var exp_item = explist.exp()[0];
+        var exp_item = ret_val.exps().exp()[0];
         PushJsonType(fret_type);
         Visit(exp_item);
         PopJsonType();
@@ -2254,7 +2280,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //      values are properly placed on a stack
         for(int i=explen;i-- > 0;)
         {
-          var exp = explist.exp()[i];
+          var exp = ret_val.exps().exp()[i];
           Visit(exp);
           ret_type.Add(curr_scope.R().T(Wrap(exp).eval_type));
         }
@@ -2262,7 +2288,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //type checking is in proper order
         for(int i=0;i<explen;++i)
         {
-          var exp = explist.exp()[i];
+          var exp = ret_val.exps().exp()[i];
           types.CheckAssign(fmret_type[i].Get(), Wrap(exp));
         }
 
@@ -3063,8 +3089,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitDeclAssign(bhlParser.DeclAssignContext ctx)
   {
-    var vdecls = ctx.varsDeclareOrCallExps().varDeclareOrCallExp();
-    var assign_exp = ctx.assignExp();
+    var vdecls = ctx.varsDeclareAssign().varsDeclareOrCallExps().varDeclareOrCallExp();
+    var assign_exp = ctx.varsDeclareAssign().assignExp();
 
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 

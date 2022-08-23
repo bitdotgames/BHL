@@ -40,9 +40,16 @@ mapType
   : '[' nsName ']' 
   ;
 
-//expressions
-explist
+exps
   : exp (',' exp)*
+  ;
+
+returnVal
+  //including 'varDeclareAssign' here for cases when 
+  //parser improperly captures the next statement
+  //which is not part of return but we need
+  //to process that as well
+  : (varDeclare | varsDeclareAssign | exps)
   ;
 
 exp
@@ -124,10 +131,14 @@ decrementOperator
   : '--'
   ;
 
+varsDeclareAssign
+  : varsDeclareOrCallExps assignExp
+  ;
+
 //statements
 statement
   : funcLambda                                                  #LambdaCall
-  | varsDeclareOrCallExps assignExp                             #DeclAssign
+  | varsDeclareAssign                                           #DeclAssign
   | varDeclare                                                  #VarDecl
   | callExp operatorPostOpAssign exp                            #VarPostOpAssign
   | callPostIncDec                                              #VarPostIncDec
@@ -141,7 +152,7 @@ statement
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
-  | 'return' explist?                                           #Return
+  | 'return' returnVal?                                          #Return
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
   | 'defer' block                                               #Defer

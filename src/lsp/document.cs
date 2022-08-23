@@ -403,12 +403,12 @@ namespace bhlsp
     
     public override object VisitReturn(bhlParser.ReturnContext ctx)
     {
-      var explist = ctx.explist();
-      if(explist != null)
+      var exps = ctx.returnVal()?.exps();
+      if(exps != null)
       {
-        AddSemanticToken(ctx.Start.StartIndex, explist.Start.StartIndex-1, SemanticTokenTypes.keyword);
+        AddSemanticToken(ctx.Start.StartIndex, exps.Start.StartIndex-1, SemanticTokenTypes.keyword);
         
-        foreach(var exp in explist.exp())
+        foreach(var exp in exps.exp())
           Visit(exp);
       }
       
@@ -583,8 +583,8 @@ namespace bhlsp
     
     public override object VisitDeclAssign(bhlParser.DeclAssignContext ctx)
     {
-      var varDeclareOrCallExp = ctx.varsDeclareOrCallExps()?.varDeclareOrCallExp();
-      var assignExp = ctx.assignExp()?.exp();
+      var varDeclareOrCallExp = ctx.varsDeclareAssign().varsDeclareOrCallExps()?.varDeclareOrCallExp();
+      var assignExp = ctx.varsDeclareAssign().assignExp()?.exp();
 
       if(varDeclareOrCallExp != null)
       {

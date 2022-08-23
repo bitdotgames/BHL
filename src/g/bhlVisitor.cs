@@ -92,11 +92,17 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMapType([NotNull] bhlParser.MapTypeContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.explist"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.exps"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExplist([NotNull] bhlParser.ExplistContext context);
+	Result VisitExps([NotNull] bhlParser.ExpsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.returnVal"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReturnVal([NotNull] bhlParser.ReturnValContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -343,6 +349,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarsDeclareAssign([NotNull] bhlParser.VarsDeclareAssignContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

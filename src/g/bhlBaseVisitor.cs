@@ -134,7 +134,7 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <return>The visitor result.</return>
 	public virtual Result VisitMapType([NotNull] bhlParser.MapTypeContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.explist"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.exps"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -142,7 +142,17 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitExplist([NotNull] bhlParser.ExplistContext context) { return VisitChildren(context); }
+	public virtual Result VisitExps([NotNull] bhlParser.ExpsContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.returnVal"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitReturnVal([NotNull] bhlParser.ReturnValContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -537,6 +547,16 @@ public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, 
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitVarsDeclareAssign([NotNull] bhlParser.VarsDeclareAssignContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

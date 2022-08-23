@@ -13240,28 +13240,46 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestBugEarlyReturnBeforeVarDecl()
   {
+    {
     string bhl = @"
-    enum Bar {
-      DUMMY = 1
+      enum Bar {
+        DUMMY = 1
+      }
+
+      func Bar test() 
+      {
+        Bar bar
+        {
+          return
+          Bar bar = Bar.DUMMY
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "already defined symbol 'bar'"
+      );
     }
 
-    func Bar test() 
     {
-      Bar bar
+    string bhl = @"
+      func test() 
       {
         return
-        Bar bar = Bar.DUMMY
+        string str
       }
-    }
-    ";
+      ";
 
-    var vm = MakeVM(bhl);
-    Execute(vm, "test");
-    CommonChecks(vm);
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]

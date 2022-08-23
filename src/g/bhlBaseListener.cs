@@ -155,17 +155,29 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMapType([NotNull] bhlParser.MapTypeContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.explist"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.exps"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExplist([NotNull] bhlParser.ExplistContext context) { }
+	public virtual void EnterExps([NotNull] bhlParser.ExpsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.explist"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.exps"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExplist([NotNull] bhlParser.ExplistContext context) { }
+	public virtual void ExitExps([NotNull] bhlParser.ExpsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.returnVal"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterReturnVal([NotNull] bhlParser.ReturnValContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.returnVal"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitReturnVal([NotNull] bhlParser.ReturnValContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -658,6 +670,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterVarsDeclareAssign([NotNull] bhlParser.VarsDeclareAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitVarsDeclareAssign([NotNull] bhlParser.VarsDeclareAssignContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
