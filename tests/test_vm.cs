@@ -13220,7 +13220,8 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //TODO:
+  //[IsTested()]
   public void TestBugReturnTypeInsteadOfValue()
   {
     {
