@@ -781,7 +781,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //checking the leftover of the call chain
     if(curr_name != null)
-      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write);
+      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write, leftover: true);
 
     var chain_ast = PeekAST();
     PopAST();
@@ -847,7 +847,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ref IType type, 
     ref AST_Interim pre_call,
     int line, 
-    bool write
+    bool write,
+    bool leftover = false
     )
   {
     AST_Call ast = null;
@@ -936,6 +937,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(enum_symb != null)
         {
+          if(leftover)
+            FireError(name, "symbol usage is not valid");
           type = enum_symb;
         }
         else if(enum_item != null)

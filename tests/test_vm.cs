@@ -13220,8 +13220,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestBugReturnTypeInsteadOfValue()
   {
     {
@@ -13277,7 +13276,29 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "symbol usage is not valie"
+        "symbol usage is not valid"
+      );
+    }
+
+    {
+      string bhl = @"
+      class Foo {
+        enum Bar {
+          DUMMY = 1
+        }
+      }
+
+      func Foo.Bar test() 
+      {
+        return Foo.Bar
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "symbol usage is not valid"
       );
     }
   }
