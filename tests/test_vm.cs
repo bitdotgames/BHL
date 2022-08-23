@@ -13272,6 +13272,19 @@ public class TestVM : BHL_TestBase
       func test() 
       {
         return
+        int foo = 10
+      }
+      ";
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    }
+
+    {
+    string bhl = @"
+      func test() 
+      {
+        return
         string str
       }
       ";
