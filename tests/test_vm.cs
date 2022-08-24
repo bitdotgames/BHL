@@ -1048,7 +1048,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "matching 'return' statement not found"
+      "matching 'return' statement not found",
+      new PlaceAssert(bhl, @"
+    func int test() 
+-------------^"
+      )
     );
   }
 
@@ -1068,7 +1072,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "matching 'return' statement not found"
+      "matching 'return' statement not found",
+      new PlaceAssert(bhl, @"
+      func bool() { foo() }
+------------------^"
+      )
     );
   }
 
@@ -1087,7 +1095,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "@(5,13) : incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      return ""bar"",100
+-------------^"
+      )
     );
   }
 
@@ -1111,7 +1123,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "@(10,13) : incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      string a,float s = foo()
+-------------^"
+      )
     );
   }
 
@@ -1220,7 +1236,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"useless statement"
+      @"useless statement",
+      new PlaceAssert(bhl, @"
+      foo
+------^"
+      )
     );
   }
 
@@ -1260,7 +1280,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"useless statement"
+      @"useless statement",
+      new PlaceAssert(bhl, @"
+      suspend
+------^"
+      )
     );
   }
 
@@ -1305,7 +1329,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"useless statement"
+      @"useless statement",
+      new PlaceAssert(bhl, @"
+      c.r
+------^"
+      )
     );
   }
 
@@ -1595,7 +1623,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"mismatched input"
+      @"mismatched input",
+      new PlaceAssert(bhl, @"
+      ().foo
+------^"
+      )
     );
   }
 
@@ -1647,7 +1679,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input"
+      "mismatched input",
+      new PlaceAssert(bhl, @"
+      ()
+------^"
+      )
     );
   }
 
@@ -1670,7 +1706,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no func to call"
+      "no func to call",
+      new PlaceAssert(bhl, @"
+      foo() ()
+------------^"
+      )
     );
   }
 
@@ -1786,7 +1826,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol is not a function"
+      "symbol is not a function",
+      new PlaceAssert(bhl, @"
+        return time()
+---------------^"
+      )
     );
   }
 
@@ -1806,7 +1850,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'k' not resolved"
+      "symbol 'k' not resolved",
+      new PlaceAssert(bhl, @"
+      float k = k
+----------------^"
+      )
     );
   }
 
@@ -2702,7 +2750,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      k += ""foo""
+------^"
+      )
     );
   }
 
@@ -2722,7 +2774,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      k -= ""foo""
+------^"
+      )
     );
   }
 
@@ -2742,7 +2798,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      k *= ""foo""
+------^"
+      )
     );
   }
 
@@ -2762,7 +2822,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      k /= ""foo""
+------^"
+      )
     );
   }
 
@@ -2839,7 +2903,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'i'"
+      "already defined symbol 'i'",
+      new PlaceAssert(bhl, @"
+        int i = 2
+------------^"
+      )
     );
   }
 
@@ -2865,7 +2933,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'i'"
+      "already defined symbol 'i'",
+      new PlaceAssert(bhl, @"
+            int i = 2
+----------------^"
+      )
     );
   }
 
@@ -2981,7 +3053,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'i' not resolved"
+      "symbol 'i' not resolved",
+      new PlaceAssert(bhl, @"
+        i = i + 2
+--------^"
+      )
     );
   }
 
@@ -3012,7 +3088,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'i' not resolved"
+      "symbol 'i' not resolved",
+      new PlaceAssert(bhl, @"
+          if(i == 2) {
+-------------^"
+      )
     );
   }
 
@@ -3074,7 +3154,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid assignment"
+        "invalid assignment",
+      new PlaceAssert(bhl, @"
+        bar() = 1
+--------------^"
+      )
       );
     }
 
@@ -3090,7 +3174,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "mismatched input"
+        "mismatched input",
+        new PlaceAssert(bhl, @"
+        func int () { return 1 }() = 1
+-----------------------------------^"
+      )
       );
     }
 
@@ -3107,7 +3195,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid assignment"
+        "invalid assignment",
+        new PlaceAssert(bhl, @"
+        f() = 1
+------------^"
+      )
       );
     }
   }
@@ -3273,7 +3365,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "already defined symbol 'trace'"
+      "already defined symbol 'trace'",
+      new PlaceAssert(bhl, @"
+    func trace(string hey)
+----^"
+     )
     );
   }
 
@@ -7010,7 +7106,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      func(int,string,ref bool) ptr = foo
+------------------------------------^"
+     )
     );
   }
 
@@ -7031,7 +7131,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "missing argument of type 'int'"
+      "missing argument of type 'int'",
+      new PlaceAssert(bhl, @"
+      ptr()
+---------^"
+     )
     );
   }
 
@@ -7052,7 +7156,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "missing argument of type 'float'"
+      "missing argument of type 'float'",
+      new PlaceAssert(bhl, @"
+      ptr(10)
+---------^"
+     )
     );
   }
 
@@ -7073,7 +7181,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "too many arguments"
+      "too many arguments",
+      new PlaceAssert(bhl, @"
+      ptr(10, 30)
+---------^"
+     )
     );
   }
 
@@ -7261,7 +7373,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'a'"
+      "already defined symbol 'a'",
+      new PlaceAssert(bhl, @"
+          float a = a 
+----------------^"
+     )
     );
   }
 
@@ -7764,7 +7880,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "max default arguments reached"
+      "max default arguments reached",
+      new PlaceAssert(bhl, @"
+      return foo()
+----------------^"
+     )
     );
   }
 
@@ -7788,7 +7908,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "missing argument 'k'"
+      "missing argument 'k'",
+      new PlaceAssert(bhl, @"
+      return foo()
+----------------^"
+     )
     );
   }
 
@@ -7812,7 +7936,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "argument already passed before"
+      "argument already passed before",
+      new PlaceAssert(bhl, @"
+      return foo(k: 1, k: 2)
+-----------------------^"
+     )
     );
   }
 
@@ -7836,7 +7964,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "missing argument 'radius'"
+      "missing argument 'radius'",
+      new PlaceAssert(bhl, @"
+      return foo()
+----------------^"
+     )
     );
   }
 
@@ -7952,7 +8084,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "return value is missing"
+      "return value is missing",
+      new PlaceAssert(bhl, @"
+      return
+------^"
+     )
     );
   }
 
@@ -7976,7 +8112,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "missing default argument expression"
+      "missing default argument expression",
+      new PlaceAssert(bhl, @"
+    func float foo(float b = 23, float k)
+---------------------------------------^"
+     )
     );
   }
   
