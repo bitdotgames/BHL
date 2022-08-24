@@ -8141,7 +8141,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no such named argument"
+      "no such named argument",
+      new PlaceAssert(bhl, @"
+      foo(b: 24, k: 3, f : 1)
+-----------------------^"
+     )
     );
   }
 
@@ -8281,7 +8285,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "already defined symbol 'a'"
+      "already defined symbol 'a'",
+      new PlaceAssert(bhl, @"
+    func foo(ref float a, float a) 
+--------------------------------^"
+     )
     );
   }
 
@@ -8460,7 +8468,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "mismatched input 'ref'"
+      "mismatched input 'ref'",
+      new PlaceAssert(bhl, @"
+      ref float a
+------^"
+     )
     );
   }
 
@@ -8478,7 +8490,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "'ref' is not allowed to have a default value"
+      "'ref' is not allowed to have a default value",
+      new PlaceAssert(bhl, @"
+    func foo(ref float k = 10)
+-----------------------^"
+     )
     );
   }
 
