@@ -878,7 +878,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 's' not resolved"
+      "symbol 's' not resolved",
+      new PlaceAssert(bhl, @"
+      float a,s = foo()
+--------------^"
+      )
     );
   }
 

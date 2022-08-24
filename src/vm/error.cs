@@ -60,6 +60,15 @@ public static class ErrorUtils
     msg = msg.Replace("\"", "\\\""); 
     return msg;
   }
+
+  public static string ShowErrorPlace(string source, int line, int char_pos)
+  {
+    var lines = source.Split('\n');
+    if(line <= lines.Length)
+      return lines[line-1] + "\n" + new String('-', char_pos) + "^";
+    else
+      return "???";
+  }
 }
 
 public class SymbolError : Exception

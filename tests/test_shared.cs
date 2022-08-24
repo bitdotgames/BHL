@@ -755,7 +755,7 @@ public class BHL_TestBase
       throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
   }
 
-  public void AssertError<T>(Action action, string msg) where T : Exception
+  public void AssertError<T>(Action action, string msg, PlaceAssert place_assert = null) where T : Exception
   {
     Exception err = null;
     try
@@ -767,9 +767,32 @@ public class BHL_TestBase
       err = e;
     }
 
+    if(place_assert != null)
+    {
+      if(err is ICompileError cerr)
+      {
+        string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.line, cerr.char_pos);
+        AssertEqual(place_err.Trim('\n'), place_assert.expect.Trim('\n'));
+      }
+      else
+        AssertTrue(false, "No ICompileError occured"); 
+    }
+
     AssertTrue(err != null, "Error didn't occur"); 
     var idx = err.ToString().IndexOf(msg);
     AssertTrue(idx != -1, "Error message is: " + err);
+  }
+
+  public class PlaceAssert
+  {
+    public string source;
+    public string expect;
+
+    public PlaceAssert(string source, string expect)
+    {
+      this.source = source;
+      this.expect = expect;
+    }
   }
 
   public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
