@@ -8838,7 +8838,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl, ts);
       },
-      "getting field by 'ref' not supported"
+      "getting native class field by 'ref' not supported",
+      new PlaceAssert(bhl, @"
+      foo(ref c.r)
+----------------^"
+     )
     );
   }
 
@@ -12001,7 +12005,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"nested defers are not allowed"
+      @"nested defers are not allowed",
+      new PlaceAssert(bhl, @"
+        defer {
+--------^"
+     )
     );
   }
 

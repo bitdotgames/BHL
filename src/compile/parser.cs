@@ -927,7 +927,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(fld_symb != null && PeekCallByRef())
           {
             if(scope is ClassSymbolNative)
-              FireError(name, "getting field by 'ref' not supported for this class");
+              FireError(name, "getting native class field by 'ref' not supported");
             ast.type = EnumCall.MVARREF; 
           }
           type = var_symb.type.Get();
