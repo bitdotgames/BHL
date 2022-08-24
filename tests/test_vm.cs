@@ -921,7 +921,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      return func string,string () 
+-------------^"
+        )
     );
   }
 
@@ -941,7 +945,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      return func string,string () 
+-------------^"
+        )
     );
   }
 
@@ -985,7 +993,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "multi return size doesn't match destination"
+      "multi return size doesn't match destination",
+      new PlaceAssert(bhl, @"
+      float s = foo()
+--------------^"
+      )
     );
   }
 
@@ -1009,7 +1021,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "multi return size doesn't match destination"
+      "multi return size doesn't match destination",
+      new PlaceAssert(bhl, @"
+      float s,string a,int f = foo()
+-----------------------------^"
+      )
     );
   }
 

@@ -719,7 +719,7 @@ public class Types : INamedResolver
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type)) 
-      throw new SemanticError(lhs, "incompatible types");
+      throw new SemanticError(rhs, "incompatible types");
   }
 
   //NOTE: SemanticError(..) is attached to rhs, not lhs. 

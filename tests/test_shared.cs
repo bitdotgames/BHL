@@ -734,7 +734,7 @@ public class BHL_TestBase
   public static void AssertEqual(string a, string b)
   {
     if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+      throw new Exception("Assertion failed:\n" + a + "\n====\n" + b);
   }
 
   public static void AssertEqual(int a, int b)
