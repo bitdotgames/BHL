@@ -13239,7 +13239,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "symbol usage is not valid"
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+        return string
+---------------^"
+        )
       );
     }
 
@@ -13260,7 +13264,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "symbol usage is not valid"
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+        return Foo.IFoo
+-------------------^"
+       )
       );
     }
 
@@ -13280,7 +13288,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "symbol usage is not valid"
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+        return Bar
+---------------^"
+        )
       );
     }
 
@@ -13302,7 +13314,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "symbol usage is not valid"
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+        return Foo.Bar
+-------------------^"
+        )
       );
     }
   }
