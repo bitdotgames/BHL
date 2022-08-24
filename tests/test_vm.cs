@@ -8537,7 +8537,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    void foo(ref int a) 
+    func foo(ref int a) 
     {
     }
 
@@ -8551,7 +8551,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "mismatched input '('"
+      "expression is not passable by 'ref'",
+      new PlaceAssert(bhl, @"
+      foo(ref 10)  
+----------^"
+     )
     );
   }
 

@@ -163,6 +163,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
+  int ref_compatible_exp_counter;
+
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s)
@@ -1116,7 +1118,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PushCallByRef(is_ref);
           PushJsonType(func_arg_type);
           PushAST(new AST_Interim());
+          int old_ref_counter = ref_compatible_exp_counter;
           Visit(na.ca);
+
+          if(is_ref && ref_compatible_exp_counter == old_ref_counter)
+            FireError(na.ca, "expression is not passable by 'ref'");
+
           TryProtectStackInterleaving(na.ca, func_arg_type, i, ref pre_call);
           PopAddOptimizeAST();
           PopJsonType();
@@ -1696,6 +1703,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp);
     Wrap(ctx).eval_type = Wrap(exp).eval_type;
 
+    ++ref_compatible_exp_counter;
+
     return null;
   }
 
@@ -1814,7 +1823,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_type = Wrap(exp).eval_type;
     var chain = ctx.chainExp(); 
     if(chain != null)
+    {
       ProcChainedCall(curr_scope, null, chain, ref curr_type, exp.Start.Line, write: false);
+      ++ref_compatible_exp_counter;
+    }
     PopAST();
     
     PeekAST().AddChild(ast);
