@@ -45,7 +45,7 @@ exps
   ;
 
 returnVal
-  //including 'varDeclareAssign' here for cases when 
+  //including var decls here for cases when 
   //parser improperly captures the next statement
   //which is not part of return but we need
   //to process that as well

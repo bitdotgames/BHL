@@ -13530,7 +13530,11 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "already defined symbol 'bar'"
+        "already defined symbol 'bar'",
+        new PlaceAssert(bhl, @"
+          Bar bar = Bar.DUMMY
+--------------^"
+        )
       );
     }
 
@@ -13988,7 +13992,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"no such attribute 'b' in class 'Color"
+      @"no such attribute 'b' in class 'Color",
+      new PlaceAssert(bhl, @"
+      Color c = {b: 10}
+-----------------^"
+      )
     );
   }
 
@@ -14010,7 +14018,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      Color c = {r: ""what""}
+--------------------^"
+      )
     );
   }
 
@@ -14097,7 +14109,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      ColorAlpha c = new Color {g: 10, r: 100}
+-------------------^"
+      )
     );
   }
 
@@ -14142,7 +14158,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"type 'Foo' not found"
+      @"type 'Foo' not found",
+      new PlaceAssert(bhl, @"
+      any c = new Foo {}
+------------------^"
+      )
     );
   }
 
@@ -14387,7 +14407,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+    func float foo(ColorAlpha c = new Color{r:20})
+--------------------------------^"
+      )
     );
   }
 
@@ -14410,7 +14434,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"can't be specified with {..}"
+      @"can't be specified with {..}",
+      new PlaceAssert(bhl, @"
+      return foo(a : {})
+---------------------^"
+      )
     );
   }
 
@@ -14635,7 +14663,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      []ColorAlpha c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
+-----------------------------------------^"
+      )
     );
   }
 
@@ -14865,7 +14897,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      return 0 == null
+-------------^"
+      )
     );
   }
 
@@ -15605,7 +15641,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      Color c3 = c1 + c2
+-----------------^"
+      )
     );
   }
 
@@ -15630,7 +15670,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      Color c3 = c1 - c2
+-----------------^"
+      )
     );
   }
 
