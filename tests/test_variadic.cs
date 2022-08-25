@@ -137,7 +137,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types"
+        "incompatible types",
+        new PlaceAssert(bhl, @"
+        sum(1, ""foo"", 2)
+---------------^"
+       )
       );
     }
 
@@ -155,7 +159,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types"
+        "incompatible types",
+        new PlaceAssert(bhl, @"
+        sum(""foo"", 2)
+------------^"
+       )
       );
     }
 
@@ -173,7 +181,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types"
+        "incompatible types",
+        new PlaceAssert(bhl, @"
+        sum(1, ""foo"")
+---------------^"
+       )
       );
     }
   }
@@ -190,7 +202,11 @@ public class TestVariadic : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "default argument is not allowed"
+      "default argument is not allowed",
+      new PlaceAssert(bhl, @"
+    func sum(...[]int ns = [1, 2]) {
+-------------------------^"
+      )
     );
   }
 
@@ -206,7 +222,11 @@ public class TestVariadic : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "variadic argument must be last"
+      "variadic argument must be last",
+      new PlaceAssert(bhl, @"
+    func sum(...[]int ns, int a) {
+-------------^"
+      )
     );
   }
 
@@ -223,7 +243,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "pass by ref not allowed"
+        "pass by ref not allowed",
+        new PlaceAssert(bhl, @"
+      func sum(ref ...[]int ns) {
+---------------^"
+        )
       );
     }
 
@@ -237,7 +261,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "no viable alternative at input 'ref'"
+        "no viable alternative at input 'ref'",
+        new PlaceAssert(bhl, @"
+      func sum(...[]ref int ns) {
+--------------------^"
+        )
       );
     }
   }
@@ -258,7 +286,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "not variadic argument"
+        "not variadic argument",
+        new PlaceAssert(bhl, @"
+        sum(...1)
+------------^"
+        )
       );
     }
 
@@ -275,7 +307,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "not variadic argument"
+        "not variadic argument",
+        new PlaceAssert(bhl, @"
+        sum(...[])
+------------^"
+        )
       );
     }
 
@@ -292,7 +328,11 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types"
+        "incompatible types",
+        new PlaceAssert(bhl, @"
+        sum(0, ...1)
+---------------^"
+        )
       );
     }
   }

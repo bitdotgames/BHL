@@ -67,7 +67,7 @@ public static class ErrorUtils
     if(line > 0 && line <= lines.Length)
       return lines[line-1] + "\n" + new String('-', char_pos) + "^";
     else
-      return "???";
+      return "??? @(" + line + ":" + char_pos + ")";
   }
 }
 

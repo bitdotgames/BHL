@@ -2423,7 +2423,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     string name = pass.func_ctx.NAME().GetText();
 
     if(pass.func_ctx.funcAttribs().Length > 0)
-      FireError(pass.func_ctx.funcAttribs()[0], "invalid usage of attributes");
+      FireError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
     pass.func_symb = new FuncSymbolScript(
       Wrap(pass.func_ctx), 
@@ -2631,7 +2631,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var fld_symb = new FieldSymbolScript(vd.NAME().GetText(), new Proxy<IType>());
+        var fld_symb = new FieldSymbolScript(Wrap(vd), vd.NAME().GetText(), new Proxy<IType>());
 
         for(int f=0;f<fldd.fldAttribs().Length;++f)
         {

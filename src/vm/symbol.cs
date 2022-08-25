@@ -1362,6 +1362,14 @@ public class FieldSymbolScript : FieldSymbol
 {
   new public const uint CLASS_ID = 9;
 
+#if BHL_FRONT
+  public FieldSymbolScript(WrappedParseTree parsed, string name, Proxy<IType> type) 
+    : this(name, type)
+  {
+    this.parsed = parsed;
+  }
+#endif
+
   public FieldSymbolScript(string name, Proxy<IType> type) 
     : base(name, type, null, null, null)
   {
@@ -1369,7 +1377,6 @@ public class FieldSymbolScript : FieldSymbol
     this.setter = Setter;
     this.getref = Getref;
   }
-
   //marshall factory version
   public FieldSymbolScript()
     : this("", new Proxy<IType>())
@@ -1697,7 +1704,7 @@ public class FuncSymbolVirtual : FuncSymbol
   public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
   {
     if(!signature.Equals(fs.signature))
-      throw new SymbolError(this, "virtual method signature doesn't match the base one");
+      throw new SymbolError(fs, "virtual method signature doesn't match the base one");
 
     fs._virtual = this;
 

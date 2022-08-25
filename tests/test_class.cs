@@ -84,7 +84,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "already defined symbol 'Foo'"
+      "already defined symbol 'Foo'",
+      new PlaceAssert(bhl, @"
+    class Foo {}
+----^"
+      )
     );
   }
 
@@ -122,7 +126,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "self inheritance is not allowed"
+      "self inheritance is not allowed",
+      new PlaceAssert(bhl, @"
+    class Foo : Foo {}
+----------------^"
+      )
     );
   }
 
@@ -503,7 +511,11 @@ public class TestClasses : BHL_TestBase
           }
         );
       },
-      @"already defined symbol 'Bar'"
+      @"already defined symbol 'Bar'",
+      new PlaceAssert(bhl1, @"
+    class Bar { }
+----^"
+      )
     );
   }
 
@@ -990,7 +1002,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no base class"
+      "no base class",
+      new PlaceAssert(bhl, @"
+        return base.a
+---------------^"
+      )
     );
   }
 
@@ -1014,7 +1030,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'b' not resolved"
+      "symbol 'b' not resolved",
+      new PlaceAssert(bhl, @"
+        return base.b
+--------------------^"
+      )
     );
   }
 
@@ -1038,7 +1058,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "keyword 'base' is reserved"
+      "keyword 'base' is reserved",
+      new PlaceAssert(bhl, @"
+        int base = 1
+------------^"
+      )
     );
   }
 
@@ -1196,7 +1220,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'a' not resolved"
+      "symbol 'a' not resolved",
+      new PlaceAssert(bhl, @"
+          a = 1
+----------^"
+      )
     );
   }
 
@@ -1275,7 +1303,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'b'"
+      "already defined symbol 'b'",
+      new PlaceAssert(bhl, @"
+      int b
+------^"
+      )
     );
   }
 
@@ -1611,7 +1643,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"already defined symbol 'getA'"
+      @"already defined symbol 'getA'",
+      new PlaceAssert(bhl, @"
+      func int getA() {
+------^"
+      )
     );
   }
 
@@ -1917,7 +1953,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"mismatched input '(' expecting '}'"
+      @"mismatched input '(' expecting '}'",
+      new PlaceAssert(bhl, @"
+      (new Foo{c: 10}).c = 20
+------^"
+      )
     );
   }
 
@@ -1946,7 +1986,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'x'"
+      "already defined symbol 'x'",
+      new PlaceAssert(bhl, @"
+      int x
+------^"
+      )
     );
   }
 
@@ -1968,7 +2012,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "extending native classes is not supported"
+      "extending native classes is not supported",
+      new PlaceAssert(bhl, @"
+    class ColorA : Color 
+-------------------^"
+      )
     );
   }
 
@@ -1985,7 +2033,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "the keyword \"this\" is reserved"
+      "the keyword \"this\" is reserved",
+      new PlaceAssert(bhl, @"
+        int this
+------------^"
+      )
     );
   }
 
@@ -2006,7 +2058,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "the keyword \"this\" is reserved"
+      "the keyword \"this\" is reserved",
+      new PlaceAssert(bhl, @"
+        func bool this()
+------------------^"
+      )
     );
   }
 
@@ -2181,7 +2237,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "symbol is not a function"
+      "symbol is not a function",
+      new PlaceAssert(bhl, @"
+      c.r()
+--------^"
+      )
     );
   }
 
@@ -2440,7 +2500,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "no base virtual method to override"
+        "no base virtual method to override",
+        new PlaceAssert(bhl, @"
+        func override int getA() {
+--------^"
+        )
       );
     }
 
@@ -2462,7 +2526,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "no base virtual method to override"
+        "no base virtual method to override",
+        new PlaceAssert(bhl, @"
+        func override int getA() {
+--------^"
+        )
       );
     }
 
@@ -2484,7 +2552,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "already defined symbol 'getA'"
+        "already defined symbol 'getA'",
+        new PlaceAssert(bhl, @"
+        func virtual int getA() {
+--------^"
+        )
       );
     }
 
@@ -2506,7 +2578,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "signature doesn't match the base one"
+        "signature doesn't match the base one",
+        new PlaceAssert(bhl, @"
+        func override float getA() {
+--------^"
+        )
       );
     }
 
@@ -2522,7 +2598,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "virtual methods are not allowed to have default arguments"
+        "virtual methods are not allowed to have default arguments",
+        new PlaceAssert(bhl, @"
+        func virtual void getA(int b, int a = 1) {
+--------^"
+        )
       );
     }
 
@@ -2543,7 +2623,11 @@ public class TestClasses : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "virtual methods are not allowed to have default arguments"
+        "virtual methods are not allowed to have default arguments",
+        new PlaceAssert(bhl, @"
+        func override void getA(int b, int a = 1) {
+--------^"
+        )
       );
     }
   }
@@ -2808,7 +2892,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "invalid usage of attributes"
+      "improper usage of attribute",
+      new PlaceAssert(bhl, @"
+    func override int getA() {
+---------^"
+      )
     );
   }
 
@@ -3370,7 +3458,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "calling static method on instance is forbidden"
+      "calling static method on instance is forbidden",
+      new PlaceAssert(bhl, @"
+      return b.foo()
+--------------^"
+      )
     );
   }
 
@@ -3390,7 +3482,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "symbol 'this' not resolved"
+      "symbol 'this' not resolved",
+      new PlaceAssert(bhl, @"
+        return this.a
+---------------^"
+      )
     );
   }
 
@@ -3478,7 +3574,11 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input '='"
+      "mismatched input '='",
+      new PlaceAssert(bhl, @"
+      static int foo = 42
+---------------------^"
+      )
     );
   }
 
