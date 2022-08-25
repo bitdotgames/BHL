@@ -17554,7 +17554,11 @@ public class TestVM : BHL_TestBase
           }
         );
       },
-      @"already defined symbol 'foo'"
+      @"already defined symbol 'foo'",
+      new PlaceAssert(bhl1, @"
+    int foo = 10
+--------^"
+      )
     );
   }
 
@@ -17719,7 +17723,11 @@ public class TestVM : BHL_TestBase
           }
         );
       },
-      @"already defined symbol 'bar'"
+      @"already defined symbol 'bar'",
+      new PlaceAssert(bhl1, @"
+    func float bar() 
+----^"
+      )
     );
   }
 
@@ -19198,7 +19206,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"already defined symbol 'foo'"
+      @"already defined symbol 'foo'",
+      new PlaceAssert(bhl, @"
+    int foo = 1
+--------^"
+      )
     );
   }
 
@@ -19214,7 +19226,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"symbol 'foo' not resolved"
+      @"symbol 'foo' not resolved",
+      new PlaceAssert(bhl, @"
+    int foo = foo
+--------------^"
+      )
     );
   }
 
