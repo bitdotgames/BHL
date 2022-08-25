@@ -767,6 +767,10 @@ public class BHL_TestBase
       err = e;
     }
 
+    AssertTrue(err != null, "Error didn't occur"); 
+    var idx = err.ToString().IndexOf(msg);
+    AssertTrue(idx != -1, "Error message is: " + err);
+
     if(place_assert != null)
     {
       if(err is ICompileError cerr)
@@ -778,9 +782,6 @@ public class BHL_TestBase
         AssertTrue(false, "No ICompileError occured, got " + err?.GetType().Name); 
     }
 
-    AssertTrue(err != null, "Error didn't occur"); 
-    var idx = err.ToString().IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err);
   }
 
   public class PlaceAssert

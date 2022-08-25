@@ -1051,7 +1051,7 @@ public class TestVM : BHL_TestBase
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
     func int test() 
--------------^"
+---------^"
       )
     );
   }
@@ -1123,7 +1123,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "incompatible types: 'string' and 'float'",
       new PlaceAssert(bhl, @"
       string a,float s = foo()
 -------------^"
@@ -2750,7 +2750,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "is not numeric type",
       new PlaceAssert(bhl, @"
       k += ""foo""
 ------^"
@@ -2774,7 +2774,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "is not numeric type",
       new PlaceAssert(bhl, @"
       k -= ""foo""
 ------^"
@@ -2798,7 +2798,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "is not numeric type",
       new PlaceAssert(bhl, @"
       k *= ""foo""
 ------^"
@@ -2822,7 +2822,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "is not numeric type",
       new PlaceAssert(bhl, @"
       k /= ""foo""
 ------^"
@@ -3870,7 +3870,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "matching 'return' statement not found"
+      "matching 'return' statement not found",
+      new PlaceAssert(bhl, @"
+    func int test() 
+---------^"
+      )
     );
   }
 
@@ -3892,7 +3896,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "matching 'return' statement not found"
+      "matching 'return' statement not found",
+      new PlaceAssert(bhl, @"
+    func int test() 
+---------^"
+      )
     );
   }
 
@@ -3912,7 +3920,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'bool' and 'void'",
+      new PlaceAssert(bhl, @"
+      return VoidFunc()
+-------------^"
+      )
     );
   }
 
@@ -4761,7 +4773,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "no viable alternative at input 'i ;"
+      "no viable alternative at input 'i ;",
+      new PlaceAssert(bhl, @"
+      for(i ; i < 3; i = i + 1) {
+------------^"
+      )
     );
   }
 
@@ -4831,7 +4847,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no viable alternative at input 'i)'"
+      "no viable alternative at input 'i)'",
+      new PlaceAssert(bhl, @"
+      for(int i = 0 ; i < 3; i) {
+------------------------------^"
+      )
     );
   }
 
@@ -4851,7 +4871,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no viable alternative at input ';'"
+      "no viable alternative at input ';'",
+      new PlaceAssert(bhl, @"
+      for(;;) {
+-----------^"
+      )
     );
   }
 
@@ -4876,7 +4900,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'bool' and 'int'",
+      new PlaceAssert(bhl, @"
+      for(; foo() ;) {
+------------^"
+      )
     );
   }
 
@@ -5285,7 +5313,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      foreach(string it in [1,2,3]) {
+----------------------------^"
+      )
     );
   }
 
@@ -5310,7 +5342,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: '[]float' and 'float'",
+      new PlaceAssert(bhl, @"
+      foreach(float it in foo()) {
+--------------------------^"
+      )
     );
   }
 
@@ -5331,7 +5367,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      foreach(it in [1,2,3]) {
+---------------------^"
+      )
     );
   }
 
@@ -5352,7 +5392,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "already defined symbol 'it'"
+      "already defined symbol 'it'",
+      new PlaceAssert(bhl, @"
+      foreach(int it in [1,2,3]) {
+------------------^"
+      )
     );
   }
 
@@ -5430,7 +5474,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "not within loop construct"
+      "not within loop construct",
+      new PlaceAssert(bhl, @"
+      break
+------^"
+      )
     );
   }
 
@@ -5453,7 +5501,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "not within loop construct"
+      "not within loop construct",
+      new PlaceAssert(bhl, @"
+          break
+----------^"
+      )
     );
   }
 
@@ -6007,7 +6059,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "type doesn't support member access via '.'"
+      "type doesn't support member access via '.'",
+      new PlaceAssert(bhl, @"
+      return func bool(int a) { return a > 2 }.foo 
+----------------------------------------------^"
+      )
     );
   }
 
@@ -6026,7 +6082,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "accessing not an array/map type 'func bool(int)'"
+      "accessing not an array/map type 'func bool(int)'",
+      new PlaceAssert(bhl, @"
+      return func bool(int a) { return a > 2 }[10] 
+----------------------------------------------^"
+      )
     );
   }
 
@@ -6190,7 +6250,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "default argument values not allowed for lambdas"
+      "default argument values not allowed for lambdas",
+      new PlaceAssert(bhl, @"
+      func int(int c, int b = 1) {
+--------------------------^"
+      )
     );
   }
   
@@ -6982,7 +7046,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'func bool(int)' and 'func void(int)'",
+      new PlaceAssert(bhl, @"
+      func bool(int) ptr = foo
+-------------------------^"
+      )
     );
   }
 
@@ -7002,7 +7070,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'func void(float)' and 'func void(int)'",
+      new PlaceAssert(bhl, @"
+      func(float) ptr = foo
+----------------------^"
+      )
     );
   }
 
@@ -7023,7 +7095,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'int' and 'string'",
+      new PlaceAssert(bhl, @"
+      ptr(""hey"")
+----------^"
+      )
     );
   }
 
@@ -7045,7 +7121,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "'ref' is missing"
+      "'ref' is missing",
+      new PlaceAssert(bhl, @"
+      ptr(10, b)
+--------------^"
+      )
     );
   }
 
@@ -7067,7 +7147,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "incompatible types"
+      "incompatible types: 'func void(int,float)' and 'func void(int,ref float)'",
+      new PlaceAssert(bhl, @"
+      func(int, float) ptr = foo
+---------------------------^"
+      )
     );
   }
 
@@ -12143,7 +12227,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"return is not allowed in defer block"
+      @"return is not allowed in defer block",
+      new PlaceAssert(bhl, @"
+        return
+--------^"
+      )
     );
   }
 
@@ -12461,14 +12549,22 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "incompatible types"
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl1, @"
+      string foo = true ? ""Foo"" : 1
+----------------------------------^" /*taking into account ""*/
+      )
     );
 
     AssertError<Exception>(
       delegate() {
         Compile(bhl2);
       },
-      "incompatible types"
+      "incompatible types: 'int' and 'string'",
+      new PlaceAssert(bhl2, @"
+      return true ? ""Foo"" : ""Bar""
+-------------^"
+      )
     );
   }
 
@@ -12594,6 +12690,17 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl1);
+      },
+      "extraneous input '++' expecting '}'",
+      new PlaceAssert(bhl1, @"
+      ++
+------^"
+      )
+    );
+
     string bhl2 = @"
     func test()
     {
@@ -12602,6 +12709,17 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl2);
+      },
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl2, @"
+      str++
+------^"
+      )
+    );
+
     string bhl3 = @"
     func test()
     {
@@ -12609,6 +12727,13 @@ public class TestVM : BHL_TestBase
       }
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl3);
+      },
+      "extraneous input '++' expecting ')'"
+    );
 
     string bhl4 = @"
     func test()
@@ -12620,6 +12745,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl4);
+      },
+      "extraneous input '++' expecting ';'"
+    );
+
     string bhl5 = @"
     func test()
     {
@@ -12629,6 +12761,13 @@ public class TestVM : BHL_TestBase
       }
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl5);
+      },
+      "symbol 'j' not resolved"
+    );
 
     string bhl6 = @"
     
@@ -12644,6 +12783,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl6);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
     string bhl7 = @"
     func test()
     {
@@ -12652,6 +12798,13 @@ public class TestVM : BHL_TestBase
       int j = arr[i++]
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl7);
+      },
+      "no viable alternative at input '[i++'"
+    );
 
     string bhl8 = @"
     func int test()
@@ -12664,6 +12817,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl8);
+      },
+      "no viable alternative at input 'foo(i++'"
+    );
+
     string bhl9 = @"
     func int test()
     {
@@ -12671,6 +12831,13 @@ public class TestVM : BHL_TestBase
       return i++
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl9);
+      },
+      "return value is missing"
+    );
 
     string bhl10 = @"
     func int, int test()
@@ -12681,6 +12848,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl10);
+      },
+      "extraneous input '++' expecting '}'"
+    );
+
     string bhl11 = @"
     func int, int test()
     {
@@ -12689,76 +12863,6 @@ public class TestVM : BHL_TestBase
       return j++, i
     }
     ";
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl1);
-      },
-      "extraneous input '++' expecting '}'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl2);
-      },
-      "incompatible types"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl3);
-      },
-      "extraneous input '++' expecting ')'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl4);
-      },
-      "extraneous input '++' expecting ';'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl5);
-      },
-      "symbol 'j' not resolved"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl6);
-      },
-      "no viable alternative at input 'foo(i++'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl7);
-      },
-      "no viable alternative at input '[i++'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl8);
-      },
-      "no viable alternative at input 'foo(i++'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl9);
-      },
-      "return value is missing"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl10);
-      },
-      "extraneous input '++' expecting '}'"
-    );
 
     AssertError<Exception>(
       delegate() {
@@ -12778,6 +12882,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl1);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
     string bhl2 = @"
     func test()
     {
@@ -12786,6 +12897,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl2);
+      },
+      "incompatible types"
+    );
+
     string bhl3 = @"
     func test()
     {
@@ -12793,6 +12911,13 @@ public class TestVM : BHL_TestBase
       }
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl3);
+      },
+      "extraneous input '--' expecting ')'"
+    );
 
     string bhl4 = @"
     func test()
@@ -12803,6 +12928,13 @@ public class TestVM : BHL_TestBase
       }
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl4);
+      },
+      "extraneous input '--' expecting ';'"
+    );
 
     string bhl5 = @"
     
@@ -12818,6 +12950,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl5);
+      },
+      "no viable alternative at input 'foo(i--'"
+    );
+
     string bhl6 = @"
     func test()
     {
@@ -12827,6 +12966,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl6);
+      },
+      "no viable alternative at input '[i--'"
+    );
+
     string bhl7 = @"
     func int test()
     {
@@ -12834,6 +12980,13 @@ public class TestVM : BHL_TestBase
       return i--
     }
     ";
+
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl7);
+      },
+      "return value is missing"
+    );
 
     string bhl8 = @"
     func int, int test()
@@ -12844,6 +12997,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
+    AssertError<Exception>(
+      delegate() {
+        Compile(bhl8);
+      },
+      "extraneous input '--' expecting '}'"
+    );
+
     string bhl9 = @"
     func int, int test()
     {
@@ -12852,62 +13012,6 @@ public class TestVM : BHL_TestBase
       return j--, i
     }
     ";
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl1);
-      },
-      "extraneous input '--' expecting '}'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl2);
-      },
-      "incompatible types"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl3);
-      },
-      "extraneous input '--' expecting ')'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl4);
-      },
-      "extraneous input '--' expecting ';'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl5);
-      },
-      "no viable alternative at input 'foo(i--'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl6);
-      },
-      "no viable alternative at input '[i--'"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl7);
-      },
-      "return value is missing"
-    );
-
-    AssertError<Exception>(
-      delegate() {
-        Compile(bhl8);
-      },
-      "extraneous input '--' expecting '}'"
-    );
 
     AssertError<Exception>(
       delegate() {
@@ -14109,7 +14213,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
       ColorAlpha c = new Color {g: 10, r: 100}
 -------------------^"
@@ -14407,7 +14511,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
     func float foo(ColorAlpha c = new Color{r:20})
 --------------------------------^"
@@ -14663,7 +14767,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
       []ColorAlpha c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
 -----------------------------------------^"

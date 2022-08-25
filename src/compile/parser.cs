@@ -1846,7 +1846,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), ctx.callExp().chainExp(), ref curr_type, ctx.Start.Line, write: true);
 
     if(!Types.IsNumeric(curr_type))
-      FireError(ctx, "incompatible types");
+      FireError(ctx, "is not numeric type");
 
     return null;
   }
@@ -2485,7 +2485,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAST();
 
       if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
-        FireError(ctx.NAME(), "matching 'return' statement not found");
+        FireError(ctx.retType(), "matching 'return' statement not found");
 
       PopScope();
     }
@@ -3081,8 +3081,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(assign_type != null)
       {
-        var tuple = assign_type as TupleType;
-        if(tuple != null)
+        if(assign_type is TupleType tuple)
           types.CheckAssign(ptree, tuple[i].Get());
         else
           types.CheckAssign(ptree, Wrap(assign_exp));
@@ -3577,7 +3576,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //evaluating array expression
       Visit(exp);
       PopJsonType();
-      types.CheckAssign(Wrap(exp), arr_type);
+      types.CheckAssign(arr_type, Wrap(exp));
 
       var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
       var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
@@ -3696,7 +3695,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //evaluating array expression
       Visit(exp);
       PopJsonType();
-      types.CheckAssign(Wrap(exp), map_type);
+      types.CheckAssign(map_type, Wrap(exp));
 
       var map_tmp_en_name = "$foreach_en" + exp.Start.Line + "_" + exp.Start.Column;
       var map_tmp_en_symb = curr_scope.ResolveWithFallback(map_tmp_en_name) as VariableSymbol;

@@ -387,6 +387,11 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   {
     return name.GetHashCode();
   }
+
+  public override string ToString() 
+  {
+    return name;
+  }
 }
 
 public class Types : INamedResolver
@@ -698,7 +703,7 @@ public class Types : INamedResolver
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
-      throw new SemanticError(a, "incompatible types");
+      throw new SemanticError(a, "incompatible types: '" + a.eval_type + "' and '" + b.eval_type + "'");
     return result;
   }
 
@@ -719,7 +724,7 @@ public class Types : INamedResolver
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     if(!CanAssignTo(rhs.eval_type, lhs.eval_type)) 
-      throw new SemanticError(rhs, "incompatible types");
+      throw new SemanticError(rhs, "incompatible types: '" + lhs.eval_type + "' and '" + rhs.eval_type + "'");
   }
 
   //NOTE: SemanticError(..) is attached to rhs, not lhs. 
@@ -730,13 +735,13 @@ public class Types : INamedResolver
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
     if(!CanAssignTo(rhs.eval_type, lhs)) 
-      throw new SemanticError(rhs, "incompatible types");
+      throw new SemanticError(rhs, "incompatible types: '" + lhs + "' and '" + rhs.eval_type + "'");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
     if(!CanAssignTo(rhs, lhs.eval_type)) 
-      throw new SemanticError(lhs, "incompatible types");
+      throw new SemanticError(lhs, "incompatible types: '" + lhs.eval_type + "' and '" + rhs + "'");
   }
 
   static public void CheckCast(WrappedParseTree dest, WrappedParseTree from) 
@@ -745,7 +750,7 @@ public class Types : INamedResolver
     var from_type = from.eval_type;
 
     if(!CheckCast(dest_type, from_type))
-      throw new SemanticError(dest, "incompatible types for casting");
+      throw new SemanticError(dest, "incompatible types for casting: '" + dest_type + "' and '" + from_type + "'");
   }
 
   public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 
