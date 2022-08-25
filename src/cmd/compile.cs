@@ -87,9 +87,7 @@ public class CompileCmd : ICmd
     if(tmp_dir == "")
       Usage("Tmp dir not set");
 
-    if(err_file == "")
-      Usage("Err file not set");
-    if(File.Exists(err_file))
+    if(!string.IsNullOrEmpty(err_file) && File.Exists(err_file))
       File.Delete(err_file);
 
     IUserBindings userbindings = new EmptyUserBindings();
@@ -144,8 +142,11 @@ public class CompileCmd : ICmd
 
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);
-    if(err != null)
+    if(err != null && string.IsNullOrEmpty(err_file))
+    {
+      ErrorUtils.OutputError(err.file, err.line, err.char_pos, err.text);
       Environment.Exit(ERROR_EXIT_CODE);
+    }
   }
 
   public static string GetSelfFile()

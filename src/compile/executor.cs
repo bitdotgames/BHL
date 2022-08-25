@@ -228,10 +228,13 @@ public class CompilationExecutor
         //NOTE: exit in case of error
         if(w.error != null)
         {
-          if(conf.err_file == "-")
-            Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
-          else
-            File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
+          if(!string.IsNullOrEmpty(conf.err_file))
+          {
+            if(conf.err_file == "-")
+              Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
+            else
+              File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
+          }
 
           return w.error;
         }

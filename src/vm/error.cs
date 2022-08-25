@@ -69,6 +69,12 @@ public static class ErrorUtils
     else
       return "??? @(" + line + ":" + char_pos + ")";
   }
+
+  public static void OutputError(string file, int line, int char_pos, string text)
+  {
+    Console.Error.WriteLine(ShowErrorPlace(File.ReadAllText(file), line, char_pos));
+    Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": " + text);
+  }
 }
 
 public class SymbolError : Exception

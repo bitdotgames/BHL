@@ -131,7 +131,6 @@ public class RunCmd : ICmd
     conf.max_threads = 1;
     conf.res_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
     conf.tmp_dir = Path.GetTempPath();
-    conf.err_file = Path.GetTempPath() + "/bhl.error";
     conf.userbindings = userbindings;
     conf.postproc = postproc;
     conf.verbose = false;
@@ -143,9 +142,7 @@ public class RunCmd : ICmd
 
     if(err != null)
     {
-      ShowPosition(files[0], err);
-      Console.Error.WriteLine("bhl: " + files[0] + ":" + err.line + ":" + err.char_pos + ": " + err.text);
-
+      ErrorUtils.OutputError(err.file, err.line, err.char_pos, err.text);
       Environment.Exit(ERROR_EXIT_CODE);
     }
 
@@ -165,17 +162,6 @@ public class RunCmd : ICmd
     const float dt = 0.016f;
     while(vm.Tick())
       System.Threading.Thread.Sleep((int)(dt * 1000));
-  }
-
-  static void ShowPosition(string file, ICompileError err)
-  {
-    var lines = File.ReadAllLines(file);
-
-    if(err.line < lines.Length)
-      Console.Error.WriteLine(lines[err.line-1]);
-    else if(err.line-1 == lines.Length)
-      Console.Error.WriteLine(lines[lines.Length-1]);
-    Console.Error.WriteLine(new String('-', err.char_pos) + '^');
   }
 
   public static string GetSelfFile()
