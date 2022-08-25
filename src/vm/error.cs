@@ -65,7 +65,18 @@ public static class ErrorUtils
   {
     var lines = source.Split('\n');
     if(line > 0 && line <= lines.Length)
-      return lines[line-1] + "\n" + new String('-', char_pos) + "^";
+    {
+      string hint = lines[line-1].Replace("\t", "    ") + "\n";
+      for(int c=0;c<char_pos;++c)
+      {
+        if(lines[line-1][c] == '\t')
+          hint += "----";
+        else
+          hint += "-";
+      }
+      hint += "^";
+      return hint;
+    }
     else
       return "??? @(" + line + ":" + char_pos + ")";
   }
