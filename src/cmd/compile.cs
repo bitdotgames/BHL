@@ -87,9 +87,6 @@ public class CompileCmd : ICmd
     if(tmp_dir == "")
       Usage("Tmp dir not set");
 
-    if(!string.IsNullOrEmpty(err_file) && File.Exists(err_file))
-      File.Delete(err_file);
-
     IUserBindings userbindings = new EmptyUserBindings();
     if(userbindings_dll_path != "")
     {

@@ -135,8 +135,6 @@ public class RunCmd : ICmd
     conf.postproc = postproc;
     conf.verbose = false;
 
-    File.Delete(conf.err_file);
-
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);
 

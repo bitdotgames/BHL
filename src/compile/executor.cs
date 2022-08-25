@@ -75,6 +75,9 @@ public class CompilationExecutor
 
   ICompileError DoExec(CompileConf conf)
   {
+    if(!string.IsNullOrEmpty(conf.err_file))
+      File.Delete(conf.err_file);
+
     var res_dir = Path.GetDirectoryName(conf.res_file); 
     if(res_dir.Length > 0)
       Directory.CreateDirectory(res_dir);
