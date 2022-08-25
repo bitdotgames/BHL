@@ -17288,7 +17288,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         CompileFiles(files);
       },
-     "invalid import"
+     "invalid import",
+      new PlaceAssert(bhl1, @"
+    import ""garbage""  
+----^"
+      )
     );
   }
 
@@ -17356,7 +17360,11 @@ public class TestVM : BHL_TestBase
           }
         );
       },
-      @"already defined symbol 'Bar'"
+      @"already defined symbol 'Bar'",
+      new PlaceAssert(bhl2, @"
+    }
+----^"
+      )
     );
   }
 

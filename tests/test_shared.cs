@@ -775,7 +775,7 @@ public class BHL_TestBase
         AssertEqual(place_err.Trim('\n'), place_assert.expect.Trim('\n'));
       }
       else
-        AssertTrue(false, "No ICompileError occured"); 
+        AssertTrue(false, "No ICompileError occured, got " + err?.GetType().Name); 
     }
 
     AssertTrue(err != null, "Error didn't occur"); 
@@ -817,7 +817,7 @@ public class BHL_TestBase
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);
     if(err != null)
-      throw new Exception(ErrorUtils.ToJson(err));
+      throw (Exception)err;
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
