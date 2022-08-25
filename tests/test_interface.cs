@@ -318,7 +318,7 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types",
+        "incompatible types: 'IFoo' and 'Foo'",
         new PlaceAssert(bhl, @"
         foo(f)
 ------------^"
