@@ -17361,8 +17361,8 @@ public class TestVM : BHL_TestBase
         );
       },
       @"already defined symbol 'Bar'",
-      new PlaceAssert(bhl2, @"
-    }
+      new PlaceAssert(bhl1, @"
+    enum Bar { 
 ----^"
       )
     );
