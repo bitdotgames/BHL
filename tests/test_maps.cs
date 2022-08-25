@@ -561,7 +561,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"incompatible types"
+        @"incompatible types",
+       new PlaceAssert(bhl, @"
+        foreach(int v in m) {
+-------------------------^"
+       )
       );
     }
 
@@ -579,7 +583,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"incompatible types"
+        @"incompatible types",
+       new PlaceAssert(bhl, @"
+        foreach(int k,int v in m) {
+-------------------------------^"
+       )
       );
     }
 
@@ -597,7 +605,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"incompatible types"
+        @"incompatible types",
+       new PlaceAssert(bhl, @"
+        foreach(int k,string v in m) {
+----------------------------------^"
+       )
       );
     }
   }
