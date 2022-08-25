@@ -1354,7 +1354,11 @@ public class TestNamespace : BHL_TestBase
           }
         );
       },
-      @"symbol 'foo.Foo' is already declared in module 'bhl2'"
+      @"symbol 'foo.Foo' is already declared in module 'bhl2'",
+      new PlaceAssert(bhl1, @"
+      func int Foo() {
+------^"
+      )
     );
   }
 
