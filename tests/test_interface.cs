@@ -222,7 +222,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "default value is not allowed"
+      "default argument value is not allowed",
+      new PlaceAssert(bhl, @"
+      func hey(int a, float b = 1)
+----------------------^"
+      )
     );
   }
 
@@ -241,7 +245,11 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'",
+        new PlaceAssert(bhl, @"
+      class Foo : IFoo {
+------^"
+        )
       );
     }
 
@@ -258,7 +266,11 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'"
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'",
+        new PlaceAssert(bhl, @"
+      class Foo : IFoo {
+------^"
+        )
       );
     }
 
@@ -277,7 +289,11 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int)'"
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int)'",
+        new PlaceAssert(bhl, @"
+      class Foo : IFoo {
+------^"
+        )
       );
     }
 
@@ -302,7 +318,11 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "incompatible types"
+        "incompatible types",
+        new PlaceAssert(bhl, @"
+        foo(f)
+------------^"
+        )
       );
     }
   }
@@ -327,7 +347,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "interface is implemented already"
+      "interface is implemented already",
+      new PlaceAssert(bhl, @"
+    class Foo : IFoo, IBar, IFoo { 
+----------------------------^"
+      )
     );
   }
 
@@ -348,7 +372,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "interface is inherited already"
+      "interface is inherited already",
+      new PlaceAssert(bhl, @"
+    interface IBar : IFoo, IFoo { 
+---------------------------^"
+      )
     );
   }
 
@@ -369,7 +397,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "self inheritance is not allowed"
+      "self inheritance is not allowed",
+      new PlaceAssert(bhl, @"
+    interface IBar : IBar { 
+---------------------^"
+      )
     );
   }
 
@@ -698,7 +730,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "implementing native interfaces is not supported"
+      "implementing native interfaces is not supported",
+      new PlaceAssert(bhl, @"
+    class Foo : IFoo {
+----------------^"
+      )
     );
   }
 
@@ -736,7 +772,11 @@ public class TestInterfaces : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "implementing native interfaces is not supported"
+      "implementing native interfaces is not supported",
+      new PlaceAssert(bhl, @"
+    class Foo : IBar, IFoo {
+----------------^"
+      )
     );
   }
 

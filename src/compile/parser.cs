@@ -2530,7 +2530,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         int default_args_num;
         var sig = ParseFuncSignature(ParseType(fd.retType(), strict: false), fd.funcParams(), out default_args_num, strict: false);
         if(default_args_num != 0)
-          FireError(ib, "default value is not allowed in this context");
+          FireError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
 
         var func_symb = new FuncSymbolScript(
           null, 
