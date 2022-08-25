@@ -64,7 +64,7 @@ public static class ErrorUtils
   public static string ShowErrorPlace(string source, int line, int char_pos)
   {
     var lines = source.Split('\n');
-    if(line <= lines.Length)
+    if(line > 0 && line <= lines.Length)
       return lines[line-1] + "\n" + new String('-', char_pos) + "^";
     else
       return "???";

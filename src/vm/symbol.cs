@@ -2020,6 +2020,12 @@ public class EnumSymbolScript : EnumSymbol
 {
   public const uint CLASS_ID = 12;
 
+#if BHL_FRONT
+  public EnumSymbolScript(WrappedParseTree parsed, string name)
+    : base(parsed, name)
+  {}
+#endif
+
   public EnumSymbolScript(string name)
     : base(name)
   {}

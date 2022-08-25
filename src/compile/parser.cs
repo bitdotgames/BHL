@@ -2846,7 +2846,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      so that it doesn't really make sense to create AST for them.
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
-    var symb = new EnumSymbolScript(enum_name);
+    var symb = new EnumSymbolScript(Wrap(ctx), enum_name);
     curr_scope.Define(symb);
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)

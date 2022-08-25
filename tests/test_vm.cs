@@ -15699,7 +15699,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      Color c3 = c1 * c2
+-----------------^"
+      )
     );
   }
 
@@ -15724,7 +15728,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      Color c3 = c1 / c2
+-----------------^"
+      )
     );
   }
 
@@ -15749,7 +15757,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      bool r = c1 > c2
+---------------^"
+      )
     );
   }
 
@@ -15774,7 +15786,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      bool r = c1 >= c2
+---------------^"
+      )
     );
   }
 
@@ -15799,7 +15815,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      bool r = c1 > c2
+---------------^"
+      )
     );
   }
 
@@ -15824,7 +15844,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"operator is not overloaded"
+      @"operator is not overloaded",
+      new PlaceAssert(bhl, @"
+      bool r = c1 > c2
+---------------^"
+      )
     );
   }
 
@@ -15848,7 +15872,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be numeric type"
+      @"must be numeric type",
+      new PlaceAssert(bhl, @"
+      Color c2 = -c1
+------------------^"
+      )
     );
   }
 
@@ -15873,7 +15901,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be int type"
+      @"must be int type",
+      new PlaceAssert(bhl, @"
+      int a = c2 & c1
+--------------^"
+      )
     );
   }
 
@@ -15898,7 +15930,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be int type"
+      @"must be int type",
+      new PlaceAssert(bhl, @"
+      int a = c2 | c1
+--------------^"
+      )
     );
   }
 
@@ -15923,7 +15959,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be bool type"
+      @"must be bool type",
+      new PlaceAssert(bhl, @"
+      bool a = c2 && c1
+---------------^"
+      )
     );
   }
 
@@ -15948,7 +15988,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be bool type"
+      @"must be bool type",
+      new PlaceAssert(bhl, @"
+      bool a = c2 || c1
+---------------^"
+      )
     );
   }
 
@@ -15972,7 +16016,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"must be bool type"
+      @"must be bool type",
+      new PlaceAssert(bhl, @"
+      bool a = !c1
+----------------^"
+      )
     );
   }
 
@@ -16200,7 +16248,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      return c1 * ""hey""
+------------------^"
+      )
     );
   }
 
@@ -16515,7 +16567,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"duplicate key 'A'"
+      @"duplicate key 'A'",
+      new PlaceAssert(bhl, @"
+      A = 10
+------^"
+      )
     );
   }
 
@@ -16536,7 +16592,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"duplicate value '1'"
+      @"duplicate value '1'",
+      new PlaceAssert(bhl, @"
+      C = 1
+----------^"
+      )
     );
   }
 
@@ -16561,7 +16621,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"already defined symbol 'Foo'"
+      @"already defined symbol 'Foo'",
+      new PlaceAssert(bhl, @"
+    enum Foo
+----^"
+      )
     );
   }
 
@@ -16585,7 +16649,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"already defined symbol 'Foo'"
+      @"already defined symbol 'Foo'",
+      new PlaceAssert(bhl, @"
+    class Foo
+----^"
+      )
     );
   }
 
@@ -16610,7 +16678,11 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "symbol is not a function"
+      "symbol is not a function",
+      new PlaceAssert(bhl, @"
+      return int(foo())
+-------------^"
+      )
     );
   }
 
