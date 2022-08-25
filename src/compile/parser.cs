@@ -1619,7 +1619,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var val = vals[i].exp() as bhlParser.ExpJsonArrContext;
         if(val?.jsonArray()?.jsonValue()?.Length != 2)
-          FireError(ctx,  "[k, v] expected");
+          FireError(val == null ? (IParseTree)ctx : (IParseTree)val,  "[k, v] expected");
 
         PushJsonType(key_type);
         Visit(val.jsonArray().jsonValue()[0]);

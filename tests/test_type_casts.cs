@@ -575,7 +575,11 @@ public class TestTypeCasts : BHL_TestBase
        delegate() {
          Compile(bhl, ts);
        },
-      "incompatible types"
+      "incompatible types",
+      new PlaceAssert(bhl, @"
+      Foo tmp = new Color
+--------------^"
+      )
     );
   }
 
@@ -608,7 +612,11 @@ public class TestTypeCasts : BHL_TestBase
        delegate() {
          Compile(bhl, ts);
        },
-      "incompatible types for casting"
+      "incompatible types for casting",
+      new PlaceAssert(bhl, @"
+      Foo tmp = (Foo)new Color
+----------------^"
+      )
     );
   }
 
@@ -1117,7 +1125,11 @@ public class TestTypeCasts : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "type 'Foo' not found"
+      "type 'Foo' not found",
+      new PlaceAssert(bhl, @"
+      Type t = typeof(Foo)
+----------------------^"
+      )
     );
   }
 

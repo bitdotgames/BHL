@@ -170,7 +170,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"[k, v] expected"
+        @"[k, v] expected",
+       new PlaceAssert(bhl, @"
+      [string]int m = [""hey""]
+----------------------^"
+       )
       );
     }
 
@@ -183,7 +187,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"[k, v] expected"
+        @"[k, v] expected",
+       new PlaceAssert(bhl, @"
+      [string]int m = [""hey"", 1]
+----------------------^"
+       )
       );
     }
 
@@ -196,7 +204,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"[k, v] expected"
+        @"[k, v] expected",
+       new PlaceAssert(bhl, @"
+      [string]int m = [[""hey""]]
+-----------------------^"
+       )
       );
     }
 
@@ -209,7 +221,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"[k, v] expected"
+        @"[k, v] expected",
+       new PlaceAssert(bhl, @"
+      [string]int m = [[""hey"", 1], [""hey""]]
+-----------------------------------^" /*taking into account ""*/
+       )
       );
     }
 
@@ -222,7 +238,11 @@ public class TestMaps : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        @"incompatible types"
+        @"incompatible types",
+       new PlaceAssert(bhl, @"
+      [string]int m = [[1, ""hey""]]
+------------------------^"
+       )
       );
     }
   }
