@@ -795,4 +795,55 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestNonExistingClass()
+  {
+    {
+      string bhl = @"
+
+      func [Foo]int fetch() {
+        return null
+      }
+
+      func test() {
+        [Foo]int fs = fetch()
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "type 'Foo' not found",
+        new PlaceAssert(bhl, @"
+      func [Foo]int fetch() {
+------------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+
+      func [int]Foo fetch() {
+        return null
+      }
+
+      func test() {
+        [int]Foo fs = fetch()
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "type 'Foo' not found",
+        new PlaceAssert(bhl, @"
+      func [int]Foo fetch() {
+----------------^"
+        )
+      );
+    }
+  }
 }

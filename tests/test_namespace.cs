@@ -1416,85 +1416,34 @@ public class TestNamespace : BHL_TestBase
   [IsTested()]
   public void TestIncompatibleTypes()
   {
-    {
-      string bhl = @"
+    string bhl = @"
 
-      namespace ecs {
+    namespace ecs {
+      class Entity {
+      }
+
+      namespace sub {
         class Entity {
         }
-      }
-
-      func []ecs.Entity fetch() {
-        return null
-      }
-
-      func test() {
-        []Entity es = fetch()
-      }
-      ";
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "incompatible types: '[]Entity' and '[]ecs.Entity'",
-        new PlaceAssert(bhl, @"
-        []Entity es = fetch()
---------------------^"
-        )
-      );
-    }
-
-    {
-      string bhl = @"
-
-      namespace ecs {
-        class Entity {
-        }
-
         func []Entity fetch() {
           return null
         }
-
-        func test() {
-          []ecs2.Entity es = fetch()
-        }
       }
-      ";
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "incompatible types: '[]ecs2.Entity' and '[]Entity'",
-        new PlaceAssert(bhl, @"
-          []ecs2.Entity es = fetch()
----------------------------^"
-        )
-      );
-    }
 
-//    {
-//      string bhl = @"
-//
-//      namespace ecs {
-//        func []Entity fetch() {
-//          return null
-//        }
-//
-//        func test() {
-//          []Entity es = fetch()
-//        }
-//      }
-//      ";
-//      AssertError<Exception>(
-//        delegate() { 
-//          Compile(bhl);
-//        },
-//        "type not found 'Entity'",
-//        new PlaceAssert(bhl, @"
-//        func []Entity fetch() {
-//---------------^"
-//        )
-//      );
-//    }
+      func test() {
+        []Entity es = sub.fetch()
+      }
+    }
+    ";
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: '[]Entity' and '[]Entity'",
+      new PlaceAssert(bhl, @"
+        []Entity es = sub.fetch()
+--------------------^"
+      )
+    );
    }
 }

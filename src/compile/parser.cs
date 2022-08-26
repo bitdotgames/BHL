@@ -1425,9 +1425,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       tp = curr_scope.R().T(ctx.nsName().GetText());
 
     if(ctx.ARR() != null)
+    {
+      if(tp.Get() == null)
+        FireError(ctx.nsName(), "type '" + tp.path + "' not found");
       tp = curr_scope.R().TArr(tp);
+    }
     else if(ctx.mapType() != null)
-      tp = curr_scope.R().TMap(curr_scope.R().T(ctx.mapType().nsName().GetText()), tp);
+    {
+      if(tp.Get() == null)
+        FireError(ctx.nsName(), "type '" + tp.path + "' not found");
+      var ktp = curr_scope.R().T(ctx.mapType().nsName().GetText());
+      if(ktp.Get() == null)
+        FireError(ctx.mapType().nsName(), "type '" + ktp.path + "' not found");
+      tp = curr_scope.R().TMap(ktp, tp);
+    }
 
     if(tp.Get() == null)
       FireError(ctx, "type '" + tp.path + "' not found");

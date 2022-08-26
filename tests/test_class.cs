@@ -607,6 +607,32 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestArrayOfNonExistingClass()
+  {
+    string bhl = @"
+
+    func []Foo fetch() {
+      return null
+    }
+
+    func test() {
+      []Foo fs = fetch()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "type 'Foo' not found",
+      new PlaceAssert(bhl, @"
+    func []Foo fetch() {
+-----------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestUserClassArrayClear()
   {
     string bhl = @"
