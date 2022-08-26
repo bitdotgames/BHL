@@ -1471,5 +1471,30 @@ public class TestNamespace : BHL_TestBase
         )
       );
     }
+
+//    {
+//      string bhl = @"
+//
+//      namespace ecs {
+//        func []Entity fetch() {
+//          return null
+//        }
+//
+//        func test() {
+//          []Entity es = fetch()
+//        }
+//      }
+//      ";
+//      AssertError<Exception>(
+//        delegate() { 
+//          Compile(bhl);
+//        },
+//        "type not found 'Entity'",
+//        new PlaceAssert(bhl, @"
+//        func []Entity fetch() {
+//---------------^"
+//        )
+//      );
+//    }
    }
 }

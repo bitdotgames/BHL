@@ -1327,9 +1327,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx, bool strict = true)
+  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
-    var ret_type = ParseType(ret_ctx, strict);
+    var ret_type = ParseType(ret_ctx);
 
     var arg_types = new List<Proxy<IType>>();
     if(types_ctx != null)
@@ -1337,7 +1337,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       for(int i=0;i<types_ctx.refType().Length;++i)
       {
         var refType = types_ctx.refType()[i];
-        var arg_type = ParseType(refType.type(), strict);
+        var arg_type = ParseType(refType.type());
         if(refType.isRef() != null)
           arg_type = curr_scope.R().TRef(arg_type);
         arg_types.Add(arg_type);
@@ -1347,12 +1347,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return new FuncSignature(ret_type, arg_types);
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx, bool strict = true)
+  FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    return ParseFuncSignature(ctx.retType(), ctx.types(), strict);
+    return ParseFuncSignature(ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num, bool strict = true)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
     var sig = new FuncSignature(ret_type);
@@ -1362,7 +1362,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var vd = fparams.funcParamDeclare()[i];
 
-        var tp = ParseType(vd.type(), strict);
+        var tp = ParseType(vd.type());
         if(vd.isRef() != null)
           tp = curr_scope.R().T(new RefType(tp));
 
@@ -1387,13 +1387,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, bool strict = true)
+  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
-    return ParseFuncSignature(ret_type, fparams, out default_args_num, strict);
+    return ParseFuncSignature(ret_type, fparams, out default_args_num);
   }
 
-  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed, bool strict = true)
+  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
   {
     Proxy<IType> tp;
 
@@ -1404,23 +1404,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var tuple = new TupleType();
       for(int i=0;i<parsed.type().Length;++i)
-        tuple.Add(ParseType(parsed.type()[i], strict));
+        tuple.Add(ParseType(parsed.type()[i]));
       tp = curr_scope.R().T(tuple);
     }
     else
-      tp = ParseType(parsed.type()[0], strict);
+      tp = ParseType(parsed.type()[0]);
 
-    if(tp.Get() == null && strict)
+    if(tp.Get() == null)
       FireError(parsed, "type '" + tp.path + "' not found");
 
     return tp;
   }
 
-  Proxy<IType> ParseType(bhlParser.TypeContext ctx, bool strict = true)
+  Proxy<IType> ParseType(bhlParser.TypeContext ctx)
   {
     Proxy<IType> tp;
     if(ctx.funcType() != null)
-      tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType(), strict));
+      tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
     else
       tp = curr_scope.R().T(ctx.nsName().GetText());
 
@@ -1429,7 +1429,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     else if(ctx.mapType() != null)
       tp = curr_scope.R().TMap(curr_scope.R().T(ctx.mapType().nsName().GetText()), tp);
 
-    if(tp.Get() == null && strict)
+    if(tp.Get() == null)
       FireError(ctx, "type '" + tp.path + "' not found");
 
    return tp;
@@ -2528,7 +2528,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         int default_args_num;
-        var sig = ParseFuncSignature(ParseType(fd.retType(), strict: false), fd.funcParams(), out default_args_num, strict: false);
+        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
           FireError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
 
