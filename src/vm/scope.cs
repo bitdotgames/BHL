@@ -442,6 +442,14 @@ public static class ScopeExtensions
     return sym.scope.GetFullPath(sym.name);
   }
 
+  public static string GetFullPath(this IType type)
+  {
+    if(type is Symbol s)
+      return s.GetFullPath();
+    else
+      return type.ToString();
+  }
+
   public static string GetFullPath(this IScope scope, string name)
   {
     if(name == null || name.IndexOf('.') != -1)

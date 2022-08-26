@@ -382,12 +382,12 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   public string GetNativeStaticFieldGetFuncName(FieldSymbol fld)
   {
-    return "$__" + this.GetFullPath() + "_get_" + fld.name;
+    return "$__" + ((Symbol)this).GetFullPath() + "_get_" + fld.name;
   }
 
   public string GetNativeStaticFieldSetFuncName(FieldSymbol fld)
   {
-    return "$__" + this.GetFullPath() + "_set_" + fld.name;
+    return "$__" + ((Symbol)this).GetFullPath() + "_set_" + fld.name;
   }
 
   public void Define(Symbol sym) 
