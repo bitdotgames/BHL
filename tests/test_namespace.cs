@@ -1425,6 +1425,40 @@ public class TestNamespace : BHL_TestBase
       namespace sub {
         class Entity {
         }
+        func Entity fetch() {
+          return null
+        }
+      }
+
+      func test() {
+        Entity es = sub.fetch()
+      }
+    }
+    ";
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'ecs.Entity' and 'ecs.sub.Entity'",
+      new PlaceAssert(bhl, @"
+        Entity es = sub.fetch()
+------------------^"
+      )
+    );
+   }
+
+  [IsTested()]
+  public void TestIncompatibleTypesArrays()
+  {
+    string bhl = @"
+
+    namespace ecs {
+      class Entity {
+      }
+
+      namespace sub {
+        class Entity {
+        }
         func []Entity fetch() {
           return null
         }
