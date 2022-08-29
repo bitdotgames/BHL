@@ -28,7 +28,6 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   public string path 
   { 
     get { return _path; } 
-    private set { _path = value; }
   }
 
   public Proxy(INamedResolver resolver, string path)
@@ -66,6 +65,11 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
     named = (T)resolver.ResolveNamedByPath(_path);
 
+    //TODO: some controversary code below - when resolving a symbol,
+    //      forcing its full path to re-write the original path
+    if(named != null)
+      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
+
     return named;
   }
 
@@ -73,11 +77,6 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   {
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
-
-    //TODO: some controversary code below - when saving a symbol,
-    //      forcing its full path to be saved
-    if(!ctx.is_read && named != null)
-      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
 
     marshall.Marshall.Sync(ctx, ref _path);
 

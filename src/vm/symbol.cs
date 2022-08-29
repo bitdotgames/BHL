@@ -1704,7 +1704,7 @@ public class FuncSymbolVirtual : FuncSymbol
   public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
   {
     if(!signature.Equals(fs.signature))
-      throw new SymbolError(fs, "virtual method signature doesn't match the base one");
+      throw new SymbolError(fs, "virtual method signature doesn't match the base one: '" + signature + "' and  '" + fs.signature + "'");
 
     fs._virtual = this;
 

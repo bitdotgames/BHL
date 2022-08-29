@@ -1439,7 +1439,7 @@ public class TestNamespace : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types: '[]Entity' and '[]Entity'",
+      "incompatible types: '[]ecs.Entity' and '[]ecs.sub.Entity'",
       new PlaceAssert(bhl, @"
         []Entity es = sub.fetch()
 --------------------^"
