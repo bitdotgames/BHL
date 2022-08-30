@@ -188,22 +188,43 @@ public class TestVar : BHL_TestBase
   [IsTested()]
   public void TestFuncSignatureMemberNotAllowed()
   {
-    string bhl = @"
-      func var test() {
-        return null
-      }
-    ";
+    {
+      string bhl = @"
+        func var test() {
+          return null
+        }
+      ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "can't determine the type",
-        new PlaceAssert(bhl, @"
-      func var test() {
------------^"
-       )
-      );
+        AssertError<Exception>(
+          delegate() { 
+            Compile(bhl);
+          },
+          "can't determine the type",
+          new PlaceAssert(bhl, @"
+        func var test() {
+-------------^"
+         )
+        );
+    }
+
+    {
+      string bhl = @"
+        func int test(int a, var b) {
+          return 1
+        }
+      ";
+
+        AssertError<Exception>(
+          delegate() { 
+            Compile(bhl);
+          },
+          "can't determine the type",
+          new PlaceAssert(bhl, @"
+        func int test(int a, var b) {
+-----------------------------^"
+         )
+        );
+     }
   }
 
   [IsTested()]
