@@ -337,8 +337,7 @@ public class TestVariadic : BHL_TestBase
     }
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestInterleaveValuesStackInParalAll()
   {
     string bhl = @"
@@ -367,7 +366,7 @@ public class TestVariadic : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
 
-    var vm = MakeVM(bhl, ts, true);
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);

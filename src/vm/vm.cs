@@ -2889,6 +2889,8 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
+  public FixedStack<Val> stack = new FixedStack<Val>(VM.Frame.MAX_STACK);
+  FixedStack<Val> orig_stack;
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
 
@@ -2909,10 +2911,14 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
     this.max_ip = max_ip;
     exec.ip = min_ip;
     exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
+    orig_stack = frm.stack;
   }
 
   public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
+    //NOTE: replacing temporarily stack with local version
+    frm.stack = stack;
+
     status = frm.vm.Execute(exec);
 
     if(status == BHS.SUCCESS)
@@ -2945,6 +2951,16 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
       exec.frames[i].Release();
     exec.frames.Clear();
     exec.regions.Clear();
+
+    //NOTE: let's clean the local stack
+    for(int i=stack.Count;i-- > 0;)
+    {
+      var val = stack[i];
+      val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    }
+    stack.Clear();
+    //NOTE: restoring the original stack
+    frm.stack = orig_stack;
   }
 
   public void RegisterDefer(DeferBlock dfb)

@@ -19,7 +19,16 @@ public class ModuleCompiler : AST_Visitor
 
   IScope curr_scope;
 
-  Stack<AST_Block> ctrl_blocks = new Stack<AST_Block>();
+  Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
+  HashSet<AST_Block> ctrl_block_has_defers = new HashSet<AST_Block>();
+
+  Stack<List<AST_Block>> func_ctrl_blocks = new Stack<List<AST_Block>>();
+
+  List<AST_Block> ctrl_blocks {
+    get {
+      return func_ctrl_blocks.Peek();
+    }
+  }
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
 
   internal struct BlockJump
@@ -30,9 +39,6 @@ public class ModuleCompiler : AST_Visitor
   List<BlockJump> non_patched_breaks = new List<BlockJump>();
   List<BlockJump> non_patched_continues = new List<BlockJump>();
   Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
-
-  Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
-  HashSet<AST_Block> ctrl_block_has_defers = new HashSet<AST_Block>();
 
   internal struct Offset
   {
@@ -997,7 +1003,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case BlockType.FUNC:
       {
+        func_ctrl_blocks.Push(new List<AST_Block>());
         VisitChildren(ast);
+        func_ctrl_blocks.Pop();
       }
       break;
       case BlockType.SEQ:
@@ -1019,7 +1027,7 @@ public class ModuleCompiler : AST_Visitor
 
   void VisitControlBlock(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
 
     bool parent_is_paral =
       parent_block != null &&
@@ -1030,7 +1038,7 @@ public class ModuleCompiler : AST_Visitor
       ast.type == BlockType.PARAL || 
       ast.type == BlockType.PARAL_ALL;
 
-    ctrl_blocks.Push(ast);
+    ctrl_blocks.Add(ast);
 
     var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
 
@@ -1046,13 +1054,14 @@ public class ModuleCompiler : AST_Visitor
       {
         var seq_child = new AST_Block(BlockType.SEQ);
         seq_child.children.Add(child);
+        ast.children[i] = seq_child;
         child = seq_child;
       }
 
       Visit(child);
     }
 
-    ctrl_blocks.Pop();
+    ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
 
     bool need_block = 
       is_paral || 
@@ -1068,7 +1077,7 @@ public class ModuleCompiler : AST_Visitor
 
   void VisitDefer(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks.Peek() : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
     if(parent_block != null)
       ctrl_block_has_defers.Add(parent_block);
 

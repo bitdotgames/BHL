@@ -711,7 +711,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool write
    )
   {
-    AST_Interim pre_call = null;
     PushAST(new AST_Interim());
 
     ITerminalNode curr_name = root_name;
@@ -753,19 +752,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, ref pre_call, line, write: false);
+          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, line, write: false);
           curr_name = null;
         }
         else if(arracc != null)
         {
-          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, ref pre_call, line, write: write && is_last);
+          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, line, write: write && is_last);
           curr_name = null;
         }
         else if(macc != null)
         {
           Symbol macc_name_symb = null;
           if(curr_name != null)
-            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write: false);
+            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write: false);
 
           scope = curr_type as IScope;
           if(!(scope is IInstanceType) && !(scope is EnumSymbol))
@@ -783,12 +782,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //checking the leftover of the call chain
     if(curr_name != null)
-      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, ref pre_call, line, write, leftover: true);
+      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write, leftover: true);
 
     var chain_ast = PeekAST();
     PopAST();
-    if(pre_call != null)
-      PeekAST().AddChildren(pre_call);
     PeekAST().AddChildren(chain_ast);
   }
 
@@ -847,7 +844,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.CallArgsContext cargs, 
     bhlParser.ArrAccessContext arracc, 
     ref IType type, 
-    ref AST_Interim pre_call,
     int line, 
     bool write,
     bool leftover = false
@@ -883,21 +879,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(!(scope is IInstanceType))
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
-            AddCallArgs(ftype, cargs, ref ast, ref pre_call);
+            AddCallArgs(ftype, cargs, ref ast);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line, null);
-            AddCallArgs(ftype, cargs, ref ast, ref pre_call);
+            AddCallArgs(ftype, cargs, ref ast);
             type = ftype.ret_type.Get();
           }
         }
         else if(func_symb != null)
         {
           ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
-          AddCallArgs(func_symb, cargs, ref ast, ref pre_call);
+          AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }
         else
@@ -964,7 +960,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         FireError(cargs, "no func to call");
       
       ast = new AST_Call(EnumCall.LMBD, line, null);
-      AddCallArgs(ftype, cargs, ref ast, ref pre_call);
+      AddCallArgs(ftype, cargs, ref ast);
       type = ftype.ret_type.Get();
     }
 
@@ -1016,7 +1012,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bool variadic;
   }
 
-  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call, ref AST_Interim pre_call)
+  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call)
   {     
     var func_args = func_symb.GetArgs();
     int total_args_num = func_symb.GetTotalArgsNum();
@@ -1124,7 +1120,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(is_ref && ref_compatible_exp_counter == old_ref_counter)
             FireError(na.ca, "expression is not passable by 'ref'");
 
-          TryProtectStackInterleaving(na.ca, func_arg_type, i, ref pre_call);
           PopAddOptimizeAST();
           PopJsonType();
           PopCallByRef();
@@ -1171,7 +1166,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             //the last item is added implicitely
             if(vidx+1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
-            TryProtectStackInterleaving(vca, varg_type, i+vidx, ref pre_call);
 
             types.CheckAssign(varg_type, Wrap(vca));
           }
@@ -1186,7 +1180,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call, ref AST_Interim pre_call)
+  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call)
   {     
     var func_args = func_type.arg_types;
     int ca_len = cargs.callArg().Length; 
@@ -1212,7 +1206,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       Visit(ca);
-      TryProtectStackInterleaving(ca, arg_type, i, ref pre_call);
       PopAddOptimizeAST();
       PopJsonType();
 
@@ -1257,55 +1250,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
     return false;
-  }
-
-  //NOTE: We really want to avoid stack interleaving for the following case: 
-  //        
-  //        foo(1, bar())
-  //      
-  //      where bar() might execute for many ticks and at the same time 
-  //      somewhere *in parallel* executes some another function which pushes 
-  //      result onto the stack *before* bar() finishes its execution. 
-  //
-  //      At the time foo(..) is actually called the stack will contain badly 
-  //      interleaved arguments! 
-  //
-  //      For this reason we rewrite the example above into something as follows:
-  //
-  //        tmp_1 = bar()
-  //        foo(1, tmp_1)
-  //
-  //      We also should take into account cases like: 
-  //
-  //        foo(wow().bar())
-  //
-  //      At the same time we should not rewrite trivial cases like:
-  //
-  //        foo(bar())
-  //
-  //      Since in this case there is no stack interleaving possible (only one argument) 
-  //      and we really want to avoid introduction of the new temp local variable
-  void TryProtectStackInterleaving(bhlParser.CallArgContext ca, IType func_arg_type, int i, ref AST_Interim pre_call)
-  {
-    var arg_ast = PeekAST();
-    if(i == 0 || !HasFuncCalls(arg_ast))
-      return;
-
-    PopAST();
-
-    var var_tmp_symb = new VariableSymbol(Wrap(ca), "$_tmp_" + ca.Start.Line + "_" + ca.Start.Column, curr_scope.R().T(func_arg_type));
-    curr_scope.Define(var_tmp_symb);
-
-    var var_tmp_decl = new AST_Call(EnumCall.VARW, ca.Start.Line, var_tmp_symb);
-    var var_tmp_read = new AST_Call(EnumCall.VAR, ca.Start.Line, var_tmp_symb);
-
-    if(pre_call == null)
-      pre_call = new AST_Interim();
-    foreach(var chain_child in arg_ast.children)
-      pre_call.children.Add(chain_child);
-    pre_call.children.Add(var_tmp_decl);
-
-    PushAST(var_tmp_read);
   }
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
