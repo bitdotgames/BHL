@@ -152,7 +152,7 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestVarIsKeyword()
+  public void TestVarIsAlreadyDefined()
   {
     string bhl = @"
     class var {
@@ -171,4 +171,26 @@ public class TestVar : BHL_TestBase
       );
   }
 
+  [IsTested()]
+  public void TestIcompatibleTypes()
+  {
+    string bhl = @"
+      func bool test() {
+        var a = 1
+        var s = ""foo""
+        return a == s
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "incompatible types: 'int' and 'string'",
+        new PlaceAssert(bhl, @"
+        return a == s
+---------------^"
+       )
+      );
+  }
 }
