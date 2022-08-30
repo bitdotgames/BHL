@@ -116,6 +116,21 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNullIsAny()
+  {
+    string bhl = @"
+    func bool test() {
+      var bar = null
+      return type(bar) == typeof(any)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestVarWithoutAssignExpressionIsNotAllowed()
   {
     string bhl = @"
