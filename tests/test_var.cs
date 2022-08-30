@@ -101,6 +101,29 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNamespaceClassJsonInit()
+  {
+    string bhl = @"
+    namespace foo {
+      namespace bar {
+        class Bar {
+          int num
+          string str
+        }
+      }
+    }
+    func int test() {
+      var bar = new foo.bar.Bar{num: 14}
+      return bar.num
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestNullIsNotAllowed()
   {
     string bhl = @"
