@@ -184,4 +184,67 @@ public class TestVar : BHL_TestBase
        )
       );
   }
+
+  [IsTested()]
+  public void TestFuncSignatureMemberNotAllowed()
+  {
+    string bhl = @"
+      func var test() {
+        return null
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "can't determine the type",
+        new PlaceAssert(bhl, @"
+      func var test() {
+-----------^"
+       )
+      );
+  }
+
+  [IsTested()]
+  public void TestVarArrayNotAllowed()
+  {
+    string bhl = @"
+      func test() {
+        []var ns = []
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "can't determine the type",
+        new PlaceAssert(bhl, @"
+        []var ns = []
+----------^"
+       )
+      );
+  }
+
+  [IsTested()]
+  public void TestVarTypeMemberNotAllowed()
+  {
+    string bhl = @"
+      class Foo {
+        var foo
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "can't determine the type",
+        new PlaceAssert(bhl, @"
+        var foo
+--------^"
+       )
+      );
+  }
 }
