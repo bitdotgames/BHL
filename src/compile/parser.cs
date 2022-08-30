@@ -1365,11 +1365,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Proxy<IType> tp;
     if(ctx.funcType() == null)
     {
-      if(ctx.nsName().dotName().NAME().GetText() == "var")
-        FireError(ctx.nsName(), "can't determine the type without assignment");
-      foreach(var tmp in ctx.nsName().dotName().memberAccess())
-        if(tmp.NAME().GetText() == "var")
-          FireError(ctx.nsName(), "can't determine the type without assignment");
+      if(ctx.nsName().GetText() == "var")
+        FireError(ctx.nsName(), "can't determine the type");
 
       tp = curr_scope.R().T(ctx.nsName().GetText());
     }
@@ -2974,7 +2971,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           is_auto_var = vd_type.GetText() == "var";
 
           if(is_auto_var && assign_exp == null)
-            FireError(vd_type, "can't determine the type without assignment");
+            FireError(vd_type, "can't determine the type");
+          else if(is_auto_var && assign_exp?.GetText() == "=null")
+            FireError(vd_type, "can't determine the type");
 
           var ast = CommonDeclVar(
             curr_scope, 

@@ -101,33 +101,24 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNull()
+  public void TestNullIsNotAllowed()
   {
     string bhl = @"
-    func bool test() {
+    func test() {
       var bar = null
-      return bar == null
     }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestNullIsAny()
-  {
-    string bhl = @"
-    func bool test() {
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "can't determine the type",
+        new PlaceAssert(bhl, @"
       var bar = null
-      return type(bar) == typeof(any)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+------^"
+       )
+      );
   }
 
   [IsTested()]
@@ -143,7 +134,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "can't determine the type without assignment",
+        "can't determine the type",
         new PlaceAssert(bhl, @"
       var a
 ------^"
