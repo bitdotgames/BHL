@@ -43,6 +43,7 @@ public class BHL_TestRunner
     Run(names, new TestInterfaces(), verbose);
     Run(names, new TestTypeCasts(), verbose);
     Run(names, new TestNamespace(), verbose);
+    Run(names, new TestVar(), verbose);
     Run(names, new TestMaps(), verbose);
     Run(names, new TestStd(), verbose);
     //TODO:

@@ -401,6 +401,7 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
+  static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
   static public ClassSymbolNative ClassType = null;
 
@@ -545,6 +546,7 @@ public class Types : INamedResolver
     ns.Define(String);
     ns.Define(Void);
     ns.Define(Any);
+    ns.Define(Var);
     ns.Define(ClassType);
 
     {

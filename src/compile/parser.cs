@@ -1363,10 +1363,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   Proxy<IType> ParseType(bhlParser.TypeContext ctx)
   {
     Proxy<IType> tp;
-    if(ctx.funcType() != null)
-      tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
-    else
+    if(ctx.funcType() == null)
+    {
+      if(ctx.nsName().dotName().NAME().GetText() == "var")
+        FireError(ctx.nsName(), "can't determine the type without assignment");
+      foreach(var tmp in ctx.nsName().dotName().memberAccess())
+        if(tmp.NAME().GetText() == "var")
+          FireError(ctx.nsName(), "can't determine the type without assignment");
+
       tp = curr_scope.R().T(ctx.nsName().GetText());
+    }
+    else
+      tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
 
     if(ctx.ARR() != null)
     {
@@ -2920,13 +2928,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType assign_type = null;
     for(int i=0;i<vdecls.Length;++i)
     {
-      var tmp = vdecls[i];
-      var cexp = tmp.callExp();
-      var vd = tmp.varDeclare();
+      var vdecl_tmp = vdecls[i];
+      var cexp = vdecl_tmp.callExp();
+      var vd = vdecl_tmp.varDeclare();
 
-      WrappedParseTree ptree = null;
+      WrappedParseTree var_ptree = null;
       IType curr_type = null;
       bool is_decl = false;
+      bool is_auto_var = false;
 
       if(cexp != null)
       {
@@ -2938,8 +2947,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
         ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), cexp.chainExp(), ref curr_type, cexp.Start.Line, write: true);
 
-        ptree = Wrap(cexp.NAME());
-        ptree.eval_type = curr_type;
+        var_ptree = Wrap(cexp.NAME());
+        var_ptree.eval_type = curr_type;
       }
       else 
       {
@@ -2954,21 +2963,35 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             FireError(vd, "symbol '" + vd_name + "' not resolved");
           curr_type = vd_symb.type.Get();
 
-          ptree = Wrap(vd.NAME());
-          ptree.eval_type = curr_type;
+          var_ptree = Wrap(vd.NAME());
+          var_ptree.eval_type = curr_type;
 
           var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
           root.AddChild(ast);
         }
         else
         {
-          var ast = CommonDeclVar(curr_scope, vd.NAME(), vd_type, is_ref: false, func_arg: false, write: assign_exp != null);
+          is_auto_var = vd_type.GetText() == "var";
+
+          if(is_auto_var && assign_exp == null)
+            FireError(vd_type, "can't determine the type without assignment");
+
+          var ast = CommonDeclVar(
+            curr_scope, 
+            vd.NAME(), 
+            //NOTE: in case of 'var' let's temporarily declare var as 'any',
+            //      below we'll setup the proper type
+            is_auto_var ? Types.Any : ParseType(vd_type), 
+            is_ref: false, 
+            func_arg: false, 
+            write: assign_exp != null
+          );
           root.AddChild(ast);
 
           is_decl = true;
 
-          ptree = Wrap(vd.NAME()); 
-          curr_type = ptree.eval_type;
+          var_ptree = Wrap(vd.NAME()); 
+          curr_type = var_ptree.eval_type;
         }
       }
 
@@ -3037,9 +3060,27 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(assign_type != null)
       {
         if(assign_type is TupleType tuple)
-          types.CheckAssign(ptree, tuple[i].Get());
+        {
+          //NOTE: let's setup the proper 'var' type
+          if(is_auto_var)
+          {
+            var symbols = ((LocalScope)curr_scope).members;
+            var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
+            var_symbol.type = new Proxy<IType>(tuple[i].Get());
+          }
+          types.CheckAssign(var_ptree, tuple[i].Get());
+        }
         else
-          types.CheckAssign(ptree, Wrap(assign_exp));
+        {
+          //NOTE: let's setup the proper 'var' type
+          if(is_auto_var)
+          {
+            var symbols = ((LocalScope)curr_scope).members;
+            var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
+            var_symbol.type = new Proxy<IType>(assign_type);
+          }
+          types.CheckAssign(var_ptree, Wrap(assign_exp));
+        }
       }
     }
   }
@@ -3103,10 +3144,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
   {
+    return CommonDeclVar(curr_scope, name, ParseType(type_ctx), is_ref, func_arg, write);
+  }
+
+  AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, Proxy<IType> tp, bool is_ref, bool func_arg, bool write)
+  {
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
       FireError(name, "keyword 'base' is reserved");
-
-    var tp = ParseType(type_ctx);
 
     var var_tree = Wrap(name); 
     var_tree.eval_type = tp.Get();

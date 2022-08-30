@@ -149,6 +149,20 @@ public class NullSymbol : BuiltInSymbolType
   }
 }
 
+public class VarSymbol : BuiltInSymbolType
+{
+  public const uint CLASS_ID = 8;
+
+  public VarSymbol()
+    : base("var")
+  {}
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+}
+
 public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
 {
   internal SymbolsStorage members;
@@ -1415,11 +1429,11 @@ public class FieldSymbolScript : FieldSymbol
 [System.Flags]
 public enum FuncAttrib : byte
 {
-  None        = 0,
-  Virtual     = 1,
-  Override    = 2,
-  Static      = 4,
-  VariadicArgs    = 8,
+  None         = 0,
+  Virtual      = 1,
+  Override     = 2,
+  Static       = 4,
+  VariadicArgs = 8,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
