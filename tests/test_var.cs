@@ -193,4 +193,20 @@ public class TestVar : BHL_TestBase
        )
       );
   }
+
+  [IsTested()]
+  public void TestGlobal()
+  {
+    string bhl = @"
+    var a = 10
+    func int test() {
+      return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
 }
