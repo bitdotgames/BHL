@@ -101,33 +101,47 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNull()
+  public void TestNamespaceClassJsonInit()
   {
     string bhl = @"
-    func bool test() {
-      var bar = null
-      return bar == null
+    namespace foo {
+      namespace bar {
+        class Bar {
+          int num
+          string str
+        }
+      }
+    }
+    func int test() {
+      var bar = new foo.bar.Bar{num: 14}
+      return bar.num
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
   [IsTested()]
-  public void TestNullIsAny()
+  public void TestNullIsNotAllowed()
   {
     string bhl = @"
-    func bool test() {
+    func test() {
       var bar = null
-      return type(bar) == typeof(any)
     }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "invalid usage context",
+        new PlaceAssert(bhl, @"
+      var bar = null
+------^"
+       )
+      );
   }
 
   [IsTested()]
@@ -143,7 +157,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "can't determine the type without assignment",
+        "invalid usage context",
         new PlaceAssert(bhl, @"
       var a
 ------^"
@@ -204,9 +218,99 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "invalid usage context",
+      new PlaceAssert(bhl, @"
+    var a = 10
+----^"
+     )
+    );
   }
 
+  [IsTested()]
+  public void TestFuncSignatureMemberNotAllowed()
+  {
+    {
+      string bhl = @"
+        func var test() {
+          return null
+        }
+      ";
+
+        AssertError<Exception>(
+          delegate() { 
+            Compile(bhl);
+          },
+          "invalid usage context",
+          new PlaceAssert(bhl, @"
+        func var test() {
+-------------^"
+         )
+        );
+    }
+
+    {
+      string bhl = @"
+        func int test(int a, var b) {
+          return 1
+        }
+      ";
+
+        AssertError<Exception>(
+          delegate() { 
+            Compile(bhl);
+          },
+          "invalid usage context",
+          new PlaceAssert(bhl, @"
+        func int test(int a, var b) {
+-----------------------------^"
+         )
+        );
+     }
+  }
+
+  [IsTested()]
+  public void TestVarArrayNotAllowed()
+  {
+    string bhl = @"
+      func test() {
+        []var ns = []
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "invalid usage context",
+        new PlaceAssert(bhl, @"
+        []var ns = []
+----------^"
+       )
+      );
+  }
+
+  [IsTested()]
+  public void TestVarTypeMemberNotAllowed()
+  {
+    string bhl = @"
+      class Foo {
+        var foo
+      }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "invalid usage context",
+        new PlaceAssert(bhl, @"
+        var foo
+--------^"
+       )
+      );
+  }
 }

@@ -283,8 +283,9 @@ You can run unit tests by executing the following command:
 1. ~~Nested classes~~
 1. ~~Nested in classes enums~~
 1. ~~Static class members support~~
-1. Variadic function arguments
+1. ~~Variadic function arguments~~
 1. ~~Maps support~~
+1. Implicit variable types using 'var' 
 1. Debugger support
 1. LSP integration
 
