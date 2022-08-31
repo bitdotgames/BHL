@@ -929,9 +929,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           else if(fld_symb != null && scope is ClassSymbolNative)
           {
             if(ast.type == EnumCall.MVAR && fld_symb.getter == null)
-              FireError(name, "get operation is not allowed");
+              FireError(name, "get operation is not defined");
             else if(ast.type == EnumCall.MVARW && fld_symb.setter == null)
-              FireError(name, "set operation is not allowed");
+              FireError(name, "set operation is not defined");
           }
 
           type = var_symb.type.Get();
@@ -1516,6 +1516,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         )
       FireError(ctx, "type '" + curr_type + "' can't be specified with {..}");
 
+    if(curr_type is ClassSymbolNative csn && csn.creator == null)
+      FireError(ctx, "constructor is not defined");
+
     Wrap(ctx).eval_type = curr_type;
 
     var ast = new AST_JsonObj(curr_type, ctx.Start.Line);
@@ -1679,9 +1682,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
-    Wrap(ctx).eval_type = tp.Get();
+    var cl = tp.Get();
+    Wrap(ctx).eval_type = cl;
 
-    var ast = new AST_New(tp.Get(), ctx.Start.Line);
+    if(cl is ClassSymbolNative csn && csn.creator == null)
+      FireError(ctx, "constructor is not defined");
+
+    var ast = new AST_New(cl, ctx.Start.Line);
     PeekAST().AddChild(ast);
 
     return null;

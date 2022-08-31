@@ -376,6 +376,72 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCtorNotAllowed()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Foo f = new Foo
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("Foo", null, null);
+
+      ts.ns.Define(cl);
+
+      cl.Setup();
+    }
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "constructor is not defined",
+      new PlaceAssert(bhl, @"
+      Foo f = new Foo
+--------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestJsonCtorNotAllowed()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Foo f = {}
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("Foo", null, null);
+
+      ts.ns.Define(cl);
+
+      cl.Setup();
+    }
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "constructor is not defined",
+      new PlaceAssert(bhl, @"
+      Foo f = {}
+--------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestGetFieldOperationIsNotAllowed()
   {
     string bhl = @"
@@ -413,7 +479,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "get operation is not allowed",
+      "get operation is not defined",
       new PlaceAssert(bhl, @"
       return f.x
 ---------------^"
@@ -460,7 +526,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "set operation is not allowed",
+      "set operation is not defined",
       new PlaceAssert(bhl, @"
       f.x = 10
 --------^"
