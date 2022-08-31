@@ -926,6 +926,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
               FireError(name, "getting native class field by 'ref' not supported");
             ast.type = EnumCall.MVARREF; 
           }
+          else if(fld_symb != null && scope is ClassSymbolNative)
+          {
+            if(ast.type == EnumCall.MVAR && fld_symb.getter == null)
+              FireError(name, "get operation is not allowed");
+            else if(ast.type == EnumCall.MVARW && fld_symb.setter == null)
+              FireError(name, "set operation is not allowed");
+          }
+
           type = var_symb.type.Get();
         }
         else if(func_symb != null)

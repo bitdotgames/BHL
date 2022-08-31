@@ -376,6 +376,99 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetFieldOperationIsNotAllowed()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      Foo f = {}
+      return f.x
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+         //dummy
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("x", ts.T("int"), 
+        null, //no getter
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          //dummy
+        }
+      ));
+      cl.Setup();
+    }
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "get operation is not allowed",
+      new PlaceAssert(bhl, @"
+      return f.x
+---------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestSetFieldOperationIsNotAllowed()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Foo f = {}
+      int tmp = f.x
+      f.x = 10
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("Foo", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+         //dummy
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("x", ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+         //dummy
+        },
+        null //no setter
+      ));
+      cl.Setup();
+    }
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts);
+      },
+      "set operation is not allowed",
+      new PlaceAssert(bhl, @"
+      f.x = 10
+--------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestReturnNativeInstance()
   {
     string bhl = @"
