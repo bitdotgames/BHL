@@ -278,6 +278,11 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   {
     return name.GetHashCode();
   }
+
+  public override string ToString()
+  {
+    return name;
+  }
 }
 
 public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>, IEphemeral

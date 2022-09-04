@@ -921,7 +921,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "incompatible types: 'float,string' and 'string,string'",
       new PlaceAssert(bhl, @"
       return func string,string () 
 -------------^"
@@ -945,7 +945,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "incompatible types: 'string' and 'string,string'",
       new PlaceAssert(bhl, @"
       return func string,string () 
 -------------^"
@@ -1095,7 +1095,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "incompatible types: 'float' and 'string'",
       new PlaceAssert(bhl, @"
       return ""bar"",100
 -------------^"
@@ -7190,7 +7190,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'func void(int,string,ref bool)' and 'func void(int,string,refbool)'",
       new PlaceAssert(bhl, @"
       func(int,string,ref bool) ptr = foo
 ------------------------------------^"
@@ -13016,7 +13016,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl2);
       },
-      "incompatible types"
+      "incompatible types: 'string' and 'int'"
     );
 
     string bhl3 = @"
@@ -14237,7 +14237,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'float' and 'string'",
       new PlaceAssert(bhl, @"
       Color c = {r: ""what""}
 --------------------^"
@@ -15116,7 +15116,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types",
+      "incompatible types: 'int' and 'null'",
       new PlaceAssert(bhl, @"
       return 0 == null
 -------------^"
@@ -16467,7 +16467,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "incompatible types",
+      "incompatible types: 'float' and 'string'",
       new PlaceAssert(bhl, @"
       return c1 * ""hey""
 ------------------^"
