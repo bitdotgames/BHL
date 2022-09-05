@@ -3066,31 +3066,31 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(pop_json_type)
           PopJsonType();
 
-        var tuple = assign_type as TupleType; 
+        var assign_tuple = assign_type as TupleType; 
         if(vdecls.Length > 1)
         {
-          if(tuple == null)
+          if(assign_tuple == null)
             FireError(assign_exp, "multi return expected");
 
-          if(tuple.Count != vdecls.Length)
+          if(assign_tuple.Count != vdecls.Length)
             FireError(assign_exp, "multi return size doesn't match destination");
         }
-        else if(tuple != null)
+        else if(assign_tuple != null)
           FireError(assign_exp, "multi return size doesn't match destination");
       }
 
       if(assign_type != null)
       {
-        if(assign_type is TupleType tuple)
+        if(assign_type is TupleType assign_tuple)
         {
           //NOTE: let's setup the proper 'var' type
           if(is_auto_var)
           {
             var symbols = ((LocalScope)curr_scope).members;
             var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-            var_symbol.type = new Proxy<IType>(tuple[i].Get());
+            var_symbol.type = new Proxy<IType>(assign_tuple[i].Get());
           }
-          types.CheckAssign(var_ptree, tuple[i].Get());
+          types.CheckAssign(var_ptree, assign_tuple[i].Get());
         }
         else
         {
