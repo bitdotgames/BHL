@@ -646,12 +646,12 @@ public class Types : INamedResolver
       return false;
     else if(type.Equals(dest_type))
       return true;
-    else if(type is IInstanceType ai && dest_type is IInstanceType bi)
+    else if(type is IInstanceType ti && dest_type is IInstanceType di)
     {
-      var aset = ai.GetAllRelatedTypesSet();
-      var bset = bi.GetAllRelatedTypesSet();
+      var tset = ti.GetAllRelatedTypesSet();
+      var dset = di.GetAllRelatedTypesSet();
 
-      return aset.IsSupersetOf(bset);
+      return tset.IsSupersetOf(dset);
     }
     else
       return false;
@@ -713,7 +713,7 @@ public class Types : INamedResolver
     return result;
   }
 
-  static public bool CanAssignTo(IType rhs, IType lhs) 
+  static bool CanAssignTo(IType lhs, IType rhs) 
   {
     if(rhs == null || lhs == null)
       return false;
@@ -729,7 +729,7 @@ public class Types : INamedResolver
 
   public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(!CanAssignTo(rhs.eval_type, lhs.eval_type)) 
+    if(!CanAssignTo(lhs.eval_type, rhs.eval_type)) 
       throw new SemanticError(rhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'");
   }
 
@@ -740,13 +740,13 @@ public class Types : INamedResolver
   //      not where it's defined (lhs)
   public void CheckAssign(IType lhs, WrappedParseTree rhs) 
   {
-    if(!CanAssignTo(rhs.eval_type, lhs)) 
+    if(!CanAssignTo(lhs, rhs.eval_type)) 
       throw new SemanticError(rhs, "incompatible types: '" + lhs?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'");
   }
 
   public void CheckAssign(WrappedParseTree lhs, IType rhs) 
   {
-    if(!CanAssignTo(rhs, lhs.eval_type)) 
+    if(!CanAssignTo(lhs.eval_type, rhs)) 
       throw new SemanticError(lhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs?.GetFullPath() + "'");
   }
 
@@ -816,24 +816,24 @@ public class Types : INamedResolver
     return a.eval_type;
   }
 
-  public IType CheckBitOp(WrappedParseTree a, WrappedParseTree b) 
+  public IType CheckBitOp(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(a.eval_type != Int) 
-      throw new SemanticError(a, "must be int type");
+    if(lhs.eval_type != Int) 
+      throw new SemanticError(lhs, "must be int type");
 
-    if(b.eval_type != Int)
-      throw new SemanticError(b, "must be int type");
+    if(rhs.eval_type != Int)
+      throw new SemanticError(rhs, "must be int type");
 
     return Int;
   }
 
-  public IType CheckLogicalOp(WrappedParseTree a, WrappedParseTree b) 
+  public IType CheckLogicalOp(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(a.eval_type != Bool) 
-      throw new SemanticError(a, "must be bool type");
+    if(lhs.eval_type != Bool) 
+      throw new SemanticError(lhs, "must be bool type");
 
-    if(b.eval_type != Bool)
-      throw new SemanticError(b, "must be bool type");
+    if(rhs.eval_type != Bool)
+      throw new SemanticError(rhs, "must be bool type");
 
     return Bool;
   }
