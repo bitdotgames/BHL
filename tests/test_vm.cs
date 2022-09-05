@@ -333,6 +333,33 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrConcatIncompatibleTypes()
+  {
+    string bhl = @"
+      
+    func foo(string s) 
+    {}
+
+    func test() 
+    {
+      string s
+      foo(s + ""hey"" + 1)
+    }
+    ";
+
+    AssertError<Exception>(
+       delegate() {
+         Compile(bhl);
+       },
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      foo(s + ""hey"" + 1)
+----------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestImplicitIntArgsCast()
   {
     string bhl = @"
@@ -15119,7 +15146,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'int' and 'null'",
       new PlaceAssert(bhl, @"
       return 0 == null
--------------^"
+------------------^"
       )
     );
   }

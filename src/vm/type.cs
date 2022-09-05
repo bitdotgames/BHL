@@ -705,11 +705,11 @@ public class Types : INamedResolver
   }
 
 #if BHL_FRONT
-  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree a, WrappedParseTree b) 
+  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree lhs, WrappedParseTree rhs) 
   {
     IType result;
-    if(!table.TryGetValue(new Tuple<IType, IType>(a.eval_type, b.eval_type), out result))
-      throw new SemanticError(a, "incompatible types: '" + a.eval_type?.GetFullPath() + "' and '" + b.eval_type?.GetFullPath() + "'");
+    if(!table.TryGetValue(new Tuple<IType, IType>(lhs.eval_type, rhs.eval_type), out result))
+      throw new SemanticError(rhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'");
     return result;
   }
 
@@ -759,51 +759,51 @@ public class Types : INamedResolver
       throw new SemanticError(dest, "incompatible types for casting: '" + dest_type?.GetFullPath() + "' and '" + from_type?.GetFullPath() + "'");
   }
 
-  public IType CheckBinOp(WrappedParseTree a, WrappedParseTree b) 
+  public IType CheckBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(!IsBinOpCompatible(a.eval_type))
-      throw new SemanticError(a, "operator is not overloaded");
+    if(!IsBinOpCompatible(lhs.eval_type))
+      throw new SemanticError(lhs, "operator is not overloaded");
 
-    if(!IsBinOpCompatible(b.eval_type))
-      throw new SemanticError(b, "operator is not overloaded");
+    if(!IsBinOpCompatible(rhs.eval_type))
+      throw new SemanticError(rhs, "operator is not overloaded");
 
-    return MatchTypes(bin_op_res_type, a, b);
+    return MatchTypes(bin_op_res_type, lhs, rhs);
   }
 
-  public IType CheckBinOpOverload(IScope scope, WrappedParseTree a, WrappedParseTree b, FuncSymbol op_func) 
+  public IType CheckBinOpOverload(IScope scope, WrappedParseTree lhs, WrappedParseTree rhs, FuncSymbol op_func) 
   {
     var op_func_arg_type = op_func.signature.arg_types[0];
-    CheckAssign(op_func_arg_type.Get(), b);
+    CheckAssign(op_func_arg_type.Get(), rhs);
     return op_func.GetReturnType();
   }
 
-  public IType CheckRtlBinOp(WrappedParseTree a, WrappedParseTree b) 
+  public IType CheckRtlBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(!IsNumeric(a.eval_type))
-      throw new SemanticError(a, "operator is not overloaded");
+    if(!IsNumeric(lhs.eval_type))
+      throw new SemanticError(lhs, "operator is not overloaded");
 
-    if(!IsNumeric(b.eval_type))
-      throw new SemanticError(b, "operator is not overloaded");
+    if(!IsNumeric(rhs.eval_type))
+      throw new SemanticError(rhs, "operator is not overloaded");
 
-    MatchTypes(rtl_op_res_type, a, b);
+    MatchTypes(rtl_op_res_type, lhs, rhs);
 
     return Bool;
   }
 
-  public IType CheckEqBinOp(WrappedParseTree a, WrappedParseTree b) 
+  public IType CheckEqBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
   {
-    if(a.eval_type == b.eval_type)
+    if(lhs.eval_type == rhs.eval_type)
       return Bool;
 
-    if(a.eval_type is ClassSymbol && b.eval_type is ClassSymbol)
+    if(lhs.eval_type is ClassSymbol && rhs.eval_type is ClassSymbol)
       return Bool;
 
     //TODO: add INullableType?
-    if(((a.eval_type is ClassSymbol || a.eval_type is InterfaceSymbol || a.eval_type is FuncSignature) && b.eval_type == Null) ||
-        ((b.eval_type is ClassSymbol || b.eval_type is InterfaceSymbol || b.eval_type is FuncSignature) && a.eval_type == Null))
+    if(((lhs.eval_type is ClassSymbol || lhs.eval_type is InterfaceSymbol || lhs.eval_type is FuncSignature) && rhs.eval_type == Null) ||
+        ((rhs.eval_type is ClassSymbol || rhs.eval_type is InterfaceSymbol || rhs.eval_type is FuncSignature) && lhs.eval_type == Null))
       return Bool;
 
-    MatchTypes(eq_op_res_type, a, b);
+    MatchTypes(eq_op_res_type, lhs, rhs);
 
     return Bool;
   }

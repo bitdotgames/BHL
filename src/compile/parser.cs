@@ -1863,6 +1863,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonVisitPostIncDec(bhlParser.CallPostIncDecContext ctx)
   {
+    //let's tweak the fake "1" expression placement
+    //by assinging it the call expression placement
+    var wone = Wrap(one_literal_exp);
+    var wcall = Wrap(ctx.callExp());
+    wone.module = wcall.module;
+    wone.tree = wcall.tree;
+    wone.tokens = wcall.tokens;
+
     if(ctx.incrementOperator() != null)
       CommonVisitBinOp(ctx, "+", ctx.callExp(), one_literal_exp);
     else if(ctx.decrementOperator() != null)

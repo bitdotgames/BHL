@@ -777,6 +777,8 @@ public class BHL_TestBase
       if(err is ICompileError cerr)
       {
         string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.line, cerr.char_pos);
+        if(place_err.Trim('\n') != place_assert.expect.Trim('\n'))
+          Console.WriteLine(err.StackTrace);
         AssertEqual(place_err.Trim('\n'), place_assert.expect.Trim('\n'));
       }
       else

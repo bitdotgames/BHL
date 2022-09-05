@@ -575,7 +575,7 @@ public class TestTypeCasts : BHL_TestBase
        delegate() {
          Compile(bhl, ts);
        },
-      "incompatible types",
+      "incompatible types: 'Foo' and 'Color'",
       new PlaceAssert(bhl, @"
       Foo tmp = new Color
 --------------^"

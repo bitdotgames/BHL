@@ -203,7 +203,7 @@ public class TestVar : BHL_TestBase
         "incompatible types: 'int' and 'string'",
         new PlaceAssert(bhl, @"
         return a == s
----------------^"
+--------------------^"
        )
       );
   }
