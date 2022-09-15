@@ -929,7 +929,10 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var ts = new Types();
+    BindFail(ts);
+
+    var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.Count);
     CommonChecks(vm);
   }

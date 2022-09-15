@@ -135,6 +135,18 @@ public class BHL_TestRunner
 
 public class BHL_TestBase
 {
+  public void BindFail(Types ts)
+  {
+    var fn = new FuncSymbolNative("fail", ts.T("void"),
+      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+      { 
+        status = BHS.FAILURE;
+        return null;
+      } 
+    );
+    ts.ns.Define(fn);
+  }
+
   public class Color
   {
     public float r;

@@ -575,7 +575,10 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var ts = new Types();
+    BindFail(ts);
+
+    var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
     vm.Tick();
     AssertEqual(fb.status, BHS.FAILURE);
@@ -4203,6 +4206,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -4456,6 +4460,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     var fb = vm.Start("test");
@@ -10761,6 +10766,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
 
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -10785,7 +10791,10 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var ts = new Types();
+    BindFail(ts);
+
+    var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     CommonChecks(vm);
   }
@@ -10878,6 +10887,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
 
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     vm.Start("test");
@@ -10922,6 +10932,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
 
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     vm.Start("test");
@@ -10995,7 +11006,10 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl); 
+    var ts = new Types();
+    BindFail(ts);
+
+    var vm = MakeVM(bhl, ts); 
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(0, fb.result.Count);
@@ -11028,7 +11042,10 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl); 
+    var ts = new Types();
+    BindFail(ts);
+
+    var vm = MakeVM(bhl, ts); 
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(0, fb.result.Count);
@@ -11053,6 +11070,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var ts = new Types();
+    BindFail(ts);
 
     {
       var fn = new FuncSymbolNative("hey", Types.Void,
@@ -11164,6 +11182,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     BindColor(ts);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.Count);
@@ -11190,6 +11209,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     BindColor(ts);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     AssertEqual(0, Execute(vm, "test").result.Count);
@@ -11252,6 +11272,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     {
       var fn = new FuncSymbolNative("foo", ts.T("Foo"),
@@ -11299,6 +11320,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
+    BindFail(ts);
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11332,6 +11354,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
+    BindFail(ts);
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11382,6 +11405,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
+    BindFail(ts);
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11437,6 +11461,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
+    BindFail(ts);
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -11494,6 +11519,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     BindColor(ts);
     BindFoo(ts);
+    BindFail(ts);
     var log = new StringBuilder();
     BindTrace(ts, log);
 
@@ -12343,6 +12369,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
@@ -13524,6 +13551,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     vm.Start("test");
@@ -13641,6 +13669,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     var log = new StringBuilder();
     BindTrace(ts, log);
+    BindFail(ts);
 
     var vm = MakeVM(bhl, ts);
     vm.Start("test");

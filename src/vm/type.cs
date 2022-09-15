@@ -574,18 +574,6 @@ public class Types : INamedResolver
       ns.Define(fn);
     }
 
-    //TODO: this one is controversary, it's defined for BC for now
-    {
-      var fn = new FuncSymbolNative("fail", this.T("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          status = BHS.FAILURE;
-          return null;
-        } 
-      );
-      ns.Define(fn);
-    }
-
     {
       var fn = new FuncSymbolNative("start", this.T("int"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
