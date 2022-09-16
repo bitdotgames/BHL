@@ -5,7 +5,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ANTLR">
-      <HintPath>./Antlr4.Runtime.Standard.dll</HintPath>
+      <HintPath>./deps/Antlr4.Runtime.Standard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="opts">
+      <HintPath>./deps/mono_opts.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
