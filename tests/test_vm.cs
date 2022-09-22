@@ -10701,6 +10701,32 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestYieldWhileBugInParal()
+  {
+    string bhl = @"
+    func Foo() {
+      suspend()
+    }
+
+    func test() {
+      paral {
+        yield while(true)
+
+        while(true) {
+          yield while(false)
+          Foo()
+        }
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl, null, false, true);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestSeqSuccess()
   {

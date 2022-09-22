@@ -150,7 +150,7 @@ public static class Tasks
 
     string mono_opts = "--debug"; 
     if(Environment.GetEnvironmentVariable("BHL_DEBUGGER") == "1")
-      mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55555";
+      mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556";
 
     MonoRun(tm, $"{BHL_ROOT}/test.exe", args, mono_opts);
   }
