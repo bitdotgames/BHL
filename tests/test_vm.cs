@@ -10701,8 +10701,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestYieldWhileBugInParal()
   {
     string bhl = @"
@@ -10722,8 +10721,12 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, null, false, true);
-    Execute(vm, "test");
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    for(int i=0;i<5;++i)
+      AssertTrue(vm.Tick());
+    //...will be running forever, well, we assume that :)
+    vm.Stop(fb);
     CommonChecks(vm);
   }
 

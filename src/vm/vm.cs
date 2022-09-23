@@ -1359,12 +1359,6 @@ public class VM : INamedResolver
   { 
     var item = exec.regions.Peek();
 
-    if(exec.ip < item.min_ip || exec.ip > item.max_ip)
-    {
-      exec.regions.Pop();
-      return BHS.SUCCESS;
-    }
-
     var curr_frame = item.frame;
 
 #if BHL_DEBUGGER
@@ -1374,6 +1368,12 @@ public class VM : INamedResolver
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)
       return ExecuteCoroutine(curr_frame, exec);
+
+    if(exec.ip < item.min_ip || exec.ip > item.max_ip)
+    {
+      exec.regions.Pop();
+      return BHS.SUCCESS;
+    }
 
     var opcode = (Opcodes)curr_frame.bytecode[exec.ip];
     //Console.WriteLine("OP " + opcode + " " + ip);
