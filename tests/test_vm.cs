@@ -3982,6 +3982,115 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNonMatchingReturnInWhile()
+  {
+    {
+      string bhl = @"
+
+      func int test() {
+        while(true) {
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+
+      func int test() {
+        while(true) {
+          return 10
+        }
+        return 2
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+    }
+  }
+
+  [IsTested()]
+  public void TestNonMatchingReturnInDoWhile()
+  {
+    {
+      string bhl = @"
+
+      func int test() {
+       do {
+          return 10
+        } while(true)
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+
+      func int test() {
+        do {
+          return 10
+        } while(true)
+        return 2
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+    }
+  }
+
+  [IsTested()]
+  public void TestNonMatchingReturnInFor()
+  {
+    {
+      string bhl = @"
+      func int test() {
+       for(int i=0;i<10;i++) {
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+      func int test() {
+       for(int i=0;i<10;i++) {
+          return 10
+        }
+       return 1
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+    }
+  }
+
+  [IsTested()]
   public void TestIfWithMultipleReturns()
   {
     string bhl = @"

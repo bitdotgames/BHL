@@ -3386,6 +3386,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     PeekAST().AddChild(ast);
 
+    return_found.Remove(PeekFuncDecl());
+
     return null;
   }
 
@@ -3412,6 +3414,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     --loops_stack;
 
     PeekAST().AddChild(ast);
+
+    return_found.Remove(PeekFuncDecl());
 
     return null;
   }
@@ -3508,6 +3512,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     local_scope.Exit();
     PopScope();
+
+    return_found.Remove(PeekFuncDecl());
 
     return null;
   }
