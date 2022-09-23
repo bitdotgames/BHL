@@ -2931,10 +2931,16 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
       else
         ext_exec.ip = exec.ip;
     }
+    
+    //NOTE: restoring the original stack
+    frm.stack = orig_stack;
   }
 
   public void Cleanup(VM.Frame frm, VM.ExecState _)
   {
+    //NOTE: replacing temporarily stack with local version
+    frm.stack = stack;
+
     if(exec.coroutine != null)
     {
       CoroutinePool.Del(frm, exec, exec.coroutine);
