@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <appname>bhl</appname>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <DefineConstants>BHL_FRONT</DefineConstants>
+    <SchemaVersion>2.0</SchemaVersion>
+    <RootNamespace></RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ANTLR">
+      <HintPath>./deps/Antlr4.Runtime.Standard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="opts">
+      <HintPath>./deps/mono_opts.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="src/compile/*.cs" />
+    <Compile Include="src/g/*.cs" />
+    <Compile Include="src/vm/*.cs" />
+    <Compile Include="src/std/*.cs" />
+    <Compile Include="src/cmd/*.cs" />
+    <Compile Include="src/lsp/*.cs" />
+    <Compile Include="tests/*.cs" />
+    <Compile Include="deps/msgpack/*.cs" />
+    <Compile Include="deps/msgpack/Compiler/*.cs" />
+ <Reference Include="netstandard">
+ </Reference>
+ <Reference Include="Microsoft.Win32.Primitives">
+ </Reference>
+ <Reference Include="System.AppContext">
+ </Reference>
+ <Reference Include="System.Collections.Concurrent">
+ </Reference>
+ <Reference Include="System.Collections.NonGeneric">
+ </Reference>
+ <Reference Include="System.Collections.Specialized">
+ </Reference>
+ <Reference Include="System.Collections">
+ </Reference>
+ <Reference Include="System.ComponentModel.EventBasedAsync">
+ </Reference>
+ <Reference Include="System.ComponentModel.Primitives">
+ </Reference>
+ <Reference Include="System.ComponentModel.TypeConverter">
+ </Reference>
+ <Reference Include="System.ComponentModel">
+ </Reference>
+ <Reference Include="System.Console">
+ </Reference>
+ <Reference Include="System.Data.Common">
+ </Reference>
+ <Reference Include="System.Diagnostics.Contracts">
+ </Reference>
+ <Reference Include="System.Diagnostics.Debug">
+ </Reference>
+ <Reference Include="System.Diagnostics.FileVersionInfo">
+ </Reference>
+ <Reference Include="System.Diagnostics.Process">
+ </Reference>
+ <Reference Include="System.Diagnostics.StackTrace">
+ </Reference>
+ <Reference Include="System.Diagnostics.TextWriterTraceListener">
+ </Reference>
+ <Reference Include="System.Diagnostics.Tools">
+ </Reference>
+ <Reference Include="System.Diagnostics.TraceSource">
+ </Reference>
+ <Reference Include="System.Diagnostics.Tracing">
+ </Reference>
+ <Reference Include="System.Drawing.Primitives">
+ </Reference>
+ <Reference Include="System.Dynamic.Runtime">
+ </Reference>
+ <Reference Include="System.Globalization.Calendars">
+ </Reference>
+ <Reference Include="System.Globalization.Extensions">
+ </Reference>
+ <Reference Include="System.Globalization">
+ </Reference>
+ <Reference Include="System.IO.Compression.ZipFile">
+ </Reference>
+ <Reference Include="System.IO.Compression">
+ </Reference>
+ <Reference Include="System.IO.FileSystem.DriveInfo">
+ </Reference>
+ <Reference Include="System.IO.FileSystem.Primitives">
+ </Reference>
+ <Reference Include="System.IO.FileSystem.Watcher">
+ </Reference>
+ <Reference Include="System.IO.FileSystem">
+ </Reference>
+ <Reference Include="System.IO.IsolatedStorage">
+ </Reference>
+ <Reference Include="System.IO.MemoryMappedFiles">
+ </Reference>
+ <Reference Include="System.IO.Pipes">
+ </Reference>
+ <Reference Include="System.IO.UnmanagedMemoryStream">
+ </Reference>
+ <Reference Include="System.IO">
+ </Reference>
+ <Reference Include="System.Linq.Expressions">
+ </Reference>
+ <Reference Include="System.Linq.Parallel">
+ </Reference>
+ <Reference Include="System.Linq.Queryable">
+ </Reference>
+ <Reference Include="System.Linq">
+ </Reference>
+ <Reference Include="System.Net.Http">
+ </Reference>
+ <Reference Include="System.Net.NameResolution">
+ </Reference>
+ <Reference Include="System.Net.NetworkInformation">
+ </Reference>
+ <Reference Include="System.Net.Ping">
+ </Reference>
+ <Reference Include="System.Net.Primitives">
+ </Reference>
+ <Reference Include="System.Net.Requests">
+ </Reference>
+ <Reference Include="System.Net.Security">
+ </Reference>
+ <Reference Include="System.Net.Sockets">
+ </Reference>
+ <Reference Include="System.Net.WebHeaderCollection">
+ </Reference>
+ <Reference Include="System.Net.WebSockets.Client">
+ </Reference>
+ <Reference Include="System.Net.WebSockets">
+ </Reference>
+ <Reference Include="System.ObjectModel">
+ </Reference>
+ <Reference Include="System.Reflection.Extensions">
+ </Reference>
+ <Reference Include="System.Reflection.Primitives">
+ </Reference>
+ <Reference Include="System.Reflection">
+ </Reference>
+ <Reference Include="System.Resources.Reader">
+ </Reference>
+ <Reference Include="System.Resources.ResourceManager">
+ </Reference>
+ <Reference Include="System.Resources.Writer">
+ </Reference>
+ <Reference Include="System.Runtime.CompilerServices.VisualC">
+ </Reference>
+ <Reference Include="System.Runtime.Extensions">
+ </Reference>
+ <Reference Include="System.Runtime.Handles">
+ </Reference>
+ <Reference Include="System.Runtime.InteropServices.RuntimeInformation">
+ </Reference>
+ <Reference Include="System.Runtime.InteropServices">
+ </Reference>
+ <Reference Include="System.Runtime.Numerics">
+ </Reference>
+ <Reference Include="System.Runtime.Serialization.Formatters">
+ </Reference>
+ <Reference Include="System.Runtime.Serialization.Json">
+ </Reference>
+ <Reference Include="System.Runtime.Serialization.Primitives">
+ </Reference>
+ <Reference Include="System.Runtime.Serialization.Xml">
+ </Reference>
+ <Reference Include="System.Runtime">
+ </Reference>
+ <Reference Include="System.Security.Claims">
+ </Reference>
+ <Reference Include="System.Security.Cryptography.Algorithms">
+ </Reference>
+ <Reference Include="System.Security.Cryptography.Csp">
+ </Reference>
+ <Reference Include="System.Security.Cryptography.Encoding">
+ </Reference>
+ <Reference Include="System.Security.Cryptography.Primitives">
+ </Reference>
+ <Reference Include="System.Security.Cryptography.X509Certificates">
+ </Reference>
+ <Reference Include="System.Security.Principal">
+ </Reference>
+ <Reference Include="System.Security.SecureString">
+ </Reference>
+ <Reference Include="System.Text.Encoding.Extensions">
+ </Reference>
+ <Reference Include="System.Text.Encoding">
+ </Reference>
+ <Reference Include="System.Text.RegularExpressions">
+ </Reference>
+ <Reference Include="System.Threading.Overlapped">
+ </Reference>
+ <Reference Include="System.Threading.Tasks.Parallel">
+ </Reference>
+ <Reference Include="System.Threading.Tasks">
+ </Reference>
+ <Reference Include="System.Threading.Thread">
+ </Reference>
+ <Reference Include="System.Threading.ThreadPool">
+ </Reference>
+ <Reference Include="System.Threading.Timer">
+ </Reference>
+ <Reference Include="System.Threading">
+ </Reference>
+ <Reference Include="System.ValueTuple">
+ </Reference>
+ <Reference Include="System.Xml.ReaderWriter">
+ </Reference>
+ <Reference Include="System.Xml.XDocument">
+ </Reference>
+ <Reference Include="System.Xml.XPath.XDocument">
+ </Reference>
+ <Reference Include="System.Xml.XPath">
+ </Reference>
+ <Reference Include="System.Xml.XmlDocument">
+ </Reference>
+ <Reference Include="System.Xml.XmlSerializer">
+ </Reference>
+ <Reference Include="System.Numerics.Vectors">
+ </Reference>
+ <Reference Include="System.Runtime.InteropServices.WindowsRuntime">
+ </Reference>
+ <Reference Include="System.ComponentModel.Composition">
+ </Reference>
+ <Reference Include="System.Core">
+ </Reference>
+ <Reference Include="System.Data">
+ </Reference>
+ <Reference Include="System.Drawing">
+ </Reference>
+ <Reference Include="System.IO.Compression.FileSystem">
+ </Reference>
+ <Reference Include="System.Net">
+ </Reference>
+ <Reference Include="System.Numerics">
+ </Reference>
+ <Reference Include="System.Runtime.Serialization">
+ </Reference>
+ <Reference Include="System.ServiceModel.Web">
+ </Reference>
+ <Reference Include="System.Transactions">
+ </Reference>
+ <Reference Include="System.Web">
+ </Reference>
+ <Reference Include="System.Windows">
+ </Reference>
+ <Reference Include="System.Xml.Linq">
+ </Reference>
+ <Reference Include="System.Xml.Serialization">
+ </Reference>
+ <Reference Include="System.Xml">
+ </Reference>
+ <Reference Include="System">
+ </Reference>
+ <Reference Include="mscorlib">
+ </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
