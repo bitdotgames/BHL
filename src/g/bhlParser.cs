@@ -3877,7 +3877,9 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class NsDeclContext : ParserRuleContext {
-		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
+		public DotNameContext dotName() {
+			return GetRuleContext<DotNameContext>(0);
+		}
 		public DeclsContext decls() {
 			return GetRuleContext<DeclsContext>(0);
 		}
@@ -3909,7 +3911,7 @@ public partial class bhlParser : Parser {
 			EnterOuterAlt(_localctx, 1);
 			{
 			State = 554; Match(T__34);
-			State = 555; Match(NAME);
+			State = 555; dotName();
 			State = 556; Match(T__31);
 			State = 557; decls();
 			State = 558; Match(T__32);
@@ -7462,7 +7464,7 @@ public partial class bhlParser : Parser {
 		'\x3', '\x2', '\x2', '\x2', '\x229', '\x22A', '\x3', '\x2', '\x2', '\x2', 
 		'\x22A', 'Q', '\x3', '\x2', '\x2', '\x2', '\x22B', '\x229', '\x3', '\x2', 
 		'\x2', '\x2', '\x22C', '\x22D', '\a', '%', '\x2', '\x2', '\x22D', '\x22E', 
-		'\a', '\x43', '\x2', '\x2', '\x22E', '\x22F', '\a', '\"', '\x2', '\x2', 
+		'\x5', '\xE', '\b', '\x2', '\x22E', '\x22F', '\a', '\"', '\x2', '\x2', 
 		'\x22F', '\x230', '\x5', '\n', '\x6', '\x2', '\x230', '\x231', '\a', '#', 
 		'\x2', '\x2', '\x231', 'S', '\x3', '\x2', '\x2', '\x2', '\x232', '\x233', 
 		'\a', '&', '\x2', '\x2', '\x233', '\x235', '\a', '\x43', '\x2', '\x2', 

@@ -2569,22 +2569,35 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
   {
-    var name = ctx.NAME().GetText();
+    string name = ctx.dotName().NAME().GetText();
 
-    var ns = curr_scope.Resolve(name) as Namespace;
-    if(ns == null)
+    int n = 0;
+    do 
     {
-      ns = new Namespace(types.nfunc_index, name, module.name, module.gvars);
-      curr_scope.Define(ns);
-    }
-    else if(ns.module_name != module.name)
-      throw new Exception("Unexpected namespace's module name: " + ns.module_name);
+      var ns = curr_scope.Resolve(name) as Namespace;
+      if(ns == null)
+      {
+        ns = new Namespace(types.nfunc_index, name, module.name, module.gvars);
+        curr_scope.Define(ns);
+      }
+      else if(ns.module_name != module.name)
+        throw new Exception("Unexpected namespace's module name: " + ns.module_name);
 
-    PushScope(ns);
+      PushScope(ns);
+
+      if(n >= ctx.dotName().memberAccess().Length)
+        break;
+
+      name = ctx.dotName().memberAccess()[n].NAME().GetText();
+
+      ++n;
+
+    } while(true);
 
     VisitDecls(ctx.decls());
 
-    PopScope();
+    for(int i = 0; i <= n; ++i) 
+      PopScope();
 
     return null;
   }

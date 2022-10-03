@@ -210,7 +210,7 @@ extensions
   ;
 
 nsDecl
-  : 'namespace' NAME '{' decls '}'
+  : 'namespace' dotName '{' decls '}'
   ;
 
 classDecl

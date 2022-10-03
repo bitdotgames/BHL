@@ -587,6 +587,62 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubNamespacesShortNotation()
+  {
+    string bhl = @"
+    namespace foo {
+      func bool test()
+      {
+        return true
+      }
+    }
+
+    namespace bar {
+      func bool test()
+      {
+        return false
+      }
+    }
+
+    namespace bar.foo {
+      func bool test()
+      {
+        return true
+      }
+    }
+
+    namespace foo {
+      func bool what()
+      {
+        return false
+      }
+    }
+
+    namespace foo.bar {
+      func bool test()
+      {
+        return true
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var foo = vm.ResolveNamedByPath("foo") as Namespace;
+    AssertTrue(foo != null);
+    AssertEqual(3, foo.GetSymbolsEnumerator().Count);
+    AssertTrue(foo.Resolve("test") is FuncSymbol);
+    AssertTrue(foo.Resolve("what") is FuncSymbol);
+    AssertTrue(foo.Resolve("bar") is Namespace);
+
+    var bar = vm.ResolveNamedByPath("bar") as Namespace;
+    AssertTrue(bar != null);
+    AssertEqual(2, bar.GetSymbolsEnumerator().Count);
+    AssertTrue(bar.Resolve("test") is FuncSymbol);
+    AssertTrue(bar.Resolve("foo") is Namespace);
+  }
+
+  [IsTested()]
   public void TestStartFuncByPath()
   {
     string bhl = @"
