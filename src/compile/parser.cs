@@ -302,8 +302,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       foreach(var kv in imports)
       {
-        kv.Value.Phase_ParseTypes1();
-        kv.Value.Phase_ParseTypes2();
+        kv.Value.Phase_ParseTypes();
       }
     }
 
@@ -512,6 +511,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ns.Link(imported.ns);
     }
+  }
+
+  internal void Phase_ParseTypes()
+  {
+    Phase_ParseTypes1();
+    Phase_ParseTypes2();
   }
 
   internal void Phase_ParseTypes1()
