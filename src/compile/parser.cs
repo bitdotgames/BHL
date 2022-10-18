@@ -296,7 +296,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public void ProcessImportRequests()
     {
       foreach(var kv in imports)
+      {
         kv.Value.Phase_Outline();
+      }
 
       foreach(var kv in imports)
       {

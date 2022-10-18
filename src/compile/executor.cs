@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
@@ -92,7 +91,7 @@ public class CompilationExecutor
       )
     {
       if(conf.verbose)
-        Console.WriteLine("BHL no need to re-build");
+        Console.WriteLine("No stale files detected");
       return null;
     }
 

@@ -18260,6 +18260,48 @@ public class TestVM : BHL_TestBase
     }
   }
 
+  //[IsTested()]
+  public void TestIncremetalBuildOfChangedFilesWithIntermediateFile()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 23}
+      return u
+    }
+    ";
+
+    string file_test = @"
+    import ""get""
+
+    func int test() {
+      return get().test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+  }
+
   [IsTested()]
   public void TestStartLambdaInScriptMgr()
   {

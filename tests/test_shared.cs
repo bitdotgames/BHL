@@ -833,7 +833,12 @@ public class BHL_TestBase
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);
     if(err != null)
+    {
+      //TODO: handle it properly elsewhere
+      Console.WriteLine(err.stack_trace);
+      Console.WriteLine("==========");
       throw (Exception)err;
+    }
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
   }
