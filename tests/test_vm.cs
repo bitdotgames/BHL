@@ -18260,7 +18260,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestIncremetalBuildOfChangedFilesWithIntermediateFile()
   {
     string file_unit = @"

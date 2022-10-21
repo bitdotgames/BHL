@@ -302,6 +302,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       foreach(var kv in imports)
       {
+        kv.Value.Phase_RequestImports();
+      }
+
+      foreach(var kv in imports)
+      {
         kv.Value.Phase_ParseTypes1();
         kv.Value.Phase_ParseTypes2();
       }
@@ -586,6 +591,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ps = new List<ANTLR_Processor>() { this };
     ProcessAll(ps, coordinator);
     return result;
+  }
+
+  static public void ProcessAll_Outline(List<ANTLR_Processor> procs)
+  {
+    foreach(var proc in procs)
+      proc.Phase_Outline();
   }
 
   static public void ProcessAll(List<ANTLR_Processor> procs, Coordinator coordinator)

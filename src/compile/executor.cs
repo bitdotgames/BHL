@@ -22,7 +22,6 @@ public class CompileConf
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
-  public bool check_deps = true;
   public bool debug = false;
   public bool verbose = true;
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
@@ -33,16 +32,38 @@ public class CompilationExecutor
   const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
 
+  public class FileImports : IMarshallable
+  {
+    public List<string> files = new List<string>();
+
+    public void Reset() 
+    {
+      files.Clear();
+    }
+
+    public void Sync(SyncContext ctx) 
+    {
+      Marshall.Sync(ctx, files);
+    }
+  }
+
   public struct InterimResult
   {
     public bool use_file_cache;
     public string compiled_file;
+    public FileImports imports;
     public ANTLR_Parsed parsed;
   }
 
-  public class Cache : ANTLR_Processor.IParsedCache
+  public class ParsedCache : ANTLR_Processor.IParsedCache
   {
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+
+    public void AddInterimResults(Dictionary<string, InterimResult> file2interim)
+    {
+      foreach(var kv in file2interim)
+        file2interim.Add(kv.Key, kv.Value);
+    }
 
     public bool TryFetch(string file, out ANTLR_Parsed parsed)
     {
@@ -102,7 +123,27 @@ public class CompilationExecutor
     conf.userbindings.Register(ts);
 
     var parse_workers = StartParseWorkers(conf);
-    var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers);
+
+    var parsed_cache = new ParsedCache();
+    var coordinator = new ANTLR_Processor.Coordinator();
+    if(!string.IsNullOrEmpty(conf.inc_dir))
+      coordinator.AddToIncludePath(conf.inc_dir);
+    coordinator.SetParsedCache(parsed_cache);
+
+    var antlr_procs = new List<ANTLR_Processor>(); 
+
+    foreach(var pw in parse_workers)
+    {
+      pw.Join();
+
+      parsed_cache.AddInterimResults(pw.file2interim);
+
+      AddANTLR_Procs(antlr_procs, ts, pw.file2interim, coordinator);
+    }
+
+    ANTLR_Processor.ProcessAll_Outline(antlr_procs);
+    
+    var compiler_workers = StartAndWaitCompileWorkers(conf, ts, parse_workers, coordinator, parsed_cache);
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
@@ -142,7 +183,6 @@ public class CompilationExecutor
       pw.count = count;
       pw.use_cache = conf.use_cache;
       pw.cache_dir = conf.tmp_dir;
-      pw.check_deps = conf.check_deps;
       pw.files = conf.files;
       pw.verbose = conf.verbose;
 
@@ -155,29 +195,39 @@ public class CompilationExecutor
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompileWorkers(CompileConf conf, Types ts, List<ParseWorker> parse_workers)
+  static void AddANTLR_Procs(
+      List<ANTLR_Processor> antlr_procs, 
+      Types ts, 
+      Dictionary<string, InterimResult> file2interim, 
+      ANTLR_Processor.Coordinator coordinator
+    )
+  {
+    foreach(var kv in file2interim)
+    {
+      var file_module = new Module(ts, coordinator.FilePath2ModuleName(kv.Key), kv.Key);
+
+      ANTLR_Processor proc = null;
+      //let's try parsed cache if it's present
+      if(kv.Value.parsed != null)
+        proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts, coordinator);
+      else
+        proc = ANTLR_Processor.MakeProcessor(kv.Key, ts, coordinator);
+
+      antlr_procs.Add(proc);
+    }
+  }
+
+  static List<CompilerWorker> StartAndWaitCompileWorkers(CompileConf conf, Types ts, List<ParseWorker> parse_workers, ANTLR_Processor.Coordinator coordinator, ParsedCache interim_cache)
   {
     var compiler_workers = new List<CompilerWorker>();
-
-    var cache = new Cache();
-
-    //1. waiting for parse workers to finish
-    foreach(var pw in parse_workers)
-    {
-      pw.Join();
-
-      //let's create the shared interim result
-      foreach(var kv in pw.file2interim)
-        cache.file2interim.Add(kv.Key, kv.Value);
-    }
 
     bool had_errors = false;
     foreach(var pw in parse_workers)
     {
       var cw = new CompilerWorker();
       cw.id = pw.id;
-      cw.cache = cache;
-      cw.inc_dir = conf.inc_dir;
+      cw.coordinator = coordinator;
+      cw.file2interim = interim_cache.file2interim;
       cw.cache_dir = pw.cache_dir;
       cw.ts = ts;
       cw.files = pw.files;
@@ -200,10 +250,15 @@ public class CompilationExecutor
     if(!had_errors)
     {
       foreach(var w in compiler_workers)
+      {
+        //one thread at a time
         w.Start();
-
-      foreach(var w in compiler_workers)
         w.Join();
+      }
+
+      //truly multithreaded
+      //foreach(var w in compiler_workers)
+      //  w.Join();
     }
 
     return compiler_workers;
@@ -313,7 +368,6 @@ public class CompilationExecutor
     public int id;
     public Thread th;
     public string self_file;
-    public bool check_deps;
     public bool use_cache;
     public string cache_dir;
     public int start;
@@ -359,11 +413,8 @@ public class CompilationExecutor
           {
             var deps = new List<string>();
 
-            if(w.check_deps)
-            {
-              var imports = w.ParseImports(file, sfs);
-              deps = imports.files;
-            }
+            var imports = w.ParseImports(file, sfs);
+            deps = imports.files;
             deps.Add(file);
 
             //NOTE: adding self binary as a dep
@@ -373,6 +424,7 @@ public class CompilationExecutor
             var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
 
             var interim = new InterimResult();
+            interim.imports = imports;
             interim.compiled_file = compiled_file;
 
             if(!w.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
@@ -411,21 +463,6 @@ public class CompilationExecutor
       sw.Stop();
       if(w.verbose)
         Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
-    }
-
-    public class FileImports : IMarshallable
-    {
-      public List<string> files = new List<string>();
-
-      public void Reset() 
-      {
-        files.Clear();
-      }
-
-      public void Sync(SyncContext ctx) 
-      {
-        Marshall.Sync(ctx, files);
-      }
     }
 
     FileImports ParseImports(string file, FileStream fsf)
@@ -507,16 +544,16 @@ public class CompilationExecutor
   {
     public int id;
     public Thread th;
-    public string inc_dir;
     public string cache_dir;
     public List<string> files;
     public Types ts;
+    public ANTLR_Processor.Coordinator coordinator;
     public int start;
     public int count;
     public bool verbose;
     public IFrontPostProcessor postproc;
     public ICompileError error = null;
-    public Cache cache;
+    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Dictionary<string, ModulePath> file2modpath = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
@@ -540,15 +577,9 @@ public class CompilationExecutor
 
       var w = (CompilerWorker)data;
 
-      var coordinator = new ANTLR_Processor.Coordinator();
-      coordinator.SetParsedCache(w.cache);
-      if(!string.IsNullOrEmpty(w.inc_dir))
-        coordinator.AddToIncludePath(w.inc_dir);
-
       int cache_hit = 0;
       int cache_miss = 0;
 
-      var processors = new List<ANTLR_Processor>();
       var files = new List<string>();
       string current_file = "";
 
@@ -559,61 +590,55 @@ public class CompilationExecutor
         {
           current_file = w.files[i]; 
 
-          var file_module = new Module(w.ts, coordinator.FilePath2ModuleName(current_file), current_file);
+          var file_module = new Module(w.ts, w.coordinator.FilePath2ModuleName(current_file), current_file);
 
           bool file_cache_ok = false;
 
-          var interim = w.cache.file2interim[current_file];
+          var interim = w.file2interim[current_file];
           w.file2compiled.Add(current_file, interim.compiled_file);
           w.file2modpath.Add(current_file, file_module.path);
 
-          if(interim.use_file_cache)
-          {
-            try
-            {
-              var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
-              w.file2ns.Add(current_file, cm.ns);
+          //NOTE: commented for now
+          //if(interim.use_file_cache)
+          //{
+          //  try
+          //  {
+          //    var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
+          //    //TODO: add to coordinator???
+          //    w.file2ns.Add(current_file, cm.ns);
 
-              ++cache_hit;
-              file_cache_ok = true;
-            }
-            catch(Exception)
-            {}
-          }
+          //    ++cache_hit;
+          //    file_cache_ok = true;
+          //  }
+          //  catch(Exception)
+          //  {}
+          //}
 
           if(!file_cache_ok)
           {
             ++cache_miss;
 
-            ANTLR_Processor proc = null;
-            //let's try parsed cache if it'e present
-            if(interim.parsed != null)
-              proc = ANTLR_Processor.MakeProcessor(file_module, interim.parsed, w.ts, coordinator);
-            else
-              proc = ANTLR_Processor.MakeProcessor(current_file, w.ts, coordinator);
-
-            processors.Add(proc);
             files.Add(current_file);
           }
         }
 
-        ANTLR_Processor.ProcessAll(processors, coordinator);
+        //ANTLR_Processor.ProcessAll(processors, coordinator);
 
-        for(int p=0;p<processors.Count;++p)
-        {
-          var proc = processors[p];
-          current_file = files[p]; 
+        //for(int p=0;p<processors.Count;++p)
+        //{
+        //  var proc = processors[p];
+        //  current_file = files[p]; 
 
-          var proc_result = w.postproc.Patch(proc.result, current_file);
+        //  var proc_result = w.postproc.Patch(proc.result, current_file);
 
-          var c  = new ModuleCompiler(proc_result);
-          var cm = c.Compile();
+        //  var c  = new ModuleCompiler(proc_result);
+        //  var cm = c.Compile();
 
-          var compiled_file = w.file2compiled[current_file];
-          CompiledModule.ToFile(cm, compiled_file);
+        //  var compiled_file = w.file2compiled[current_file];
+        //  CompiledModule.ToFile(cm, compiled_file);
 
-          w.file2ns.Add(current_file, proc_result.module.ns);
-        }
+        //  w.file2ns.Add(current_file, proc_result.module.ns);
+        //}
       }
       catch(Exception e)
       {
