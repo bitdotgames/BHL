@@ -78,8 +78,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public IAST ast;
     public IScope scope;
 
-    public bhlParser.ImportsContext imps_ctx;
-
     public bhlParser.VarDeclareAssignContext gvar_ctx;
     public VariableSymbol gvar_symb;
 
@@ -100,7 +98,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       this.ast = ast;
       this.scope = scope;
-      this.imps_ctx = ctx as bhlParser.ImportsContext;
       this.gvar_ctx = ctx as bhlParser.VarDeclareAssignContext;
       this.func_ctx = ctx as bhlParser.FuncDeclContext;
       this.class_ctx = ctx as bhlParser.ClassDeclContext;
@@ -475,31 +472,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  internal void Phase_RequestImports()
+  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc)
   {
-    for(int p=0;p<passes.Count;++p)
+    foreach(var import_path in module.imports)
     {
-      var pass = passes[p];
+      var imported_module = file2proc[import_path].module;
 
-      Pass_RequestImports(pass);
+      //NOTE: let's add imported global vars to module's global vars index
+      if(module.local_gvars_mark == -1)
+        module.local_gvars_mark = module.gvars.Count;
+
+      for(int i=0;i<imported_module.local_gvars_num;++i)
+        module.gvars.index.Add(imported_module.gvars.index[i]);
+
+      ns.Link(imported_module.ns);
     }
-  }
-
-  internal void Phase_ResolveImports()
-  {
-    //foreach(var import_path in module.imports)
-    //{
-    //  var imported = coordinator.GetModule(import_path);
-
-    //  //NOTE: let's add imported global vars to module's global vars index
-    //  if(module.local_gvars_mark == -1)
-    //    module.local_gvars_mark = module.gvars.Count;
-
-    //  for(int i=0;i<imported.local_gvars_num;++i)
-    //    module.gvars.index.Add(imported.gvars.index[i]);
-
-    //  ns.Link(imported.ns);
-    //}
   }
 
   internal void Phase_ParseTypes1()
@@ -587,11 +574,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ////coordinator.ProcessImportRequests();
 
     //foreach(var proc in procs)
-    //{
-    //  //proc.Phase_ResolveImports();
-
     //  proc.Phase_ParseTypes1();
-    //}
 
     //foreach(var proc in procs)
     //  proc.Phase_ParseTypes2();

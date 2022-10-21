@@ -95,16 +95,11 @@ public class CompilationExecutor
 
   static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc)
   {
-    //let's outline symbols
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();
 
-    //let's link imports
     foreach(var kv in file2proc)
-    {
-      foreach(var file in kv.Value.module.imports)
-        kv.Value.module.ns.Link(file2proc[file].module.ns);
-    }
+      kv.Value.Phase_LinkImports(file2proc);
 
     foreach(var kv in file2proc)
       kv.Value.Phase_ParseTypes1();
