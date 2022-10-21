@@ -65,12 +65,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Types types;
 
-  //NOTE: In this mode only top symbols declarations are inspected.
-  //      This mode is used when module is imported by another one.
-  bool being_imported;
-
-  Coordinator coordinator;
-
   public Module module { get; private set; }
 
   //NOTE: points to module.ns
@@ -175,15 +169,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static ANTLR_Processor MakeProcessor(string file, Types ts, ANTLR_Processor.Coordinator coordinator)
-  {
-    using(var sfs = File.OpenRead(file))
-    {
-      var mod = new Module(ts, coordinator.FilePath2ModuleName(file), file);
-      return MakeProcessor(mod, sfs, ts, coordinator);
-    }
-  }
-
   public static bhlParser Stream2Parser(string file, Stream src)
   {
     var tokens = Stream2Tokens(file, src);
@@ -193,16 +178,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return p;
   }
   
-  public static ANTLR_Processor MakeProcessor(Module module, Stream src, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
+  public static ANTLR_Processor MakeProcessor(Module module, ANTLR_Parsed parsed/*can be null*/, Types ts)
+  {
+    if(parsed == null)
+    {
+      using(var sfs = File.OpenRead(module.file_path))
+      {
+        return MakeProcessor(module, sfs, ts);
+      }
+    }
+    else 
+      return new ANTLR_Processor(parsed, module, ts);
+  }
+
+  public static ANTLR_Processor MakeProcessor(Module module, Stream src, Types ts)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
-    return MakeProcessor(module, parsed, ts, coordinator, being_imported);
-  }
-
-  public static ANTLR_Processor MakeProcessor(Module module, ANTLR_Parsed parsed, Types ts, ANTLR_Processor.Coordinator coordinator = null, bool being_imported = false)
-  {
-    return new ANTLR_Processor(parsed, module, ts, coordinator, being_imported);
+    return new ANTLR_Processor(parsed, module, ts);
   }
 
   public interface IParsedCache
@@ -318,13 +311,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
       {
         //Console.WriteLine("HIT " + full_path);
-        proc = ANTLR_Processor.MakeProcessor(m, parsed, ts, this, being_imported: true);
+        proc = new ANTLR_Processor(parsed, m, ts);
       }
       else
       {
         //Console.WriteLine("MISS " + full_path);
         using(var fs = File.OpenRead(full_path))
-          proc = ANTLR_Processor.MakeProcessor(m, fs, ts, this, being_imported: true);
+          proc = ANTLR_Processor.MakeProcessor(m, fs, ts);
       }
       return proc;
     }
@@ -367,7 +360,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, Types types, Coordinator coordinator, bool being_imported = false)
+  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, Types types)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -379,15 +372,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ns.Link(types.ns);
 
     PushScope(ns);
-
-    this.being_imported = being_imported;
-
-    if(coordinator == null)
-      coordinator = new Coordinator();
-    this.coordinator = coordinator;
-    //NOTE: in order to properly handle circular dependencies let's add ourself
-    if(!being_imported)
-      this.coordinator.RegisterModule(module);
   }
 
   void FireError(IParseTree place, string msg) 
@@ -588,11 +572,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public Result Process()
   {
     var ps = new List<ANTLR_Processor>() { this };
-    ProcessAll(ps, coordinator);
+    ProcessAll(ps);
     return result;
   }
 
-  static public void ProcessAll(List<ANTLR_Processor> procs, Coordinator coordinator)
+  static public void ProcessAll(List<ANTLR_Processor> procs)
   {
     //foreach(var proc in procs)
     //  proc.Phase_Outline();
@@ -625,13 +609,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   public override object VisitProgblock(bhlParser.ProgblockContext ctx)
-  {
-    if(!being_imported)
-    {
-      var imps = ctx.imports();
-      if(imps != null)
-        AddPass(imps, null, PeekAST());
-    }
+  { 
+    //NOTE: imports are taken care of on a higher level code
+    //ctx.imports();
     
     Visit(ctx.decls()); 
 
@@ -2464,19 +2444,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ParseFuncBlock(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
   {
-    if(!being_imported)
-    {
-      PushScope(func_ast.symbol);
+    PushScope(func_ast.symbol);
 
-      PushAST(func_ast.block());
-      Visit(ctx.funcBlock());
-      PopAST();
+    PushAST(func_ast.block());
+    Visit(ctx.funcBlock());
+    PopAST();
 
-      if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
-        FireError(ctx.retType(), "matching 'return' statement not found");
+    if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
+      FireError(ctx.retType(), "matching 'return' statement not found");
 
-      PopScope();
-    }
+    PopScope();
   }
 
   void Pass_OutlineGlobalVar(ParserPass pass)
@@ -2880,38 +2857,35 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
 
-    if(!being_imported)
+    PushAST((AST_Tree)pass.ast);
+
+    var assign_exp = pass.gvar_ctx.assignExp();
+
+    AST_Interim exp_ast = null;
+    if(assign_exp != null)
     {
-      PushAST((AST_Tree)pass.ast);
+      var tp = ParseType(vd.type());
 
-      var assign_exp = pass.gvar_ctx.assignExp();
-
-      AST_Interim exp_ast = null;
-      if(assign_exp != null)
-      {
-        var tp = ParseType(vd.type());
-
-        exp_ast = new AST_Interim();
-        PushAST(exp_ast);
-        PushJsonType(tp.Get());
-        Visit(assign_exp);
-        PopJsonType();
-        PopAST();
-      }
-
-      AST_Tree ast = assign_exp != null ? 
-        (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
-        (AST_Tree)new AST_VarDecl(pass.gvar_symb);
-
-      if(exp_ast != null)
-        PeekAST().AddChild(exp_ast);
-      PeekAST().AddChild(ast);
-
-      if(assign_exp != null)
-        types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
-
+      exp_ast = new AST_Interim();
+      PushAST(exp_ast);
+      PushJsonType(tp.Get());
+      Visit(assign_exp);
+      PopJsonType();
       PopAST();
     }
+
+    AST_Tree ast = assign_exp != null ? 
+      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
+      (AST_Tree)new AST_VarDecl(pass.gvar_symb);
+
+    if(exp_ast != null)
+      PeekAST().AddChild(exp_ast);
+    PeekAST().AddChild(ast);
+
+    if(assign_exp != null)
+      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+
+    PopAST();
 
     EnableVar(((Namespace)curr_scope).members, pass.gvar_symb, subst_symbol);
   }

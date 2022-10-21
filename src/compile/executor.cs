@@ -239,12 +239,7 @@ public class CompilationExecutor
       var file_module = new Module(ts, coordinator.FilePath2ModuleName(kv.Key), kv.Key);
       file_module.imports = kv.Value.imports.files;
 
-      ANTLR_Processor proc = null;
-      //let's try parsed cache if it's present
-      if(kv.Value.parsed != null)
-        proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts, coordinator);
-      else
-        proc = ANTLR_Processor.MakeProcessor(kv.Key, ts, coordinator);
+      var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts);
 
       antlr_procs.Add(kv.Key, proc);
     }
@@ -266,7 +261,6 @@ public class CompilationExecutor
     {
       var cw = new CompilerWorker();
       cw.id = pw.id;
-      cw.coordinator = coordinator;
       cw.file2interim = file2interim;
       cw.file2proc = file2proc;
       cw.cache_dir = pw.cache_dir;
@@ -291,15 +285,10 @@ public class CompilationExecutor
     if(!had_errors)
     {
       foreach(var w in compiler_workers)
-      {
-        //one thread at a time
         w.Start();
-        w.Join();
-      }
 
-      //truly multithreaded
-      //foreach(var w in compiler_workers)
-      //  w.Join();
+      foreach(var w in compiler_workers)
+        w.Join();
     }
 
     return compiler_workers;
@@ -586,7 +575,6 @@ public class CompilationExecutor
     public string cache_dir;
     public List<string> files;
     public Types ts;
-    public ANTLR_Processor.Coordinator coordinator;
     public int start;
     public int count;
     public bool verbose;
