@@ -218,7 +218,7 @@ public class Module
     }
   }
   public ModulePath path;
-  public HashSet<string> imports = new HashSet<string>(); 
+  public List<string> imports = new List<string>(); 
 
   public VarIndex gvars = new VarIndex();
   public int local_gvars_mark = -1;

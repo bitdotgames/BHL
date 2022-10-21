@@ -71,8 +71,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Coordinator coordinator;
 
-  Module module;
+  public Module module { get; private set; }
 
+  //NOTE: points to module.ns
   Namespace ns;
 
   ITokenStream tokens;
@@ -215,8 +216,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //Every processor is obliged to register its module
     Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-    //All import requests and their processors
-    Dictionary<string, ANTLR_Processor> imports = new Dictionary<string, ANTLR_Processor>();
 
     IParsedCache parsed_cache = null;
 
@@ -245,72 +244,72 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return modules[norm_path];
     }
 
-    //NOTE: returns normalized imported module path or null in case of error
-    //TODO: the code below is kinda 'fishy' but works
-    public string RequestImport(Module origin, Types ts, string path)
-    {
-      string norm_path;
+    ////NOTE: returns normalized imported module path or null in case of error
+    ////TODO: the code below is kinda 'fishy' but works
+    //public string RequestImport(Module origin, Types ts, string path)
+    //{
+    //  string norm_path;
 
-      //1. check pre-registered module
-      Module m = ts.FindRegisteredModule(path);
-      if(m != null)
-      {
-        norm_path = m.name;
-        if(!imports.ContainsKey(norm_path))
-          RegisterModule(m);
-      }
-      //2. try filesystem
-      else
-      {
-        string file_path;
-        ResolvePath(origin.file_path, path, out file_path, out norm_path);
+    //  //1. check pre-registered module
+    //  Module m = ts.FindRegisteredModule(path);
+    //  if(m != null)
+    //  {
+    //    norm_path = m.name;
+    //    if(!imports.ContainsKey(norm_path))
+    //      RegisterModule(m);
+    //  }
+    //  //2. try filesystem
+    //  else
+    //  {
+    //    string file_path;
+    //    ResolvePath(origin.file_path, path, out file_path, out norm_path);
 
-        if(!imports.ContainsKey(norm_path))
-        {
-          //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
-          //      Otherwise we re-use the already registered module. This way we share symbols across  
-          //      all the parsed/imported modules and don't do any 'double work'
-          if(!modules.ContainsKey(norm_path))
-          {
-            m = new Module(ts, norm_path, file_path); 
-            RegisterModule(m);
+    //    if(!imports.ContainsKey(norm_path))
+    //    {
+    //      //NOTE: If a module wasn't registered (by some processor) we create a module and processor for it.
+    //      //      Otherwise we re-use the already registered module. This way we share symbols across  
+    //      //      all the parsed/imported modules and don't do any 'double work'
+    //      if(!modules.ContainsKey(norm_path))
+    //      {
+    //        m = new Module(ts, norm_path, file_path); 
+    //        RegisterModule(m);
 
-            try
-            {
-              var proc = MakeProcessor(file_path, m, ts);
-              imports.Add(norm_path, proc);
-            }
-            catch(Exception)
-            {
-              return null;
-            }
-          }
-        }
-      }
+    //        try
+    //        {
+    //          var proc = MakeProcessor(file_path, m, ts);
+    //          imports.Add(norm_path, proc);
+    //        }
+    //        catch(Exception)
+    //        {
+    //          return null;
+    //        }
+    //      }
+    //    }
+    //  }
 
-      origin.imports.Add(norm_path);
+    //  origin.imports.Add(norm_path);
 
-      return norm_path;
-    }
+    //  return norm_path;
+    //}
 
-    public void ProcessImportRequests()
-    {
-      foreach(var kv in imports)
-      {
-        kv.Value.Phase_Outline();
-      }
+    //public void ProcessImportRequests()
+    //{
+    //  foreach(var kv in imports)
+    //  {
+    //    kv.Value.Phase_Outline();
+    //  }
 
-      foreach(var kv in imports)
-      {
-        kv.Value.Phase_RequestImports();
-      }
+    //  foreach(var kv in imports)
+    //  {
+    //    kv.Value.Phase_RequestImports();
+    //  }
 
-      foreach(var kv in imports)
-      {
-        kv.Value.Phase_ParseTypes1();
-        kv.Value.Phase_ParseTypes2();
-      }
-    }
+    //  foreach(var kv in imports)
+    //  {
+    //    kv.Value.Phase_ParseTypes1();
+    //    kv.Value.Phase_ParseTypes2();
+    //  }
+    //}
 
     ANTLR_Processor MakeProcessor(string full_path, Module m, Types ts)
     {
@@ -504,19 +503,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_ResolveImports()
   {
-    foreach(var import_path in module.imports)
-    {
-      var imported = coordinator.GetModule(import_path);
+    //foreach(var import_path in module.imports)
+    //{
+    //  var imported = coordinator.GetModule(import_path);
 
-      //NOTE: let's add imported global vars to module's global vars index
-      if(module.local_gvars_mark == -1)
-        module.local_gvars_mark = module.gvars.Count;
+    //  //NOTE: let's add imported global vars to module's global vars index
+    //  if(module.local_gvars_mark == -1)
+    //    module.local_gvars_mark = module.gvars.Count;
 
-      for(int i=0;i<imported.local_gvars_num;++i)
-        module.gvars.index.Add(imported.gvars.index[i]);
+    //  for(int i=0;i<imported.local_gvars_num;++i)
+    //    module.gvars.index.Add(imported.gvars.index[i]);
 
-      ns.Link(imported.ns);
-    }
+    //  ns.Link(imported.ns);
+    //}
   }
 
   internal void Phase_ParseTypes1()
@@ -593,34 +592,28 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return result;
   }
 
-  static public void ProcessAll_Outline(List<ANTLR_Processor> procs)
-  {
-    foreach(var proc in procs)
-      proc.Phase_Outline();
-  }
-
   static public void ProcessAll(List<ANTLR_Processor> procs, Coordinator coordinator)
   {
-    foreach(var proc in procs)
-      proc.Phase_Outline();
+    //foreach(var proc in procs)
+    //  proc.Phase_Outline();
 
-    foreach(var proc in procs)
-      proc.Phase_RequestImports();
+    //foreach(var proc in procs)
+    //  proc.Phase_RequestImports();
 
-    coordinator.ProcessImportRequests();
+    ////coordinator.ProcessImportRequests();
 
-    foreach(var proc in procs)
-    {
-      proc.Phase_ResolveImports();
+    //foreach(var proc in procs)
+    //{
+    //  //proc.Phase_ResolveImports();
 
-      proc.Phase_ParseTypes1();
-    }
+    //  proc.Phase_ParseTypes1();
+    //}
 
-    foreach(var proc in procs)
-      proc.Phase_ParseTypes2();
+    //foreach(var proc in procs)
+    //  proc.Phase_ParseTypes2();
 
-    foreach(var proc in procs)
-      proc.Phase_ParseFuncBodies();
+    //foreach(var proc in procs)
+    //  proc.Phase_ParseFuncBodies();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
@@ -650,19 +643,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-  void RequestImport(AST_Import ast, bhlParser.MimportContext ctx)
-  {
-    var name = ctx.NORMALSTRING().GetText();
-    //removing quotes
-    name = name.Substring(1, name.Length-2);
+  //void RequestImport(AST_Import ast, bhlParser.MimportContext ctx)
+  //{
+  //  var name = ctx.NORMALSTRING().GetText();
+  //  //removing quotes
+  //  name = name.Substring(1, name.Length-2);
 
-    var norm_path = coordinator.RequestImport(module, types, name);
-    if(norm_path == null)
-      FireError(ctx, "invalid import");
+  //  var norm_path = coordinator.RequestImport(module, types, name);
+  //  if(norm_path == null)
+  //    FireError(ctx, "invalid import");
 
-    if(!ast.module_names.Contains(norm_path))
-      ast.module_names.Add(norm_path);
-  }
+  //  if(!ast.module_names.Contains(norm_path))
+  //    ast.module_names.Add(norm_path);
+  //}
 
   public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
   {
@@ -2398,14 +2391,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void Pass_RequestImports(ParserPass pass)
   {
-    if(pass.imps_ctx == null)
-      return;
+    //if(pass.imps_ctx == null)
+    //  return;
 
     var ast = new AST_Import();
 
-    var imps = pass.imps_ctx.mimport();
-    for(int i=0;i<imps.Length;++i)
-      RequestImport(ast, imps[i]);
+    //var imps = pass.imps_ctx.mimport();
+    //for(int i=0;i<imps.Length;++i)
+    //  RequestImport(ast, imps[i]);
 
     pass.ast.AddChild(ast);
   }

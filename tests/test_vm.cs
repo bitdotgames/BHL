@@ -18203,7 +18203,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestIncremetalBuildOfChangedFiles()
+  public void TestIncrementalBuildOfChangedFiles()
   {
     string file_unit = @"
       class Unit {
@@ -18261,7 +18261,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestIncremetalBuildOfChangedFilesWithIntermediateFile()
+  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile()
   {
     string file_unit = @"
       class Unit {
