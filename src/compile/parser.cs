@@ -405,8 +405,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc)
+  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, Coordinator coordinator)
   {
+    var ast_import = new AST_Import();
+
     foreach(var import_path in module.imports)
     {
       var imported_module = file2proc[import_path].module;
@@ -419,7 +421,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         module.gvars.index.Add(imported_module.gvars.index[i]);
 
       ns.Link(imported_module.ns);
+
+      ast_import.module_names.Add(coordinator.FilePath2ModuleName(import_path));
     }
+    
+    root_ast.AddChild(ast_import);
   }
 
   internal void Phase_ParseTypes1()
@@ -498,22 +504,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   static public void ProcessAll(List<ANTLR_Processor> procs)
   {
-    //foreach(var proc in procs)
-    //  proc.Phase_Outline();
-
-    //foreach(var proc in procs)
-    //  proc.Phase_RequestImports();
-
-    ////coordinator.ProcessImportRequests();
-
-    //foreach(var proc in procs)
-    //  proc.Phase_ParseTypes1();
-
-    //foreach(var proc in procs)
-    //  proc.Phase_ParseTypes2();
-
-    //foreach(var proc in procs)
-    //  proc.Phase_ParseFuncBodies();
+    throw new NotImplementedException();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
@@ -526,9 +517,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitProgblock(bhlParser.ProgblockContext ctx)
   { 
-    //NOTE: imports are taken care of on a higher level code
-    //ctx.imports();
-    
     Visit(ctx.decls()); 
 
     return null;
@@ -2283,20 +2271,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     return null;
-  }
-
-  void Pass_RequestImports(ParserPass pass)
-  {
-    //if(pass.imps_ctx == null)
-    //  return;
-
-    var ast = new AST_Import();
-
-    //var imps = pass.imps_ctx.mimport();
-    //for(int i=0;i<imps.Length;++i)
-    //  RequestImport(ast, imps[i]);
-
-    pass.ast.AddChild(ast);
   }
 
   void Pass_OutlineFuncDecl(ParserPass pass)

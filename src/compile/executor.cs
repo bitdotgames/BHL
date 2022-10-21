@@ -93,13 +93,13 @@ public class CompilationExecutor
     return err;
   }
 
-  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc)
+  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, ANTLR_Processor.Coordinator coordinator)
   {
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_LinkImports(file2proc);
+      kv.Value.Phase_LinkImports(file2proc, coordinator);
 
     foreach(var kv in file2proc)
       kv.Value.Phase_ParseTypes1();
@@ -160,7 +160,7 @@ public class CompilationExecutor
     }
 
     //3. process parse result
-    ProcessAll(file2proc);
+    ProcessAll(file2proc, coordinator);
     
     //4. compile to bytecode 
     var compiler_workers = StartAndWaitCompileWorkers(
