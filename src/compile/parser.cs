@@ -195,101 +195,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return new ANTLR_Processor(parsed, module, ts);
   }
 
-  public interface IParsedCache
-  {
-    bool TryFetch(string file, out ANTLR_Parsed parsed);
-  }
-
-  public class Coordinator
-  {
-    List<string> include_path = new List<string>();
-
-    //Every processor is obliged to register its module
-    Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
-
-    IParsedCache parsed_cache = null;
-
-    public void SetParsedCache(IParsedCache cache)
-    {
-      parsed_cache = cache;
-    }
-
-    public void AddToIncludePath(string path)
-    {
-      include_path.Add(Util.NormalizeFilePath(path));
-    }
-
-    public List<string> GetIncludePath()
-    {
-      return include_path;
-    }
-
-    public void RegisterModule(Module m)
-    {
-      modules.Add(m.name, m);
-    }
-
-    public Module GetModule(string norm_path)
-    {
-      return modules[norm_path];
-    }
-
-    ANTLR_Processor MakeProcessor(string full_path, Module m, Types ts)
-    {
-      ANTLR_Processor proc = null;
-      ANTLR_Parsed parsed;
-      if(parsed_cache != null && parsed_cache.TryFetch(full_path, out parsed))
-      {
-        //Console.WriteLine("HIT " + full_path);
-        proc = new ANTLR_Processor(parsed, m, ts);
-      }
-      else
-      {
-        //Console.WriteLine("MISS " + full_path);
-        using(var fs = File.OpenRead(full_path))
-          proc = ANTLR_Processor.MakeProcessor(m, fs, ts);
-      }
-      return proc;
-    }
-
-    void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
-    {
-      file_path = "";
-      norm_path = "";
-
-      if(path.Length == 0)
-        throw new Exception("Bad path");
-
-      file_path = Util.ResolveImportPath(include_path, self_path, path);
-      norm_path = FilePath2ModuleName(file_path);
-    }
-
-    public string FilePath2ModuleName(string full_path)
-    {
-      full_path = Util.NormalizeFilePath(full_path);
-
-      string norm_path = "";
-      for(int i=0;i<include_path.Count;++i)
-      {
-        var inc_path = include_path[i];
-        if(full_path.IndexOf(inc_path) == 0)
-        {
-          norm_path = full_path.Replace(inc_path, "");
-          norm_path = norm_path.Replace('\\', '/');
-          //stripping .bhl extension
-          norm_path = norm_path.Substring(0, norm_path.Length-4);
-          //stripping initial /
-          norm_path = norm_path.TrimStart('/', '\\');
-          break;
-        }
-      }
-
-      if(norm_path.Length == 0)
-        throw new Exception("File path '" + full_path + "' was not normalized");
-      return norm_path;
-    }
-  }
-
   public ANTLR_Processor(ANTLR_Parsed parsed, Module module, Types types)
   {
     this.parsed = parsed;
@@ -402,6 +307,58 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Pass_OutlineEnumDecl(pass);
 
       PopScope();
+    }
+  }
+
+  public class Coordinator
+  {
+    List<string> include_path = new List<string>();
+
+    public void AddToIncludePath(string path)
+    {
+      include_path.Add(Util.NormalizeFilePath(path));
+    }
+
+    public List<string> GetIncludePath()
+    {
+      return include_path;
+    }
+
+    void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
+    {
+      file_path = "";
+      norm_path = "";
+
+      if(path.Length == 0)
+        throw new Exception("Bad path");
+
+      file_path = Util.ResolveImportPath(include_path, self_path, path);
+      norm_path = FilePath2ModuleName(file_path);
+    }
+
+    public string FilePath2ModuleName(string full_path)
+    {
+      full_path = Util.NormalizeFilePath(full_path);
+
+      string norm_path = "";
+      for(int i=0;i<include_path.Count;++i)
+      {
+        var inc_path = include_path[i];
+        if(full_path.IndexOf(inc_path) == 0)
+        {
+          norm_path = full_path.Replace(inc_path, "");
+          norm_path = norm_path.Replace('\\', '/');
+          //stripping .bhl extension
+          norm_path = norm_path.Substring(0, norm_path.Length-4);
+          //stripping initial /
+          norm_path = norm_path.TrimStart('/', '\\');
+          break;
+        }
+      }
+
+      if(norm_path.Length == 0)
+        throw new Exception("File path '" + full_path + "' was not normalized");
+      return norm_path;
     }
   }
 

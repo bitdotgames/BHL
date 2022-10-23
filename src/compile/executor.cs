@@ -55,7 +55,7 @@ public class CompilationExecutor
     public ANTLR_Parsed parsed;
   }
 
-  public class ParsedCache : ANTLR_Processor.IParsedCache
+  public class ParsedCache
   {
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
 
@@ -147,7 +147,6 @@ public class CompilationExecutor
     var coordinator = new ANTLR_Processor.Coordinator();
     if(!string.IsNullOrEmpty(conf.inc_dir))
       coordinator.AddToIncludePath(conf.inc_dir);
-    coordinator.SetParsedCache(parsed_cache);
 
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
 
