@@ -34,16 +34,31 @@ public class CompilationExecutor
 
   public class FileImports : IMarshallable
   {
-    public List<string> files = new List<string>();
+    public List<string> rel_paths = new List<string>();
+    public List<string> abs_paths = new List<string>();
+
+    public FileImports()
+    {}
+
+    public FileImports(Dictionary<string, string> imps)
+    {
+      foreach(var kv in imps)
+      {
+        rel_paths.Add(kv.Key);
+        abs_paths.Add(kv.Value);
+      }
+    }
 
     public void Reset() 
     {
-      files.Clear();
+      rel_paths.Clear();
+      abs_paths.Clear();
     }
 
     public void Sync(SyncContext ctx) 
     {
-      Marshall.Sync(ctx, files);
+      Marshall.Sync(ctx, rel_paths);
+      Marshall.Sync(ctx, abs_paths);
     }
   }
 
@@ -230,8 +245,8 @@ public class CompilationExecutor
   {
     foreach(var kv in file2interim)
     {
-      var file_module = new Module(ts, coordinator.FilePath2ModuleName(kv.Key), kv.Key);
-      file_module.imports = kv.Value.imports.files;
+      var file_module = new Module(ts, Util.FilePath2ModuleName(coordinator.include_path, kv.Key), kv.Key);
+      file_module.abs_paths_imports = kv.Value.imports.abs_paths;
 
       var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts);
 
@@ -436,7 +451,7 @@ public class CompilationExecutor
           using(var sfs = File.OpenRead(file))
           {
             var imports = w.ParseImports(file, sfs);
-            var deps = new List<string>(imports.files);
+            var deps = new List<string>(imports.abs_paths);
             deps.Add(file);
 
             //NOTE: adding self binary as a dep
@@ -492,8 +507,7 @@ public class CompilationExecutor
       var imports = TryReadImportsCache(file);
       if(imports == null)
       {
-        imports = new FileImports();
-        imports.files = ParseImports(inc_path, file, fsf);
+        imports = new FileImports(ParseImports(inc_path, file, fsf));
         WriteImportsCache(file, imports);
       }
       return imports;
@@ -523,9 +537,9 @@ public class CompilationExecutor
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
-    static List<string> ParseImports(List<string> inc_paths, string file, FileStream fs)
+    static Dictionary<string, string> ParseImports(List<string> inc_paths, string file, FileStream fs)
     {
-      var imps = new List<string>();
+      var imps = new Dictionary<string, string>();
 
       var r = new StreamReader(fs);
 
@@ -546,8 +560,7 @@ public class CompilationExecutor
             {
               string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
               string import = Util.ResolveImportPath(inc_paths, file, rel_import);
-              if(imps.IndexOf(import) == -1)
-                imps.Add(import);
+              imps[rel_import] = import;
             }
             import_idx = line.IndexOf("import", q2_idx + 1);
           }

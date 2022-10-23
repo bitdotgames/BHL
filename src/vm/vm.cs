@@ -218,7 +218,7 @@ public class Module
     }
   }
   public ModulePath path;
-  public List<string> imports = new List<string>(); 
+  public List<string> abs_paths_imports = new List<string>(); 
 
   public VarIndex gvars = new VarIndex();
   public int local_gvars_mark = -1;

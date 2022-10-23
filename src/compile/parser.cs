@@ -312,7 +312,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public class Coordinator
   {
-    List<string> include_path = new List<string>();
+    public List<string> include_path = new List<string>();
 
     public void AddToIncludePath(string path)
     {
@@ -324,49 +324,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return include_path;
     }
 
-    void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
-    {
-      file_path = "";
-      norm_path = "";
+    //void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
+    //{
+    //  file_path = "";
+    //  norm_path = "";
 
-      if(path.Length == 0)
-        throw new Exception("Bad path");
+    //  if(path.Length == 0)
+    //    throw new Exception("Bad path");
 
-      file_path = Util.ResolveImportPath(include_path, self_path, path);
-      norm_path = FilePath2ModuleName(file_path);
-    }
-
-    public string FilePath2ModuleName(string full_path)
-    {
-      full_path = Util.NormalizeFilePath(full_path);
-
-      string norm_path = "";
-      for(int i=0;i<include_path.Count;++i)
-      {
-        var inc_path = include_path[i];
-        if(full_path.IndexOf(inc_path) == 0)
-        {
-          norm_path = full_path.Replace(inc_path, "");
-          norm_path = norm_path.Replace('\\', '/');
-          //stripping .bhl extension
-          norm_path = norm_path.Substring(0, norm_path.Length-4);
-          //stripping initial /
-          norm_path = norm_path.TrimStart('/', '\\');
-          break;
-        }
-      }
-
-      if(norm_path.Length == 0)
-        throw new Exception("File path '" + full_path + "' was not normalized");
-      return norm_path;
-    }
+    //  file_path = Util.ResolveImportPath(include_path, self_path, path);
+    //  norm_path = Util.FilePath2ModuleName(include_path, file_path);
+    //}
   }
 
   internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, Coordinator coordinator)
   {
     var ast_import = new AST_Import();
 
-    foreach(var import_path in module.imports)
+    foreach(var import_path in module.abs_paths_imports)
     {
       var imported_module = file2proc[import_path].module;
 
@@ -379,7 +354,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ns.Link(imported_module.ns);
 
-      ast_import.module_names.Add(coordinator.FilePath2ModuleName(import_path));
+      ast_import.module_names.Add(Util.FilePath2ModuleName(coordinator.include_path, import_path));
     }
     
     root_ast.AddChild(ast_import);

@@ -57,6 +57,31 @@ static public class Util
       return TryIncludePaths(inc_paths, path);
   }
 
+  public static string FilePath2ModuleName(List<string> include_path, string full_path)
+  {
+    full_path = NormalizeFilePath(full_path);
+
+    string norm_path = "";
+    for(int i=0;i<include_path.Count;++i)
+    {
+      var inc_path = include_path[i];
+      if(full_path.IndexOf(inc_path) == 0)
+      {
+        norm_path = full_path.Replace(inc_path, "");
+        norm_path = norm_path.Replace('\\', '/');
+        //stripping .bhl extension
+        norm_path = norm_path.Substring(0, norm_path.Length-4);
+        //stripping initial /
+        norm_path = norm_path.TrimStart('/', '\\');
+        break;
+      }
+    }
+
+    if(norm_path.Length == 0)
+      throw new Exception("File path '" + full_path + "' was not normalized");
+    return norm_path;
+  }
+
   static string TryIncludePaths(List<string> inc_paths, string path)
   {
     for(int i=0;i<inc_paths.Count;++i)
