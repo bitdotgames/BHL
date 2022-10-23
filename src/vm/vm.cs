@@ -205,6 +205,8 @@ public class ModulePath
   }
 }
 
+//TODO: there's CompiledModule as well and 
+//      probably this one must be renamed
 public class Module
 {
   public string name {
