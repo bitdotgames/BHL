@@ -51,12 +51,39 @@ public class CompilationExecutor
     var sw = new Stopwatch();
     sw.Start();
 
-    var err = DoExec(conf);
+    ICompileError err;
+
+    try
+    {
+      err = DoExec(conf);
+    }
+    catch(Exception e)
+    {
+      if(e is ICompileError ie)
+        err = ie;
+      else
+      {
+        //let's log unexpected exceptions immediately
+        Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+        err = new BuildError("?", e);
+      }
+    }
 
     sw.Stop();
 
     if(conf.verbose)
       Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+
+    if(err != null)
+    {
+      if(!string.IsNullOrEmpty(conf.err_file))
+      {
+        if(conf.err_file == "-")
+          Console.Error.WriteLine(ErrorUtils.ToJson(err));
+        else
+          File.WriteAllText(conf.err_file, ErrorUtils.ToJson(err));
+      }
+    }
 
     return err;
   }
@@ -93,13 +120,21 @@ public class CompilationExecutor
     //1. start parse workers
     var parse_workers = StartParseWorkers(conf);
 
-    var file2interim = new Dictionary<string, InterimResult>();
-    var file2proc = new Dictionary<string, ANTLR_Processor>(); 
     //2. wait for the completion of parse workers
     foreach(var pw in parse_workers)
-    {
       pw.Join();
+    
+    foreach(var pw in parse_workers)
+    {
+      if(pw.error != null)
+        return pw.error;
+    }
 
+    //3. create ANTLR processors
+    var file2interim = new Dictionary<string, InterimResult>();
+    var file2proc = new Dictionary<string, ANTLR_Processor>(); 
+    foreach(var pw in parse_workers)
+    {
       parse_cache_hits += pw.cache_hit;
       parse_cache_miss += pw.cache_miss;
 
@@ -113,12 +148,12 @@ public class CompilationExecutor
       }
     }
 
-    //3. process parse result
+    //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
     
-    //4. compile to bytecode 
-    var compiler_workers = StartAndWaitCompileWorkers(
+    //5. compile to bytecode 
+    var compiler_workers = StartAndWaitCompilerWorkers(
       conf, 
       ts, 
       parse_workers, 
@@ -128,15 +163,23 @@ public class CompilationExecutor
 
     foreach(var cw in compiler_workers)
     {
+      if(cw.error != null)
+        return cw.error;
+    }
+
+    foreach(var cw in compiler_workers)
+    {
       compile_cache_hits += cw.cache_hit;
       compile_cache_miss += cw.cache_miss;
     }
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
-    var werror = WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file);
-    if(werror != null)
-      return werror;
+    var check_err = CheckUniqueSymbols(compiler_workers);
+    if(check_err != null)
+      return check_err;
+
+    WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file);
 
     if(File.Exists(conf.res_file))
       File.Delete(conf.res_file);
@@ -178,7 +221,7 @@ public class CompilationExecutor
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompileWorkers(
+  static List<CompilerWorker> StartAndWaitCompilerWorkers(
     CompileConf conf, 
     Types ts, 
     List<ParseWorker> parse_workers, 
@@ -188,7 +231,6 @@ public class CompilationExecutor
   {
     var compiler_workers = new List<CompilerWorker>();
 
-    bool had_errors = false;
     foreach(var pw in parse_workers)
     {
       var cw = new CompilerWorker();
@@ -201,30 +243,32 @@ public class CompilationExecutor
       cw.count = pw.count;
       cw.postproc = conf.postproc;
 
-      //passing parser error if any
-      cw.error = pw.error;
-
-      if(pw.error != null)
-        had_errors = true;
-
       compiler_workers.Add(cw);
     }
 
-    //2. starting workers which now actually compile the code
-    //   if there were no errors
-    if(!had_errors)
-    {
-      foreach(var w in compiler_workers)
-        w.Start();
+    foreach(var w in compiler_workers)
+      w.Start();
 
-      foreach(var w in compiler_workers)
-        w.Join();
-    }
+    foreach(var w in compiler_workers)
+      w.Join();
 
     return compiler_workers;
   }
 
-  ICompileError WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  SymbolError CheckUniqueSymbols(List<CompilerWorker> compiler_workers)
+  {
+    //used as a global namespace for unique symbols check
+    var ns = new Namespace();
+    foreach(var w in compiler_workers)
+    {
+      var check_err = CheckUniqueSymbols(ns, w);
+      if(check_err != null)
+        return check_err;
+    }
+    return null;
+  }
+
+  void WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
   {
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -233,30 +277,9 @@ public class CompilationExecutor
       mwriter.Write(ModuleLoader.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
-      //used as a global namespace for unique symbols check
-      var ns = new Namespace();
-
       int total_modules = 0;
       foreach(var w in compiler_workers)
-      {
-        if(w.error == null)
-          CheckUniqueSymbols(ns, w);
-
-        //NOTE: exit in case of error
-        if(w.error != null)
-        {
-          if(!string.IsNullOrEmpty(conf.err_file))
-          {
-            if(conf.err_file == "-")
-              Console.Error.WriteLine(ErrorUtils.ToJson(w.error));
-            else
-              File.WriteAllText(conf.err_file, ErrorUtils.ToJson(w.error));
-          }
-
-          return w.error;
-        }
         total_modules += w.file2modpath.Count;
-      }
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
@@ -287,8 +310,6 @@ public class CompilationExecutor
           }
         }
       }
-
-      return null;
     }
   }
 
@@ -309,7 +330,7 @@ public class CompilationExecutor
     return lz4_bytes;
   }
 
-  void CheckUniqueSymbols(Namespace ns, CompilerWorker w)
+  SymbolError CheckUniqueSymbols(Namespace ns, CompilerWorker w)
   {
     foreach(var kv in w.file2ns)
     {
@@ -319,8 +340,9 @@ public class CompilationExecutor
 
       var conflict = ns.TryLink(file_ns);
       if(!conflict.Ok)
-        w.error = new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullPath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module_name + "'");
+        return new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullPath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module_name + "'");
     }
+    return null;
   }
 
   public class ParseWorker
