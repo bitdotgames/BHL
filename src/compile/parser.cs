@@ -317,18 +317,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
-    //let's check imports first
-    foreach(var kv in parsed_imports)
-    {
-      if(!imports.IsValid(kv.Value))
-        FireError(kv.Key, "invalid import");
-    }
-
     var ast_import = new AST_Import();
 
-    foreach(var import_path in imports.file_paths)
+    foreach(var kv in parsed_imports)
     {
-      var imported_module = file2proc[import_path].module;
+      //let's check if it's a registered native module
+      var reg_mod = types.FindRegisteredModule(kv.Value);
+      if(reg_mod != null)
+      {
+        ns.Link(reg_mod.ns);
+        continue;
+      }
+
+      //let's check if it's a compiled module
+      var file_path = imports.MapToFilePath(kv.Value);
+      if(file_path == null || !File.Exists(file_path))
+        FireError(kv.Key, "invalid import");
+
+      var imported_module = file2proc[file_path].module;
 
       //NOTE: let's add imported global vars to module's global vars index
       if(module.local_gvars_mark == -1)
@@ -339,9 +345,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ns.Link(imported_module.ns);
 
-      ast_import.module_names.Add(inc_path.FilePath2ModuleName(import_path));
+      ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
     }
-    
+
     root_ast.AddChild(ast_import);
   }
 

@@ -129,7 +129,7 @@ public class IncludePath
       if(File.Exists(file_path))
         return file_path;
     }
-    throw new Exception("Could not find file for path '" + path + "'");
+    return null;
   }
 }
 
@@ -151,6 +151,7 @@ public class FileImports : marshall.IMarshallable
   }
 
   //TODO: handle duplicate file_paths?
+  //NOTE: file_path can be null if imported module is native for example
   public void Add(string import_path, string file_path)
   {
     if(import_paths.Contains(import_path))
@@ -159,12 +160,12 @@ public class FileImports : marshall.IMarshallable
     file_paths.Add(file_path);
   }
 
-  public bool IsValid(string import_path)
+  public string MapToFilePath(string import_path)
   {
     int idx = import_paths.IndexOf(import_path);
     if(idx == -1)
-      return false;
-    return File.Exists(file_paths[idx]);
+      return null;
+    return file_paths[idx];
   }
 
   public void Reset() 
