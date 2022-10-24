@@ -5542,6 +5542,30 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachBadSyntax()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      foreach([1,2,3] as int t) {
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input '1' expecting NAME",
+      new PlaceAssert(bhl, @"
+      foreach([1,2,3] as int t) {
+---------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestBreakInForLoop()
   {
     string bhl = @"
