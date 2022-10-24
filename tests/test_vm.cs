@@ -18234,10 +18234,16 @@ public class TestVM : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.parse_cache_hits, 0);
+      AssertEqual(exec.parse_cache_miss, 3);
+      AssertEqual(exec.compile_cache_hits, 0);
+      AssertEqual(exec.compile_cache_miss, 3);
     }
 
     string new_file_unit = @"
@@ -18253,10 +18259,16 @@ public class TestVM : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+      AssertEqual(exec.parse_cache_hits, 1);
+      AssertEqual(exec.parse_cache_miss, 1+1);
+      AssertEqual(exec.compile_cache_hits, 1);
+      AssertEqual(exec.compile_cache_miss, 1+1);
     }
   }
 
@@ -18295,10 +18307,16 @@ public class TestVM : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.parse_cache_hits, 0);
+      AssertEqual(exec.parse_cache_miss, 3);
+      AssertEqual(exec.compile_cache_hits, 0);
+      AssertEqual(exec.compile_cache_miss, 3);
     }
 
     string new_file_get = @"
@@ -18315,10 +18333,16 @@ public class TestVM : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+      AssertEqual(exec.parse_cache_hits, 1);
+      AssertEqual(exec.parse_cache_miss, 1+1);
+      AssertEqual(exec.compile_cache_hits, 1);
+      AssertEqual(exec.compile_cache_miss, 1+1);
     }
   }
 

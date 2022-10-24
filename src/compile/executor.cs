@@ -40,6 +40,12 @@ public class CompilationExecutor
     public ANTLR_Parsed parsed;
   }
 
+  public int parse_cache_hits { get; private set; }
+  public int parse_cache_miss { get; private set; }
+
+  public int compile_cache_hits { get; private set; }
+  public int compile_cache_miss { get; private set; }
+
   public ICompileError Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
@@ -94,6 +100,9 @@ public class CompilationExecutor
     {
       pw.Join();
 
+      parse_cache_hits += pw.cache_hit;
+      parse_cache_miss += pw.cache_miss;
+
       foreach(var kv in pw.file2interim)
       {
         var file_module = new Module(ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
@@ -116,6 +125,12 @@ public class CompilationExecutor
       file2interim,
       file2proc
     );
+
+    foreach(var cw in compiler_workers)
+    {
+      compile_cache_hits += cw.cache_hit;
+      compile_cache_miss += cw.cache_miss;
+    }
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 

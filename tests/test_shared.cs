@@ -833,9 +833,9 @@ public class BHL_TestBase
     return conf;
   }
 
-  static public Stream CompileFiles(CompilationExecutor cmp, CompileConf conf)
+  static public Stream CompileFiles(CompilationExecutor exec, CompileConf conf)
   {
-    var err = cmp.Exec(conf);
+    var err = exec.Exec(conf);
     if(err != null)
     {
       //TODO: handle it properly elsewhere
@@ -850,8 +850,7 @@ public class BHL_TestBase
   static public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
   {
     var conf = MakeCompileConf(files, ts, use_cache, max_threads);
-    var cmp = new CompilationExecutor();
-    return CompileFiles(cmp, conf);
+    return CompileFiles(new CompilationExecutor(), conf);
   }
 
   public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
