@@ -208,7 +208,6 @@ public class CompilationExecutor
       var pw = new ParseWorker();
       pw.conf = conf;
       pw.id = wid;
-      pw.verbose = conf.verbose;
       pw.start = idx;
       pw.count = count;
 
@@ -353,8 +352,6 @@ public class CompilationExecutor
     public string self_file;
     public int start;
     public int count;
-    public bool verbose;
-    public IncludePath inc_path = new IncludePath();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public ICompileError error = null;
     public int cache_hit;
@@ -438,7 +435,7 @@ public class CompilationExecutor
       }
 
       sw.Stop();
-      if(w.verbose)
+      if(w.conf.verbose)
         Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss);
     }
 
@@ -447,7 +444,7 @@ public class CompilationExecutor
       var imports = TryReadImportsCache(file);
       if(imports == null)
       {
-        imports = ParseImports(inc_path, file, fsf);
+        imports = ParseImports(conf.inc_path, file, fsf);
         WriteImportsCache(file, imports);
       }
       return imports;

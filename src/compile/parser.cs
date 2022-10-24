@@ -470,20 +470,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-  //void RequestImport(AST_Import ast, bhlParser.MimportContext ctx)
-  //{
-  //  var name = ctx.NORMALSTRING().GetText();
-  //  //removing quotes
-  //  name = name.Substring(1, name.Length-2);
-
-  //  var norm_path = coordinator.RequestImport(module, types, name);
-  //  if(norm_path == null)
-  //    FireError(ctx, "invalid import");
-
-  //  if(!ast.module_names.Contains(norm_path))
-  //    ast.module_names.Add(norm_path);
-  //}
-
   public override object VisitSymbCall(bhlParser.SymbCallContext ctx)
   {
     var exp = ctx.callExp(); 
