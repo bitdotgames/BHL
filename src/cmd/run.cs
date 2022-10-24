@@ -25,40 +25,7 @@ public class RunCmd : ICmd
   {
     var files = new List<string>();
 
-    //string src_dir = "";
-    //string res_file = "";
-    //string tmp_dir = "";
-    //bool use_cache = true;
-    //string err_file = "";
-    //string postproc_dll_path = "";
-    //string userbindings_dll_path = "";
-    //int max_threads = 1;
-    //bool check_deps = true;
-    //bool deterministic = false;
-
     var p = new OptionSet() {
-    //  { "dir=", "source dir",
-    //    v => src_dir = v },
-    //  { "files=", "source files list",
-    //    v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
-    //  { "result=", "result file",
-    //    v => res_file = v },
-    //  { "tmp-dir=", "tmp dir",
-    //    v => tmp_dir = v },
-    //  { "C", "don't use cache",
-    //    v => use_cache = v == null },
-    //  { "N", "don't check import deps",
-    //    v => check_deps = v == null },
-    //  { "postproc-dll=", "posprocess dll path",
-    //    v => postproc_dll_path = v },
-    //  { "bindings-dll=", "bindings dll path",
-    //    v => userbindings_dll_path = v },
-    //  { "error=", "error file",
-    //    v => err_file = v },
-    //  { "deterministic=", "deterministic build",
-    //    v => deterministic = v != null },
-    //  { "threads=", "number of threads",
-    //      v => max_threads = int.Parse(v) },
      };
 
     var extra = new List<string>();
@@ -72,40 +39,9 @@ public class RunCmd : ICmd
     }
     files.AddRange(extra);
 
-    //if(!Directory.Exists(src_dir))
-    //  Usage("Root source directory is not valid");
-    //src_dir = Path.GetFullPath(src_dir);
-
-    //if(res_file == "")
-    //  Usage("Result file path not set");
-
-    //if(tmp_dir == "")
-    //  Usage("Tmp dir not set");
-
-    //if(err_file == "")
-    //  Usage("Err file not set");
-    //if(File.Exists(err_file))
-    //  File.Delete(err_file);
-
     IUserBindings userbindings = new EmptyUserBindings();
-    //if(userbindings_dll_path != "")
-    //{
-    //  var userbindings_assembly = System.Reflection.Assembly.LoadFrom(userbindings_dll_path);
-    //  var userbindings_class = userbindings_assembly.GetTypes()[0];
-    //  userbindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-    //  if(userbindings == null)
-    //    Usage("User bindings are invalid");
-    //}
 
     IFrontPostProcessor postproc = new EmptyPostProcessor();
-    //if(postproc_dll_path != "")
-    //{
-    //  var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
-    //  var postproc_class = postproc_assembly.GetTypes()[0];
-    //  postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
-    //  if(postproc == null)
-    //    Usage("User postprocessor is invalid");
-    //}
 
     for(int i=files.Count;i-- > 0;)
     {
@@ -125,9 +61,8 @@ public class RunCmd : ICmd
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.use_cache = false;
     conf.self_file = GetSelfFile();
-    conf.check_deps = true;
     conf.files = files;
-    conf.inc_dir = src_dir;
+    conf.inc_path.Add(src_dir);
     conf.max_threads = 1;
     conf.res_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
     conf.tmp_dir = Path.GetTempPath();

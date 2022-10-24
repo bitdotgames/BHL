@@ -29,7 +29,6 @@ public class CompileCmd : ICmd
     string postproc_dll_path = "";
     string userbindings_dll_path = "";
     int max_threads = 1;
-    bool check_deps = true;
     bool deterministic = false;
     bool debug = false;
     ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
@@ -45,15 +44,13 @@ public class CompileCmd : ICmd
         v => tmp_dir = v },
       { "C", "don't use cache",
         v => use_cache = v == null },
-      { "N", "don't check import deps",
-        v => check_deps = v == null },
       { "postproc-dll=", "posprocess dll path",
         v => postproc_dll_path = v },
       { "bindings-dll=", "bindings dll path",
         v => userbindings_dll_path = v },
       { "error=", "error file",
         v => err_file = v },
-      { "deterministic=", "deterministic build",
+      { "deterministic=", "deterministic build (sorts files by name)",
         v => deterministic = v != null },
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
@@ -122,9 +119,8 @@ public class CompileCmd : ICmd
     conf.module_fmt = module_fmt;
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
-    conf.check_deps = check_deps;
     conf.files = files;
-    conf.inc_dir = src_dir;
+    conf.inc_path.Add(src_dir);
     conf.max_threads = max_threads;
     conf.res_file = res_file;
     conf.tmp_dir = tmp_dir;
