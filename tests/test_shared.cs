@@ -854,11 +854,11 @@ public class BHL_TestBase
     var mdl = new bhl.Module(ts, "", "");
 
     var proc = ANTLR_Processor.MakeProcessor(mdl, new FileImports(), bhl.ToStream(), ts);
-    var res = proc.Process();
+    ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
     if(show_ast)
-      AST_Dumper.Dump(res.ast);
-    var c  = new ModuleCompiler(res);
+      AST_Dumper.Dump(proc.result.ast);
+    var c  = new ModuleCompiler(proc.result);
     var cm = c.Compile();
     if(show_bytes)
       Dump(c);

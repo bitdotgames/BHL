@@ -401,18 +401,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     result = new Result(module, root_ast);
   }
 
-  //NOTE: Convenience method which includes all phases,
-  //      used in tests.
-  public Result Process()
+  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
-    var ps = new List<ANTLR_Processor>() { this };
-    ProcessAll(ps);
-    return result;
-  }
+    foreach(var kv in file2proc)
+      kv.Value.Phase_Outline();
 
-  static public void ProcessAll(List<ANTLR_Processor> procs)
-  {
-    throw new NotImplementedException();
+    foreach(var kv in file2proc)
+      kv.Value.Phase_LinkImports(file2proc, inc_path);
+
+    foreach(var kv in file2proc)
+      kv.Value.Phase_ParseTypes1();
+
+    foreach(var kv in file2proc)
+      kv.Value.Phase_ParseTypes2();
+
+    foreach(var kv in file2proc)
+      kv.Value.Phase_ParseFuncBodies();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

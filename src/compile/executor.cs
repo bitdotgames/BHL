@@ -78,24 +78,6 @@ public class CompilationExecutor
     return err;
   }
 
-  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
-  {
-    foreach(var kv in file2proc)
-      kv.Value.Phase_Outline();
-
-    foreach(var kv in file2proc)
-      kv.Value.Phase_LinkImports(file2proc, inc_path);
-
-    foreach(var kv in file2proc)
-      kv.Value.Phase_ParseTypes1();
-
-    foreach(var kv in file2proc)
-      kv.Value.Phase_ParseTypes2();
-
-    foreach(var kv in file2proc)
-      kv.Value.Phase_ParseFuncBodies();
-  }
-
   ICompileError DoExec(CompileConf conf)
   {
     if(!string.IsNullOrEmpty(conf.err_file))
@@ -141,7 +123,8 @@ public class CompilationExecutor
     }
 
     //3. process parse result
-    ProcessAll(file2proc, conf.inc_path);
+    //TODO: it's not multithreaded now
+    ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
     
     //4. compile to bytecode 
     var compiler_workers = StartAndWaitCompileWorkers(
