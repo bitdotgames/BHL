@@ -69,6 +69,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public FileImports imports; 
 
+  Dictionary<bhlParser.MimportContext, string> parsed_imports = new Dictionary<bhlParser.MimportContext, string>();
+
   //NOTE: module.ns linked with types.ns
   Namespace ns;
 
@@ -315,6 +317,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
+    //let's check imports first
+    foreach(var kv in parsed_imports)
+    {
+      if(!imports.IsValid(kv.Value))
+        FireError(kv.Key, "invalid import");
+    }
+
     var ast_import = new AST_Import();
 
     foreach(var import_path in imports.file_paths)
@@ -429,9 +438,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitProgblock(bhlParser.ProgblockContext ctx)
   { 
+    var imps = ctx.imports();
+    if(imps != null)
+    {
+      for(int i=0;i<imps.mimport().Length;++i)
+        ParseImport(imps.mimport()[i]);
+    }
+
     Visit(ctx.decls()); 
 
     return null;
+  }
+
+  void ParseImport(bhlParser.MimportContext ctx)
+  {
+    var name = ctx.NORMALSTRING().GetText();
+    //removing quotes
+    name = name.Substring(1, name.Length-2);
+
+    parsed_imports.Add(ctx, name);
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)

@@ -159,6 +159,14 @@ public class FileImports : marshall.IMarshallable
     file_paths.Add(file_path);
   }
 
+  public bool IsValid(string import_path)
+  {
+    int idx = import_paths.IndexOf(import_path);
+    if(idx == -1)
+      return false;
+    return File.Exists(file_paths[idx]);
+  }
+
   public void Reset() 
   {
     import_paths.Clear();
