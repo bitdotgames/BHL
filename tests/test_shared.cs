@@ -853,7 +853,7 @@ public class BHL_TestBase
 
     var mdl = new bhl.Module(ts, "", "");
 
-    var proc = ANTLR_Processor.MakeProcessor(mdl, bhl.ToStream(), ts);
+    var proc = ANTLR_Processor.MakeProcessor(mdl, new FileImports(), bhl.ToStream(), ts);
     var res = proc.Process();
 
     if(show_ast)

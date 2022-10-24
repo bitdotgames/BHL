@@ -220,8 +220,6 @@ public class Module
     }
   }
   public ModulePath path;
-  //TODO: should not be here
-  public List<string> abs_paths_imports = new List<string>(); 
 
   public VarIndex gvars = new VarIndex();
   public int local_gvars_mark = -1;

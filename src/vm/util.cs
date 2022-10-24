@@ -133,6 +133,36 @@ public class IncludePath
   }
 }
 
+public class FileImports : marshall.IMarshallable
+{
+  public List<string> nrm_paths = new List<string>();
+  public List<string> abs_paths = new List<string>();
+
+  public FileImports()
+  {}
+
+  public FileImports(Dictionary<string, string> imps)
+  {
+    foreach(var kv in imps)
+    {
+      nrm_paths.Add(kv.Key);
+      abs_paths.Add(kv.Value);
+    }
+  }
+
+  public void Reset() 
+  {
+    nrm_paths.Clear();
+    abs_paths.Clear();
+  }
+
+  public void Sync(marshall.SyncContext ctx) 
+  {
+    marshall.Marshall.Sync(ctx, nrm_paths);
+    marshall.Marshall.Sync(ctx, abs_paths);
+  }
+}
+
 public static class Hash
 {
   static public uint CRC32(string id)

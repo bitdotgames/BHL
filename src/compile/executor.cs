@@ -32,36 +32,6 @@ public class CompilationExecutor
   const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
 
-  public class FileImports : IMarshallable
-  {
-    public List<string> rel_paths = new List<string>();
-    public List<string> abs_paths = new List<string>();
-
-    public FileImports()
-    {}
-
-    public FileImports(Dictionary<string, string> imps)
-    {
-      foreach(var kv in imps)
-      {
-        rel_paths.Add(kv.Key);
-        abs_paths.Add(kv.Value);
-      }
-    }
-
-    public void Reset() 
-    {
-      rel_paths.Clear();
-      abs_paths.Clear();
-    }
-
-    public void Sync(SyncContext ctx) 
-    {
-      Marshall.Sync(ctx, rel_paths);
-      Marshall.Sync(ctx, abs_paths);
-    }
-  }
-
   public struct InterimResult
   {
     public bool use_file_cache;
@@ -238,9 +208,7 @@ public class CompilationExecutor
     foreach(var kv in file2interim)
     {
       var file_module = new Module(ts, inc_path.FilePath2ModuleName(kv.Key), kv.Key);
-      file_module.abs_paths_imports = kv.Value.imports.abs_paths;
-
-      var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts);
+      var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.imports, kv.Value.parsed, ts);
 
       antlr_procs.Add(kv.Key, proc);
     }
@@ -437,7 +405,7 @@ public class CompilationExecutor
           var file = w.conf.files[i]; 
           using(var sfs = File.OpenRead(file))
           {
-            var imports = w.ParseImports(file, sfs);
+            var imports = w.GetImports(file, sfs);
             var deps = new List<string>(imports.abs_paths);
             deps.Add(file);
 
@@ -489,7 +457,7 @@ public class CompilationExecutor
         Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
 
-    FileImports ParseImports(string file, FileStream fsf)
+    FileImports GetImports(string file, FileStream fsf)
     {
       var imports = TryReadImportsCache(file);
       if(imports == null)

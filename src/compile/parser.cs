@@ -65,9 +65,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Types types;
 
-  public Module module { get; private set; }
+  public Module module;
 
-  //NOTE: points to module.ns
+  public FileImports imports; 
+
+  //NOTE: module.ns linked with types.ns
   Namespace ns;
 
   ITokenStream tokens;
@@ -175,33 +177,34 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return p;
   }
   
-  public static ANTLR_Processor MakeProcessor(Module module, ANTLR_Parsed parsed/*can be null*/, Types ts)
+  public static ANTLR_Processor MakeProcessor(Module module, FileImports imports, ANTLR_Parsed parsed/*can be null*/, Types ts)
   {
     if(parsed == null)
     {
       using(var sfs = File.OpenRead(module.file_path))
       {
-        return MakeProcessor(module, sfs, ts);
+        return MakeProcessor(module, imports, sfs, ts);
       }
     }
     else 
-      return new ANTLR_Processor(parsed, module, ts);
+      return new ANTLR_Processor(parsed, module, imports, ts);
   }
 
-  public static ANTLR_Processor MakeProcessor(Module module, Stream src, Types ts)
+  public static ANTLR_Processor MakeProcessor(Module module, FileImports imports, Stream src, Types ts)
   {
     var p = Stream2Parser(module.file_path, src);
     var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
-    return new ANTLR_Processor(parsed, module, ts);
+    return new ANTLR_Processor(parsed, module, imports, ts);
   }
 
-  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, Types types)
+  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, FileImports imports, Types types)
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
 
     this.types = types;
     this.module = module;
+    this.imports = imports;
 
     ns = module.ns;
     ns.Link(types.ns);
@@ -314,7 +317,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast_import = new AST_Import();
 
-    foreach(var import_path in module.abs_paths_imports)
+    foreach(var import_path in imports.abs_paths)
     {
       var imported_module = file2proc[import_path].module;
 
