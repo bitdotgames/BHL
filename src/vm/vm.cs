@@ -205,8 +205,9 @@ public class ModulePath
   }
 }
 
-//TODO: there's CompiledModule as well and 
-//      probably this one must be renamed
+//TODO: there's CompiledModule as well and probably this 
+//      one must be renamed or unified with CompiledModule
+//NOTE: represents a module which can be registered in VM
 public class Module
 {
   public string name {

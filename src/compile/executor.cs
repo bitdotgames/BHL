@@ -94,10 +94,14 @@ public class CompilationExecutor
     {
       pw.Join();
 
-      Add_ANTLR_Procs(file2proc, ts, pw.file2interim, conf.inc_path);
-
       foreach(var kv in pw.file2interim)
+      {
+        var file_module = new Module(ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
+        var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.imports, kv.Value.parsed, ts);
+
+        file2proc.Add(kv.Key, proc);
         file2interim.Add(kv.Key, kv.Value);
+      }
     }
 
     //3. process parse result
@@ -157,22 +161,6 @@ public class CompilationExecutor
     }
 
     return parse_workers;
-  }
-
-  static void Add_ANTLR_Procs(
-      Dictionary<string, ANTLR_Processor> file2proc, 
-      Types ts, 
-      Dictionary<string, InterimResult> file2interim, 
-      IncludePath inc_path
-    )
-  {
-    foreach(var kv in file2interim)
-    {
-      var file_module = new Module(ts, inc_path.FilePath2ModuleName(kv.Key), kv.Key);
-      var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.imports, kv.Value.parsed, ts);
-
-      file2proc.Add(kv.Key, proc);
-    }
   }
 
   static List<CompilerWorker> StartAndWaitCompileWorkers(
