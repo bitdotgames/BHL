@@ -40,29 +40,6 @@ public class CompilationExecutor
     public ANTLR_Parsed parsed;
   }
 
-  public class ParsedCache
-  {
-    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-
-    public void AddInterimResults(Dictionary<string, InterimResult> file2interim)
-    {
-      foreach(var kv in file2interim)
-        this.file2interim.Add(kv.Key, kv.Value);
-    }
-
-    public bool TryFetch(string file, out ANTLR_Parsed parsed)
-    {
-      parsed = null;
-      InterimResult interim;
-      if(file2interim.TryGetValue(file, out interim) && !interim.use_file_cache && interim.parsed != null)
-      {
-        parsed = interim.parsed;
-        return true;
-      }
-      return false;
-    }
-  }
-
   public ICompileError Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
@@ -110,20 +87,21 @@ public class CompilationExecutor
     //1. start parse workers
     var parse_workers = StartParseWorkers(conf);
 
-    var parsed_cache = new ParsedCache();
-
+    var file2interim = new Dictionary<string, InterimResult>();
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
-
     //2. wait for the completion of parse workers
     foreach(var pw in parse_workers)
     {
       pw.Join();
-      parsed_cache.AddInterimResults(pw.file2interim);
+
       Add_ANTLR_Procs(file2proc, ts, pw.file2interim, conf.inc_path);
+
+      foreach(var kv in pw.file2interim)
+        file2interim.Add(kv.Key, kv.Value);
     }
 
     //3. process parse result
-    //TODO: it's not multithreaded now
+    //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
     
     //4. compile to bytecode 
@@ -131,7 +109,7 @@ public class CompilationExecutor
       conf, 
       ts, 
       parse_workers, 
-      parsed_cache.file2interim,
+      file2interim,
       file2proc
     );
 
@@ -182,7 +160,7 @@ public class CompilationExecutor
   }
 
   static void Add_ANTLR_Procs(
-      Dictionary<string, ANTLR_Processor> antlr_procs, 
+      Dictionary<string, ANTLR_Processor> file2proc, 
       Types ts, 
       Dictionary<string, InterimResult> file2interim, 
       IncludePath inc_path
@@ -193,7 +171,7 @@ public class CompilationExecutor
       var file_module = new Module(ts, inc_path.FilePath2ModuleName(kv.Key), kv.Key);
       var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.imports, kv.Value.parsed, ts);
 
-      antlr_procs.Add(kv.Key, proc);
+      file2proc.Add(kv.Key, proc);
     }
   }
 
@@ -354,6 +332,8 @@ public class CompilationExecutor
     public IncludePath inc_path = new IncludePath();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public ICompileError error = null;
+    public int cache_hit;
+    public int cache_miss;
 
     public void Start()
     {
@@ -377,9 +357,6 @@ public class CompilationExecutor
       string self_bin_file = w.conf.self_file;
 
       int i = w.start;
-
-      int cache_hit = 0;
-      int cache_miss = 0;
 
       try
       {
@@ -409,14 +386,14 @@ public class CompilationExecutor
 
               interim.parsed = parsed;
 
-              ++cache_miss;
+              ++w.cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
             else
             {
               interim.use_file_cache = true;
 
-              ++cache_hit;
+              ++w.cache_hit;
             }
 
             w.file2interim[file] = interim;
@@ -437,7 +414,7 @@ public class CompilationExecutor
 
       sw.Stop();
       if(w.verbose)
-        Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+        Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss);
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -528,6 +505,8 @@ public class CompilationExecutor
     public Dictionary<string, ModulePath> file2modpath = new Dictionary<string, ModulePath>();
     public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
+    public int cache_hit;
+    public int cache_miss;
 
     public void Start()
     {
@@ -547,9 +526,6 @@ public class CompilationExecutor
       sw.Start();
 
       var w = (CompilerWorker)data;
-
-      int cache_hit = 0;
-      int cache_miss = 0;
 
       string current_file = "";
 
@@ -574,7 +550,7 @@ public class CompilationExecutor
               var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
               w.file2ns.Add(current_file, cm.ns);
 
-              ++cache_hit;
+              ++w.cache_hit;
               file_cache_ok = true;
             }
             catch(Exception)
@@ -583,7 +559,7 @@ public class CompilationExecutor
 
           if(!file_cache_ok)
           {
-            ++cache_miss;
+            ++w.cache_miss;
 
             var proc_result = w.postproc.Patch(proc.result, current_file);
 
@@ -611,7 +587,7 @@ public class CompilationExecutor
 
       sw.Stop();
       if(w.conf.verbose)
-        Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
+        Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss);
     }
   }
 

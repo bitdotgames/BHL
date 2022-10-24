@@ -811,7 +811,7 @@ public class BHL_TestBase
     }
   }
 
-  public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
+  static public CompileConf MakeCompileConf(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
   {
     if(ts == null)
       ts = new Types();
@@ -830,7 +830,11 @@ public class BHL_TestBase
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = use_cache;
 
-    var cmp = new CompilationExecutor();
+    return conf;
+  }
+
+  static public Stream CompileFiles(CompilationExecutor cmp, CompileConf conf)
+  {
     var err = cmp.Exec(conf);
     if(err != null)
     {
@@ -841,6 +845,13 @@ public class BHL_TestBase
     }
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
+  }
+
+  static public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
+  {
+    var conf = MakeCompileConf(files, ts, use_cache, max_threads);
+    var cmp = new CompilationExecutor();
+    return CompileFiles(cmp, conf);
   }
 
   public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
