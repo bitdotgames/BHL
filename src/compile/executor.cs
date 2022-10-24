@@ -402,7 +402,7 @@ public class CompilationExecutor
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            //if(!w.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
+            if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
               var proc = ANTLR_Processor.Stream2Parser(file, sfs);
               var parsed = new ANTLR_Parsed(proc.TokenStream, proc.program());
@@ -412,12 +412,12 @@ public class CompilationExecutor
               ++cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
-            //else
-            //{
-            //  interim.use_file_cache = true;
+            else
+            {
+              interim.use_file_cache = true;
 
-            //  ++cache_hit;
-            //}
+              ++cache_hit;
+            }
 
             w.file2interim[file] = interim;
           }
@@ -551,7 +551,6 @@ public class CompilationExecutor
       int cache_hit = 0;
       int cache_miss = 0;
 
-      var files = new List<string>();
       string current_file = "";
 
       try
@@ -561,46 +560,41 @@ public class CompilationExecutor
         {
           current_file = w.conf.files[i]; 
 
-          bool file_cache_ok = false;
-
           var interim = w.file2interim[current_file];
           var proc = w.file2proc[current_file];
 
           w.file2compiled.Add(current_file, interim.compiled_file);
           w.file2modpath.Add(current_file, proc.module.path);
 
-          //NOTE: commented for now
-          //if(interim.use_file_cache)
-          //{
-          //  try
-          //  {
-          //    var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
-          //    //TODO: add to coordinator???
-          //    w.file2ns.Add(current_file, cm.ns);
+          bool file_cache_ok = false;
+          if(interim.use_file_cache)
+          {
+            try
+            {
+              var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
+              w.file2ns.Add(current_file, cm.ns);
 
-          //    ++cache_hit;
-          //    file_cache_ok = true;
-          //  }
-          //  catch(Exception)
-          //  {}
-          //}
+              ++cache_hit;
+              file_cache_ok = true;
+            }
+            catch(Exception)
+            {}
+          }
 
           if(!file_cache_ok)
           {
             ++cache_miss;
 
-            files.Add(current_file);
+            var proc_result = w.postproc.Patch(proc.result, current_file);
+
+            var c  = new ModuleCompiler(proc_result);
+            var cm = c.Compile();
+
+            var compiled_file = w.file2compiled[current_file];
+            CompiledModule.ToFile(cm, compiled_file);
+
+            w.file2ns.Add(current_file, proc_result.module.ns);
           }
-
-          var proc_result = w.postproc.Patch(proc.result, current_file);
-
-          var c  = new ModuleCompiler(proc_result);
-          var cm = c.Compile();
-
-          var compiled_file = w.file2compiled[current_file];
-          CompiledModule.ToFile(cm, compiled_file);
-
-          w.file2ns.Add(current_file, proc_result.module.ns);
         }
       }
       catch(Exception e)

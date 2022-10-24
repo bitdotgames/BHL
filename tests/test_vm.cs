@@ -18300,6 +18300,26 @@ public class TestVM : BHL_TestBase
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
+
+    string new_file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 32}
+      return u
+    }
+    ";
+    files.RemoveAt(1);
+    NewTestFile("get.bhl", new_file_get, ref files);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true, max_threads: 3));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+    }
   }
 
   [IsTested()]
