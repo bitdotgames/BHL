@@ -58,12 +58,10 @@ public class BHL_TestRunner
     }
     catch(Exception e)
     {
-      if(verbose)
-      {
-        Console.Error.WriteLine(e.ToString());
-        Console.Error.WriteLine("=========================");
-        Console.Error.WriteLine(e.GetFullMessage());
-      }
+      //TODO: ICompileError can't be handled here, it's hidden by reflection exception
+      Console.Error.WriteLine(e.ToString());
+      Console.Error.WriteLine("=========================");
+      Console.Error.WriteLine(e.GetFullMessage());
       System.Environment.Exit(1);
     }
   }
