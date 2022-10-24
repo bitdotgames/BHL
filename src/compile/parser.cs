@@ -310,34 +310,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  public class Coordinator
-  {
-    public List<string> include_path = new List<string>();
-
-    public void AddToIncludePath(string path)
-    {
-      include_path.Add(Util.NormalizeFilePath(path));
-    }
-
-    public List<string> GetIncludePath()
-    {
-      return include_path;
-    }
-
-    //void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
-    //{
-    //  file_path = "";
-    //  norm_path = "";
-
-    //  if(path.Length == 0)
-    //    throw new Exception("Bad path");
-
-    //  file_path = Util.ResolveImportPath(include_path, self_path, path);
-    //  norm_path = Util.FilePath2ModuleName(include_path, file_path);
-    //}
-  }
-
-  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, Coordinator coordinator)
+  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
     var ast_import = new AST_Import();
 
@@ -354,7 +327,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ns.Link(imported_module.ns);
 
-      ast_import.module_names.Add(Util.FilePath2ModuleName(coordinator.include_path, import_path));
+      ast_import.module_names.Add(inc_path.FilePath2ModuleName(import_path));
     }
     
     root_ast.AddChild(ast_import);

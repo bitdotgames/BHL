@@ -43,8 +43,35 @@ static public class Util
   {
     return Path.GetFullPath(file_path).Replace("\\", "/");
   }
+}
 
-  static public string ResolveImportPath(List<string> inc_paths, string self_path, string path)
+public class IncludePath
+{
+  List<string> items = new List<string>();
+
+  public void Add(string path)
+  {
+    items.Add(Util.NormalizeFilePath(path));
+  }
+
+  public int Count {
+    get {
+      return items.Count;
+    }
+  }
+
+  public string this[int i]
+  {
+    get {
+      return items[i];
+    }
+
+    set {
+      items[i] = value;
+    }
+  }
+
+  public string ResolveImportPath(string self_path, string path)
   {
     //relative import
     if(!Path.IsPathRooted(path))
@@ -54,17 +81,17 @@ static public class Util
     }
     //absolute import
     else
-      return TryIncludePaths(inc_paths, path);
+      return TryIncludePaths(path);
   }
 
-  public static string FilePath2ModuleName(List<string> include_path, string full_path)
+  public string FilePath2ModuleName(string full_path)
   {
-    full_path = NormalizeFilePath(full_path);
+    full_path = Util.NormalizeFilePath(full_path);
 
     string norm_path = "";
-    for(int i=0;i<include_path.Count;++i)
+    for(int i=0;i<this.Count;++i)
     {
-      var inc_path = include_path[i];
+      var inc_path = this[i];
       if(full_path.IndexOf(inc_path) == 0)
       {
         norm_path = full_path.Replace(inc_path, "");
@@ -82,11 +109,23 @@ static public class Util
     return norm_path;
   }
 
-  static string TryIncludePaths(List<string> inc_paths, string path)
+  public void ResolvePath(string self_path, string path, out string file_path, out string norm_path)
   {
-    for(int i=0;i<inc_paths.Count;++i)
+    file_path = "";
+    norm_path = "";
+
+    if(path.Length == 0)
+      throw new Exception("Bad path");
+
+    file_path = ResolveImportPath(self_path, path);
+    norm_path = FilePath2ModuleName(file_path);
+  }
+
+  public string TryIncludePaths(string path)
+  {
+    for(int i=0;i<this.Count;++i)
     {
-      var file_path = Path.GetFullPath(inc_paths[i] + "/" + path  + ".bhl");
+      var file_path = Path.GetFullPath(this[i] + "/" + path  + ".bhl");
       if(File.Exists(file_path))
         return file_path;
     }

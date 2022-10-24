@@ -14,7 +14,7 @@ public class CompileConf
   public List<string> files = new List<string>();
   public Types ts;
   public string self_file = "";
-  public string inc_dir = "";
+  public IncludePath inc_path = new IncludePath();
   public string res_file = "";
   public string tmp_dir = "";
   public bool use_cache = true;
@@ -108,13 +108,13 @@ public class CompilationExecutor
     return err;
   }
 
-  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, ANTLR_Processor.Coordinator coordinator)
+  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_LinkImports(file2proc, coordinator);
+      kv.Value.Phase_LinkImports(file2proc, inc_path);
 
     foreach(var kv in file2proc)
       kv.Value.Phase_ParseTypes1();
@@ -159,9 +159,6 @@ public class CompilationExecutor
     var parse_workers = StartParseWorkers(conf);
 
     var parsed_cache = new ParsedCache();
-    var coordinator = new ANTLR_Processor.Coordinator();
-    if(!string.IsNullOrEmpty(conf.inc_dir))
-      coordinator.AddToIncludePath(conf.inc_dir);
 
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
 
@@ -170,18 +167,17 @@ public class CompilationExecutor
     {
       pw.Join();
       parsed_cache.AddInterimResults(pw.file2interim);
-      Add_ANTLR_Procs(file2proc, ts, pw.file2interim, coordinator);
+      Add_ANTLR_Procs(file2proc, ts, pw.file2interim, conf.inc_path);
     }
 
     //3. process parse result
-    ProcessAll(file2proc, coordinator);
+    ProcessAll(file2proc, conf.inc_path);
     
     //4. compile to bytecode 
     var compiler_workers = StartAndWaitCompileWorkers(
       conf, 
       ts, 
       parse_workers, 
-      coordinator, 
       parsed_cache.file2interim,
       file2proc
     );
@@ -217,15 +213,11 @@ public class CompilationExecutor
       ++wid;
 
       var pw = new ParseWorker();
+      pw.conf = conf;
       pw.id = wid;
-      pw.self_file = conf.self_file;
-      pw.start = idx;
-      pw.inc_path.Add(conf.inc_dir);
-      pw.count = count;
-      pw.use_cache = conf.use_cache;
-      pw.cache_dir = conf.tmp_dir;
-      pw.files = conf.files;
       pw.verbose = conf.verbose;
+      pw.start = idx;
+      pw.count = count;
 
       parse_workers.Add(pw);
       pw.Start();
@@ -240,12 +232,12 @@ public class CompilationExecutor
       Dictionary<string, ANTLR_Processor> antlr_procs, 
       Types ts, 
       Dictionary<string, InterimResult> file2interim, 
-      ANTLR_Processor.Coordinator coordinator
+      IncludePath inc_path
     )
   {
     foreach(var kv in file2interim)
     {
-      var file_module = new Module(ts, Util.FilePath2ModuleName(coordinator.include_path, kv.Key), kv.Key);
+      var file_module = new Module(ts, inc_path.FilePath2ModuleName(kv.Key), kv.Key);
       file_module.abs_paths_imports = kv.Value.imports.abs_paths;
 
       var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.parsed, ts);
@@ -258,7 +250,6 @@ public class CompilationExecutor
     CompileConf conf, 
     Types ts, 
     List<ParseWorker> parse_workers, 
-    ANTLR_Processor.Coordinator coordinator, 
     Dictionary<string, InterimResult> file2interim,
     Dictionary<string, ANTLR_Processor> file2proc
     )
@@ -269,15 +260,13 @@ public class CompilationExecutor
     foreach(var pw in parse_workers)
     {
       var cw = new CompilerWorker();
+      cw.conf = pw.conf;
       cw.id = pw.id;
       cw.file2interim = file2interim;
       cw.file2proc = file2proc;
-      cw.cache_dir = pw.cache_dir;
       cw.ts = ts;
-      cw.files = pw.files;
       cw.start = pw.start;
       cw.count = pw.count;
-      cw.verbose = pw.verbose;
       cw.postproc = conf.postproc;
 
       //passing parser error if any
@@ -404,16 +393,14 @@ public class CompilationExecutor
 
   public class ParseWorker
   {
+    public CompileConf conf;
     public int id;
     public Thread th;
     public string self_file;
-    public bool use_cache;
-    public string cache_dir;
     public int start;
     public int count;
     public bool verbose;
-    public List<string> inc_path = new List<string>();
-    public List<string> files;
+    public IncludePath inc_path = new IncludePath();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public ICompileError error = null;
 
@@ -436,7 +423,7 @@ public class CompilationExecutor
 
       var w = (ParseWorker)data;
 
-      string self_bin_file = w.self_file;
+      string self_bin_file = w.conf.self_file;
 
       int i = w.start;
 
@@ -447,7 +434,7 @@ public class CompilationExecutor
       {
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
-          var file = w.files[i]; 
+          var file = w.conf.files[i]; 
           using(var sfs = File.OpenRead(file))
           {
             var imports = w.ParseImports(file, sfs);
@@ -458,7 +445,7 @@ public class CompilationExecutor
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var compiled_file = GetCompiledCacheFile(w.cache_dir, file);
+            var compiled_file = GetCompiledCacheFile(w.conf.tmp_dir, file);
 
             var interim = new InterimResult();
             interim.imports = imports;
@@ -493,7 +480,7 @@ public class CompilationExecutor
         {
           //let's log unexpected exceptions immediately
           Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(w.files[i], e);
+          w.error = new BuildError(w.conf.files[i], e);
         }
       }
 
@@ -515,7 +502,7 @@ public class CompilationExecutor
 
     FileImports TryReadImportsCache(string file)
     {
-      var cache_imports_file = GetImportsCacheFile(cache_dir, file);
+      var cache_imports_file = GetImportsCacheFile(conf.tmp_dir, file);
 
       if(BuildUtil.NeedToRegen(cache_imports_file, file))
         return null;
@@ -533,11 +520,11 @@ public class CompilationExecutor
     void WriteImportsCache(string file, FileImports imports)
     {
       //Console.WriteLine("IMPORTS MISS " + file);
-      var cache_imports_file = GetImportsCacheFile(cache_dir, file);
+      var cache_imports_file = GetImportsCacheFile(conf.tmp_dir, file);
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
-    static Dictionary<string, string> ParseImports(List<string> inc_paths, string file, FileStream fs)
+    static Dictionary<string, string> ParseImports(IncludePath inc_path, string file, FileStream fs)
     {
       var imps = new Dictionary<string, string>();
 
@@ -559,7 +546,7 @@ public class CompilationExecutor
             if(q2_idx != -1)
             {
               string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
-              string import = Util.ResolveImportPath(inc_paths, file, rel_import);
+              string import = inc_path.ResolveImportPath(file, rel_import);
               imps[rel_import] = import;
             }
             import_idx = line.IndexOf("import", q2_idx + 1);
@@ -577,14 +564,12 @@ public class CompilationExecutor
 
   public class CompilerWorker
   {
+    public CompileConf conf;
     public int id;
     public Thread th;
-    public string cache_dir;
-    public List<string> files;
     public Types ts;
     public int start;
     public int count;
-    public bool verbose;
     public IFrontPostProcessor postproc;
     public ICompileError error = null;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
@@ -623,7 +608,7 @@ public class CompilationExecutor
         int i = w.start;
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
-          current_file = w.files[i]; 
+          current_file = w.conf.files[i]; 
 
           bool file_cache_ok = false;
 
@@ -680,7 +665,7 @@ public class CompilationExecutor
       }
 
       sw.Stop();
-      if(w.verbose)
+      if(w.conf.verbose)
         Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), cache_hit, cache_miss);
     }
   }

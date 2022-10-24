@@ -825,7 +825,7 @@ public class BHL_TestBase
     conf.ts = ts;
     conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
-    conf.inc_dir = TestDirPath();
+    conf.inc_path.Add(TestDirPath());
     conf.tmp_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = use_cache;
