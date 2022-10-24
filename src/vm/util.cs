@@ -135,8 +135,8 @@ public class IncludePath
 
 public class FileImports : marshall.IMarshallable
 {
-  public List<string> nrm_paths = new List<string>();
-  public List<string> abs_paths = new List<string>();
+  public List<string> import_paths = new List<string>();
+  public List<string> file_paths = new List<string>();
 
   public FileImports()
   {}
@@ -145,21 +145,30 @@ public class FileImports : marshall.IMarshallable
   {
     foreach(var kv in imps)
     {
-      nrm_paths.Add(kv.Key);
-      abs_paths.Add(kv.Value);
+      import_paths.Add(kv.Key);
+      file_paths.Add(kv.Value);
     }
+  }
+
+  //TODO: handle duplicate file_paths?
+  public void Add(string import_path, string file_path)
+  {
+    if(import_paths.Contains(import_path))
+      return;
+    import_paths.Add(import_path);
+    file_paths.Add(file_path);
   }
 
   public void Reset() 
   {
-    nrm_paths.Clear();
-    abs_paths.Clear();
+    import_paths.Clear();
+    file_paths.Clear();
   }
 
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.Sync(ctx, nrm_paths);
-    marshall.Marshall.Sync(ctx, abs_paths);
+    marshall.Marshall.Sync(ctx, import_paths);
+    marshall.Marshall.Sync(ctx, file_paths);
   }
 }
 

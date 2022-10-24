@@ -317,7 +317,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast_import = new AST_Import();
 
-    foreach(var import_path in imports.abs_paths)
+    foreach(var import_path in imports.file_paths)
     {
       var imported_module = file2proc[import_path].module;
 

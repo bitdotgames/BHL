@@ -389,7 +389,7 @@ public class CompilationExecutor
           using(var sfs = File.OpenRead(file))
           {
             var imports = w.GetImports(file, sfs);
-            var deps = new List<string>(imports.abs_paths);
+            var deps = new List<string>(imports.file_paths);
             deps.Add(file);
 
             //NOTE: adding self binary as a dep
@@ -445,7 +445,7 @@ public class CompilationExecutor
       var imports = TryReadImportsCache(file);
       if(imports == null)
       {
-        imports = new FileImports(ParseImports(inc_path, file, fsf));
+        imports = ParseImports(inc_path, file, fsf);
         WriteImportsCache(file, imports);
       }
       return imports;
@@ -475,9 +475,9 @@ public class CompilationExecutor
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
-    static Dictionary<string, string> ParseImports(IncludePath inc_path, string file, FileStream fs)
+    static FileImports ParseImports(IncludePath inc_path, string file, FileStream fs)
     {
-      var imps = new Dictionary<string, string>();
+      var imps = new FileImports();
 
       var r = new StreamReader(fs);
 
@@ -497,8 +497,8 @@ public class CompilationExecutor
             if(q2_idx != -1)
             {
               string rel_import = line.Substring(q1_idx + 1, q2_idx - q1_idx - 1);
-              string import = inc_path.ResolveImportPath(file, rel_import);
-              imps[rel_import] = import;
+              string file_path = inc_path.ResolveImportPath(file, rel_import);
+              imps.Add(rel_import, file_path);
             }
             import_idx = line.IndexOf("import", q2_idx + 1);
           }
