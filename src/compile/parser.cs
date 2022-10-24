@@ -351,6 +351,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     root_ast.AddChild(ast_import);
   }
 
+  internal void Phase_ParseTypes()
+  {
+    Phase_ParseTypes1();
+    Phase_ParseTypes2();
+  }
+
   internal void Phase_ParseTypes1()
   {
     for(int p=0;p<passes.Count;++p)
