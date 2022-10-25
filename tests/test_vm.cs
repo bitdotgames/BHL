@@ -5565,6 +5565,32 @@ public class TestVM : BHL_TestBase
     );
   }
 
+  //[IsTested()]
+  public void TestForeachBadSyntaxInNamespace()
+  {
+    string bhl = @"
+    namespace foo {
+    int a = 1
+    func test() 
+    {
+      foreach([1,2,3] as int t) {
+      }
+    }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input '1' expecting NAME",
+      new PlaceAssert(bhl, @"
+      foreach([1,2,3] as int t) {
+---------------^"
+      )
+    );
+  }
+
   [IsTested()]
   public void TestBreakInForLoop()
   {
