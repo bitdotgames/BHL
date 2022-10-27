@@ -688,6 +688,14 @@ public class TestImport : BHL_TestBase
     }
     ";
 
+    string file_use =  @"
+    import ""/collections/unit""
+
+    func use_unit() { 
+      Unit u = {test: 42}
+    }
+    ";                 
+
     string file_test = @"
     import ""/try/get""
 
@@ -702,6 +710,7 @@ public class TestImport : BHL_TestBase
     NewTestFile("collections/unit.bhl", file_unit, ref files);
     NewTestFile("try/get.bhl", file_get, ref files);
     NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("use/use.bhl", file_use, ref files);
 
     {
       var ts = new Types();
@@ -737,9 +746,9 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 24);
-      AssertEqual(exec.parse_cache_hits, 2);
+      AssertEqual(exec.parse_cache_hits, 3);
       AssertEqual(exec.parse_cache_miss, 1);
-      AssertEqual(exec.compile_cache_hits, 2);
+      AssertEqual(exec.compile_cache_hits, 3);
       AssertEqual(exec.compile_cache_miss, 1);
     }
   }
