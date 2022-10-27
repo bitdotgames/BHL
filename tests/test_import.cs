@@ -514,7 +514,7 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    files.RemoveAt(0);
+    files.RemoveAt(files.FindIndex(f => f.IndexOf("unit.bhl") != -1));
     NewTestFile("unit.bhl", new_file_unit, ref files);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
@@ -578,7 +578,7 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    files.RemoveAt(0);
+    files.RemoveAt(files.FindIndex(f => f.IndexOf("unit.bhl") != -1));
     NewTestFile("unit.bhl", new_file_unit, ref files);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
@@ -652,7 +652,7 @@ public class TestImport : BHL_TestBase
       return u
     }
     ";
-    files.RemoveAt(1);
+    files.RemoveAt(files.FindIndex(f => f.IndexOf("get.bhl") != -1));
     NewTestFile("get.bhl", new_file_get, ref files);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
@@ -668,6 +668,81 @@ public class TestImport : BHL_TestBase
       AssertEqual(exec.parse_cache_miss, 1+1);
       AssertEqual(exec.compile_cache_hits, 1);
       AssertEqual(exec.compile_cache_miss, 1+1);
+    }
+  }
+
+  [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 23}
+      return u
+    }
+    ";
+
+    string file_test = @"
+    import ""get""
+
+    func int test() {
+      return get().test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+
+    string new_file_test = @"
+    import ""get""
+
+    namespace foo {
+      func int get_add() {
+        return get().test + 1
+      }
+    }
+
+    func int test() {
+      return foo.get_add()
+    }
+    ";
+    files.RemoveAt(files.FindIndex(f => f.IndexOf("test.bhl") != -1));
+    NewTestFile("test.bhl", new_file_test, ref files);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 24);
+      AssertEqual(exec.parse_cache_hits, 2);
+      AssertEqual(exec.parse_cache_miss, 1);
+      AssertEqual(exec.compile_cache_hits, 2);
+      AssertEqual(exec.compile_cache_miss, 1);
     }
   }
 }
