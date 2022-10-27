@@ -514,8 +514,7 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    files.RemoveAt(files.FindIndex(f => f.IndexOf("unit.bhl") != -1));
-    NewTestFile("unit.bhl", new_file_unit, ref files);
+    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {
@@ -578,8 +577,7 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    files.RemoveAt(files.FindIndex(f => f.IndexOf("unit.bhl") != -1));
-    NewTestFile("unit.bhl", new_file_unit, ref files);
+    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {
@@ -652,8 +650,7 @@ public class TestImport : BHL_TestBase
       return u
     }
     ";
-    files.RemoveAt(files.FindIndex(f => f.IndexOf("get.bhl") != -1));
-    NewTestFile("get.bhl", new_file_get, ref files);
+    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {
@@ -681,7 +678,9 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_get = @"
-    import ""unit""
+    import ""/collections/unit""
+
+    Unit global_unit
 
     func Unit get() { 
       Unit u = {test: 23}
@@ -690,7 +689,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_test = @"
-    import ""get""
+    import ""/try/get""
 
     func int test() {
       return get().test
@@ -700,8 +699,8 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile("unit.bhl", file_unit, ref files);
-    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("collections/unit.bhl", file_unit, ref files);
+    NewTestFile("try/get.bhl", file_get, ref files);
     NewTestFile("test.bhl", file_test, ref files);
 
     {
@@ -715,7 +714,7 @@ public class TestImport : BHL_TestBase
     }
 
     string new_file_test = @"
-    import ""get""
+    import ""/try/get""
 
     namespace foo {
       func int get_add() {
@@ -727,8 +726,7 @@ public class TestImport : BHL_TestBase
       return foo.get_add()
     }
     ";
-    files.RemoveAt(files.FindIndex(f => f.IndexOf("test.bhl") != -1));
-    NewTestFile("test.bhl", new_file_test, ref files);
+    NewTestFile("test.bhl", new_file_test, ref files, replace: true);
     System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
 
     {

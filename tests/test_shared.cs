@@ -593,9 +593,11 @@ public class BHL_TestBase
       Directory.Delete(dir, true/*recursive*/);
   }
 
-  public static void NewTestFile(string path, string text, ref List<string> files)
+  public static void NewTestFile(string path, string text, ref List<string> files, bool replace = false)
   {
     string full_path = TestDirPath() + "/" + path;
+    if(replace)
+      files.Remove(full_path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     files.Add(full_path);
