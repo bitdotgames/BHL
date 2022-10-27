@@ -5565,6 +5565,32 @@ public class TestVM : BHL_TestBase
     );
   }
 
+  //[IsTested()]
+  public void TestForeachBadSyntaxInNamespace()
+  {
+    string bhl = @"
+    namespace foo {
+    int a = 1
+    func test() 
+    {
+      foreach([1,2,3] as int t) {
+      }
+    }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input '1' expecting NAME",
+      new PlaceAssert(bhl, @"
+      foreach([1,2,3] as int t) {
+---------------^"
+      )
+    );
+  }
+
   [IsTested()]
   public void TestBreakInForLoop()
   {
@@ -17706,6 +17732,40 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+
+  [IsTested()]
+  public void TestImportAbsolutePath()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""/units/unit""
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("units/unit.bhl", file_unit, ref files);
+    NewTestFile("tests/test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("tests/test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+  }
 
   [IsTested()]
   public void TestStartLambdaInScriptMgr()

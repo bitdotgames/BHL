@@ -59,9 +59,10 @@ public class BHL_TestRunner
     }
     catch(Exception e)
     {
-      Console.WriteLine(e.ToString());
-      Console.WriteLine("=========================");
-      Console.WriteLine(e.GetFullMessage());
+      //TODO: ICompileError can't be handled here, it's hidden by reflection exception
+      Console.Error.WriteLine(e.ToString());
+      Console.Error.WriteLine("=========================");
+      Console.Error.WriteLine(e.GetFullMessage());
       System.Environment.Exit(1);
     }
   }
@@ -830,6 +831,7 @@ public class BHL_TestBase
     conf.tmp_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = use_cache;
+    conf.verbose = true;
 
     return conf;
   }
@@ -839,9 +841,11 @@ public class BHL_TestBase
     var err = exec.Exec(conf);
     if(err != null)
     {
-      //TODO: handle it properly elsewhere
-      Console.WriteLine(err.stack_trace);
-      Console.WriteLine("==========");
+      if(conf.verbose && !string.IsNullOrEmpty(err.stack_trace))
+      {
+        Console.Error.WriteLine(err.stack_trace);
+        Console.Error.WriteLine("==========");
+      }
       throw (Exception)err;
     }
 

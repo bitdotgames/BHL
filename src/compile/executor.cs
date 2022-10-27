@@ -23,7 +23,7 @@ public class CompileConf
   public IUserBindings userbindings = new EmptyUserBindings();
   public int max_threads = 1;
   public bool debug = false;
-  public bool verbose = true;
+  public bool verbose = false;
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
@@ -63,8 +63,8 @@ public class CompilationExecutor
         err = ie;
       else
       {
-        //let's log unexpected exceptions immediately
-        Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+        if(conf.verbose)
+          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
         err = new BuildError("?", e);
       }
     }
@@ -428,8 +428,8 @@ public class CompilationExecutor
           w.error = ie;
         else
         {
-          //let's log unexpected exceptions immediately
-          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          if(w.conf.verbose)
+            Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.error = new BuildError(w.conf.files[i], e);
         }
       }
@@ -601,8 +601,8 @@ public class CompilationExecutor
           w.error = ie;
         else
         {
-          //let's log unexpected exceptions immediately
-          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          if(w.conf.verbose)
+            Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.error = new BuildError(current_file, e);
         }
       }

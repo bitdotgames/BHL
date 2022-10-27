@@ -30,7 +30,7 @@ public class CompileCmd : ICmd
     string userbindings_dll_path = "";
     int max_threads = 1;
     bool deterministic = false;
-    bool debug = false;
+    bool verbose = false;
     ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
     var p = new OptionSet() {
@@ -55,7 +55,7 @@ public class CompileCmd : ICmd
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
       { "d", "debug version",
-        v => debug = v != null },
+        v => verbose = v != null },
       { "module-fmt=", "binary module format",
         v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
      };
@@ -113,7 +113,7 @@ public class CompileCmd : ICmd
     if(deterministic)
       files.Sort();
 
-    Console.WriteLine("BHL total files: {0}(debug: {1}, cache: {2})", files.Count, debug, use_cache);
+    Console.WriteLine("BHL total files: {0}(cache: {1})", files.Count, use_cache);
     var conf = new CompileConf();
     conf.args = string.Join(";", args);
     conf.module_fmt = module_fmt;
@@ -127,8 +127,7 @@ public class CompileCmd : ICmd
     conf.err_file = err_file;
     conf.userbindings = userbindings;
     conf.postproc = postproc;
-    conf.debug = debug;
-    conf.verbose = true;
+    conf.verbose = verbose;
 
     var cmp = new CompilationExecutor();
     var err = cmp.Exec(conf);
