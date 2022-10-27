@@ -38,6 +38,7 @@ public class BHL_TestRunner
 
     Run(names, new TestNodes(), verbose);
     Run(names, new TestVM(), verbose);
+    Run(names, new TestImport(), verbose);
     Run(names, new TestVariadic(), verbose);
     Run(names, new TestClasses(), verbose);
     Run(names, new TestInterfaces(), verbose);
