@@ -1,9 +1,6 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using bhl;
-using bhl.marshall;
 
 public class TestImport : BHL_TestBase
 {
@@ -523,6 +520,46 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+    }
+  }
+
+  [IsTested()]
+  public void TestSearchIncludePath()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""/unit"";  
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit/unit.bhl", file_unit, ref files);
+    NewTestFile("test/test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      conf.inc_path.Clear();
+      conf.inc_path.Add(TestDirPath() + "/test");
+      conf.inc_path.Add(TestDirPath() + "/unit");
+
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
   }
 
