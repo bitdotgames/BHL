@@ -2258,7 +2258,7 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsEnumerator
   }
 }
 
-public class TypeSet<T> : marshall.IMarshallable where T : IType
+public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
   List<Proxy<T>> list = new List<Proxy<T>>();

@@ -17,7 +17,7 @@ public interface IEphemeral : INamed
 {}
 
 // For lazy evaluation of types and forward declarations
-public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : INamed
+public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : class, INamed
 {
   public T named;
 
@@ -63,7 +63,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(string.IsNullOrEmpty(_path))
       return default(T);
 
-    named = (T)resolver.ResolveNamedByPath(_path);
+    named = resolver.ResolveNamedByPath(_path) as T;
 
     //TODO: some controversary code below - when resolving a symbol,
     //      forcing its full path to re-write the original path
