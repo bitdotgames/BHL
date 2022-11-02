@@ -113,7 +113,7 @@ public class CompileCmd : ICmd
     if(deterministic)
       files.Sort();
 
-    Console.WriteLine("BHL total files: {0}(cache: {1})", files.Count, use_cache);
+    Console.WriteLine("BHL({2}) files: {0}, cache: {1}", files.Count, use_cache, Version.Name);
     var conf = new CompileConf();
     conf.args = string.Join(";", args);
     conf.module_fmt = module_fmt;

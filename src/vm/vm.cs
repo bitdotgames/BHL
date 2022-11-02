@@ -238,6 +238,10 @@ public class Module
     ns = new Namespace(ts.nfunc_index, "", name, gvars);
   }
 
+  int Hey() {
+    return 1;
+  }
+
   public Module(Types ts, string name, string file_path)
     : this(ts, new ModulePath(name, file_path))
   {}
