@@ -49,11 +49,6 @@ public class IncludePath
 {
   List<string> items = new List<string>();
 
-  public void Add(string path)
-  {
-    items.Add(Util.NormalizeFilePath(path));
-  }
-
   public int Count {
     get {
       return items.Count;
@@ -69,6 +64,16 @@ public class IncludePath
     set {
       items[i] = value;
     }
+  }
+
+  public void Add(string path)
+  {
+    items.Add(Util.NormalizeFilePath(path));
+  }
+
+  public void Clear()
+  {
+    items.Clear();
   }
 
   public string ResolveImportPath(string self_path, string path)
