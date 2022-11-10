@@ -1069,7 +1069,7 @@ public class TestVM : BHL_TestBase
         {
           return 1
         }
-        yield()
+        yield
       }
     }
     ";
@@ -3034,13 +3034,13 @@ public class TestVM : BHL_TestBase
         {
           int i = 1
           i = i + 1
-          yield()
+          yield
           trace((string)i)
         }
         {
           string i
           i = ""foo""
-          yield()
+          yield
           trace((string)i)
         }
       }
@@ -4514,7 +4514,7 @@ public class TestVM : BHL_TestBase
       while(true) {
         int foo = 1
         trace((string)foo + "";"")
-        yield()
+        yield
       }
     }
     ";
@@ -4599,7 +4599,7 @@ public class TestVM : BHL_TestBase
     {
       while(true) {
         hey(foo())
-        yield()
+        yield
       }
     }
     ";
@@ -4873,7 +4873,7 @@ public class TestVM : BHL_TestBase
       paral {
         for(int i = 0; i < 3; i = i + 1) {
           trace((string)i)
-          yield()
+          yield
         }
         suspend()
       }
@@ -5282,7 +5282,7 @@ public class TestVM : BHL_TestBase
       paral {
         foreach(int it in [1,2,3]) {
           trace((string)it)
-          yield()
+          yield
         }
         suspend()
       }
@@ -5313,11 +5313,11 @@ public class TestVM : BHL_TestBase
       paral_all {
         foreach(int it in [1,2,3]) {
           trace((string)it)
-          yield()
+          yield
         }
         foreach(int it2 in [4,5,6]) {
           trace((string)it2)
-          yield()
+          yield
         }
       }
     }
@@ -5800,7 +5800,7 @@ public class TestVM : BHL_TestBase
         if(i == 3) {
           break
         }
-        yield()
+        yield
       }
       return i
     }
@@ -6877,7 +6877,7 @@ public class TestVM : BHL_TestBase
     {
       func(string) ptr = func(string arg) {
         trace(arg)
-        yield()
+        yield
       }
       paral {
         ptr(""FOO"")
@@ -7804,7 +7804,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo() {
       trace(""FOO1"")
-      yield()
+      yield
       trace(""FOO2"")
     }
 
@@ -7835,7 +7835,7 @@ public class TestVM : BHL_TestBase
     string bhl2 = @"
     func foo() {
       trace(""FOO1"")
-      yield()
+      yield
       trace(""FOO2"")
     }
     ";
@@ -10030,7 +10030,7 @@ public class TestVM : BHL_TestBase
     {
       while(true) {
         []string arr = new []string
-        yield()
+        yield
       }
     }
     ";
@@ -10284,7 +10284,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func test()
     {
-      yield()
+      yield
     }
     ";
 
@@ -10302,9 +10302,9 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      yield()
+      yield
       int a = 1
-      yield()
+      yield
       return a
     }
     ";
@@ -10329,10 +10329,10 @@ public class TestVM : BHL_TestBase
     {
       int i = 0
       paral {
-        while(i < 3) { yield() }
+        while(i < 3) { yield }
         while(true) {
           i = i + 1
-          yield()
+          yield
         }
       }
       return i
@@ -10362,7 +10362,7 @@ public class TestVM : BHL_TestBase
           suspend() 
         }
         {
-          yield()
+          yield
           a = 1
         }
       }
@@ -10409,7 +10409,7 @@ public class TestVM : BHL_TestBase
       paral {
         suspend() 
         {
-          yield()
+          yield
           a = 1
         }
         suspend() 
@@ -10459,7 +10459,7 @@ public class TestVM : BHL_TestBase
       paral {
         suspend() 
         paral {
-          yield()
+          yield
           a = 1
         }
         suspend() 
@@ -10512,7 +10512,7 @@ public class TestVM : BHL_TestBase
         suspend() 
         func() {
           paral {
-            yield()
+            yield
             a = 1
           }
         } ()
@@ -10570,7 +10570,7 @@ public class TestVM : BHL_TestBase
     }
 
     func int bar() {
-      yield()
+      yield
       return 1
     }
 
@@ -10607,7 +10607,7 @@ public class TestVM : BHL_TestBase
     }
 
     func int bar() {
-      yield()
+      yield
       return 1
     }
 
@@ -10676,7 +10676,7 @@ public class TestVM : BHL_TestBase
           suspend() 
         }
         {
-          yield()
+          yield
           a = 1
         }
       }
@@ -10701,11 +10701,11 @@ public class TestVM : BHL_TestBase
       int a
       paral_all {
         {
-          yield()
-          yield()
+          yield
+          yield
         }
         {
-          yield()
+          yield
           a = 1
         }
       }
@@ -10775,7 +10775,7 @@ public class TestVM : BHL_TestBase
       int i = 0
       paral_all {
         {
-          yield()
+          yield
           if(i == 1) {
             i = foo(2)
           }
@@ -10784,7 +10784,7 @@ public class TestVM : BHL_TestBase
           if(i == 0) {
             i = foo(1)
           }
-          yield()
+          yield
         }
       }
       return i
@@ -10812,7 +10812,7 @@ public class TestVM : BHL_TestBase
         yield while(i < 3)
         while(true) {
           i = i + 1
-          yield()
+          yield
         }
       }
       return i
@@ -10848,7 +10848,7 @@ public class TestVM : BHL_TestBase
         }
         while(true) {
           i = i + 1
-          yield()
+          yield
         }
       }
       return i
@@ -11048,16 +11048,16 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo()
     {
-      yield()
-      yield()
-      yield()
+      yield
+      yield
+      yield
       trace(""A"")
     }
 
     func bar()
     {
-      yield()
-      yield()
+      yield
+      yield
       fail()
       trace(""B"")
     }
@@ -11093,16 +11093,16 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo()
     {
-      yield()
-      yield()
-      yield()
+      yield
+      yield
+      yield
       trace(""A"")
     }
 
     func bar()
     {
-      yield()
-      yield()
+      yield
+      yield
       fail()
       trace(""B"")
     }
@@ -11284,7 +11284,7 @@ public class TestVM : BHL_TestBase
 
     func int foo()
     {
-      yield()
+      yield
       return 100
     }
 
@@ -11313,7 +11313,7 @@ public class TestVM : BHL_TestBase
 
     func int foo()
     {
-      yield()
+      yield
       return 1
     }
 
@@ -11411,7 +11411,7 @@ public class TestVM : BHL_TestBase
 
     func int sub_sub_call()
     {
-      yield()
+      yield
       return 2
     }
 
@@ -11559,12 +11559,12 @@ public class TestVM : BHL_TestBase
     func int foo(int ticks) 
     {
       if(ticks == 2) {
-        yield()
-        yield()
+        yield
+        yield
         fail()
       } else if(ticks == 3) {
-        yield()
-        yield()
+        yield
+        yield
         fail()
       }
       return 42
@@ -11614,12 +11614,12 @@ public class TestVM : BHL_TestBase
     func int foo(int ticks) 
     {
       if(ticks == 2) {
-        yield()
-        yield()
+        yield
+        yield
         fail()
       } else if(ticks == 3) {
-        yield()
-        yield()
+        yield
+        yield
         fail()
       }
       return 42
@@ -11675,8 +11675,8 @@ public class TestVM : BHL_TestBase
           f = PassthruFoo({hey:10, colors:[{r:
               func int (int n) 
               { 
-                yield()
-                yield()
+                yield
+                yield
                 fail()
                 return n
               }(2) 
@@ -11686,9 +11686,9 @@ public class TestVM : BHL_TestBase
           f = PassthruFoo({hey:20, colors:[{r:
               func int (int n) 
               { 
-                yield()
-                yield()
-                yield()
+                yield
+                yield
+                yield
                 fail()
                 return n
               }(3) 
@@ -11738,7 +11738,7 @@ public class TestVM : BHL_TestBase
     func int ret_int(int val, int ticks)
     {
       while(ticks > 0) {
-        yield()
+        yield
         ticks = ticks - 1
       }
       return val
@@ -11773,12 +11773,12 @@ public class TestVM : BHL_TestBase
     func int foo(int ticks) 
     {
       if(ticks == 2) {
-        yield()
-        yield()
+        yield
+        yield
       } else if(ticks == 3) {
-        yield()
-        yield()
-        yield()
+        yield
+        yield
+        yield
       }
       return ticks
     }
@@ -11830,7 +11830,7 @@ public class TestVM : BHL_TestBase
     {
       while(ticks > 0)
       {
-        yield()
+        yield
         ticks = ticks - 1
       }
       return val
@@ -11876,7 +11876,7 @@ public class TestVM : BHL_TestBase
     {
       while(ticks > 0)
       {
-        yield()
+        yield
         ticks = ticks - 1
       }
       return val
@@ -11922,7 +11922,7 @@ public class TestVM : BHL_TestBase
           foo(1, 
               func int (int val, int ticks) {
                 while(ticks > 0) {
-                  yield()
+                  yield
                   ticks = ticks - 1
                 }
                 return val
@@ -11932,7 +11932,7 @@ public class TestVM : BHL_TestBase
         foo(10, 
             func int (int val, int ticks) {
               while(ticks > 0) {
-                yield()
+                yield
                 ticks = ticks - 1
               }
               return val
@@ -11964,7 +11964,7 @@ public class TestVM : BHL_TestBase
     {
       while(ticks > 0)
       {
-        yield()
+        yield
         ticks = ticks - 1
       }
       return val
@@ -12177,8 +12177,8 @@ public class TestVM : BHL_TestBase
           foo(k)
         }
       }
-      yield()
-      yield()
+      yield
+      yield
       k = 2
 
       return 100
@@ -12237,8 +12237,8 @@ public class TestVM : BHL_TestBase
           doer()
         }
         {
-          yield()
-          yield()
+          yield
+          yield
         }
       }
     }
@@ -12321,7 +12321,7 @@ public class TestVM : BHL_TestBase
           doer(ref a)
         }
         {
-          yield()
+          yield
           return
         }
       }
@@ -12351,7 +12351,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
 
     func changer() {
-      yield()
+      yield
     }
 
     func doer(int i) {
@@ -12737,7 +12737,7 @@ public class TestVM : BHL_TestBase
 
     func test() {
       level_body(func() { 
-        yield() 
+        yield 
       } )
     }
     ";
@@ -13464,7 +13464,7 @@ public class TestVM : BHL_TestBase
         defer {
           trace(""HEY;"")
         }
-        yield()
+        yield
       }
       defer {
         trace(""NEVER;"")
@@ -13483,7 +13483,7 @@ public class TestVM : BHL_TestBase
       AssertTrue(vm.Tick());
     //...will be running forever, well, we assume that :)
 
-    //NOTE: on the first tick we yield() is executed and 
+    //NOTE: on the first tick we yield is executed and 
     //      defer block is not run
     AssertEqual("HEY;HEY;HEY;HEY;", log.ToString());
     vm.Stop(fb);
@@ -13506,7 +13506,7 @@ public class TestVM : BHL_TestBase
         if(i == 2) {
           break
         }
-        yield()
+        yield
       }
       defer {
         trace(""YOU;"")
@@ -13642,9 +13642,9 @@ public class TestVM : BHL_TestBase
           wait_3()
         }
         {
-          yield()
+          yield
           trace(""!here"")
-          yield()
+          yield
         }
       }
     }
@@ -13679,7 +13679,7 @@ public class TestVM : BHL_TestBase
           trace(""bar"")
         }
         {
-          yield()
+          yield
           trace(""wow"")
         }
       }
@@ -13727,8 +13727,8 @@ public class TestVM : BHL_TestBase
           defer {
             trace(""4"")
           }
-          yield()
-          yield()
+          yield
+          yield
           trace(""5"")
         }
       }
@@ -13796,7 +13796,7 @@ public class TestVM : BHL_TestBase
           trace(""bar"")
         }
         {
-          yield()
+          yield
           trace(""wow"")
         }
       }
@@ -13844,8 +13844,8 @@ public class TestVM : BHL_TestBase
           defer {
             trace(""4"")
           }
-          yield()
-          yield()
+          yield
+          yield
           trace(""5"")
           fail()
         }
@@ -14196,7 +14196,7 @@ public class TestVM : BHL_TestBase
     func int test() 
     {
       paral_all {
-        yield()
+        yield
         return 1
       }
       return 0
@@ -17155,7 +17155,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int test(int a)
     {
-      yield()
+      yield
       return a
     }
     ";
@@ -17178,7 +17178,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func float test(float k, float m) 
     {
-      yield()
+      yield
       return m
     }
     ";
@@ -17195,7 +17195,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func float test(float k, float m) 
     {
-      yield()
+      yield
       return k
     }
     ";
@@ -17212,7 +17212,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      yield()
+      yield
       return 123
     }
     ";
@@ -17238,7 +17238,7 @@ public class TestVM : BHL_TestBase
     func test()
     {
       start(func() {
-        yield()
+        yield
         trace(""done"")
       })
     }
@@ -17267,7 +17267,7 @@ public class TestVM : BHL_TestBase
         trace(""4"")
       }
       trace(""1"")
-      yield()
+      yield
     }
 
     func test()
@@ -17280,7 +17280,7 @@ public class TestVM : BHL_TestBase
         trace(""2"")
       })
 
-      yield()
+      yield
       trace(""3"")
       stop(fid)
     }
@@ -17309,7 +17309,7 @@ public class TestVM : BHL_TestBase
         trace(""4"")
       }
       trace(""1"")
-      yield()
+      yield
     }
 
     func test()
@@ -17322,7 +17322,7 @@ public class TestVM : BHL_TestBase
         trace(""2"")
       })
 
-      yield()
+      yield
       trace(""3"")
       stop(fid)
       stop(fid)
@@ -17361,14 +17361,14 @@ public class TestVM : BHL_TestBase
         defer {
           trace(""0"")
         }
-        yield()
+        yield
         foo()
         stop(fid)
-        yield()
+        yield
         trace(""2"")
       })
 
-      yield()
+      yield
       trace(""3"")
     }
     ";
@@ -17396,7 +17396,7 @@ public class TestVM : BHL_TestBase
         trace(""4"")
       }
       trace(""1"")
-      yield()
+      yield
     }
 
     func test()
@@ -17407,16 +17407,16 @@ public class TestVM : BHL_TestBase
         }
         foo()
         trace(""2"")
-        yield()
+        yield
       })
       defer {
         trace(""5"")
         stop(fb)
       }
 
-      yield()
+      yield
       trace(""3"")
-      yield()
+      yield
     }
     ";
 
@@ -17498,7 +17498,7 @@ public class TestVM : BHL_TestBase
       
     func foo()
     {
-      yield()
+      yield
     }
 
     func test() 
@@ -17539,7 +17539,7 @@ public class TestVM : BHL_TestBase
       
     func foo()
     {
-      yield()
+      yield
     }
 
     func test() 
@@ -17781,7 +17781,7 @@ public class TestVM : BHL_TestBase
           },
           spawns : 1
         )
-        yield()
+        yield
       }
     }
     ";
@@ -17837,7 +17837,7 @@ public class TestVM : BHL_TestBase
           },
           spawns : 1
         )
-        yield()
+        yield
       }
     }
     ";
@@ -18446,7 +18446,7 @@ public class TestVM : BHL_TestBase
     func float wow(float b)
     {
       paral {
-        yield()
+        yield
         record_callstack()
       }
       return b
@@ -18523,7 +18523,7 @@ public class TestVM : BHL_TestBase
     func float wow(float b)
     {
       paral_all {
-        yield()
+        yield
         record_callstack()
       }
       return b
@@ -19248,12 +19248,12 @@ public class TestVM : BHL_TestBase
           A()
           {
             while(i < 1) {
-              yield()
+              yield
               i = i + 1
             }
           }
         }
-        yield()
+        yield
       }
     }
     ";
