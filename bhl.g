@@ -148,11 +148,11 @@ statement
   | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
-  | 'yield' '(' ')'                                             #Yield //we need this one because of 'yield while()' special case
+  | 'yield'                                                     #Yield
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
-  | 'return' returnVal?                                          #Return
+  | 'return' returnVal?                                         #Return
   | 'paral' block                                               #Paral
   | 'paral_all' block                                           #ParalAll
   | 'defer' block                                               #Defer
