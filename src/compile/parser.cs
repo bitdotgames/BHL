@@ -3333,7 +3333,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
      int line = ctx.Start.Line;
-     var ast = new AST_Call(EnumCall.FUNC, line, ns.Resolve("yield"));
+     var ast = new AST_Yield(line);
      PeekAST().AddChild(ast);
      return null;
   }
@@ -3358,7 +3358,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var body = new AST_Block(BlockType.SEQ);
     int line = ctx.Start.Line;
-    body.AddChild(new AST_Call(EnumCall.FUNC, line, ns.Resolve("yield")));
+    body.AddChild(new AST_Yield(line));
     ast.AddChild(body);
 
     --loops_stack;

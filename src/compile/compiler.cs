@@ -1361,6 +1361,12 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
+  public override void DoVisit(AST_Yield ast)
+  {
+    //TODO: do we need a separate opcode for that?
+    Emit(Opcodes.CallNative, new int[] {Types.YieldFunc.scope_idx, 0}, ast.line_num);
+  }
+
   public override void DoVisit(AST_PopValue ast)
   {
     Emit(Opcodes.Pop);

@@ -409,6 +409,7 @@ public class Types : INamedResolver
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
   static public ClassSymbolNative ClassType = null;
+  static public FuncSymbolNative YieldFunc = null;
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -555,20 +556,22 @@ public class Types : INamedResolver
     ns.Define(ClassType);
 
     {
-      var fn = new FuncSymbolNative("suspend", this.T("void"), 
+      //it's a builtin non-directly available function
+      var fn = new FuncSymbolNative("$yield", this.T("void"),
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          return CoroutineSuspend.Instance;
+          return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
       );
+      YieldFunc = fn;
       ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("yield", this.T("void"),
+      var fn = new FuncSymbolNative("suspend", this.T("void"), 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
-          return CoroutinePool.New<CoroutineYield>(frm.vm);
+          return CoroutineSuspend.Instance;
         } 
       );
       ns.Define(fn);
