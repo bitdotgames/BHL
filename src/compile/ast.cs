@@ -21,6 +21,7 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_Return ast);
   public abstract void DoVisit(AST_Break ast);
   public abstract void DoVisit(AST_Continue ast);
+  public abstract void DoVisit(AST_Yield ast);
   public abstract void DoVisit(AST_PopValue ast);
   public abstract void DoVisit(AST_Literal ast);
   public abstract void DoVisit(AST_BinaryOpExp ast);
@@ -99,6 +100,8 @@ public abstract class AST_Visitor
       DoVisit(_29);
     else if(ast is AST_JsonMapAddItem _30)
       DoVisit(_30);
+    else if(ast is AST_Yield _31)
+      DoVisit(_31);
     else 
       throw new Exception("Not known type: " + ast.GetType().Name);
   }
@@ -407,6 +410,16 @@ public class AST_Continue : IAST
   }
 }
 
+public class AST_Yield : IAST
+{
+  public int line_num;
+
+  public AST_Yield(int line_num)
+  {
+    this.line_num = line_num;
+  }
+}
+
 public class AST_Literal : IAST
 {
   public ConstType type = new ConstType();
@@ -641,6 +654,11 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Continue node)
   {
     Console.Write("(CONT)");
+  }
+
+  public override void DoVisit(AST_Yield node)
+  {
+    Console.Write("(YIELD)");
   }
 
   public override void DoVisit(AST_PopValue node)
