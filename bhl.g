@@ -148,7 +148,7 @@ statement
   | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
-  | 'yield'                                                     #Yield
+  | 'yield' callExp?                                            #Yield
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
@@ -284,11 +284,11 @@ funcAttribs
   ;
 
 funcDecl
-  : 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
+  : ASYNC? 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
-  : 'func' retType? '(' types? ')'
+  : ASYNC? 'func' retType? '(' types? ')'
   ;
 
 funcBlock
@@ -430,6 +430,10 @@ jsonValue
 
 NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
+  ;
+
+ASYNC
+  : 'async'
   ;
 
 ARR
