@@ -123,38 +123,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Dictionary<FuncSymbol, List<AST_Block>> func2blocks = new Dictionary<FuncSymbol, List<AST_Block>>();
 
-  int defer_count {
-    get {
-      return CountBlocks(BlockType.DEFER);
-    }
-  }
-
-  int defer_level {
-    get {
-      return GetBlockLevel(BlockType.DEFER);
-    }
-  }
-
-  int loop_level {
-    get {
-      var fsymb = PeekFuncDecl();
-      List<AST_Block> blocks;
-      func2blocks.TryGetValue(fsymb, out blocks);
-      if(blocks != null)
-      {
-        for(int i=blocks.Count;i-- > 0;)
-        {
-          var block = blocks[i];
-          if(block.type == BlockType.FOR || 
-             block.type == BlockType.WHILE || 
-             block.type == BlockType.DOWHILE)
-            return i;
-        }
-      }
-      return -1;
-    }
-  }
-
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   List<FuncSymbolScript> func_decl_stack = new List<FuncSymbolScript>();
 
@@ -274,6 +242,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
     return -1;
+  }
+
+  int GetLoopBlockLevel()
+  {
+    int level = GetBlockLevel(BlockType.FOR);
+    if(level != -1)
+      return level;
+    level = GetBlockLevel(BlockType.WHILE);
+    if(level != -1)
+      return level;
+    level = GetBlockLevel(BlockType.DOWHILE);
+    return level;
   }
 
   void PushScope(IScope scope)
@@ -2093,7 +2073,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    if(defer_count > 0)
+    if(CountBlocks(BlockType.DEFER) > 0)
       FireError(ctx, "return is not allowed in defer block");
 
     var func_symb = PeekFuncDecl();
@@ -2189,10 +2169,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitBreak(bhlParser.BreakContext ctx)
   {
+    int loop_level = GetLoopBlockLevel();
+
     if(loop_level == -1)
       FireError(ctx, "not within loop construct");
 
-    if(defer_level > loop_level)
+    if(GetBlockLevel(BlockType.DEFER) > loop_level)
       FireError(ctx, "not within loop construct");
 
     PeekAST().AddChild(new AST_Break());
@@ -2202,10 +2184,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitContinue(bhlParser.ContinueContext ctx)
   {
+    int loop_level = GetLoopBlockLevel();
+
     if(loop_level == -1)
       FireError(ctx, "not within loop construct");
 
-    if(defer_level > loop_level)
+    if(GetBlockLevel(BlockType.DEFER) > loop_level)
       FireError(ctx, "not within loop construct");
 
     PeekAST().AddChild(new AST_Continue());
@@ -3087,7 +3071,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
-    if(defer_count > 0)
+    if(CountBlocks(BlockType.DEFER) > 0)
       FireError(ctx, "nested defers are not allowed");
     CommonVisitBlock(BlockType.DEFER, ctx.block().statement());
     return null;
