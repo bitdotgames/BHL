@@ -16,6 +16,22 @@ public static class Tasks
     $"{BHL_ROOT}/src/std/*.cs",
     $"{BHL_ROOT}/src/msgpack/*.cs",
   };
+  
+  [Task(verbose: false)]
+  public static void version(Taskman tm, string[] args)
+  {
+    BuildAndRunDllCmd(
+      tm,
+      "version",
+      new string[] {
+        $"{BHL_ROOT}/src/cmd/version.cs",
+        $"{BHL_ROOT}/src/cmd/cmd.cs",
+        $"{BHL_ROOT}/src/vm/version.cs",
+      },
+      "",
+      args
+    );
+  }
 
   [Task()]
   public static void build_front_dll(Taskman tm, string[] args)
