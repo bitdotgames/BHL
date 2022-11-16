@@ -125,35 +125,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   int defer_count {
     get {
-      var fsymb = PeekFuncDecl();
-      List<AST_Block> blocks;
-      func2blocks.TryGetValue(fsymb, out blocks);
-      int c = 0;
-      if(blocks != null)
-      {
-        foreach(var block in blocks)
-          if(block.type == BlockType.DEFER)
-            ++c;
-      }
-      return c;
+      return CountBlocks(BlockType.DEFER);
     }
   }
 
   int defer_level {
     get {
-      var fsymb = PeekFuncDecl();
-      List<AST_Block> blocks;
-      func2blocks.TryGetValue(fsymb, out blocks);
-      if(blocks != null)
-      {
-        for(int i=blocks.Count;i-- > 0;)
-        {
-          var block = blocks[i];
-          if(block.type == BlockType.DEFER)
-            return i;
-        }
-      }
-      return -1;
+      return GetBlockLevel(BlockType.DEFER);
     }
   }
 
@@ -264,6 +242,38 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     List<AST_Block> blocks;
     func2blocks.TryGetValue(fsymb, out blocks);
     blocks.Remove(block);
+  }
+
+  int CountBlocks(BlockType type)
+  {
+    var fsymb = PeekFuncDecl();
+    List<AST_Block> blocks;
+    func2blocks.TryGetValue(fsymb, out blocks);
+    int c = 0;
+    if(blocks != null)
+    {
+      foreach(var block in blocks)
+        if(block.type == type)
+          ++c;
+    }
+    return c;
+  }
+
+  int GetBlockLevel(BlockType type)
+  {
+    var fsymb = PeekFuncDecl();
+    List<AST_Block> blocks;
+    func2blocks.TryGetValue(fsymb, out blocks);
+    if(blocks != null)
+    {
+      for(int i=blocks.Count;i-- > 0;)
+      {
+        var block = blocks[i];
+        if(block.type == type)
+          return i;
+      }
+    }
+    return -1;
   }
 
   void PushScope(IScope scope)
