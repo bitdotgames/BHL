@@ -5701,6 +5701,66 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBreakInLoopInDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        while(true) {
+          trace(""2;"")
+          break
+        }
+      }
+      trace(""1;"")
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("1;2;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestContinueInLoopInDefer()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      defer {
+        int i = 0
+        while(i < 2) {
+          i = i + 1
+          if(i == 1) {
+            continue;
+          }
+          trace(""2;"")
+        }
+      }
+      trace(""1;"")
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+
+    BindTrace(ts, log);
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual("1;2;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestContinueInForLoop()
   {
     string bhl = @"

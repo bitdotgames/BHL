@@ -121,33 +121,59 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
 
-  Dictionary<FuncSymbol, int> defers2func = new Dictionary<FuncSymbol, int>();
-  int defer_stack {
+  Dictionary<FuncSymbol, List<AST_Block>> func2blocks = new Dictionary<FuncSymbol, List<AST_Block>>();
+
+  int defer_count {
     get {
       var fsymb = PeekFuncDecl();
-      int v;
-      defers2func.TryGetValue(fsymb, out v);
-      return v;
-    }
-
-    set {
-      var fsymb = PeekFuncDecl();
-      defers2func[fsymb] = value;
+      List<AST_Block> blocks;
+      func2blocks.TryGetValue(fsymb, out blocks);
+      int c = 0;
+      if(blocks != null)
+      {
+        foreach(var block in blocks)
+          if(block.type == BlockType.DEFER)
+            ++c;
+      }
+      return c;
     }
   }
 
-  Dictionary<FuncSymbol, int> loops2func = new Dictionary<FuncSymbol, int>();
-  int loops_stack {
+  int defer_level {
     get {
       var fsymb = PeekFuncDecl();
-      int v;
-      loops2func.TryGetValue(fsymb, out v);
-      return v;
+      List<AST_Block> blocks;
+      func2blocks.TryGetValue(fsymb, out blocks);
+      if(blocks != null)
+      {
+        for(int i=blocks.Count;i-- > 0;)
+        {
+          var block = blocks[i];
+          if(block.type == BlockType.DEFER)
+            return i;
+        }
+      }
+      return -1;
     }
+  }
 
-    set {
+  int loop_level {
+    get {
       var fsymb = PeekFuncDecl();
-      loops2func[fsymb] = value;
+      List<AST_Block> blocks;
+      func2blocks.TryGetValue(fsymb, out blocks);
+      if(blocks != null)
+      {
+        for(int i=blocks.Count;i-- > 0;)
+        {
+          var block = blocks[i];
+          if(block.type == BlockType.FOR || 
+             block.type == BlockType.WHILE || 
+             block.type == BlockType.DOWHILE)
+            return i;
+        }
+      }
+      return -1;
     }
   }
 
@@ -217,6 +243,27 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void FireError(IParseTree place, string msg) 
   {
     throw new SemanticError(module, place, tokens, msg);
+  }
+
+  void PushBlock(AST_Block block)
+  {
+    var fsymb = PeekFuncDecl();
+    List<AST_Block> blocks;
+    func2blocks.TryGetValue(fsymb, out blocks);
+    if(blocks == null)
+    {
+      blocks = new List<AST_Block>();
+      func2blocks[fsymb] = blocks;
+    }
+    blocks.Add(block);
+  }
+
+  void PopBlock(AST_Block block)
+  {
+    var fsymb = PeekFuncDecl();
+    List<AST_Block> blocks;
+    func2blocks.TryGetValue(fsymb, out blocks);
+    blocks.Remove(block);
   }
 
   void PushScope(IScope scope)
@@ -2036,7 +2083,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    if(defer_stack > 0)
+    if(defer_count > 0)
       FireError(ctx, "return is not allowed in defer block");
 
     var func_symb = PeekFuncDecl();
@@ -2132,10 +2179,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitBreak(bhlParser.BreakContext ctx)
   {
-    if(defer_stack > 0)
+    if(loop_level == -1)
       FireError(ctx, "not within loop construct");
 
-    if(loops_stack == 0)
+    if(defer_level > loop_level)
       FireError(ctx, "not within loop construct");
 
     PeekAST().AddChild(new AST_Break());
@@ -2145,10 +2192,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitContinue(bhlParser.ContinueContext ctx)
   {
-    if(defer_stack > 0)
+    if(loop_level == -1)
       FireError(ctx, "not within loop construct");
 
-    if(loops_stack == 0)
+    if(defer_level > loop_level)
       FireError(ctx, "not within loop construct");
 
     PeekAST().AddChild(new AST_Continue());
@@ -3030,11 +3077,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitDefer(bhlParser.DeferContext ctx)
   {
-    ++defer_stack;
-    if(defer_stack > 1)
+    if(defer_count > 0)
       FireError(ctx, "nested defers are not allowed");
     CommonVisitBlock(BlockType.DEFER, ctx.block().statement());
-    --defer_stack;
     return null;
   }
 
@@ -3178,7 +3223,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.WHILE);
 
-    ++loops_stack;
+    PushBlock(ast);
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
@@ -3194,9 +3239,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PopAST();
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
-    --loops_stack;
-
     PeekAST().AddChild(ast);
+
+    PopBlock(ast);
 
     return_found.Remove(PeekFuncDecl());
 
@@ -3207,7 +3252,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.DOWHILE);
 
-    ++loops_stack;
+    PushBlock(ast);
 
     PushAST(ast);
     CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
@@ -3223,9 +3268,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ast.AddChild(cond);
 
-    --loops_stack;
-
     PeekAST().AddChild(ast);
+
+    PopBlock(ast);
 
     return_found.Remove(PeekFuncDecl());
 
@@ -3276,7 +3321,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var ast = new AST_Block(BlockType.WHILE);
 
-    ++loops_stack;
+    PushBlock(ast);
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
@@ -3318,9 +3363,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     PopAST();
 
-    --loops_stack;
-
     PeekAST().AddChild(ast);
+
+    PopBlock(ast);
 
     local_scope.Exit();
     PopScope();
@@ -3345,7 +3390,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var ast = new AST_Block(BlockType.WHILE);
 
-    ++loops_stack;
+    PushBlock(ast);
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
@@ -3361,7 +3406,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     body.AddChild(new AST_Call(EnumCall.FUNC, line, ns.Resolve("yield")));
     ast.AddChild(body);
 
-    --loops_stack;
+    PopBlock(ast);
 
     PeekAST().AddChild(ast);
     return null;
@@ -3441,7 +3486,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         PeekAST().AddChild(iter_ast_decl);
 
       var ast = new AST_Block(BlockType.WHILE);
-      ++loops_stack;
+      PushBlock(ast);
 
       //while condition
       var cond = new AST_Block(BlockType.SEQ);
@@ -3467,8 +3512,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       block.AddChild(new AST_Inc(arr_cnt_symb));
       PopAST();
 
-      --loops_stack;
       PeekAST().AddChild(ast);
+
+      PopBlock(ast);
     }
     else if(ctx.foreachExp().varOrDeclares().varOrDeclare().Length == 2)
     {
@@ -3555,7 +3601,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         PeekAST().AddChild(val_iter_ast_decl);
 
       var ast = new AST_Block(BlockType.WHILE);
-      ++loops_stack;
+      PushBlock(ast);
 
       //while condition
       var cond = new AST_Block(BlockType.SEQ);
@@ -3575,8 +3621,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       block.AddChild(new AST_Continue(jump_marker: true));
       PopAST();
 
-      --loops_stack;
       PeekAST().AddChild(ast);
+
+      PopBlock(ast);
     }
     else
       FireError(ctx.foreachExp().varOrDeclares(), "invalid 'foreach' syntax");
@@ -3598,6 +3645,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     local_scope.Enter();
 
     var ast = new AST_Block(type);
+    PushBlock(ast);
+
     var tmp = new AST_Interim();
     PushAST(ast);
     for(int i=0;i<sts.Length;++i)
@@ -3633,6 +3682,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(is_paral)
       return_found.Remove(PeekFuncDecl());
+
+    PopBlock(ast);
 
     PeekAST().AddChild(ast);
     return ast;
