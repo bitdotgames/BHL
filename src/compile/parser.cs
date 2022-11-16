@@ -488,7 +488,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
 
       if(!has_calls)
-        FireError(ctx, "useless statement");
+        FireError(exp, "useless statement");
 
       var tuple = eval_type as TupleType;
       if(tuple != null)
@@ -526,7 +526,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.ChainExpContext[] chain, 
     ref IType curr_type, 
     int line, 
-    bool write
+    bool write = false
    )
   {
     PushAST(new AST_Interim());
@@ -3335,6 +3335,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      int line = ctx.Start.Line;
      var ast = new AST_Yield(line);
      PeekAST().AddChild(ast);
+
+     if(ctx.callExp() != null && ctx.callArgs() != null)
+     {
+       var cexp = ctx.callExp();
+
+       var chain = new List<bhlParser.ChainExpContext>();
+       for(int c=0;c<cexp.chainExp().Length;++c)
+         chain.Add(cexp.chainExp()[c]);
+       chain.Add(ctx.callArgs());
+
+       IType curr_type = null;
+       ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), chain.ToList(), ref curr_type, cexp.Start.Line, write: false);
+     }
+
      return null;
   }
 

@@ -148,7 +148,7 @@ statement
   | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
-  | 'yield' callExp?                                            #Yield
+  | 'yield' (callExp callArgs)?                                 #Yield
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
