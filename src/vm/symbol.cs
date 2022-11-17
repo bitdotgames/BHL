@@ -1434,6 +1434,7 @@ public enum FuncAttrib : byte
   Override     = 2,
   Static       = 4,
   VariadicArgs = 8,
+  Async        = 16,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable

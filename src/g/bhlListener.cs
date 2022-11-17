@@ -723,6 +723,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitYield([NotNull] bhlParser.YieldContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>YieldFunc</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterYieldFunc([NotNull] bhlParser.YieldFuncContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>YieldFunc</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitYieldFunc([NotNull] bhlParser.YieldFuncContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>YieldWhile</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

@@ -851,6 +851,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitYield([NotNull] bhlParser.YieldContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>YieldFunc</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterYieldFunc([NotNull] bhlParser.YieldFuncContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>YieldFunc</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitYieldFunc([NotNull] bhlParser.YieldFuncContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>YieldWhile</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>

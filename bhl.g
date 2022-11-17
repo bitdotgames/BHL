@@ -148,7 +148,8 @@ statement
   | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
-  | 'yield' funcCallChain?                                      #Yield
+  | 'yield' '(' ')'                                             #Yield
+  | 'yield' funcCallChain                                       #YieldFunc
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue

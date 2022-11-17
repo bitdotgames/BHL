@@ -520,7 +520,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void ProcChainedCall(
+  AST_Tree ProcChainedCall(
     IScope scope,
     ITerminalNode root_name, 
     IExpChain chain, 
@@ -603,6 +603,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain_ast = PeekAST();
     PopAST();
     PeekAST().AddChildren(chain_ast);
+
+    return chain_ast;
   }
 
   void TryProcessClassBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, IExpChain chain, int line)
@@ -3332,21 +3334,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      var ast = new AST_Yield(line);
      PeekAST().AddChild(ast);
 
-     //let's check if it's a coroutine call
-     if(ctx.funcCallChain() != null)
-     {
-       var fn_call = ctx.funcCallChain();
+     return null;
+  }
 
-       var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
+  public override object VisitYieldFunc(bhlParser.YieldFuncContext ctx)
+  {
+     var fn_call = ctx.funcCallChain();
 
-       IType curr_type = null;
-       ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, write: false);
+     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
-       //TODO: check if that's a coroutine
-       //var last_added = PeekAST().children[PeekAST().children.Count-1];
-       //var last_call = last_added as AST_Call;
-       //Console.WriteLine(last_call.symb.name);
-     }
+     IType curr_type = null;
+     var ast_chain = ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, write: false);
+     var last_call = ast_chain.children[ast_chain.children.Count-1] as AST_Call;
+     if(!(last_call.symb as FuncSymbol).attribs.HasFlag(FuncAttrib.Async))
+        FireError(fn_call.callExp(), "not an async function");
 
      return null;
   }

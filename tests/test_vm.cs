@@ -3034,13 +3034,13 @@ public class TestVM : BHL_TestBase
         {
           int i = 1
           i = i + 1
-          yield
+          yield()
           trace((string)i)
         }
         {
           string i
           i = ""foo""
-          yield
+          yield()
           trace((string)i)
         }
       }
