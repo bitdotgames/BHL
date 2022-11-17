@@ -3332,6 +3332,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      var ast = new AST_Yield(line);
      PeekAST().AddChild(ast);
 
+     //let's check if it's a coroutine call
      if(ctx.funcCallChain() != null)
      {
        var fn_call = ctx.funcCallChain();
@@ -3340,6 +3341,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
        IType curr_type = null;
        ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, write: false);
+
+       //TODO: check if that's a coroutine
+       //var last_added = PeekAST().children[PeekAST().children.Count-1];
+       //var last_call = last_added as AST_Call;
+       //Console.WriteLine(last_call.symb.name);
      }
 
      return null;

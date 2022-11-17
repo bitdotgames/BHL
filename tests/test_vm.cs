@@ -18446,8 +18446,12 @@ public class TestVM : BHL_TestBase
     func float wow(float b)
     {
       paral {
-        yield
-        record_callstack()
+        {
+          yield
+        }
+        {
+          record_callstack()
+        }
       }
       return b
     }
@@ -18501,7 +18505,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    AssertEqual(9, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
@@ -18523,8 +18527,12 @@ public class TestVM : BHL_TestBase
     func float wow(float b)
     {
       paral_all {
-        yield
-        record_callstack()
+        {
+          yield
+        }
+        {
+          record_callstack()
+        }
       }
       return b
     }
@@ -18577,7 +18585,7 @@ public class TestVM : BHL_TestBase
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    AssertEqual(9, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
