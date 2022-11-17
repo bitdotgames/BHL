@@ -148,7 +148,7 @@ statement
   | 'do' block 'while' '(' exp ')'                              #DoWhile
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
-  | 'yield' (callExp callArgs)?                                 #Yield
+  | 'yield' funcCallChain?                                      #Yield
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
@@ -178,6 +178,10 @@ callExp
 
 chainExp
   : callArgs | memberAccess | arrAccess
+  ;
+
+funcCallChain
+  : callExp callArgs
   ;
 
 typeof 
