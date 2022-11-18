@@ -347,7 +347,7 @@ public class TestVariadic : BHL_TestBase
 
     func int ret_int(int val, int ticks) {
       while(ticks > 0) {
-        yield
+        yield()
         ticks = ticks - 1
       }
       return val
