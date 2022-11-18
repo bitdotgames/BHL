@@ -10220,7 +10220,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func test()
     {
-      suspend()
+      yield suspend()
     }
     ";
 

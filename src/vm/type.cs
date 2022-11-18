@@ -568,7 +568,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative("suspend", this.T("void"), 
+      var fn = new FuncSymbolNative("suspend", FuncAttrib.Async, this.T("void"), 0, 
         delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
