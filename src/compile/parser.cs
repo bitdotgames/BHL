@@ -2215,6 +2215,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       new FuncSignature(),
       name
     ); 
+
+    if(pass.func_ctx.asyncFlag() != null)
+      pass.func_symb.attribs |= FuncAttrib.Async;
+
     pass.scope.Define(pass.func_symb);
 
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
@@ -2473,6 +2477,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             FireError(attr, "this attribute is set already");
           func_symb.attribs |= attr_type;
         }
+
+        if(fd.asyncFlag() != null)
+          func_symb.attribs |= FuncAttrib.Async;
 
         if(!func_symb.attribs.HasFlag(FuncAttrib.Static))
           func_symb.ReserveThisArgument(pass.class_symb);
@@ -3330,6 +3337,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
+     var curr_func = PeekFuncDecl();
+     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
+        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+
      int line = ctx.Start.Line;
      var ast = new AST_Yield(line);
      PeekAST().AddChild(ast);
@@ -3339,6 +3350,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYieldFunc(bhlParser.YieldFuncContext ctx)
   {
+     var curr_func = PeekFuncDecl();
+     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
+        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+
      var fn_call = ctx.funcCallChain();
 
      var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
@@ -3356,6 +3371,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
+
+   var curr_func = PeekFuncDecl();
+   if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
+      FireError(curr_func.parsed.tree, "function with yield calls must be async");
 
     var ast = new AST_Block(BlockType.WHILE);
 

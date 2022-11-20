@@ -284,16 +284,20 @@ staticFlag
   : 'static'
   ;
 
+asyncFlag
+  : 'async'
+  ;
+
 funcAttribs
   : (virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
-  : ASYNC? 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
+  : asyncFlag? 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
-  : ASYNC? 'func' retType? '(' types? ')'
+  : asyncFlag? 'func' retType? '(' types? ')'
   ;
 
 funcBlock
@@ -435,10 +439,6 @@ jsonValue
 
 NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
-  ;
-
-ASYNC
-  : 'async'
   ;
 
 ARR

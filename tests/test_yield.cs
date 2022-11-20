@@ -1,19 +1,40 @@
+using System;
 using bhl;
 
 public class TestYield : BHL_TestBase
 {
   [IsTested()]
+  public void TestFuncWithYieldMustByAsync()
+  {
+    string bhl = @"
+    func test() {
+      yield()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "function with yield calls must be async",
+      new PlaceAssert(bhl, @"
+    func test() {
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestBasicYield()
   {
     string bhl = @"
-    func test()
+    async func test()
     {
       yield()
     }
     ";
 
-    var ts = new Types();
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl);
     vm.Start("test");
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
@@ -24,7 +45,7 @@ public class TestYield : BHL_TestBase
   public void TestYieldSeveralTimesAndReturnValue()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       yield()
       int a = 1
@@ -49,7 +70,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int i = 0
       paral {
@@ -75,11 +96,32 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncWithYieldWhileMustByAsync()
+  {
+    string bhl = @"
+    func test() {
+      yield while(false)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "function with yield calls must be async",
+      new PlaceAssert(bhl, @"
+    func test() {
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestYieldWhileInParal()
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int i = 0
       paral {
@@ -112,7 +154,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int i = 0
       paral {
@@ -138,11 +180,11 @@ public class TestYield : BHL_TestBase
   public void TestYieldWhileBugInParal()
   {
     string bhl = @"
-    func Foo() {
-      suspend()
+    async func Foo() {
+      yield suspend()
     }
 
-    func test() {
+    async func test() {
       paral {
         yield while(true)
 
@@ -164,10 +206,31 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestFuncWithYieldFuncCallMustByAsync()
+  {
+    string bhl = @"
+    func test() {
+      yield suspend()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "function with yield calls must be async",
+      new PlaceAssert(bhl, @"
+    func test() {
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
-    func test()
+    async func test()
     {
       yield suspend()
     }

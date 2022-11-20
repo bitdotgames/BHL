@@ -1131,6 +1131,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.asyncFlag"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAsyncFlag([NotNull] bhlParser.AsyncFlagContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.asyncFlag"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAsyncFlag([NotNull] bhlParser.AsyncFlagContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
