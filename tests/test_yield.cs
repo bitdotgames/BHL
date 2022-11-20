@@ -42,6 +42,57 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSuspend()
+  {
+    string bhl = @"
+    async func test()
+    {
+      yield suspend()
+    }
+    ";
+
+    var ts = new Types();
+    var c = Compile(bhl, ts);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0 })
+      .EmitThen(Opcodes.ExitFrame)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    for(int i=0;i<99;i++)
+      AssertTrue(vm.Tick());
+    vm.Stop(fb);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAsyncFuncMustBeCalledWithYield()
+  {
+    string bhl = @"
+    func test() {
+      suspend()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "async function must be called via yield",
+      new PlaceAssert(bhl, @"
+      suspend()
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestYieldSeveralTimesAndReturnValue()
   {
     string bhl = @"
@@ -190,7 +241,7 @@ public class TestYield : BHL_TestBase
 
         while(true) {
           yield while(false)
-          Foo()
+          yield Foo()
         }
       }
     }
@@ -224,35 +275,5 @@ public class TestYield : BHL_TestBase
 ----^"
       )
     );
-  }
-
-  [IsTested()]
-  public void TestSuspend()
-  {
-    string bhl = @"
-    async func test()
-    {
-      yield suspend()
-    }
-    ";
-
-    var ts = new Types();
-    var c = Compile(bhl, ts);
-
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0 })
-      .EmitThen(Opcodes.ExitFrame)
-      ;
-    AssertEqual(c, expected);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    for(int i=0;i<99;i++)
-      AssertTrue(vm.Tick());
-    vm.Stop(fb);
-    CommonChecks(vm);
   }
 }

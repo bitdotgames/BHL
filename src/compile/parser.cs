@@ -507,7 +507,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
 
     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-    ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx.Start.Line, write: false);
+    var ast_chain = ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx.Start.Line, write: false);
+
+     var last_call = ast_chain.children[ast_chain.children.Count-1] as AST_Call;
+     if(last_call.symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Async))
+      FireError(ctx.NAME(), "async function must be called via yield");
 
     Wrap(ctx).eval_type = curr_type;
 
