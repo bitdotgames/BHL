@@ -1447,12 +1447,12 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     set {
       _signature = value;
 
-      if(signature.is_async)
+      if(_signature.is_async)
         attribs |= FuncAttrib.Async;
       else
         attribs &= ~FuncAttrib.Async;
 
-      if(signature.has_variadic)
+      if(_signature.has_variadic)
         attribs |= FuncAttrib.VariadicArgs;
       else
         attribs &= ~FuncAttrib.VariadicArgs;
@@ -1480,6 +1480,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _attribs = (byte)value;
+      signature.is_async = attribs.HasFlag(FuncAttrib.Async);
       signature.has_variadic = attribs.HasFlag(FuncAttrib.VariadicArgs);
     }
   }

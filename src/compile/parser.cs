@@ -2303,7 +2303,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    pass.func_symb.signature = ParseFuncSignature(pass.func_ctx.asyncFlag() != null, ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams());
+    pass.func_symb.signature = ParseFuncSignature(
+      pass.func_ctx.asyncFlag() != null, 
+      ParseType(pass.func_ctx.retType()), 
+      pass.func_ctx.funcParams()
+    );
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
