@@ -300,25 +300,30 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public bool has_variadic;
 
+  public bool is_async;
+
   public string GetName() { return name; }
 
-  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(bool is_async, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
   {
+    this.is_async = is_async;
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
       this.arg_types.Add(arg_type);
     Update();
   }
 
-  public FuncSignature(Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
+  public FuncSignature(bool is_async, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
   {
+    this.is_async = is_async;
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncSignature(Proxy<IType> ret_type)
+  public FuncSignature(bool is_async, Proxy<IType> ret_type)
   {
+    this.is_async = is_async;
     this.ret_type = ret_type;
     Update();
   }
@@ -345,6 +350,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
       tmp += arg_types[i].path;
     }
     tmp += ")";
+    if(is_async)
+      tmp = "async " + tmp;
 
     name = tmp;
   }
@@ -360,6 +367,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     marshall.Marshall.Sync(ctx, arg_types);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref has_variadic);
+    marshall.Marshall.Sync(ctx, ref is_async);
     if(ctx.is_read)
       Update();
   }
@@ -587,7 +595,7 @@ public class Types : INamedResolver
           frm.stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", this.TFunc("void"))
+        new FuncArgSymbol("p", this.TFunc(true/*is async*/, "void"))
       );
       ns.Define(fn);
     }

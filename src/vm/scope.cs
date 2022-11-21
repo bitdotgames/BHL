@@ -682,12 +682,17 @@ public static class ScopeExtensions
     return self.T(new GenericMapTypeSymbol(self.T(kt), self.T(vt)));
   }
 
-  public static Proxy<IType> TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
+  public static Proxy<IType> TFunc(this INamedResolver self, bool is_async, TypeArg ret_type, params TypeArg[] arg_types)
   {           
-    var sig = new FuncSignature(self.T(ret_type));
+    var sig = new FuncSignature(is_async, self.T(ret_type));
     foreach(var arg_type in arg_types)
       sig.AddArg(self.T(arg_type));
     return self.T(sig);
+  }
+
+  public static Proxy<IType> TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
+  {           
+    return self.TFunc(false, ret_type, arg_types);
   }
 
   public static Proxy<IType> T(this INamedResolver self, TypeArg tn, params TypeArg[] types)

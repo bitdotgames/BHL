@@ -1446,6 +1446,12 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _signature = value;
+
+      if(signature.is_async)
+        attribs |= FuncAttrib.Async;
+      else
+        attribs &= ~FuncAttrib.Async;
+
       if(signature.has_variadic)
         attribs |= FuncAttrib.VariadicArgs;
       else
@@ -1871,7 +1877,7 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : base(name, new FuncSignature(ret_type))
+    : base(name, new FuncSignature(attribs.HasFlag(FuncAttrib.Async), ret_type))
   {
     this.attribs = attribs;
 

@@ -1063,7 +1063,7 @@ public class TestVM : BHL_TestBase
   public void TestReturnNotAllPathsReturnValue()
   {
     string bhl = @"
-    func int test() 
+    async func int test() 
     {
       paral_all {
         {
@@ -1080,8 +1080,8 @@ public class TestVM : BHL_TestBase
       },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-    func int test() 
----------^"
+    async func int test() 
+---------------^"
       )
     );
   }
@@ -1399,11 +1399,11 @@ public class TestVM : BHL_TestBase
       return 100
     }
       
-    func int test() 
+    async func int test() 
     {
       paral {
         foo()
-        suspend()
+        yield suspend()
       }
       return 2
     }
@@ -3028,7 +3028,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       paral_all {
         {
@@ -4509,7 +4509,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       while(true) {
         int foo = 1
@@ -4595,7 +4595,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    func test() 
+    async func test() 
     {
       while(true) {
         hey(foo())
@@ -4868,14 +4868,14 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       paral {
         for(int i = 0; i < 3; i = i + 1) {
           trace((string)i)
           yield()
         }
-        suspend()
+        yield suspend()
       }
     }
     ";
@@ -5277,14 +5277,14 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       paral {
         foreach(int it in [1,2,3]) {
           trace((string)it)
           yield()
         }
-        suspend()
+        yield suspend()
       }
     }
     ";
@@ -5308,7 +5308,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       paral_all {
         foreach(int it in [1,2,3]) {
@@ -5792,7 +5792,7 @@ public class TestVM : BHL_TestBase
   public void TestForeverLoopBreak()
   {
     string bhl = @"
-    func int test() 
+    async func int test() 
     {
       int i = 0
       while(true) {
@@ -5816,7 +5816,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int n = 0
       while(true) {
@@ -5824,11 +5824,11 @@ public class TestVM : BHL_TestBase
           {
             n = 1
             break
-            suspend()
+            yield suspend()
           }
           {
             n = 2
-            suspend()
+            yield suspend()
           }
         }
       }
@@ -5847,7 +5847,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int n = 0
       while(true) {
@@ -5855,11 +5855,11 @@ public class TestVM : BHL_TestBase
           {
             n = 1
             break
-            suspend()
+            yield suspend()
           }
           {
             n = 2
-            suspend()
+            yield suspend()
           }
         }
       }
@@ -5878,12 +5878,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       int n = 0
       paral {
         {
-          suspend()
+          yield suspend()
           n = 10
         }
         {
@@ -5896,7 +5896,7 @@ public class TestVM : BHL_TestBase
           n = 2
         }
         {
-          suspend()
+          yield suspend()
           n = 3
         }
       }
@@ -6873,15 +6873,15 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
-      func(string) ptr = func(string arg) {
+      async func(string) ptr = async func(string arg) {
         trace(arg)
         yield()
       }
       paral {
-        ptr(""FOO"")
-        ptr(""BAR"")
+        yield ptr(""FOO"")
+        yield ptr(""BAR"")
       }
     }
     ";
@@ -7802,15 +7802,15 @@ public class TestVM : BHL_TestBase
   public void TestStartSameFuncPtr()
   {
     string bhl = @"
-    func foo() {
+    async func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
     }
 
     func test() {
-      func() fn = foo
-      func() fn2 = fn
+      async func() fn = foo
+      async func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -7833,7 +7833,7 @@ public class TestVM : BHL_TestBase
   public void TestStartImportedSameFuncPtr()
   {
     string bhl2 = @"
-    func foo() {
+    async func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
@@ -7844,8 +7844,8 @@ public class TestVM : BHL_TestBase
     import ""bhl2""
 
     func test() {
-      func() fn = foo
-      func() fn2 = fn
+      async func() fn = foo
+      async func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -10026,7 +10026,7 @@ public class TestVM : BHL_TestBase
       return arr
     }
       
-    func test() 
+    async func test() 
     {
       while(true) {
         []string arr = new []string
@@ -10252,12 +10252,12 @@ public class TestVM : BHL_TestBase
   public void TestBasicParal()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral {
         {
-          suspend() 
+          yield suspend() 
         }
         {
           yield()
@@ -10301,16 +10301,16 @@ public class TestVM : BHL_TestBase
   public void TestBasicParalAutoSeqWrap()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral {
-        suspend() 
+        yield suspend() 
         {
           yield()
           a = 1
         }
-        suspend() 
+        yield suspend() 
       }
       return a
     }
@@ -10351,16 +10351,16 @@ public class TestVM : BHL_TestBase
   public void TestSubParalAutoSeqWrap()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral {
-        suspend() 
+        yield suspend() 
         paral {
           yield()
           a = 1
         }
-        suspend() 
+        yield suspend() 
       }
       return a
     }
@@ -10403,18 +10403,18 @@ public class TestVM : BHL_TestBase
   public void TestSubParalAutoSeqWrapLambda()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral {
-        suspend() 
-        func() {
+        yield suspend() 
+        yield async func() {
           paral {
             yield()
             a = 1
           }
         } ()
-        suspend() 
+        yield suspend() 
       }
       return a
     }
@@ -10463,23 +10463,23 @@ public class TestVM : BHL_TestBase
   public void TestParalWithSubFuncs()
   {
     string bhl = @"
-    func foo() {
-      suspend()
+    async func foo() {
+      yield suspend()
     }
 
-    func int bar() {
+    async func int bar() {
       yield()
       return 1
     }
 
-    func int test() {
+    async func int test() {
       int a
       paral {
         {
-          foo()
+          yield foo()
         }
         {
-          a = bar()
+          a = yield bar()
         }
       }
       return a
@@ -10500,20 +10500,20 @@ public class TestVM : BHL_TestBase
   public void TestParalWithSubFuncsAndAutoSeqWrap()
   {
     string bhl = @"
-    func foo() {
-      suspend()
+    async func foo() {
+      yield suspend()
     }
 
-    func int bar() {
+    async func int bar() {
       yield()
       return 1
     }
 
-    func int test() {
+    async func int test() {
       int a
       paral {
-        foo()
-        a = bar()
+        yield foo()
+        a = yield bar()
       }
       return a
     }
@@ -19558,17 +19558,17 @@ public class TestVM : BHL_TestBase
 
       ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(false, ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155));
 
-      ns.Define(new FuncSymbolScript(null, new FuncSignature(ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
+      ns.Define(new FuncSymbolScript(null, new FuncSignature(false, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15));
 
       var Foo = new ClassSymbolScript("Foo");
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
-      Foo.Define(new FuncSymbolScript(null, new FuncSignature(Types.Void), "Hey", 0, 3));
+      Foo.Define(new FuncSymbolScript(null, new FuncSignature(false, Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
       var Bar = new ClassSymbolScript("Bar", Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(null, new FuncSignature(false, ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");

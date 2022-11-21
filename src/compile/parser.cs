@@ -507,11 +507,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
 
     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-    var ast_chain = ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx.Start.Line, write: false);
-
-     var last_call = ast_chain.children[ast_chain.children.Count-1] as AST_Call;
-     if(last_call.symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Async))
-      FireError(ctx.NAME(), "async function must be called via yield");
+    ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx.Start.Line);
 
     Wrap(ctx).eval_type = curr_type;
 
@@ -520,7 +516,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitLambdaCall(bhlParser.LambdaCallContext ctx)
   {
-    CommonVisitLambda(ctx, ctx.funcLambda());
+    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
+    return null;
+  }
+
+  public override object VisitYieldLambdaCall(bhlParser.YieldLambdaCallContext ctx)
+  {
+    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: true);
     return null;
   }
 
@@ -530,7 +532,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IExpChain chain, 
     ref IType curr_type, 
     int line, 
-    bool write = false
+    bool write = false,
+    bool yielded = false
    )
   {
     PushAST(new AST_Interim());
@@ -607,6 +610,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain_ast = PeekAST();
     PopAST();
     PeekAST().AddChildren(chain_ast);
+
+    if(chain_ast.children.Count > 0 && 
+       chain_ast.children[chain_ast.children.Count-1] is AST_Call last_call && 
+       (last_call.type == EnumCall.FUNC || last_call.type == EnumCall.MFUNC) &&
+       last_call.symb is FuncSymbol fs
+       )
+    {
+      if(!yielded && fs.attribs.HasFlag(FuncAttrib.Async))
+        FireError(root_name, "async function must be called via yield");
+      else if(yielded && !fs.attribs.HasFlag(FuncAttrib.Async))
+        FireError(root_name, "not an async function");
+    }
 
     return chain_ast;
   }
@@ -1095,11 +1110,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
-    CommonVisitLambda(ctx, ctx.funcLambda());
+    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
     return null;
   }
 
-  FuncSignature ParseFuncSignature(bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
+  FuncSignature ParseFuncSignature(bool is_async, bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
     var ret_type = ParseType(ret_ctx);
 
@@ -1116,18 +1131,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    return new FuncSignature(ret_type, arg_types);
+    return new FuncSignature(is_async, ret_type, arg_types);
   }
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    return ParseFuncSignature(ctx.retType(), ctx.types());
+    return ParseFuncSignature(ctx.asyncFlag() != null, ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
-    var sig = new FuncSignature(ret_type);
+    var sig = new FuncSignature(is_async, ret_type);
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
@@ -1159,10 +1174,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
-    return ParseFuncSignature(ret_type, fparams, out default_args_num);
+    return ParseFuncSignature(is_async, ret_type, fparams, out default_args_num);
   }
 
   Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
@@ -1223,7 +1238,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    return tp;
   }
 
-  void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda)
+  void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
   {
     var tp = ParseType(funcLambda.retType());
 
@@ -1232,7 +1247,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
       func_name,
-      ParseFuncSignature(tp, funcLambda.funcParams()),
+      ParseFuncSignature(funcLambda.asyncFlag() != null, tp, funcLambda.funcParams()),
       upvals,
       this.func_decl_stack
     );
@@ -1281,7 +1296,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, funcLambda.Start.Line, write: false);
+      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, funcLambda.Start.Line);
       PopAST();
       Wrap(ctx).eval_type = curr_type;
       PeekAST().AddChild(interim);
@@ -1619,7 +1634,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = ctx.chainExp(); 
     if(chain != null)
     {
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, exp.Start.Line, write: false);
+      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, exp.Start.Line);
       ++ref_compatible_exp_counter;
     }
     PopAST();
@@ -2220,9 +2235,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       name
     ); 
 
-    if(pass.func_ctx.asyncFlag() != null)
-      pass.func_symb.attribs |= FuncAttrib.Async;
-
     pass.scope.Define(pass.func_symb);
 
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
@@ -2234,7 +2246,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    pass.func_symb.signature = ParseFuncSignature(ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams());
+    pass.func_symb.signature = ParseFuncSignature(pass.func_ctx.asyncFlag() != null, ParseType(pass.func_ctx.retType()), pass.func_ctx.funcParams());
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
@@ -2318,7 +2330,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         int default_args_num;
-        var sig = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+        var sig = ParseFuncSignature(fd.asyncFlag() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
           FireError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
 
@@ -2482,9 +2494,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           func_symb.attribs |= attr_type;
         }
 
-        if(fd.asyncFlag() != null)
-          func_symb.attribs |= FuncAttrib.Async;
-
         if(!func_symb.attribs.HasFlag(FuncAttrib.Static))
           func_symb.ReserveThisArgument(pass.class_symb);
 
@@ -2535,7 +2544,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
 
-        func_symb.signature = ParseFuncSignature(ParseType(fd.retType()), fd.funcParams());
+        func_symb.signature = ParseFuncSignature(fd.asyncFlag() != null, ParseType(fd.retType()), fd.funcParams());
 
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);
@@ -3358,15 +3367,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
         FireError(curr_func.parsed.tree, "function with yield calls must be async");
 
-     var fn_call = ctx.funcCallChain();
+     var fn_call = ctx.funcCallExp();
 
      var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
      IType curr_type = null;
-     var ast_chain = ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, write: false);
-     var last_call = ast_chain.children[ast_chain.children.Count-1] as AST_Call;
-     if(!(last_call.symb as FuncSymbol).attribs.HasFlag(FuncAttrib.Async))
-        FireError(fn_call.callExp(), "not an async function");
+     ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, yielded: true);
 
      return null;
   }

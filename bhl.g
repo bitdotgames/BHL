@@ -59,6 +59,7 @@ exp
   | number                                                  #ExpLiteralNum
   | string                                                  #ExpLiteralStr
   | callExp                                                 #ExpCall
+  | 'yield' funcCallExp                                     #ExpYieldCall
   | typeof                                                  #ExpTypeof
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
@@ -149,7 +150,8 @@ statement
   | 'for' forExp block                                          #For
   | 'foreach' foreachExp block                                  #Foreach
   | 'yield' '(' ')'                                             #Yield
-  | 'yield' funcCallChain                                       #YieldFunc
+  | 'yield' funcCallExp                                         #YieldFunc
+  | 'yield' funcLambda                                          #YieldLambdaCall
   | 'yield' 'while' '(' exp ')'                                 #YieldWhile
   | 'break'                                                     #Break
   | 'continue'                                                  #Continue
@@ -181,7 +183,7 @@ chainExp
   : callArgs | memberAccess | arrAccess
   ;
 
-funcCallChain
+funcCallExp
   : callExp callArgs
   ;
 
@@ -305,11 +307,11 @@ funcBlock
   ;
 
 interfaceFuncDecl
-  : 'func' retType? NAME '(' funcParams? ')'
+  : asyncFlag? 'func' retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda
-  : 'func' retType? '(' funcParams? ')' funcBlock chainExp*
+  : asyncFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExp*
   ;
 
 refType
