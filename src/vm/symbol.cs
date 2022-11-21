@@ -1448,14 +1448,14 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
       _signature = value;
 
       if(_signature.is_async)
-        attribs |= FuncAttrib.Async;
+        _attribs |= (byte)FuncAttrib.Async;
       else
-        attribs &= ~FuncAttrib.Async;
+        _attribs &= (byte)~FuncAttrib.Async;
 
       if(_signature.has_variadic)
-        attribs |= FuncAttrib.VariadicArgs;
+        _attribs |= (byte)FuncAttrib.VariadicArgs;
       else
-        attribs &= ~FuncAttrib.VariadicArgs;
+        _attribs &= (byte)~FuncAttrib.VariadicArgs;
     }
   }
 
@@ -1480,8 +1480,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _attribs = (byte)value;
-      signature.is_async = attribs.HasFlag(FuncAttrib.Async);
-      signature.has_variadic = attribs.HasFlag(FuncAttrib.VariadicArgs);
+      signature.is_async = value.HasFlag(FuncAttrib.Async);
+      signature.has_variadic = value.HasFlag(FuncAttrib.VariadicArgs);
     }
   }
 
@@ -1499,12 +1499,12 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public FuncSymbol(
     string name, 
-    FuncSignature signature
+    FuncSignature sig
   ) 
     : base(name)
   {
     this.members = new SymbolsStorage(this);
-    this.signature = signature;
+    this.signature = sig;
   }
 
   public IType GetIType()
@@ -1598,6 +1598,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
+    marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref _signature);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
@@ -1680,7 +1681,6 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref local_vars_num);
     marshall.Marshall.Sync(ctx, ref default_args_num);
     marshall.Marshall.Sync(ctx, ref ip_addr);

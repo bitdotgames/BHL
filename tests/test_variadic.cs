@@ -1,7 +1,5 @@
 using System;           
-using System.IO;
 using System.Text;
-using System.Collections.Generic;
 using bhl;
 
 public class TestVariadic : BHL_TestBase
@@ -345,7 +343,7 @@ public class TestVariadic : BHL_TestBase
       trace((string)ns[0] + "" "" + (string)ns[1] + "";"")
     }
 
-    func int ret_int(int val, int ticks) {
+    async func int ret_int(int val, int ticks) {
       while(ticks > 0) {
         yield()
         ticks = ticks - 1
@@ -353,11 +351,11 @@ public class TestVariadic : BHL_TestBase
       return val
     }
 
-    func test() 
+    async func test() 
     {
       paral_all {
-        foo(1, ret_int(val: 2, ticks: 1))
-        foo(10, ret_int(val: 20, ticks: 2))
+        foo(1, yield ret_int(val: 2, ticks: 1))
+        foo(10, yield ret_int(val: 20, ticks: 2))
       }
     }
     ";
