@@ -163,6 +163,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpYieldLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpYieldLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpIs</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -450,6 +462,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpYieldParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpYieldParen([NotNull] bhlParser.ExpYieldParenContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpYieldParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpYieldParen([NotNull] bhlParser.ExpYieldParenContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>

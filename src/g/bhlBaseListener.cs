@@ -193,6 +193,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTypeof([NotNull] bhlParser.ExpTypeofContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpYieldLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpYieldLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpIs</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -528,6 +542,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpYieldParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpYieldParen([NotNull] bhlParser.ExpYieldParenContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpYieldParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpYieldParen([NotNull] bhlParser.ExpYieldParenContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// <para>The default implementation does nothing.</para>

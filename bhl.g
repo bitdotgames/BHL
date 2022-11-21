@@ -64,11 +64,13 @@ exp
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr
   | funcLambda                                              #ExpLambda
+  | 'yield' funcLambda                                      #ExpYieldLambda
   | '(' type ')' exp                                        #ExpTypeCast
   | exp 'as' type                                           #ExpAs
   | exp 'is' type                                           #ExpIs
   | operatorUnary exp                                       #ExpUnary
   | '(' exp ')' chainExp*                                   #ExpParen
+  | 'yield' '(' exp ')' chainExp+ callArgs                   #ExpYieldParen
   | exp operatorBitAnd exp                                  #ExpBitAnd
   | exp operatorBitOr exp                                   #ExpBitOr
   | exp operatorMulDivMod exp                               #ExpMulDivMod

@@ -507,7 +507,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
 
     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-    ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx.Start.Line);
+    ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx);
 
     Wrap(ctx).eval_type = curr_type;
 
@@ -531,11 +531,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ITerminalNode root_name, 
     IExpChain chain, 
     ref IType curr_type, 
-    int line, 
+    ParserRuleContext chain_ctx,
     bool write = false,
     bool yielded = false
    )
   {
+    int line = chain_ctx.Start.Line;  
+
     PushAST(new AST_Interim());
 
     ITerminalNode curr_name = root_name;
@@ -618,9 +620,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
        )
     {
       if(!yielded && fs.attribs.HasFlag(FuncAttrib.Async))
-        FireError(root_name, "async function must be called via yield");
+        FireError(chain_ctx, "async function must be called via yield");
       else if(yielded && !fs.attribs.HasFlag(FuncAttrib.Async))
-        FireError(root_name, "not an async function");
+        FireError(chain_ctx, "not an async function");
     }
 
     return chain_ast;
@@ -1114,6 +1116,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpYieldLambda(bhlParser.ExpYieldLambdaContext ctx)
+  {
+    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: true);
+    return null;
+  }
+
   FuncSignature ParseFuncSignature(bool is_async, bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
     var ret_type = ParseType(ret_ctx);
@@ -1296,7 +1304,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, funcLambda.Start.Line);
+      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, funcLambda);
       PopAST();
       Wrap(ctx).eval_type = curr_type;
       PeekAST().AddChild(interim);
@@ -1516,6 +1524,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
+    EnsureInAsyncFunc();
+
     var exp = ctx.funcCallExp();
     CommonYieldFuncCall(exp);
     Wrap(ctx).eval_type = Wrap(exp).eval_type;
@@ -1523,18 +1533,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  void EnsureInAsyncFunc()
+  {
+    var curr_func = PeekFuncDecl();
+    if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
+      FireError(curr_func.parsed.tree, "function with yield calls must be async");
+  }
+
   void CommonYieldFuncCall(bhlParser.FuncCallExpContext fn_call)
   {
-     var curr_func = PeekFuncDecl();
-     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
-        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+    EnsureInAsyncFunc();
 
-     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
+    var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
-     IType curr_type = null;
-     ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, yielded: true);
+    IType curr_type = null;
+    ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp(), yielded: true);
 
-     Wrap(fn_call).eval_type = curr_type;
+    Wrap(fn_call).eval_type = curr_type;
   }
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
@@ -1657,9 +1672,28 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = ctx.chainExp(); 
     if(chain != null)
     {
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, exp.Start.Line);
+      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, exp);
       ++ref_compatible_exp_counter;
     }
+    PopAST();
+    
+    PeekAST().AddChild(ast);
+    
+    Wrap(ctx).eval_type = curr_type;
+
+    return null;
+  }
+
+  public override object VisitExpYieldParen(bhlParser.ExpYieldParenContext ctx)
+  {
+    var ast = new AST_Interim();
+    var exp = ctx.exp(); 
+    PushAST(ast);
+    Visit(exp);
+
+    var curr_type = Wrap(exp).eval_type;
+    var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
+    ProcChainedCall(curr_scope, null, chain, ref curr_type, exp, yielded: true);
     PopAST();
     
     PeekAST().AddChild(ast);
@@ -1676,7 +1710,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
      IType curr_type = null;
-     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx.Start.Line, write: true);
+     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx, write: true);
 
     if(!Types.IsNumeric(curr_type))
       FireError(ctx, "is not numeric type");
@@ -1738,7 +1772,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
      IType curr_type = null;
-     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx.Start.Line, write: true);
+     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx, write: true);
 
     if(!Types.IsNumeric(curr_type))
       FireError(ctx, "only numeric types supported");
@@ -2817,7 +2851,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(assign_exp, "invalid assignment");
 
         //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-        ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), new ExpChain(cexp.chainExp()), ref curr_type, cexp.Start.Line, write: true);
+        ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), new ExpChain(cexp.chainExp()), ref curr_type, cexp, write: true);
 
         var_ptree = Wrap(cexp.NAME());
         var_ptree.eval_type = curr_type;
@@ -3373,15 +3407,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
-     var curr_func = PeekFuncDecl();
-     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
-        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+    EnsureInAsyncFunc();
 
-     int line = ctx.Start.Line;
-     var ast = new AST_Yield(line);
-     PeekAST().AddChild(ast);
+    int line = ctx.Start.Line;
+    var ast = new AST_Yield(line);
+    PeekAST().AddChild(ast);
 
-     return null;
+    return null;
   }
 
   public override object VisitYieldFunc(bhlParser.YieldFuncContext ctx)
@@ -3396,9 +3428,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-   var curr_func = PeekFuncDecl();
-   if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
-      FireError(curr_func.parsed.tree, "function with yield calls must be async");
+    EnsureInAsyncFunc();
 
     var ast = new AST_Block(BlockType.WHILE);
 

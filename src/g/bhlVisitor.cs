@@ -111,6 +111,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpYieldLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpIs</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -278,6 +285,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpYieldParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpYieldParen([NotNull] bhlParser.ExpYieldParenContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>

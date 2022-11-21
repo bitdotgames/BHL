@@ -11544,7 +11544,7 @@ public class TestVM : BHL_TestBase
       return 1
     }
 
-    func int ret_int(int val, int ticks)
+    async func int ret_int(int val, int ticks)
     {
       while(ticks > 0) {
         yield()
@@ -11553,14 +11553,14 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    func test() 
+    async func test() 
     {
       paral {
         {
-          foo(1, ret_int(val: 2, ticks: ticky()))
-          suspend()
+          foo(1, yield ret_int(val: 2, ticks: ticky()))
+          yield suspend()
         }
-        foo(10, ret_int(val: 20, ticks: 2))
+        foo(10, yield ret_int(val: 20, ticks: 2))
       }
     }
     ";
@@ -11579,7 +11579,7 @@ public class TestVM : BHL_TestBase
   public void TestInterleaveFuncStackInParal()
   {
     string bhl = @"
-    func int foo(int ticks) 
+    async func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11592,25 +11592,25 @@ public class TestVM : BHL_TestBase
       return ticks
     }
 
-    func bar()
+    async func bar()
     {
       Foo f
       paral_all {
         {
-          f = PassthruFoo({hey:foo(3), colors:[]})
+          f = PassthruFoo({hey:yield foo(3), colors:[]})
           trace((string)f.hey)
         }
         {
-          f = PassthruFoo({hey:foo(2), colors:[]})
+          f = PassthruFoo({hey:yield foo(2), colors:[]})
           trace((string)f.hey)
         }
       }
       trace((string)f.hey)
     }
 
-    func test() 
+    async func test() 
     {
-      bar()
+      yield bar()
     }
     ";
 
@@ -11635,7 +11635,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func int ret_int(int val, int ticks)
+    async func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11645,13 +11645,13 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    func test() 
+    async func test() 
     {
-      func int(int,int) p = ret_int
+      async func int(int,int) p = ret_int
       paral {
         {
-          foo(1, p(2, 1))
-          suspend()
+          foo(1, yield p(2, 1))
+          yield suspend()
         }
         foo(10, p(20, 2))
       }
@@ -11678,10 +11678,10 @@ public class TestVM : BHL_TestBase
     }
 
     class Bar { 
-      func int(int,int) ptr
+      async func int(int,int) ptr
     }
 
-    func int ret_int(int val, int ticks)
+    async func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11691,14 +11691,14 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    func test() 
+    async func test() 
     {
       Bar b = {}
       b.ptr = ret_int
       paral {
         {
           foo(1, b.ptr(2, 1))
-          suspend()
+          yield suspend()
         }
         foo(10, b.ptr(20, 2))
       }
@@ -11724,22 +11724,22 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func test() 
+    async func test() 
     {
       paral {
         {
           foo(1, 
-              func int (int val, int ticks) {
+              yield async func int (int val, int ticks) {
                 while(ticks > 0) {
                   yield()
                   ticks = ticks - 1
                 }
                 return val
               }(2, 1))
-          suspend()
+          yield suspend()
         }
         foo(10, 
-            func int (int val, int ticks) {
+            yield async func int (int val, int ticks) {
               while(ticks > 0) {
                 yield()
                 ticks = ticks - 1
@@ -11769,7 +11769,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func int ret_int(int val, int ticks)
+    async func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11779,11 +11779,11 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    func test() 
+    async func test() 
     {
       paral_all {
-        foo(1, ret_int(val: 2, ticks: 1))
-        foo(10, ret_int(val: 20, ticks: 2))
+        foo(1, yield ret_int(val: 2, ticks: 1))
+        foo(10, yield ret_int(val: 20, ticks: 2))
       }
     }
     ";
@@ -11841,14 +11841,14 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    func test() 
+    async func test() 
     {
       paral {
         {
-          foo(1, (new Bar).self().ret_int(val: 2, ticks: 1))
-          suspend()
+          foo(1, yield (new Bar).self().ret_int(val: 2, ticks: 1))
+          yield suspend()
         }
-        foo(10, (new Bar).self().ret_int(val: 20, ticks: 2))
+        foo(10, yield (new Bar).self().ret_int(val: 20, ticks: 2))
       }
     }
     ";
@@ -11879,7 +11879,7 @@ public class TestVM : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("ret_int", Types.Int,
+        var m = new FuncSymbolNative("ret_int", FuncAttrib.Async, Types.Int, 0,
           delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
@@ -11978,7 +11978,7 @@ public class TestVM : BHL_TestBase
       trace((string)k)
     }
 
-    func int doer() 
+    async func int doer() 
     {
       float k = 1
       defer {
@@ -11993,14 +11993,14 @@ public class TestVM : BHL_TestBase
       return 100
     }
 
-    func test() 
+    async func test() 
     {
       paral {
         {
-          doer()
+          yield doer()
         }
         {
-          suspend()
+          yield suspend()
         }
       }
     }
@@ -12027,7 +12027,7 @@ public class TestVM : BHL_TestBase
       trace((string)k)
     }
 
-    func doer() 
+    async func doer() 
     {
       float k = 1
       defer {
@@ -12035,15 +12035,15 @@ public class TestVM : BHL_TestBase
           foo(k)
         }
       }
-      suspend()
+      yield suspend()
       k = 2
     }
 
-    func test() 
+    async func test() 
     {
       paral {
         {
-          doer()
+          yield doer()
         }
         {
           yield()
@@ -12068,20 +12068,20 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func doer() 
+    async func doer() 
     {
       defer {
-        start(func() {})
+        start(async func() { yield() })
         trace(""142"")
       }
-      suspend()
+      yield suspend()
     }
 
-    func wow()
+    async func wow()
     {
       paral {
         {
-          doer()
+          yield doer()
         }
         {
           paral {
@@ -12093,9 +12093,9 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    func test() 
+    async func test() 
     {
-      wow()
+      yield wow()
     }
     ";
 
@@ -12114,20 +12114,20 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func doer(ref int a) 
+    async func doer(ref int a) 
     {
       defer {
-        start(func() {})
+        start(async func() { yield() })
       }
       a = 42
-      suspend()
+      yield suspend()
     }
 
-    func wow(ref int a)
+    async func wow(ref int a)
     {
       paral {
         {
-          doer(ref a)
+          yield doer(ref a)
         }
         {
           yield()
@@ -12136,10 +12136,10 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    func test() 
+    async func test() 
     {
       int a = 0
-      wow(ref a)
+      yield wow(ref a)
       trace((string)a)
     }
     ";
@@ -12159,21 +12159,21 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func changer() {
+    async func changer() {
       yield()
     }
 
-    func doer(int i) {
-      suspend()
+    async func doer(int i) {
+      yield suspend()
     }
 
-    func test() 
+    async func test() 
     {
       int i = 0
       while(i < 2) {
         paral {
-          changer()
-          doer(i)
+          yield changer()
+          yield doer(i)
         }
         i++
       }
@@ -12534,18 +12534,18 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    func level_body(func() cb) {
+    async func level_body(async func() cb) {
       defer {
         trace(""~level_body"")
       }
 
-      cb()
+      yield cb()
 
       level_start()
     }
 
-    func test() {
-      level_body(func() { 
+    async func test() {
+      yield level_body(async func() { 
         yield() 
       } )
     }
@@ -13267,7 +13267,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       while(true) {
         defer {
@@ -13304,7 +13304,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       int i = 0
       while(true) {
@@ -13433,22 +13433,22 @@ public class TestVM : BHL_TestBase
   public void TestDeferInSubParalFuncCall()
   {
     string bhl = @"
-    func wait_3() {
+    async func wait_3() {
       defer {
         trace(""~wait_3"")
       }
 
       trace(""!wait_3"")
-      suspend()
+      yield suspend()
     }
 
-    func doer() {
+    async func doer() {
       defer {
         trace(""~doer"")
       }
       paral {
         {
-          wait_3()
+          yield wait_3()
         }
         {
           yield()
@@ -13458,9 +13458,9 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    func test() 
+    async func test() 
     {
-      doer()
+      yield doer()
     }
     ";
 
@@ -13478,7 +13478,7 @@ public class TestVM : BHL_TestBase
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
-    func test() 
+    async func test() 
     {
       defer {
         trace(""hey"")
@@ -13514,7 +13514,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       defer {
         trace(""1"")
@@ -13524,13 +13524,13 @@ public class TestVM : BHL_TestBase
           defer {
             trace(""2"")
           }
-          suspend()
+          yield suspend()
         }
         {
           defer {
             trace(""3"")
           }
-          suspend()
+          yield suspend()
         }
         {
           defer {
@@ -13595,7 +13595,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       defer {
         trace(""hey"")
@@ -13631,7 +13631,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       defer {
         trace(""1"")
@@ -13641,13 +13641,13 @@ public class TestVM : BHL_TestBase
           defer {
             trace(""2"")
           }
-          suspend()
+          yield suspend()
         }
         {
           defer {
             trace(""3"")
           }
-          suspend()
+          yield suspend()
         }
         {
           defer {
@@ -13843,13 +13843,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       paral {
         {
           return 1
         }
-        suspend()
+        yield suspend()
       }
       return 0
     }
@@ -13953,18 +13953,18 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       paral {
         {
           paral {
-            suspend()
+            yield suspend()
             {
               return 1
             }
           }
         }
-        suspend()
+        yield suspend()
       }
       return 0
     }
@@ -13980,13 +13980,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       paral_all {
         {
           return 1
         }
-        suspend()
+        yield suspend()
       }
       return 0
     }
@@ -14002,7 +14002,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       paral_all {
         yield()
@@ -14022,18 +14022,18 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    async func int test() 
     {
       paral_all {
         {
           paral_all {
-            suspend()
+            yield suspend()
             {
               return 1
             }
           }
         }
-        suspend()
+        yield suspend()
       }
       return 0
     }
@@ -14075,15 +14075,16 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO: must be a compile time error
   [IsTested()]
   public void TestRunningInDeferIsException()
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       defer {
-        suspend()
+        yield suspend()
       }
     }
     ";
@@ -16962,7 +16963,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgToFiber()
   {
     string bhl = @"
-    func int test(int a)
+    async func int test(int a)
     {
       yield()
       return a
@@ -16985,7 +16986,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber()
   {
     string bhl = @"
-    func float test(float k, float m) 
+    async func float test(float k, float m) 
     {
       yield()
       return m
@@ -17002,7 +17003,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber2()
   {
     string bhl = @"
-    func float test(float k, float m) 
+    async func float test(float k, float m) 
     {
       yield()
       return k
@@ -17019,7 +17020,7 @@ public class TestVM : BHL_TestBase
   public void TestStartSeveralFibers()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       yield()
       return 123
@@ -17046,7 +17047,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func test()
     {
-      start(func() {
+      start(async func() {
         yield()
         trace(""done"")
       })
@@ -17070,7 +17071,7 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberFromScript()
   {
     string bhl = @"
-    func foo()
+    async func foo()
     {
       defer {
         trace(""4"")
@@ -17079,13 +17080,13 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    func test()
+    async func test()
     {
-      int fid = start(func() {
+      int fid = start(async func() {
         defer {
           trace(""0"")
         }
-        foo()
+        yield foo()
         trace(""2"")
       })
 
@@ -17112,7 +17113,7 @@ public class TestVM : BHL_TestBase
   public void TestDoubleStopFiberFromScript()
   {
     string bhl = @"
-    func foo()
+    async func foo()
     {
       defer {
         trace(""4"")
@@ -17121,13 +17122,13 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    func test()
+    async func test()
     {
-      int fid = start(func() {
+      int fid = start(async func() {
         defer {
           trace(""0"")
         }
-        foo()
+        yield foo()
         trace(""2"")
       })
 
@@ -17163,10 +17164,10 @@ public class TestVM : BHL_TestBase
       trace(""1"")
     }
 
-    func test()
+    async func test()
     {
       int fid
-      fid = start(func() {
+      fid = start(async func() {
         defer {
           trace(""0"")
         }
@@ -17199,7 +17200,7 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberExternallyWithProperDefers()
   {
     string bhl = @"
-    func foo()
+    async func foo()
     {
       defer {
         trace(""4"")
@@ -17208,13 +17209,13 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    func test()
+    async func test()
     {
-      int fb = start(func() {
+      int fb = start(async func() {
         defer {
           trace(""0"")
         }
-        foo()
+        yield foo()
         trace(""2"")
         yield()
       })
@@ -17250,23 +17251,23 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberExternallyWithProperDefersInParalsInModules()
   {
     string bhl2 = @"
-    func foo()
+    async func foo()
     {
       paral {
         defer {
           trace(""2"")
         }
-        suspend()
+        yield suspend()
       }
     }
     ";
 
     string bhl1 = @"
     import ""bhl2""
-    func test()
+    async func test()
     {
-      int fb = start(func() {
-        foo()
+      int fb = start(async func() {
+        yield foo()
       })
 
       defer {
@@ -17274,7 +17275,7 @@ public class TestVM : BHL_TestBase
         stop(fb)
       }
 
-      suspend()
+      yield suspend()
     }
     ";
 
@@ -17305,14 +17306,14 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func foo()
+    async func foo()
     {
       yield()
     }
 
-    func test() 
+    async func test() 
     {
-      foo()
+      yield foo()
     }
     ";
 
@@ -17346,14 +17347,14 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    func foo()
+    async func foo()
     {
       yield()
     }
 
-    func test() 
+    async func test() 
     {
-      foo()
+      yield foo()
     }
     ";
 
@@ -17581,7 +17582,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       while(true) {
         StartScriptInMgr(
@@ -17636,13 +17637,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    async func test() 
     {
       while(true) {
         StartScriptInMgr(
-          script: func() { 
+          script: async func() { 
             trace(""HERE;"") 
-            suspend()
+            yield suspend()
           },
           spawns : 1
         )
@@ -17696,8 +17697,8 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       StartScriptInMgr(
-        script: func() { 
-          suspend()
+        script: async func() { 
+          yield suspend()
         },
         spawns : 3
       )
@@ -17736,9 +17737,9 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      func() fn = func() {
+      async func() fn = async func() {
         trace(""HERE;"")
-        suspend()
+        yield suspend()
       }
 
       StartScriptInMgr(
@@ -17829,14 +17830,14 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      func() fn = func() {
+      async func() fn = async func() {
         trace(""HERE;"")
-        suspend()
+        yield suspend()
       }
 
       StartScriptInMgr(
-        script: func() { 
-          fn()
+        script: async func() { 
+          yield fn()
         },
         spawns : 2
       )
@@ -17877,10 +17878,10 @@ public class TestVM : BHL_TestBase
     {
       float a = 0
       StartScriptInMgr(
-        script: func() { 
+        script: async func() { 
           a = a + 1
           trace((string) a + "";"") 
-          suspend()
+          yield suspend()
         },
         spawns : 3
       )
@@ -17923,11 +17924,11 @@ public class TestVM : BHL_TestBase
     {
       float a = 1
       StartScriptInMgr(
-        script: func() { 
-            func (float a) { 
+        script: async func() { 
+            yield async func (float a) { 
               a = a + 1
               trace((string) a + "";"") 
-              suspend()
+              yield suspend()
           }(a)
         },
         spawns : 3
@@ -18252,7 +18253,7 @@ public class TestVM : BHL_TestBase
   public void TestGetStackTraceFromParal()
   {
     string bhl3 = @"
-    func float wow(float b)
+    async func float wow(float b)
     {
       paral {
         {
@@ -18268,22 +18269,22 @@ public class TestVM : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl3""
-    func float bar(float b)
+    async func float bar(float b)
     {
-      return wow(b)
+      return yield wow(b)
     }
     ";
 
     string bhl1 = @"
     import ""bhl2""
-    func float foo(float k)
+    async func float foo(float k)
     {
-      return bar(k)
+      return yield bar(k)
     }
 
-    func float test(float k) 
+    async func float test(float k) 
     {
-      return foo(k)
+      return yield foo(k)
     }
     ";
 
@@ -18333,7 +18334,7 @@ public class TestVM : BHL_TestBase
   public void TestGetStackTraceFromParalAll()
   {
     string bhl3 = @"
-    func float wow(float b)
+    async func float wow(float b)
     {
       paral_all {
         {
@@ -18349,22 +18350,22 @@ public class TestVM : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl3""
-    func float bar(float b)
+    async func float bar(float b)
     {
-      return wow(b)
+      return yield wow(b)
     }
     ";
 
     string bhl1 = @"
     import ""bhl2""
-    func float foo(float k)
+    async func float foo(float k)
     {
-      return bar(k)
+      return yield bar(k)
     }
 
-    func float test(float k) 
+    async func float test(float k) 
     {
-      return foo(k)
+      return yield foo(k)
     }
     ";
 
@@ -19051,18 +19052,18 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func A(int b = 1)
+    async func A(int b = 1)
     {
       trace(""A"" + (string)b)
-      suspend()
+      yield suspend()
     }
 
-    func test() 
+    async func test() 
     {
       while(true) {
         int i = 0
         paral {
-          A()
+          yield A()
           {
             while(i < 1) {
               yield()
@@ -20043,7 +20044,7 @@ public class TestVM : BHL_TestBase
 
             return null;
           },
-        new FuncArgSymbol("script", ts.TFunc(Types.Void)),
+        new FuncArgSymbol("script", ts.TFunc(true, Types.Void)),
         new FuncArgSymbol("spawns", Types.Int)
       );
 
