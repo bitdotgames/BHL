@@ -1545,19 +1545,19 @@ public partial class bhlParser : Parser {
 				break;
 			case 6:
 				{
-				_localctx = new ExpCallContext(_localctx);
+				_localctx = new ExpYieldCallContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 272; callExp();
+				State = 272; Match(T__7);
+				State = 273; funcCallExp();
 				}
 				break;
 			case 7:
 				{
-				_localctx = new ExpYieldCallContext(_localctx);
+				_localctx = new ExpCallContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 273; Match(T__7);
-				State = 274; funcCallExp();
+				State = 274; callExp();
 				}
 				break;
 			case 8:
@@ -7477,10 +7477,10 @@ public partial class bhlParser : Parser {
 		'\x2', '\x10C', '\x10D', '\b', '\xE', '\x1', '\x2', '\x10D', '\x12C', 
 		'\a', '\a', '\x2', '\x2', '\x10E', '\x12C', '\a', '\b', '\x2', '\x2', 
 		'\x10F', '\x12C', '\a', '\t', '\x2', '\x2', '\x110', '\x12C', '\x5', '\xB0', 
-		'Y', '\x2', '\x111', '\x12C', '\x5', '\xB2', 'Z', '\x2', '\x112', '\x12C', 
-		'\x5', '@', '!', '\x2', '\x113', '\x114', '\a', '\n', '\x2', '\x2', '\x114', 
-		'\x12C', '\x5', '\x44', '#', '\x2', '\x115', '\x12C', '\x5', '\x46', '$', 
-		'\x2', '\x116', '\x12C', '\x5', '\xB4', '[', '\x2', '\x117', '\x12C', 
+		'Y', '\x2', '\x111', '\x12C', '\x5', '\xB2', 'Z', '\x2', '\x112', '\x113', 
+		'\a', '\n', '\x2', '\x2', '\x113', '\x12C', '\x5', '\x44', '#', '\x2', 
+		'\x114', '\x12C', '\x5', '@', '!', '\x2', '\x115', '\x12C', '\x5', '\x46', 
+		'$', '\x2', '\x116', '\x12C', '\x5', '\xB4', '[', '\x2', '\x117', '\x12C', 
 		'\x5', '\xBA', '^', '\x2', '\x118', '\x12C', '\x5', '\x82', '\x42', '\x2', 
 		'\x119', '\x11A', '\a', '\v', '\x2', '\x2', '\x11A', '\x11B', '\x5', '\x12', 
 		'\n', '\x2', '\x11B', '\x11C', '\a', '\f', '\x2', '\x2', '\x11C', '\x11D', 
@@ -7497,7 +7497,7 @@ public partial class bhlParser : Parser {
 		'\x2', '\x2', '\x2', '\x12B', '\x10E', '\x3', '\x2', '\x2', '\x2', '\x12B', 
 		'\x10F', '\x3', '\x2', '\x2', '\x2', '\x12B', '\x110', '\x3', '\x2', '\x2', 
 		'\x2', '\x12B', '\x111', '\x3', '\x2', '\x2', '\x2', '\x12B', '\x112', 
-		'\x3', '\x2', '\x2', '\x2', '\x12B', '\x113', '\x3', '\x2', '\x2', '\x2', 
+		'\x3', '\x2', '\x2', '\x2', '\x12B', '\x114', '\x3', '\x2', '\x2', '\x2', 
 		'\x12B', '\x115', '\x3', '\x2', '\x2', '\x2', '\x12B', '\x116', '\x3', 
 		'\x2', '\x2', '\x2', '\x12B', '\x117', '\x3', '\x2', '\x2', '\x2', '\x12B', 
 		'\x118', '\x3', '\x2', '\x2', '\x2', '\x12B', '\x119', '\x3', '\x2', '\x2', 

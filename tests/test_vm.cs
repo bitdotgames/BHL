@@ -10566,12 +10566,12 @@ public class TestVM : BHL_TestBase
   public void TestParalAllRunning()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral_all {
         {
-          suspend() 
+          yield suspend() 
         }
         {
           yield()
@@ -10594,7 +10594,7 @@ public class TestVM : BHL_TestBase
   public void TestParalAllFinished()
   {
     string bhl = @"
-    func int test()
+    async func int test()
     {
       int a
       paral_all {
@@ -10668,7 +10668,7 @@ public class TestVM : BHL_TestBase
       return 0
     }
 
-    func int test() 
+    async func int test() 
     {
       int i = 0
       paral_all {
@@ -10855,7 +10855,7 @@ public class TestVM : BHL_TestBase
   public void TestParalFailure()
   {
     string bhl = @"
-    func foo()
+    async func foo()
     {
       yield()
       yield()
@@ -10863,7 +10863,7 @@ public class TestVM : BHL_TestBase
       trace(""A"")
     }
 
-    func bar()
+    async func bar()
     {
       yield()
       yield()
@@ -10871,11 +10871,11 @@ public class TestVM : BHL_TestBase
       trace(""B"")
     }
 
-    func test() 
+    async func test() 
     {
       paral {
-        bar()
-        foo()
+        yield bar()
+        yield foo()
       }
     }
     ";
@@ -10900,7 +10900,7 @@ public class TestVM : BHL_TestBase
   public void TestParalAllFailure()
   {
     string bhl = @"
-    func foo()
+    async func foo()
     {
       yield()
       yield()
@@ -10908,7 +10908,7 @@ public class TestVM : BHL_TestBase
       trace(""A"")
     }
 
-    func bar()
+    async func bar()
     {
       yield()
       yield()
@@ -10916,11 +10916,11 @@ public class TestVM : BHL_TestBase
       trace(""B"")
     }
 
-    func test() 
+    async func test() 
     {
       paral_all {
-        bar()
-        foo()
+        yield bar()
+        yield foo()
       }
     }
     ";
@@ -11091,7 +11091,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int foo()
+    async func int foo()
     {
       yield()
       return 100
@@ -11101,9 +11101,9 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    func test() 
+    async func test() 
     {
-      hey(""bar"", 1 + foo())
+      hey(""bar"", 1 + yield foo())
     }
     ";
 
@@ -11120,7 +11120,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int foo()
+    async func int foo()
     {
       yield()
       return 1

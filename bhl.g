@@ -58,8 +58,8 @@ exp
   | 'true'                                                  #ExpLiteralTrue
   | number                                                  #ExpLiteralNum
   | string                                                  #ExpLiteralStr
-  | callExp                                                 #ExpCall
   | 'yield' funcCallExp                                     #ExpYieldCall
+  | callExp                                                 #ExpCall
   | typeof                                                  #ExpTypeof
   | jsonObject                                              #ExpJsonObj
   | jsonArray                                               #ExpJsonArr

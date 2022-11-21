@@ -1514,6 +1514,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
+  {
+    var exp = ctx.funcCallExp();
+    CommonYieldFuncCall(exp);
+    Wrap(ctx).eval_type = Wrap(exp.callExp()).eval_type;
+
+    ++ref_compatible_exp_counter;
+
+    return null;
+  }
+
+  void CommonYieldFuncCall(bhlParser.FuncCallExpContext fn_call)
+  {
+     var curr_func = PeekFuncDecl();
+     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
+        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+
+     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
+
+     IType curr_type = null;
+     ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, yielded: true);
+  }
+
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
@@ -3363,18 +3386,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYieldFunc(bhlParser.YieldFuncContext ctx)
   {
-     var curr_func = PeekFuncDecl();
-     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
-        FireError(curr_func.parsed.tree, "function with yield calls must be async");
+    CommonYieldFuncCall(ctx.funcCallExp());
 
-     var fn_call = ctx.funcCallExp();
-
-     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
-
-     IType curr_type = null;
-     ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, yielded: true);
-
-     return null;
+    return null;
   }
 
   public override object VisitYieldWhile(bhlParser.YieldWhileContext ctx)
