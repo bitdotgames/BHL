@@ -1518,9 +1518,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.funcCallExp();
     CommonYieldFuncCall(exp);
-    Wrap(ctx).eval_type = Wrap(exp.callExp()).eval_type;
-
-    ++ref_compatible_exp_counter;
+    Wrap(ctx).eval_type = Wrap(exp).eval_type;
 
     return null;
   }
@@ -1535,6 +1533,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      IType curr_type = null;
      ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp().Start.Line, yielded: true);
+
+     Wrap(fn_call).eval_type = curr_type;
   }
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)

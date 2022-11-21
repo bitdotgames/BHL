@@ -11126,17 +11126,17 @@ public class TestVM : BHL_TestBase
       return 1
     }
 
-    func doer(ref int c)
+    async func doer(ref int c)
     {
       while(c < 2) {
-        c = c + foo()
+        c = c + yield foo()
       }
     }
 
-    func test() 
+    async func test() 
     {
       int c = 0
-      doer(ref c)
+      yield doer(ref c)
     }
     ";
 
@@ -11218,20 +11218,20 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int sub_sub_call()
+    async func int sub_sub_call()
     {
       yield()
       return 2
     }
 
-    func int sub_call()
+    async func int sub_call()
     {
-      return 1 + 10 + 12 + sub_sub_call()
+      return 1 + 10 + 12 + yield sub_sub_call()
     }
 
-    func test() 
+    async func test() 
     {
-      int cost = 1 + sub_call()
+      int cost = 1 + yield sub_call()
     }
     ";
 
@@ -11365,7 +11365,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanArgsStackInParal()
   {
     string bhl = @"
-    func int foo(int ticks) 
+    async func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11379,23 +11379,23 @@ public class TestVM : BHL_TestBase
       return 42
     }
 
-    func bar()
+    async func bar()
     {
       Foo f
       paral_all {
         {
-          f = PassthruFoo({hey:10, colors:[{r:foo(2)}]})
+          f = PassthruFoo({hey:10, colors:[{r: yield foo(2)}]})
         }
         {
-          f = PassthruFoo({hey:20, colors:[{r:foo(3)}]})
+          f = PassthruFoo({hey:20, colors:[{r: yield foo(3)}]})
         }
       }
       trace((string)f.hey)
     }
 
-    func test() 
+    async func test() 
     {
-      bar()
+      yield bar()
     }
     ";
 
@@ -11420,7 +11420,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncPtrArgsStackInParal()
   {
     string bhl = @"
-    func int foo(int ticks) 
+    async func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11434,24 +11434,24 @@ public class TestVM : BHL_TestBase
       return 42
     }
 
-    func bar()
+    async func bar()
     {
-      func int(int) p = foo
+      async func int(int) p = foo
       Foo f
       paral_all {
         {
-          f = PassthruFoo({hey:10, colors:[{r:p(2)}]})
+          f = PassthruFoo({hey:10, colors:[{r:yield p(2)}]})
         }
         {
-          f = PassthruFoo({hey:20, colors:[{r:p(3)}]})
+          f = PassthruFoo({hey:20, colors:[{r:yield p(3)}]})
         }
       }
       trace((string)f.hey)
     }
 
-    func test() 
+    async func test() 
     {
-      bar()
+      yield bar()
     }
     ";
 
@@ -11476,13 +11476,13 @@ public class TestVM : BHL_TestBase
   public void TestCleanArgsStackInParalForLambda()
   {
     string bhl = @"
-    func bar()
+    async func bar()
     {
       Foo f
       paral_all {
         {
           f = PassthruFoo({hey:10, colors:[{r:
-              func int (int n) 
+              yield async func int (int n) 
               { 
                 yield()
                 yield()
@@ -11493,7 +11493,7 @@ public class TestVM : BHL_TestBase
         }
         {
           f = PassthruFoo({hey:20, colors:[{r:
-              func int (int n) 
+              yield async func int (int n) 
               { 
                 yield()
                 yield()
@@ -11507,9 +11507,9 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func test() 
+    async func test() 
     {
-      bar()
+      yield bar()
     }
     ";
 
