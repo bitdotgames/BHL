@@ -241,14 +241,14 @@ public class TestYield : BHL_TestBase
     }
 
     class Foo : IFoo {
-      async func virtual int Doer() {
+      async virtual func int Doer() {
         yield()
         return 42
       }
     }
 
     class SubFoo : Foo {
-      async func override int Doer() {
+      async override func int Doer() {
         return 10 + yield base.Doer()
       }
     }
@@ -273,13 +273,13 @@ public class TestYield : BHL_TestBase
     }
 
     class Foo : IFoo {
-      func virtual int Doer() {
+      virtual func int Doer() {
         return 42
       }
     }
 
     class SubFoo : Foo {
-      async func override int Doer() {
+      async override func int Doer() {
         yield()
         return 10 + base.Doer()
       }
@@ -292,7 +292,7 @@ public class TestYield : BHL_TestBase
       },
       "'func int()' and  'async func int()'",
       new PlaceAssert(bhl, @"
-      async func override int Doer() {
+      async override func int Doer() {
 ------^"
       )
     );
@@ -307,14 +307,14 @@ public class TestYield : BHL_TestBase
     }
 
     class Foo : IFoo {
-      async func virtual int Doer() {
+      async virtual func int Doer() {
         yield()
         return 42
       }
     }
 
     class SubFoo : Foo {
-      func override int Doer() {
+      override func int Doer() {
         return 10
       }
     }
