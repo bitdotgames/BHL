@@ -70,6 +70,7 @@ public class BHL_TestRunner
 
   static void _Run(IList<string> names, BHL_TestBase test, bool verbose)
   {
+    Console.WriteLine(">>>> Testing " + test.GetType().Name + " <<<<");
     int c = 0;
     foreach(var method in test.GetType().GetMethods())
     {
