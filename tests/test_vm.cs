@@ -2765,13 +2765,32 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestPostOpAddAssignStringNotAllowed()
+  public void TestPostOpAddAssignString()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      string k = ""bar""
+      k += ""foo""
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var str = Execute(vm, "test").result.PopRelease().str;
+    AssertEqual(str, "barfoo");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestPostOpAddAssignStringNotCompatible()
   {
     string bhl = @"
       
     func test() 
     {
-      string k
+      int k
       k += ""foo""
     }
     ";
@@ -2780,10 +2799,10 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "is not numeric type",
+      "incompatible types: 'int' and 'string'",
       new PlaceAssert(bhl, @"
       k += ""foo""
-------^"
+-----------^"
       )
     );
   }

@@ -233,6 +233,104 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInterfaceParentOverride()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func int Doer()
+    }
+
+    class Foo : IFoo {
+      async func virtual int Doer() {
+        yield()
+        return 42
+      }
+    }
+
+    class SubFoo : Foo {
+      async func override int Doer() {
+        return 10 + yield base.Doer()
+      }
+    }
+
+    async func int test() {
+      var o = new SubFoo
+      return yield o.Doer()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(52, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestInterfaceParentOverrideError()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func int Doer()
+    }
+
+    class Foo : IFoo {
+      func virtual int Doer() {
+        return 42
+      }
+    }
+
+    class SubFoo : Foo {
+      async func override int Doer() {
+        yield()
+        return 10 + base.Doer()
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "'func int()' and  'async func int()'",
+      new PlaceAssert(bhl, @"
+      async func override int Doer() {
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestInterfaceParentSyncOverrideAsyncIsOk()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func int Doer()
+    }
+
+    class Foo : IFoo {
+      async func virtual int Doer() {
+        yield()
+        return 42
+      }
+    }
+
+    class SubFoo : Foo {
+      func override int Doer() {
+        return 10
+      }
+    }
+
+    func int test() {
+      var o = new SubFoo
+      return o.Doer()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"

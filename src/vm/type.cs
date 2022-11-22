@@ -385,7 +385,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
       return false;
     if(ReferenceEquals(this, o))
       return true;
-    //TODO: 'sync' function is a subset of an 'async' one?
+    //TODO: 'non-async' function is a subset of an 'async' one
     if(is_async && !o.is_async)
       return false;
     if(!ret_type.Equals(o.ret_type))
