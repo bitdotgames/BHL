@@ -121,6 +121,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
 
+  HashSet<FuncSymbol> has_yield_calls = new HashSet<FuncSymbol>();
+
   Dictionary<FuncSymbol, List<AST_Block>> func2blocks = new Dictionary<FuncSymbol, List<AST_Block>>();
 
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
@@ -1283,8 +1285,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    return tp;
   }
 
-  void CommonVisitLambda(IParseTree ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
+  void CommonVisitLambda(ParserRuleContext ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
   {
+    if(yielded)
+      CheckAsyncCallValidity(ctx);
+
     var tp = ParseType(funcLambda.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + funcLambda.Stop.Line;
@@ -1561,8 +1566,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    CheckAsyncCallValidity(ctx);
-
     var exp = ctx.funcCallExp();
     CommonYieldFuncCall(ctx, exp);
     Wrap(ctx).eval_type = Wrap(exp).eval_type;
@@ -1578,6 +1581,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(GetBlockLevel(BlockType.DEFER) != -1)
       FireError(ctx, "yield is not allowed in defer block");
+
+    has_yield_calls.Add(curr_func);
   }
 
   void CommonYieldFuncCall(ParserRuleContext ctx, bhlParser.FuncCallExpContext fn_call)
@@ -1726,6 +1731,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldParen(bhlParser.ExpYieldParenContext ctx)
   {
+    CheckAsyncCallValidity(ctx);
+
     var ast = new AST_Interim();
     var exp = ctx.exp(); 
     PushAST(ast);
@@ -2396,6 +2403,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       FireError(ctx.retType(), "matching 'return' statement not found");
 
     PopScope();
+
+    if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Async) && !has_yield_calls.Contains(func_ast.symbol))
+      FireError(ctx, "async functions without yield calls not allowed");
   }
 
   void Pass_OutlineGlobalVar(ParserPass pass)

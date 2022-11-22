@@ -70,7 +70,7 @@ exp
   | exp 'is' type                                           #ExpIs
   | operatorUnary exp                                       #ExpUnary
   | '(' exp ')' chainExp*                                   #ExpParen
-  | 'yield' '(' exp ')' chainExp+ callArgs                   #ExpYieldParen
+  | 'yield' '(' exp ')' chainExp+ callArgs                  #ExpYieldParen
   | exp operatorBitAnd exp                                  #ExpBitAnd
   | exp operatorBitOr exp                                   #ExpBitOr
   | exp operatorMulDivMod exp                               #ExpMulDivMod

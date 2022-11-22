@@ -25,12 +25,97 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyAsyncFuncNotAllowed()
+  {
+    {
+      string bhl = @"
+      async func test() {
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async functions without yield calls not allowed",
+        new PlaceAssert(bhl, @"
+      async func test() {
+------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+      async func test() {
+        int a = 10
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async functions without yield calls not allowed",
+        new PlaceAssert(bhl, @"
+      async func test() {
+------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+      async func test() {
+        start(async func() {
+            yield()
+        })
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async functions without yield calls not allowed",
+        new PlaceAssert(bhl, @"
+      async func test() {
+------^"
+        )
+      );
+    }
+  }
+
+  [IsTested()]
   public void TestBasicYield()
   {
     string bhl = @"
     async func test()
     {
       yield()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMethodYield()
+  {
+    string bhl = @"
+    class Foo {
+      async func bar() {
+        yield()
+      }
+    }
+    async func test()
+    {
+      var foo = new Foo
+      yield foo.bar()
     }
     ";
 
@@ -87,6 +172,34 @@ public class TestYield : BHL_TestBase
       "async function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestAsyncMethodMustBeCalledWithYield()
+  {
+    string bhl = @"
+    class Foo {
+      async func bar() {
+        yield()
+      }
+    }
+    func test()
+    {
+      var foo = new Foo
+      foo.bar()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "async function must be called via yield",
+      new PlaceAssert(bhl, @"
+      foo.bar()
 ------^"
       )
     );
