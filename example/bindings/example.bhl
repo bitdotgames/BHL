@@ -1,5 +1,5 @@
 
-func bool Idle()
+async func bool Idle()
 {
   bool done = false
   defer {
@@ -13,13 +13,13 @@ func bool Idle()
   int sec = (int)(1 + Rand() * 3)
   Trace("Idling " + (string)sec + " sec...")
 
-  Wait(sec)
+  yield Wait(sec)
 
   done = true
   return true
 }
 
-func bool FindTarget(ref int target_id)
+async func bool FindTarget(ref int target_id)
 {
   target_id = 0
 
@@ -32,42 +32,42 @@ func bool FindTarget(ref int target_id)
   Trace("Found new target " + (string)tmp_target_id + "! Approaching it.")
 
   int sec = (int)(1 + Rand() * 3)
-  Wait(sec)
+  yield Wait(sec)
   target_id = tmp_target_id
   return true
 }
 
-func bool AttackTarget(ref int target_id)
+async func bool AttackTarget(ref int target_id)
 {
   if(target_id == 0) {
     return false
   }
 
   Trace("Attacking target " + (string)target_id + "")
-  Wait(0.2)
+  yield Wait(0.2)
   Trace("Target " + (string)target_id + " is dead!")
   target_id = 0
   return true
 }
 
-func StateChanged(ref int state)
+async func StateChanged(ref int state)
 {
   int last_state = state
   yield while(last_state == state)
   Trace("State changed!")
 }
 
-func RandomStateChanger(ref int state)
+async func RandomStateChanger(ref int state)
 {
   while(true) {
-    Wait(1 + Rand() * 4)
+    yield Wait(1 + Rand() * 4)
     state = state + 1
   }
 }
 
-func Selector([]func bool() fns) {
+async func Selector([]async func bool() fns) {
   foreach(func bool() fn in fns) {
-    if(!fn()) {
+    if(!yield fn()) {
       continue
     } else {
       break
@@ -75,22 +75,22 @@ func Selector([]func bool() fns) {
   }
 }
 
-func Unit() {
+async func Unit() {
   Trace("Unit starts...")
 
   int state = 0
   int target_id = 0
 
   paral {
-    RandomStateChanger(ref state)
+    yield RandomStateChanger(ref state)
     while(true) {
       paral {
-        StateChanged(ref state)
-        Selector(
+        yield StateChanged(ref state)
+        yield Selector(
             [
-              func bool() { return AttackTarget(ref target_id) }, 
-              func bool() { return FindTarget(ref target_id) }, 
-              func bool() { return Idle() }
+              async func bool() { return yield AttackTarget(ref target_id) }, 
+              async func bool() { return yield FindTarget(ref target_id) }, 
+              async func bool() { return yield Idle() }
             ]
           )
       }

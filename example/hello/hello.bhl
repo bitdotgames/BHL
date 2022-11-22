@@ -1,6 +1,6 @@
 import "std/io"
 
-func main([]string argv) {
+async func main([]string argv) {
   paral {
     {
       yield()
@@ -8,7 +8,7 @@ func main([]string argv) {
     }
     {
       std.io.Write("Hello ")
-      suspend()
+      yield suspend()
     }
   }
 }
