@@ -1524,7 +1524,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    EnsureInAsyncFunc();
+    CheckAsyncCallValidity();
 
     var exp = ctx.funcCallExp();
     CommonYieldFuncCall(exp);
@@ -1533,7 +1533,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void EnsureInAsyncFunc()
+  void CheckAsyncCallValidity()
   {
     var curr_func = PeekFuncDecl();
     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
@@ -1542,7 +1542,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonYieldFuncCall(bhlParser.FuncCallExpContext fn_call)
   {
-    EnsureInAsyncFunc();
+    CheckAsyncCallValidity();
 
     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
@@ -3411,7 +3411,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
-    EnsureInAsyncFunc();
+    CheckAsyncCallValidity();
 
     int line = ctx.Start.Line;
     var ast = new AST_Yield(line);
@@ -3432,7 +3432,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    EnsureInAsyncFunc();
+    CheckAsyncCallValidity();
 
     var ast = new AST_Block(BlockType.WHILE);
 
