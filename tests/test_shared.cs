@@ -70,25 +70,26 @@ public class BHL_TestRunner
 
   static void _Run(IList<string> names, BHL_TestBase test, bool verbose)
   {
-    Console.WriteLine(">>>> Testing " + test.GetType().Name + " <<<<");
-    int c = 0;
+    var methods = new List<MethodInfo>();
+
     foreach(var method in test.GetType().GetMethods())
     {
-      if(IsMemberTested(method))
-      {
-        if(IsAllowedToRun(names, test, method))
-        {
-          if(verbose)
-            Console.WriteLine(">>>> Testing " + test.GetType().Name + "." + method.Name + " <<<<");
-
-          ++c;
-          method.Invoke(test, new object[] {});
-        }
-      }
+      if(IsMemberTested(method) && IsAllowedToRun(names, test, method))
+        methods.Add(method);
     }
 
-    if(c > 0)
-      Console.WriteLine("Done running "  + c + " tests");
+    if(methods.Count > 0)
+    {
+      Console.WriteLine(">>>> Testing " + test.GetType().Name + " (" + methods.Count + ") <<<<");
+
+      foreach(var method in methods)
+      {
+        if(verbose)
+          Console.WriteLine(">>>> Testing " + test.GetType().Name + "." + method.Name + " <<<<");
+
+        method.Invoke(test, new object[] {});
+      }
+    }
   }
 
   static bool IsAllowedToRun(IList<string> names, BHL_TestBase test, MemberInfo member)

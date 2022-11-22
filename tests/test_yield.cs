@@ -276,4 +276,45 @@ public class TestYield : BHL_TestBase
       )
     );
   }
+
+  [IsTested()]
+  public void TestFuncPtrIsSubsetOfAsyncPtr()
+  {
+    string bhl = @"
+    async func int test() {
+      async func int() p = func int() {
+        return 42
+      }
+      return yield p()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestAsyncFuncPtrIsNotSubsetOfFuncPtr()
+  {
+    string bhl = @"
+    func int test() {
+      func int() p = async func int() {
+        return 42
+      }
+      return p()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'func int()' and 'async func int()'",
+      new PlaceAssert(bhl, @"
+      func int() p = async func int() {
+-------------------^"
+      )
+    );
+  }
 }
