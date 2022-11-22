@@ -181,6 +181,57 @@ public class TestYield : BHL_TestBase
     AssertFalse(vm.Tick());
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestInterfaceImplentingAsyncAsRegularMethod()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func int Doer()
+    }
+
+    class Foo : IFoo {
+      func int Doer() {
+        return 42
+      }
+    }
+
+    func int test() {
+      var foo = new Foo
+      return foo.Doer()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestInterfaceImplentingAsync()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func int Doer()
+    }
+
+    class Foo : IFoo {
+      func int Doer() {
+        return 42
+      }
+    }
+
+    async func int test() {
+      IFoo ifoo = new Foo
+      return yield ifoo.Doer()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestSuspend()
   {
