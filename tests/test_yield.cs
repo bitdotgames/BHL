@@ -321,23 +321,70 @@ public class TestYield : BHL_TestBase
   [IsTested()]
   public void TestYieldIsForbiddenInDefer()
   {
-    string bhl = @"
-    async func test() {
-      defer {
+    {
+      string bhl = @"
+      async func test() {
+        defer {
+          yield()
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "yield is not allowed in defer block",
+        new PlaceAssert(bhl, @"
+          yield()
+----------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+      async func test() {
+        defer {
+          yield while(true)
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "yield is not allowed in defer block",
+        new PlaceAssert(bhl, @"
+          yield while(true)
+----------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+      async func foo() {
         yield()
       }
-    }
-    ";
+      async func test() {
+        defer {
+          yield foo()
+        }
+      }
+      ";
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "yield is not allowed in defer block",
-      new PlaceAssert(bhl, @"
-        yield()
---------^"
-      )
-    );
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "yield is not allowed in defer block",
+        new PlaceAssert(bhl, @"
+          yield foo()
+----------^"
+        )
+      );
+    }
   }
 }

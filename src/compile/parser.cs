@@ -1561,25 +1561,28 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    CheckAsyncCallValidity();
+    CheckAsyncCallValidity(ctx);
 
     var exp = ctx.funcCallExp();
-    CommonYieldFuncCall(exp);
+    CommonYieldFuncCall(ctx, exp);
     Wrap(ctx).eval_type = Wrap(exp).eval_type;
 
     return null;
   }
 
-  void CheckAsyncCallValidity()
+  void CheckAsyncCallValidity(ParserRuleContext ctx)
   {
     var curr_func = PeekFuncDecl();
     if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
       FireError(curr_func.parsed.tree, "function with yield calls must be async");
+
+    if(GetBlockLevel(BlockType.DEFER) != -1)
+      FireError(ctx, "yield is not allowed in defer block");
   }
 
-  void CommonYieldFuncCall(bhlParser.FuncCallExpContext fn_call)
+  void CommonYieldFuncCall(ParserRuleContext ctx, bhlParser.FuncCallExpContext fn_call)
   {
-    CheckAsyncCallValidity();
+    CheckAsyncCallValidity(ctx);
 
     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
@@ -3450,7 +3453,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
-    CheckAsyncCallValidity();
+    CheckAsyncCallValidity(ctx);
 
     int line = ctx.Start.Line;
     var ast = new AST_Yield(line);
@@ -3461,7 +3464,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYieldFunc(bhlParser.YieldFuncContext ctx)
   {
-    CommonYieldFuncCall(ctx.funcCallExp());
+    CommonYieldFuncCall(ctx, ctx.funcCallExp());
 
     return null;
   }
@@ -3471,7 +3474,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    CheckAsyncCallValidity();
+    CheckAsyncCallValidity(ctx);
 
     var ast = new AST_Block(BlockType.WHILE);
 

@@ -14135,30 +14135,6 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO: must be a compile time error
-  [IsTested()]
-  public void TestRunningInDeferIsException()
-  {
-    string bhl = @"
-
-    async func test() 
-    {
-      defer {
-        yield suspend()
-      }
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    AssertError<Exception>(
-      delegate() { 
-        Execute(vm, "test");
-      },
-      "Defer execution invalid status: RUNNING"
-    );
-  }
-
   [IsTested()]
   public void TestLambdaDefer()
   {
