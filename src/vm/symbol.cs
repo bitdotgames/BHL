@@ -1725,7 +1725,9 @@ public class FuncSymbolVirtual : FuncSymbol
 
   public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
   {
-    if(!signature.Equals(fs.signature))
+    //NOTE: we call fs.signature(signature) but not signature.Equals(fs.signature) on purpose,
+    //      since we want to allow 'non-async' functions to be a subset(compatible) of 'async' ones
+    if(!fs.signature.Equals(signature))
       throw new SymbolError(fs, "virtual method signature doesn't match the base one: '" + signature + "' and  '" + fs.signature + "'");
 
     fs._virtual = this;
