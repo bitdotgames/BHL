@@ -2582,7 +2582,7 @@ public class TestClasses : BHL_TestBase
     import ""bhl1""  
     namespace b {
       class B { 
-        func virtual int Foo() {
+        virtual func int Foo() {
           return 42
         }
       }
@@ -2629,7 +2629,7 @@ public class TestClasses : BHL_TestBase
       int a
       int b
 
-      func virtual int getA() {
+      virtual func int getA() {
         return this.a
       }
 
@@ -2641,7 +2641,7 @@ public class TestClasses : BHL_TestBase
     class Bar : Foo {
       int new_a
 
-      func override int getA() {
+      override func int getA() {
         return this.new_a
       }
     }
@@ -2678,7 +2678,7 @@ public class TestClasses : BHL_TestBase
     {
       string bhl = @"
       class Foo {
-        func override int getA() {
+        override func int getA() {
           return 42
         }
       }
@@ -2690,7 +2690,7 @@ public class TestClasses : BHL_TestBase
         },
         "no base virtual method to override",
         new PlaceAssert(bhl, @"
-        func override int getA() {
+        override func int getA() {
 --------^"
         )
       );
@@ -2704,7 +2704,7 @@ public class TestClasses : BHL_TestBase
         }
       }
       class Foo : Hey {
-        func override int getA() {
+        override func int getA() {
           return 42
         }
       }
@@ -2716,7 +2716,7 @@ public class TestClasses : BHL_TestBase
         },
         "no base virtual method to override",
         new PlaceAssert(bhl, @"
-        func override int getA() {
+        override func int getA() {
 --------^"
         )
       );
@@ -2730,7 +2730,7 @@ public class TestClasses : BHL_TestBase
         }
       }
       class Foo : Hey {
-        func virtual int getA() {
+        virtual func int getA() {
           return 42
         }
       }
@@ -2742,7 +2742,7 @@ public class TestClasses : BHL_TestBase
         },
         "already defined symbol 'getA'",
         new PlaceAssert(bhl, @"
-        func virtual int getA() {
+        virtual func int getA() {
 --------^"
         )
       );
@@ -2751,12 +2751,12 @@ public class TestClasses : BHL_TestBase
     {
       string bhl = @"
       class Hey {
-        func virtual int getA() {
+        virtual func int getA() {
           return 4
         }
       }
       class Foo : Hey {
-        func override float getA() {
+        override func float getA() {
           return 42
         }
       }
@@ -2768,7 +2768,7 @@ public class TestClasses : BHL_TestBase
         },
         "signature doesn't match the base one",
         new PlaceAssert(bhl, @"
-        func override float getA() {
+        override func float getA() {
 --------^"
         )
       );
@@ -2777,7 +2777,7 @@ public class TestClasses : BHL_TestBase
     {
       string bhl = @"
       class Foo {
-        func virtual void getA(int b, int a = 1) {
+        virtual func void getA(int b, int a = 1) {
         }
       }
       ";
@@ -2788,7 +2788,7 @@ public class TestClasses : BHL_TestBase
         },
         "virtual methods are not allowed to have default arguments",
         new PlaceAssert(bhl, @"
-        func virtual void getA(int b, int a = 1) {
+        virtual func void getA(int b, int a = 1) {
 --------^"
         )
       );
@@ -2797,12 +2797,12 @@ public class TestClasses : BHL_TestBase
     {
       string bhl = @"
       class Foo {
-        func virtual void getA(int b, int a) {
+        virtual func void getA(int b, int a) {
         }
       }
 
       class Bar : Foo {
-        func override void getA(int b, int a = 1) {
+        override func void getA(int b, int a = 1) {
         }
       }
       ";
@@ -2813,7 +2813,7 @@ public class TestClasses : BHL_TestBase
         },
         "virtual methods are not allowed to have default arguments",
         new PlaceAssert(bhl, @"
-        func override void getA(int b, int a = 1) {
+        override func void getA(int b, int a = 1) {
 --------^"
         )
       );
@@ -2834,7 +2834,7 @@ public class TestClasses : BHL_TestBase
         return this.b
       }
 
-      func virtual int getA() {
+      virtual func int getA() {
         return this.a
       }
     }
@@ -2842,7 +2842,7 @@ public class TestClasses : BHL_TestBase
     class Bar : Foo {
       int bar_a
 
-      func override int getA() {
+      override func int getA() {
         return this.bar_a
       }
     }
@@ -2850,7 +2850,7 @@ public class TestClasses : BHL_TestBase
     class Hey : Bar {
       int hey_a
 
-      func override int getA() {
+      override func int getA() {
         return this.hey_a
       }
     }
@@ -2905,7 +2905,7 @@ public class TestClasses : BHL_TestBase
       int a
       int b
 
-      func virtual int getA() {
+      virtual func int getA() {
         return this.a
       }
 
@@ -2917,7 +2917,7 @@ public class TestClasses : BHL_TestBase
     class Bar : Foo {
       int new_a
 
-      func override int getA() {
+      override func int getA() {
         return base.getA() + this.new_a
       }
     }
@@ -2950,7 +2950,7 @@ public class TestClasses : BHL_TestBase
         return 42
       }
 
-      func virtual int getA() {
+      virtual func int getA() {
         return this.a
       }
 
@@ -2966,7 +2966,7 @@ public class TestClasses : BHL_TestBase
     class Bar : Foo {
       int new_a
 
-      func override int getA() {
+      override func int getA() {
         return this.new_a
       }
 
@@ -3022,7 +3022,7 @@ public class TestClasses : BHL_TestBase
           return 42
         }
 
-        func virtual int getA(Item item) {
+        virtual func int getA(Item item) {
           return this.a + item.a
         }
 
@@ -3039,7 +3039,7 @@ public class TestClasses : BHL_TestBase
     class Bar : fns.Foo {
       int new_a
 
-      func override int getA(fns.Item item) {
+      override func int getA(fns.Item item) {
         return this.new_a + item.a
       }
 
@@ -3071,7 +3071,7 @@ public class TestClasses : BHL_TestBase
   public void TestInvalidFuncAttrubutes()
   {
     string bhl = @"
-    func override int getA() {
+    override func int getA() {
       return 42
     }
     ";
@@ -3082,8 +3082,8 @@ public class TestClasses : BHL_TestBase
       },
       "improper usage of attribute",
       new PlaceAssert(bhl, @"
-    func override int getA() {
----------^"
+    override func int getA() {
+----^"
       )
     );
   }
@@ -3095,7 +3095,7 @@ public class TestClasses : BHL_TestBase
     import ""bhl2""  
     namespace a {
       class A : b.B {
-        func override int Foo(int v) {
+        override func int Foo(int v) {
           return v + 1
         }
       }
@@ -3106,7 +3106,7 @@ public class TestClasses : BHL_TestBase
     import ""bhl1""  
     namespace b {
       class B {
-        func virtual int Foo(int v) {
+        virtual func int Foo(int v) {
           return v
         }
       }
@@ -3143,11 +3143,11 @@ public class TestClasses : BHL_TestBase
     }
 
     class BaseBar : IBar {
-      func virtual int test() { return 1 }
+      virtual func int test() { return 1 }
     }
 
     class Bar : BaseBar {
-      func override int test() { return 2 }
+      override func int test() { return 2 }
     }
 
     func int test() {
@@ -3174,11 +3174,11 @@ public class TestClasses : BHL_TestBase
     }
 
     class BaseBar : IBar {
-      func virtual int test(int v) { return v+1 }
+      virtual func int test(int v) { return v+1 }
     }
 
     class Bar : BaseBar {
-      func override int test(int v) { return v+2 }
+      override func int test(int v) { return v+2 }
     }
 
     func int test1() {
@@ -3544,7 +3544,7 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
     class Bar {
-      func static int foo() {
+      static func int foo() {
         return 42
       }
     }
@@ -3566,7 +3566,7 @@ public class TestClasses : BHL_TestBase
     string bhl = @"
     class Bar {
       int b
-      func static int foo() {
+      static func int foo() {
         return 42
       }
       func int getC() {
@@ -3594,7 +3594,7 @@ public class TestClasses : BHL_TestBase
     namespace a {
       class Bar {
         int b
-        func static int foo() {
+        static func int foo() {
           return 42
         }
         func int getC() {
@@ -3630,7 +3630,7 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
     class Bar {
-      func static int foo() {
+      static func int foo() {
         return 42
       }
     }
@@ -3660,7 +3660,7 @@ public class TestClasses : BHL_TestBase
     string bhl = @"
     class Bar {
       int a
-      func static int foo() {
+      static func int foo() {
         return this.a
       }
     }

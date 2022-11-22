@@ -2334,7 +2334,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcAttribs().Length > 0)
+    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].asyncFlag() == null)
       FireError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
     pass.func_symb = new FuncSymbolScript(
@@ -2355,7 +2355,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
 
     pass.func_symb.signature = ParseFuncSignature(
-      pass.func_ctx.asyncFlag() != null, 
+      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].asyncFlag() != null, 
       ParseType(pass.func_ctx.retType()), 
       pass.func_ctx.funcParams()
     );
@@ -2597,7 +2597,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var attr = fd.funcAttribs()[f];
           var attr_type = FuncAttrib.None;
 
-          if(attr.virtualFlag() != null)
+          if(attr.asyncFlag() != null)
+            attr_type = FuncAttrib.Async;
+          else if(attr.virtualFlag() != null)
             attr_type = FuncAttrib.Virtual;
           else if(attr.overrideFlag() != null)
             attr_type = FuncAttrib.Override;
@@ -2606,6 +2608,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(func_symb.attribs.HasFlag(attr_type))
             FireError(attr, "this attribute is set already");
+
           func_symb.attribs |= attr_type;
         }
 
@@ -2659,7 +2662,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
 
-        func_symb.signature = ParseFuncSignature(fd.asyncFlag() != null, ParseType(fd.retType()), fd.funcParams());
+        func_symb.signature = ParseFuncSignature(
+          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].asyncFlag() != null, 
+          ParseType(fd.retType()), 
+          fd.funcParams()
+        );
 
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);

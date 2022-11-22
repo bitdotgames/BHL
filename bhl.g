@@ -293,11 +293,11 @@ asyncFlag
   ;
 
 funcAttribs
-  : (virtualFlag | overrideFlag | staticFlag)
+  : (asyncFlag | virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
-  : asyncFlag? 'func' funcAttribs* retType? NAME '(' funcParams? ')' funcBlock
+  : funcAttribs* 'func' retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
