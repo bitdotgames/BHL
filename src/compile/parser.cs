@@ -1759,6 +1759,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      IType curr_type = null;
      ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx, write: true);
 
+    if(curr_type == Types.String && post_op == "+=")
+      return null;
+
     if(!Types.IsNumeric(curr_type))
       FireError(ctx, "is not numeric type");
 
