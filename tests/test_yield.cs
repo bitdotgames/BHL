@@ -156,6 +156,32 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInterfaceYield()
+  {
+    string bhl = @"
+    interface IFoo {
+      async func Doer()
+    }
+
+    class Foo : IFoo {
+      async func Doer() {
+        yield()
+      }
+    }
+    async func test()
+    {
+      var foo = new Foo
+      yield foo.Doer()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    CommonChecks(vm);
+  }
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
