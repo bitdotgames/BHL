@@ -127,6 +127,35 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestMethodBaseYield()
+  {
+    string bhl = @"
+    class FooBase {
+      async func foo() {
+        yield()
+      }
+    }
+
+    class Foo : FooBase {
+      async func bar() {
+        yield base.foo()
+      }
+    }
+    async func test()
+    {
+      var foo = new Foo
+      yield foo.bar()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSuspend()
   {
     string bhl = @"
