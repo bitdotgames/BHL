@@ -669,7 +669,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
        )
     {
       if(PeekFuncDecl() == null)
-        FireError(chain.parseTree(chain.Length-1), "function calls not allowed in global context");
+        FireError(chain_ctx, "function calls not allowed in global context");
 
       if(!yielded && fs.attribs.HasFlag(FuncAttrib.Async))
         FireError(chain_ctx, "async function must be called via yield");
