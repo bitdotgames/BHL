@@ -19028,6 +19028,58 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGlobalVariableFuncCallsNotAllowed()
+  {
+    {
+      string bhl = @"
+
+      func int make()
+      {
+        return 10
+      }
+
+      int foo = make()
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"function calls not allowed in global context",
+        new PlaceAssert(bhl, @"
+      int foo = make()
+--------------------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+
+      class Foo {
+        func int make()
+        {
+          return 10
+        }
+      }
+
+      int foo = (new Foo).make()
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        @"function calls not allowed in global context",
+        new PlaceAssert(bhl, @"
+      int foo = (new Foo).make()
+------------------------------^"
+        )
+      );
+    }
+  }
+
+  [IsTested()]
   public void TestLocalVariableHasPriorityOverGlobalOne()
   {
     string bhl = @"

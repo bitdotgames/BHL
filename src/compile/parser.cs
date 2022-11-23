@@ -566,7 +566,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   AST_Tree ProcChainedCall(
-    IScope scope,
+    IScope root_scope,
     ITerminalNode root_name, 
     IExpChain chain, 
     ref IType curr_type, 
@@ -575,6 +575,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool yielded = false
    )
   {
+    IScope scope = root_scope;
+
     int line = chain_ctx.Start.Line;  
 
     PushAST(new AST_Interim());
@@ -650,21 +652,30 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var chain_ast = PeekAST();
     PopAST();
+
+    ValidateChainCall(chain_ctx, chain, chain_ast, yielded);
+
     PeekAST().AddChildren(chain_ast);
 
+    return chain_ast;
+  }
+  
+  void ValidateChainCall(ParserRuleContext chain_ctx, IExpChain chain, AST_Tree chain_ast, bool yielded)
+  {
     if(chain_ast.children.Count > 0 && 
        chain_ast.children[chain_ast.children.Count-1] is AST_Call last_call && 
        (last_call.type == EnumCall.FUNC || last_call.type == EnumCall.MFUNC) &&
        last_call.symb is FuncSymbol fs
        )
     {
+      if(PeekFuncDecl() == null)
+        FireError(chain.parseTree(chain.Length-1), "function calls not allowed in global context");
+
       if(!yielded && fs.attribs.HasFlag(FuncAttrib.Async))
         FireError(chain_ctx, "async function must be called via yield");
       else if(yielded && !fs.attribs.HasFlag(FuncAttrib.Async))
         FireError(chain_ctx, "not an async function");
     }
-
-    return chain_ast;
   }
 
   void TryProcessClassBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, IExpChain chain, int line)
