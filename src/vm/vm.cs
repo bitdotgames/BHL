@@ -1187,9 +1187,15 @@ public class VM : INamedResolver
   public Fiber Start(string func, uint cargs_bits, params Val[] args)
   {
     FuncAddr addr;
-    if(!TryFindFuncAddr(func, out addr))
+    FuncSymbolScript fs;
+    if(!TryFindFuncAddr(func, out addr, out fs))
       return null;
 
+    return Start(addr, cargs_bits, args);
+  }
+
+  public Fiber Start(FuncAddr addr, uint cargs_bits, params Val[] args)
+  {
     var fb = Fiber.New(this);
     Register(fb);
 
@@ -1209,11 +1215,11 @@ public class VM : INamedResolver
     return fb;
   }
 
-  bool TryFindFuncAddr(string path, out FuncAddr addr)
+  public bool TryFindFuncAddr(string path, out FuncAddr addr, out FuncSymbolScript fs)
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveNamedByPath(path) as FuncSymbolScript;
+    fs = ResolveNamedByPath(path) as FuncSymbolScript;
     if(fs == null)
       return false;
 
