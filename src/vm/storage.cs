@@ -229,7 +229,7 @@ public class Val
     return dv;
   }
 
-  public void SetNum(int n)
+  public void SetNum(long n)
   {
     Reset();
     type = Types.Int;

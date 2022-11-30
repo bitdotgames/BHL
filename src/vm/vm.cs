@@ -2068,7 +2068,7 @@ public class VM : INamedResolver
     var val = curr_frame.stack.PopRelease();
 
     if(cast_type == Types.Int)
-      new_val.SetNum((int)val.num);
+      new_val.SetNum((long)val.num);
     else if(cast_type == Types.String && val.type != Types.String)
       new_val.SetStr(val.num.ToString());
     else
