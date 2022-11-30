@@ -145,6 +145,22 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInternalIntIsLong()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return (int)(2147483647 + 2147483647)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 2147483647L + 2147483647L);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCastStrToAny()
   {
     string bhl = @"
