@@ -222,7 +222,7 @@ public class Val
     _obj = s;
   }
 
-  static public Val NewNum(VM vm, int n)
+  static public Val NewNum(VM vm, long n)
   {
     Val dv = New(vm);
     dv.SetNum(n);
