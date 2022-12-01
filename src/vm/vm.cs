@@ -1261,8 +1261,6 @@ public class VM : INamedResolver
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame)
   {
-    uint cargs_bits = 0;
-
     var fb = Fiber.New(this);
     Register(fb);
 
@@ -1273,7 +1271,7 @@ public class VM : INamedResolver
       var frame = Frame.New(this);
       frame.Init(fb, curr_frame, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.exec.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(cargs_bits), ref fb.status);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1285,7 +1283,7 @@ public class VM : INamedResolver
       var frame = ptr.MakeFrame(this, curr_frame);
       Attach(fb, frame);
       //cargs bits
-      frame.stack.Push(Val.NewFlt(this, cargs_bits));
+      frame.stack.Push(Val.NewNum(this, 0));
     }
 
     return fb;
