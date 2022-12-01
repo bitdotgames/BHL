@@ -337,6 +337,13 @@ public class Val
   }
 }
 
+public class ValStack : FixedStack<Val>
+{
+  public ValStack(int max_capacity)
+    : base(max_capacity)
+  {}
+}
+
 public class ValList : IList<Val>, IValRefcounted
 {
   //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
