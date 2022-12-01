@@ -863,7 +863,10 @@ public class ModuleCompiler : AST_Visitor
 
     fsymb.ip_addr = GetCodeSize();
 
-    Emit(Opcodes.InitFrame, new int[] { fsymb.local_vars_num + 1/*cargs bits*/});
+    Emit(Opcodes.InitFrame, 
+      new int[] { fsymb.local_vars_num + 1/*cargs bits*/}, 
+      ast.symbol.parsed.line
+    );
     VisitChildren(ast);
 
     Emit(Opcodes.ExitFrame);
@@ -877,7 +880,10 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    Emit(Opcodes.InitFrame, new int[] { ast.local_vars_num + 1/*cargs bits*/});
+    Emit(Opcodes.InitFrame, 
+      new int[] { ast.local_vars_num + 1/*cargs bits*/},
+      ast.symbol.parsed.line
+    );
     VisitChildren(ast);
     Emit(Opcodes.ExitFrame, null, ast.last_line_num);
     AddOffsetFromTo(lmbd_op, Peek());
