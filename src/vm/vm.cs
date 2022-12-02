@@ -1641,6 +1641,7 @@ public class VM : INamedResolver
       case Opcodes.ExitFrame:
       {
         exec.ip = curr_frame.return_ip;
+        exec.stack = curr_frame.origin_stack;
         curr_frame.ExitScope(null, exec);
         curr_frame.Release();
         exec.frames.Pop();
@@ -1649,6 +1650,7 @@ public class VM : INamedResolver
       break;
       case Opcodes.Return:
       {
+        //let's jump to exit frame
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
@@ -1661,6 +1663,7 @@ public class VM : INamedResolver
           curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
+        //let's jump to exit frame
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
@@ -2009,6 +2012,7 @@ public class VM : INamedResolver
 
     //let's remember ip to return to
     new_frame.return_ip = exec.ip;
+    exec.stack = new_frame._stack;
     exec.frames.Push(new_frame);
     exec.regions.Push(new Region(new_frame, new_frame));
     //since ip will be incremented below we decrement it intentionally here
