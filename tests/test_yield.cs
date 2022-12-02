@@ -84,6 +84,26 @@ public class TestYield : BHL_TestBase
         )
       );
     }
+
+    {
+      string bhl = @"
+      func test() {
+        start(async func() {
+        })
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async functions without yield calls not allowed",
+        new PlaceAssert(bhl, @"
+        start(async func() {
+--------------^"
+        )
+      );
+    }
   }
 
   [IsTested()]
@@ -617,6 +637,7 @@ public class TestYield : BHL_TestBase
     string bhl = @"
     func int test() {
       func int() p = async func int() {
+        yield()
         return 42
       }
       return p()
