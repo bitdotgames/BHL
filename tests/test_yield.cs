@@ -632,6 +632,51 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestOnlyAsyncFuncCanBeYielded()
+  {
+    string bhl = @"
+    func foo() {
+    }
+    async func test() {
+      yield foo()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not an async function",
+      new PlaceAssert(bhl, @"
+      yield foo()
+------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestOnlyAsyncPtrCanBeYielded()
+  {
+    string bhl = @"
+    async func test() {
+      func () p = func() {}
+      yield p()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not an async function",
+      new PlaceAssert(bhl, @"
+      yield p()
+------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestAsyncFuncPtrIsNotSubsetOfFuncPtr()
   {
     string bhl = @"

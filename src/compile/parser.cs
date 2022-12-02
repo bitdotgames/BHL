@@ -653,29 +653,39 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain_ast = PeekAST();
     PopAST();
 
-    ValidateChainCall(chain_ctx, chain, chain_ast, yielded);
+    ValidateChainCall(chain_ctx, chain_ast, yielded);
 
     PeekAST().AddChildren(chain_ast);
 
     return chain_ast;
   }
   
-  void ValidateChainCall(ParserRuleContext chain_ctx, IExpChain chain, AST_Tree chain_ast, bool yielded)
+  void ValidateChainCall(ParserRuleContext chain_ctx, AST_Tree chain_ast, bool yielded)
   {
     if(chain_ast.children.Count > 0 && 
-       chain_ast.children[chain_ast.children.Count-1] is AST_Call last_call && 
-       (last_call.type == EnumCall.FUNC || last_call.type == EnumCall.MFUNC) &&
-       last_call.symb is FuncSymbol fs
-       )
+       chain_ast.children[chain_ast.children.Count-1] is AST_Call last_call)
     {
-      if(PeekFuncDecl() == null)
-        FireError(chain_ctx, "function calls not allowed in global context");
-
-      if(!yielded && fs.attribs.HasFlag(FuncAttrib.Async))
-        FireError(chain_ctx, "async function must be called via yield");
-      else if(yielded && !fs.attribs.HasFlag(FuncAttrib.Async))
-        FireError(chain_ctx, "not an async function");
+      if((last_call.type == EnumCall.FUNC || last_call.type == EnumCall.MFUNC) &&
+          last_call.symb is FuncSymbol fs)
+      {
+        ValidateFuncCall(chain_ctx, fs.signature, yielded);
+      }
+      else if(last_call.type == EnumCall.FUNC_VAR && last_call.symb is VariableSymbol vs)
+      {
+        ValidateFuncCall(chain_ctx, vs.type.Get() as FuncSignature, yielded);
+      }
     }
+  }
+
+  void ValidateFuncCall(ParserRuleContext chain_ctx, FuncSignature fsig, bool yielded)
+  {
+    if(PeekFuncDecl() == null)
+      FireError(chain_ctx, "function calls not allowed in global context");
+
+    if(!yielded && fsig.is_async)
+      FireError(chain_ctx, "async function must be called via yield");
+    else if(yielded && !fsig.is_async)
+      FireError(chain_ctx, "not an async function");
   }
 
   void TryProcessClassBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, IExpChain chain, int line)

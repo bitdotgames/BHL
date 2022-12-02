@@ -11732,7 +11732,7 @@ public class TestVM : BHL_TestBase
           foo(1, yield p(2, 1))
           yield suspend()
         }
-        foo(10, p(20, 2))
+        foo(10, yield p(20, 2))
       }
     }
     ";
