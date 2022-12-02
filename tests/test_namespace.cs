@@ -723,8 +723,8 @@ public class TestNamespace : BHL_TestBase
       var ts = new Types();
       {
         var fn = new FuncSymbolNative("wow", ts.T("int"),
-            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-              frm.stack.Push(Val.NewInt(frm.vm, 1)); 
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
             }
         );
@@ -732,8 +732,8 @@ public class TestNamespace : BHL_TestBase
       }
       {
         var fn = new FuncSymbolNative("wow", ts.T("int"),
-            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-              frm.stack.Push(Val.NewInt(frm.vm, 10)); 
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              stack.Push(Val.NewInt(frm.vm, 10)); 
               return null;
             }
         );

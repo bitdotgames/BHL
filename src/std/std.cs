@@ -20,9 +20,9 @@ public static class std
 
       {
         var fn = new FuncSymbolNative("Write", ts.T("void"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
-            var s = frm.stack.PopRelease().str;
+            var s = stack.PopRelease().str;
             Console.Write(s);
             return null;
           }, 
@@ -33,9 +33,9 @@ public static class std
 
       {
         var fn = new FuncSymbolNative("WriteLine", ts.T("void"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
-            var s = frm.stack.PopRelease().str;
+            var s = stack.PopRelease().str;
             Console.WriteLine(s);
             return null;
           }, 

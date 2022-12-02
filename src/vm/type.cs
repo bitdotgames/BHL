@@ -556,7 +556,7 @@ public class Types : INamedResolver
 
     {
       var fn = new FuncSymbolNative("suspend", this.T("void"), 
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
         } 
@@ -566,7 +566,7 @@ public class Types : INamedResolver
 
     {
       var fn = new FuncSymbolNative("yield", this.T("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         } 
@@ -576,12 +576,12 @@ public class Types : INamedResolver
 
     {
       var fn = new FuncSymbolNative("start", this.T("int"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var val_ptr = frm.stack.Pop();
-          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm).id;
+          var val_ptr = stack.Pop();
+          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm, stack).id;
           val_ptr.Release();
-          frm.stack.Push(Val.NewNum(frm.vm, id));
+          stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
         new FuncArgSymbol("p", this.TFunc("void"))
@@ -591,9 +591,9 @@ public class Types : INamedResolver
 
     {
       var fn = new FuncSymbolNative("stop", this.T("void"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var fid = (int)frm.stack.PopRelease().num;
+          var fid = (int)stack.PopRelease().num;
           frm.vm.Stop(fid);
           return null;
         }, 
@@ -604,10 +604,10 @@ public class Types : INamedResolver
 
     {
       var fn = new FuncSymbolNative("type", this.T("Type"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
-          var o = frm.stack.Pop();
-          frm.stack.Push(Val.NewObj(frm.vm, o.type, ClassType));
+          var o = stack.Pop();
+          stack.Push(Val.NewObj(frm.vm, o.type, ClassType));
           o.Release();
           return null;
         }, 

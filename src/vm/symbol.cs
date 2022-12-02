@@ -414,20 +414,20 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       {
         //let's create fake static get/set native functions
         var static_get = new FuncSymbolNative(GetNativeStaticFieldGetFuncName(fld), fld.type,
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var res = Val.New(frm.vm);
           fld.getter(frm, null, ref res, fld);
-          frm.stack.Push(res);
+          stack.Push(res);
           return null;
         });
         this.GetNamespace().nfunc_index.Index(static_get);
 
         var static_set = new FuncSymbolNative(GetNativeStaticFieldSetFuncName(fld), fld.type,
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           Val ctx = null;
-          var val = frm.stack.Pop();
+          var val = stack.Pop();
           fld.setter(frm, ref ctx, val, fld);
           val.Release();
           return null;
@@ -695,12 +695,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine IndexOf(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Add(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine IndexOf(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeral
@@ -735,10 +735,10 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     v.SetNum(lst.Count);
   }
   
-  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frm.stack.Pop();
-    var arr = frm.stack.Pop();
+    var val = stack.Pop();
+    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.Add(val);
     val.Release();
@@ -746,10 +746,10 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     return null;
   }
 
-  public override ICoroutine IndexOf(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine IndexOf(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frm.stack.Pop();
-    var arr = frm.stack.Pop();
+    var val = stack.Pop();
+    var arr = stack.Pop();
     var lst = AsList(arr);
 
     int idx = -1;
@@ -764,28 +764,28 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 
     val.Release();
     arr.Release();
-    frm.stack.Push(Val.NewInt(frm.vm, idx));
+    stack.Push(Val.NewInt(frm.vm, idx));
     return null;
   }
 
   //NOTE: follows special Opcodes.ArrIdx conventions
-  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
     var lst = AsList(arr);
     var res = lst[idx]; 
-    frame.stack.PushRetain(res);
+    stack.PushRetain(res);
     arr.Release();
     return null;
   }
 
   //NOTE: follows special Opcodes.ArrIdxW conventions
-  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
-    var val = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
+    var val = stack.Pop();
     var lst = AsList(arr);
     lst[idx] = val;
     val.Release();
@@ -793,19 +793,19 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     return null;
   }
 
-  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
     arr.Release();
     return null;
   }
 
-  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var arr = frame.stack.Pop();
+    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
     arr.Release();
@@ -872,10 +872,10 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.SetNum(((IList<T>)ctx.obj).Count);
   }
   
-  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frm.stack.Pop();
-    var arr = frm.stack.Pop();
+    var val = stack.Pop();
+    var arr = stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst.Add((T)val.obj);
     val.Release();
@@ -883,36 +883,36 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine IndexOf(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine IndexOf(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frm.stack.Pop();
-    var arr = frm.stack.Pop();
+    var val = stack.Pop();
+    var arr = stack.Pop();
     var lst = (IList<T>)arr.obj;
     int idx = lst.IndexOf((T)val.obj);
     val.Release();
     arr.Release();
-    frm.stack.Push(Val.NewInt(frm.vm, idx));
+    stack.Push(Val.NewInt(frm.vm, idx));
     return null;
   }
 
   //NOTE: follows special Opcodes.ArrIdx conventions
-  public override ICoroutine ArrIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
     var lst = (IList<T>)arr.obj;
     var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
-    frame.stack.Push(res);
+    stack.Push(res);
     arr.Release();
     return null;
   }
 
   //NOTE: follows special Opcodes.ArrIdxW conventions
-  public override ICoroutine ArrIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
-    var val = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
+    var val = stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst[idx] = (T)val.obj;
     val.Release();
@@ -920,20 +920,20 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     return null;
   }
 
-  public override ICoroutine RemoveAt(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst.RemoveAt(idx); 
     arr.Release();
     return null;
   }
 
-  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)frame.stack.PopRelease().num;
-    var arr = frame.stack.Pop();
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
     var lst = (IList<T>)arr.obj;
     lst.Clear();
     arr.Release();
@@ -1043,16 +1043,16 @@ public abstract class MapTypeSymbol : ClassSymbol
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract void GetEnumerator(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract ICoroutine Add(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine TryGet(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
-  public abstract ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Add(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine MapIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine MapIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Remove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Contains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine TryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
 
   public abstract void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status);
+  public abstract ICoroutine EnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeral
@@ -1129,11 +1129,11 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     v.SetObj(new ValMap.Enumerator(m), enumerator_type);
   }
 
-  public override ICoroutine Add(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = frm.stack.Pop();
-    var key = frm.stack.Pop();
-    var v = frm.stack.Pop();
+    var val = stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     //TODO: maybe we should rather user C# Dictionary.Add(k, v)?
     map[key] = val;
@@ -1143,10 +1143,10 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     return null;
   }
 
-  public override ICoroutine Remove(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Remove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var key = frame.stack.Pop();
-    var v = frame.stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     map.Remove(key);
     key.Release();
@@ -1154,38 +1154,38 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     return null;
   }
 
-  public override ICoroutine Contains(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Contains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var key = frame.stack.Pop();
-    var v = frame.stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     bool yes = map.ContainsKey(key);
     key.Release();
     v.Release();
-    frame.stack.Push(Val.NewBool(frame.vm, yes));
+    stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
 
-  public override ICoroutine TryGet(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine TryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var key = frame.stack.Pop();
-    var v = frame.stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     Val val;
     bool yes = map.TryGetValue(key, out val);
     key.Release();
     v.Release();
     if(yes)
-      frame.stack.PushRetain(val);
+      stack.PushRetain(val);
     else
-      frame.stack.Push(Val.New(frame.vm)); /*just dummy value*/
-    frame.stack.Push(Val.NewBool(frame.vm, yes));
+      stack.Push(Val.New(frame.vm)); /*just dummy value*/
+    stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
 
-  public override ICoroutine Clear(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var v = frame.stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     map.Clear();
     v.Release();
@@ -1193,24 +1193,24 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   }
 
   //NOTE: follows special Opcodes.MapIdx conventions
-  public override ICoroutine MapIdx(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine MapIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var key = frame.stack.Pop();
-    var v = frame.stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
     var map = AsMap(v);
     var res = map[key]; 
-    frame.stack.PushRetain(res);
+    stack.PushRetain(res);
     key.Release();
     v.Release();
     return null;
   }
 
   //NOTE: follows special Opcodes.MapIdxW conventions
-  public override ICoroutine MapIdxW(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine MapIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var key = frame.stack.Pop();
-    var v = frame.stack.Pop();
-    var val = frame.stack.Pop();
+    var key = stack.Pop();
+    var v = stack.Pop();
+    var val = stack.Pop();
     var map = AsMap(v);
     map[key] = val;
     key.Release();
@@ -1226,14 +1226,14 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     v.SetBool(ok);
   }
 
-  public override ICoroutine EnumeratorCurrent(VM.Frame frame, FuncArgsInfo args_info, ref BHS status)
+  public override ICoroutine EnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var v = frame.stack.Pop();
+    var v = stack.Pop();
     var en = (ValMap.Enumerator)v._obj;
     var key = (Val)en.Key; 
     var val = (Val)en.Value; 
-    frame.stack.PushRetain(val);
-    frame.stack.PushRetain(key);
+    stack.PushRetain(val);
+    stack.PushRetain(key);
     v.Release();
     return null;
   }
@@ -1838,7 +1838,7 @@ public class LambdaSymbol : FuncSymbolScript
 
 public class FuncSymbolNative : FuncSymbol
 {
-  public delegate ICoroutine Cb(VM.Frame frm, FuncArgsInfo args_info, ref BHS status); 
+  public delegate ICoroutine Cb(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status); 
   public Cb cb;
 
   int default_args_num;

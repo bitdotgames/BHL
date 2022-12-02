@@ -140,7 +140,7 @@ public class BHL_TestBase
   public void BindFail(Types ts)
   {
     var fn = new FuncSymbolNative("fail", ts.T("void"),
-      delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) 
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
       { 
         status = BHS.FAILURE;
         return null;
@@ -214,17 +214,17 @@ public class BHL_TestBase
 
     {
       var m = new FuncSymbolNative("Add", ts.T("Color"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          var k = (float)frm.stack.PopRelease().num;
-          var c = (Color)frm.stack.PopRelease().obj;
+          var k = (float)stack.PopRelease().num;
+          var c = (Color)stack.PopRelease().obj;
 
           var newc = new Color();
           newc.r = c.r + k;
           newc.g = c.g + k;
 
           var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
-          frm.stack.Push(v);
+          stack.Push(v);
 
           return null;
         },
@@ -236,11 +236,11 @@ public class BHL_TestBase
     
     {
       var m = new FuncSymbolNative("mult_summ", ts.T("float"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          var k = frm.stack.PopRelease().num;
-          var c = (Color)frm.stack.PopRelease().obj;
-          frm.stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
+          var k = stack.PopRelease().num;
+          var c = (Color)stack.PopRelease().obj;
+          stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
           return null;
         },
         new FuncArgSymbol("k", ts.T("float"))
@@ -251,12 +251,12 @@ public class BHL_TestBase
     
     {
       var fn = new FuncSymbolNative("mkcolor", ts.T("Color"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            var r = frm.stack.PopRelease().num;
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            var r = stack.PopRelease().num;
             var c = new Color();
             c.r = (float)r;
             var v = Val.NewObj(frm.vm, c, ts.T("Color").Get());
-            frm.stack.Push(v);
+            stack.Push(v);
             return null;
           },
         new FuncArgSymbol("r", ts.T("float"))
@@ -267,8 +267,8 @@ public class BHL_TestBase
     
     {
       var fn = new FuncSymbolNative("mkcolor_null", ts.T("Color"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            frm.stack.Push(frm.vm.Null);
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            stack.Push(frm.vm.Null);
             return null;
           }
       );
@@ -313,11 +313,11 @@ public class BHL_TestBase
 
       {
         var m = new FuncSymbolNative("mult_summ_alpha", ts.T("float"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
-            var c = (ColorAlpha)frm.stack.PopRelease().obj;
+            var c = (ColorAlpha)stack.PopRelease().obj;
 
-            frm.stack.Push(Val.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
+            stack.Push(Val.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
 
             return null;
           }
@@ -397,8 +397,8 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative("PassthruFoo", ts.T("Foo"),
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            frm.stack.Push(frm.stack.Pop());
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            stack.Push(stack.Pop());
             return null;
           },
           new FuncArgSymbol("foo", ts.T("Foo"))
@@ -472,8 +472,8 @@ public class BHL_TestBase
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative("trace", Types.Void,
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-          string str = frm.stack.PopRelease().str;
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          string str = stack.PopRelease().str;
           //for extra debug
           //Console.WriteLine(str);
           log.Append(str);
@@ -490,8 +490,8 @@ public class BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative("log", Types.Void,
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status) { 
-            string str = frm.stack.PopRelease().str;
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            string str = stack.PopRelease().str;
             Console.WriteLine(str); 
             return null;
           },

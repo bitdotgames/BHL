@@ -882,11 +882,11 @@ public class TestInterfaces : BHL_TestBase
           "INativeFoo", 
           null, 
           new FuncSymbolNative("foo", ts.T("int"),
-            delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
-              var n = (int)frm.stack.PopRelease().num;
-              var f = (INativeFoo)frm.stack.PopRelease().obj;
-              frm.stack.Push(Val.NewInt(frm.vm, f.foo(n)));
+              var n = (int)stack.PopRelease().num;
+              var f = (INativeFoo)stack.PopRelease().obj;
+              stack.Push(Val.NewInt(frm.vm, f.foo(n)));
               return null;
             },
             new FuncArgSymbol("int", ts.T("int")) 
@@ -904,11 +904,11 @@ public class TestInterfaces : BHL_TestBase
       ts.ns.Define(cl);
 
       var m = new FuncSymbolNative("foo", ts.T("int"),
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          var n = (int)frm.stack.PopRelease().num;
-          var f = (NativeFoo)frm.stack.PopRelease().obj;
-          frm.stack.Push(Val.NewInt(frm.vm, f.foo(n)));
+          var n = (int)stack.PopRelease().num;
+          var f = (NativeFoo)stack.PopRelease().obj;
+          stack.Push(Val.NewInt(frm.vm, f.foo(n)));
           return null;
         },
         new FuncArgSymbol("int", ts.T("int")) 
