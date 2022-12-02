@@ -1333,12 +1333,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: while we are inside lambda the eval type is its return type
     Wrap(ctx).eval_type = lmb_symb.GetReturnType();
 
-    PushAST(ast.block());
-    Visit(funcLambda.funcBlock());
-    PopAST();
-
-    if(tp.Get() != Types.Void && !return_found.Contains(lmb_symb))
-      FireError(funcLambda.funcBlock(), "matching 'return' statement not found");
+    ParseFuncBlock(funcLambda, funcLambda.funcBlock(), funcLambda.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
     var curr_type = (IType)lmb_symb.signature;
@@ -2402,21 +2397,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    ParseFuncBlock(pass.func_ctx, pass.func_ast);
+    PushScope(pass.func_ast.symbol);
+    ParseFuncBlock(pass.func_ctx, pass.func_ctx.funcBlock(), pass.func_ctx.retType(), pass.func_ast);
+    PopScope();
   }
 
-  void ParseFuncBlock(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
+  void ParseFuncBlock(ParserRuleContext ctx, bhlParser.FuncBlockContext block_ctx, bhlParser.RetTypeContext ret_ctx, AST_FuncDecl func_ast)
   {
-    PushScope(func_ast.symbol);
-
     PushAST(func_ast.block());
-    Visit(ctx.funcBlock());
+    Visit(block_ctx);
     PopAST();
 
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
-      FireError(ctx.retType(), "matching 'return' statement not found");
-
-    PopScope();
+      FireError(ret_ctx, "matching 'return' statement not found");
 
     if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Async) && !has_yield_calls.Contains(func_ast.symbol))
       FireError(ctx, "async functions without yield calls not allowed");
@@ -2776,7 +2769,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
         if(func_ast == null)
           throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
-        ParseFuncBlock(fd, func_ast);
+
+        PushScope(func_symb);
+        ParseFuncBlock(fd, fd.funcBlock(), fd.retType(), func_ast);
+        PopScope();
       }
     }
   }

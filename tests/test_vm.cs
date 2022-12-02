@@ -1105,7 +1105,7 @@ public class TestVM : BHL_TestBase
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
       func bool() { foo() }
-------------------^"
+-----------^"
       )
     );
   }
@@ -15089,6 +15089,26 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test", Val.NewNum(vm, 42));
     AssertEqual("3", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStructCanBeNull()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      IntStruct c = null
+      return c == null
+    }
+    ";
+
+    var ts = new Types();
+    BindIntStruct(ts);
+
+    var vm = MakeVM(bhl, ts);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
