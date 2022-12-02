@@ -276,7 +276,7 @@ public class VM : INamedResolver
     internal ICoroutine coroutine;
     internal FixedStack<Region> regions = new FixedStack<Region>(32);
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
-    internal ValStack stack;
+    public ValStack stack;
   }
 
   public class Fiber
@@ -1157,7 +1157,7 @@ public class VM : INamedResolver
           self.Retain();
           var class_type = ((ArrayTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame._stack, new FuncArgsInfo(), ref status);
           init_frame._stack.Push(self);
         }
         break;
@@ -1167,7 +1167,7 @@ public class VM : INamedResolver
           self.Retain();
           var class_type = ((MapTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, new FuncArgsInfo(), ref status);
+          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame._stack, new FuncArgsInfo(), ref status);
           init_frame._stack.Push(self);
         }
         break;
@@ -1275,7 +1275,7 @@ public class VM : INamedResolver
       var frame = Frame.New(this);
       frame.Init(fb, curr_frame, curr_stack, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.exec.coroutine = ptr.native.cb(curr_frame, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1454,7 +1454,7 @@ public class VM : INamedResolver
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        class_type.FuncArrIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
+        class_type.FuncArrIdx.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.ArrIdxW:
@@ -1462,7 +1462,7 @@ public class VM : INamedResolver
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        class_type.FuncArrIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
+        class_type.FuncArrIdxW.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.ArrAddInplace:
@@ -1471,7 +1471,7 @@ public class VM : INamedResolver
         self.Retain();
         var class_type = ((ArrayTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
+        ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
         exec.stack.Push(self);
       }
       break;
@@ -1480,7 +1480,7 @@ public class VM : INamedResolver
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((MapTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        class_type.FuncMapIdx.cb(curr_frame, new FuncArgsInfo(), ref status);
+        class_type.FuncMapIdx.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.MapIdxW:
@@ -1488,7 +1488,7 @@ public class VM : INamedResolver
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((MapTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        class_type.FuncMapIdxW.cb(curr_frame, new FuncArgsInfo(), ref status);
+        class_type.FuncMapIdxW.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
       }
       break;
       case Opcodes.MapAddInplace:
@@ -1497,7 +1497,7 @@ public class VM : INamedResolver
         self.Retain();
         var class_type = ((MapTypeSymbol)self.type);
         var status = BHS.SUCCESS;
-        ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, new FuncArgsInfo(), ref status);
+        ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
         exec.stack.Push(self);
       }
       break;
@@ -1721,7 +1721,7 @@ public class VM : INamedResolver
         var native = (FuncSymbolNative)types.nfunc_index[func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, native, args_bits, out status, ref exec.coroutine))
+        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1773,7 +1773,7 @@ public class VM : INamedResolver
         var class_type = (ClassSymbol)self.type;
 
         BHS status;
-        if(CallNative(curr_frame, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref exec.coroutine))
+        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1835,7 +1835,7 @@ public class VM : INamedResolver
         var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, func_symb, args_bits, out status, ref exec.coroutine))
+        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1850,7 +1850,7 @@ public class VM : INamedResolver
         if(ptr.native != null)
         {
           BHS status;
-          bool return_status = CallNative(curr_frame, ptr.native, args_bits, out status, ref exec.coroutine);
+          bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
           val_ptr.Release();
           if(return_status)
             return status;
@@ -2016,10 +2016,10 @@ public class VM : INamedResolver
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
-  static bool CallNative(Frame curr_frame, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
+  static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
   {
     status = BHS.SUCCESS;
-    var new_coroutine = native.cb(curr_frame, new FuncArgsInfo(args_bits), ref status);
+    var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);
 
     if(new_coroutine != null)
     {
@@ -2907,7 +2907,6 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
   public int min_ip;
   public int max_ip;
   public ValStack stack = new ValStack(VM.Frame.MAX_STACK);
-  ValStack orig_stack;
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
 
