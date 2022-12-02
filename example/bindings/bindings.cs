@@ -14,10 +14,10 @@ public class MyBindings : IUserBindings
   {
     {
       var fn = new FuncSymbolNative("Trace", Types.Void,
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
-          var str = frm.stack.PopRelease().str;
+          var str = stack.PopRelease().str;
           Console.WriteLine(str);
 #endif
           return null;
@@ -30,12 +30,12 @@ public class MyBindings : IUserBindings
 
     {
       var fn = new FuncSymbolNative("Rand", Types.Float,
-        delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
           var rnd = new Random();
           var val = rnd.NextDouble(); 
-          frm.stack.Push(Val.NewFlt(frm.vm, val));
+          stack.Push(Val.NewFlt(frm.vm, val));
 #endif
           return null;
         }
@@ -45,7 +45,7 @@ public class MyBindings : IUserBindings
 
     {
       var fn = new FuncSymbolNative("Wait", FuncAttrib.Async, Types.Void, 0,
-          delegate(VM.Frame frm, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           { return new WaitNode(); },
           new FuncArgSymbol("t", Types.Float)
         );
@@ -71,7 +71,7 @@ public class WaitNode : ICoroutine
     if(first_time)
     {
       status = BHS.RUNNING;
-      time_left = (float)frm.stack.PopRelease().num;
+      time_left = (float)exec.stack.PopRelease().num;
       first_time = false;
     }
     else 
