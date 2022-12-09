@@ -774,7 +774,7 @@ public class Types : INamedResolver
 
   public IType CheckBinOpOverload(IScope scope, WrappedParseTree lhs, WrappedParseTree rhs, FuncSymbol op_func) 
   {
-    var op_func_arg_type = op_func.signature.arg_types[0];
+    var op_func_arg_type = op_func.signature.arg_types[1];
     CheckAssign(op_func_arg_type.Get(), rhs);
     return op_func.GetReturnType();
   }

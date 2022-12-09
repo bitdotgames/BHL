@@ -16389,24 +16389,25 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts, setup: false);
-    var op = new FuncSymbolNative("+", ts.T("Color"),
+    var op = new FuncSymbolNative("+", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
-        var r = (Color)stack.PopRelease().obj;
+        var o = (Color)stack.PopRelease().obj;
         var c = (Color)stack.PopRelease().obj;
 
         var newc = new Color();
-        newc.r = c.r + r.r;
-        newc.g = c.g + r.g;
+        newc.r = c.r + o.r;
+        newc.g = c.g + o.g;
 
         var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("r", ts.T("Color"))
+      new FuncArgSymbol("c", ts.T("Color")),
+      new FuncArgSymbol("o", ts.T("Color"))
     );
-    cl.OverloadBinaryOperator(op);
+    cl.Define(op);
     cl.Setup();
 
     var vm = MakeVM(bhl, ts);
@@ -16432,7 +16433,7 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts, setup: false);
-    var op = new FuncSymbolNative("*", ts.T("Color"),
+    var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)stack.PopRelease().num;
@@ -16447,9 +16448,10 @@ public class TestVM : BHL_TestBase
 
         return null;
       },
+      new FuncArgSymbol("c", ts.T("Color")),
       new FuncArgSymbol("k", ts.T("float"))
     );
-    cl.OverloadBinaryOperator(op);
+    cl.Define(op);
     cl.Setup();
 
     var vm = MakeVM(bhl, ts);
@@ -16477,7 +16479,7 @@ public class TestVM : BHL_TestBase
     
     var cl = BindColor(ts, setup: false);
     {
-      var op = new FuncSymbolNative("*", ts.T("Color"),
+      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
         var k = (float)stack.PopRelease().num;
@@ -16492,30 +16494,32 @@ public class TestVM : BHL_TestBase
 
         return null;
       },
+      new FuncArgSymbol("c", ts.T("Color")),
       new FuncArgSymbol("k", ts.T("float"))
       );
-      cl.OverloadBinaryOperator(op);
+      cl.Define(op);
     }
     
     {
-      var op = new FuncSymbolNative("+", ts.T("Color"),
+      var op = new FuncSymbolNative("+", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
-        var r = (Color)stack.PopRelease().obj;
+        var o = (Color)stack.PopRelease().obj;
         var c = (Color)stack.PopRelease().obj;
 
         var newc = new Color();
-        newc.r = c.r + r.r;
-        newc.g = c.g + r.g;
+        newc.r = c.r + o.r;
+        newc.g = c.g + o.g;
 
         var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
         stack.Push(v);
 
         return null;
       },
+      new FuncArgSymbol("c", ts.T("Color")),
       new FuncArgSymbol("r", ts.T("Color"))
       );
-      cl.OverloadBinaryOperator(op);
+      cl.Define(op);
     }
     cl.Setup();
 
@@ -16550,26 +16554,129 @@ public class TestVM : BHL_TestBase
     BindTrace(ts, log);
     
     var cl = BindColor(ts, setup: false);
-    var op = new FuncSymbolNative("==", ts.T("bool"),
+    var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
-        var arg = (Color)stack.PopRelease().obj;
+        var o = (Color)stack.PopRelease().obj;
         var c = (Color)stack.PopRelease().obj;
 
-        var v = Val.NewBool(frm.vm, c.r == arg.r && c.g == arg.g);
+        var v = Val.NewBool(frm.vm, c.r == o.r && c.g == o.g);
         stack.Push(v);
 
         return null;
       },
-      new FuncArgSymbol("arg", ts.T("Color"))
+      new FuncArgSymbol("c", ts.T("Color")),
+      new FuncArgSymbol("o", ts.T("Color"))
     );
-    cl.OverloadBinaryOperator(op);
+    cl.Define(op);
     cl.Setup();
 
     var vm = MakeVM(bhl, ts);
     Execute(vm, "test");
     AssertEqual(log.ToString(), "YES");
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestEqualityOverloadedForNativeClassAndNull()
+  {
+    string bhl = @"
+      
+    func test() 
+    {
+      Color c1 = null
+      if(c1 == null) {
+        trace(""YES"")
+      }
+    }
+    ";
+
+    var ts = new Types();
+    var log = new StringBuilder();
+    BindTrace(ts, log);
+    
+    var cl = BindColor(ts, setup: false);
+    var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      {
+        var ov = stack.PopRelease().obj;
+        var cv = stack.PopRelease().obj;
+
+        //null comparison guard
+        if(cv == null || ov == null)
+        {
+          stack.Push(Val.NewBool(frm.vm, cv == ov));
+          return null;
+        }
+
+        var o = (Color)ov;
+        var c = (Color)cv;
+
+        var v = Val.NewBool(frm.vm, c.r == o.r && c.g == o.g);
+        stack.Push(v);
+
+        return null;
+      },
+      new FuncArgSymbol("c", ts.T("Color")),
+      new FuncArgSymbol("o", ts.T("Color"))
+    );
+    cl.Define(op);
+    cl.Setup();
+
+    var vm = MakeVM(bhl, ts);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "YES");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCustomOperatorOverloadInvalidForNativeClass()
+  {
+    {
+      var ts = new Types();
+      var cl = BindColor(ts);
+      var op = new FuncSymbolNative("*", ts.T("Color"), null,
+        new FuncArgSymbol("k", ts.T("float"))
+      );
+
+      AssertError<Exception>(
+        delegate() { 
+          cl.Define(op);
+        },
+        "operator overload must be static"
+      );
+    }
+
+    {
+      var ts = new Types();
+      var cl = BindColor(ts);
+      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0, null,
+        new FuncArgSymbol("k", ts.T("float"))
+      );
+
+      AssertError<Exception>(
+        delegate() { 
+          cl.Define(op);
+        },
+        "operator overload must have exactly 2 arguments"
+      );
+    }
+
+    {
+      var ts = new Types();
+      var cl = BindColor(ts);
+      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("void"), 0, null,
+        new FuncArgSymbol("c", ts.T("Color")),
+        new FuncArgSymbol("k", ts.T("float"))
+      );
+
+      AssertError<Exception>(
+        delegate() { 
+          cl.Define(op);
+        },
+        "operator overload return value can't be void"
+      );
+    }
   }
 
   [IsTested()]
@@ -16587,10 +16694,11 @@ public class TestVM : BHL_TestBase
     var ts = new Types();
     
     var cl = BindColor(ts);
-    var op = new FuncSymbolNative("*", ts.T("Color"), null,
+    var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0, null,
+      new FuncArgSymbol("c", ts.T("Color")),
       new FuncArgSymbol("k", ts.T("float"))
     );
-    cl.OverloadBinaryOperator(op);
+    cl.Define(op);
 
     AssertError<Exception>(
       delegate() { 

@@ -404,11 +404,43 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     return "$__" + ((Symbol)this).GetFullPath() + "_set_" + fld.name;
   }
 
+  static public bool IsBinaryOp(string op)
+  {
+    if(op == "+")
+      return true;
+    else if(op == "-")
+      return true;
+    else if(op == "==")
+      return true;
+    else if(op == "!=")
+      return true;
+    else if(op == "*")
+      return true;
+    else if(op == "/")
+      return true;
+    else if(op == "%")
+      return true;
+    else if(op == ">")
+      return true;
+    else if(op == ">=")
+      return true;
+    else if(op == "<")
+      return true;
+    else if(op == "<=")
+      return true;
+    else
+      return false; 
+  }
+
   public void Define(Symbol sym) 
   {
-    if(sym is FuncSymbolNative fs && fs.attribs.HasFlag(FuncAttrib.Static))
-      this.GetNamespace().nfunc_index.Index(fs);
-    else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
+    if(sym is FuncSymbol fs && IsBinaryOp(fs.name))
+      CheckBinaryOpOverload(fs);
+
+    if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
+      this.GetNamespace().nfunc_index.Index(fsn);
+
+    if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
       if(this is ClassSymbolNative)
       {
@@ -441,6 +473,18 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     //NOTE: we don't check if there are any parent symbols with the same name, 
     //      they will be checked once the class is finally setup
     members.Add(sym);
+  }
+
+  static void CheckBinaryOpOverload(FuncSymbol fs)
+  {
+    if(!fs.attribs.HasFlag(FuncAttrib.Static))
+      throw new SymbolError(fs, "operator overload must be static");
+
+    if(fs.GetTotalArgsNum() != 2)
+      throw new SymbolError(fs, "operator overload must have exactly 2 arguments");
+
+    if(fs.GetReturnType() == Types.Void)
+      throw new SymbolError(fs, "operator overload return value can't be void");
   }
 
   public Symbol Resolve(string name) 
@@ -615,18 +659,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       }
     }
     return related_types;
-  }
-
-  //TODO: make it more generic
-  public void OverloadBinaryOperator(FuncSymbol s)
-  {
-    if(s.GetTotalArgsNum() != 1)
-      throw new SymbolError(s, "operator overload must have exactly one argument");
-
-    if(s.GetReturnType() == Types.Void)
-      throw new SymbolError(s, "operator overload return value can't be void");
-
-    Define(s);
   }
 }
 

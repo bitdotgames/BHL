@@ -1898,7 +1898,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var wrhs = Wrap(rhs);
 
     var class_symb = wlhs.eval_type as ClassSymbol;
-    //NOTE: checking if there's an operator overload
+    //NOTE: checking if there's binary operator overload
     if(class_symb != null && class_symb.Resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
@@ -1909,7 +1909,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var over_ast = new AST_Interim();
       for(int i=0;i<ast.children.Count;++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.MFUNC, ctx.Start.Line, op_func, 1/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_func, 2/*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
