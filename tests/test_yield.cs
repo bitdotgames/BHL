@@ -396,7 +396,7 @@ public class TestYield : BHL_TestBase
       "async function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
-------^"
+-------------^"
       )
     );
   }
@@ -424,7 +424,39 @@ public class TestYield : BHL_TestBase
       "async function must be called via yield",
       new PlaceAssert(bhl, @"
       foo.bar()
-------^"
+-------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestAsyncInChainCallIsNotAllowed()
+  {
+    string bhl = @"
+    class Bar {
+      int number
+    }
+    class Foo {
+      async func Bar bar() {
+        yield()
+        return new Bar
+      }
+    }
+    func test()
+    {
+      var foo = new Foo
+      foo.bar().number
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "async function must be called via yield",
+      new PlaceAssert(bhl, @"
+      foo.bar().number
+-------------^"
       )
     );
   }
@@ -649,7 +681,7 @@ public class TestYield : BHL_TestBase
       "not an async function",
       new PlaceAssert(bhl, @"
       yield foo()
-------------^"
+---------------^"
       )
     );
   }
@@ -671,7 +703,7 @@ public class TestYield : BHL_TestBase
       "not an async function",
       new PlaceAssert(bhl, @"
       yield p()
-------------^"
+-------------^"
       )
     );
   }
