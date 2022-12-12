@@ -396,7 +396,7 @@ public class TestYield : BHL_TestBase
       "async function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
--------------^"
+------^"
       )
     );
   }
@@ -720,7 +720,7 @@ public class TestYield : BHL_TestBase
       "not an async function",
       new PlaceAssert(bhl, @"
       yield foo()
----------------^"
+------------^"
       )
     );
   }
@@ -742,7 +742,7 @@ public class TestYield : BHL_TestBase
       "not an async function",
       new PlaceAssert(bhl, @"
       yield p()
--------------^"
+------------^"
       )
     );
   }

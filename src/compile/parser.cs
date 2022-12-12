@@ -546,7 +546,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
 
     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-    ProcChainedCall(ctx.DOT() != null ? ns : curr_scope, ctx.NAME(), new ExpChain(ctx.chainExp()), ref curr_type, ctx);
+    ProcChainedCall(
+      ctx.DOT() != null ? ns : curr_scope, 
+      ctx.NAME(), 
+      new ExpChain(ctx.chainExp()), 
+      ref curr_type, 
+      ctx
+    );
 
     Wrap(ctx).eval_type = curr_type;
 
@@ -653,14 +659,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain_ast = PeekAST();
     PopAST();
 
-    ValidateChainCall(chain, chain_ast, yielded);
+    ValidateChainCall(chain, chain_ctx, chain_ast, yielded);
 
     PeekAST().AddChildren(chain_ast);
 
     return chain_ast;
   }
   
-  void ValidateChainCall(IExpChain chain, AST_Tree chain_ast, bool yielded)
+  void ValidateChainCall(IExpChain chain, ParserRuleContext chain_ctx, AST_Tree chain_ast, bool yielded)
   {
     for(int i = 0; i < chain_ast.children.Count; ++i)
     {
@@ -669,34 +675,34 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) &&
             call.symb is FuncSymbol fs)
         {
-          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
+          ValidateFuncCall(chain, chain_ctx, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
         }
         else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
         {
-          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+          ValidateFuncCall(chain, chain_ctx, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
   }
 
-  void ValidateFuncCall(IExpChain chain, int idx, bool is_last, FuncSignature fsig, bool yielded)
+  void ValidateFuncCall(IExpChain chain, ParserRuleContext chain_ctx, int idx, bool is_last, FuncSignature fsig, bool yielded)
   {
     if(PeekFuncDecl() == null)
-      FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "function calls not allowed in global context");
+      FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "function calls not allowed in global context");
 
     if(is_last)
     {
       if(!yielded && fsig.is_async)
       {
-        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "async function must be called via yield");
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "async function must be called via yield");
       }
       else if(yielded && !fsig.is_async)
-        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "not an async function");
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "not an async function");
     }
     else 
     {
       if(fsig.is_async)
-        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "async function must be called via yield");
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "async function must be called via yield");
     }
   }
 
@@ -1620,7 +1626,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
     IType curr_type = null;
-    ProcChainedCall(fn_call.callExp().DOT() != null ? ns : curr_scope, fn_call.callExp().NAME(), chain, ref curr_type, fn_call.callExp(), yielded: true);
+    ProcChainedCall(
+      fn_call.callExp().DOT() != null ? ns : curr_scope, 
+      fn_call.callExp().NAME(), 
+      chain, 
+      ref curr_type, 
+      fn_call.callExp(), 
+      yielded: true
+    );
 
     Wrap(fn_call).eval_type = curr_type;
   }
@@ -1785,7 +1798,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
      IType curr_type = null;
-     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx, write: true);
+     ProcChainedCall(
+      ctx.callExp().DOT() != null ? ns : curr_scope, 
+      ctx.callExp().NAME(), 
+      new ExpChain(ctx.callExp().chainExp()), 
+      ref curr_type, 
+      ctx, 
+      write: true
+     );
 
     if(curr_type == Types.String && post_op == "+=")
       return null;
@@ -1850,7 +1870,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
      IType curr_type = null;
-     ProcChainedCall(ctx.callExp().DOT() != null ? ns : curr_scope, ctx.callExp().NAME(), new ExpChain(ctx.callExp().chainExp()), ref curr_type, ctx, write: true);
+     ProcChainedCall(
+      ctx.callExp().DOT() != null ? ns : curr_scope, 
+      ctx.callExp().NAME(), 
+      new ExpChain(ctx.callExp().chainExp()), 
+      ref curr_type, 
+      ctx, 
+      write: true
+    );
 
     if(!Types.IsNumeric(curr_type))
       FireError(ctx, "only numeric types supported");
@@ -2948,7 +2975,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(assign_exp, "invalid assignment");
 
         //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
-        ProcChainedCall(cexp.DOT() != null ? ns : curr_scope, cexp.NAME(), new ExpChain(cexp.chainExp()), ref curr_type, cexp, write: true);
+        ProcChainedCall(
+          cexp.DOT() != null ? ns : curr_scope, 
+          cexp.NAME(), 
+          new ExpChain(cexp.chainExp()), 
+          ref curr_type, 
+          cexp, 
+          write: true
+        );
 
         var_ptree = Wrap(cexp.NAME());
         var_ptree.eval_type = curr_type;
