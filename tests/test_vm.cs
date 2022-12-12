@@ -11776,10 +11776,10 @@ public class TestVM : BHL_TestBase
       b.ptr = ret_int
       paral {
         {
-          foo(1, b.ptr(2, 1))
+          foo(1, yield b.ptr(2, 1))
           yield suspend()
         }
-        foo(10, b.ptr(20, 2))
+        foo(10, yield b.ptr(20, 2))
       }
     }
     ";

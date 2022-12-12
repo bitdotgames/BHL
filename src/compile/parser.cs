@@ -671,7 +671,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
         }
-        else if(call.type == EnumCall.FUNC_VAR && call.symb is VariableSymbol vs)
+        else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
         {
           ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
@@ -682,19 +682,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void ValidateFuncCall(IExpChain chain, int idx, bool is_last, FuncSignature fsig, bool yielded)
   {
     if(PeekFuncDecl() == null)
-      FireError(chain.parseTree(idx), "function calls not allowed in global context");
+      FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "function calls not allowed in global context");
 
     if(is_last)
     {
       if(!yielded && fsig.is_async)
-        FireError(chain.parseTree(idx), "async function must be called via yield");
+      {
+        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "async function must be called via yield");
+      }
       else if(yielded && !fsig.is_async)
-        FireError(chain.parseTree(idx), "not an async function");
+        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "not an async function");
     }
     else 
     {
       if(fsig.is_async)
-        FireError(chain.parseTree(idx), "async function must be called via yield");
+        FireError(chain.parseTree(idx > 0 ? idx-1 : 0), "async function must be called via yield");
     }
   }
 
@@ -792,7 +794,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
-            ast = new AST_Call(EnumCall.FUNC_MVAR, line, null);
+            ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb);
             AddCallArgs(ftype, cargs, ref ast);
             type = ftype.ret_type.Get();
           }

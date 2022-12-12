@@ -424,7 +424,7 @@ public class TestYield : BHL_TestBase
       "async function must be called via yield",
       new PlaceAssert(bhl, @"
       foo.bar()
--------------^"
+---------^"
       )
     );
   }
@@ -432,33 +432,72 @@ public class TestYield : BHL_TestBase
   [IsTested()]
   public void TestAsyncInChainCallIsNotAllowed()
   {
-    string bhl = @"
-    class Bar {
-      int number
-    }
-    class Foo {
-      async func Bar bar() {
-        yield()
-        return new Bar
-      }
-    }
-    func test()
     {
-      var foo = new Foo
-      foo.bar().number
-    }
-    ";
+      string bhl = @"
+      class Bar {
+        int number
+      }
+      class Foo {
+        async func Bar bar() {
+          yield()
+          return new Bar
+        }
+      }
+      func test()
+      {
+        var foo = new Foo
+        foo.bar().number
+      }
+      ";
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "async function must be called via yield",
-      new PlaceAssert(bhl, @"
-      foo.bar().number
--------------^"
-      )
-    );
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async function must be called via yield",
+        new PlaceAssert(bhl, @"
+        foo.bar().number
+-----------^"
+        )
+      );
+    }
+
+    {
+      string bhl = @"
+      class Hey {
+        int number
+      }
+      class Bar {
+        async func Hey() ptr
+      }
+      class Foo {
+        func Bar bar() {
+          var b = new Bar
+          b.ptr = async func Hey() { 
+            yield()
+            return new Hey
+          }
+          return b
+        }
+      }
+      func test()
+      {
+        var foo = new Foo
+        foo.bar().ptr().number
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "async function must be called via yield",
+        new PlaceAssert(bhl, @"
+        foo.bar().ptr().number
+-----------------^"
+        )
+      );
+    }
   }
 
   [IsTested()]
