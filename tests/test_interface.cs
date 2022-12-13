@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using bhl;
 
@@ -893,13 +891,13 @@ public class TestInterfaces : BHL_TestBase
           )
       );
       ts.ns.Define(ifs);
+      ifs.Setup();
 
-      var cl = new ClassSymbolNative("NativeFoo", null,
+      var cl = new ClassSymbolNative("NativeFoo", new List<Proxy<IType>>(){ ts.T("INativeFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeFoo(), type);
-        },
-        new List<InterfaceSymbol>(){ ifs }
+        }
       );
       ts.ns.Define(cl);
 

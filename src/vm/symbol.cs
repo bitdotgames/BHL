@@ -174,29 +174,23 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 #if BHL_FRONT
   public InterfaceSymbol(
     WrappedParseTree parsed, 
-    string name,
-    IList<InterfaceSymbol> inherits = null
+    string name
   )
-    : this(name, inherits)
+    : this(name)
   {
     this.parsed = parsed;
   }
 #endif
 
-  public InterfaceSymbol(
-    string name,
-    IList<InterfaceSymbol> inherits = null
-  )
+  public InterfaceSymbol(string name)
     : base(name)
   {
     this.members = new SymbolsStorage(this);
-
-    SetInherits(inherits);
   }
 
   //marshall factory version
   public InterfaceSymbol()
-    : this(null, null)
+    : this(null)
   {}
 
   public void Define(Symbol sym)
@@ -262,20 +256,16 @@ public class InterfaceSymbolScript : InterfaceSymbol
 {
   public const uint CLASS_ID = 18;
   
-  public InterfaceSymbolScript(
-    string name,
-    IList<InterfaceSymbol> inherits = null
-  )
-    : base(name, inherits)
+  public InterfaceSymbolScript(string name)
+    : base(name)
   {}
 
 #if BHL_FRONT
   public InterfaceSymbolScript(
     WrappedParseTree parsed, 
-    string name,
-    IList<InterfaceSymbol> inherits = null
+    string name
   )
-    : this(name, inherits)
+    : this(name)
   {
     this.parsed = parsed;
   }
@@ -301,13 +291,37 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
 public class InterfaceSymbolNative : InterfaceSymbol
 {
+  IList<Proxy<IType>> proxy_inherits;
+  FuncSymbol[] funcs;
+
   public InterfaceSymbolNative(
     string name, 
-    IList<InterfaceSymbol> inherits,
+    IList<Proxy<IType>> proxy_inherits,
     params FuncSymbol[] funcs
   )
-    : base(name, inherits)
+    : base(name)
   {
+    this.proxy_inherits = proxy_inherits;
+    this.funcs = funcs;
+  }
+  
+  public void Setup()
+  {
+    List<InterfaceSymbol> inherits = null;
+    if(proxy_inherits != null && proxy_inherits.Count > 0)
+    {
+      inherits = new List<InterfaceSymbol>();
+      foreach(var pi in proxy_inherits)
+      {
+        var iface = pi.Get() as InterfaceSymbol;
+        if(iface == null) 
+          throw new Exception("Inherited interface not found" + pi.path);
+
+        inherits.Add(iface);
+      }
+      SetInherits(inherits);
+    }
+
     foreach(var func in funcs)
       Define(func);
   }
@@ -357,11 +371,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
   public ClassSymbol(
     WrappedParseTree parsed, 
     string name, 
-    ClassSymbol super_class, 
-    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
-    : this(name, super_class, implements, creator)
+    : this(name, creator)
   {
     this.parsed = parsed;
   }
@@ -370,8 +382,6 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
   public ClassSymbol(
     string name, 
-    ClassSymbol super_class, 
-    IList<InterfaceSymbol> implements = null,
     VM.ClassCreator creator = null
   )
     : base(name)
@@ -379,11 +389,14 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
     this.members = new SymbolsStorage(this);
 
     this.creator = creator;
+  }
 
+  public void SetSuperAndInterfaces(ClassSymbol super_class, IList<InterfaceSymbol> implements = null)
+  {
     if(super_class != null)
       _super_class = new Proxy<ClassSymbol>(super_class);
 
-    if(implements != null)
+    if(implements != null && implements.Count > 0)
       SetImplementedInterfaces(implements);
   }
 
@@ -516,7 +529,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       this.implements.Add(imp);
   }
 
-  public void Setup()
+  public virtual void Setup()
   {
     ValidateInterfaces();
 
@@ -670,7 +683,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public Proxy<IType> item_type;
 
   public ArrayTypeSymbol(string name, Proxy<IType> item_type)     
-    : base(name, super_class: null)
+    : base(name)
   {
     this.item_type = item_type;
 
@@ -994,7 +1007,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   public ClassSymbol enumerator_type = new ClassSymbolNative("Enumerator");
 
   public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base("[" + key_type.path + "]" + val_type.path, super_class: null)
+    : base("[" + key_type.path + "]" + val_type.path)
   {
     this.key_type = key_type;
     this.val_type = val_type;
@@ -1946,9 +1959,71 @@ public class FuncSymbolNative : FuncSymbol
 
 public class ClassSymbolNative : ClassSymbol
 {
-  public ClassSymbolNative(string name, ClassSymbol super_class = null, VM.ClassCreator creator = null, IList<InterfaceSymbol> implements = null)
-    : base(name, super_class, implements, creator)
+  Proxy<IType> proxy_super_class;
+  IList<Proxy<IType>> proxy_implements;
+
+  public ClassSymbolNative(
+    string name, 
+    VM.ClassCreator creator = null
+  )
+    : this(name, new Proxy<IType>(), null, creator)
   {}
+
+  public ClassSymbolNative(
+    string name, 
+    IList<Proxy<IType>> proxy_implements,
+    VM.ClassCreator creator = null
+  )
+    : this(name, new Proxy<IType>(), proxy_implements, creator)
+  {}
+
+  public ClassSymbolNative(
+    string name, 
+    Proxy<IType> proxy_super_class,
+    VM.ClassCreator creator = null
+  )
+    : this(name, proxy_super_class, null, creator)
+  {}
+
+  public ClassSymbolNative(
+    string name, 
+    Proxy<IType> proxy_super_class,
+    IList<Proxy<IType>> proxy_implements,
+    VM.ClassCreator creator = null
+  )
+    : base(name, creator)
+  {
+    this.proxy_super_class = proxy_super_class;
+    this.proxy_implements = proxy_implements;
+  }
+
+  public override void Setup()
+  {
+    ClassSymbol super_class = null;
+    if(!proxy_super_class.IsEmpty())
+    {
+      super_class = proxy_super_class.Get() as ClassSymbol;
+      if(super_class == null)
+        throw new Exception("Parent class is not found: " + proxy_super_class.path);
+    }
+
+    List<InterfaceSymbol> implements = null;
+    if(proxy_implements != null)
+    {
+      implements = new List<InterfaceSymbol>();
+      foreach(var pi in proxy_implements)
+      {
+        var iface = pi.Get() as InterfaceSymbol;
+        if(iface == null) 
+          throw new Exception("Implemented interface not found" + pi.path);
+        implements.Add(iface);
+      }
+    }
+
+    SetSuperAndInterfaces(super_class, implements);
+
+    base.Setup();
+  }
 
   public override uint ClassId()
   {
@@ -1965,15 +2040,18 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public ClassSymbolScript(string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
-    : base(name, super_class, implements, null)
+  public ClassSymbolScript(string name)
+    : base(name)
   {
     this.creator = ClassCreator;
   }
 
 #if BHL_FRONT
-  public ClassSymbolScript(WrappedParseTree parsed, string name, ClassSymbol super_class = null, IList<InterfaceSymbol> implements = null)
-    : this(name, super_class, implements)
+  public ClassSymbolScript(
+    WrappedParseTree parsed, 
+    string name
+  )
+    : this(name)
   {
     this.parsed = parsed;
   }
@@ -1981,7 +2059,7 @@ public class ClassSymbolScript : ClassSymbol
 
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null, null, null)
+    : this(null)
   {}
 
   void ClassCreator(VM.Frame frm, ref Val data, IType type)
@@ -2022,11 +2100,8 @@ public class ClassSymbolScript : ClassSymbol
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-
     marshall.Marshall.Sync(ctx, ref _super_class);
-
     marshall.Marshall.Sync(ctx, ref members);
-
     marshall.Marshall.Sync(ctx, ref implements); 
   }
 }

@@ -2483,7 +2483,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var name = pass.iface_ctx.NAME().GetText();
 
-    pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name, null);
+    pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name);
 
     pass.scope.Define(pass.iface_symb);
   }
@@ -2600,7 +2600,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var name = pass.class_ctx.NAME().GetText();
 
-    pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name, null, null);
+    pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name);
     pass.scope.Define(pass.class_symb);
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
@@ -2777,11 +2777,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(ext_name, "not a class or an interface");
       }
 
-      if(super_class != null)
-        pass.class_symb._super_class = new Proxy<ClassSymbol>(super_class);
-
-      if(implements.Count > 0)
-        pass.class_symb.SetImplementedInterfaces(implements);
+      pass.class_symb.SetSuperAndInterfaces(super_class, implements);
     }
   }
 

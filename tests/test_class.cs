@@ -1,5 +1,4 @@
 using System;           
-using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
@@ -3291,7 +3290,7 @@ public class TestClasses : BHL_TestBase
     }
 
     {
-      var cl = new ClassSymbolNative("Bar", (ClassSymbol)ts.T("Foo").Get(),
+      var cl = new ClassSymbolNative("Bar", ts.T("Foo"),
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new VirtBar(), type);
@@ -3880,6 +3879,89 @@ public class TestClasses : BHL_TestBase
     NativeFoo.static_bar = 14;
     AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
     AssertEqual(43, NativeFoo.static_bar);
+    CommonChecks(vm);
+  }
+
+  public class A {
+    public int a;
+  }
+  public class B : A {
+    public int b;
+  }
+
+  [IsTested()]
+  public void TestNestedNativeClassesIrrelevantOrder()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      A a = {}
+      B b = {}
+      a.a = 10
+      b.a = 100
+      b.b = 1000
+      return a.a + b.a + b.b
+    }
+    ";
+
+    var ts = new Types();
+
+    {
+      var cl = new ClassSymbolNative("B", ts.T("A"),
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new B(), type);
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("b", ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var b = (B)ctx.obj;
+          v.SetInt(b.b);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var b = (B)ctx.obj;
+          b.b = (int)v.num; 
+        }
+      ));
+    }
+
+    {
+      var cl = new ClassSymbolNative("A",
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new A(), type);
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol("a", ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var a = (A)ctx.obj;
+          v.SetInt(a.a);
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var a = (A)ctx.obj;
+          a.a = (int)v.num; 
+        }
+      ));
+    }
+
+    {
+      (ts.T("A").Get() as ClassSymbolNative).Setup();
+      (ts.T("B").Get() as ClassSymbolNative).Setup();
+    }
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(1110, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

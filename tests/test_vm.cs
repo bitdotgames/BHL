@@ -7447,7 +7447,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
 
     {
-      var cl = new ClassSymbolNative("refbool", null,
+      var cl = new ClassSymbolNative("refbool",
         delegate(VM.Frame frm, ref Val v, IType type) 
         {}
       );
@@ -11937,7 +11937,7 @@ public class TestVM : BHL_TestBase
     BindTrace(ts, log);
 
     {
-      var cl = new ClassSymbolNative("Bar", null,
+      var cl = new ClassSymbolNative("Bar",
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           //fake object
@@ -19802,7 +19802,8 @@ public class TestVM : BHL_TestBase
       Foo.Define(new FieldSymbolScript("Int", Types.Int));
       Foo.Define(new FuncSymbolScript(null, new FuncSignature(false, Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
-      var Bar = new ClassSymbolScript("Bar", Foo);
+      var Bar = new ClassSymbolScript("Bar");
+      Bar.SetSuperAndInterfaces(Foo);
       Bar.Define(new FieldSymbolScript("Float", Types.Float));
       Bar.Define(new FuncSymbolScript(null, new FuncSignature(false, ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
@@ -20025,7 +20026,7 @@ public class TestVM : BHL_TestBase
   void BindIntStruct(Types ts)
   {
     {
-      var cl = new ClassSymbolNative("IntStruct", null,
+      var cl = new ClassSymbolNative("IntStruct",
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           var s = new IntStruct();
@@ -20062,7 +20063,7 @@ public class TestVM : BHL_TestBase
   void BindStringClass(Types ts)
   {
     {
-      var cl = new ClassSymbolNative("StringClass", null,
+      var cl = new ClassSymbolNative("StringClass",
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new StringClass(), type);
@@ -20102,7 +20103,7 @@ public class TestVM : BHL_TestBase
     BindIntStruct(ts);
 
     {
-      var cl = new ClassSymbolNative("MasterStruct", null,
+      var cl = new ClassSymbolNative("MasterStruct",
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           var o = new MasterStruct();

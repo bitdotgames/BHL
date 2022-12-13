@@ -494,7 +494,7 @@ public class Types : INamedResolver
   static Types()
   {
     {
-      ClassType = new ClassSymbolNative("Type", null, 
+      ClassType = new ClassSymbolNative("Type", 
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null, type);
