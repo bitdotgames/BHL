@@ -26,7 +26,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 ## Quick example
 
 ```go
-func GoToTarget(Unit u, Unit t) {
+async func GoToTarget(Unit u, Unit t) {
   NavPath path
   defer {
     PathRelease(path)
@@ -36,12 +36,12 @@ func GoToTarget(Unit u, Unit t) {
    yield while(!IsDead(u) && !IsDead(t) && !IsInRange(u, t))
    
    {
-     path = FindPathTo(u, t)
-     Wait(1)
+     path = yield FindPathTo(u, t)
+     yield Wait(1)
    }
    
    {
-     FollowPath(u, path)
+     yield FollowPath(u, path)
    }
 }
 ```
@@ -124,10 +124,10 @@ Unit u,float dist_to_target = FindTarget(self)
 ```go
 Unit u = FindTarget()
 float distance = 4
-u.InjectScript(func() {
+u.InjectScript(async func() {
   paral_all {
-    PushBack(distance: distance)
-    Stun(time: 0.4, intensity: 0.15)
+    yield PushBack(distance: distance)
+    yield Stun(time: 0.4, intensity: 0.15)
   }
 })
 ```
@@ -152,16 +152,16 @@ return p(10)
 ### Pseudo parallel code execution
 
 ```go
-func Attack(Unit u) {
+async func Attack(Unit u) {
   Unit t = TargetInRange(u)
   Check(t != null)
   paral_all {
-   PlayAnim(u, trigger: "Attack")
+   yield PlayAnim(u, trigger: "Attack")
    SoundPlay(u, sound: "Swoosh")
    seq {
-     WaitAnimEvent(u, event: "Hit")
+     yield WaitAnimEvent(u, event: "Hit")
      SoundPlay(u, sound: "Damage")
-     HitTarget(u, t, damage: RandRange(1,16))
+     yeld HitTarget(u, t, damage: RandRange(1,16))
   }
 }
 ```
@@ -169,9 +169,9 @@ func Attack(Unit u) {
 ### Example of some unit's top behavior
 
 ```go
-func Selector([]func bool() fns) {
-  foreach(func bool() fn in fns) {
-    if(!fn()) {
+async func Selector([]async func bool() fns) {
+  foreach(var fn in fns) {
+    if(!yield fn()) {
       continue
     } else {
       break
@@ -179,15 +179,15 @@ func Selector([]func bool() fns) {
   }
 }
 
-func UnitScript(Unit u) {
+async func UnitScript(Unit u) {
   while(true) {
     paral {
-      WaitStateChanged(u)
+      yield WaitStateChanged(u)
       Selector(
             [
-              func bool() { return FindTarget(u) },
-              func bool() { return AttackTarget(u) },
-              func bool() { return Idle(u) }
+              async func bool() { return yield FindTarget(u) },
+              async func bool() { return yield AttackTarget(u) },
+              async func bool() { return yield Idle(u) }
             ]
        )
     }
@@ -285,9 +285,9 @@ You can run unit tests by executing the following command:
 1. ~~Static class members support~~
 1. ~~Variadic function arguments~~
 1. ~~Maps support~~
-1. Implicit variable types using 'var' 
-1. Debugger support
+1. ~~Implicit variable types using 'var'~~ 
 1. LSP integration
+1. Debugger support
 
 ## Version 1.0
 
