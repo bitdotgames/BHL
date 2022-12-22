@@ -1087,22 +1087,13 @@ public class ForeverNode : SequentialNode
       if(currentTask.currStatus != BHS.RUNNING)
         currentTask.init();
 
+      status = currentTask.execute();
+        
       //inlining break handling
       var interp = Interpreter.instance;
       if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
       {
-        interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
-        currentPosition = 0;
-        currStatus = BHS.SUCCESS;
-        stop();
-        return BHS.SUCCESS;
-      } 
-          
-      status = currentTask.execute();
-        
-      //inlining break handling
-      if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
-      {
+        //reset the execution flow state - similar to catching the BreakException
         interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
         currentPosition = 0;
         currStatus = BHS.SUCCESS;
@@ -1421,6 +1412,7 @@ public class LoopNode : ScopeNode
       last_body_status = body.run();
       if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
       {
+        //reset the execution flow state - similar to catching the BreakException
         interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
         cond.stop();
         body.stop();
@@ -2142,20 +2134,12 @@ public class FuncNodeAST : FuncNode
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
         
-        //inlining return handling
-        if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Return)
-        {
-          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
-          this.stop();
-          interp.PopScope();
-          return BHS.SUCCESS;
-        }
-        
         status = currentTask.execute();
         
         //inlining return handling
         if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Return)
         {
+          //reset the execution flow state - similar to catching the ReturnException
           interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
           this.stop();
           interp.PopScope();
