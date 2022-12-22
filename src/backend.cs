@@ -22,7 +22,7 @@ public class Interpreter : AST_Visitor
     Regular,
     Return,
     Break,
-    Continue
+    Continue //TODO: implement
   }
 
   internal ExecutionFlowState execution_flow_state = ExecutionFlowState.Regular;
@@ -287,12 +287,6 @@ public class Interpreter : AST_Visitor
     }
     return bhl_stack;
   }
-
-  //TODO: implement some day
-  //public void JumpContinue()
-  //{
-  //  throw new ContinueException();
-  //}
 
   public void PushScope(DynValDict mem)
   {
