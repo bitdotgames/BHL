@@ -17,10 +17,15 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public class ReturnException : Exception {}
-  public class BreakException : Exception {}
-  //not supported
-  //public class ContinueException : Exception {}
+  internal enum ExecutionFlowState
+  {
+    Regular,
+    Return,
+    Break,
+    Continue
+  }
+
+  internal ExecutionFlowState execution_flow_state = ExecutionFlowState.Regular;
 
   public delegate void ClassCreator(ref DynVal res);
   public delegate void FieldGetter(DynVal v, ref DynVal res);
@@ -281,20 +286,6 @@ public class Interpreter : AST_Visitor
       bhl_stack += (string.IsNullOrEmpty(item.func_name) ? item.func_id.ToString() : item.func_name) + " () (at "  + (string.IsNullOrEmpty(item.module_name) ? item.module_id.ToString() : item.module_name + ".bhl") + ":" + item.line_num + ") " + item.func_hash + "\n"; 
     }
     return bhl_stack;
-  }
-
-  //NOTE: caching exceptions for less allocations
-  static ReturnException return_exception = new ReturnException();
-  static BreakException break_exception = new BreakException();
-
-  public void JumpReturn()
-  {
-    throw return_exception;
-  }
-
-  public void JumpBreak()
-  {
-    throw break_exception;
   }
 
   //TODO: implement some day
