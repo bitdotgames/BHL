@@ -839,20 +839,25 @@ public class ParallelNode : ScopeNode
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
-        try
+          
+        //inlining return/break handling
+        if(interp.execution_flow_state != Interpreter.ExecutionFlowState.Regular)
         {
-          status = currentTask.execute();
-        }
-        catch(Interpreter.ReturnException)
-        {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
           interp.PopStackParalCtx();
-          throw;
+          return BHS.SUCCESS;
         }
-        catch(Interpreter.BreakException)
+        
+        status = currentTask.execute();
+        
+        //inlining return/break handling
+        if(interp.execution_flow_state != Interpreter.ExecutionFlowState.Regular)
         {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
           interp.PopStackParalCtx();
-          throw;
+          return status;
         }
+        
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
@@ -903,20 +908,25 @@ public class ParallelAllNode : ScopeNode
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
-        try
+          
+        //inlining return/break handling
+        if(interp.execution_flow_state != Interpreter.ExecutionFlowState.Regular)
         {
-          status = currentTask.execute();
-        }
-        catch(Interpreter.ReturnException)
-        {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
           interp.PopStackParalCtx();
-          throw;
+          return BHS.SUCCESS;
         }
-        catch(Interpreter.BreakException)
+        
+        status = currentTask.execute();
+        
+        //inlining return/break handling
+        if(interp.execution_flow_state != Interpreter.ExecutionFlowState.Regular)
         {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
           interp.PopStackParalCtx();
-          throw;
+          return status;
         }
+        
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
@@ -1086,33 +1096,46 @@ public class ForeverNode : SequentialNode
     ////////////////////FORCING CODE INLINE////////////////////////////////
     BHS status = BHS.SUCCESS;
 
-    try
+    while(currentPosition < children.Count)
     {
-      while(currentPosition < children.Count)
+      var currentTask = children[currentPosition];
+      //status = currentTask.run();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(currentTask.currStatus != BHS.RUNNING)
+        currentTask.init();
+
+      //inlining break handling
+      var interp = Interpreter.instance;
+      if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
       {
-        var currentTask = children[currentPosition];
-        //status = currentTask.run();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-        if(currentTask.currStatus != BHS.RUNNING)
-          currentTask.init();
-        status = currentTask.execute();
-        currentTask.currStatus = status;
-        if(status != BHS.RUNNING)
-          currentTask.deinit();
-        ////////////////////FORCING CODE INLINE////////////////////////////////
-        if(status == BHS.SUCCESS)
-          ++currentPosition;
-        else
-          break;
+        interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
+        currentPosition = 0;
+        currStatus = BHS.SUCCESS;
+        stop();
+        return BHS.SUCCESS;
       } 
-    }
-    catch(Interpreter.BreakException)
-    {
-      currentPosition = 0;
-      currStatus = BHS.SUCCESS;
-      stop();
-      return BHS.SUCCESS;
-    }
+          
+      status = currentTask.execute();
+        
+      //inlining break handling
+      if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
+      {
+        interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
+        currentPosition = 0;
+        currStatus = BHS.SUCCESS;
+        stop();
+        return BHS.SUCCESS;
+      } 
+          
+      currentTask.currStatus = status;
+      if(status != BHS.RUNNING)
+        currentTask.deinit();
+      ////////////////////FORCING CODE INLINE////////////////////////////////
+      if(status == BHS.SUCCESS)
+        ++currentPosition;
+      else
+        break;
+    } 
 
     if(status != BHS.RUNNING)
       currentPosition = 0;
@@ -1412,18 +1435,17 @@ public class LoopNode : ScopeNode
           return BHS.SUCCESS;
       }
 
-      try
+      last_body_status = body.run();
+      if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Break)
       {
-        last_body_status = body.run();
-        if(last_body_status == BHS.RUNNING || last_body_status == BHS.FAILURE)
-          return last_body_status;
-      }
-      catch(Interpreter.BreakException)
-      {
+        interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
         cond.stop();
         body.stop();
         return BHS.SUCCESS;
       }
+          
+      if(last_body_status == BHS.RUNNING || last_body_status == BHS.FAILURE)
+        return last_body_status;
     }
   }
 }
@@ -1445,29 +1467,29 @@ public class InvertNode : BehaviorTreeDecoratorNode
 
 public class ReturnNode : BehaviorTreeTerminalNode
 {
-  public override void init() 
+  public override BHS execute() 
   {
-    var interp = Interpreter.instance;
-    interp.JumpReturn();
+    Interpreter.instance.execution_flow_state = Interpreter.ExecutionFlowState.Return;
+    return BHS.FAILURE;
   }
 }
 
 public class BreakNode : BehaviorTreeTerminalNode
 {
-  public override void init() 
+  public override BHS execute() 
   {
-    var interp = Interpreter.instance;
-    interp.JumpBreak();
+    Interpreter.instance.execution_flow_state = Interpreter.ExecutionFlowState.Break;
+    return BHS.FAILURE;
   }
 }
 
 //TODO:
 //public class ContinueNode : BehaviorTreeTerminalNode
 //{
-//  public override void init() 
-//  {
-//    var interp = Interpreter.instance;
-//    interp.JumpContinue();
+// public override BHS execute() 
+// {
+//   Interpreter.instance.execution_flow_state = Interpreter.ExecutionFlowState.Continue;
+//   return BHS.FAILURE;
 //  }
 //}
 
@@ -2148,8 +2170,6 @@ public class FuncNodeAST : FuncNode
     interp.PushScope(mem);
 
     BHS status;
-    try
-    {
       //status = base.execute();
       ////////////////////FORCING CODE INLINE////////////////////////////////
       status = BHS.SUCCESS;
@@ -2160,7 +2180,27 @@ public class FuncNodeAST : FuncNode
         ////////////////////FORCING CODE INLINE////////////////////////////////
         if(currentTask.currStatus != BHS.RUNNING)
           currentTask.init();
+        
+        //inlining return handling
+        if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Return)
+        {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
+          this.stop();
+          interp.PopScope();
+          return BHS.SUCCESS;
+        }
+        
         status = currentTask.execute();
+        
+        //inlining return handling
+        if(interp.execution_flow_state == Interpreter.ExecutionFlowState.Return)
+        {
+          interp.execution_flow_state = Interpreter.ExecutionFlowState.Regular;
+          this.stop();
+          interp.PopScope();
+          return BHS.SUCCESS;
+        }
+        
         currentTask.currStatus = status;
         if(status != BHS.RUNNING)
           currentTask.deinit();
@@ -2173,13 +2213,6 @@ public class FuncNodeAST : FuncNode
       if(status != BHS.RUNNING)
         currentPosition = 0;
       ////////////////////FORCING CODE INLINE////////////////////////////////
-    }
-    catch(Interpreter.ReturnException)
-    {
-      //Console.WriteLine("CATCH RETURN " + decl.nname + " " + e.val);
-      status = BHS.SUCCESS;
-      this.stop();
-    }
 
     interp.PopScope();
 
