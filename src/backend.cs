@@ -17,10 +17,15 @@ public class Interpreter : AST_Visitor
     }
   }
 
-  public class ReturnException : Exception {}
-  public class BreakException : Exception {}
-  //not supported
-  //public class ContinueException : Exception {}
+  internal enum ExecutionFlowState
+  {
+    Regular,
+    Return,
+    Break,
+    Continue //TODO: implement
+  }
+
+  internal ExecutionFlowState execution_flow_state = ExecutionFlowState.Regular;
 
   public delegate void ClassCreator(ref DynVal res);
   public delegate void FieldGetter(DynVal v, ref DynVal res);
@@ -282,26 +287,6 @@ public class Interpreter : AST_Visitor
     }
     return bhl_stack;
   }
-
-  //NOTE: caching exceptions for less allocations
-  static ReturnException return_exception = new ReturnException();
-  static BreakException break_exception = new BreakException();
-
-  public void JumpReturn()
-  {
-    throw return_exception;
-  }
-
-  public void JumpBreak()
-  {
-    throw break_exception;
-  }
-
-  //TODO: implement some day
-  //public void JumpContinue()
-  //{
-  //  throw new ContinueException();
-  //}
 
   public void PushScope(DynValDict mem)
   {
