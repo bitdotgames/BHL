@@ -48,6 +48,7 @@ public class BHL_TestRunner
     Run(names, new TestVar(), verbose);
     Run(names, new TestMaps(), verbose);
     Run(names, new TestStd(), verbose);
+    Run(names, new TestPerf(), verbose);
     //TODO:
     //Run(names, new TestLSP(), verbose);
   }
