@@ -921,7 +921,7 @@ public class TestNamespace : BHL_TestBase
       }
 
       func int test() {
-        return .bar()
+        return ..bar()
       }
     }
     ";

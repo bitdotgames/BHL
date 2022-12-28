@@ -545,9 +545,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     IType curr_type = null;
 
-    //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+    //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
     ProcChainedCall(
-      ctx.DOT() != null ? ns : curr_scope, 
+      ctx.GLOBAL() != null ? ns : curr_scope, 
       ctx.NAME(), 
       new ExpChain(ctx.chainExp()), 
       ref curr_type, 
@@ -1627,7 +1627,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     IType curr_type = null;
     ProcChainedCall(
-      fn_call.callExp().DOT() != null ? ns : curr_scope, 
+      fn_call.callExp().GLOBAL() != null ? ns : curr_scope, 
       fn_call.callExp().NAME(), 
       chain, 
       ref curr_type, 
@@ -1796,10 +1796,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     string post_op = ctx.operatorPostOpAssign().GetText();
     CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.callExp(), ctx.exp());
 
-     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+     //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
-      ctx.callExp().DOT() != null ? ns : curr_scope, 
+      ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
       ctx.callExp().NAME(), 
       new ExpChain(ctx.callExp().chainExp()), 
       ref curr_type, 
@@ -1868,10 +1868,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     else
       FireError(ctx, "unknown operator");
 
-     //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+     //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
-      ctx.callExp().DOT() != null ? ns : curr_scope, 
+      ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
       ctx.callExp().NAME(), 
       new ExpChain(ctx.callExp().chainExp()), 
       ref curr_type, 
@@ -2970,9 +2970,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         else if(cexp.chainExp()?.Length > 0 && cexp.chainExp()[cexp.chainExp().Length-1].callArgs() != null)
           FireError(assign_exp, "invalid assignment");
 
-        //NOTE: if expression starts with '.' we consider the global namespace instead of current scope
+        //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
         ProcChainedCall(
-          cexp.DOT() != null ? ns : curr_scope, 
+          cexp.GLOBAL() != null ? ns : curr_scope, 
           cexp.NAME(), 
           new ExpChain(cexp.chainExp()), 
           ref curr_type, 

@@ -29,7 +29,7 @@ dotName
  ;
 
 nsName
-  : DOT? dotName
+  : GLOBAL? dotName
   ;
 
 type
@@ -178,7 +178,7 @@ else
 
 //vars && funcs
 callExp
-  : DOT? NAME chainExp* 
+  : GLOBAL? NAME chainExp* 
   ;
 
 chainExp
@@ -449,8 +449,8 @@ ARR
   : '[' ']'
   ;
 
-DOT
-  : '.'
+GLOBAL
+  : '..'
   ;
 
 VARIADIC
