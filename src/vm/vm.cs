@@ -72,7 +72,7 @@ public enum Opcodes
   ArrIdx                = 82,
   ArrIdxW               = 83,
   ArrAddInplace         = 84,  //TODO: used for json alike array initialization,   
-                              //      can be replaced with more low-level opcodes?
+                               //      can be replaced with more low-level opcodes?
   MapIdx                = 90,
   MapIdxW               = 91,
   MapAddInplace         = 92,  //TODO: used for json alike array initialization,   
@@ -1198,7 +1198,7 @@ public class VM : INamedResolver
     return Start(addr, cargs_bits, args);
   }
 
-  public Fiber Start(FuncAddr addr, uint cargs_bits, params Val[] args)
+  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
   {
     var fb = Fiber.New(this);
     Register(fb);

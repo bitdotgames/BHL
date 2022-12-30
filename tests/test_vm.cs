@@ -9542,6 +9542,58 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStartFiberByFuncAddr()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 123
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    VM.FuncAddr addr;
+    FuncSymbolScript fs;
+    AssertFalse(vm.TryFindFuncAddr("garbage", out addr, out fs));
+    AssertTrue(vm.TryFindFuncAddr("test", out addr, out fs));
+    {
+      var fb = vm.Start(addr);
+      AssertFalse(vm.Tick());
+      AssertEqual(fb.result.PopRelease().num, 123);
+    }
+    {
+      var fb = vm.Start(addr);
+      AssertFalse(vm.Tick());
+      AssertEqual(fb.result.PopRelease().num, 123);
+    }
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDetachFiber()
+  {
+    string bhl = @"
+    async func int test()
+    {
+      yield()
+      return 123
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertEqual(fb.status, BHS.NONE);
+    vm.Detach(fb);
+    AssertEqual(fb.status, BHS.NONE);
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.status, BHS.NONE);
+    AssertTrue(vm.Tick(fb));
+    AssertFalse(vm.Tick(fb));
+    AssertEqual(fb.result.PopRelease().num, 123);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFiberFuncDefaultArg()
   {
     string bhl = @"
