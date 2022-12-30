@@ -288,12 +288,12 @@ staticFlag
   : 'static'
   ;
 
-asyncFlag
-  : 'async'
+coroFlag
+  : 'coro'
   ;
 
 funcAttribs
-  : (asyncFlag | virtualFlag | overrideFlag | staticFlag)
+  : (coroFlag | virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
@@ -301,7 +301,7 @@ funcDecl
   ;
 
 funcType
-  : asyncFlag? 'func' retType? '(' types? ')'
+  : coroFlag? 'func' retType? '(' types? ')'
   ;
 
 funcBlock
@@ -309,11 +309,11 @@ funcBlock
   ;
 
 interfaceFuncDecl
-  : asyncFlag? 'func' retType? NAME '(' funcParams? ')'
+  : coroFlag? 'func' retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda
-  : asyncFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExp*
+  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExp*
   ;
 
 refType

@@ -1,6 +1,6 @@
 import "std/io"
 
-async func main([]string argv) {
+coro func main([]string argv) {
   paral {
     {
       yield()

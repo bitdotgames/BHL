@@ -1479,7 +1479,7 @@ public enum FuncAttrib : byte
   Override     = 2,
   Static       = 4,
   VariadicArgs = 8,
-  Async        = 16,
+  Coro        = 16,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
@@ -1492,10 +1492,10 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     set {
       _signature = value;
 
-      if(_signature.is_async)
-        _attribs |= (byte)FuncAttrib.Async;
+      if(_signature.is_coro)
+        _attribs |= (byte)FuncAttrib.Coro;
       else
-        _attribs &= (byte)~FuncAttrib.Async;
+        _attribs &= (byte)~FuncAttrib.Coro;
 
       if(_signature.has_variadic)
         _attribs |= (byte)FuncAttrib.VariadicArgs;
@@ -1525,7 +1525,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _attribs = (byte)value;
-      signature.is_async = value.HasFlag(FuncAttrib.Async);
+      signature.is_coro = value.HasFlag(FuncAttrib.Coro);
       signature.has_variadic = value.HasFlag(FuncAttrib.VariadicArgs);
     }
   }
@@ -1771,7 +1771,7 @@ public class FuncSymbolVirtual : FuncSymbol
   public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
   {
     //NOTE: we call fs.signature(signature) but not signature.Equals(fs.signature) on purpose,
-    //      since we want to allow 'non-async' functions to be a subset(compatible) of 'async' ones
+    //      since we want to allow 'non-coro' functions to be a subset(compatible) of 'coro' ones
     if(!fs.signature.Equals(signature))
       throw new SymbolError(fs, "virtual method signature doesn't match the base one: '" + signature + "' and  '" + fs.signature + "'");
 
@@ -1925,7 +1925,7 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : base(name, new FuncSignature(attribs.HasFlag(FuncAttrib.Async), ret_type))
+    : base(name, new FuncSignature(attribs.HasFlag(FuncAttrib.Coro), ret_type))
   {
     this.attribs = attribs;
 

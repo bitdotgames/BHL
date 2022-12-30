@@ -300,30 +300,30 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public bool has_variadic;
 
-  public bool is_async;
+  public bool is_coro;
 
   public string GetName() { return name; }
 
-  public FuncSignature(bool is_async, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(bool is_coro, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
   {
-    this.is_async = is_async;
+    this.is_coro = is_coro;
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
       this.arg_types.Add(arg_type);
     Update();
   }
 
-  public FuncSignature(bool is_async, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
+  public FuncSignature(bool is_coro, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
   {
-    this.is_async = is_async;
+    this.is_coro = is_coro;
     this.ret_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
 
-  public FuncSignature(bool is_async, Proxy<IType> ret_type)
+  public FuncSignature(bool is_coro, Proxy<IType> ret_type)
   {
-    this.is_async = is_async;
+    this.is_coro = is_coro;
     this.ret_type = ret_type;
     Update();
   }
@@ -350,8 +350,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
       tmp += arg_types[i].path;
     }
     tmp += ")";
-    if(is_async)
-      tmp = "async " + tmp;
+    if(is_coro)
+      tmp = "coro " + tmp;
 
     name = tmp;
   }
@@ -363,7 +363,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, ref is_async);
+    marshall.Marshall.Sync(ctx, ref is_coro);
     marshall.Marshall.Sync(ctx, ref ret_type);
     marshall.Marshall.Sync(ctx, arg_types);
     marshall.Marshall.Sync(ctx, ref default_args_num);
@@ -385,8 +385,8 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
       return false;
     if(ReferenceEquals(this, o))
       return true;
-    //TODO: 'non-async' function is a subset of an 'async' one
-    if(is_async && !o.is_async)
+    //TODO: 'non-coro' function is a subset of a 'coro' one
+    if(is_coro && !o.is_coro)
       return false;
     if(!ret_type.Equals(o.ret_type))
       return false;
@@ -579,7 +579,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative("suspend", FuncAttrib.Async, this.T("void"), 0, 
+      var fn = new FuncSymbolNative("suspend", FuncAttrib.Coro, this.T("void"), 0, 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutineSuspend.Instance;
@@ -598,7 +598,7 @@ public class Types : INamedResolver
           stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", this.TFunc(true/*is async*/, "void"))
+        new FuncArgSymbol("p", this.TFunc(true/*is coro*/, "void"))
       );
       ns.Define(fn);
     }

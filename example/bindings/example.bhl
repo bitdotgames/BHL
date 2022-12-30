@@ -1,5 +1,5 @@
 
-async func bool Idle()
+coro func bool Idle()
 {
   bool done = false
   defer {
@@ -19,7 +19,7 @@ async func bool Idle()
   return true
 }
 
-async func bool FindTarget(ref int target_id)
+coro func bool FindTarget(ref int target_id)
 {
   target_id = 0
 
@@ -37,7 +37,7 @@ async func bool FindTarget(ref int target_id)
   return true
 }
 
-async func bool AttackTarget(ref int target_id)
+coro func bool AttackTarget(ref int target_id)
 {
   if(target_id == 0) {
     return false
@@ -50,14 +50,14 @@ async func bool AttackTarget(ref int target_id)
   return true
 }
 
-async func StateChanged(ref int state)
+coro func StateChanged(ref int state)
 {
   int last_state = state
   yield while(last_state == state)
   Trace("State changed!")
 }
 
-async func RandomStateChanger(ref int state)
+coro func RandomStateChanger(ref int state)
 {
   while(true) {
     yield Wait(1 + Rand() * 4)
@@ -65,8 +65,8 @@ async func RandomStateChanger(ref int state)
   }
 }
 
-async func Selector([]async func bool() fns) {
-  foreach(async func bool() fn in fns) {
+coro func Selector([]coro func bool() fns) {
+  foreach(coro func bool() fn in fns) {
     if(!yield fn()) {
       continue
     } else {
@@ -75,7 +75,7 @@ async func Selector([]async func bool() fns) {
   }
 }
 
-async func Unit() {
+coro func Unit() {
   Trace("Unit starts...")
 
   int state = 0
@@ -88,9 +88,9 @@ async func Unit() {
         yield StateChanged(ref state)
         yield Selector(
             [
-              async func bool() { return yield AttackTarget(ref target_id) }, 
-              async func bool() { return yield FindTarget(ref target_id) }, 
-              async func bool() { return yield Idle() }
+              coro func bool() { return yield AttackTarget(ref target_id) }, 
+              coro func bool() { return yield FindTarget(ref target_id) }, 
+              coro func bool() { return yield Idle() }
             ]
           )
       }

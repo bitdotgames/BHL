@@ -692,17 +692,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(is_last)
     {
-      if(!yielded && fsig.is_async)
+      if(!yielded && fsig.is_coro)
       {
-        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "async function must be called via yield");
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "coro function must be called via yield");
       }
-      else if(yielded && !fsig.is_async)
-        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "not an async function");
+      else if(yielded && !fsig.is_coro)
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "not a coro function");
     }
     else 
     {
-      if(fsig.is_async)
-        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "async function must be called via yield");
+      if(fsig.is_coro)
+        FireError(idx == 0 ? chain_ctx : chain.parseTree(idx-1), "coro function must be called via yield");
     }
   }
 
@@ -1222,7 +1222,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    return ParseFuncSignature(ctx.asyncFlag() != null, ctx.retType(), ctx.types());
+    return ParseFuncSignature(ctx.coroFlag() != null, ctx.retType(), ctx.types());
   }
 
   FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
@@ -1260,10 +1260,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(bool is_coro, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
-    return ParseFuncSignature(is_async, ret_type, fparams, out default_args_num);
+    return ParseFuncSignature(is_coro, ret_type, fparams, out default_args_num);
   }
 
   Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
@@ -1327,7 +1327,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void CommonVisitLambda(ParserRuleContext ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
   {
     if(yielded)
-      CheckAsyncCallValidity(ctx);
+      CheckCoroCallValidity(ctx);
 
     var tp = ParseType(funcLambda.retType());
 
@@ -1336,7 +1336,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var lmb_symb = new LambdaSymbol(
       Wrap(ctx), 
       func_name,
-      ParseFuncSignature(funcLambda.asyncFlag() != null, tp, funcLambda.funcParams()),
+      ParseFuncSignature(funcLambda.coroFlag() != null, tp, funcLambda.funcParams()),
       upvals,
       this.func_decl_stack
     );
@@ -1607,11 +1607,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void CheckAsyncCallValidity(ParserRuleContext ctx)
+  void CheckCoroCallValidity(ParserRuleContext ctx)
   {
     var curr_func = PeekFuncDecl();
-    if(!curr_func.attribs.HasFlag(FuncAttrib.Async))
-      FireError(curr_func.parsed.tree, "function with yield calls must be async");
+    if(!curr_func.attribs.HasFlag(FuncAttrib.Coro))
+      FireError(curr_func.parsed.tree, "function with yield calls must be coro");
 
     if(GetBlockLevel(BlockType.DEFER) != -1)
       FireError(ctx, "yield is not allowed in defer block");
@@ -1621,7 +1621,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonYieldFuncCall(ParserRuleContext ctx, bhlParser.FuncCallExpContext fn_call)
   {
-    CheckAsyncCallValidity(ctx);
+    CheckCoroCallValidity(ctx);
 
     var chain = new ExpChainExtraCall(new ExpChain(fn_call.callExp().chainExp()), fn_call.callArgs());
 
@@ -1772,7 +1772,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldParen(bhlParser.ExpYieldParenContext ctx)
   {
-    CheckAsyncCallValidity(ctx);
+    CheckCoroCallValidity(ctx);
 
     var ast = new AST_Interim();
     var exp = ctx.exp(); 
@@ -2392,7 +2392,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].asyncFlag() == null)
+    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() == null)
       FireError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
     pass.func_symb = new FuncSymbolScript(
@@ -2413,7 +2413,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
 
     pass.func_symb.signature = ParseFuncSignature(
-      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].asyncFlag() != null, 
+      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() != null, 
       ParseType(pass.func_ctx.retType()), 
       pass.func_ctx.funcParams()
     );
@@ -2460,8 +2460,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
       FireError(ret_ctx, "matching 'return' statement not found");
 
-    if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Async) && !has_yield_calls.Contains(func_ast.symbol))
-      FireError(ctx, "async functions without yield calls not allowed");
+    if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Coro) && !has_yield_calls.Contains(func_ast.symbol))
+      FireError(ctx, "coro functions without yield calls not allowed");
   }
 
   void Pass_OutlineGlobalVar(ParserPass pass)
@@ -2501,7 +2501,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         int default_args_num;
-        var sig = ParseFuncSignature(fd.asyncFlag() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+        var sig = ParseFuncSignature(fd.coroFlag() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
           FireError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
 
@@ -2653,8 +2653,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var attr = fd.funcAttribs()[f];
           var attr_type = FuncAttrib.None;
 
-          if(attr.asyncFlag() != null)
-            attr_type = FuncAttrib.Async;
+          if(attr.coroFlag() != null)
+            attr_type = FuncAttrib.Coro;
           else if(attr.virtualFlag() != null)
             attr_type = FuncAttrib.Virtual;
           else if(attr.overrideFlag() != null)
@@ -2719,7 +2719,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
 
         func_symb.signature = ParseFuncSignature(
-          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].asyncFlag() != null, 
+          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].coroFlag() != null, 
           ParseType(fd.retType()), 
           fd.funcParams()
         );
@@ -3532,7 +3532,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitYield(bhlParser.YieldContext ctx)
   {
-    CheckAsyncCallValidity(ctx);
+    CheckCoroCallValidity(ctx);
 
     int line = ctx.Start.Line;
     var ast = new AST_Yield(line);
@@ -3553,7 +3553,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    CheckAsyncCallValidity(ctx);
+    CheckCoroCallValidity(ctx);
 
     var ast = new AST_Block(BlockType.WHILE);
 

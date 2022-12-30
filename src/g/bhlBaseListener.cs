@@ -1393,17 +1393,17 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.asyncFlag"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.coroFlag"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterAsyncFlag([NotNull] bhlParser.AsyncFlagContext context) { }
+	public virtual void EnterCoroFlag([NotNull] bhlParser.CoroFlagContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.asyncFlag"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.coroFlag"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitAsyncFlag([NotNull] bhlParser.AsyncFlagContext context) { }
+	public virtual void ExitCoroFlag([NotNull] bhlParser.CoroFlagContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// <para>The default implementation does nothing.</para>

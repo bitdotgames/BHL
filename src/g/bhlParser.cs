@@ -64,7 +64,7 @@ public partial class bhlParser : Parser {
 		RULE_classMember = 47, RULE_interfaceDecl = 48, RULE_interfaceBlock = 49, 
 		RULE_interfaceMembers = 50, RULE_interfaceMember = 51, RULE_enumDecl = 52, 
 		RULE_enumBlock = 53, RULE_enumMember = 54, RULE_virtualFlag = 55, RULE_overrideFlag = 56, 
-		RULE_staticFlag = 57, RULE_asyncFlag = 58, RULE_funcAttribs = 59, RULE_funcDecl = 60, 
+		RULE_staticFlag = 57, RULE_coroFlag = 58, RULE_funcAttribs = 59, RULE_funcDecl = 60, 
 		RULE_funcType = 61, RULE_funcBlock = 62, RULE_interfaceFuncDecl = 63, 
 		RULE_funcLambda = 64, RULE_refType = 65, RULE_retType = 66, RULE_types = 67, 
 		RULE_funcParams = 68, RULE_funcParamDeclare = 69, RULE_varsDeclare = 70, 
@@ -86,7 +86,7 @@ public partial class bhlParser : Parser {
 		"callArg", "block", "extensions", "nsDecl", "classDecl", "classBlock", 
 		"classMembers", "fldAttribs", "fldDeclare", "classMember", "interfaceDecl", 
 		"interfaceBlock", "interfaceMembers", "interfaceMember", "enumDecl", "enumBlock", 
-		"enumMember", "virtualFlag", "overrideFlag", "staticFlag", "asyncFlag", 
+		"enumMember", "virtualFlag", "overrideFlag", "staticFlag", "coroFlag", 
 		"funcAttribs", "funcDecl", "funcType", "funcBlock", "interfaceFuncDecl", 
 		"funcLambda", "refType", "retType", "types", "funcParams", "funcParamDeclare", 
 		"varsDeclare", "varDeclare", "varOrDeclare", "varOrDeclares", "varsDeclareOrCallExps", 
@@ -102,7 +102,7 @@ public partial class bhlParser : Parser {
 		"'++'", "'--'", "'while'", "'do'", "'for'", "'foreach'", "'break'", "'continue'", 
 		"'return'", "'paral'", "'paral_all'", "'defer'", "'if'", "'else'", "'typeof'", 
 		"'.'", "'{'", "'}'", "'{}'", "'namespace'", "'class'", "'interface'", 
-		"'enum'", "'='", "'virtual'", "'override'", "'static'", "'async'", "'func'", 
+		"'enum'", "'='", "'virtual'", "'override'", "'static'", "'coro'", "'func'", 
 		"'||'", "'&&'", "'|'", "'&'", "'+='", "'-='", "'*='", "'/='", "'<'", "'>'", 
 		"'<='", "'>='", "'!='", "'=='", "'+'", "'-'", "'*'", "'/'", "'%'", "'!'", 
 		"'ref'", null, null, "'..'", "'...'", "';'"
@@ -5039,31 +5039,31 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class AsyncFlagContext : ParserRuleContext {
-		public AsyncFlagContext(ParserRuleContext parent, int invokingState)
+	public partial class CoroFlagContext : ParserRuleContext {
+		public CoroFlagContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_asyncFlag; } }
+		public override int RuleIndex { get { return RULE_coroFlag; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterAsyncFlag(this);
+			if (typedListener != null) typedListener.EnterCoroFlag(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitAsyncFlag(this);
+			if (typedListener != null) typedListener.ExitCoroFlag(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitAsyncFlag(this);
+			if (typedVisitor != null) return typedVisitor.VisitCoroFlag(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public AsyncFlagContext asyncFlag() {
-		AsyncFlagContext _localctx = new AsyncFlagContext(Context, State);
-		EnterRule(_localctx, 116, RULE_asyncFlag);
+	public CoroFlagContext coroFlag() {
+		CoroFlagContext _localctx = new CoroFlagContext(Context, State);
+		EnterRule(_localctx, 116, RULE_coroFlag);
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
@@ -5082,8 +5082,8 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class FuncAttribsContext : ParserRuleContext {
-		public AsyncFlagContext asyncFlag() {
-			return GetRuleContext<AsyncFlagContext>(0);
+		public CoroFlagContext coroFlag() {
+			return GetRuleContext<CoroFlagContext>(0);
 		}
 		public VirtualFlagContext virtualFlag() {
 			return GetRuleContext<VirtualFlagContext>(0);
@@ -5126,7 +5126,7 @@ public partial class bhlParser : Parser {
 			switch (TokenStream.LA(1)) {
 			case T__43:
 				{
-				State = 669; asyncFlag();
+				State = 669; coroFlag();
 				}
 				break;
 			case T__40:
@@ -5255,8 +5255,8 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class FuncTypeContext : ParserRuleContext {
-		public AsyncFlagContext asyncFlag() {
-			return GetRuleContext<AsyncFlagContext>(0);
+		public CoroFlagContext coroFlag() {
+			return GetRuleContext<CoroFlagContext>(0);
 		}
 		public RetTypeContext retType() {
 			return GetRuleContext<RetTypeContext>(0);
@@ -5297,7 +5297,7 @@ public partial class bhlParser : Parser {
 			_la = TokenStream.LA(1);
 			if (_la==T__43) {
 				{
-				State = 693; asyncFlag();
+				State = 693; coroFlag();
 				}
 			}
 
@@ -5382,8 +5382,8 @@ public partial class bhlParser : Parser {
 
 	public partial class InterfaceFuncDeclContext : ParserRuleContext {
 		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
-		public AsyncFlagContext asyncFlag() {
-			return GetRuleContext<AsyncFlagContext>(0);
+		public CoroFlagContext coroFlag() {
+			return GetRuleContext<CoroFlagContext>(0);
 		}
 		public RetTypeContext retType() {
 			return GetRuleContext<RetTypeContext>(0);
@@ -5424,7 +5424,7 @@ public partial class bhlParser : Parser {
 			_la = TokenStream.LA(1);
 			if (_la==T__43) {
 				{
-				State = 708; asyncFlag();
+				State = 708; coroFlag();
 				}
 			}
 
@@ -5467,8 +5467,8 @@ public partial class bhlParser : Parser {
 		public FuncBlockContext funcBlock() {
 			return GetRuleContext<FuncBlockContext>(0);
 		}
-		public AsyncFlagContext asyncFlag() {
-			return GetRuleContext<AsyncFlagContext>(0);
+		public CoroFlagContext coroFlag() {
+			return GetRuleContext<CoroFlagContext>(0);
 		}
 		public RetTypeContext retType() {
 			return GetRuleContext<RetTypeContext>(0);
@@ -5516,7 +5516,7 @@ public partial class bhlParser : Parser {
 			_la = TokenStream.LA(1);
 			if (_la==T__43) {
 				{
-				State = 722; asyncFlag();
+				State = 722; coroFlag();
 				}
 			}
 

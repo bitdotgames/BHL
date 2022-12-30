@@ -343,7 +343,7 @@ public class TestVariadic : BHL_TestBase
       trace((string)ns[0] + "" "" + (string)ns[1] + "";"")
     }
 
-    async func int ret_int(int val, int ticks) {
+    coro func int ret_int(int val, int ticks) {
       while(ticks > 0) {
         yield()
         ticks = ticks - 1
@@ -351,7 +351,7 @@ public class TestVariadic : BHL_TestBase
       return val
     }
 
-    async func test() 
+    coro func test() 
     {
       paral_all {
         foo(1, yield ret_int(val: 2, ticks: 1))

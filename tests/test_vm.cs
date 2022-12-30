@@ -1063,7 +1063,7 @@ public class TestVM : BHL_TestBase
   public void TestReturnNotAllPathsReturnValue()
   {
     string bhl = @"
-    async func int test() 
+    coro func int test() 
     {
       paral_all {
         {
@@ -1080,8 +1080,8 @@ public class TestVM : BHL_TestBase
       },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-    async func int test() 
----------------^"
+    coro func int test() 
+--------------^"
       )
     );
   }
@@ -1399,7 +1399,7 @@ public class TestVM : BHL_TestBase
       return 100
     }
       
-    async func int test() 
+    coro func int test() 
     {
       paral {
         foo()
@@ -3047,7 +3047,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       paral_all {
         {
@@ -4528,7 +4528,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         int foo = 1
@@ -4614,7 +4614,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         hey(foo())
@@ -4887,7 +4887,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       paral {
         for(int i = 0; i < 3; i = i + 1) {
@@ -5296,7 +5296,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       paral {
         foreach(int it in [1,2,3]) {
@@ -5327,7 +5327,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       paral_all {
         foreach(int it in [1,2,3]) {
@@ -5871,7 +5871,7 @@ public class TestVM : BHL_TestBase
   public void TestForeverLoopBreak()
   {
     string bhl = @"
-    async func int test() 
+    coro func int test() 
     {
       int i = 0
       while(true) {
@@ -5895,7 +5895,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int n = 0
       while(true) {
@@ -5926,7 +5926,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int n = 0
       while(true) {
@@ -5957,7 +5957,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int n = 0
       paral {
@@ -6952,9 +6952,9 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
-      async func(string) ptr = async func(string arg) {
+      coro func(string) ptr = coro func(string arg) {
         trace(arg)
         yield()
       }
@@ -7881,15 +7881,15 @@ public class TestVM : BHL_TestBase
   public void TestStartSameFuncPtr()
   {
     string bhl = @"
-    async func foo() {
+    coro func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
     }
 
     func test() {
-      async func() fn = foo
-      async func() fn2 = fn
+      coro func() fn = foo
+      coro func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -7912,7 +7912,7 @@ public class TestVM : BHL_TestBase
   public void TestStartImportedSameFuncPtr()
   {
     string bhl2 = @"
-    async func foo() {
+    coro func foo() {
       trace(""FOO1"")
       yield()
       trace(""FOO2"")
@@ -7923,8 +7923,8 @@ public class TestVM : BHL_TestBase
     import ""bhl2""
 
     func test() {
-      async func() fn = foo
-      async func() fn2 = fn
+      coro func() fn = foo
+      coro func() fn2 = fn
       paral_all {
         start(fn2)
         start(fn2)
@@ -9573,7 +9573,7 @@ public class TestVM : BHL_TestBase
   public void TestDetachFiber()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       yield()
       return 123
@@ -9597,12 +9597,12 @@ public class TestVM : BHL_TestBase
   public void TestDetachAndTickSeveralFibers()
   {
     string bhl = @"
-    async func test()
+    coro func test()
     {
       yield()
     }
 
-    async func test2()
+    coro func test2()
     {
       yield()
       yield()
@@ -10194,7 +10194,7 @@ public class TestVM : BHL_TestBase
       return arr
     }
       
-    async func test() 
+    coro func test() 
     {
       while(true) {
         []string arr = new []string
@@ -10420,7 +10420,7 @@ public class TestVM : BHL_TestBase
   public void TestBasicParal()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral {
@@ -10469,7 +10469,7 @@ public class TestVM : BHL_TestBase
   public void TestBasicParalAutoSeqWrap()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral {
@@ -10519,7 +10519,7 @@ public class TestVM : BHL_TestBase
   public void TestSubParalAutoSeqWrap()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral {
@@ -10571,12 +10571,12 @@ public class TestVM : BHL_TestBase
   public void TestSubParalAutoSeqWrapLambda()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral {
         yield suspend() 
-        yield async func() {
+        yield coro func() {
           paral {
             yield()
             a = 1
@@ -10631,16 +10631,16 @@ public class TestVM : BHL_TestBase
   public void TestParalWithSubFuncs()
   {
     string bhl = @"
-    async func foo() {
+    coro func foo() {
       yield suspend()
     }
 
-    async func int bar() {
+    coro func int bar() {
       yield()
       return 1
     }
 
-    async func int test() {
+    coro func int test() {
       int a
       paral {
         {
@@ -10668,16 +10668,16 @@ public class TestVM : BHL_TestBase
   public void TestParalWithSubFuncsAndAutoSeqWrap()
   {
     string bhl = @"
-    async func foo() {
+    coro func foo() {
       yield suspend()
     }
 
-    async func int bar() {
+    coro func int bar() {
       yield()
       return 1
     }
 
-    async func int test() {
+    coro func int test() {
       int a
       paral {
         yield foo()
@@ -10734,7 +10734,7 @@ public class TestVM : BHL_TestBase
   public void TestParalAllRunning()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral_all {
@@ -10762,7 +10762,7 @@ public class TestVM : BHL_TestBase
   public void TestParalAllFinished()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       int a
       paral_all {
@@ -10836,7 +10836,7 @@ public class TestVM : BHL_TestBase
       return 0
     }
 
-    async func int test() 
+    coro func int test() 
     {
       int i = 0
       paral_all {
@@ -11023,7 +11023,7 @@ public class TestVM : BHL_TestBase
   public void TestParalFailure()
   {
     string bhl = @"
-    async func foo()
+    coro func foo()
     {
       yield()
       yield()
@@ -11031,7 +11031,7 @@ public class TestVM : BHL_TestBase
       trace(""A"")
     }
 
-    async func bar()
+    coro func bar()
     {
       yield()
       yield()
@@ -11039,7 +11039,7 @@ public class TestVM : BHL_TestBase
       trace(""B"")
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         yield bar()
@@ -11068,7 +11068,7 @@ public class TestVM : BHL_TestBase
   public void TestParalAllFailure()
   {
     string bhl = @"
-    async func foo()
+    coro func foo()
     {
       yield()
       yield()
@@ -11076,7 +11076,7 @@ public class TestVM : BHL_TestBase
       trace(""A"")
     }
 
-    async func bar()
+    coro func bar()
     {
       yield()
       yield()
@@ -11084,7 +11084,7 @@ public class TestVM : BHL_TestBase
       trace(""B"")
     }
 
-    async func test() 
+    coro func test() 
     {
       paral_all {
         yield bar()
@@ -11259,7 +11259,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int foo()
+    coro func int foo()
     {
       yield()
       return 100
@@ -11269,7 +11269,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    async func test() 
+    coro func test() 
     {
       hey(""bar"", 1 + yield foo())
     }
@@ -11288,20 +11288,20 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int foo()
+    coro func int foo()
     {
       yield()
       return 1
     }
 
-    async func doer(ref int c)
+    coro func doer(ref int c)
     {
       while(c < 2) {
         c = c + yield foo()
       }
     }
 
-    async func test() 
+    coro func test() 
     {
       int c = 0
       yield doer(ref c)
@@ -11386,18 +11386,18 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int sub_sub_call()
+    coro func int sub_sub_call()
     {
       yield()
       return 2
     }
 
-    async func int sub_call()
+    coro func int sub_call()
     {
       return 1 + 10 + 12 + yield sub_sub_call()
     }
 
-    async func test() 
+    coro func test() 
     {
       int cost = 1 + yield sub_call()
     }
@@ -11533,7 +11533,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanArgsStackInParal()
   {
     string bhl = @"
-    async func int foo(int ticks) 
+    coro func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11547,7 +11547,7 @@ public class TestVM : BHL_TestBase
       return 42
     }
 
-    async func bar()
+    coro func bar()
     {
       Foo f
       paral_all {
@@ -11561,7 +11561,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    async func test() 
+    coro func test() 
     {
       yield bar()
     }
@@ -11588,7 +11588,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncPtrArgsStackInParal()
   {
     string bhl = @"
-    async func int foo(int ticks) 
+    coro func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11602,9 +11602,9 @@ public class TestVM : BHL_TestBase
       return 42
     }
 
-    async func bar()
+    coro func bar()
     {
-      async func int(int) p = foo
+      coro func int(int) p = foo
       Foo f
       paral_all {
         {
@@ -11617,7 +11617,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    async func test() 
+    coro func test() 
     {
       yield bar()
     }
@@ -11644,13 +11644,13 @@ public class TestVM : BHL_TestBase
   public void TestCleanArgsStackInParalForLambda()
   {
     string bhl = @"
-    async func bar()
+    coro func bar()
     {
       Foo f
       paral_all {
         {
           f = PassthruFoo({hey:10, colors:[{r:
-              yield async func int (int n) 
+              yield coro func int (int n) 
               { 
                 yield()
                 yield()
@@ -11661,7 +11661,7 @@ public class TestVM : BHL_TestBase
         }
         {
           f = PassthruFoo({hey:20, colors:[{r:
-              yield async func int (int n) 
+              yield coro func int (int n) 
               { 
                 yield()
                 yield()
@@ -11675,7 +11675,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    async func test() 
+    coro func test() 
     {
       yield bar()
     }
@@ -11712,7 +11712,7 @@ public class TestVM : BHL_TestBase
       return 1
     }
 
-    async func int ret_int(int val, int ticks)
+    coro func int ret_int(int val, int ticks)
     {
       while(ticks > 0) {
         yield()
@@ -11721,7 +11721,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         {
@@ -11747,7 +11747,7 @@ public class TestVM : BHL_TestBase
   public void TestInterleaveFuncStackInParal()
   {
     string bhl = @"
-    async func int foo(int ticks) 
+    coro func int foo(int ticks) 
     {
       if(ticks == 2) {
         yield()
@@ -11760,7 +11760,7 @@ public class TestVM : BHL_TestBase
       return ticks
     }
 
-    async func bar()
+    coro func bar()
     {
       Foo f
       paral_all {
@@ -11776,7 +11776,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    async func test() 
+    coro func test() 
     {
       yield bar()
     }
@@ -11803,7 +11803,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    async func int ret_int(int val, int ticks)
+    coro func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11813,9 +11813,9 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    async func test() 
+    coro func test() 
     {
-      async func int(int,int) p = ret_int
+      coro func int(int,int) p = ret_int
       paral {
         {
           foo(1, yield p(2, 1))
@@ -11846,10 +11846,10 @@ public class TestVM : BHL_TestBase
     }
 
     class Bar { 
-      async func int(int,int) ptr
+      coro func int(int,int) ptr
     }
 
-    async func int ret_int(int val, int ticks)
+    coro func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11859,7 +11859,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    async func test() 
+    coro func test() 
     {
       Bar b = {}
       b.ptr = ret_int
@@ -11892,12 +11892,12 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         {
           foo(1, 
-              yield async func int (int val, int ticks) {
+              yield coro func int (int val, int ticks) {
                 while(ticks > 0) {
                   yield()
                   ticks = ticks - 1
@@ -11907,7 +11907,7 @@ public class TestVM : BHL_TestBase
           yield suspend()
         }
         foo(10, 
-            yield async func int (int val, int ticks) {
+            yield coro func int (int val, int ticks) {
               while(ticks > 0) {
                 yield()
                 ticks = ticks - 1
@@ -11937,7 +11937,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    async func int ret_int(int val, int ticks)
+    coro func int ret_int(int val, int ticks)
     {
       while(ticks > 0)
       {
@@ -11947,7 +11947,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    async func test() 
+    coro func test() 
     {
       paral_all {
         foo(1, yield ret_int(val: 2, ticks: 1))
@@ -12009,7 +12009,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         {
@@ -12047,7 +12047,7 @@ public class TestVM : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("ret_int", FuncAttrib.Async, Types.Int, 0,
+        var m = new FuncSymbolNative("ret_int", FuncAttrib.Coro, Types.Int, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             return CoroutinePool.New<Bar_ret_int>(frm.vm);
@@ -12146,7 +12146,7 @@ public class TestVM : BHL_TestBase
       trace((string)k)
     }
 
-    async func int doer() 
+    coro func int doer() 
     {
       float k = 1
       defer {
@@ -12161,7 +12161,7 @@ public class TestVM : BHL_TestBase
       return 100
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         {
@@ -12195,7 +12195,7 @@ public class TestVM : BHL_TestBase
       trace((string)k)
     }
 
-    async func doer() 
+    coro func doer() 
     {
       float k = 1
       defer {
@@ -12207,7 +12207,7 @@ public class TestVM : BHL_TestBase
       k = 2
     }
 
-    async func test() 
+    coro func test() 
     {
       paral {
         {
@@ -12236,16 +12236,16 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func doer() 
+    coro func doer() 
     {
       defer {
-        start(async func() { yield() })
+        start(coro func() { yield() })
         trace(""142"")
       }
       yield suspend()
     }
 
-    async func wow()
+    coro func wow()
     {
       paral {
         {
@@ -12261,7 +12261,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    async func test() 
+    coro func test() 
     {
       yield wow()
     }
@@ -12282,16 +12282,16 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func doer(ref int a) 
+    coro func doer(ref int a) 
     {
       defer {
-        start(async func() { yield() })
+        start(coro func() { yield() })
       }
       a = 42
       yield suspend()
     }
 
-    async func wow(ref int a)
+    coro func wow(ref int a)
     {
       paral {
         {
@@ -12304,7 +12304,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    async func test() 
+    coro func test() 
     {
       int a = 0
       yield wow(ref a)
@@ -12327,15 +12327,15 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func changer() {
+    coro func changer() {
       yield()
     }
 
-    async func doer(int i) {
+    coro func doer(int i) {
       yield suspend()
     }
 
-    async func test() 
+    coro func test() 
     {
       int i = 0
       while(i < 2) {
@@ -12702,7 +12702,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    async func level_body(async func() cb) {
+    coro func level_body(coro func() cb) {
       defer {
         trace(""~level_body"")
       }
@@ -12712,8 +12712,8 @@ public class TestVM : BHL_TestBase
       level_start()
     }
 
-    async func test() {
-      yield level_body(async func() { 
+    coro func test() {
+      yield level_body(coro func() { 
         yield() 
       } )
     }
@@ -13435,7 +13435,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         defer {
@@ -13472,7 +13472,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       int i = 0
       while(true) {
@@ -13601,7 +13601,7 @@ public class TestVM : BHL_TestBase
   public void TestDeferInSubParalFuncCall()
   {
     string bhl = @"
-    async func wait_3() {
+    coro func wait_3() {
       defer {
         trace(""~wait_3"")
       }
@@ -13610,7 +13610,7 @@ public class TestVM : BHL_TestBase
       yield suspend()
     }
 
-    async func doer() {
+    coro func doer() {
       defer {
         trace(""~doer"")
       }
@@ -13626,7 +13626,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    async func test() 
+    coro func test() 
     {
       yield doer()
     }
@@ -13646,7 +13646,7 @@ public class TestVM : BHL_TestBase
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
-    async func test() 
+    coro func test() 
     {
       defer {
         trace(""hey"")
@@ -13682,7 +13682,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       defer {
         trace(""1"")
@@ -13763,7 +13763,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       defer {
         trace(""hey"")
@@ -13799,7 +13799,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       defer {
         trace(""1"")
@@ -14011,7 +14011,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       paral {
         {
@@ -14121,7 +14121,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       paral {
         {
@@ -14148,7 +14148,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       paral_all {
         {
@@ -14170,7 +14170,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       paral_all {
         yield()
@@ -14190,7 +14190,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       paral_all {
         {
@@ -17235,7 +17235,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgToFiber()
   {
     string bhl = @"
-    async func int test(int a)
+    coro func int test(int a)
     {
       yield()
       return a
@@ -17258,7 +17258,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber()
   {
     string bhl = @"
-    async func float test(float k, float m) 
+    coro func float test(float k, float m) 
     {
       yield()
       return m
@@ -17275,7 +17275,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber2()
   {
     string bhl = @"
-    async func float test(float k, float m) 
+    coro func float test(float k, float m) 
     {
       yield()
       return k
@@ -17292,7 +17292,7 @@ public class TestVM : BHL_TestBase
   public void TestStartSeveralFibers()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       yield()
       return 123
@@ -17319,7 +17319,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func test()
     {
-      start(async func() {
+      start(coro func() {
         yield()
         trace(""done"")
       })
@@ -17343,7 +17343,7 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberFromScript()
   {
     string bhl = @"
-    async func foo()
+    coro func foo()
     {
       defer {
         trace(""4"")
@@ -17352,9 +17352,9 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    async func test()
+    coro func test()
     {
-      int fid = start(async func() {
+      int fid = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -17385,7 +17385,7 @@ public class TestVM : BHL_TestBase
   public void TestDoubleStopFiberFromScript()
   {
     string bhl = @"
-    async func foo()
+    coro func foo()
     {
       defer {
         trace(""4"")
@@ -17394,9 +17394,9 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    async func test()
+    coro func test()
     {
-      int fid = start(async func() {
+      int fid = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -17436,10 +17436,10 @@ public class TestVM : BHL_TestBase
       trace(""1"")
     }
 
-    async func test()
+    coro func test()
     {
       int fid
-      fid = start(async func() {
+      fid = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -17472,7 +17472,7 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberExternallyWithProperDefers()
   {
     string bhl = @"
-    async func foo()
+    coro func foo()
     {
       defer {
         trace(""4"")
@@ -17481,9 +17481,9 @@ public class TestVM : BHL_TestBase
       yield()
     }
 
-    async func test()
+    coro func test()
     {
-      int fb = start(async func() {
+      int fb = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -17523,7 +17523,7 @@ public class TestVM : BHL_TestBase
   public void TestStopFiberExternallyWithProperDefersInParalsInModules()
   {
     string bhl2 = @"
-    async func foo()
+    coro func foo()
     {
       paral {
         defer {
@@ -17536,9 +17536,9 @@ public class TestVM : BHL_TestBase
 
     string bhl1 = @"
     import ""bhl2""
-    async func test()
+    coro func test()
     {
-      int fb = start(async func() {
+      int fb = start(coro func() {
         yield foo()
       })
 
@@ -17578,12 +17578,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    async func foo()
+    coro func foo()
     {
       yield()
     }
 
-    async func test() 
+    coro func test() 
     {
       yield foo()
     }
@@ -17619,12 +17619,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
       
-    async func foo()
+    coro func foo()
     {
       yield()
     }
 
-    async func test() 
+    coro func test() 
     {
       yield foo()
     }
@@ -17854,7 +17854,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         StartScriptInMgr(
@@ -17909,11 +17909,11 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         StartScriptInMgr(
-          script: async func() { 
+          script: coro func() { 
             trace(""HERE;"") 
             yield suspend()
           },
@@ -17969,7 +17969,7 @@ public class TestVM : BHL_TestBase
     func test() 
     {
       StartScriptInMgr(
-        script: async func() { 
+        script: coro func() { 
           yield suspend()
         },
         spawns : 3
@@ -18009,7 +18009,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      async func() fn = async func() {
+      coro func() fn = coro func() {
         trace(""HERE;"")
         yield suspend()
       }
@@ -18102,13 +18102,13 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      async func() fn = async func() {
+      coro func() fn = coro func() {
         trace(""HERE;"")
         yield suspend()
       }
 
       StartScriptInMgr(
-        script: async func() { 
+        script: coro func() { 
           yield fn()
         },
         spawns : 2
@@ -18150,7 +18150,7 @@ public class TestVM : BHL_TestBase
     {
       float a = 0
       StartScriptInMgr(
-        script: async func() { 
+        script: coro func() { 
           a = a + 1
           trace((string) a + "";"") 
           yield suspend()
@@ -18196,8 +18196,8 @@ public class TestVM : BHL_TestBase
     {
       float a = 1
       StartScriptInMgr(
-        script: async func() { 
-            yield async func (float a) { 
+        script: coro func() { 
+            yield coro func (float a) { 
               a = a + 1
               trace((string) a + "";"") 
               yield suspend()
@@ -18525,7 +18525,7 @@ public class TestVM : BHL_TestBase
   public void TestGetStackTraceFromParal()
   {
     string bhl3 = @"
-    async func float wow(float b)
+    coro func float wow(float b)
     {
       paral {
         {
@@ -18541,7 +18541,7 @@ public class TestVM : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl3""
-    async func float bar(float b)
+    coro func float bar(float b)
     {
       return yield wow(b)
     }
@@ -18549,12 +18549,12 @@ public class TestVM : BHL_TestBase
 
     string bhl1 = @"
     import ""bhl2""
-    async func float foo(float k)
+    coro func float foo(float k)
     {
       return yield bar(k)
     }
 
-    async func float test(float k) 
+    coro func float test(float k) 
     {
       return yield foo(k)
     }
@@ -18606,7 +18606,7 @@ public class TestVM : BHL_TestBase
   public void TestGetStackTraceFromParalAll()
   {
     string bhl3 = @"
-    async func float wow(float b)
+    coro func float wow(float b)
     {
       paral_all {
         {
@@ -18622,7 +18622,7 @@ public class TestVM : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl3""
-    async func float bar(float b)
+    coro func float bar(float b)
     {
       return yield wow(b)
     }
@@ -18630,12 +18630,12 @@ public class TestVM : BHL_TestBase
 
     string bhl1 = @"
     import ""bhl2""
-    async func float foo(float k)
+    coro func float foo(float k)
     {
       return yield bar(k)
     }
 
-    async func float test(float k) 
+    coro func float test(float k) 
     {
       return yield foo(k)
     }
@@ -19376,13 +19376,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    async func A(int b = 1)
+    coro func A(int b = 1)
     {
       trace(""A"" + (string)b)
       yield suspend()
     }
 
-    async func test() 
+    coro func test() 
     {
       while(true) {
         int i = 0

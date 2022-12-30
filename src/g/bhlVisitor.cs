@@ -711,11 +711,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.asyncFlag"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.coroFlag"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitAsyncFlag([NotNull] bhlParser.AsyncFlagContext context);
+	Result VisitCoroFlag([NotNull] bhlParser.CoroFlagContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>

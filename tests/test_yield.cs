@@ -4,7 +4,7 @@ using bhl;
 public class TestYield : BHL_TestBase
 {
   [IsTested()]
-  public void TestFuncWithYieldMustByAsync()
+  public void TestFuncWithYieldMustBeCoro()
   {
     string bhl = @"
     func test() {
@@ -16,7 +16,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "function with yield calls must be async",
+      "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
 ----^"
@@ -25,11 +25,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestEmptyAsyncFuncNotAllowed()
+  public void TestEmptyCoroFuncNotAllowed()
   {
     {
       string bhl = @"
-      async func test() {
+      coro func test() {
       }
       ";
 
@@ -37,9 +37,9 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async functions without yield calls not allowed",
+        "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
-      async func test() {
+      coro func test() {
 ------^"
         )
       );
@@ -47,7 +47,7 @@ public class TestYield : BHL_TestBase
 
     {
       string bhl = @"
-      async func test() {
+      coro func test() {
         int a = 10
       }
       ";
@@ -56,9 +56,9 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async functions without yield calls not allowed",
+        "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
-      async func test() {
+      coro func test() {
 ------^"
         )
       );
@@ -66,8 +66,8 @@ public class TestYield : BHL_TestBase
 
     {
       string bhl = @"
-      async func test() {
-        start(async func() {
+      coro func test() {
+        start(coro func() {
             yield()
         })
       }
@@ -77,9 +77,9 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async functions without yield calls not allowed",
+        "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
-      async func test() {
+      coro func test() {
 ------^"
         )
       );
@@ -88,7 +88,7 @@ public class TestYield : BHL_TestBase
     {
       string bhl = @"
       func test() {
-        start(async func() {
+        start(coro func() {
         })
       }
       ";
@@ -97,9 +97,9 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async functions without yield calls not allowed",
+        "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
-        start(async func() {
+        start(coro func() {
 --------------^"
         )
       );
@@ -110,7 +110,7 @@ public class TestYield : BHL_TestBase
   public void TestBasicYield()
   {
     string bhl = @"
-    async func test()
+    coro func test()
     {
       yield()
     }
@@ -128,11 +128,11 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
     class Foo {
-      async func bar() {
+      coro func bar() {
         yield()
       }
     }
-    async func test()
+    coro func test()
     {
       var foo = new Foo
       yield foo.bar()
@@ -151,17 +151,17 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
     class FooBase {
-      async func foo() {
+      coro func foo() {
         yield()
       }
     }
 
     class Foo : FooBase {
-      async func bar() {
+      coro func bar() {
         yield base.foo()
       }
     }
-    async func test()
+    coro func test()
     {
       var foo = new Foo
       yield foo.bar()
@@ -180,15 +180,15 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
     interface IFoo {
-      async func Doer()
+      coro func Doer()
     }
 
     class Foo : IFoo {
-      async func Doer() {
+      coro func Doer() {
         yield()
       }
     }
-    async func test()
+    coro func test()
     {
       var foo = new Foo
       yield foo.Doer()
@@ -203,11 +203,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestInterfaceImplentingAsyncAsRegularMethod()
+  public void TestInterfaceImplentingCoroAsRegularMethod()
   {
     string bhl = @"
     interface IFoo {
-      async func int Doer()
+      coro func int Doer()
     }
 
     class Foo : IFoo {
@@ -228,11 +228,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestInterfaceImplentingAsync()
+  public void TestInterfaceImplentingCoro()
   {
     string bhl = @"
     interface IFoo {
-      async func int Doer()
+      coro func int Doer()
     }
 
     class Foo : IFoo {
@@ -241,7 +241,7 @@ public class TestYield : BHL_TestBase
       }
     }
 
-    async func int test() {
+    coro func int test() {
       IFoo ifoo = new Foo
       return yield ifoo.Doer()
     }
@@ -257,23 +257,23 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
     interface IFoo {
-      async func int Doer()
+      coro func int Doer()
     }
 
     class Foo : IFoo {
-      async virtual func int Doer() {
+      coro virtual func int Doer() {
         yield()
         return 42
       }
     }
 
     class SubFoo : Foo {
-      async override func int Doer() {
+      coro override func int Doer() {
         return 10 + yield base.Doer()
       }
     }
 
-    async func int test() {
+    coro func int test() {
       var o = new SubFoo
       return yield o.Doer()
     }
@@ -289,7 +289,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
     interface IFoo {
-      async func int Doer()
+      coro func int Doer()
     }
 
     class Foo : IFoo {
@@ -299,7 +299,7 @@ public class TestYield : BHL_TestBase
     }
 
     class SubFoo : Foo {
-      async override func int Doer() {
+      coro override func int Doer() {
         yield()
         return 10 + base.Doer()
       }
@@ -310,24 +310,24 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "'func int()' and  'async func int()'",
+      "'func int()' and  'coro func int()'",
       new PlaceAssert(bhl, @"
-      async override func int Doer() {
+      coro override func int Doer() {
 ------^"
       )
     );
   }
 
   [IsTested()]
-  public void TestInterfaceParentSyncOverrideAsyncIsOk()
+  public void TestInterfaceParentSyncOverrideCoroIsOk()
   {
     string bhl = @"
     interface IFoo {
-      async func int Doer()
+      coro func int Doer()
     }
 
     class Foo : IFoo {
-      async virtual func int Doer() {
+      coro virtual func int Doer() {
         yield()
         return 42
       }
@@ -354,7 +354,7 @@ public class TestYield : BHL_TestBase
   public void TestSuspend()
   {
     string bhl = @"
-    async func test()
+    coro func test()
     {
       yield suspend()
     }
@@ -381,7 +381,7 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAsyncFuncMustBeCalledWithYield()
+  public void TestCoroFuncMustBeCalledWithYield()
   {
     string bhl = @"
     func test() {
@@ -393,7 +393,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "async function must be called via yield",
+      "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
 ------^"
@@ -402,11 +402,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAsyncMethodMustBeCalledWithYield()
+  public void TestCoroMethodMustBeCalledWithYield()
   {
     string bhl = @"
     class Foo {
-      async func bar() {
+      coro func bar() {
         yield()
       }
     }
@@ -421,7 +421,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "async function must be called via yield",
+      "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       foo.bar()
 ---------^"
@@ -430,7 +430,7 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAsyncInChainCallIsNotAllowed()
+  public void TestCoroInChainCallIsNotAllowed()
   {
     {
       string bhl = @"
@@ -438,7 +438,7 @@ public class TestYield : BHL_TestBase
         int number
       }
       class Foo {
-        async func Bar bar() {
+        coro func Bar bar() {
           yield()
           return new Bar
         }
@@ -454,7 +454,7 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async function must be called via yield",
+        "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         foo.bar().number
 -----------^"
@@ -468,12 +468,12 @@ public class TestYield : BHL_TestBase
         int number
       }
       class Bar {
-        async func Hey() ptr
+        coro func Hey() ptr
       }
       class Foo {
         func Bar bar() {
           var b = new Bar
-          b.ptr = async func Hey() { 
+          b.ptr = coro func Hey() { 
             yield()
             return new Hey
           }
@@ -491,7 +491,7 @@ public class TestYield : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "async function must be called via yield",
+        "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         foo.bar().ptr().number
 -----------------^"
@@ -504,7 +504,7 @@ public class TestYield : BHL_TestBase
   public void TestYieldSeveralTimesAndReturnValue()
   {
     string bhl = @"
-    async func int test()
+    coro func int test()
     {
       yield()
       int a = 1
@@ -529,7 +529,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int i = 0
       paral {
@@ -555,7 +555,7 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFuncWithYieldWhileMustByAsync()
+  public void TestFuncWithYieldWhileMustByCoro()
   {
     string bhl = @"
     func test() {
@@ -567,7 +567,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "function with yield calls must be async",
+      "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
 ----^"
@@ -580,7 +580,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int i = 0
       paral {
@@ -613,7 +613,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    async func int test() 
+    coro func int test() 
     {
       int i = 0
       paral {
@@ -639,11 +639,11 @@ public class TestYield : BHL_TestBase
   public void TestYieldWhileBugInParal()
   {
     string bhl = @"
-    async func Foo() {
+    coro func Foo() {
       yield suspend()
     }
 
-    async func test() {
+    coro func test() {
       paral {
         yield while(true)
 
@@ -665,7 +665,7 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFuncWithYieldFuncCallMustByAsync()
+  public void TestFuncWithYieldFuncCallMustByCoro()
   {
     string bhl = @"
     func test() {
@@ -677,7 +677,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "function with yield calls must be async",
+      "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
 ----^"
@@ -686,11 +686,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestFuncPtrIsSubsetOfAsyncPtr()
+  public void TestFuncPtrIsSubsetOfCoroPtr()
   {
     string bhl = @"
-    async func int test() {
-      async func int() p = func int() {
+    coro func int test() {
+      coro func int() p = func int() {
         return 42
       }
       return yield p()
@@ -703,12 +703,12 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestOnlyAsyncFuncCanBeYielded()
+  public void TestOnlyCoroFuncCanBeYielded()
   {
     string bhl = @"
     func foo() {
     }
-    async func test() {
+    coro func test() {
       yield foo()
     }
     ";
@@ -717,7 +717,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "not an async function",
+      "not a coro function",
       new PlaceAssert(bhl, @"
       yield foo()
 ------------^"
@@ -726,10 +726,10 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestOnlyAsyncPtrCanBeYielded()
+  public void TestOnlyCoroPtrCanBeYielded()
   {
     string bhl = @"
-    async func test() {
+    coro func test() {
       func () p = func() {}
       yield p()
     }
@@ -739,7 +739,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "not an async function",
+      "not a coro function",
       new PlaceAssert(bhl, @"
       yield p()
 ------------^"
@@ -748,11 +748,11 @@ public class TestYield : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestAsyncFuncPtrIsNotSubsetOfFuncPtr()
+  public void TestCoroFuncPtrIsNotSubsetOfFuncPtr()
   {
     string bhl = @"
     func int test() {
-      func int() p = async func int() {
+      func int() p = coro func int() {
         yield()
         return 42
       }
@@ -764,9 +764,9 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "incompatible types: 'func int()' and 'async func int()'",
+      "incompatible types: 'func int()' and 'coro func int()'",
       new PlaceAssert(bhl, @"
-      func int() p = async func int() {
+      func int() p = coro func int() {
 -------------------^"
       )
     );
@@ -777,7 +777,7 @@ public class TestYield : BHL_TestBase
   {
     {
       string bhl = @"
-      async func test() {
+      coro func test() {
         defer {
           yield()
         }
@@ -798,7 +798,7 @@ public class TestYield : BHL_TestBase
 
     {
       string bhl = @"
-      async func test() {
+      coro func test() {
         defer {
           yield while(true)
         }
@@ -819,10 +819,10 @@ public class TestYield : BHL_TestBase
 
     {
       string bhl = @"
-      async func foo() {
+      coro func foo() {
         yield()
       }
-      async func test() {
+      coro func test() {
         defer {
           yield foo()
         }

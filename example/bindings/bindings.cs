@@ -44,7 +44,7 @@ public class MyBindings : IUserBindings
     }
 
     {
-      var fn = new FuncSymbolNative("Wait", FuncAttrib.Async, Types.Void, 0,
+      var fn = new FuncSymbolNative("Wait", FuncAttrib.Coro, Types.Void, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           { return new WaitNode(); },
           new FuncArgSymbol("t", Types.Float)
