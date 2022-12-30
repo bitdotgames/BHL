@@ -26,7 +26,7 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 ## Quick example
 
 ```go
-async func GoToTarget(Unit u, Unit t) {
+coro func GoToTarget(Unit u, Unit t) {
   NavPath path
   defer {
     PathRelease(path)
@@ -124,7 +124,7 @@ Unit u,float dist_to_target = FindTarget(self)
 ```go
 Unit u = FindTarget()
 float distance = 4
-u.InjectScript(async func() {
+u.InjectScript(coro func() {
   paral_all {
     yield PushBack(distance: distance)
     yield Stun(time: 0.4, intensity: 0.15)
@@ -152,7 +152,7 @@ return p(10)
 ### Pseudo parallel code execution
 
 ```go
-async func Attack(Unit u) {
+coro func Attack(Unit u) {
   Unit t = TargetInRange(u)
   Check(t != null)
   paral_all {
@@ -169,7 +169,7 @@ async func Attack(Unit u) {
 ### Example of some unit's top behavior
 
 ```go
-async func Selector([]async func bool() fns) {
+coro func Selector([]coro func bool() fns) {
   foreach(var fn in fns) {
     if(!yield fn()) {
       continue
@@ -179,15 +179,15 @@ async func Selector([]async func bool() fns) {
   }
 }
 
-async func UnitScript(Unit u) {
+coro func UnitScript(Unit u) {
   while(true) {
     paral {
       yield WaitStateChanged(u)
       Selector(
             [
-              async func bool() { return yield FindTarget(u) },
-              async func bool() { return yield AttackTarget(u) },
-              async func bool() { return yield Idle(u) }
+              coro func bool() { return yield FindTarget(u) },
+              coro func bool() { return yield AttackTarget(u) },
+              coro func bool() { return yield Idle(u) }
             ]
        )
     }
