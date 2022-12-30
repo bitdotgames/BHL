@@ -12,15 +12,15 @@ Please note that bhl is in alpha state and currently targets only C# platform. N
 
 * [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
+* Cooperative multitasking support
 * Built-in support for pseudo parallel code orchestration
 * Golang alike *defer*
-* Basic types: *float, int, bool, string, enums, arrays, classes*
-* Supports imperative style control constructs: *if/else, while, break, return*
-* Allows user defined: *functions, lambdas, classes*
+* Basic types: *float, int, bool, string, enums, arrays, maps*
+* Supports imperative style control constructs: *if/else, while, foreach, break, continue, return*
+* Allows user defined: *functions, lambdas, classes, interfaces*
 * Supports C# bindings to user types and functions
 * Passing arguments to function by *ref* like in C#
 * Multiple returned values like in Golang
-* Hot code reload
 * Strict control over memory allocations 
 
 ## Quick example
