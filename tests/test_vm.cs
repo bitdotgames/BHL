@@ -9594,6 +9594,43 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDetachAndTickSeveralFibers()
+  {
+    string bhl = @"
+    async func test()
+    {
+      yield()
+    }
+
+    async func test2()
+    {
+      yield()
+      yield()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fbs = new List<VM.Fiber>();
+    fbs.Add(vm.Start("test"));
+    fbs.Add(vm.Start("test2"));
+    vm.Detach(fbs[0]);
+    vm.Detach(fbs[1]);
+
+    AssertEqual(fbs.Count, 2);
+
+    AssertTrue(vm.Tick(fbs));
+    AssertEqual(fbs.Count, 2);
+
+    AssertTrue(vm.Tick(fbs));
+    AssertEqual(fbs.Count, 1);
+
+    AssertFalse(vm.Tick(fbs));
+    AssertEqual(fbs.Count, 0);
+
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFiberFuncDefaultArg()
   {
     string bhl = @"
