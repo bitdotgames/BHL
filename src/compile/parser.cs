@@ -624,19 +624,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(cargs != null)
         {
-          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, line, write: false);
+          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, line, write: false, is_root: c == chain_offset);
           curr_name = null;
         }
         else if(arracc != null)
         {
-          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, line, write: write && is_last);
+          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, line, write: write && is_last, is_root: c == chain_offset);
           curr_name = null;
         }
         else if(macc != null)
         {
           Symbol macc_name_symb = null;
           if(curr_name != null)
-            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write: false);
+            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write: false, is_root: c == chain_offset);
 
           scope = curr_type as IScope;
           if(!(scope is IInstanceType) && !(scope is EnumSymbol))
@@ -652,9 +652,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    //checking the leftover of the call chain
     if(curr_name != null)
-      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write, leftover: true);
+    {
+      //checking the leftover of the call chain or a root call
+      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write, is_leftover: true, is_root: chain?.Length == 0);
+    }
 
     var chain_ast = PeekAST();
     PopAST();
@@ -761,7 +763,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ref IType type, 
     int line, 
     bool write,
-    bool leftover = false
+    bool is_leftover = false,
+    bool is_root = false
     )
   {
     AST_Call ast = null;
@@ -770,7 +773,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(name != null)
     {
-      name_symb = scope.ResolveWithFallback(name.GetText());
+      name_symb = scope.ResolveChained(name.GetText(), is_root: is_root);
       if(name_symb == null)
         FireError(name, "symbol '" + name.GetText() + "' not resolved");
 
@@ -858,7 +861,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(enum_symb != null)
         {
-          if(leftover)
+          if(is_leftover)
             FireError(name, "symbol usage is not valid");
           type = enum_symb;
         }

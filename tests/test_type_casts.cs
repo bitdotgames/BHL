@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Text;
 using bhl;
 
@@ -1216,5 +1215,60 @@ public class TestTypeCasts : BHL_TestBase
       AssertEqual("func void()", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
     }
+  }
+
+  [IsTested()]
+  public void TestMissingTypePropertyIsNotConfusedWithTypeFunc1()
+  {
+    string bhl = @"
+    class Foo {
+      int int_type
+    }
+
+    func test() {
+      var foo = new Foo
+      foo.type = 1
+    }
+    ";
+
+    AssertError<Exception>(
+       delegate() {
+         Compile(bhl);
+       },
+      "symbol 'type' not resolved",
+      new PlaceAssert(bhl, @"
+      foo.type = 1
+----------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestMissingTypePropertyIsNotConfusedWithTypeFunc2()
+  {
+    string bhl = @"
+    class Foo {
+      int int_type
+    }
+
+    func Foo foo() {
+      return {}
+    }
+
+    func bool test() {
+      return foo().type == 1
+    }
+    ";
+
+    AssertError<Exception>(
+       delegate() {
+         Compile(bhl);
+       },
+      "symbol 'type' not resolved",
+      new PlaceAssert(bhl, @"
+      return foo().type == 1
+-------------------^"
+      )
+    );
   }
 }

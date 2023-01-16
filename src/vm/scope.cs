@@ -522,7 +522,7 @@ public static class ScopeExtensions
         (start_idx == 0 ? path : path.Substring(start_idx)) : 
         path.Substring(start_idx, next_idx - start_idx);
 
-      var symb = start_idx == 0 ? scope.ResolveWithFallback(name) : scope.Resolve(name);
+      var symb = scope.ResolveChained(name, is_root: start_idx == 0);
 
       if(symb == null)
         break;
@@ -555,6 +555,26 @@ public static class ScopeExtensions
       return fallback.ResolveWithFallback(name);
 
     return null;
+  }
+
+  public static Symbol ResolveChained(this IScope scope, string name, bool is_root)
+  {
+    if(is_root)
+      return scope.ResolveWithFallback(name);
+
+    if(scope is IInstanceType iitype)
+    {
+      var type_set = iitype.GetAllRelatedTypesSet();
+      foreach(var item in type_set)
+      {
+        var s = item.Resolve(name);
+        if(s != null)
+          return s;
+      }
+      return null;
+    }
+    else
+      return scope.Resolve(name);
   }
 
   public static FuncSymbolScript FindEnclosingFuncSymbol(this IScope scope)
