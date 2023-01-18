@@ -15,12 +15,12 @@ public class Server
   
   public void Start()
   {
-    while (true)
+    while(true)
     {
       try
       {
-        var success = ReadAndHandle();
-        if (!success)
+        bool success = ReadAndHandle();
+        if(!success)
           break;
       }
 
@@ -61,7 +61,6 @@ public class Server
       if(!string.IsNullOrEmpty(response))
         connection.Write(response);
     }
-
 #if BHLSP_DEBUG
     catch(Exception e)
     {

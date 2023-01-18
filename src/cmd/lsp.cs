@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 using Mono.Options;
-using bhlsp;
+using bhl.lsp;
 
 namespace bhl {
 
