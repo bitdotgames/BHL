@@ -49,8 +49,7 @@ public class BHL_TestRunner
     Run(names, new TestMaps(), verbose);
     Run(names, new TestStd(), verbose);
     Run(names, new TestPerf(), verbose);
-    //TODO:
-    //Run(names, new TestLSP(), verbose);
+    Run(names, new TestLSP(), verbose);
   }
 
   static void Run(IList<string> names, BHL_TestBase test, bool verbose)

@@ -3,89 +3,90 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace bhlsp
+namespace bhl.lsp {
+
+public class LogTextWriter : TextWriter
 {
-  public class BHLSPLogTextWriter : TextWriter
+  public override Encoding Encoding => throw new NotImplementedException();
+  private static readonly string home = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp/";
+  private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
+  private static bool done = false;
+  
+  public void CleanUpLogFile()
   {
-    public override Encoding Encoding => throw new NotImplementedException();
-    private static readonly string home = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp/";
-    private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
-    private static bool done = false;
+    if(done)
+      return;
     
-    public void CleanUpLogFile()
+    done = true;
+    var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
+    cacheLock.EnterWriteLock();
+    
+    try
     {
-      if(done)
-        return;
-      
-      done = true;
-      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
-      cacheLock.EnterWriteLock();
-      
-      try
+      File.Delete(log);
+      using(StreamWriter w = File.AppendText(log))
       {
-        File.Delete(log);
-        using(StreamWriter w = File.AppendText(log))
-        {
-          w.WriteLine($"{DateTime.Now} Logging for BHLSPC started");
-        }
-      }
-      finally
-      {
-        cacheLock.ExitWriteLock();
+        w.WriteLine($"{DateTime.Now} Logging for LSP started");
       }
     }
-
-    public override void Write(string message)
+    finally
     {
-      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
-      cacheLock.EnterWriteLock();
-      
-      try
-      {
-        using(StreamWriter w = File.AppendText(log))
-        {
-          w.Write(message);
-        }
-      }
-      finally
-      {
-        cacheLock.ExitWriteLock();
-      }
-    }
-
-    public override void WriteLine(string message)
-    {
-      var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
-      cacheLock.EnterWriteLock();
-      try
-      {
-        using(StreamWriter w = File.AppendText(log))
-        {
-          w.WriteLine($"{DateTime.Now} {message}");
-        }
-      }
-      finally
-      {
-        cacheLock.ExitWriteLock();
-      }
+      cacheLock.ExitWriteLock();
     }
   }
 
-  public class BHLSPLogger
+  public override void Write(string message)
   {
-    public static void WriteLine(object value)
+    var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
+    cacheLock.EnterWriteLock();
+    
+    try
     {
-      if(value == null)
-        Log.WriteLine();
-      else
-        Log.WriteLine(value is IFormattable f ? f.ToString(null, Log.FormatProvider) : value.ToString());
+      using(StreamWriter w = File.AppendText(log))
+      {
+        w.Write(message);
+      }
     }
-
-    public static void CleanUpLogFile()
+    finally
     {
-      Log.CleanUpLogFile();
+      cacheLock.ExitWriteLock();
     }
-
-    private static BHLSPLogTextWriter Log { get; set; } = new BHLSPLogTextWriter();
   }
+
+  public override void WriteLine(string message)
+  {
+    var log = home + Path.DirectorySeparatorChar + ".bhlsplog";
+    cacheLock.EnterWriteLock();
+    try
+    {
+      using(StreamWriter w = File.AppendText(log))
+      {
+        w.WriteLine($"{DateTime.Now} {message}");
+      }
+    }
+    finally
+    {
+      cacheLock.ExitWriteLock();
+    }
+  }
+}
+
+public class Logger
+{
+  public static void WriteLine(object value)
+  {
+    if(value == null)
+      Log.WriteLine();
+    else
+      Log.WriteLine(value is IFormattable f ? f.ToString(null, Log.FormatProvider) : value.ToString());
+  }
+
+  public static void CleanUpLogFile()
+  {
+    Log.CleanUpLogFile();
+  }
+
+  private static LogTextWriter Log { get; set; } = new LogTextWriter();
+}
+
 }

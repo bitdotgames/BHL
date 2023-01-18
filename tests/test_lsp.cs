@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
-using bhlsp;
+using bhl.lsp;
 
 public class TestLSP : BHL_TestBase
 {
@@ -10,9 +10,9 @@ public class TestLSP : BHL_TestBase
   public void TestRpcResponseErrors()
   {
     string json = "";
-    var rpc = new BHLSPJsonRpc();
+    var rpc = new JsonRpc();
     
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     //ParseError
     json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
@@ -41,7 +41,7 @@ public class TestLSP : BHL_TestBase
     );
     
     //InvalidParams
-    rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+    rpc.AttachRpcService(new GeneralJsonRpcService());
     json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
     AssertEqual(
       rpc.HandleMessage(json),
@@ -61,10 +61,10 @@ public class TestLSP : BHL_TestBase
     string json = "";
     string rsp = "";
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new GeneralJsonRpcService());
     
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
     
@@ -142,10 +142,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPTextDocumentSynchronizationJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new TextDocumentSynchronizationJsonRpcService());
 
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -166,7 +166,7 @@ public class TestLSP : BHL_TestBase
       string.Empty
     );
 
-    var document = BHLSPWorkspace.self.FindDocument(uri);
+    var document = Workspace.self.FindDocument(uri);
     string line = document.text.Split('\n')[1];
     
     AssertEqual(
@@ -226,10 +226,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new TextDocumentSignatureHelpJsonRpcService());
     
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -301,10 +301,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPTextDocumentGoToJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new TextDocumentGoToJsonRpcService());
 
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -314,7 +314,7 @@ public class TestLSP : BHL_TestBase
     NewTestDocument("bhl1.bhl", bhl1, files);
     NewTestDocument("bhl2.bhl", bhl2, files);
     
-    BHLSPWorkspace.self.AddRoot(GetDirPath(), true);
+    Workspace.self.AddRoot(GetDirPath(), true);
     
     Uri uri1 = GetUri(files[0]);
     Uri uri2 = GetUri(files[1]);
@@ -375,10 +375,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPTextDocumentSemanticTokensJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new TextDocumentSemanticTokensJsonRpcService());
 
-    BHLSPWorkspace.self.Shutdown();
+    Workspace.self.Shutdown();
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))

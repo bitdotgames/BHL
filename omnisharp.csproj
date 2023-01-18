@@ -6,7 +6,7 @@
   <PropertyGroup>
     <appname>bhl</appname>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <DefineConstants>BHL_FRONT</DefineConstants>
+    <DefineConstants>BHL_FRONT;BHLSP_DEBUG</DefineConstants>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
   </PropertyGroup>
@@ -15,8 +15,8 @@
     <Compile Include="src/g/*.cs" />
     <Compile Include="src/vm/*.cs" />
     <Compile Include="src/std/*.cs" />
-    <Compile Include="src/cmd/*.cs" />
     <Compile Include="src/lsp/*.cs" />
+    <Compile Include="src/cmd/*.cs" />
     <Compile Include="tests/*.cs" />
     <Compile Include="deps/msgpack/*.cs" />
     <Compile Include="deps/msgpack/Compiler/*.cs" />

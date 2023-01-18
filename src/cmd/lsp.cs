@@ -10,13 +10,13 @@ public class LSP : ICmd
   public void Run(string[] args)
   {
 #if BHLSP_DEBUG
-    BHLSPLogger.CleanUpLogFile();
+    Logger.CleanUpLogFile();
 #endif
     
     var p = new OptionSet
     {
       { "root=", "bhl root dir",
-        v => BHLSPWorkspace.self.AddRoot(v, false) }
+        v => Workspace.self.AddRoot(v, false) }
     };
     
     try
@@ -26,7 +26,7 @@ public class LSP : ICmd
 #if BHLSP_DEBUG
     catch(OptionException e)
     {
-      BHLSPLogger.WriteLine(e);
+      Logger.WriteLine(e);
 #else
     catch
     {
@@ -39,17 +39,17 @@ public class LSP : ICmd
     var stdin = Console.OpenStandardInput();
     var stdout = Console.OpenStandardOutput();
     
-    var connection = new BHLSPConnectionStdIO(stdout, stdin);
+    var connection = new ConnectionStdIO(stdout, stdin);
     
-    var rpc = new BHLSPJsonRpc();
-    rpc.AttachRpcService(new BHLSPGeneralJsonRpcService());
-    rpc.AttachRpcService(new BHLSPTextDocumentSynchronizationJsonRpcService());
-    rpc.AttachRpcService(new BHLSPTextDocumentSignatureHelpJsonRpcService());
-    rpc.AttachRpcService(new BHLSPTextDocumentGoToJsonRpcService());
-    rpc.AttachRpcService(new BHLSPTextDocumentHoverJsonRpcService());
-    rpc.AttachRpcService(new BHLSPTextDocumentSemanticTokensJsonRpcService());
+    var rpc = new JsonRpc();
+    rpc.AttachRpcService(new GeneralJsonRpcService());
+    rpc.AttachRpcService(new TextDocumentSynchronizationJsonRpcService());
+    rpc.AttachRpcService(new TextDocumentSignatureHelpJsonRpcService());
+    rpc.AttachRpcService(new TextDocumentGoToJsonRpcService());
+    rpc.AttachRpcService(new TextDocumentHoverJsonRpcService());
+    rpc.AttachRpcService(new TextDocumentSemanticTokensJsonRpcService());
     
-    BHLSPServer server = new BHLSPServer(connection, rpc);
+    Server server = new Server(connection, rpc);
     
     try
     {
@@ -58,7 +58,7 @@ public class LSP : ICmd
 #if BHLSP_DEBUG
     catch (Exception e)
     {
-      BHLSPLogger.WriteLine(e);
+      Logger.WriteLine(e);
 #else
     catch
     {
