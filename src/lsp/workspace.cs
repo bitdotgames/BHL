@@ -11,18 +11,6 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  private static Workspace self_;
-  public static Workspace self
-  {
-    get
-    {
-      if(self_ == null)
-        self_ = new Workspace();
-
-      return self_;
-    }
-  }
-
   struct RootPath
   {
     public string path;

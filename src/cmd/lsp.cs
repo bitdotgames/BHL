@@ -13,10 +13,12 @@ public class LSP : ICmd
     Logger.CleanUpLogFile();
 #endif
     
+    var workspace = new Workspace();
+
     var p = new OptionSet
     {
       { "root=", "bhl root dir",
-        v => Workspace.self.AddRoot(v, false) }
+        v => workspace.AddRoot(v, false) }
     };
     
     try
@@ -42,14 +44,14 @@ public class LSP : ICmd
     var connection = new ConnectionStdIO(stdout, stdin);
     
     var rpc = new JsonRpc();
-    rpc.AttachRpcService(new GeneralJsonRpcService());
-    rpc.AttachRpcService(new TextDocumentSynchronizationJsonRpcService());
-    rpc.AttachRpcService(new TextDocumentSignatureHelpJsonRpcService());
-    rpc.AttachRpcService(new TextDocumentGoToJsonRpcService());
-    rpc.AttachRpcService(new TextDocumentHoverJsonRpcService());
-    rpc.AttachRpcService(new TextDocumentSemanticTokensJsonRpcService());
+    rpc.AttachService(new GeneralJsonRpcService(workspace));
+    rpc.AttachService(new TextDocumentSynchronizationJsonRpcService(workspace));
+    rpc.AttachService(new TextDocumentSignatureHelpJsonRpcService(workspace));
+    rpc.AttachService(new TextDocumentGoToJsonRpcService(workspace));
+    rpc.AttachService(new TextDocumentHoverJsonRpcService(workspace));
+    rpc.AttachService(new TextDocumentSemanticTokensJsonRpcService(workspace));
     
-    Server server = new Server(connection, rpc);
+    var server = new Server(workspace, connection, rpc);
     
     try
     {

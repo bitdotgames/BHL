@@ -15,7 +15,7 @@ public class JsonRpc : IJsonRpc
 {
   List<JsonRpcService> services = new List<JsonRpcService>();
 
-  public JsonRpc AttachRpcService(JsonRpcService service)
+  public JsonRpc AttachService(JsonRpcService service)
   {
     services.Add(service);
     return this;
@@ -41,11 +41,11 @@ public class JsonRpc : IJsonRpc
 #endif
       resp = new ResponseMessage
       {
-          error = new ResponseError
-          {
-              code = (int)ErrorCodes.ParseError,
-              message = "Parse error"
-          }
+        error = new ResponseError
+        {
+          code = (int)ErrorCodes.ParseError,
+          message = "Parse error"
+        }
       };
     }
 
@@ -63,11 +63,11 @@ public class JsonRpc : IJsonRpc
       else
         resp = new ResponseMessage
         {
-            error = new ResponseError
-            {
-                code = (int)ErrorCodes.InvalidRequest,
-                message = ""
-            }
+          error = new ResponseError
+          {
+            code = (int)ErrorCodes.InvalidRequest,
+            message = ""
+          }
         };
     }
     

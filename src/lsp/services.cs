@@ -165,8 +165,15 @@ public abstract class WorkspaceJsonRpcServiceTemplate : JsonRpcService
   
 public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
 {
-  private int? processId;
+  Workspace workspace;
+
+  int? processId;
   
+  public GeneralJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   public override RpcResult Initialize(InitializeParams args)
   {
     processId = args.processId;
@@ -174,20 +181,20 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        Workspace.self.AddRoot(args.workspaceFolders[i].uri.LocalPath, true);
+        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath, true);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      Workspace.self.AddRoot(args.rootUri.LocalPath, true, false);
+      workspace.AddRoot(args.rootUri.LocalPath, true, false);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      Workspace.self.AddRoot(args.rootPath, true, false);
+      workspace.AddRoot(args.rootPath, true, false);
     }
     
-    Workspace.self.Scan();
+    workspace.Scan();
     
-    ServerCapabilities capabilities = new ServerCapabilities();
+    var capabilities = new ServerCapabilities();
 
     if(args.capabilities.textDocument != null)
     {
@@ -196,7 +203,7 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
         capabilities.textDocumentSync = new TextDocumentSyncOptions
         {
           openClose = true, //didOpen, didClose
-          change = Workspace.self.syncKind, //didChange
+          change = workspace.syncKind, //didChange
           save = false //didSave
         };
       }
@@ -209,7 +216,7 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
       if(args.capabilities.textDocument.declaration != null)
       {
         if(args.capabilities.textDocument.declaration.linkSupport != null)
-          Workspace.self.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
+          workspace.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
 
         capabilities.declarationProvider = false; //textDocument/declaration
       }
@@ -217,7 +224,7 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
       if(args.capabilities.textDocument.definition != null)
       {
         if(args.capabilities.textDocument.definition.linkSupport != null)
-          Workspace.self.definitionLinkSupport = (bool)args.capabilities.textDocument.definition.linkSupport;
+          workspace.definitionLinkSupport = (bool)args.capabilities.textDocument.definition.linkSupport;
 
         capabilities.definitionProvider = true; //textDocument/definition
       }
@@ -225,7 +232,7 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
       if(args.capabilities.textDocument.typeDefinition != null)
       {
         if(args.capabilities.textDocument.typeDefinition.linkSupport != null)
-          Workspace.self.typeDefinitionLinkSupport = (bool)args.capabilities.textDocument.typeDefinition.linkSupport;
+          workspace.typeDefinitionLinkSupport = (bool)args.capabilities.textDocument.typeDefinition.linkSupport;
 
         capabilities.typeDefinitionProvider = false; //textDocument/typeDefinition
       }
@@ -233,7 +240,7 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
       if(args.capabilities.textDocument.implementation != null)
       {
         if(args.capabilities.textDocument.implementation.linkSupport != null)
-          Workspace.self.implementationLinkSupport = (bool)args.capabilities.textDocument.implementation.linkSupport;
+          workspace.implementationLinkSupport = (bool)args.capabilities.textDocument.implementation.linkSupport;
 
         capabilities.implementationProvider = false; //textDocument/implementation
       }
@@ -281,7 +288,8 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
 
   public override RpcResult Shutdown()
   {
-    Workspace.self.Shutdown();
+    workspace.Shutdown();
+
     return RpcResult.Success();
   }
 
@@ -296,10 +304,17 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
 
 public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelpJsonRpcServiceTemplate
 {
+  Workspace workspace;
+
+  public TextDocumentSignatureHelpJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   public override RpcResult SignatureHelp(SignatureHelpParams args)
   {
-    Workspace.self.TryAddDocument(args.textDocument.uri);
-    if(Workspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    workspace.TryAddDocument(args.textDocument.uri);
+    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
@@ -338,7 +353,7 @@ public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelp
       bhlParser.FuncDeclContext funcDecl = null;
       if(!string.IsNullOrEmpty(funcName))
       {
-        foreach(var doc in Workspace.self.ForEachBhlImports(document))
+        foreach(var doc in workspace.ForEachBhlImports(document))
         {
           if(doc.FuncDecls.ContainsKey(funcName))
           {
@@ -413,22 +428,29 @@ public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelp
 
 public class TextDocumentSynchronizationJsonRpcService : TextDocumentSynchronizationJsonRpcServiceTemplate
 {
+  Workspace workspace;
+
+  public TextDocumentSynchronizationJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   public override RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
   {
-    Workspace.self.TryAddDocument(args.textDocument.uri, args.textDocument.text);
+    workspace.TryAddDocument(args.textDocument.uri, args.textDocument.text);
     return RpcResult.Success();
   }
   
   public override RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
-    if(Workspace.self.FindDocument(args.textDocument.uri) is TextDocument document)
+    if(workspace.FindDocument(args.textDocument.uri) is TextDocument document)
     {
-      if(Workspace.self.syncKind == TextDocumentSyncKind.Full)
+      if(workspace.syncKind == TextDocumentSyncKind.Full)
       {
-        foreach (var contentChanges in args.contentChanges)
+        foreach(var contentChanges in args.contentChanges)
           document.Sync(contentChanges.text);
       }
-      else if(Workspace.self.syncKind == TextDocumentSyncKind.Incremental)
+      else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
       {
         //TODO: ...
       }
@@ -472,14 +494,21 @@ public class TextDocumentSynchronizationJsonRpcService : TextDocumentSynchroniza
 
 public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemplate
 {
+  Workspace workspace;
+
+  public TextDocumentGoToJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   /**
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.definition.linkSupport.
    */
   public override RpcResult GotoDefinition(DefinitionParams args)
   {
-    Workspace.self.TryAddDocument(args.textDocument.uri);
-    if(Workspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    workspace.TryAddDocument(args.textDocument.uri);
+    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
@@ -582,7 +611,7 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
           bhlParser.ClassDeclContext classDecl = null;
           BHLTextDocument classDeclBhlDocument = null;
           
-          foreach(var doc in Workspace.self.ForEachBhlImports(document))
+          foreach(var doc in workspace.ForEachBhlImports(document))
           {
             if(doc.ClassDecls.ContainsKey(classTypeName))
             {
@@ -640,7 +669,7 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
         {
           string callExpName = callExp.NAME().GetText();
           
-          foreach(var doc in Workspace.self.ForEachBhlImports(document))
+          foreach(var doc in workspace.ForEachBhlImports(document))
           {
             if(doc.FuncDecls.ContainsKey(callExpName))
             {
@@ -671,7 +700,7 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
           if(!string.IsNullOrEmpty(funcName))
           {
           
-            foreach(var doc in Workspace.self.ForEachBhlImports(document))
+            foreach(var doc in workspace.ForEachBhlImports(document))
             {
               if(doc.FuncDecls.ContainsKey(funcName))
               {
@@ -750,10 +779,18 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
 
 public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTemplate
 {
+  Workspace workspace;
+
+  public TextDocumentHoverJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   public override RpcResult Hover(TextDocumentPositionParams args)
   {
-    Workspace.self.TryAddDocument(args.textDocument.uri);
-    if(Workspace.self.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    workspace.TryAddDocument(args.textDocument.uri);
+
+    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
@@ -780,7 +817,7 @@ public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTe
       {
         string callExpName = callExp.NAME().GetText();
         
-        foreach(var doc in Workspace.self.ForEachBhlImports(document))
+        foreach(var doc in workspace.ForEachBhlImports(document))
         {
           if(doc.FuncDecls.ContainsKey(callExpName))
           {
@@ -794,7 +831,7 @@ public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTe
       {
         string label = funcDecl.NAME().GetText()+"(";
     
-        List<ParameterInformation> funcParameters = Util.GetInfoParams(funcDecl);
+        var funcParameters = Util.GetInfoParams(funcDecl);
     
         if(funcParameters.Count > 0)
         {
@@ -845,10 +882,17 @@ public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTe
 
 public class TextDocumentSemanticTokensJsonRpcService : TextDocumentSemanticTokensJsonRpcServiceTemplate
 {
+  Workspace workspace;
+
+  public TextDocumentSemanticTokensJsonRpcService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
   public override RpcResult SemanticTokensFull(SemanticTokensParams args)
   {
-    Workspace.self.TryAddDocument(args.textDocument.uri);
-    var document = Workspace.self.FindDocument(args.textDocument.uri);
+    workspace.TryAddDocument(args.textDocument.uri);
+    var document = workspace.FindDocument(args.textDocument.uri);
     
     if(document is BHLTextDocument bhldocument)
     {
