@@ -8,9 +8,9 @@ namespace bhl.lsp {
 public class LogTextWriter : TextWriter
 {
   public override Encoding Encoding => throw new NotImplementedException();
-  private static readonly string home = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp/";
-  private static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
-  private static bool done = false;
+  static readonly string home = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/tmp/";
+  static readonly ReaderWriterLockSlim cacheLock = new ReaderWriterLockSlim();
+  static bool done = false;
   
   public void CleanUpLogFile()
   {
@@ -73,6 +73,8 @@ public class LogTextWriter : TextWriter
 
 public class Logger
 {
+  static LogTextWriter Log { get; set; } = new LogTextWriter();
+
   public static void WriteLine(object value)
   {
     if(value == null)
@@ -85,8 +87,6 @@ public class Logger
   {
     Log.CleanUpLogFile();
   }
-
-  private static LogTextWriter Log { get; set; } = new LogTextWriter();
 }
 
 }

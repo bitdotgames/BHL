@@ -200,13 +200,13 @@ public class WorkspaceFolder
   /**
    * The associated URI for this workspace folder.
    */
-  public Uri uri { get; set; }
+  public Uri uri;
 
   /**
    * The name of the workspace folder. Used to refer to this
    * workspace folder in the user interface.
    */
-  public string name { get; set; }
+  public string name;
 }
 
 public class SaveOptions
@@ -214,19 +214,19 @@ public class SaveOptions
   /**
    * The client is supposed to include the content on save.
    */
-  public bool? includeText { get; set; }
+  public bool? includeText;
 }
 
 public class WorkDoneProgressOptions
 {
-  public bool? workDoneProgress { get; set; } = false;
+  public bool? workDoneProgress = false;
 }
 
 public class CompletionOptions : WorkDoneProgressOptions
 {
-  public string[] triggerCharacters { get; set; }
-  public string[] allCommitCharacters { get; set; }
-  public bool? resolveProvider { get; set; }
+  public string[] triggerCharacters;
+  public string[] allCommitCharacters;
+  public bool? resolveProvider;
 }
 
 public class HoverOptions : WorkDoneProgressOptions
@@ -239,7 +239,7 @@ public class SignatureHelpOptions : WorkDoneProgressOptions
    * The characters that trigger signature help
    * automatically.
    */
-  public string[] triggerCharacters { get; set; }
+  public string[] triggerCharacters;
 
   /**
    * List of characters that re-trigger signature help.
@@ -250,7 +250,7 @@ public class SignatureHelpOptions : WorkDoneProgressOptions
    *
    * @since 3.15.0
    */
-  public string[] retriggerCharacters { get; set; }
+  public string[] retriggerCharacters;
 }
 
 public class DeclarationOptions : WorkDoneProgressOptions
@@ -259,15 +259,15 @@ public class DeclarationOptions : WorkDoneProgressOptions
 
 public class DocumentFilter
 {
-  public string language { get; set; }
-  public string scheme { get; set; }
-  public string pattern { get; set; }
+  public string language;
+  public string scheme;
+  public string pattern;
 }
 
 public class DeclarationRegistrationOptions : DeclarationOptions
 {
-  public DocumentFilter[] documentSelector { get; set; }
-  public string id { get; set; }
+  public DocumentFilter[] documentSelector;
+  public string id;
 }
 
 public class DefinitionOptions : WorkDoneProgressOptions
@@ -280,19 +280,19 @@ public class TypeDefinitionOptions : WorkDoneProgressOptions
 
 public class TextDocumentRegistrationOptions
 {
-  public DocumentFilter[] documentSelector { get; set; }
+  public DocumentFilter[] documentSelector;
 }
 
 public class TypeDefinitionRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public class DefinitionRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public enum TextDocumentSyncKind
@@ -322,7 +322,7 @@ public class TextDocumentSyncOptions
    * Open and close notifications are sent to the server. If omitted open
    * close notification should not be sent.
    */
-  public bool? openClose { get; set; }
+  public bool? openClose;
 
   /**
    * Change notifications are sent to the server. See
@@ -330,25 +330,25 @@ public class TextDocumentSyncOptions
    * TextDocumentSyncKind.Incremental. If omitted it defaults to
    * TextDocumentSyncKind.None.
    */
-  public TextDocumentSyncKind? change { get; set; }
+  public TextDocumentSyncKind? change;
 
   /**
    * If present will save notifications are sent to the server. If omitted
    * the notification should not be sent.
    */
-  public bool? willSave { get; set; }
+  public bool? willSave;
 
   /**
    * If present will save wait until requests are sent to the server. If
    * omitted the request should not be sent.
    */
-  public bool? willSaveWaitUntil { get; set; }
+  public bool? willSaveWaitUntil;
 
   /**
    * If present save notifications are sent to the server. If omitted the
    * notification should not be sent.
    */
-  public SumType<bool, SaveOptions> save { get; set; }
+  public SumType<bool, SaveOptions> save;
 }
 
 public class ImplementationOptions : WorkDoneProgressOptions
@@ -357,8 +357,8 @@ public class ImplementationOptions : WorkDoneProgressOptions
 
 public class ImplementationRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public class ReferenceOptions : WorkDoneProgressOptions
@@ -377,7 +377,7 @@ public class DocumentSymbolOptions : WorkDoneProgressOptions
    *
    * @since 3.16.0
    */
-  public string label { get; set; }
+  public string label;
 }
 
 public enum CodeActionKind
@@ -394,18 +394,18 @@ public enum CodeActionKind
 
 public class CodeActionOptions : WorkDoneProgressOptions
 {
-  public CodeActionKind[] codeActionKinds { get; set; }
-  public bool? resolveProvider { get; set; }
+  public CodeActionKind[] codeActionKinds;
+  public bool? resolveProvider;
 }
 
 public class CodeLensOptions : WorkDoneProgressOptions
 {
-  public bool? resolveProvider { get; set; }
+  public bool? resolveProvider;
 }
 
 public class DocumentLinkOptions : WorkDoneProgressOptions
 {
-  public bool? resolveProvider { get; set; }
+  public bool? resolveProvider;
 }
 
 public class DocumentColorOptions : WorkDoneProgressOptions
@@ -414,8 +414,8 @@ public class DocumentColorOptions : WorkDoneProgressOptions
 
 public class DocumentColorRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public string id { get; set; }
-  public bool? workDoneProgress { get; set; }
+  public string id;
+  public bool? workDoneProgress;
 }
 
 public class DocumentFormattingOptions : WorkDoneProgressOptions
@@ -428,13 +428,13 @@ public class DocumentRangeFormattingOptions : WorkDoneProgressOptions
 
 public class DocumentOnTypeFormattingOptions
 {
-  public string firstTriggerCharacter { get; set; }
-  public string[] moreTriggerCharacter { get; set; }
+  public string firstTriggerCharacter;
+  public string[] moreTriggerCharacter;
 }
 
 public class RenameOptions : WorkDoneProgressOptions
 {
-  public bool? prepareProvider { get; set; }
+  public bool? prepareProvider;
 }
 
 public class FoldingRangeOptions : WorkDoneProgressOptions
@@ -443,13 +443,13 @@ public class FoldingRangeOptions : WorkDoneProgressOptions
 
 public class FoldingRangeRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public class ExecuteCommandOptions : WorkDoneProgressOptions
 {
-  public string[] commands { get; set; }
+  public string[] commands;
 }
 
 public class SelectionRangeOptions : WorkDoneProgressOptions
@@ -458,8 +458,8 @@ public class SelectionRangeOptions : WorkDoneProgressOptions
 
 public class SelectionRangeRegistrationOptions : SelectionRangeOptions
 {
-  public DocumentFilter[] documentSelector { get; set; }
-  public string id { get; set; }
+  public DocumentFilter[] documentSelector;
+  public string id;
 }
 
 public class LinkedEditingRangeOptions : WorkDoneProgressOptions
@@ -468,8 +468,8 @@ public class LinkedEditingRangeOptions : WorkDoneProgressOptions
 
 public class LinkedEditingRangeRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public class CallHierarchyOptions : WorkDoneProgressOptions
@@ -478,14 +478,14 @@ public class CallHierarchyOptions : WorkDoneProgressOptions
 
 public class CallHierarchyRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
-  public string id { get; set; }
+  public bool? workDoneProgress;
+  public string id;
 }
 
 public class SemanticTokensLegend
 {
-  public string[] tokenTypes { get; set; }
-  public string[] tokenModifiers { get; set; }
+  public string[] tokenTypes;
+  public string[] tokenModifiers;
 }
 
 public class SemanticTokensOptionRange
@@ -497,23 +497,23 @@ public class SemanticTokensOptionFull
   /**
    * The server supports deltas for full documents.
    */
-  public bool? delta { get; set; }
+  public bool? delta;
 }
 
 public class SemanticTokensOptions : WorkDoneProgressOptions
 {
-  public SemanticTokensLegend legend { get; set; }
-  public SumType<bool, SemanticTokensOptionRange> range { get; set; }
-  public SumType<bool, SemanticTokensOptionFull> full { get; set; }
+  public SemanticTokensLegend legend;
+  public SumType<bool, SemanticTokensOptionRange> range;
+  public SumType<bool, SemanticTokensOptionFull> full;
 }
 
 public class SemanticTokensRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public SemanticTokensLegend legend { get; set; }
-  public SumType<bool, object> range { get; set; }
-  public SumType<bool, object> full { get; set; }
-  public string id { get; set; }
-  public bool? workDoneProgress { get; set; }
+  public SemanticTokensLegend legend;
+  public SumType<bool, object> range;
+  public SumType<bool, object> full;
+  public string id;
+  public bool? workDoneProgress;
 }
 
 public class MonikerOptions : WorkDoneProgressOptions
@@ -522,7 +522,7 @@ public class MonikerOptions : WorkDoneProgressOptions
 
 public class MonikerRegistrationOptions : TextDocumentRegistrationOptions
 {
-  public bool? workDoneProgress { get; set; }
+  public bool? workDoneProgress;
 }
 
 public class WorkspaceSymbolOptions : WorkDoneProgressOptions
@@ -531,7 +531,7 @@ public class WorkspaceSymbolOptions : WorkDoneProgressOptions
 
 public class WorkDoneProgressParams
 {
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 }
 
 public class SignatureHelpClientCapabilities
@@ -544,7 +544,7 @@ public class SignatureHelpClientCapabilities
      *
      * @since 3.14.0
      */
-    public bool? labelOffsetSupport { get; set; }
+    public bool? labelOffsetSupport;
   }
 
   public class SignatureHelpClientCapabilitiesSignatureInformation
@@ -555,12 +555,12 @@ public class SignatureHelpClientCapabilities
      *
      * MarkupKind = 'plaintext' | 'markdown';
      */
-    public string[] documentationFormat { get; set; }
+    public string[] documentationFormat;
 
     /**
      * Client capabilities specific to parameter information.
      */
-    public SignatureHelpClientCapabilitiesParameterInformation parameterInformation { get; set; }
+    public SignatureHelpClientCapabilitiesParameterInformation parameterInformation;
 
     /**
      * The client supports the `activeParameter` property on
@@ -568,19 +568,19 @@ public class SignatureHelpClientCapabilities
      *
      * @since 3.16.0
      */
-    public bool? activeParameterSupport { get; set; }
+    public bool? activeParameterSupport;
   }
 
   /**
    * Whether signature help supports dynamic registration.
    */
-  public bool? dynamicRegistration { get; set; }
+  public bool? dynamicRegistration;
 
   /**
    * The client supports the following `SignatureInformation`
    * specific properties.
    */
-  public SignatureHelpClientCapabilitiesSignatureInformation signatureInformation { get; set; }
+  public SignatureHelpClientCapabilitiesSignatureInformation signatureInformation;
 
   /**
    * The client supports to send additional context information for a
@@ -590,7 +590,7 @@ public class SignatureHelpClientCapabilities
    *
    * @since 3.15.0
    */
-  public bool? contextSupport { get; set; }
+  public bool? contextSupport;
 }
 
 public class TextDocumentSyncClientCapabilities
@@ -598,24 +598,24 @@ public class TextDocumentSyncClientCapabilities
   /**
    * Whether text document synchronization supports dynamic registration.
    */
-  public bool? dynamicRegistration { get; set; }
+  public bool? dynamicRegistration;
 
   /**
    * The client supports sending will save notifications.
    */
-  public bool? willSave { get; set; }
+  public bool? willSave;
 
   /**
    * The client supports sending a will save request and
    * waits for a response providing text edits which will
    * be applied to the document before it is saved.
    */
-  public bool? willSaveWaitUntil { get; set; }
+  public bool? willSaveWaitUntil;
 
   /**
    * The client supports did save notifications.
    */
-  public bool? didSave { get; set; }
+  public bool? didSave;
 }
 
 public class DeclarationClientCapabilities
@@ -696,7 +696,7 @@ public class HoverClientCapabilities
    * 
    * MarkupKind = 'plaintext' | 'markdown';
    */
-  public string[] contentFormat { get; set; }
+  public string[] contentFormat;
 }
 
 public class ReferenceClientCapabilities
@@ -704,7 +704,7 @@ public class ReferenceClientCapabilities
   /**
    * Whether references supports dynamic registration.
    */
-  public bool? dynamicRegistration { get; set; }
+  public bool? dynamicRegistration;
 }
 
 public class SemanticTokensClientCapabilities
@@ -715,13 +715,13 @@ public class SemanticTokensClientCapabilities
      * The client will send the `textDocument/semanticTokens/range` request
      * if the server provides a corresponding handler.
      */
-    public SumType<bool, object> range { get; set; }
+    public SumType<bool, object> range;
 
     /**
      * The client will send the `textDocument/semanticTokens/full` request
      * if the server provides a corresponding handler.
      */
-    public SumType<bool, object> full { get; set; }
+    public SumType<bool, object> full;
   }
 
   /**
@@ -730,7 +730,7 @@ public class SemanticTokensClientCapabilities
    * StaticRegistrationOptions)` return value for the corresponding server
    * capability as well.
    */
-  public bool? dynamicRegistration { get; set; }
+  public bool? dynamicRegistration;
 
   /**
    * Which requests the client supports and might send to the server
@@ -742,34 +742,34 @@ public class SemanticTokensClientCapabilities
    * range provider the client might not render a minimap correctly or might
    * even decide to not show any semantic tokens at all.
    */
-  public SemanticTokensClientCapabilitiesRequests requests { get; set; }
+  public SemanticTokensClientCapabilitiesRequests requests;
 
   /**
    * The token types that the client supports.
    */
-  public string[] tokenTypes { get; set; }
+  public string[] tokenTypes;
 
   /**
    * The token modifiers that the client supports.
    */
-  public string[] tokenModifiers { get; set; }
+  public string[] tokenModifiers;
 
   /**
    * The formats the clients supports.
    *
    * type TokenFormat = 'relative'
    */
-  public string[] formats { get; set; }
+  public string[] formats;
 
   /**
    * Whether the client supports tokens that can overlap each other.
    */
-  public bool? overlappingTokenSupport { get; set; }
+  public bool? overlappingTokenSupport;
 
   /**
    * Whether the client supports tokens that can span multiple lines.
    */
-  public bool? multilineTokenSupport { get; set; }
+  public bool? multilineTokenSupport;
 
   /**
    * Whether the client allows the server to actively cancel a
@@ -779,7 +779,7 @@ public class SemanticTokensClientCapabilities
    *
    * @since 3.17.0
    */
-  public bool? serverCancelSupport { get; set; }
+  public bool? serverCancelSupport;
 
   /**
    * Whether the client uses semantic tokens to augment existing
@@ -793,60 +793,60 @@ public class SemanticTokensClientCapabilities
    *
    * @since 3.17.0
    */
-  public bool? augmentsSyntaxTokens { get; set; }
+  public bool? augmentsSyntaxTokens;
 }
 
 public class TextDocumentClientCapabilities
 {
-  public TextDocumentSyncClientCapabilities synchronization { get; set; }
+  public TextDocumentSyncClientCapabilities synchronization;
 
   /**
    * Capabilities specific to the `textDocument/hover` request.
    */
-  public HoverClientCapabilities hover { get; set; }
+  public HoverClientCapabilities hover;
 
   /**
    * Capabilities specific to the `textDocument/signatureHelp` request.
    */
-  public SignatureHelpClientCapabilities signatureHelp { get; set; }
+  public SignatureHelpClientCapabilities signatureHelp;
 
   /**
    * Capabilities specific to the `textDocument/declaration` request.
    *
    * @since 3.14.0
    */
-  public DeclarationClientCapabilities declaration { get; set; }
+  public DeclarationClientCapabilities declaration;
 
   /**
    * Capabilities specific to the `textDocument/definition` request.
    */
-  public DefinitionClientCapabilities definition { get; set; }
+  public DefinitionClientCapabilities definition;
 
   /**
    * Capabilities specific to the `textDocument/typeDefinition` request.
    *
    * @since 3.6.0
    */
-  public TypeDefinitionClientCapabilities typeDefinition { get; set; }
+  public TypeDefinitionClientCapabilities typeDefinition;
 
   /**
    * Capabilities specific to the `textDocument/implementation` request.
    *
    * @since 3.6.0
    */
-  public ImplementationClientCapabilities implementation { get; set; }
+  public ImplementationClientCapabilities implementation;
 
   /**
    * Capabilities specific to the `textDocument/references` request.
    */
-  public ReferenceClientCapabilities references { get; set; }
+  public ReferenceClientCapabilities references;
 
   /**
    * Capabilities specific to the various semantic token requests.
    *
    * @since 3.16.0
    */
-  public SemanticTokensClientCapabilities semanticTokens { get; set; }
+  public SemanticTokensClientCapabilities semanticTokens;
 }
 
 public class ClientCapabilities
@@ -861,8 +861,8 @@ public class InitializeParams : WorkDoneProgressParams
 {
   public class InitializeParamsClientInfo
   {
-    public string name { get; set; }
-    public string version { get; set; }
+    public string name;
+    public string version;
   }
 
   /**
@@ -871,14 +871,14 @@ public class InitializeParams : WorkDoneProgressParams
    * process is not alive then the server should exit (see exit notification)
    * its process.
    */
-  public int? processId { get; set; }
+  public int? processId;
 
   /**
    * Information about the client
    *
    * @since 3.15.0
    */
-  public InitializeParamsClientInfo clientInfo { get; set; }
+  public InitializeParamsClientInfo clientInfo;
 
   /**
    * The locale the client is currently showing the user interface
@@ -890,7 +890,7 @@ public class InitializeParams : WorkDoneProgressParams
    *
    * @since 3.16.0
    */
-  public string locale { get; set; }
+  public string locale;
 
   /**
    * The rootPath of the workspace. Is null
@@ -898,7 +898,7 @@ public class InitializeParams : WorkDoneProgressParams
    *
    * @deprecated in favour of `rootUri`.
    */
-  public string rootPath { get; set; }
+  public string rootPath;
 
   /**
    * The rootUri of the workspace. Is null if no
@@ -907,22 +907,22 @@ public class InitializeParams : WorkDoneProgressParams
    *
    * @deprecated in favour of `workspaceFolders`
    */
-  public Uri rootUri { get; set; }
+  public Uri rootUri;
 
   /**
    * User provided initialization options.
    */
-  public object initializationOptions { get; set; }
+  public object initializationOptions;
 
   /**
    * The capabilities provided by the client (editor or tool)
    */
-  public ClientCapabilities capabilities { get; set; }
+  public ClientCapabilities capabilities;
 
   /**
    * The initial trace setting. If omitted trace is disabled ('off').
    */
-  public string trace { get; set; }
+  public string trace;
 
   /**
    * The workspace folders configured in the client when the server starts.
@@ -932,7 +932,7 @@ public class InitializeParams : WorkDoneProgressParams
    *
    * @since 3.6.0
    */
-  public WorkspaceFolder[] workspaceFolders { get; set; }
+  public WorkspaceFolder[] workspaceFolders;
 }
 
 public enum FileOperationPatternKind
@@ -943,43 +943,43 @@ public enum FileOperationPatternKind
 
 public class FileOperationPatternOptions
 {
-  public bool? ignoreCase { get; set; }
+  public bool? ignoreCase;
 }
 
 public class FileOperationPattern
 {
-  public string glob { get; set; }
-  public FileOperationPatternKind matches { get; set; }
-  public FileOperationPatternOptions options { get; set; }
+  public string glob;
+  public FileOperationPatternKind matches;
+  public FileOperationPatternOptions options;
 }
 
 public class FileOperationFilter
 {
-  public string scheme { get; set; }
-  public FileOperationPattern pattern { get; set; }
+  public string scheme;
+  public FileOperationPattern pattern;
 }
 
 public class FileOperationRegistrationOptions
 {
-  public FileOperationFilter[] filters { get; set; }
+  public FileOperationFilter[] filters;
 }
 
 public class ServerCapabilities
 {
   public class WorkspaceFoldersServerCapabilities
   {
-    public bool? supported { get; set; }
-    public SumType<string, bool> changeNotifications { get; set; }
+    public bool? supported;
+    public SumType<string, bool> changeNotifications;
   }
 
   public class ServerCapabilitiesWorkspaceFileOperations
   {
-    public FileOperationRegistrationOptions didCreate { get; set; }
-    public FileOperationRegistrationOptions willCreate { get; set; }
-    public FileOperationRegistrationOptions didRename { get; set; }
-    public FileOperationRegistrationOptions willRename { get; set; }
-    public FileOperationRegistrationOptions didDelete { get; set; }
-    public FileOperationRegistrationOptions willDelete { get; set; }
+    public FileOperationRegistrationOptions didCreate;
+    public FileOperationRegistrationOptions willCreate;
+    public FileOperationRegistrationOptions didRename;
+    public FileOperationRegistrationOptions willRename;
+    public FileOperationRegistrationOptions didDelete;
+    public FileOperationRegistrationOptions willDelete;
   }
 
   public class ServerCapabilitiesWorkspace
@@ -989,14 +989,14 @@ public class ServerCapabilities
      *
      * @since 3.6.0
      */
-    public WorkspaceFoldersServerCapabilities workspaceFolders { get; set; }
+    public WorkspaceFoldersServerCapabilities workspaceFolders;
 
     /**
      * The server is interested in file notifications/requests.
      *
      * @since 3.16.0
      */
-    public ServerCapabilitiesWorkspaceFileOperations fileOperations { get; set; }
+    public ServerCapabilitiesWorkspaceFileOperations fileOperations;
   }
 
   /**
@@ -1005,198 +1005,194 @@ public class ServerCapabilities
    * TextDocumentSyncKind number. If omitted it defaults to
    * `TextDocumentSyncKind.None`.
    */
-  public SumType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync { get; set; }
+  public SumType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync;
 
   /**
    * The server provides completion support.
    */
-  public CompletionOptions completionProvider { get; set; }
+  public CompletionOptions completionProvider;
 
   /**
    * The server provides hover support.
    */
-  public SumType<bool, HoverOptions> hoverProvider { get; set; }
+  public SumType<bool, HoverOptions> hoverProvider;
 
   /**
    * The server provides signature help support.
    */
-  public SignatureHelpOptions signatureHelpProvider { get; set; }
+  public SignatureHelpOptions signatureHelpProvider;
 
   /**
    * The server provides go to declaration support.
    *
    * @since 3.14.0
    */
-  public SumType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider { get; set; }
+  public SumType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider;
 
   /**
    * The server provides goto definition support.
    */
-  public SumType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider { get; set; }
+  public SumType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider;
 
   /**
    * The server provides goto type definition support.
    *
    * @since 3.6.0
    */
-  public SumType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider { get; set; }
+  public SumType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider;
 
   /**
    * The server provides goto implementation support.
    *
    * @since 3.6.0
    */
-  public SumType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider { get; set; }
+  public SumType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider;
 
   /**
    * The server provides find references support.
    */
-  public SumType<bool, ReferenceOptions> referencesProvider { get; set; }
+  public SumType<bool, ReferenceOptions> referencesProvider;
 
   /**
    * The server provides document highlight support.
    */
-  public SumType<bool, DocumentHighlightOptions> documentHighlightProvider { get; set; }
+  public SumType<bool, DocumentHighlightOptions> documentHighlightProvider;
 
   /**
    * The server provides document symbol support.
    */
-  public SumType<bool, DocumentSymbolOptions> documentSymbolProvider { get; set; }
+  public SumType<bool, DocumentSymbolOptions> documentSymbolProvider;
 
   /**
    * The server provides code actions. The `CodeActionOptions` return type is
    * only valid if the client signals code action literal support via the
    * property `textDocument.codeAction.codeActionLiteralSupport`.
    */
-  public SumType<bool, CodeActionOptions> codeActionProvider { get; set; }
+  public SumType<bool, CodeActionOptions> codeActionProvider;
 
   /**
    * The server provides code lens.
    */
-  public CodeLensOptions codeLensProvider { get; set; }
+  public CodeLensOptions codeLensProvider;
 
   /**
    * The server provides document link support.
    */
-  public DocumentLinkOptions documentLinkProvider { get; set; }
+  public DocumentLinkOptions documentLinkProvider;
 
   /**
    * The server provides color provider support.
    *
    * @since 3.6.0
    */
-  public SumType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider { get; set; }
+  public SumType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider;
 
   /**
    * The server provides document formatting.
    */
-  public SumType<bool, DocumentFormattingOptions> documentFormattingProvider { get; set; }
+  public SumType<bool, DocumentFormattingOptions> documentFormattingProvider;
 
   /**
    * The server provides document range formatting.
    */
-  public SumType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider { get; set; }
+  public SumType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider;
 
   /**
    * The server provides document formatting on typing.
    */
-  public DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider { get; set; }
+  public DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider;
 
   /**
    * The server provides rename support. RenameOptions may only be
    * specified if the client states that it supports
    * `prepareSupport` in its initial `initialize` request.
    */
-  public SumType<bool, RenameOptions> renameProvider { get; set; }
+  public SumType<bool, RenameOptions> renameProvider;
 
   /**
    * The server provides folding provider support.
    *
    * @since 3.10.0
    */
-  public SumType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider { get; set; }
+  public SumType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider;
 
   /**
    * The server provides execute command support.
    */
-  public ExecuteCommandOptions executeCommandProvider { get; set; }
+  public ExecuteCommandOptions executeCommandProvider;
 
   /**
    * The server provides selection range support.
    *
    * @since 3.15.0
    */
-  public SumType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider { get; set; }
+  public SumType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider;
 
   /**
    * The server provides linked editing range support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider
-  {
-    get;
-    set;
-  }
+  public SumType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider;
 
   /**
    * The server provides call hierarchy support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider { get; set; }
+  public SumType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider;
 
   /**
    * The server provides semantic tokens support.
    *
    * @since 3.16.0
    */
-  public SumType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider { get; set; }
+  public SumType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider;
 
   /**
    * Whether server provides moniker support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider { get; set; }
+  public SumType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider;
 
   /**
    * The server provides workspace symbol support.
    */
-  public SumType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider { get; set; }
+  public SumType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider;
 
   /**
    * Workspace specific server capabilities
    */
-  public ServerCapabilitiesWorkspace workspace { get; set; }
+  public ServerCapabilitiesWorkspace workspace;
 
   /**
    * Experimental server capabilities.
    */
-  public object experimental { get; set; }
+  public object experimental;
 }
 
 public class InitializeResult
 {
   public class InitializeResultsServerInfo
   {
-    public string name { get; set; }
-    public string version { get; set; }
+    public string name;
+    public string version;
   }
 
-  public ServerCapabilities capabilities { get; set; }
+  public ServerCapabilities capabilities;
 
   /**
    * Information about the server.
    *
    * @since 3.15.0
    */
-  public InitializeResultsServerInfo serverInfo { get; set; }
+  public InitializeResultsServerInfo serverInfo;
 }
 
 public class InitializeError
 {
-  public bool retry { get; set; }
+  public bool retry;
 }
 
 public class TextDocumentItem
@@ -1204,23 +1200,23 @@ public class TextDocumentItem
   /**
    * The text document's URI.
    */
-  public Uri uri { get; set; }
+  public Uri uri;
 
   /**
    * The text document's language identifier.
    */
-  public string languageId { get; set; }
+  public string languageId;
 
   /**
    * The version number of this document (it will increase after each
    * change, including undo/redo).
    */
-  public int version { get; set; }
+  public int version;
 
   /**
    * The content of the opened text document.
    */
-  public string text { get; set; }
+  public string text;
 }
 
 public class DidOpenTextDocumentParams
@@ -1228,7 +1224,7 @@ public class DidOpenTextDocumentParams
   /**
    * The document that was opened.
    */
-  public TextDocumentItem textDocument { get; set; }
+  public TextDocumentItem textDocument;
 }
 
 public class TextDocumentIdentifier
@@ -1236,7 +1232,7 @@ public class TextDocumentIdentifier
   /**
    * The text document's URI.
    */
-  public Uri uri { get; set; }
+  public Uri uri;
 }
 
 public class VersionedTextDocumentIdentifier : TextDocumentIdentifier
@@ -1247,7 +1243,7 @@ public class VersionedTextDocumentIdentifier : TextDocumentIdentifier
    * * The version number of a document will increase after each change,
    * * including undo/redo. The number doesn't need to be consecutive.
    */
-  public int version { get; set; }
+  public int version;
 }
 
 public class Position
@@ -1255,7 +1251,7 @@ public class Position
   /**
    * Line position in a document (zero-based).
    */
-  public uint line { get; set; }
+  public uint line;
 
   /**
    * * Character offset on a line in a document (zero-based). Assuming that
@@ -1265,7 +1261,7 @@ public class Position
    * * If the character value is greater than the line length it defaults back
    * * to the line length.
    */
-  public uint character { get; set; }
+  public uint character;
 }
 
 public class Range
@@ -1273,12 +1269,12 @@ public class Range
   /**
    * The range's start position.
    */
-  public Position start { get; set; }
+  public Position start;
 
   /**
    * The range's end position.
    */
-  public Position end { get; set; }
+  public Position end;
 }
 
 public class TextDocumentContentChangeEvent
@@ -1286,21 +1282,21 @@ public class TextDocumentContentChangeEvent
   /**
    * The range of the document that changed.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The optional length of the range that got replaced.
    *
    * @deprecated use range instead.
    */
-  public uint? rangeLength { get; set; }
+  public uint? rangeLength;
 
   /**
    * The new text for the provided range.
    * or
    * The new text of the whole document.
    */
-  public string text { get; set; }
+  public string text;
 }
 
 public class DidChangeTextDocumentParams
@@ -1310,7 +1306,7 @@ public class DidChangeTextDocumentParams
    * to the version after all provided content changes have
    * been applied.
    */
-  public VersionedTextDocumentIdentifier textDocument { get; set; }
+  public VersionedTextDocumentIdentifier textDocument;
 
   /**
    * * The actual content changes. The content changes describe single state
@@ -1327,7 +1323,7 @@ public class DidChangeTextDocumentParams
    * * - apply the `TextDocumentContentChangeEvent`s in a single notification
    * *   in the order you receive them.
    */
-  public TextDocumentContentChangeEvent[] contentChanges { get; set; }
+  public TextDocumentContentChangeEvent[] contentChanges;
 }
 
 public enum TextDocumentSaveReason
@@ -1342,12 +1338,12 @@ public class WillSaveTextDocumentParams
   /**
    * The document that will be saved.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The 'TextDocumentSaveReason'.
    */
-  public TextDocumentSaveReason reason { get; set; }
+  public TextDocumentSaveReason reason;
 }
 
 public class DidSaveTextDocumentParams
@@ -1355,13 +1351,13 @@ public class DidSaveTextDocumentParams
   /**
    * The document that was saved.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * Optional the content when saved. Depends on the includeText value
    * when the save notification was requested.
    */
-  public string text { get; set; }
+  public string text;
 }
 
 public class DidCloseTextDocumentParams
@@ -1369,7 +1365,7 @@ public class DidCloseTextDocumentParams
   /**
    * The document that was closed.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 }
 
 public class TextDocumentPositionParams
@@ -1377,12 +1373,12 @@ public class TextDocumentPositionParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The position inside the text document.
    */
-  public Position position { get; set; }
+  public Position position;
 }
 
 public enum CompletionTriggerKind
@@ -1397,14 +1393,14 @@ public class CompletionContext
   /**
    * How the completion was triggered.
    */
-  public CompletionTriggerKind triggerKind { get; set; }
+  public CompletionTriggerKind triggerKind;
 
   /**
    * * The trigger character (a single character) that has trigger code
    * * complete. Is undefined if
    * * `triggerKind !== CompletionTriggerKind.TriggerCharacter`
    */
-  public string triggerCharacter { get; set; }
+  public string triggerCharacter;
 }
 
 public class CompletionParams : TextDocumentPositionParams
@@ -1414,18 +1410,18 @@ public class CompletionParams : TextDocumentPositionParams
    * * to send this using the client capability
    * * `completion.contextSupport === true`
    */
-  public CompletionContext context { get; set; }
+  public CompletionContext context;
 
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public enum CompletionItemKind
@@ -1470,12 +1466,12 @@ public class MarkupContent
    * Markdown: 'markdown' = 'markdown';
    * type MarkupKind = 'plaintext' | 'markdown';
    */
-  public string kind { get; set; }
+  public string kind;
 
   /**
    * The content itself
    */
-  public string value { get; set; }
+  public string value;
 }
 
 public enum InsertTextFormat
@@ -1496,13 +1492,13 @@ public class TextEdit
    * The range of the text document to be manipulated. To insert
    * text into a document create a range where start === end.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The string to be inserted. For delete operations use an
    * empty string.
    */
-  public string newText { get; set; }
+  public string newText;
 }
 
 public class InsertReplaceEdit
@@ -1510,17 +1506,17 @@ public class InsertReplaceEdit
   /**
    * The string to be inserted.
    */
-  public string newText { get; set; }
+  public string newText;
 
   /**
    * The range if the insert is requested
    */
-  public Range insert { get; set; }
+  public Range insert;
 
   /**
    * The range if the replace is requested.
    */
-  public Range replace { get; set; }
+  public Range replace;
 }
 
 public class Command
@@ -1528,18 +1524,18 @@ public class Command
   /**
    * Title of the command, like `save`.
    */
-  public string title { get; set; }
+  public string title;
 
   /**
    * The identifier of the actual command handler.
    */
-  public string command { get; set; }
+  public string command;
 
   /**
    * Arguments that the command handler should be
    * invoked with.
    */
-  public object[] arguments { get; set; }
+  public object[] arguments;
 }
 
 public class CompletionItem
@@ -1553,39 +1549,39 @@ public class CompletionItem
    * If label details are provided the label itself should
    * be an unqualified name of the completion item.
    */
-  public string label { get; set; }
+  public string label;
 
   /**
    * The kind of this completion item. Based of the kind
    * an icon is chosen by the editor. The standardized set
    * of available values is defined in `CompletionItemKind`.
    */
-  public CompletionItemKind? kind { get; set; }
+  public CompletionItemKind? kind;
 
   /**
    * Tags for this completion item.
    *
    * @since 3.15.0
    */
-  public CompletionItemTag[] tags { get; set; }
+  public CompletionItemTag[] tags;
 
   /**
    * A human-readable string with additional information
    * about this item, like type or symbol information.
    */
-  public string detail { get; set; }
+  public string detail;
 
   /**
    * A human-readable string that represents a doc-comment.
    */
-  public SumType<string, MarkupContent> documentation { get; set; }
+  public SumType<string, MarkupContent> documentation;
 
   /**
    * Indicates if this item is deprecated.
    *
    * @deprecated Use `tags` instead if supported.
    */
-  public bool? deprecated { get; set; }
+  public bool? deprecated;
 
   /**
    * Select this item when showing.
@@ -1594,19 +1590,19 @@ public class CompletionItem
    * tool / client decides which item that is. The rule is that the *first*
    * item of those that match best is selected.
    */
-  public bool? preselect { get; set; }
+  public bool? preselect;
 
   /**
    * A string that should be used when comparing this item
    * with other items. When `falsy` the label is used.
    */
-  public string sortText { get; set; }
+  public string sortText;
 
   /**
    * A string that should be used when filtering a set of
    * completion items. When `falsy` the label is used.
    */
-  public string filterText { get; set; }
+  public string filterText;
 
   /**
    * * A string that should be inserted into a document when selecting
@@ -1622,7 +1618,7 @@ public class CompletionItem
    *   * recommended to use `textEdit` instead since it avoids additional client
    *   * side interpretation.
    */
-  public string insertText { get; set; }
+  public string insertText;
 
   /**
    * The format of the insert text. The format applies to both the
@@ -1632,7 +1628,7 @@ public class CompletionItem
    * Please note that the insertTextFormat doesn't apply to
    * `additionalTextEdits`.
    */
-  public InsertTextFormat insertTextFormat { get; set; }
+  public InsertTextFormat insertTextFormat;
 
   /**
    * How whitespace and indentation is handled during completion
@@ -1642,7 +1638,7 @@ public class CompletionItem
    * @since 3.16.0
    * @since 3.17.0 - support for `textDocument.completion.insertTextMode`
    */
-  public InsertTextMode? insertTextMode { get; set; }
+  public InsertTextMode? insertTextMode;
 
   /**
    * * An edit which is applied to a document when selecting this completion.
@@ -1668,7 +1664,7 @@ public class CompletionItem
    * *
    * * @since 3.16.0 additional type `InsertReplaceEdit`
    */
-  public SumType<TextEdit, InsertReplaceEdit>? textEdit { get; set; }
+  public SumType<TextEdit, InsertReplaceEdit>? textEdit;
 
   /**
    * * An optional array of additional text edits that are applied when
@@ -1679,7 +1675,7 @@ public class CompletionItem
    * * current cursor position (for example adding an import statement at the
    * * top of the file if the completion item will insert an unqualified type).
    */
-  public TextEdit[] additionalTextEdits { get; set; }
+  public TextEdit[] additionalTextEdits;
 
   /**
    * * An optional set of characters that when pressed while this completion is
@@ -1687,20 +1683,20 @@ public class CompletionItem
    * * commit characters should have `length=1` and that superfluous characters
    * * will be ignored.
    */
-  public string[] commitCharacters { get; set; }
+  public string[] commitCharacters;
 
   /**
    * * An optional command that is executed *after* inserting this completion.
    * * *Note* that additional modifications to the current document should be
    * * described with the additionalTextEdits-property.
    */
-  public Command command { get; set; }
+  public Command command;
 
   /**
    * A data entry field that is preserved on a completion item between
    * a completion and a completion resolve request.
    */
-  public object data { get; set; }
+  public object data;
 }
 
 public class ReferenceContext
@@ -1708,23 +1704,23 @@ public class ReferenceContext
   /**
    * Include the declaration of the current symbol.
    */
-  public bool includeDeclaration { get; set; }
+  public bool includeDeclaration;
 }
 
 public class ReferenceParams : TextDocumentPositionParams
 {
-  public ReferenceContext context { get; set; }
+  public ReferenceContext context;
 
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class DocumentSymbolParams : WorkDoneProgressParams
@@ -1732,13 +1728,13 @@ public class DocumentSymbolParams : WorkDoneProgressParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class DocumentColorParams : WorkDoneProgressParams
@@ -1746,12 +1742,12 @@ public class DocumentColorParams : WorkDoneProgressParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class Color
@@ -1759,22 +1755,22 @@ public class Color
   /**
    * The red component of this color in the range [0-1].
    */
-  public float red { get; set; }
+  public float red;
 
   /**
    * The green component of this color in the range [0-1].
    */
-  public float green { get; set; }
+  public float green;
 
   /**
    * The blue component of this color in the range [0-1].
    */
-  public float blue { get; set; }
+  public float blue;
 
   /**
    * The alpha component of this color in the range [0-1].
    */
-  public float alpha { get; set; }
+  public float alpha;
 }
 
 public class ColorPresentationParams : WorkDoneProgressParams
@@ -1782,22 +1778,22 @@ public class ColorPresentationParams : WorkDoneProgressParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The color information to request presentations for.
    */
-  public Color color { get; set; }
+  public Color color;
 
   /**
    * The range where the color would be inserted. Serves as a context.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class FormattingOptions
@@ -1805,39 +1801,39 @@ public class FormattingOptions
   /**
    * Size of a tab in spaces.
    */
-  public uint tabSize { get; set; }
+  public uint tabSize;
 
   /**
    * Prefer spaces over tabs.
    */
-  public bool insertSpaces { get; set; }
+  public bool insertSpaces;
 
   /**
    * Trim trailing whitespace on a line.
    *
    * @since 3.15.0
    */
-  public bool? trimTrailingWhitespace { get; set; }
+  public bool? trimTrailingWhitespace;
 
   /**
    * Insert a newline character at the end of the file if one does not exist.
    *
    * @since 3.15.0
    */
-  public bool? insertFinalNewline { get; set; }
+  public bool? insertFinalNewline;
 
   /**
    * Trim all newlines after the final newline at the end of the file.
    *
    * @since 3.15.0
    */
-  public bool? trimFinalNewlines { get; set; }
+  public bool? trimFinalNewlines;
 
   /**
   * Signature for further properties.
   * [key: string]: boolean | integer | string;
   */
-  //public object properties { get; set; } //TODO: ...
+  //public object properties; //TODO: ...
 }
 
 public class DocumentFormattingParams : WorkDoneProgressParams
@@ -1845,12 +1841,12 @@ public class DocumentFormattingParams : WorkDoneProgressParams
   /**
    * The document to format.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The format options.
    */
-  public FormattingOptions options { get; set; }
+  public FormattingOptions options;
 }
 
 public class DocumentRangeFormattingParams : WorkDoneProgressParams
@@ -1858,17 +1854,17 @@ public class DocumentRangeFormattingParams : WorkDoneProgressParams
   /**
    * The document to format.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The range to format
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The format options
    */
-  public FormattingOptions options { get; set; }
+  public FormattingOptions options;
 }
 
 public class DocumentOnTypeFormattingParams : TextDocumentPositionParams
@@ -1876,12 +1872,12 @@ public class DocumentOnTypeFormattingParams : TextDocumentPositionParams
   /**
    * The character that has been typed.
    */
-  public string ch { get; set; }
+  public string ch;
 
   /**
    * The format options.
    */
-  public FormattingOptions options { get; set; }
+  public FormattingOptions options;
 }
 
 public enum DiagnosticSeverity
@@ -1897,7 +1893,7 @@ public class CodeDescription
   /**
    * An URI to open with more information about the diagnostic error.
    */
-  public string href { get; set; }
+  public string href;
 }
 
 public enum DiagnosticTag
@@ -1908,8 +1904,8 @@ public enum DiagnosticTag
 
 public class Location
 {
-  public Uri uri { get; set; }
-  public Range range { get; set; }
+  public Uri uri;
+  public Range range;
 }
 
 public class DiagnosticRelatedInformation
@@ -1917,12 +1913,12 @@ public class DiagnosticRelatedInformation
   /**
    * The location of this related diagnostic information.
    */
-  public Location location { get; set; }
+  public Location location;
 
   /**
    * The message of this related diagnostic information.
    */
-  public string message { get; set; }
+  public string message;
 }
 
 public class Diagnostic
@@ -1930,49 +1926,49 @@ public class Diagnostic
   /**
    * The range at which the message applies.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The diagnostic's severity. Can be omitted. If omitted it is up to the
    * client to interpret diagnostics as error, warning, info or hint.
    */
-  public DiagnosticSeverity severity { get; set; }
+  public DiagnosticSeverity severity;
 
   /**
    * The diagnostic's code, which might appear in the user interface.
    */
-  public SumType<string, int> code { get; set; }
+  public SumType<string, int> code;
 
   /**
    * An optional property to describe the error code.
    *
    * @since 3.16.0
    */
-  public CodeDescription codeDescription { get; set; }
+  public CodeDescription codeDescription;
 
   /**
    * A human-readable string describing the source of this
    * diagnostic, e.g. 'typescript' or 'super lint'.
    */
-  public string source { get; set; }
+  public string source;
 
   /**
    * The diagnostic's message.
    */
-  public string message { get; set; }
+  public string message;
 
   /**
    * Additional metadata about the diagnostic.
    *
    * @since 3.15.0
    */
-  public DiagnosticTag[] tags { get; set; }
+  public DiagnosticTag[] tags;
 
   /**
    * An array of related diagnostic information, e.g. when symbol-names within
    * a scope collide all definitions can be marked via this property.
    */
-  public DiagnosticRelatedInformation[] relatedInformation { get; set; }
+  public DiagnosticRelatedInformation[] relatedInformation;
 
   /**
    * A data entry field that is preserved between a
@@ -1981,7 +1977,7 @@ public class Diagnostic
    *
    * @since 3.16.0
    */
-  public object data { get; set; }
+  public object data;
 }
 
 public class CodeActionContext
@@ -1994,7 +1990,7 @@ public class CodeActionContext
    * * the error state of the resource. The primary parameter
    * * to compute code actions is the provided range.
    */
-  public Diagnostic[] diagnostics { get; set; }
+  public Diagnostic[] diagnostics;
 
   /**
    * * Requested kind of actions to return.
@@ -2002,7 +1998,7 @@ public class CodeActionContext
    * * Actions not of this kind are filtered out by the client before being
    * * shown. So servers can omit computing them.
    */
-  public CodeActionKind[] only { get; set; }
+  public CodeActionKind[] only;
 }
 
 public class CodeActionParams : WorkDoneProgressParams
@@ -2010,23 +2006,23 @@ public class CodeActionParams : WorkDoneProgressParams
   /**
    * The document in which the command was invoked.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * The range for which the command was invoked.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * Context carrying additional information.
    */
-  public CodeActionContext context { get; set; }
+  public CodeActionContext context;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class CodeLensParams : WorkDoneProgressParams
@@ -2034,13 +2030,13 @@ public class CodeLensParams : WorkDoneProgressParams
   /**
    * The document to request code lens for.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class CodeLens
@@ -2048,18 +2044,18 @@ public class CodeLens
   /**
    * The range in which this code lens is valid. Should only span a single line.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The command this code lens represents.
    */
-  public Command command { get; set; }
+  public Command command;
 
   /**
    * A data entry field that is preserved on a code lens item between
    * a code lens and a code lens resolve request.
    */
-  public object data { get; set; }
+  public object data;
 }
 
 public class DocumentLinkParams : WorkDoneProgressParams
@@ -2067,13 +2063,13 @@ public class DocumentLinkParams : WorkDoneProgressParams
   /**
    * The document to provide document links for.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class DocumentLink
@@ -2081,12 +2077,12 @@ public class DocumentLink
   /**
    * The range this link applies to.
    */
-  public Range range { get; set; }
+  public Range range;
 
   /**
    * The uri this link points to. If missing a resolve request is sent later.
    */
-  public string target { get; set; }
+  public string target;
 
   /**
    * * The tooltip text when you hover over this link.
@@ -2098,13 +2094,13 @@ public class DocumentLink
    * *
    * * @since 3.15.0
    */
-  public string tooltip { get; set; }
+  public string tooltip;
 
   /**
    * A data entry field that is preserved on a document link between a
    * DocumentLinkRequest and a DocumentLinkResolveRequest.
    */
-  public object data { get; set; }
+  public object data;
 }
 
 public class RenameParams : TextDocumentPositionParams
@@ -2114,12 +2110,12 @@ public class RenameParams : TextDocumentPositionParams
    * request must return a [ResponseError](#ResponseError) with an
    * appropriate message set.
    */
-  public string newName { get; set; }
+  public string newName;
 
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 }
 
 public class FoldingRangeParams : WorkDoneProgressParams
@@ -2127,13 +2123,13 @@ public class FoldingRangeParams : WorkDoneProgressParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class WorkspaceFoldersChangeEvent
@@ -2141,12 +2137,12 @@ public class WorkspaceFoldersChangeEvent
   /**
    * The array of added workspace folders
    */
-  public WorkspaceFolder[] added { get; set; }
+  public WorkspaceFolder[] added;
 
   /**
    * The array of the removed workspace folders
    */
-  public WorkspaceFolder[] removed { get; set; }
+  public WorkspaceFolder[] removed;
 }
 
 public class DidChangeWorkspaceFoldersParams
@@ -2154,7 +2150,7 @@ public class DidChangeWorkspaceFoldersParams
   /**
    * The actual workspace folder change event.
    */
-  public WorkspaceFoldersChangeEvent @event { get; set; }
+  public WorkspaceFoldersChangeEvent @event;
 }
 
 public class DidChangeConfigurationParams
@@ -2162,7 +2158,7 @@ public class DidChangeConfigurationParams
   /**
    * The actual changed settings
    */
-  public object settings { get; set; }
+  public object settings;
 }
 
 public enum FileChangeType
@@ -2177,12 +2173,12 @@ public class FileEvent
   /**
    * The file's URI.
    */
-  public string uri { get; set; }
+  public string uri;
 
   /**
    * The change type.
    */
-  public FileChangeType type { get; set; }
+  public FileChangeType type;
 }
 
 public class DidChangeWatchedFilesParams
@@ -2190,7 +2186,7 @@ public class DidChangeWatchedFilesParams
   /**
    * The actual file events.
    */
-  public FileEvent[] changes { get; set; }
+  public FileEvent[] changes;
 }
 
 public class WorkspaceSymbolParams : WorkDoneProgressParams
@@ -2199,13 +2195,13 @@ public class WorkspaceSymbolParams : WorkDoneProgressParams
    * A query string to filter symbols by. Clients may send an empty
    * string here to request all symbols.
    */
-  public string query { get; set; }
+  public string query;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class ExecuteCommandParams : WorkDoneProgressParams
@@ -2213,12 +2209,12 @@ public class ExecuteCommandParams : WorkDoneProgressParams
   /**
    * The identifier of the actual command handler.
    */
-  public string command { get; set; }
+  public string command;
 
   /**
    * Arguments that the command should be invoked with.
    */
-  public object[] arguments { get; set; }
+  public object[] arguments;
 }
 
 public enum SignatureHelpTriggerKind
@@ -2242,13 +2238,13 @@ public class ParameterInformation
    * signature label. Its intended use case is to highlight the parameter
    * label part in the `SignatureInformation.label`.
    */
-  public SumType<string, List<uint>> label { get; set; }
+  public SumType<string, List<uint>> label;
 
   /**
    * The human-readable doc-comment of this parameter. Will be shown
    * in the UI but can be omitted.
    */
-  public SumType<string, MarkupContent> documentation { get; set; }
+  public SumType<string, MarkupContent> documentation;
 }
 
 public class SignatureInformation
@@ -2257,18 +2253,18 @@ public class SignatureInformation
    * The label of this signature. Will be shown in
    * the UI.
    */
-  public string label { get; set; }
+  public string label;
 
   /**
    * The human-readable doc-comment of this signature. Will be shown
    * in the UI but can be omitted.
    */
-  public SumType<string, MarkupContent> documentation { get; set; }
+  public SumType<string, MarkupContent> documentation;
 
   /**
    * The parameters of this signature.
    */
-  public ParameterInformation[] parameters { get; set; }
+  public ParameterInformation[] parameters;
 
   /**
    * The index of the active parameter.
@@ -2277,7 +2273,7 @@ public class SignatureInformation
    *
    * @since 3.16.0
    */
-  public uint? activeParameter { get; set; }
+  public uint? activeParameter;
 }
 
 public class SignatureHelp
@@ -2286,7 +2282,7 @@ public class SignatureHelp
    * One or more signatures. If no signatures are available the signature help
    * request should return `null`.
    */
-  public SignatureInformation[] signatures { get; set; }
+  public SignatureInformation[] signatures;
 
   /**
    * The active signature. If omitted or the value lies outside the
@@ -2299,7 +2295,7 @@ public class SignatureHelp
    * In future version of the protocol this property might become
    * mandatory to better express this.
    */
-  public uint? activeSignature { get; set; }
+  public uint? activeSignature;
 
   /**
    * The active parameter of the active signature. If omitted or the value
@@ -2310,7 +2306,7 @@ public class SignatureHelp
    * mandatory to better express the active parameter if the
    * active signature does have any.
    */
-  public uint? activeParameter { get; set; }
+  public uint? activeParameter;
 }
 
 public class SignatureHelpContext
@@ -2318,7 +2314,7 @@ public class SignatureHelpContext
   /**
    * Action that caused signature help to be triggered.
    */
-  public SignatureHelpTriggerKind triggerKind { get; set; }
+  public SignatureHelpTriggerKind triggerKind;
 
   /**
    * Character that caused signature help to be triggered.
@@ -2326,7 +2322,7 @@ public class SignatureHelpContext
    * This is undefined when triggerKind !==
    * SignatureHelpTriggerKind.TriggerCharacter
    */
-  public string triggerCharacter { get; set; }
+  public string triggerCharacter;
 
   /**
    * `true` if signature help was already showing when it was triggered.
@@ -2335,7 +2331,7 @@ public class SignatureHelpContext
    * caused by actions such as typing a trigger character, a cursor move, or
    * document content changes.
    */
-  public bool isRetrigger { get; set; }
+  public bool isRetrigger;
 
   /**
    * The currently active `SignatureHelp`.
@@ -2343,7 +2339,7 @@ public class SignatureHelpContext
    * The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field
    * updated based on the user navigating through available signatures.
    */
-  public SignatureHelp activeSignatureHelp { get; set; }
+  public SignatureHelp activeSignatureHelp;
 }
 
 public class SignatureHelpParams : TextDocumentPositionParams
@@ -2355,12 +2351,12 @@ public class SignatureHelpParams : TextDocumentPositionParams
    *
    * @since 3.15.0
    */
-  public SignatureHelpContext context { get; set; }
+  public SignatureHelpContext context;
 
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 }
 
 public class DeclarationParams : TextDocumentPositionParams
@@ -2368,12 +2364,12 @@ public class DeclarationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class DefinitionParams : TextDocumentPositionParams
@@ -2381,12 +2377,12 @@ public class DefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class TypeDefinitionParams : TextDocumentPositionParams
@@ -2394,12 +2390,12 @@ public class TypeDefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class ImplementationParams : TextDocumentPositionParams
@@ -2407,13 +2403,13 @@ public class ImplementationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken { get; set; }
+  public SumType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class Hover
@@ -2421,13 +2417,13 @@ public class Hover
   /**
    * The hover's content
    */
-  public MarkupContent contents { get; set; }
+  public MarkupContent contents;
 
   /**
    * An optional range is a range inside a text document
    * that is used to visualize a hover, e.g. by changing the background color.
    */
-  public Range range { get; set; }
+  public Range range;
 }
 
 public class SemanticTokensParams : WorkDoneProgressParams
@@ -2435,13 +2431,13 @@ public class SemanticTokensParams : WorkDoneProgressParams
   /**
    * The text document.
    */
-  public TextDocumentIdentifier textDocument { get; set; }
+  public TextDocumentIdentifier textDocument;
 
   /**
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SumType<int, string> partialResultToken { get; set; }
+  public SumType<int, string> partialResultToken;
 }
 
 public class SemanticTokens
@@ -2452,12 +2448,12 @@ public class SemanticTokens
    * A server can then instead of computing all semantic tokens again simply
    * send a delta.
    */
-  public string resultId { get; set; }
+  public string resultId;
 
   /**
   * The actual tokens.
    */
-  public uint[] data { get; set; }
+  public uint[] data;
 }
 
 public class SemanticTokenTypes
@@ -2512,7 +2508,7 @@ public class CancelParams
   /**
    * The request id to cancel.
    */
-  public SumType<Int32, Int64, string> id { get; set; }
+  public SumType<Int32, Int64, string> id;
 }
 
 }

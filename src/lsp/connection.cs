@@ -13,13 +13,13 @@ public interface Connection
 
 public class ConnectionStdIO : Connection
 {
-  private const byte CR = 13;
-  private const byte LF = 10;
+  const byte CR = 13;
+  const byte LF = 10;
   
-  private readonly byte[] separator = { CR, LF };
+  readonly byte[] separator = { CR, LF };
   
-  private readonly StreamReader input;
-  private readonly Stream output;
+  readonly StreamReader input;
+  readonly Stream output;
   
   public ConnectionStdIO(Stream output, Stream input)
   {
@@ -72,13 +72,13 @@ public class ConnectionStdIO : Connection
 
 class StreamReader
 {
-  private const int bufferSize = 1024;
+  const int bufferSize = 1024;
   
-  private Stream stream;
-  private List<byte[]> buffers;
-  private int headPos;
-  private int tailPos;
-  private int lengthRead;
+  Stream stream;
+  List<byte[]> buffers;
+  int headPos;
+  int tailPos;
+  int lengthRead;
 
   public StreamReader(Stream input)
   {
@@ -119,7 +119,7 @@ class StreamReader
     }
   }
 
-  private int FillBuffer()
+  int FillBuffer()
   {
     byte[] lastBuffer;
     if(buffers.Count > 0 && tailPos < bufferSize)
@@ -145,7 +145,7 @@ class StreamReader
     }
   }
 
-  private bool FindSeparator(byte[] separator, int bufferIndex, int bufferPos, out int count)
+  bool FindSeparator(byte[] separator, int bufferIndex, int bufferPos, out int count)
   {
     count = 0;
     var separatorLength = separator.Length;
@@ -171,7 +171,7 @@ class StreamReader
     return false;
   }
 
-  private bool IsSeparatorMatched(byte[] separator, int bufferIndex, int bufferPos)
+  bool IsSeparatorMatched(byte[] separator, int bufferIndex, int bufferPos)
   {
     for(var i = 0; i < separator.Length; i++)
     {
@@ -186,7 +186,7 @@ class StreamReader
     return true;
   }
 
-  private byte[] Slice(int copyLength, int chopLength)
+  byte[] Slice(int copyLength, int chopLength)
   {
     var dest = new byte[copyLength];
     var destPos = 0;
