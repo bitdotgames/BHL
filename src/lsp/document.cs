@@ -10,83 +10,58 @@ public abstract class TextDocument
   public Uri uri { get; set; }
   public string text { get; set; }
   
-  List<int> indices = new List<int>();
+  List<int> line2byte_offset = new List<int>();
   
   public virtual void Sync(string text)
   {
     this.text = text;
-    ComputeIndexes();
+    ComputeLineByteOffsets();
   }
 
-  void ComputeIndexes()
+  void ComputeLineByteOffsets()
   {
-    indices.Clear();
+    line2byte_offset.Clear();
     
-    int cur_index = 0;
-    int cur_line = 0;
-    int cur_col = 0;
-    
-    indices.Add(cur_index);
+    line2byte_offset.Add(0);
 
-    int length = text.Length;
-    // Go through file and record index of start of each line.
-    for(int i = 0; i < length; ++i)
+    for(int i = 0; i < text.Length; ++i)
     {
-      if(cur_index >= length)
-        break;
-
-      char ch = text[cur_index];
+      char ch = text[i];
       if(ch == '\r')
       {
-        if(cur_index + 1 >= length)
+        //weird case: \r without \n
+        if(i + 1 >= text.Length)
           break;
         
-        if(text[cur_index + 1] == '\n')
+        if(text[i + 1] == '\n')
         {
-          cur_line++;
-          cur_col = 0;
-          cur_index += 2;
-          indices.Add(cur_index);
+          i += 1;
+          line2byte_offset.Add(i);
         }
         else
         {
-          // Error in code.
-          cur_line++;
-          cur_col = 0;
-          cur_index += 1;
-          indices.Add(cur_index);
+          line2byte_offset.Add(i);
         }
       }
       else if(ch == '\n')
       {
-        cur_line++;
-        cur_col = 0;
-        cur_index += 1;
-        indices.Add(cur_index);
+        line2byte_offset.Add(i);
       }
-      else
-      {
-        cur_col += 1;
-        cur_index += 1;
-      }
-      
-      if(cur_index >= length)
-        break;
     }
   }
 
-  public int GetIndex(int line, int column)
+  public int CalcByteIndex(int line, int column)
   {
-    if(indices.Count > 0 && line < indices.Count)
-      return indices[line] + column;
+    if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
+      return line2byte_offset[line] + column;
 
     return 0;
   }
   
-  public int GetIndex(int line)
+  public int CalcByteIndex(int line)
   {
-    if(indices.Count > 0 && line < indices.Count)
-      return indices[line];
+    if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
+      return line2byte_offset[line];
 
     return 0;
   }
@@ -95,20 +70,20 @@ public abstract class TextDocument
   {
     // Binary search.
     int low = 0;
-    int high = indices.Count - 1;
+    int high = line2byte_offset.Count - 1;
     int i = 0;
     
     while (low <= high)
     {
       i = (low + high) / 2;
-      var v = indices[i];
+      var v = line2byte_offset[i];
       if (v < index) low = i + 1;
       else if (v > index) high = i - 1;
       else break;
     }
     
     var min = low <= high ? i : high;
-    return (min, index - indices[min]);
+    return (min, index - line2byte_offset[min]);
   }
 }
 

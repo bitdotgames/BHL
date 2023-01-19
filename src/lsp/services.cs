@@ -319,8 +319,8 @@ public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelp
       int line = (int)args.position.line;
       int character = (int)args.position.character;
       
-      int start = document.GetIndex(line);
-      int stop = document.GetIndex(line, character);
+      int start = document.CalcByteIndex(line);
+      int stop = document.CalcByteIndex(line, character);
       var text = document.text;
 
       var txtLine = text.Substring(start, stop - start);
@@ -508,12 +508,13 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
   public override RpcResult GotoDefinition(DefinitionParams args)
   {
     workspace.TryAddDocument(args.textDocument.uri);
+
     if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
       
-      int idx = document.GetIndex(line, character);
+      int idx = document.CalcByteIndex(line, character);
       
       bhlParser.FuncDeclContext funcDecl = null;
       BHLTextDocument funcDeclBhlDocument = null;
@@ -523,6 +524,7 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
       bhlParser.TypeContext type = null;
       bhlParser.StatementContext statement = null;
       bhlParser.NsNameContext nsName = null;
+      bhlParser.DotNameContext dotName = null;
 
       foreach(IParseTree node in Util.DFS(document.ToParser().program()))
       {
@@ -530,12 +532,15 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
         {
           if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
           {
+            //Console.WriteLine("GOTCHA " + idx + " " + prc.GetType().Name + " @" + prc.Start.Line + ":" + prc.Start.Column + " " + prc.GetText());
+
             funcDecl     = prc as bhlParser.FuncDeclContext;
             callExp      = prc as bhlParser.CallExpContext;
             memberAccess = prc as bhlParser.MemberAccessContext;
             type         = prc as bhlParser.TypeContext;
             statement    = prc as bhlParser.StatementContext;
             nsName       = prc as bhlParser.NsNameContext;
+            dotName       = prc as bhlParser.DotNameContext;
             break;
           }
         }
@@ -553,6 +558,12 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
         else if(nsName != null)
         {
           var nsNameStr = nsName.dotName()?.NAME()?.GetText();
+          if(nsNameStr != null)
+            classTypeName = nsNameStr;
+        }
+        else if(dotName != null)
+        {
+          var nsNameStr = dotName.NAME()?.GetText();
           if(nsNameStr != null)
             classTypeName = nsNameStr;
         }
@@ -699,7 +710,6 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
 
           if(!string.IsNullOrEmpty(funcName))
           {
-          
             foreach(var doc in workspace.ForEachBhlImports(document))
             {
               if(doc.FuncDecls.ContainsKey(funcName))
@@ -795,7 +805,7 @@ public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTe
       int line = (int)args.position.line;
       int character = (int)args.position.character;
       
-      int idx = document.GetIndex(line, character);
+      int idx = document.CalcByteIndex(line, character);
 
       bhlParser.CallExpContext callExp = null;
       

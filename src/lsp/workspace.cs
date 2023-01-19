@@ -80,7 +80,7 @@ public class Workspace
     
     if(!documents.ContainsKey(path))
     {
-      TextDocument document = CreateDocument(path);
+      var document = CreateDocument(path);
       if(document != null)
       {
         document.uri = uri;
