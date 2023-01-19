@@ -7,8 +7,8 @@ namespace bhl.lsp {
 
 public abstract class TextDocument
 {
-  public Uri uri { get; set; }
-  public string text { get; set; }
+  public Uri uri;
+  public string text;
   
   List<int> line2byte_offset = new List<int>();
   
@@ -73,13 +73,16 @@ public abstract class TextDocument
     int high = line2byte_offset.Count - 1;
     int i = 0;
     
-    while (low <= high)
+    while(low <= high)
     {
       i = (low + high) / 2;
       var v = line2byte_offset[i];
-      if (v < index) low = i + 1;
-      else if (v > index) high = i - 1;
-      else break;
+      if(v < index) 
+        low = i + 1;
+      else if(v > index) 
+        high = i - 1;
+      else 
+        break;
     }
     
     var min = low <= high ? i : high;
@@ -102,13 +105,13 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
   public readonly Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
   public readonly List<uint> dataSemanticTokens = new List<uint>();
   
-  private int next;
-  private BHLTextDocument document;
+  int nextIdx;
+  BHLTextDocument document;
 
   public void VisitDocument(BHLTextDocument document)
   {
     this.document = document;
-    next = 0;
+    nextIdx = 0;
     
     imports.Clear();
     funcDecls.Clear();
@@ -980,7 +983,7 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
       AddSemanticToken(node, SemanticTokenTypes.type);
   }
   
-  private void AddSemanticToken(ITerminalNode node, string tokenType, params string[] tokenModifiers)
+  void AddSemanticToken(ITerminalNode node, string tokenType, params string[] tokenModifiers)
   {
     if(node == null)
       return;
@@ -988,7 +991,7 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
     AddSemanticToken(node.Symbol.StartIndex, node.Symbol.StopIndex, tokenType, tokenModifiers);
   }
 
-  private void AddSemanticToken(int startIdx, int stopIdx, string tokenType, params string[] tokenModifiers)
+  void AddSemanticToken(int startIdx, int stopIdx, string tokenType, params string[] tokenModifiers)
   {
     if(startIdx < 0 || stopIdx < 0)
       return;
@@ -1000,7 +1003,7 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
     if(t < 0)
       return;
     
-    var nextStart = document.GetLineColumn(next);
+    var nextStart = document.GetLineColumn(nextIdx);
     var lineColumnSymbol = document.GetLineColumn(startIdx);
 
     var diffLine = lineColumnSymbol.Item1 - nextStart.Item1;
@@ -1024,7 +1027,7 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
     // tokenModifiers
     dataSemanticTokens.Add((uint)bitTokenModifiers);
 
-    next = startIdx;
+    nextIdx = startIdx;
   }
 }
 
