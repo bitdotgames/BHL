@@ -612,10 +612,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         FireError(root_name, "bad chain call");
     }
 
-    int c = chain_offset;
     if(chain != null)
     {
-      for(;c<chain.Length;++c)
+      for(int c=chain_offset;c<chain.Length;++c)
       {
         var cargs = chain.callArgs(c);
         var macc = chain.memberAccess(c);
