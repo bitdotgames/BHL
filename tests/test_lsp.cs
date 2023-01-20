@@ -1,11 +1,27 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using bhl.lsp;
 
 public class TestLSP : BHL_TestBase
 {
+  [IsTested()]
+  public void TestDocumentIndexing()
+  {
+    string bhl = "func int test()\n{\nwhat()\n}";
+    var doc = new BHLTextDocument();
+    doc.Sync(bhl);
+
+    AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
+    AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
+    AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
+    AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
+    AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+
+    AssertEqual(-1, doc.CalcByteIndex(4, 0));
+    AssertEqual(-1, doc.CalcByteIndex(100, 1));
+  }
+
   [IsTested()]
   public void TestRpcResponseErrors()
   {
@@ -324,7 +340,7 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
           rpc.HandleMessage(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":{\"line\":9,\"character\":5},\"end\":{\"line\":9,\"character\":5}}},\"jsonrpc\":\"2.0\"}"
+          "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
     }
     
@@ -337,7 +353,7 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
           rpc.HandleMessage(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":{\"line\":14,\"character\":5},\"end\":{\"line\":14,\"character\":5}}},\"jsonrpc\":\"2.0\"}"
+          "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
     }
     
@@ -350,7 +366,7 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.HandleMessage(json),
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-        "\",\"range\":{\"start\":{\"line\":1,\"character\":5},\"end\":{\"line\":1,\"character\":5}}},\"jsonrpc\":\"2.0\"}"
+        "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
     }
   }

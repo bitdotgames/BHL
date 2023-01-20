@@ -15,6 +15,7 @@ public abstract class TextDocument
   public virtual void Sync(string text)
   {
     this.text = text;
+
     ComputeLineByteOffsets();
   }
 
@@ -22,31 +23,19 @@ public abstract class TextDocument
   {
     line2byte_offset.Clear();
     
-    line2byte_offset.Add(0);
+    if(text.Length > 0)
+      line2byte_offset.Add(0);
 
-    for(int i = 0; i < text.Length; ++i)
+    for(int i = 0; i < text.Length; i++)
     {
-      char ch = text[i];
-      if(ch == '\r')
+      if(text[i] == '\r')
       {
-        //weird case: \r without \n
-        if(i + 1 >= text.Length)
-          break;
-        
-        if(text[i + 1] == '\n')
-        {
-          i += 1;
-          line2byte_offset.Add(i);
-        }
-        else
-        {
-          line2byte_offset.Add(i);
-        }
+        if(i + 1 < text.Length && text[i + 1] == '\n')
+          i++;
+        line2byte_offset.Add(i + 1);
       }
-      else if(ch == '\n')
-      {
-        line2byte_offset.Add(i);
-      }
+      else if(text[i] == '\n')
+        line2byte_offset.Add(i + 1);
     }
   }
 
@@ -55,7 +44,7 @@ public abstract class TextDocument
     if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
       return line2byte_offset[line] + column;
 
-    return 0;
+    return -1;
   }
   
   public int CalcByteIndex(int line)
@@ -63,7 +52,7 @@ public abstract class TextDocument
     if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
       return line2byte_offset[line];
 
-    return 0;
+    return -1;
   }
   
   public (int, int) GetLineColumn(int index)
@@ -1061,7 +1050,7 @@ public static class BHLSemanticTokens
 
 public class BHLTextDocument : TextDocument
 {
-  private readonly BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
+  readonly BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
   
   public List<string> Imports => visitor.imports;
   public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
