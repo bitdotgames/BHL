@@ -57,6 +57,9 @@ public abstract class TextDocument
   
   public (int, int) GetLineColumn(int index)
   {
+    if(index >= text.Length)
+      return (-1, -1); 
+
     // Binary search.
     int low = 0;
     int high = line2byte_offset.Count - 1;

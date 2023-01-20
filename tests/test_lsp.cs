@@ -6,7 +6,7 @@ using bhl.lsp;
 public class TestLSP : BHL_TestBase
 {
   [IsTested()]
-  public void TestDocumentIndexing()
+  public void TestDocumentCalcByteIndex()
   {
     string bhl = "func int test()\n{\nwhat()\n}";
     var doc = new BHLTextDocument();
@@ -20,6 +20,40 @@ public class TestLSP : BHL_TestBase
 
     AssertEqual(-1, doc.CalcByteIndex(4, 0));
     AssertEqual(-1, doc.CalcByteIndex(100, 1));
+  }
+
+  [IsTested()]
+  public void TestDocumentGetLineColumn()
+  {
+    string bhl = "func int test()\n{\nwhat()\n}";
+    var doc = new BHLTextDocument();
+    doc.Sync(bhl);
+
+    {
+      var lc = doc.GetLineColumn(0);
+      AssertEqual("f", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+    }
+
+    {
+      var lc = doc.GetLineColumn(1);
+      AssertEqual("u", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+    }
+
+    {
+      var lc = doc.GetLineColumn(16);
+      AssertEqual("{", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+    }
+
+    {
+      var lc = doc.GetLineColumn(bhl.Length-1);
+      AssertEqual("}", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+    }
+
+    {
+      var lc = doc.GetLineColumn(bhl.Length);
+      AssertEqual(-1, lc.Item1);
+      AssertEqual(-1, lc.Item2);
+    }
   }
 
   [IsTested()]
