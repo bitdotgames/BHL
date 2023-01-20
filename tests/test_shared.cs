@@ -68,32 +68,46 @@ public class BHL_TestRunner
     }
   }
 
+  internal class MethodToTest
+  {
+    internal MethodInfo method;
+    internal int sub_test_idx_filter; 
+  }
+
   static void _Run(IList<string> names, BHL_TestBase test, bool verbose)
   {
-    var methods = new List<MethodInfo>();
+    var tested_methods = new List<MethodToTest>();
 
     foreach(var method in test.GetType().GetMethods())
     {
-      if(IsMemberTested(method) && IsAllowedToRun(names, test, method))
-        methods.Add(method);
+      MethodToTest to_test;
+      if(HasTestedAttribute(method) && CheckForTesting(names, test, method, out to_test))
+        tested_methods.Add(to_test);
     }
 
-    if(methods.Count > 0)
+    if(tested_methods.Count > 0)
     {
-      Console.WriteLine(">>>> Testing " + test.GetType().Name + " (" + methods.Count + ") <<<<");
+      Console.WriteLine(">>>> Testing " + test.GetType().Name + " (" + tested_methods.Count + ")");
 
-      foreach(var method in methods)
+      foreach(var to_test in tested_methods)
       {
         if(verbose)
-          Console.WriteLine(">>>> Testing " + test.GetType().Name + "." + method.Name + " <<<<");
+          Console.WriteLine(">>>>> " + test.GetType().Name + "." + to_test.method.Name);
 
-        method.Invoke(test, new object[] {});
+        test.verbose = verbose;
+        test.sub_test_idx_filter = to_test.sub_test_idx_filter;
+        test.sub_test_idx = -1;
+        to_test.method.Invoke(test, new object[] {});
       }
     }
   }
 
-  static bool IsAllowedToRun(IList<string> names, BHL_TestBase test, MemberInfo member)
+  static bool CheckForTesting(IList<string> names, BHL_TestBase test, MethodInfo member, out MethodToTest to_test)
   {
+    to_test = new MethodToTest();
+    to_test.sub_test_idx_filter = -1;
+    to_test.method = member;
+
     if(names?.Count == 0)
       return true;
 
@@ -103,6 +117,7 @@ public class BHL_TestRunner
 
       string test_filter = parts.Length >= 1 ? parts[0] : null;
       string method_filter = parts.Length > 1 ? parts[1] : null;
+      string sub_filter = parts.Length > 2 ? parts[2] : null; 
 
       bool exact = true;
       if(test_filter != null && test_filter.EndsWith("~"))
@@ -120,14 +135,18 @@ public class BHL_TestRunner
       if(test_filter == null || (test_filter != null && (exact ? test.GetType().Name == test_filter : test.GetType().Name.IndexOf(test_filter) != -1)))
       {
         if(method_filter == null || (method_filter != null && (exact ? member.Name == method_filter : member.Name.IndexOf(method_filter) != -1)))
+        {
+          if(sub_filter != null)
+            to_test.sub_test_idx_filter = int.Parse(sub_filter);
           return true;
+        }
       }
     }
 
     return false;
   }
 
-  static bool IsMemberTested(MemberInfo member)
+  static bool HasTestedAttribute(MemberInfo member)
   {
     foreach(var attribute in member.GetCustomAttributes(true))
     {
@@ -140,6 +159,11 @@ public class BHL_TestRunner
 
 public class BHL_TestBase
 {
+  internal bool verbose;
+  internal int sub_test_idx;
+  //TODO: make it a set?
+  internal int sub_test_idx_filter;
+
   public void BindFail(Types ts)
   {
     var fn = new FuncSymbolNative("fail", ts.T("void"),
@@ -701,6 +725,17 @@ public class BHL_TestBase
       AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
     if(check_instructions)
       AssertEqual(vm.coro_pool.Allocs, vm.coro_pool.Free);
+  }
+
+  public void SubTest(System.Action fn)
+  {
+    ++sub_test_idx;
+    if(sub_test_idx_filter == -1 || sub_test_idx_filter == sub_test_idx)
+    {
+      if(verbose)
+        Console.WriteLine(">>>>>> Sub Test: " + sub_test_idx);
+      fn();
+    }
   }
 
   public static string TestDirPath()

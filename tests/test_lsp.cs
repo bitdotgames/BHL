@@ -25,48 +25,65 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestRpcResponseErrors()
   {
-    string json = "";
     var rpc = new JsonRpc();
     
-    //ParseError
-    json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      //ParseError
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    //MethodNotFound
-    json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      //MethodNotFound
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    //InvalidParams
-    rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
-    json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      //InvalidParams
+      rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\", \"id\": 1}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() =>
+    {
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\", \"id\": 1}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+      );
+    });
   }
 
   [IsTested()]
