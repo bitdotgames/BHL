@@ -729,11 +729,16 @@ public class BHL_TestBase
 
   public void SubTest(System.Action fn)
   {
+    SubTest("", fn);
+  }
+
+  public void SubTest(string name, System.Action fn)
+  {
     ++sub_test_idx;
     if(sub_test_idx_filter == -1 || sub_test_idx_filter == sub_test_idx)
     {
       if(verbose)
-        Console.WriteLine(">>>>>> Sub Test: " + sub_test_idx);
+        Console.WriteLine(">>>>>> Sub Test(" + sub_test_idx + ") : " + name);
       fn();
     }
   }

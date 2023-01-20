@@ -27,7 +27,7 @@ public class TestLSP : BHL_TestBase
   {
     var rpc = new JsonRpc();
     
-    SubTest(() =>
+    SubTest("hey ho", () =>
     {
       //ParseError
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
@@ -89,59 +89,64 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestGeneralRpc()
   {
-    string json = "";
-    string rsp = "";
-    
     var rpc = new JsonRpc();
     rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
-    
-    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
-    
-    rsp = "{\"id\":1,\"result\":{" +
-            "\"capabilities\":{" +
-              "\"textDocumentSync\":null," +
-              "\"hoverProvider\":null," +
-              "\"declarationProvider\":null," +
-              "\"definitionProvider\":null," +
-              "\"typeDefinitionProvider\":null," +
-              "\"implementationProvider\":null," +
-              "\"referencesProvider\":null," +
-              "\"documentHighlightProvider\":null," +
-              "\"documentSymbolProvider\":null," +
-              "\"codeActionProvider\":null," +
-              "\"colorProvider\":null," +
-              "\"documentFormattingProvider\":null," +
-              "\"documentRangeFormattingProvider\":null," +
-              "\"renameProvider\":null," +
-              "\"foldingRangeProvider\":null," +
-              "\"selectionRangeProvider\":null," +
-              "\"linkedEditingRangeProvider\":null," +
-              "\"callHierarchyProvider\":null," +
-              "\"semanticTokensProvider\":null," +
-              "\"monikerProvider\":null," +
-              "\"workspaceSymbolProvider\":null}," +
-            "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"0.1\"}}," +
-            "\"jsonrpc\":\"2.0\"}";
 
-    AssertEqual(rpc.HandleMessage(json), rsp);
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
+      
+      string rsp = "{\"id\":1,\"result\":{" +
+              "\"capabilities\":{" +
+                "\"textDocumentSync\":null," +
+                "\"hoverProvider\":null," +
+                "\"declarationProvider\":null," +
+                "\"definitionProvider\":null," +
+                "\"typeDefinitionProvider\":null," +
+                "\"implementationProvider\":null," +
+                "\"referencesProvider\":null," +
+                "\"documentHighlightProvider\":null," +
+                "\"documentSymbolProvider\":null," +
+                "\"codeActionProvider\":null," +
+                "\"colorProvider\":null," +
+                "\"documentFormattingProvider\":null," +
+                "\"documentRangeFormattingProvider\":null," +
+                "\"renameProvider\":null," +
+                "\"foldingRangeProvider\":null," +
+                "\"selectionRangeProvider\":null," +
+                "\"linkedEditingRangeProvider\":null," +
+                "\"callHierarchyProvider\":null," +
+                "\"semanticTokensProvider\":null," +
+                "\"monikerProvider\":null," +
+                "\"workspaceSymbolProvider\":null}," +
+              "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"0.1\"}}," +
+              "\"jsonrpc\":\"2.0\"}";
+
+      AssertEqual(rpc.HandleMessage(json), rsp);
+    });
     
-    json = "{\"params\":{},\"method\":\"initialized\",\"jsonrpc\":\"2.0\"}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      string.Empty
-    );
+    SubTest(() => {
+      string json = "{\"params\":{},\"method\":\"initialized\",\"jsonrpc\":\"2.0\"}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        string.Empty
+      );
+    });
     
-    json = "{\"id\":1,\"params\":null,\"method\":\"shutdown\",\"jsonrpc\":\"2.0\"}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() => {
+      string json = "{\"id\":1,\"params\":null,\"method\":\"shutdown\",\"jsonrpc\":\"2.0\"}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    json = "{\"params\":null,\"method\":\"exit\",\"jsonrpc\":\"2.0\"}";
-    AssertEqual(
-      rpc.HandleMessage(json),
-      string.Empty
-    );
+    SubTest(() => {
+      string json = "{\"params\":null,\"method\":\"exit\",\"jsonrpc\":\"2.0\"}";
+      AssertEqual(
+        rpc.HandleMessage(json),
+        string.Empty
+      );
+    });
   }
 
   [IsTested()]
@@ -177,8 +182,7 @@ public class TestLSP : BHL_TestBase
     rpc.AttachService(new TextDocumentSynchronizationJsonRpcService(ws));
     
     string dir = GetDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+    Directory.Delete(dir, true/*recursive*/);
     
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
@@ -203,8 +207,7 @@ public class TestLSP : BHL_TestBase
       "    func float test1(float k) "
     );
     
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+    Directory.Delete(dir, true/*recursive*/);
     
     NewTestDocument("bhl1.bhl", bhl2, files);
 
@@ -260,36 +263,38 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSignatureHelpJsonRpcService(ws));
     
-    string dir = GetDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+    Directory.Delete(GetDirPath(), true/*recursive*/);
     
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
     
     Uri uri = GetUri(files[0]);
 
-    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-    json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
+      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
+      json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
+      
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
+      );
+    });
     
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
-      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-      "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
-    );
-    
-    json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-    json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
-    
-    AssertEqual(
-      rpc.HandleMessage(json),
-      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
-      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-      "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
-    );
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
+      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
+      json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
+      
+      AssertEqual(
+        rpc.HandleMessage(json),
+        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+        "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
+      );
+    });
   }
 
   [IsTested()]
@@ -348,9 +353,8 @@ public class TestLSP : BHL_TestBase
     Uri uri1 = GetUri(files[0]);
     Uri uri2 = GetUri(files[1]);
     
-    {
-      string json;
-      json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
       json += "\"}, \"position\": {\"line\": 16, \"character\": 8}}}";
       
@@ -359,11 +363,10 @@ public class TestLSP : BHL_TestBase
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
     
-    {
-      string json;
-      json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
       json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
       
@@ -372,11 +375,10 @@ public class TestLSP : BHL_TestBase
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
     
-    {
-      string json;
-      json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    SubTest(() => {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
       json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
       
@@ -385,7 +387,7 @@ public class TestLSP : BHL_TestBase
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
         "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
   }
 
   [IsTested()]
@@ -417,8 +419,7 @@ public class TestLSP : BHL_TestBase
     rpc.AttachService(new TextDocumentSemanticTokensJsonRpcService(ws));
     
     string dir = GetDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+    Directory.Delete(dir, true/*recursive*/);
     
     var files = new List<string>();
     NewTestDocument("bhl1.bhl", bhl1, files);
