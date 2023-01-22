@@ -8,18 +8,50 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestDocumentCalcByteIndex()
   {
-    string bhl = "func int test()\n{\nwhat()\n}";
-    var doc = new BHLTextDocument();
-    doc.Sync(bhl);
+    SubTest("Unix line endings", () => {
+      string bhl = "func int test()\n{\nwhat()\n}";
+      var doc = new BHLTextDocument();
+      doc.Sync(bhl);
 
-    AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
-    AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
-    AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
-    AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
-    AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
 
-    AssertEqual(-1, doc.CalcByteIndex(4, 0));
-    AssertEqual(-1, doc.CalcByteIndex(100, 1));
+      AssertEqual(-1, doc.CalcByteIndex(4, 0));
+      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+    });
+
+    SubTest("Windows line endings", () => {
+      string bhl = "func int test()\r\n{\r\nwhat()\r\n}";
+      var doc = new BHLTextDocument();
+      doc.Sync(bhl);
+
+      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+
+      AssertEqual(-1, doc.CalcByteIndex(4, 0));
+      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+    });
+
+    SubTest("Mixed line endings", () => {
+      string bhl = "func int test()\n{\r\nwhat()\r}";
+      var doc = new BHLTextDocument();
+      doc.Sync(bhl);
+
+      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+
+      AssertEqual(-1, doc.CalcByteIndex(4, 0));
+      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+    });
   }
 
   [IsTested()]
@@ -61,7 +93,7 @@ public class TestLSP : BHL_TestBase
   {
     var rpc = new JsonRpc();
     
-    SubTest("hey ho", () =>
+    SubTest(() =>
     {
       //ParseError
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
