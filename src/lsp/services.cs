@@ -453,7 +453,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
       }
       else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
       {
-        //TODO: ...
+        throw new NotImplementedException();
       }
     }
     
@@ -517,9 +517,9 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
       
       int idx = document.CalcByteIndex(line, character);
       
-      bhlParser.FuncDeclContext funcDecl = null;
       BHLTextDocument funcDeclBhlDocument = null;
-      
+
+      bhlParser.FuncDeclContext funcDecl = null;
       bhlParser.CallExpContext callExp = null;
       bhlParser.MemberAccessContext memberAccess = null;
       bhlParser.TypeContext type = null;
