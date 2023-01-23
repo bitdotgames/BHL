@@ -21,19 +21,19 @@ public class JsonRpc : IJsonRpc
     return this;
   }
 
-  public string Handle(string json)
+  public string Handle(string req_json)
   {
     RequestMessage req = null;
     ResponseMessage resp = null;
     
     try
     {
-      req = JsonConvert.DeserializeObject<RequestMessage>(json);
+      req = JsonConvert.DeserializeObject<RequestMessage>(req_json);
     }
     catch(Exception e)
     {
       Logger.WriteLine(e);
-      Logger.WriteLine($"{json}");
+      Logger.WriteLine($"{req_json}");
 
       resp = new ResponseMessage
       {
@@ -64,7 +64,7 @@ public class JsonRpc : IJsonRpc
         };
     }
     
-    string response = string.Empty;
+    string resp_json = string.Empty;
 
     if(resp != null)
     {
@@ -74,7 +74,7 @@ public class JsonRpc : IJsonRpc
       if(!isNotification)
       {
         var jSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-        response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
+        resp_json = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
         
         if(req != null)
           Logger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
@@ -83,7 +83,7 @@ public class JsonRpc : IJsonRpc
       }
     }
     
-    return response;
+    return resp_json;
   }
   
   ResponseMessage HandleMessage(RequestMessage request)

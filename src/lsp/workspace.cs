@@ -36,11 +36,7 @@ public class Workspace
       if(roots[i].cleanup)
         roots.RemoveAt(i);
     }
-    
-    lock(addDocumentPathLock)
-    {
-      documentPaths.Clear();
-    }
+    documentPaths.Clear();
   }
 
   public void AddRoot(string pathFolder, bool cleanup, bool check = true)
@@ -51,21 +47,13 @@ public class Workspace
     roots.Add(new RootPath {path = pathFolder, cleanup = cleanup});
   }
   
-  object addDocumentPathLock = new object();
-  
   public void Scan()
   {
-    Task.Run(() => {
-      foreach(var root in roots)
-      {
-        var files = Directory.GetFiles(root.path, "*.bhl", SearchOption.AllDirectories);
-        
-        lock(addDocumentPathLock)
-        {
-          documentPaths.AddRange(files);
-        }
-      }
-    });
+    foreach(var root in roots)
+    {
+      var files = Directory.GetFiles(root.path, "*.bhl", SearchOption.AllDirectories);
+      documentPaths.AddRange(files);
+    }
   }
   
   public void TryAddDocument(string path, string text = null)
@@ -91,11 +79,8 @@ public class Workspace
           text = Encoding.UTF8.GetString(buffer);
         }
         
-        lock(addDocumentPathLock)
-        {
-          if(-1 == documentPaths.IndexOf(path))
-            documentPaths.Add(path);
-        }
+        if(-1 == documentPaths.IndexOf(path))
+          documentPaths.Add(path);
         
         document.Sync(text);
         documents.Add(path, document);
@@ -135,12 +120,12 @@ public class Workspace
   
   public IEnumerable<BHLTextDocument> ForEachBhlImports(BHLTextDocument root)
   {
-    Queue<BHLTextDocument> toVisit = new Queue<BHLTextDocument>();
+    var toVisit = new Queue<BHLTextDocument>();
     
     toVisit.Enqueue(root);
     while(toVisit.Count > 0)
     {
-      BHLTextDocument document = toVisit.Dequeue();
+      var document = toVisit.Dequeue();
       
       string ext = Path.GetExtension(document.uri.AbsolutePath);
       foreach(var import in document.Imports)
@@ -186,15 +171,12 @@ public class Workspace
       }
     }
     
-    lock(addDocumentPathLock)
+    foreach(var path in documentPaths)
     {
-      foreach(var path in documentPaths)
+      if(-1 != path.IndexOf(import + ext, StringComparison.Ordinal))
       {
-        if(-1 != path.IndexOf(import + ext, StringComparison.Ordinal))
-        {
-          filePath = path;
-          break;
-        }
+        filePath = path;
+        break;
       }
     }
     
