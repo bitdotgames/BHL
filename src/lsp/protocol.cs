@@ -5,19 +5,19 @@ using Newtonsoft.Json.Linq;
 
 namespace bhl.lsp {
 
-public class SumTypeJsonConverter : JsonConverter
+public class SelectorTypeJsonConverter : JsonConverter
 {
   public override bool CanConvert(Type objectType)
   {
-    return objectType == typeof(ISumType);
+    return objectType == typeof(ISelectorType);
   }
 
   public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
   {
-    WriteJson(writer, (ISumType)value, serializer);
+    WriteJson(writer, (ISelectorType)value, serializer);
   }
 
-  void WriteJson(JsonWriter writer, ISumType value, JsonSerializer serializer)
+  void WriteJson(JsonWriter writer, ISelectorType value, JsonSerializer serializer)
   {
     var obj = value.Value;
     if(obj == null)
@@ -38,32 +38,32 @@ public class SumTypeJsonConverter : JsonConverter
   }
 }
 
-public interface ISumType
+public interface ISelectorType
 {
   object Value { get; }
 }
 
-[JsonConverter(typeof(SumTypeJsonConverter))]
-public struct SumType<T1, T2> : IEquatable<SumType<T1, T2>>, ISumType
+[JsonConverter(typeof(SelectorTypeJsonConverter))]
+public struct SelectorType<T1, T2> : IEquatable<SelectorType<T1, T2>>, ISelectorType
 {
-  public SumType(T1 val)
-  {
-    Value = val;
-  }
-
-  public SumType(T2 val)
-  {
-    Value = val;
-  }
-
   public object Value { get; }
+
+  public SelectorType(T1 val)
+  {
+    Value = val;
+  }
+
+  public SelectorType(T2 val)
+  {
+    Value = val;
+  }
 
   public override bool Equals(object obj)
   {
-    return obj is SumType<T1, T2> other && Equals(other);
+    return obj is SelectorType<T1, T2> other && Equals(other);
   }
 
-  public bool Equals(SumType<T1, T2> other)
+  public bool Equals(SelectorType<T1, T2> other)
   {
     return EqualityComparer<object>.Default.Equals(Value, other.Value);
   }
@@ -73,27 +73,27 @@ public struct SumType<T1, T2> : IEquatable<SumType<T1, T2>>, ISumType
     return EqualityComparer<object>.Default.GetHashCode(Value) - 1937169414;
   }
 
-  public static bool operator ==(SumType<T1, T2> left, SumType<T1, T2> right)
+  public static bool operator ==(SelectorType<T1, T2> left, SelectorType<T1, T2> right)
   {
     return left.Equals(right);
   }
 
-  public static bool operator !=(SumType<T1, T2> left, SumType<T1, T2> right)
+  public static bool operator !=(SelectorType<T1, T2> left, SelectorType<T1, T2> right)
   {
     return !(left == right);
   }
 
-  public static implicit operator SumType<T1, T2>(T1 val)
+  public static implicit operator SelectorType<T1, T2>(T1 val)
   {
-    return new SumType<T1, T2>(val);
+    return new SelectorType<T1, T2>(val);
   }
 
-  public static implicit operator SumType<T1, T2>(T2 val)
+  public static implicit operator SelectorType<T1, T2>(T2 val)
   {
-    return new SumType<T1, T2>(val);
+    return new SelectorType<T1, T2>(val);
   }
 
-  public static explicit operator T1(SumType<T1, T2> sum)
+  public static explicit operator T1(SelectorType<T1, T2> sum)
   {
     if(sum.Value is T1 obj1)
       return obj1;
@@ -101,7 +101,7 @@ public struct SumType<T1, T2> : IEquatable<SumType<T1, T2>>, ISumType
     throw new InvalidCastException();
   }
 
-  public static explicit operator T2(SumType<T1, T2> sum)
+  public static explicit operator T2(SelectorType<T1, T2> sum)
   {
     if(sum.Value is T2 obj2)
       return obj2;
@@ -110,32 +110,32 @@ public struct SumType<T1, T2> : IEquatable<SumType<T1, T2>>, ISumType
   }
 }
 
-[JsonConverter(typeof(SumTypeJsonConverter))]
-public struct SumType<T1, T2, T3> : IEquatable<SumType<T1, T2, T3>>, ISumType
+[JsonConverter(typeof(SelectorTypeJsonConverter))]
+public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, ISelectorType
 {
-  public SumType(T1 val)
-  {
-    Value = val;
-  }
-
-  public SumType(T2 val)
-  {
-    Value = val;
-  }
-
-  public SumType(T3 val)
-  {
-    Value = val;
-  }
-
   public object Value { get; }
+
+  public SelectorType(T1 val)
+  {
+    Value = val;
+  }
+
+  public SelectorType(T2 val)
+  {
+    Value = val;
+  }
+
+  public SelectorType(T3 val)
+  {
+    Value = val;
+  }
 
   public override bool Equals(object obj)
   {
-    return obj is SumType<T1, T2, T3> other && Equals(other);
+    return obj is SelectorType<T1, T2, T3> other && Equals(other);
   }
 
-  public bool Equals(SumType<T1, T2, T3> other)
+  public bool Equals(SelectorType<T1, T2, T3> other)
   {
     return EqualityComparer<object>.Default.Equals(Value, other.Value);
   }
@@ -145,32 +145,32 @@ public struct SumType<T1, T2, T3> : IEquatable<SumType<T1, T2, T3>>, ISumType
     return EqualityComparer<object>.Default.GetHashCode(Value) - 1937169414;
   }
 
-  public static bool operator ==(SumType<T1, T2, T3> left, SumType<T1, T2, T3> right)
+  public static bool operator ==(SelectorType<T1, T2, T3> left, SelectorType<T1, T2, T3> right)
   {
     return left.Equals(right);
   }
 
-  public static bool operator !=(SumType<T1, T2, T3> left, SumType<T1, T2, T3> right)
+  public static bool operator !=(SelectorType<T1, T2, T3> left, SelectorType<T1, T2, T3> right)
   {
     return !(left == right);
   }
 
-  public static implicit operator SumType<T1, T2, T3>(T1 val)
+  public static implicit operator SelectorType<T1, T2, T3>(T1 val)
   {
-    return new SumType<T1, T2, T3>(val);
+    return new SelectorType<T1, T2, T3>(val);
   }
 
-  public static implicit operator SumType<T1, T2, T3>(T2 val)
+  public static implicit operator SelectorType<T1, T2, T3>(T2 val)
   {
-    return new SumType<T1, T2, T3>(val);
+    return new SelectorType<T1, T2, T3>(val);
   }
 
-  public static implicit operator SumType<T1, T2, T3>(T3 val)
+  public static implicit operator SelectorType<T1, T2, T3>(T3 val)
   {
-    return new SumType<T1, T2, T3>(val);
+    return new SelectorType<T1, T2, T3>(val);
   }
 
-  public static explicit operator T1(SumType<T1, T2, T3> sum)
+  public static explicit operator T1(SelectorType<T1, T2, T3> sum)
   {
     if(sum.Value is T1 obj)
       return obj;
@@ -178,7 +178,7 @@ public struct SumType<T1, T2, T3> : IEquatable<SumType<T1, T2, T3>>, ISumType
     throw new InvalidCastException();
   }
 
-  public static explicit operator T2(SumType<T1, T2, T3> sum)
+  public static explicit operator T2(SelectorType<T1, T2, T3> sum)
   {
     if(sum.Value is T2 obj)
       return obj;
@@ -186,7 +186,7 @@ public struct SumType<T1, T2, T3> : IEquatable<SumType<T1, T2, T3>>, ISumType
     throw new InvalidCastException();
   }
 
-  public static explicit operator T3(SumType<T1, T2, T3> sum)
+  public static explicit operator T3(SelectorType<T1, T2, T3> sum)
   {
     if(sum.Value is T3 obj)
       return obj;
@@ -348,7 +348,7 @@ public class TextDocumentSyncOptions
    * If present save notifications are sent to the server. If omitted the
    * notification should not be sent.
    */
-  public SumType<bool, SaveOptions> save;
+  public SelectorType<bool, SaveOptions> save;
 }
 
 public class ImplementationOptions : WorkDoneProgressOptions
@@ -503,15 +503,15 @@ public class SemanticTokensOptionFull
 public class SemanticTokensOptions : WorkDoneProgressOptions
 {
   public SemanticTokensLegend legend;
-  public SumType<bool, SemanticTokensOptionRange> range;
-  public SumType<bool, SemanticTokensOptionFull> full;
+  public SelectorType<bool, SemanticTokensOptionRange> range;
+  public SelectorType<bool, SemanticTokensOptionFull> full;
 }
 
 public class SemanticTokensRegistrationOptions : TextDocumentRegistrationOptions
 {
   public SemanticTokensLegend legend;
-  public SumType<bool, object> range;
-  public SumType<bool, object> full;
+  public SelectorType<bool, object> range;
+  public SelectorType<bool, object> full;
   public string id;
   public bool? workDoneProgress;
 }
@@ -531,7 +531,7 @@ public class WorkspaceSymbolOptions : WorkDoneProgressOptions
 
 public class WorkDoneProgressParams
 {
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 }
 
 public class SignatureHelpClientCapabilities
@@ -715,13 +715,13 @@ public class SemanticTokensClientCapabilities
      * The client will send the `textDocument/semanticTokens/range` request
      * if the server provides a corresponding handler.
      */
-    public SumType<bool, object> range;
+    public SelectorType<bool, object> range;
 
     /**
      * The client will send the `textDocument/semanticTokens/full` request
      * if the server provides a corresponding handler.
      */
-    public SumType<bool, object> full;
+    public SelectorType<bool, object> full;
   }
 
   /**
@@ -969,7 +969,7 @@ public class ServerCapabilities
   public class WorkspaceFoldersServerCapabilities
   {
     public bool? supported;
-    public SumType<string, bool> changeNotifications;
+    public SelectorType<string, bool> changeNotifications;
   }
 
   public class ServerCapabilitiesWorkspaceFileOperations
@@ -1005,7 +1005,7 @@ public class ServerCapabilities
    * TextDocumentSyncKind number. If omitted it defaults to
    * `TextDocumentSyncKind.None`.
    */
-  public SumType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync;
+  public SelectorType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync;
 
   /**
    * The server provides completion support.
@@ -1015,7 +1015,7 @@ public class ServerCapabilities
   /**
    * The server provides hover support.
    */
-  public SumType<bool, HoverOptions> hoverProvider;
+  public SelectorType<bool, HoverOptions> hoverProvider;
 
   /**
    * The server provides signature help support.
@@ -1027,48 +1027,48 @@ public class ServerCapabilities
    *
    * @since 3.14.0
    */
-  public SumType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider;
+  public SelectorType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider;
 
   /**
    * The server provides goto definition support.
    */
-  public SumType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider;
+  public SelectorType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider;
 
   /**
    * The server provides goto type definition support.
    *
    * @since 3.6.0
    */
-  public SumType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider;
+  public SelectorType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider;
 
   /**
    * The server provides goto implementation support.
    *
    * @since 3.6.0
    */
-  public SumType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider;
+  public SelectorType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider;
 
   /**
    * The server provides find references support.
    */
-  public SumType<bool, ReferenceOptions> referencesProvider;
+  public SelectorType<bool, ReferenceOptions> referencesProvider;
 
   /**
    * The server provides document highlight support.
    */
-  public SumType<bool, DocumentHighlightOptions> documentHighlightProvider;
+  public SelectorType<bool, DocumentHighlightOptions> documentHighlightProvider;
 
   /**
    * The server provides document symbol support.
    */
-  public SumType<bool, DocumentSymbolOptions> documentSymbolProvider;
+  public SelectorType<bool, DocumentSymbolOptions> documentSymbolProvider;
 
   /**
    * The server provides code actions. The `CodeActionOptions` return type is
    * only valid if the client signals code action literal support via the
    * property `textDocument.codeAction.codeActionLiteralSupport`.
    */
-  public SumType<bool, CodeActionOptions> codeActionProvider;
+  public SelectorType<bool, CodeActionOptions> codeActionProvider;
 
   /**
    * The server provides code lens.
@@ -1085,17 +1085,17 @@ public class ServerCapabilities
    *
    * @since 3.6.0
    */
-  public SumType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider;
+  public SelectorType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider;
 
   /**
    * The server provides document formatting.
    */
-  public SumType<bool, DocumentFormattingOptions> documentFormattingProvider;
+  public SelectorType<bool, DocumentFormattingOptions> documentFormattingProvider;
 
   /**
    * The server provides document range formatting.
    */
-  public SumType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider;
+  public SelectorType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider;
 
   /**
    * The server provides document formatting on typing.
@@ -1107,14 +1107,14 @@ public class ServerCapabilities
    * specified if the client states that it supports
    * `prepareSupport` in its initial `initialize` request.
    */
-  public SumType<bool, RenameOptions> renameProvider;
+  public SelectorType<bool, RenameOptions> renameProvider;
 
   /**
    * The server provides folding provider support.
    *
    * @since 3.10.0
    */
-  public SumType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider;
+  public SelectorType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider;
 
   /**
    * The server provides execute command support.
@@ -1126,40 +1126,40 @@ public class ServerCapabilities
    *
    * @since 3.15.0
    */
-  public SumType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider;
+  public SelectorType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider;
 
   /**
    * The server provides linked editing range support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider;
+  public SelectorType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider;
 
   /**
    * The server provides call hierarchy support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider;
+  public SelectorType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider;
 
   /**
    * The server provides semantic tokens support.
    *
    * @since 3.16.0
    */
-  public SumType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider;
+  public SelectorType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider;
 
   /**
    * Whether server provides moniker support.
    *
    * @since 3.16.0
    */
-  public SumType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider;
+  public SelectorType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider;
 
   /**
    * The server provides workspace symbol support.
    */
-  public SumType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider;
+  public SelectorType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider;
 
   /**
    * Workspace specific server capabilities
@@ -1415,13 +1415,13 @@ public class CompletionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public enum CompletionItemKind
@@ -1574,7 +1574,7 @@ public class CompletionItem
   /**
    * A human-readable string that represents a doc-comment.
    */
-  public SumType<string, MarkupContent> documentation;
+  public SelectorType<string, MarkupContent> documentation;
 
   /**
    * Indicates if this item is deprecated.
@@ -1664,7 +1664,7 @@ public class CompletionItem
    * *
    * * @since 3.16.0 additional type `InsertReplaceEdit`
    */
-  public SumType<TextEdit, InsertReplaceEdit>? textEdit;
+  public SelectorType<TextEdit, InsertReplaceEdit>? textEdit;
 
   /**
    * * An optional array of additional text edits that are applied when
@@ -1714,13 +1714,13 @@ public class ReferenceParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class DocumentSymbolParams : WorkDoneProgressParams
@@ -1734,7 +1734,7 @@ public class DocumentSymbolParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class DocumentColorParams : WorkDoneProgressParams
@@ -1747,7 +1747,7 @@ public class DocumentColorParams : WorkDoneProgressParams
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class Color
@@ -1793,7 +1793,7 @@ public class ColorPresentationParams : WorkDoneProgressParams
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class FormattingOptions
@@ -1937,7 +1937,7 @@ public class Diagnostic
   /**
    * The diagnostic's code, which might appear in the user interface.
    */
-  public SumType<string, int> code;
+  public SelectorType<string, int> code;
 
   /**
    * An optional property to describe the error code.
@@ -2022,7 +2022,7 @@ public class CodeActionParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class CodeLensParams : WorkDoneProgressParams
@@ -2036,7 +2036,7 @@ public class CodeLensParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class CodeLens
@@ -2069,7 +2069,7 @@ public class DocumentLinkParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class DocumentLink
@@ -2115,7 +2115,7 @@ public class RenameParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 }
 
 public class FoldingRangeParams : WorkDoneProgressParams
@@ -2129,7 +2129,7 @@ public class FoldingRangeParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class WorkspaceFoldersChangeEvent
@@ -2201,7 +2201,7 @@ public class WorkspaceSymbolParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class ExecuteCommandParams : WorkDoneProgressParams
@@ -2238,13 +2238,13 @@ public class ParameterInformation
    * signature label. Its intended use case is to highlight the parameter
    * label part in the `SignatureInformation.label`.
    */
-  public SumType<string, List<uint>> label;
+  public SelectorType<string, List<uint>> label;
 
   /**
    * The human-readable doc-comment of this parameter. Will be shown
    * in the UI but can be omitted.
    */
-  public SumType<string, MarkupContent> documentation;
+  public SelectorType<string, MarkupContent> documentation;
 }
 
 public class SignatureInformation
@@ -2259,7 +2259,7 @@ public class SignatureInformation
    * The human-readable doc-comment of this signature. Will be shown
    * in the UI but can be omitted.
    */
-  public SumType<string, MarkupContent> documentation;
+  public SelectorType<string, MarkupContent> documentation;
 
   /**
    * The parameters of this signature.
@@ -2356,7 +2356,7 @@ public class SignatureHelpParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 }
 
 public class DeclarationParams : TextDocumentPositionParams
@@ -2364,12 +2364,12 @@ public class DeclarationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class DefinitionParams : TextDocumentPositionParams
@@ -2377,12 +2377,12 @@ public class DefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class TypeDefinitionParams : TextDocumentPositionParams
@@ -2390,12 +2390,12 @@ public class TypeDefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class ImplementationParams : TextDocumentPositionParams
@@ -2403,13 +2403,13 @@ public class ImplementationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SumType<string, int> workDoneToken;
+  public SelectorType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class Hover
@@ -2437,7 +2437,7 @@ public class SemanticTokensParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SumType<int, string> partialResultToken;
+  public SelectorType<int, string> partialResultToken;
 }
 
 public class SemanticTokens
@@ -2508,7 +2508,7 @@ public class CancelParams
   /**
    * The request id to cancel.
    */
-  public SumType<Int32, Int64, string> id;
+  public SelectorType<Int32, Int64, string> id;
 }
 
 }

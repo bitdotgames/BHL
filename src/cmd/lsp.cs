@@ -9,9 +9,7 @@ public class LSP : ICmd
 {
   public void Run(string[] args)
   {
-#if BHLSP_DEBUG
     Logger.CleanUpLogFile();
-#endif
     
     var workspace = new Workspace();
 
@@ -25,15 +23,9 @@ public class LSP : ICmd
     {
       p.Parse(args);
     }
-#if BHLSP_DEBUG
     catch(OptionException e)
     {
       Logger.WriteLine(e);
-#else
-    catch
-    {
-      // ignored
-#endif
     }
 
     Console.OutputEncoding = new UTF8Encoding();
@@ -44,12 +36,12 @@ public class LSP : ICmd
     var connection = new ConnectionStdIO(stdout, stdin);
     
     var rpc = new JsonRpc();
-    rpc.AttachService(new GeneralJsonRpcService(workspace));
-    rpc.AttachService(new TextDocumentSynchronizationJsonRpcService(workspace));
-    rpc.AttachService(new TextDocumentSignatureHelpJsonRpcService(workspace));
-    rpc.AttachService(new TextDocumentGoToJsonRpcService(workspace));
-    rpc.AttachService(new TextDocumentHoverJsonRpcService(workspace));
-    rpc.AttachService(new TextDocumentSemanticTokensJsonRpcService(workspace));
+    rpc.AttachService(new GeneralService(workspace));
+    rpc.AttachService(new TextDocumentSynchronizationService(workspace));
+    rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
+    rpc.AttachService(new TextDocumentGoToService(workspace));
+    rpc.AttachService(new TextDocumentHoverService(workspace));
+    rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
     
     var server = new Server(workspace, connection, rpc);
     
@@ -57,14 +49,9 @@ public class LSP : ICmd
     {
       server.Start();
     }
-#if BHLSP_DEBUG
     catch (Exception e)
     {
       Logger.WriteLine(e);
-#else
-    catch
-    {
-#endif
       Environment.Exit(-1);
     }
   }

@@ -163,13 +163,13 @@ public abstract class WorkspaceJsonRpcServiceTemplate : JsonRpcService
   public abstract RpcResult ExecuteCommand(ExecuteCommandParams args);
 }
   
-public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
+public class GeneralService : GeneralJsonRpcServiceTemplate
 {
   Workspace workspace;
 
   int? processId;
   
-  public GeneralJsonRpcService(Workspace workspace)
+  public GeneralService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -181,15 +181,15 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath, true);
+        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath, cleanup: true);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      workspace.AddRoot(args.rootUri.LocalPath, true, false);
+      workspace.AddRoot(args.rootUri.LocalPath, cleanup: true, check: false);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      workspace.AddRoot(args.rootPath, true, false);
+      workspace.AddRoot(args.rootPath, cleanup: true, check: false);
     }
     
     workspace.Scan();
@@ -305,11 +305,11 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
   }
 }
 
-public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelpJsonRpcServiceTemplate
+public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpJsonRpcServiceTemplate
 {
   Workspace workspace;
 
-  public TextDocumentSignatureHelpJsonRpcService(Workspace workspace)
+  public TextDocumentSignatureHelpService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -429,11 +429,11 @@ public class TextDocumentSignatureHelpJsonRpcService : TextDocumentSignatureHelp
   }
 }
 
-public class TextDocumentSynchronizationJsonRpcService : TextDocumentSynchronizationJsonRpcServiceTemplate
+public class TextDocumentSynchronizationService : TextDocumentSynchronizationJsonRpcServiceTemplate
 {
   Workspace workspace;
 
-  public TextDocumentSynchronizationJsonRpcService(Workspace workspace)
+  public TextDocumentSynchronizationService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -495,11 +495,11 @@ public class TextDocumentSynchronizationJsonRpcService : TextDocumentSynchroniza
   }
 }
 
-public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemplate
+public class TextDocumentGoToService : TextDocumentGoToJsonRpcServiceTemplate
 {
   Workspace workspace;
 
-  public TextDocumentGoToJsonRpcService(Workspace workspace)
+  public TextDocumentGoToService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -790,11 +790,11 @@ public class TextDocumentGoToJsonRpcService : TextDocumentGoToJsonRpcServiceTemp
   }
 }
 
-public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTemplate
+public class TextDocumentHoverService : TextDocumentHoverJsonRpcServiceTemplate
 {
   Workspace workspace;
 
-  public TextDocumentHoverJsonRpcService(Workspace workspace)
+  public TextDocumentHoverService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -893,11 +893,11 @@ public class TextDocumentHoverJsonRpcService : TextDocumentHoverJsonRpcServiceTe
   }
 }
 
-public class TextDocumentSemanticTokensJsonRpcService : TextDocumentSemanticTokensJsonRpcServiceTemplate
+public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensJsonRpcServiceTemplate
 {
   Workspace workspace;
 
-  public TextDocumentSemanticTokensJsonRpcService(Workspace workspace)
+  public TextDocumentSemanticTokensService(Workspace workspace)
   {
     this.workspace = workspace;
   }

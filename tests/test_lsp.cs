@@ -134,7 +134,7 @@ public class TestLSP : BHL_TestBase
     SubTest("invalid params", () =>
     {
       var rpc = new JsonRpc();
-      rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
+      rpc.AttachService(new GeneralService(new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -147,7 +147,7 @@ public class TestLSP : BHL_TestBase
   public void TestInitShutdownExitRpc()
   {
     var rpc = new JsonRpc();
-    rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
+    rpc.AttachService(new GeneralService(new Workspace()));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -236,7 +236,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSynchronizationJsonRpcService(ws));
+    rpc.AttachService(new TextDocumentSynchronizationService(ws));
     
     string dir = GetDirPath();
     Directory.Delete(dir, true/*recursive*/);
@@ -318,7 +318,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSignatureHelpJsonRpcService(ws));
+    rpc.AttachService(new TextDocumentSignatureHelpService(ws));
     
     Directory.Delete(GetDirPath(), true/*recursive*/);
     
@@ -395,7 +395,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentGoToJsonRpcService(ws));
+    rpc.AttachService(new TextDocumentGoToService(ws));
     
     string dir = GetDirPath();
     if(Directory.Exists(dir))
@@ -473,7 +473,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSemanticTokensJsonRpcService(ws));
+    rpc.AttachService(new TextDocumentSemanticTokensService(ws));
     
     string dir = GetDirPath();
     Directory.Delete(dir, true/*recursive*/);

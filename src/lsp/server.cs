@@ -5,10 +5,10 @@ namespace bhl.lsp {
 public class Server
 {
   Workspace workspace;
-  Connection connection;
+  IConnection connection;
   IJsonRpc rpc;
 
-  public Server(Workspace workspace, Connection connection, IJsonRpc rpc)
+  public Server(Workspace workspace, IConnection connection, IJsonRpc rpc)
   {
     this.workspace = workspace;
     this.connection = connection;
@@ -44,8 +44,8 @@ public class Server
     
     string response = rpc.Handle(json);
     
-      sw.Stop();
-      Logger.WriteLine($"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    sw.Stop();
+    Logger.WriteLine($"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     try
     {

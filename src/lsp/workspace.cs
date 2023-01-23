@@ -134,6 +134,7 @@ public class Workspace
         if(!string.IsNullOrEmpty(path))
         {
           TryAddDocument(path);
+
           if(FindDocument(path) is BHLTextDocument doc)
             toVisit.Enqueue(doc);
         }

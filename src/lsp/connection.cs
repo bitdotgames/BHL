@@ -5,13 +5,13 @@ using System.Text;
 
 namespace bhl.lsp {
 
-public interface Connection
+public interface IConnection
 {
   string Read();
   void Write(string json);
 }
 
-public class ConnectionStdIO : Connection
+public class ConnectionStdIO : IConnection
 {
   const byte CR = 13;
   const byte LF = 10;

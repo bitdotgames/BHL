@@ -73,7 +73,7 @@ public class LogTextWriter : TextWriter
 
 public class Logger
 {
-  static LogTextWriter Log { get; set; } = new LogTextWriter();
+  static LogTextWriter Log = new LogTextWriter();
 
   public static void WriteLine(object value)
   {
