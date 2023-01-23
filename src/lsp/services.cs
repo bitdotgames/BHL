@@ -9,161 +9,159 @@ using bhl;
 
 namespace bhl.lsp {
 
-public abstract class JsonRpcService
-{
-}
+public interface IService {}
 
-public abstract class GeneralJsonRpcServiceTemplate : JsonRpcService
+public abstract class GeneralServiceProto : IService
 {
-  [JsonRpcMethod("initialize")]
+  [RpcMethod("initialize")]
   public abstract RpcResult Initialize(InitializeParams args);
 
-  [JsonRpcMethod("initialized")]
+  [RpcMethod("initialized")]
   public abstract RpcResult Initialized();
 
-  [JsonRpcMethod("shutdown")]
+  [RpcMethod("shutdown")]
   public abstract RpcResult Shutdown();
 
-  [JsonRpcMethod("exit")]
+  [RpcMethod("exit")]
   public abstract RpcResult Exit();
 }
 
-public abstract class DiagnosticJsonRpcServiceTemplate : JsonRpcService
+public abstract class DiagnosticServiceProto : IService
 {
-  [JsonRpcMethod("$/cancelRequest")]
+  [RpcMethod("$/cancelRequest")]
   public abstract RpcResult CancelRequest(CancelParams args);
 }
 
-public abstract class TextDocumentSynchronizationJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentSynchronizationServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/didOpen")]
+  [RpcMethod("textDocument/didOpen")]
   public abstract RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args);
   
-  [JsonRpcMethod("textDocument/didChange")]
+  [RpcMethod("textDocument/didChange")]
   public abstract RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args);
   
-  [JsonRpcMethod("textDocument/willSave")]
+  [RpcMethod("textDocument/willSave")]
   public abstract RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args);
   
-  [JsonRpcMethod("textDocument/willSaveWaitUntil")]
+  [RpcMethod("textDocument/willSaveWaitUntil")]
   public abstract RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args);
   
-  [JsonRpcMethod("textDocument/didSave")]
+  [RpcMethod("textDocument/didSave")]
   public abstract RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args);
   
-  [JsonRpcMethod("textDocument/didClose")]
+  [RpcMethod("textDocument/didClose")]
   public abstract RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args);
 }
 
-public abstract class TextDocumentSignatureHelpJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentSignatureHelpServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/signatureHelp")]
+  [RpcMethod("textDocument/signatureHelp")]
   public abstract RpcResult SignatureHelp(SignatureHelpParams args);
 }
 
-public abstract class TextDocumentGoToJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentGoToServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/declaration")]
+  [RpcMethod("textDocument/declaration")]
   public abstract RpcResult GotoDeclaration(DeclarationParams args);
   
-  [JsonRpcMethod("textDocument/definition")]
+  [RpcMethod("textDocument/definition")]
   public abstract RpcResult GotoDefinition(DefinitionParams args);
 
-  [JsonRpcMethod("textDocument/typeDefinition")]
+  [RpcMethod("textDocument/typeDefinition")]
   public abstract RpcResult GotoTypeDefinition(TypeDefinitionParams args);
 
-  [JsonRpcMethod("textDocument/implementation")]
+  [RpcMethod("textDocument/implementation")]
   public abstract RpcResult GotoImplementation(ImplementationParams args);
 }
 
-public abstract class TextDocumentHoverJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentHoverServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/hover")]
+  [RpcMethod("textDocument/hover")]
   public abstract RpcResult Hover(TextDocumentPositionParams args);
 }
 
-public abstract class TextDocumentFindReferencesJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentFindReferencesServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/references")]
+  [RpcMethod("textDocument/references")]
   public abstract RpcResult FindReferences(ReferenceParams args);
 }
 
-public abstract class TextDocumentSemanticTokensJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentSemanticTokensServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/semanticTokens/full")]
+  [RpcMethod("textDocument/semanticTokens/full")]
   public abstract RpcResult SemanticTokensFull(SemanticTokensParams args);
 }
 
-public abstract class TextDocumentJsonRpcServiceTemplate : JsonRpcService
+public abstract class TextDocumentServiceProto : IService
 {
-  [JsonRpcMethod("textDocument/completion")]
+  [RpcMethod("textDocument/completion")]
   public abstract RpcResult Completion(CompletionParams args);
 
-  [JsonRpcMethod("completionItem/resolve")]
+  [RpcMethod("completionItem/resolve")]
   public abstract RpcResult ResolveCompletionItem(CompletionItem args);
   
-  [JsonRpcMethod("textDocument/documentHighlight")]
+  [RpcMethod("textDocument/documentHighlight")]
   public abstract RpcResult DocumentHighlight(TextDocumentPositionParams args);
 
-  [JsonRpcMethod("textDocument/documentSymbol")]
+  [RpcMethod("textDocument/documentSymbol")]
   public abstract RpcResult DocumentSymbols(DocumentSymbolParams args);
 
-  [JsonRpcMethod("textDocument/documentColor")]
+  [RpcMethod("textDocument/documentColor")]
   public abstract RpcResult DocumentColor(DocumentColorParams args);
 
-  [JsonRpcMethod("textDocument/colorPresentation")]
+  [RpcMethod("textDocument/colorPresentation")]
   public abstract RpcResult ColorPresentation(ColorPresentationParams args);
 
-  [JsonRpcMethod("textDocument/formatting")]
+  [RpcMethod("textDocument/formatting")]
   public abstract RpcResult DocumentFormatting(DocumentFormattingParams args);
 
-  [JsonRpcMethod("textDocument/rangeFormatting")]
+  [RpcMethod("textDocument/rangeFormatting")]
   public abstract RpcResult DocumentRangeFormatting(DocumentRangeFormattingParams args);
 
-  [JsonRpcMethod("textDocument/onTypeFormatting")]
+  [RpcMethod("textDocument/onTypeFormatting")]
   public abstract RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
   
-  [JsonRpcMethod("textDocument/codeAction")]
+  [RpcMethod("textDocument/codeAction")]
   public abstract RpcResult CodeAction(CodeActionParams args);
 
-  [JsonRpcMethod("textDocument/codeLens")]
+  [RpcMethod("textDocument/codeLens")]
   public abstract RpcResult CodeLens(CodeLensParams args);
 
-  [JsonRpcMethod("codeLens/resolve")]
+  [RpcMethod("codeLens/resolve")]
   public abstract RpcResult ResolveCodeLens(CodeLens args);
 
-  [JsonRpcMethod("textDocument/documentLink")]
+  [RpcMethod("textDocument/documentLink")]
   public abstract RpcResult DocumentLink(DocumentLinkParams args);
 
-  [JsonRpcMethod("documentLink/resolve")]
+  [RpcMethod("documentLink/resolve")]
   public abstract RpcResult ResolveDocumentLink(DocumentLink args);
 
-  [JsonRpcMethod("textDocument/rename")]
+  [RpcMethod("textDocument/rename")]
   public abstract RpcResult Rename(RenameParams args);
 
-  [JsonRpcMethod("textDocument/foldingRange")]
+  [RpcMethod("textDocument/foldingRange")]
   public abstract RpcResult FoldingRange(FoldingRangeParams args);
 }
 
-public abstract class WorkspaceJsonRpcServiceTemplate : JsonRpcService
+public abstract class WorkspaceServiceProto : IService
 {
-  [JsonRpcMethod("workspace/didChangeWorkspaceFolders")]
+  [RpcMethod("workspace/didChangeWorkspaceFolders")]
   public abstract RpcResult DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams args);
 
-  [JsonRpcMethod("workspace/didChangeConfiguration")]
+  [RpcMethod("workspace/didChangeConfiguration")]
   public abstract RpcResult DidChangeConfiguration(DidChangeConfigurationParams args);
 
-  [JsonRpcMethod("workspace/didChangeWatchedFiles")]
+  [RpcMethod("workspace/didChangeWatchedFiles")]
   public abstract RpcResult DidChangeWatchedFiles(DidChangeWatchedFilesParams args);
 
-  [JsonRpcMethod("workspace/symbol")]
+  [RpcMethod("workspace/symbol")]
   public abstract RpcResult Symbol(WorkspaceSymbolParams args);
 
-  [JsonRpcMethod("workspace/executeCommand")]
+  [RpcMethod("workspace/executeCommand")]
   public abstract RpcResult ExecuteCommand(ExecuteCommandParams args);
 }
   
-public class GeneralService : GeneralJsonRpcServiceTemplate
+public class GeneralService : GeneralServiceProto
 {
   Workspace workspace;
 
@@ -305,7 +303,7 @@ public class GeneralService : GeneralJsonRpcServiceTemplate
   }
 }
 
-public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpJsonRpcServiceTemplate
+public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpServiceProto
 {
   Workspace workspace;
 
@@ -429,7 +427,7 @@ public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpJsonRpc
   }
 }
 
-public class TextDocumentSynchronizationService : TextDocumentSynchronizationJsonRpcServiceTemplate
+public class TextDocumentSynchronizationService : TextDocumentSynchronizationServiceProto
 {
   Workspace workspace;
 
@@ -495,7 +493,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationJso
   }
 }
 
-public class TextDocumentGoToService : TextDocumentGoToJsonRpcServiceTemplate
+public class TextDocumentGoToService : TextDocumentGoToServiceProto
 {
   Workspace workspace;
 
@@ -790,7 +788,7 @@ public class TextDocumentGoToService : TextDocumentGoToJsonRpcServiceTemplate
   }
 }
 
-public class TextDocumentHoverService : TextDocumentHoverJsonRpcServiceTemplate
+public class TextDocumentHoverService : TextDocumentHoverServiceProto
 {
   Workspace workspace;
 
@@ -893,7 +891,7 @@ public class TextDocumentHoverService : TextDocumentHoverJsonRpcServiceTemplate
   }
 }
 
-public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensJsonRpcServiceTemplate
+public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServiceProto
 {
   Workspace workspace;
 

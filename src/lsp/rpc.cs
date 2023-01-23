@@ -13,9 +13,9 @@ public interface IJsonRpc
 
 public class JsonRpc : IJsonRpc
 {
-  List<JsonRpcService> services = new List<JsonRpcService>();
+  List<IService> services = new List<IService>();
 
-  public JsonRpc AttachService(JsonRpcService service)
+  public JsonRpc AttachService(IService service)
   {
     services.Add(service);
     return this;
@@ -186,7 +186,7 @@ public class JsonRpc : IJsonRpc
   {
     foreach(var attribute in m.GetCustomAttributes(true))
     {
-      if(attribute is JsonRpcMethodAttribute jsonRpcMethod && jsonRpcMethod.Method == name)
+      if(attribute is RpcMethod jsonRpcMethod && jsonRpcMethod.Method == name)
         return true;
     }
 
@@ -263,11 +263,11 @@ public class ResponseMessage : MessageBase
 }
 
 [AttributeUsage(AttributeTargets.Method)]
-public class JsonRpcMethodAttribute : Attribute
+public class RpcMethod : Attribute
 {
   private string method;
 
-  public JsonRpcMethodAttribute(string method)
+  public RpcMethod(string method)
   {
     this.method = method;
   }
