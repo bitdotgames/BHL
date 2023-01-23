@@ -238,10 +238,10 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSynchronizationService(ws));
     
-    string dir = GetDirPath();
+    string dir = GetTestDirPath();
     Directory.Delete(dir, true/*recursive*/);
 
-    var uri = GetUri(NewTestDocument("bhl1.bhl", bhl_v1));
+    var uri = MakeUri(NewTestDocument("bhl1.bhl", bhl_v1));
     
     {
       string json =
@@ -320,14 +320,11 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSignatureHelpService(ws));
     
-    Directory.Delete(GetDirPath(), true/*recursive*/);
+    Directory.Delete(GetTestDirPath(), true/*recursive*/);
     
-    var files = new List<string>();
-    NewTestDocument("bhl1.bhl", bhl1, files);
-    
-    Uri uri = GetUri(files[0]);
+    Uri uri = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
 
-    SubTest(() => {
+    {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
       json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
@@ -338,9 +335,9 @@ public class TestLSP : BHL_TestBase
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest(() => {
+    {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
       json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
@@ -351,7 +348,7 @@ public class TestLSP : BHL_TestBase
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
   }
 
   [IsTested()]
@@ -397,20 +394,15 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentGoToService(ws));
     
-    string dir = GetDirPath();
-    if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+    string dir = GetTestDirPath();
+    Directory.Delete(dir, true/*recursive*/);
     
-    var files = new List<string>();
-    NewTestDocument("bhl1.bhl", bhl1, files);
-    NewTestDocument("bhl2.bhl", bhl2, files);
+    Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
+    Uri uri2 = MakeUri(NewTestDocument("bhl2.bhl", bhl2));
     
-    ws.AddRoot(GetDirPath(), true);
+    ws.AddRoot(GetTestDirPath(), true);
     
-    Uri uri1 = GetUri(files[0]);
-    Uri uri2 = GetUri(files[1]);
-    
-    SubTest(() => {
+    {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
       json += "\"}, \"position\": {\"line\": 16, \"character\": 8}}}";
@@ -420,9 +412,9 @@ public class TestLSP : BHL_TestBase
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest(() => {
+    {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
       json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
@@ -432,9 +424,9 @@ public class TestLSP : BHL_TestBase
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest(() => {
+    {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
       json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
@@ -444,7 +436,7 @@ public class TestLSP : BHL_TestBase
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
         "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
   }
 
   [IsTested()]
@@ -475,31 +467,28 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSemanticTokensService(ws));
     
-    string dir = GetDirPath();
+    string dir = GetTestDirPath();
     Directory.Delete(dir, true/*recursive*/);
     
-    var files = new List<string>();
-    NewTestDocument("bhl1.bhl", bhl1, files);
-    
-    Uri uri1 = GetUri(files[0]);
+    Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
     
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
     
     AssertEqual(
-        rpc.Handle(json),
-        "{\"id\":1,\"result\":{\"data\":" +
-        "[1,4,6,6,0,0,6,3,0,0,1,6,3,6,0,0,4,3,2,10,3,4,3,5,0,0,4,3,2,0,1,6,3,2,0,0,6,1,3,0,3,4,5,6,0,0,5,5,6," +
-        "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"
+      rpc.Handle(json),
+      "{\"id\":1,\"result\":{\"data\":" +
+      "[1,4,6,6,0,0,6,3,0,0,1,6,3,6,0,0,4,3,2,10,3,4,3,5,0,0,4,3,2,0,1,6,3,2,0,0,6,1,3,0,3,4,5,6,0,0,5,5,6," +
+      "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"
     );
   }
   
-  static Uri GetUri(string path)
+  static Uri MakeUri(string path)
   {
     return new Uri("file://" + path);
   }
   
-  static string GetDirPath()
+  static string GetTestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
@@ -507,7 +496,7 @@ public class TestLSP : BHL_TestBase
   
   static string NewTestDocument(string path, string text, List<string> files = null)
   {
-    string full_path = GetDirPath() + "/" + path;
+    string full_path = GetTestDirPath() + "/" + path;
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     if(files != null)
