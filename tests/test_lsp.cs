@@ -209,7 +209,7 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestSyncDocument()
   {
-    string bhl1 = @"
+    string bhl_v1 = @"
     func float test1(float k) 
     {
       return 0
@@ -221,7 +221,7 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    string bhl2 = @"
+    string bhl_v2 = @"
     func float test1(float k, int j) 
     {
       return 0
@@ -240,59 +240,59 @@ public class TestLSP : BHL_TestBase
     
     string dir = GetDirPath();
     Directory.Delete(dir, true/*recursive*/);
-    
-    var files = new List<string>();
-    NewTestDocument("bhl1.bhl", bhl1, files);
 
-    Uri uri = GetUri(files[0]);
+    var uri = GetUri(NewTestDocument("bhl1.bhl", bhl_v1));
+    
+    {
+      string json =
+        "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
+        "\",\"text\":\"" + bhl_v1 +
+        "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
 
-    string json =
-      "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
-      "\",\"text\":\"" + bhl1 +
-      "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
-    
-    AssertEqual(
-      rpc.Handle(json),
-      string.Empty
-    );
+      var document = ws.FindDocument(uri);
+      
+      AssertEqual(
+        bhl_v1,
+        document.text
+      );
+    }
 
-    var document = ws.FindDocument(uri);
-    string line = document.text.Split('\n')[1];
-    
-    AssertEqual(
-      line,
-      "    func float test1(float k) "
-    );
-    
     Directory.Delete(dir, true/*recursive*/);
-    
-    NewTestDocument("bhl1.bhl", bhl2, files);
 
-    uri = GetUri(files[1]);
+    {
+      NewTestDocument("bhl1.bhl", bhl_v2);
 
-    json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
-           "\"},\"contentChanges\":[{\"text\":\"" + bhl2 +
-           "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
+      string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
+             "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
+             "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
+
+      var document = ws.FindDocument(uri);
+
+      AssertEqual(
+        bhl_v2,
+        document.text
+      );
+    }
     
-    AssertEqual(
-      rpc.Handle(json),
-      string.Empty
-    );
-    
-    line = document.text.Split('\n')[1];
-    
-    AssertEqual(
-      line,
-      "    func float test1(float k, int j) "
-    );
-    
-    json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
-           "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
-    
-    AssertEqual(
-      rpc.Handle(json),
-      string.Empty
-    );
+    {
+      string json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
+             "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
+    }
   }
   
   [IsTested()]
@@ -505,11 +505,13 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static void NewTestDocument(string path, string text, List<string> files)
+  static string NewTestDocument(string path, string text, List<string> files = null)
   {
     string full_path = GetDirPath() + "/" + path;
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
-    files.Add(full_path);
+    if(files != null)
+      files.Add(full_path);
+    return full_path;
   }
 }
