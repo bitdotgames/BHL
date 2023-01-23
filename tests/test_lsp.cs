@@ -91,75 +91,66 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestRpcResponseErrors()
   {
-    var rpc = new JsonRpc();
-    
-    SubTest(() =>
+    SubTest("parse error", () =>
     {
-      //ParseError
+      var rpc = new JsonRpc();
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
-    SubTest(() =>
+    SubTest("invalid request", () =>
     {
+      var rpc = new JsonRpc();
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
-    SubTest(() =>
+    SubTest("invalid request", () =>
     {
+      var rpc = new JsonRpc();
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
-    SubTest(() =>
+    SubTest("method not found", () =>
     {
-      //MethodNotFound
+      var rpc = new JsonRpc();
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
-    SubTest(() =>
+    SubTest("invalid params", () =>
     {
-      //InvalidParams
+      var rpc = new JsonRpc();
       rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        rpc.HandleMessage(json),
-        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-      );
-    });
-    
-    SubTest(() =>
-    {
-      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\", \"id\": 1}";
-      AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     });
   }
 
   [IsTested()]
-  public void TestGeneralRpc()
+  public void TestInitShutdownExitRpc()
   {
     var rpc = new JsonRpc();
     rpc.AttachService(new GeneralJsonRpcService(new Workspace()));
 
     SubTest(() => {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
+      string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
       
       string rsp = "{\"id\":1,\"result\":{" +
               "\"capabilities\":{" +
@@ -187,13 +178,13 @@ public class TestLSP : BHL_TestBase
               "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"0.1\"}}," +
               "\"jsonrpc\":\"2.0\"}";
 
-      AssertEqual(rpc.HandleMessage(json), rsp);
+      AssertEqual(rpc.Handle(req), rsp);
     });
     
     SubTest(() => {
       string json = "{\"params\":{},\"method\":\"initialized\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         string.Empty
       );
     });
@@ -201,7 +192,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       string json = "{\"id\":1,\"params\":null,\"method\":\"shutdown\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}"
       );
     });
@@ -209,7 +200,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       string json = "{\"params\":null,\"method\":\"exit\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         string.Empty
       );
     });
@@ -261,7 +252,7 @@ public class TestLSP : BHL_TestBase
       "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
     
     AssertEqual(
-      rpc.HandleMessage(json),
+      rpc.Handle(json),
       string.Empty
     );
 
@@ -284,7 +275,7 @@ public class TestLSP : BHL_TestBase
            "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
     
     AssertEqual(
-      rpc.HandleMessage(json),
+      rpc.Handle(json),
       string.Empty
     );
     
@@ -299,7 +290,7 @@ public class TestLSP : BHL_TestBase
            "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
     
     AssertEqual(
-      rpc.HandleMessage(json),
+      rpc.Handle(json),
       string.Empty
     );
   }
@@ -342,7 +333,7 @@ public class TestLSP : BHL_TestBase
       json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
       
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
@@ -355,7 +346,7 @@ public class TestLSP : BHL_TestBase
       json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
       
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
@@ -425,7 +416,7 @@ public class TestLSP : BHL_TestBase
       json += "\"}, \"position\": {\"line\": 16, \"character\": 8}}}";
       
       AssertEqual(
-          rpc.HandleMessage(json),
+          rpc.Handle(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
@@ -437,7 +428,7 @@ public class TestLSP : BHL_TestBase
       json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
       
       AssertEqual(
-          rpc.HandleMessage(json),
+          rpc.Handle(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
@@ -449,7 +440,7 @@ public class TestLSP : BHL_TestBase
       json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
       
       AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
         "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
@@ -496,7 +487,7 @@ public class TestLSP : BHL_TestBase
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
     
     AssertEqual(
-        rpc.HandleMessage(json),
+        rpc.Handle(json),
         "{\"id\":1,\"result\":{\"data\":" +
         "[1,4,6,6,0,0,6,3,0,0,1,6,3,6,0,0,4,3,2,10,3,4,3,5,0,0,4,3,2,0,1,6,3,2,0,0,6,1,3,0,3,4,5,6,0,0,5,5,6," +
         "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"

@@ -296,7 +296,10 @@ public class GeneralJsonRpcService : GeneralJsonRpcServiceTemplate
   public override RpcResult Exit()
   {
     if(processId != null)
+    {
+      //TODO: in this case success response won't be sent
       Environment.Exit(0);
+    }
     
     return RpcResult.Success();
   }

@@ -8,7 +8,7 @@ namespace bhl.lsp {
 
 public interface IJsonRpc
 {
-  string HandleMessage(string json);
+  string Handle(string json);
 }
 
 public class JsonRpc : IJsonRpc
@@ -21,7 +21,7 @@ public class JsonRpc : IJsonRpc
     return this;
   }
 
-  public string HandleMessage(string json)
+  public string Handle(string json)
   {
     RequestMessage req = null;
     ResponseMessage resp = null;
@@ -30,15 +30,11 @@ public class JsonRpc : IJsonRpc
     {
       req = JsonConvert.DeserializeObject<RequestMessage>(json);
     }
-#if BHLSP_DEBUG
     catch(Exception e)
     {
       Logger.WriteLine(e);
       Logger.WriteLine($"{json}");
-#else
-    catch
-    {
-#endif
+
       resp = new ResponseMessage
       {
         error = new ResponseError
@@ -49,12 +45,9 @@ public class JsonRpc : IJsonRpc
       };
     }
 
-#if BHLSP_DEBUG
     if(req != null)
       Logger.WriteLine($":: bhlsp <-- {req.method}({req.id.Value})");
-    
-    //BHLSPLogger.WriteLine($":: bhlsp <-- {json}");
-#endif
+    //Logger.WriteLine($":: bhlsp <-- {json}");
     
     if(resp == null && req != null)
     {
@@ -75,22 +68,18 @@ public class JsonRpc : IJsonRpc
 
     if(resp != null)
     {
-      /* *
-       * A processed notification message must not send a response back.
-       * They work like events.
-       */
+      // A processed notification message must not send a response back.
+      // They work like events.
       bool isNotification = req != null && req.id.Value == null;
       if(!isNotification)
       {
         var jSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
         response = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
         
-#if BHLSP_DEBUG
         if(req != null)
           Logger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
         
         //Logger.WriteLine($":: bhlsp --> {JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.Indented, jSettings)}");
-#endif
       }
     }
     
@@ -126,14 +115,10 @@ public class JsonRpc : IJsonRpc
         };
       }
     }
-#if BHLSP_DEBUG
     catch(Exception e)
     {
       Logger.WriteLine(e);
-#else
-    catch
-    {
-#endif
+
       response = new ResponseMessage
       {
         id = request.id, error = new ResponseError
@@ -150,34 +135,33 @@ public class JsonRpc : IJsonRpc
   private RpcResult CallRpcMethod(string name, JToken @params)
   {
     if(double.TryParse(name, out _))
+    {
       return RpcResult.Error(new ResponseError
       {
         code = (int)ErrorCodes.InvalidRequest,
         message = ""
       });
+    }
     
-    foreach (var service in services)
+    //TODO: build and cache a map of available methods
+    foreach(var service in services)
     {
-      foreach (var method in service.GetType().GetMethods())
+      foreach(var method in service.GetType().GetMethods())
       {
-        if (IsAllowedToInvoke(method, name))
+        if(IsAllowedToInvoke(method, name))
         {
           object[] args = null;
           var pms = method.GetParameters();
-          if (pms.Length > 0)
+          if(pms.Length > 0)
           {
             try
             {
               args = new[] { @params.ToObject(pms[0].ParameterType) };
             }
-#if BHLSP_DEBUG
             catch(Exception e)
             {
               Logger.WriteLine(e);
-#else
-            catch
-            {
-#endif
+
               return RpcResult.Error(new ResponseError
               {
                 code = (int)ErrorCodes.InvalidParams,

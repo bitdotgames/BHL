@@ -6,7 +6,7 @@
   <PropertyGroup>
     <appname>bhl</appname>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <DefineConstants>BHL_FRONT;BHLSP_DEBUG</DefineConstants>
+    <DefineConstants>BHL_FRONT</DefineConstants>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
   </PropertyGroup>
