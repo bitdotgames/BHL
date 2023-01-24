@@ -13,6 +13,8 @@ public class BHLDocument
   List<int> line2byte_offset = new List<int>();
 
   BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
+
+  List<IParseTree> nodes = new List<IParseTree>();
   
   public List<string> Imports => visitor.imports;
   public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
@@ -26,6 +28,25 @@ public class BHLDocument
     ComputeLineByteOffsets();
 
     visitor.VisitDocument(this);
+
+    foreach(var node in Util.IterateNodes(ToParser().program()))
+      nodes.Add(node);
+  }
+
+  public ParserRuleContext FindNode(int line, int character)
+  {
+    return FindNodeByIndex(CalcByteIndex(line, character));
+  }
+
+  public ParserRuleContext FindNodeByIndex(int idx)
+  {
+    //TODO: use binary search?
+    foreach(var node in nodes)
+    {
+      if(node is ParserRuleContext ctx && ctx.Start.StartIndex <= idx && ctx.Stop.StopIndex >= idx)
+        return ctx;
+    }
+    return null;
   }
 
   public bhlParser ToParser()

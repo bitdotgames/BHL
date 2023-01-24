@@ -1,11 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using bhl;
 
 namespace bhl.lsp {
 
@@ -380,38 +377,17 @@ public class TextDocumentGoToService : IService
     int line = (int)args.position.line;
     int character = (int)args.position.character;
     
-    int idx = document.CalcByteIndex(line, character);
+    var node = document.FindNode(line, character);
+    var funcDecl     = node as bhlParser.FuncDeclContext;
+    var callExp      = node as bhlParser.CallExpContext;
+    var memberAccess = node as bhlParser.MemberAccessContext;
+    var type         = node as bhlParser.TypeContext;
+    var statement    = node as bhlParser.StatementContext;
+    var nsName       = node as bhlParser.NsNameContext;
+    var dotName      = node as bhlParser.DotNameContext;
     
     BHLDocument funcDeclBhlDocument = null;
 
-    bhlParser.FuncDeclContext funcDecl = null;
-    bhlParser.CallExpContext callExp = null;
-    bhlParser.MemberAccessContext memberAccess = null;
-    bhlParser.TypeContext type = null;
-    bhlParser.StatementContext statement = null;
-    bhlParser.NsNameContext nsName = null;
-    bhlParser.DotNameContext dotName = null;
-
-    foreach(IParseTree node in Util.DFS(document.ToParser().program()))
-    {
-      if(node is ParserRuleContext prc)
-      {
-        if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
-        {
-          //Console.WriteLine("GOTCHA " + idx + " " + prc.GetType().Name + " @" + prc.Start.Line + ":" + prc.Start.Column + " " + prc.GetText());
-
-          funcDecl     = prc as bhlParser.FuncDeclContext;
-          callExp      = prc as bhlParser.CallExpContext;
-          memberAccess = prc as bhlParser.MemberAccessContext;
-          type         = prc as bhlParser.TypeContext;
-          statement    = prc as bhlParser.StatementContext;
-          nsName       = prc as bhlParser.NsNameContext;
-          dotName       = prc as bhlParser.DotNameContext;
-          break;
-        }
-      }
-    }
-    
     if(funcDecl == null)
     {
       string classTypeName = string.Empty;
@@ -458,9 +434,9 @@ public class TextDocumentGoToService : IService
           
           if(memberAccessParentFuncDecl?.NAME() != null)
           {
-            foreach(IParseTree node in Util.DFS(memberAccessParentFuncDecl))
+            foreach(IParseTree memberFuncNode in Util.IterateNodes(memberAccessParentFuncDecl))
             {
-              if(node is bhlParser.FuncParamDeclareContext funcParamDeclare)
+              if(memberFuncNode is bhlParser.FuncParamDeclareContext funcParamDeclare)
               {
                 bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
                 if(funcParamDeclareType.funcType() != null || funcParamDeclareType.ARR() != null)
@@ -672,21 +648,9 @@ public class TextDocumentHoverService : IService
     int line = (int)args.position.line;
     int character = (int)args.position.character;
     
-    int idx = document.CalcByteIndex(line, character);
+    var node = document.FindNode(line, character);
 
-    bhlParser.CallExpContext callExp = null;
-    
-    foreach(IParseTree node in Util.DFS(document.ToParser().program()))
-    {
-      if(node is ParserRuleContext prc)
-      {
-        if(prc.Start.StartIndex <= idx && idx <= prc.Stop.StopIndex)
-        {
-          callExp = prc as bhlParser.CallExpContext;
-          break;
-        }
-      }
-    }
+    var callExp = node as bhlParser.CallExpContext;
     
     bhlParser.FuncDeclContext funcDecl = null;
     

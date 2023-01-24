@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
-using bhl;
 
 namespace bhl.lsp {
 
@@ -14,7 +12,7 @@ public class Workspace
   List<string> roots = new List<string>();
   Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
-  public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
+  public TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
 
   public bool declarationLinkSupport;
   public bool definitionLinkSupport;

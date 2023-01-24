@@ -9,7 +9,7 @@ namespace bhl.lsp {
 
 public static class Util
 {
-  public static IEnumerable<IParseTree> DFS(IParseTree root)
+  public static IEnumerable<IParseTree> IterateNodes(IParseTree root)
   {
     Stack<IParseTree> toVisit = new Stack<IParseTree>();
     Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
