@@ -30,33 +30,22 @@ public class Workspace
   {
     roots.Add(path);
   }
-  
-  public void TryAddDocument(string path, string text = null)
-  {
-    TryAddDocument(new Uri($"file://{path}"), text);
-  }
-  
-  public void TryAddDocument(Uri uri, string text = null)
+
+  public BHLDocument GetOrLoadDocument(Uri uri)
   {
     string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
-    
-    if(!documents.ContainsKey(path))
-    {
-      var document = CreateDocument(path);
-      if(document != null)
-      {
-        document.uri = uri;
+    BHLDocument document;
+    if(documents.TryGetValue(path, out document))
+      return document;
+    else
+      return LoadDocument(uri);
+  }
 
-        if(string.IsNullOrEmpty(text))
-        {
-          byte[] buffer = File.ReadAllBytes(path);
-          text = Encoding.UTF8.GetString(buffer);
-        }
-        
-        document.Sync(text);
-        documents.Add(path, document);
-      }
-    }
+  public BHLDocument LoadDocument(Uri uri)
+  {
+    byte[] buffer = File.ReadAllBytes(uri.LocalPath);
+    string text = Encoding.UTF8.GetString(buffer);
+    return OpenDocument(uri, text);
   }
 
   public BHLDocument OpenDocument(Uri uri, string text)
@@ -125,10 +114,8 @@ public class Workspace
         string path = ResolveImportPath(document.uri.LocalPath, import, ext);
         if(!string.IsNullOrEmpty(path))
         {
-          TryAddDocument(path);
-
-          if(FindDocument(path) is BHLDocument doc)
-            toVisit.Enqueue(doc);
+          var doc = GetOrLoadDocument(new Uri($"file://{path}"));
+          toVisit.Enqueue(doc);
         }
       }
       
