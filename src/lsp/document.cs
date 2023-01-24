@@ -8,9 +8,8 @@ namespace bhl.lsp {
 public class BHLDocument
 {
   public Uri uri;
-  public string text;
   
-  List<int> line2byte_offset = new List<int>();
+  public Code Code = new Code();
 
   BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
 
@@ -23,9 +22,7 @@ public class BHLDocument
   
   public void Sync(string text)
   {
-    this.text = text;
-
-    ComputeLineByteOffsets();
+    Code.Update(text);
 
     visitor.VisitDocument(this);
 
@@ -35,7 +32,7 @@ public class BHLDocument
 
   public ParserRuleContext FindNode(int line, int character)
   {
-    return FindNodeByIndex(CalcByteIndex(line, character));
+    return FindNodeByIndex(Code.CalcByteIndex(line, character));
   }
 
   public ParserRuleContext FindNodeByIndex(int idx)
@@ -51,7 +48,7 @@ public class BHLDocument
 
   public bhlParser ToParser()
   {
-    var ais = new AntlrInputStream(text.ToStream());
+    var ais = new AntlrInputStream(Code.Text.ToStream());
     var lex = new bhlLexer(ais);
     var tokens = new CommonTokenStream(lex);
     var parser = new bhlParser(tokens);
@@ -60,68 +57,6 @@ public class BHLDocument
     parser.RemoveErrorListeners();
 
     return parser;
-  }
-  
-  void ComputeLineByteOffsets()
-  {
-    line2byte_offset.Clear();
-    
-    if(text.Length > 0)
-      line2byte_offset.Add(0);
-
-    for(int i = 0; i < text.Length; i++)
-    {
-      if(text[i] == '\r')
-      {
-        if(i + 1 < text.Length && text[i + 1] == '\n')
-          i++;
-        line2byte_offset.Add(i + 1);
-      }
-      else if(text[i] == '\n')
-        line2byte_offset.Add(i + 1);
-    }
-  }
-
-  public int CalcByteIndex(int line, int column)
-  {
-    if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
-      return line2byte_offset[line] + column;
-
-    return -1;
-  }
-  
-  public int CalcByteIndex(int line)
-  {
-    if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
-      return line2byte_offset[line];
-
-    return -1;
-  }
-  
-  public (int, int) GetLineColumn(int index)
-  {
-    if(index >= text.Length)
-      return (-1, -1); 
-
-    // Binary search.
-    int low = 0;
-    int high = line2byte_offset.Count - 1;
-    int i = 0;
-    
-    while(low <= high)
-    {
-      i = (low + high) / 2;
-      var v = line2byte_offset[i];
-      if(v < index) 
-        low = i + 1;
-      else if(v > index) 
-        high = i - 1;
-      else 
-        break;
-    }
-    
-    var min = low <= high ? i : high;
-    return (min, index - line2byte_offset[min]);
   }
 }
 
@@ -1030,8 +965,8 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
     if(t < 0)
       return;
     
-    var nextStart = document.GetLineColumn(nextIdx);
-    var lineColumnSymbol = document.GetLineColumn(startIdx);
+    var nextStart = document.Code.GetLineColumn(nextIdx);
+    var lineColumnSymbol = document.Code.GetLineColumn(startIdx);
 
     var diffLine = lineColumnSymbol.Item1 - nextStart.Item1;
     var diffColumn = diffLine != 0 ? lineColumnSymbol.Item2 : lineColumnSymbol.Item2 - nextStart.Item2;

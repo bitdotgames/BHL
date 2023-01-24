@@ -172,9 +172,9 @@ public class TextDocumentSignatureHelpService : IService
     int line = (int)args.position.line;
     int character = (int)args.position.character;
     
-    int start = document.CalcByteIndex(line);
-    int stop = document.CalcByteIndex(line, character);
-    var text = document.text;
+    int start = document.Code.CalcByteIndex(line);
+    int stop = document.Code.CalcByteIndex(line, character);
+    var text = document.Code.Text;
 
     var txtLine = text.Substring(start, stop - start);
     string funcName = string.Empty;
@@ -503,7 +503,7 @@ public class TextDocumentGoToService : IService
           }
 
           int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
-          var start = classDeclBhlDocument.GetLineColumn(classDeclIdx);
+          var start = classDeclBhlDocument.Code.GetLineColumn(classDeclIdx);
           var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
       
           return RpcResult.Success(new Location
@@ -571,7 +571,7 @@ public class TextDocumentGoToService : IService
     
     if(funcDecl != null)
     {
-      var start = funcDeclBhlDocument.GetLineColumn(funcDecl.Start.StartIndex);
+      var start = funcDeclBhlDocument.Code.GetLineColumn(funcDecl.Start.StartIndex);
       var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
         
       return RpcResult.Success(new Location

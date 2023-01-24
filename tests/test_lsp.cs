@@ -10,47 +10,47 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("Unix line endings", () => {
       string bhl = "func int test()\n{\nwhat()\n}";
-      var doc = new BHLDocument();
-      doc.Sync(bhl);
+      var code = new Code();
+      code.Update(bhl);
 
-      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
-      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
-      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
-      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
-      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+      AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[code.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[code.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, doc.CalcByteIndex(4, 0));
-      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+      AssertEqual(-1, code.CalcByteIndex(4, 0));
+      AssertEqual(-1, code.CalcByteIndex(100, 1));
     });
 
     SubTest("Windows line endings", () => {
       string bhl = "func int test()\r\n{\r\nwhat()\r\n}";
-      var doc = new BHLDocument();
-      doc.Sync(bhl);
+      var code = new Code();
+      code.Update(bhl);
 
-      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
-      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
-      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
-      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
-      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+      AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[code.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[code.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, doc.CalcByteIndex(4, 0));
-      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+      AssertEqual(-1, code.CalcByteIndex(4, 0));
+      AssertEqual(-1, code.CalcByteIndex(100, 1));
     });
 
     SubTest("Mixed line endings", () => {
       string bhl = "func int test()\n{\r\nwhat()\r}";
-      var doc = new BHLDocument();
-      doc.Sync(bhl);
+      var code = new Code();
+      code.Update(bhl);
 
-      AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
-      AssertEqual("u", bhl[doc.CalcByteIndex(0, 1)].ToString());
-      AssertEqual("{", bhl[doc.CalcByteIndex(1, 0)].ToString());
-      AssertEqual("h", bhl[doc.CalcByteIndex(2, 1)].ToString());
-      AssertEqual("}", bhl[doc.CalcByteIndex(3, 0)].ToString());
+      AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
+      AssertEqual("u", bhl[code.CalcByteIndex(0, 1)].ToString());
+      AssertEqual("{", bhl[code.CalcByteIndex(1, 0)].ToString());
+      AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
+      AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, doc.CalcByteIndex(4, 0));
-      AssertEqual(-1, doc.CalcByteIndex(100, 1));
+      AssertEqual(-1, code.CalcByteIndex(4, 0));
+      AssertEqual(-1, code.CalcByteIndex(100, 1));
     });
   }
 
@@ -58,31 +58,31 @@ public class TestLSP : BHL_TestBase
   public void TestDocumentGetLineColumn()
   {
     string bhl = "func int test()\n{\nwhat()\n}";
-    var doc = new BHLDocument();
-    doc.Sync(bhl);
+    var code = new Code();
+    code.Update(bhl);
 
     {
-      var lc = doc.GetLineColumn(0);
-      AssertEqual("f", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var lc = code.GetLineColumn(0);
+      AssertEqual("f", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
     }
 
     {
-      var lc = doc.GetLineColumn(1);
-      AssertEqual("u", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var lc = code.GetLineColumn(1);
+      AssertEqual("u", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
     }
 
     {
-      var lc = doc.GetLineColumn(16);
-      AssertEqual("{", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var lc = code.GetLineColumn(16);
+      AssertEqual("{", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
     }
 
     {
-      var lc = doc.GetLineColumn(bhl.Length-1);
-      AssertEqual("}", bhl[doc.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var lc = code.GetLineColumn(bhl.Length-1);
+      AssertEqual("}", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
     }
 
     {
-      var lc = doc.GetLineColumn(bhl.Length);
+      var lc = code.GetLineColumn(bhl.Length);
       AssertEqual(-1, lc.Item1);
       AssertEqual(-1, lc.Item2);
     }
@@ -257,7 +257,7 @@ public class TestLSP : BHL_TestBase
       
       AssertEqual(
         bhl_v1,
-        document.text
+        document.Code.Text
       );
     }
 
@@ -279,7 +279,7 @@ public class TestLSP : BHL_TestBase
 
       AssertEqual(
         bhl_v2,
-        document.text
+        document.Code.Text
       );
     }
     
@@ -400,19 +400,19 @@ public class TestLSP : BHL_TestBase
     
     ws.AddRoot(GetTestDirPath());
     
-    {
+    SubTest(() => {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-      json += "\"}, \"position\": {\"line\": 16, \"character\": 8}}}";
+      json += "\"}, \"position\": " + JsonPos(bhl1, "test1()") + "}}";
       
       AssertEqual(
           rpc.Handle(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":{\"line\":9,\"character\":4},\"end\":{\"line\":9,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+          "\",\"range\":{\"start\":" + JsonPos(bhl1, "func float test1(float k)") + ",\"end\":" + JsonPos(bhl1, "func float test1(float k)") + "}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
     
-    {
+    SubTest(() => {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
       json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
@@ -422,9 +422,9 @@ public class TestLSP : BHL_TestBase
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
           "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
     
-    {
+    SubTest(() => {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
       json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
@@ -434,7 +434,7 @@ public class TestLSP : BHL_TestBase
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
         "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
       );
-    }
+    });
   }
 
   [IsTested()]
@@ -506,5 +506,18 @@ public class TestLSP : BHL_TestBase
     if(files != null)
       files.Add(full_path);
     return full_path;
+  }
+
+  static string JsonPos(string code, string needle)
+  {
+    int idx = code.IndexOf(needle);
+    if(idx == -1)
+      throw new Exception("Needle not found: " + needle);
+    var indexer = new Code();
+    indexer.Update(code);
+    var lc = indexer.GetLineColumn(idx);
+    if(lc.Item1 == -1 && lc.Item2 == -1)
+      throw new Exception("Needle not mapped: " + needle);
+    return "{\"line\":" + lc.Item1 + ",\"character\":" + lc.Item2 + "}";
   }
 }
