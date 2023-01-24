@@ -415,24 +415,24 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-      json += "\"}, \"position\": {\"line\": 10, \"character\": 8}}}";
+      json += "\"}, \"position\": " + JsonPos(bhl2, "est2()") + "}}";
       
       AssertEqual(
           rpc.Handle(json),
           "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":{\"line\":14,\"character\":4},\"end\":{\"line\":14,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+          "\",\"range\":{\"start\":" + JsonPos(bhl1, "func test2()") + ",\"end\":" + JsonPos(bhl1, "func test2()") + "}},\"jsonrpc\":\"2.0\"}"
       );
     });
     
     SubTest(() => {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
       json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-      json += "\"}, \"position\": {\"line\": 5, \"character\": 5}}}";
+      json += "\"}, \"position\": " + JsonPos(bhl1, "oo foo = {") + "}}";
       
       AssertEqual(
         rpc.Handle(json),
         "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-        "\",\"range\":{\"start\":{\"line\":1,\"character\":4},\"end\":{\"line\":1,\"character\":4}}},\"jsonrpc\":\"2.0\"}"
+        "\",\"range\":{\"start\":" + JsonPos(bhl1, "class Foo {") + ",\"end\":" + JsonPos(bhl1, "class Foo {") + "}},\"jsonrpc\":\"2.0\"}"
       );
     });
   }
