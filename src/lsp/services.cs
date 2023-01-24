@@ -179,18 +179,19 @@ public class GeneralService : GeneralServiceProto
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath, cleanup: true);
+        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      workspace.AddRoot(args.rootUri.LocalPath, cleanup: true, check: false);
+      workspace.AddRoot(args.rootUri.LocalPath);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      workspace.AddRoot(args.rootPath, cleanup: true, check: false);
+      workspace.AddRoot(args.rootPath);
     }
     
-    workspace.Scan();
+    //TODO: do indexing in background
+    //workspace.IndexInBackground();
     
     var capabilities = new ServerCapabilities();
 

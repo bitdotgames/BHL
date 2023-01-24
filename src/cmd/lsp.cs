@@ -16,7 +16,7 @@ public class LSP : ICmd
     var p = new OptionSet
     {
       { "root=", "bhl root dir",
-        v => workspace.AddRoot(v, false) }
+        v => workspace.AddRoot(v) }
     };
     
     try

@@ -398,7 +398,7 @@ public class TestLSP : BHL_TestBase
     Uri uri1 = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
     Uri uri2 = MakeUri(MakeTestDocument("bhl2.bhl", bhl2));
     
-    ws.AddRoot(GetTestDirPath(), true);
+    ws.AddRoot(GetTestDirPath());
     
     {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";

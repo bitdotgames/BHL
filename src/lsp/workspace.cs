@@ -11,15 +11,8 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  struct RootPath
-  {
-    public string path;
-    public bool cleanup;
-  }
-  
-  private List<RootPath> roots = new List<RootPath>();
-  private Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
-  List<string> documentPaths = new List<string>();
+  List<string> roots = new List<string>();
+  Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
   public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
 
@@ -31,29 +24,11 @@ public class Workspace
   public void Shutdown()
   {
     documents.Clear();
-    for(int i = roots.Count - 1; i >= 0; i--)
-    {
-      if(roots[i].cleanup)
-        roots.RemoveAt(i);
-    }
-    documentPaths.Clear();
   }
 
-  public void AddRoot(string pathFolder, bool cleanup, bool check = true)
+  public void AddRoot(string path)
   {
-    if(check && !Directory.Exists(pathFolder))
-      return;
-    
-    roots.Add(new RootPath {path = pathFolder, cleanup = cleanup});
-  }
-  
-  public void Scan()
-  {
-    foreach(var root in roots)
-    {
-      var files = Directory.GetFiles(root.path, "*.bhl", SearchOption.AllDirectories);
-      documentPaths.AddRange(files);
-    }
+    roots.Add(path);
   }
   
   public void TryAddDocument(string path, string text = null)
@@ -78,13 +53,32 @@ public class Workspace
           text = Encoding.UTF8.GetString(buffer);
         }
         
-        if(-1 == documentPaths.IndexOf(path))
-          documentPaths.Add(path);
-        
         document.Sync(text);
         documents.Add(path, document);
       }
     }
+  }
+
+  public BHLDocument OpenDocument(Uri uri, string text)
+  {
+    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
+
+    BHLDocument document;
+    if(documents.TryGetValue(path, out document))
+    {
+      document.Sync(text);
+    }
+    else
+    {
+      document = CreateDocument(path);
+
+      document.uri = uri;
+      document.Sync(text);
+
+      documents.Add(path, document);
+    }
+
+    return document;
   }
   
   BHLDocument CreateDocument(string path)
@@ -110,10 +104,10 @@ public class Workspace
   {
     path = bhl.Util.NormalizeFilePath(path);
     
-    if(documents.ContainsKey(path))
-      return documents[path];
+    BHLDocument document;
+    documents.TryGetValue(path, out document);
 
-    return null;
+    return document;
   }
   
   public IEnumerable<BHLDocument> ForEachBhlImports(BHLDocument root)
@@ -144,7 +138,7 @@ public class Workspace
 
   public string ResolveImportPath(string docpath, string import, string ext)
   {
-    var filePath = string.Empty;
+    var resolved_path = string.Empty;
 
     foreach(var root in roots)
     {
@@ -155,34 +149,25 @@ public class Workspace
         path = Path.GetFullPath(Path.Combine(dir, import) + ext);
         if(File.Exists(path))
         {
-          filePath = path;
+          resolved_path = path;
           break;
         }
       }
       else
       {
-        path = Path.GetFullPath(root.path + "/" + import + ext);
+        path = Path.GetFullPath(root + "/" + import + ext);
         if(File.Exists(path))
         {
-          filePath = path;
+          resolved_path = path;
           break;
         }
       }
     }
     
-    foreach(var path in documentPaths)
-    {
-      if(-1 != path.IndexOf(import + ext, StringComparison.Ordinal))
-      {
-        filePath = path;
-        break;
-      }
-    }
+    if(!string.IsNullOrEmpty(resolved_path))
+      resolved_path = bhl.Util.NormalizeFilePath(resolved_path);
     
-    if(!string.IsNullOrEmpty(filePath))
-      filePath = bhl.Util.NormalizeFilePath(filePath);
-    
-    return filePath;
+    return resolved_path;
   }
 }
 
