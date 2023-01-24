@@ -238,8 +238,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSynchronizationService(ws));
     
-    string dir = GetTestDirPath();
-    Directory.Delete(dir, true/*recursive*/);
+    CleanTestFiles();
 
     var uri = MakeUri(NewTestDocument("bhl1.bhl", bhl_v1));
     
@@ -262,7 +261,7 @@ public class TestLSP : BHL_TestBase
       );
     }
 
-    Directory.Delete(dir, true/*recursive*/);
+    CleanTestFiles();
 
     {
       NewTestDocument("bhl1.bhl", bhl_v2);
@@ -320,7 +319,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSignatureHelpService(ws));
     
-    Directory.Delete(GetTestDirPath(), true/*recursive*/);
+    CleanTestFiles();
     
     Uri uri = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
 
@@ -394,8 +393,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentGoToService(ws));
     
-    string dir = GetTestDirPath();
-    Directory.Delete(dir, true/*recursive*/);
+    CleanTestFiles();
     
     Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
     Uri uri2 = MakeUri(NewTestDocument("bhl2.bhl", bhl2));
@@ -467,8 +465,7 @@ public class TestLSP : BHL_TestBase
     var rpc = new JsonRpc();
     rpc.AttachService(new TextDocumentSemanticTokensService(ws));
     
-    string dir = GetTestDirPath();
-    Directory.Delete(dir, true/*recursive*/);
+    CleanTestFiles();
     
     Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
     
@@ -486,6 +483,13 @@ public class TestLSP : BHL_TestBase
   static Uri MakeUri(string path)
   {
     return new Uri("file://" + path);
+  }
+
+  static void CleanTestFiles()
+  {
+    string dir = GetTestDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true/*recursive*/);
   }
   
   static string GetTestDirPath()
