@@ -10,7 +10,7 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("Unix line endings", () => {
       string bhl = "func int test()\n{\nwhat()\n}";
-      var doc = new BHLTextDocument();
+      var doc = new BHLDocument();
       doc.Sync(bhl);
 
       AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
@@ -25,7 +25,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest("Windows line endings", () => {
       string bhl = "func int test()\r\n{\r\nwhat()\r\n}";
-      var doc = new BHLTextDocument();
+      var doc = new BHLDocument();
       doc.Sync(bhl);
 
       AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
@@ -40,7 +40,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest("Mixed line endings", () => {
       string bhl = "func int test()\n{\r\nwhat()\r}";
-      var doc = new BHLTextDocument();
+      var doc = new BHLDocument();
       doc.Sync(bhl);
 
       AssertEqual("f", bhl[doc.CalcByteIndex(0, 0)].ToString());
@@ -58,7 +58,7 @@ public class TestLSP : BHL_TestBase
   public void TestDocumentGetLineColumn()
   {
     string bhl = "func int test()\n{\nwhat()\n}";
-    var doc = new BHLTextDocument();
+    var doc = new BHLDocument();
     doc.Sync(bhl);
 
     {

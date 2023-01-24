@@ -18,7 +18,7 @@ public class Workspace
   }
   
   private List<RootPath> roots = new List<RootPath>();
-  private Dictionary<string, TextDocument> documents = new Dictionary<string, TextDocument>();
+  private Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
   List<string> documentPaths = new List<string>();
 
   public TextDocumentSyncKind syncKind { get; set; } = TextDocumentSyncKind.Full;
@@ -87,26 +87,26 @@ public class Workspace
     }
   }
   
-  TextDocument CreateDocument(string path)
+  BHLDocument CreateDocument(string path)
   {
     if(File.Exists(path))
     {
       string ext = Path.GetExtension(path);
       switch(ext)
       {
-        case ".bhl": return new BHLTextDocument();
+        case ".bhl": return new BHLDocument();
       }
     }
     
     return null;
   }
   
-  public TextDocument FindDocument(Uri uri)
+  public BHLDocument FindDocument(Uri uri)
   {
     return FindDocument(uri.LocalPath);
   }
   
-  public TextDocument FindDocument(string path)
+  public BHLDocument FindDocument(string path)
   {
     path = bhl.Util.NormalizeFilePath(path);
     
@@ -116,9 +116,9 @@ public class Workspace
     return null;
   }
   
-  public IEnumerable<BHLTextDocument> ForEachBhlImports(BHLTextDocument root)
+  public IEnumerable<BHLDocument> ForEachBhlImports(BHLDocument root)
   {
-    var toVisit = new Queue<BHLTextDocument>();
+    var toVisit = new Queue<BHLDocument>();
     
     toVisit.Enqueue(root);
     while(toVisit.Count > 0)
@@ -133,7 +133,7 @@ public class Workspace
         {
           TryAddDocument(path);
 
-          if(FindDocument(path) is BHLTextDocument doc)
+          if(FindDocument(path) is BHLDocument doc)
             toVisit.Enqueue(doc);
         }
       }

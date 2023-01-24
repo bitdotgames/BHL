@@ -316,7 +316,7 @@ public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpService
   {
     workspace.TryAddDocument(args.textDocument.uri);
 
-    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    if(workspace.FindDocument(args.textDocument.uri) is BHLDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
@@ -445,7 +445,8 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
   
   public override RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
-    if(workspace.FindDocument(args.textDocument.uri) is TextDocument document)
+    var document = workspace.FindDocument(args.textDocument.uri);
+    if(document != null)
     {
       if(workspace.syncKind == TextDocumentSyncKind.Full)
       {
@@ -515,14 +516,14 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
   {
     workspace.TryAddDocument(args.textDocument.uri);
 
-    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    if(workspace.FindDocument(args.textDocument.uri) is BHLDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
       
       int idx = document.CalcByteIndex(line, character);
       
-      BHLTextDocument funcDeclBhlDocument = null;
+      BHLDocument funcDeclBhlDocument = null;
 
       bhlParser.FuncDeclContext funcDecl = null;
       bhlParser.CallExpContext callExp = null;
@@ -626,7 +627,7 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
         if(!string.IsNullOrEmpty(classTypeName))
         {
           bhlParser.ClassDeclContext classDecl = null;
-          BHLTextDocument classDeclBhlDocument = null;
+          BHLDocument classDeclBhlDocument = null;
           
           foreach(var doc in workspace.ForEachBhlImports(document))
           {
@@ -806,7 +807,7 @@ public class TextDocumentHoverService : TextDocumentHoverServiceProto
   {
     workspace.TryAddDocument(args.textDocument.uri);
 
-    if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
+    if(workspace.FindDocument(args.textDocument.uri) is BHLDocument document)
     {
       int line = (int)args.position.line;
       int character = (int)args.position.character;
@@ -911,7 +912,7 @@ public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServi
 
     var document = workspace.FindDocument(args.textDocument.uri);
     
-    if(document is BHLTextDocument bhldocument)
+    if(document is BHLDocument bhldocument)
     {
       return RpcResult.Success(new SemanticTokens
       {

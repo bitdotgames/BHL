@@ -5,20 +5,42 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp {
 
-public abstract class TextDocument
+public class BHLDocument
 {
   public Uri uri;
   public string text;
   
   List<int> line2byte_offset = new List<int>();
+
+  BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
   
-  public virtual void Sync(string text)
+  public List<string> Imports => visitor.imports;
+  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
+  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => visitor.funcDecls;
+  public List<uint> DataSemanticTokens => visitor.dataSemanticTokens;
+  
+  public void Sync(string text)
   {
     this.text = text;
 
     ComputeLineByteOffsets();
+
+    visitor.VisitDocument(this);
   }
 
+  public bhlParser ToParser()
+  {
+    var ais = new AntlrInputStream(text.ToStream());
+    var lex = new bhlLexer(ais);
+    var tokens = new CommonTokenStream(lex);
+    var parser = new bhlParser(tokens);
+    
+    lex.RemoveErrorListeners();
+    parser.RemoveErrorListeners();
+
+    return parser;
+  }
+  
   void ComputeLineByteOffsets()
   {
     line2byte_offset.Clear();
@@ -90,9 +112,9 @@ public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
   public readonly List<uint> dataSemanticTokens = new List<uint>();
   
   int nextIdx;
-  BHLTextDocument document;
+  BHLDocument document;
 
-  public void VisitDocument(BHLTextDocument document)
+  public void VisitDocument(BHLDocument document)
   {
     this.document = document;
     nextIdx = 0;
@@ -1041,35 +1063,6 @@ public static class BHLSemanticTokens
       SemanticTokenModifiers.documentation, // 256
       SemanticTokenModifiers.defaultLibrary // 512
   };
-}
-
-public class BHLTextDocument : TextDocument
-{
-  readonly BHLTextDocumentVisitor visitor = new BHLTextDocumentVisitor();
-  
-  public List<string> Imports => visitor.imports;
-  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
-  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => visitor.funcDecls;
-  public List<uint> DataSemanticTokens => visitor.dataSemanticTokens;
-  
-  public override void Sync(string text)
-  {
-    base.Sync(text);
-    visitor.VisitDocument(this);
-  }
-  
-  public bhlParser ToParser()
-  {
-    var ais = new AntlrInputStream(text.ToStream());
-    var lex = new bhlLexer(ais);
-    var tokens = new CommonTokenStream(lex);
-    var parser = new bhlParser(tokens);
-    
-    lex.RemoveErrorListeners();
-    parser.RemoveErrorListeners();
-
-    return parser;
-  }
 }
 
 }
