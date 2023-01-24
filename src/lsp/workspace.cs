@@ -63,8 +63,7 @@ public class Workspace
   
   public void TryAddDocument(Uri uri, string text = null)
   {
-    string path = uri.LocalPath;
-    path = bhl.Util.NormalizeFilePath(path);
+    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
     
     if(!documents.ContainsKey(path))
     {

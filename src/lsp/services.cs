@@ -315,6 +315,7 @@ public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpService
   public override RpcResult SignatureHelp(SignatureHelpParams args)
   {
     workspace.TryAddDocument(args.textDocument.uri);
+
     if(workspace.FindDocument(args.textDocument.uri) is BHLTextDocument document)
     {
       int line = (int)args.position.line;
@@ -473,7 +474,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -482,7 +483,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -491,7 +492,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -760,7 +761,7 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -773,7 +774,7 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -786,7 +787,7 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
   {
     return RpcResult.Error(new ResponseError
     {
-      code = (int) ErrorCodes.RequestFailed,
+      code = (int)ErrorCodes.RequestFailed,
       message = "Not supported"
     });
   }
@@ -907,6 +908,7 @@ public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServi
   public override RpcResult SemanticTokensFull(SemanticTokensParams args)
   {
     workspace.TryAddDocument(args.textDocument.uri);
+
     var document = workspace.FindDocument(args.textDocument.uri);
     
     if(document is BHLTextDocument bhldocument)
