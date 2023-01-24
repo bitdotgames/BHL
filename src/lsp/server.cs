@@ -4,13 +4,11 @@ namespace bhl.lsp {
 
 public class Server
 {
-  Workspace workspace;
   IConnection connection;
   IJsonRpc rpc;
 
-  public Server(Workspace workspace, IConnection connection, IJsonRpc rpc)
+  public Server(IConnection connection, IJsonRpc rpc)
   {
-    this.workspace = workspace;
     this.connection = connection;
     this.rpc = rpc;
   }

@@ -43,7 +43,7 @@ public class LSP : ICmd
     rpc.AttachService(new TextDocumentHoverService(workspace));
     rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
     
-    var server = new Server(workspace, connection, rpc);
+    var server = new Server(connection, rpc);
     
     try
     {

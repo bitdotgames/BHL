@@ -240,7 +240,7 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
 
-    var uri = MakeUri(NewTestDocument("bhl1.bhl", bhl_v1));
+    var uri = MakeUri(MakeTestDocument("bhl1.bhl", bhl_v1));
     
     {
       string json =
@@ -264,7 +264,7 @@ public class TestLSP : BHL_TestBase
     CleanTestFiles();
 
     {
-      NewTestDocument("bhl1.bhl", bhl_v2);
+      MakeTestDocument("bhl1.bhl", bhl_v2);
 
       string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
              "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
@@ -321,7 +321,7 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
+    Uri uri = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
 
     {
       string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
@@ -395,8 +395,8 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
-    Uri uri2 = MakeUri(NewTestDocument("bhl2.bhl", bhl2));
+    Uri uri1 = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
+    Uri uri2 = MakeUri(MakeTestDocument("bhl2.bhl", bhl2));
     
     ws.AddRoot(GetTestDirPath(), true);
     
@@ -467,7 +467,7 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri1 = MakeUri(NewTestDocument("bhl1.bhl", bhl1));
+    Uri uri1 = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
     
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
@@ -498,7 +498,7 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static string NewTestDocument(string path, string text, List<string> files = null)
+  static string MakeTestDocument(string path, string text, List<string> files = null)
   {
     string full_path = GetTestDirPath() + "/" + path;
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));

@@ -448,12 +448,16 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
     {
       if(workspace.syncKind == TextDocumentSyncKind.Full)
       {
-        foreach(var contentChanges in args.contentChanges)
-          document.Sync(contentChanges.text);
+        foreach(var changes in args.contentChanges)
+          document.Sync(changes.text);
       }
       else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
       {
-        throw new NotImplementedException();
+        return RpcResult.Error(new ResponseError
+        {
+          code = (int)ErrorCodes.RequestFailed,
+          message = "Not supported"
+        });
       }
     }
     
