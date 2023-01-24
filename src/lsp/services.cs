@@ -11,157 +11,7 @@ namespace bhl.lsp {
 
 public interface IService {}
 
-public abstract class GeneralServiceProto : IService
-{
-  [RpcMethod("initialize")]
-  public abstract RpcResult Initialize(InitializeParams args);
-
-  [RpcMethod("initialized")]
-  public abstract RpcResult Initialized();
-
-  [RpcMethod("shutdown")]
-  public abstract RpcResult Shutdown();
-
-  [RpcMethod("exit")]
-  public abstract RpcResult Exit();
-}
-
-public abstract class DiagnosticServiceProto : IService
-{
-  [RpcMethod("$/cancelRequest")]
-  public abstract RpcResult CancelRequest(CancelParams args);
-}
-
-public abstract class TextDocumentSynchronizationServiceProto : IService
-{
-  [RpcMethod("textDocument/didOpen")]
-  public abstract RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args);
-  
-  [RpcMethod("textDocument/didChange")]
-  public abstract RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args);
-  
-  [RpcMethod("textDocument/willSave")]
-  public abstract RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args);
-  
-  [RpcMethod("textDocument/willSaveWaitUntil")]
-  public abstract RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args);
-  
-  [RpcMethod("textDocument/didSave")]
-  public abstract RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args);
-  
-  [RpcMethod("textDocument/didClose")]
-  public abstract RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args);
-}
-
-public abstract class TextDocumentSignatureHelpServiceProto : IService
-{
-  [RpcMethod("textDocument/signatureHelp")]
-  public abstract RpcResult SignatureHelp(SignatureHelpParams args);
-}
-
-public abstract class TextDocumentGoToServiceProto : IService
-{
-  [RpcMethod("textDocument/declaration")]
-  public abstract RpcResult GotoDeclaration(DeclarationParams args);
-  
-  [RpcMethod("textDocument/definition")]
-  public abstract RpcResult GotoDefinition(DefinitionParams args);
-
-  [RpcMethod("textDocument/typeDefinition")]
-  public abstract RpcResult GotoTypeDefinition(TypeDefinitionParams args);
-
-  [RpcMethod("textDocument/implementation")]
-  public abstract RpcResult GotoImplementation(ImplementationParams args);
-}
-
-public abstract class TextDocumentHoverServiceProto : IService
-{
-  [RpcMethod("textDocument/hover")]
-  public abstract RpcResult Hover(TextDocumentPositionParams args);
-}
-
-public abstract class TextDocumentFindReferencesServiceProto : IService
-{
-  [RpcMethod("textDocument/references")]
-  public abstract RpcResult FindReferences(ReferenceParams args);
-}
-
-public abstract class TextDocumentSemanticTokensServiceProto : IService
-{
-  [RpcMethod("textDocument/semanticTokens/full")]
-  public abstract RpcResult SemanticTokensFull(SemanticTokensParams args);
-}
-
-public abstract class TextDocumentServiceProto : IService
-{
-  [RpcMethod("textDocument/completion")]
-  public abstract RpcResult Completion(CompletionParams args);
-
-  [RpcMethod("completionItem/resolve")]
-  public abstract RpcResult ResolveCompletionItem(CompletionItem args);
-  
-  [RpcMethod("textDocument/documentHighlight")]
-  public abstract RpcResult DocumentHighlight(TextDocumentPositionParams args);
-
-  [RpcMethod("textDocument/documentSymbol")]
-  public abstract RpcResult DocumentSymbols(DocumentSymbolParams args);
-
-  [RpcMethod("textDocument/documentColor")]
-  public abstract RpcResult DocumentColor(DocumentColorParams args);
-
-  [RpcMethod("textDocument/colorPresentation")]
-  public abstract RpcResult ColorPresentation(ColorPresentationParams args);
-
-  [RpcMethod("textDocument/formatting")]
-  public abstract RpcResult DocumentFormatting(DocumentFormattingParams args);
-
-  [RpcMethod("textDocument/rangeFormatting")]
-  public abstract RpcResult DocumentRangeFormatting(DocumentRangeFormattingParams args);
-
-  [RpcMethod("textDocument/onTypeFormatting")]
-  public abstract RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
-  
-  [RpcMethod("textDocument/codeAction")]
-  public abstract RpcResult CodeAction(CodeActionParams args);
-
-  [RpcMethod("textDocument/codeLens")]
-  public abstract RpcResult CodeLens(CodeLensParams args);
-
-  [RpcMethod("codeLens/resolve")]
-  public abstract RpcResult ResolveCodeLens(CodeLens args);
-
-  [RpcMethod("textDocument/documentLink")]
-  public abstract RpcResult DocumentLink(DocumentLinkParams args);
-
-  [RpcMethod("documentLink/resolve")]
-  public abstract RpcResult ResolveDocumentLink(DocumentLink args);
-
-  [RpcMethod("textDocument/rename")]
-  public abstract RpcResult Rename(RenameParams args);
-
-  [RpcMethod("textDocument/foldingRange")]
-  public abstract RpcResult FoldingRange(FoldingRangeParams args);
-}
-
-public abstract class WorkspaceServiceProto : IService
-{
-  [RpcMethod("workspace/didChangeWorkspaceFolders")]
-  public abstract RpcResult DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams args);
-
-  [RpcMethod("workspace/didChangeConfiguration")]
-  public abstract RpcResult DidChangeConfiguration(DidChangeConfigurationParams args);
-
-  [RpcMethod("workspace/didChangeWatchedFiles")]
-  public abstract RpcResult DidChangeWatchedFiles(DidChangeWatchedFilesParams args);
-
-  [RpcMethod("workspace/symbol")]
-  public abstract RpcResult Symbol(WorkspaceSymbolParams args);
-
-  [RpcMethod("workspace/executeCommand")]
-  public abstract RpcResult ExecuteCommand(ExecuteCommandParams args);
-}
-  
-public class GeneralService : GeneralServiceProto
+public class GeneralService : IService
 {
   Workspace workspace;
 
@@ -172,7 +22,8 @@ public class GeneralService : GeneralServiceProto
     this.workspace = workspace;
   }
 
-  public override RpcResult Initialize(InitializeParams args)
+  [RpcMethod("initialize")]
+  public RpcResult Initialize(InitializeParams args)
   {
     processId = args.processId;
     
@@ -280,19 +131,22 @@ public class GeneralService : GeneralServiceProto
     });
   }
 
-  public override RpcResult Initialized()
+  [RpcMethod("initialized")]
+  public RpcResult Initialized()
   {
     return RpcResult.Success();
   }
 
-  public override RpcResult Shutdown()
+  [RpcMethod("shutdown")]
+  public RpcResult Shutdown()
   {
     workspace.Shutdown();
 
     return RpcResult.Success();
   }
 
-  public override RpcResult Exit()
+  [RpcMethod("exit")]
+  public RpcResult Exit()
   {
     if(processId != null)
     {
@@ -304,7 +158,7 @@ public class GeneralService : GeneralServiceProto
   }
 }
 
-public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpServiceProto
+public class TextDocumentSignatureHelpService : IService
 {
   Workspace workspace;
 
@@ -313,7 +167,8 @@ public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpService
     this.workspace = workspace;
   }
 
-  public override RpcResult SignatureHelp(SignatureHelpParams args)
+  [RpcMethod("textDocument/signatureHelp")]
+  public RpcResult SignatureHelp(SignatureHelpParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -426,7 +281,7 @@ public class TextDocumentSignatureHelpService : TextDocumentSignatureHelpService
   }
 }
 
-public class TextDocumentSynchronizationService : TextDocumentSynchronizationServiceProto
+public class TextDocumentSynchronizationService : IService
 {
   Workspace workspace;
 
@@ -435,14 +290,16 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
     this.workspace = workspace;
   }
 
-  public override RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
+  [RpcMethod("textDocument/didOpen")]
+  public RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
   {
     workspace.OpenDocument(args.textDocument.uri, args.textDocument.text);
 
     return RpcResult.Success();
   }
   
-  public override RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
+  [RpcMethod("textDocument/didChange")]
+  public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
     var document = workspace.FindDocument(args.textDocument.uri);
     if(document != null)
@@ -465,12 +322,14 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
     return RpcResult.Success();
   }
 
-  public override RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
+  [RpcMethod("textDocument/didClose")]
+  public RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
   {
     return RpcResult.Success();
   }
   
-  public override RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
+  [RpcMethod("textDocument/willSave")]
+  public RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -479,7 +338,8 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
     });
   }
 
-  public override RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
+  [RpcMethod("textDocument/willSaveWaitUntil")]
+  public RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -488,7 +348,8 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
     });
   }
 
-  public override RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
+  [RpcMethod("textDocument/didSave")]
+  public RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -498,7 +359,7 @@ public class TextDocumentSynchronizationService : TextDocumentSynchronizationSer
   }
 }
 
-public class TextDocumentGoToService : TextDocumentGoToServiceProto
+public class TextDocumentGoToService : IService
 {
   Workspace workspace;
 
@@ -511,7 +372,8 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.definition.linkSupport.
    */
-  public override RpcResult GotoDefinition(DefinitionParams args)
+  [RpcMethod("textDocument/definition")]
+  public RpcResult GotoDefinition(DefinitionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -754,7 +616,8 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.declaration.linkSupport.
    */
-  public override RpcResult GotoDeclaration(DeclarationParams args)
+  [RpcMethod("textDocument/declaration")]
+  public RpcResult GotoDeclaration(DeclarationParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -767,7 +630,8 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.typeDefinition.linkSupport.
    */
-  public override RpcResult GotoTypeDefinition(TypeDefinitionParams args)
+  [RpcMethod("textDocument/typeDefinition")]
+  public RpcResult GotoTypeDefinition(TypeDefinitionParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -780,7 +644,8 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.implementation.linkSupport.
    */
-  public override RpcResult GotoImplementation(ImplementationParams args)
+  [RpcMethod("textDocument/implementation")]
+  public RpcResult GotoImplementation(ImplementationParams args)
   {
     return RpcResult.Error(new ResponseError
     {
@@ -790,7 +655,7 @@ public class TextDocumentGoToService : TextDocumentGoToServiceProto
   }
 }
 
-public class TextDocumentHoverService : TextDocumentHoverServiceProto
+public class TextDocumentHoverService : IService
 {
   Workspace workspace;
 
@@ -799,7 +664,8 @@ public class TextDocumentHoverService : TextDocumentHoverServiceProto
     this.workspace = workspace;
   }
 
-  public override RpcResult Hover(TextDocumentPositionParams args)
+  [RpcMethod("textDocument/hover")]
+  public RpcResult Hover(TextDocumentPositionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -890,7 +756,7 @@ public class TextDocumentHoverService : TextDocumentHoverServiceProto
   }
 }
 
-public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServiceProto
+public class TextDocumentSemanticTokensService : IService
 {
   Workspace workspace;
 
@@ -899,7 +765,8 @@ public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServi
     this.workspace = workspace;
   }
 
-  public override RpcResult SemanticTokensFull(SemanticTokensParams args)
+  [RpcMethod("textDocument/semanticTokens/full")]
+  public RpcResult SemanticTokensFull(SemanticTokensParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -909,5 +776,80 @@ public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServi
     });
   }
 }
+
+//public class WorkspaceService : IService
+//{
+//  [RpcMethod("workspace/didChangeWorkspaceFolders")]
+//  public RpcResult DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams args);
+//
+//  [RpcMethod("workspace/didChangeConfiguration")]
+//  public RpcResult DidChangeConfiguration(DidChangeConfigurationParams args);
+//
+//  [RpcMethod("workspace/didChangeWatchedFiles")]
+//  public RpcResult DidChangeWatchedFiles(DidChangeWatchedFilesParams args);
+//
+//  [RpcMethod("workspace/symbol")]
+//  public RpcResult Symbol(WorkspaceSymbolParams args);
+//
+//  [RpcMethod("workspace/executeCommand")]
+//  public RpcResult ExecuteCommand(ExecuteCommandParams args);
+//}
+//  
+//public class TextDocumentFindReferencesServiceProto : IService
+//{
+//  [RpcMethod("textDocument/references")]
+//  public RpcResult FindReferences(ReferenceParams args);
+//}
+//
+//public class TextDocumentServiceProto : IService
+//{
+//  [RpcMethod("textDocument/completion")]
+//  public RpcResult Completion(CompletionParams args);
+//
+//  [RpcMethod("completionItem/resolve")]
+//  public RpcResult ResolveCompletionItem(CompletionItem args);
+//  
+//  [RpcMethod("textDocument/documentHighlight")]
+//  public RpcResult DocumentHighlight(TextDocumentPositionParams args);
+//
+//  [RpcMethod("textDocument/documentSymbol")]
+//  public RpcResult DocumentSymbols(DocumentSymbolParams args);
+//
+//  [RpcMethod("textDocument/documentColor")]
+//  public RpcResult DocumentColor(DocumentColorParams args);
+//
+//  [RpcMethod("textDocument/colorPresentation")]
+//  public RpcResult ColorPresentation(ColorPresentationParams args);
+//
+//  [RpcMethod("textDocument/formatting")]
+//  public RpcResult DocumentFormatting(DocumentFormattingParams args);
+//
+//  [RpcMethod("textDocument/rangeFormatting")]
+//  public RpcResult DocumentRangeFormatting(DocumentRangeFormattingParams args);
+//
+//  [RpcMethod("textDocument/onTypeFormatting")]
+//  public RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
+//  
+//  [RpcMethod("textDocument/codeAction")]
+//  public RpcResult CodeAction(CodeActionParams args);
+//
+//  [RpcMethod("textDocument/codeLens")]
+//  public RpcResult CodeLens(CodeLensParams args);
+//
+//  [RpcMethod("codeLens/resolve")]
+//  public RpcResult ResolveCodeLens(CodeLens args);
+//
+//  [RpcMethod("textDocument/documentLink")]
+//  public RpcResult DocumentLink(DocumentLinkParams args);
+//
+//  [RpcMethod("documentLink/resolve")]
+//  public RpcResult ResolveDocumentLink(DocumentLink args);
+//
+//  [RpcMethod("textDocument/rename")]
+//  public RpcResult Rename(RenameParams args);
+//
+//  [RpcMethod("textDocument/foldingRange")]
+//  public RpcResult FoldingRange(FoldingRangeParams args);
+//}
 
 }
