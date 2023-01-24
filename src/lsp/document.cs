@@ -82,14 +82,6 @@ public abstract class TextDocument
   }
 }
 
-public class JSTextDocument : TextDocument
-{
-  public override void Sync(string text)
-  {
-    base.Sync(text);
-  }
-}
-
 public class BHLTextDocumentVisitor : bhlBaseVisitor<object>
 {
   public readonly List<string> imports = new List<string>();

@@ -95,7 +95,6 @@ public class Workspace
       switch(ext)
       {
         case ".bhl": return new BHLTextDocument();
-        case ".js": return new JSTextDocument();
       }
     }
     

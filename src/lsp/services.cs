@@ -919,14 +919,6 @@ public class TextDocumentSemanticTokensService : TextDocumentSemanticTokensServi
       });
     }
     
-    if(document is JSTextDocument /*jsdocument*/)
-    {
-      return RpcResult.Success(new SemanticTokens
-      {
-          data = new uint[0]
-      });
-    }
-    
     return RpcResult.Success();
   }
 }
