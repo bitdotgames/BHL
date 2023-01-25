@@ -4,9 +4,7 @@ using System.Text.RegularExpressions;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace bhl.lsp {
-
-public interface IService {}
+namespace bhl.lsp.spec {
 
 public class GeneralService : IService
 {
@@ -110,8 +108,8 @@ public class GeneralService : IService
           range = false,
           legend = new SemanticTokensLegend
           {
-            tokenTypes = BHLSemanticTokens.semanticTokenTypes,
-            tokenModifiers = BHLSemanticTokens.semanticTokenModifiers
+            tokenTypes = BHLSemanticTokens.token_types,
+            tokenModifiers = BHLSemanticTokens.modifiers
           }
         };
       }
@@ -503,16 +501,14 @@ public class TextDocumentGoToService : IService
           }
 
           int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
-          var start = classDeclBhlDocument.Code.GetLineColumn(classDeclIdx);
-          var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
-      
+          var start_pos = classDeclBhlDocument.Code.GetIndexPosition(classDeclIdx);
           return RpcResult.Success(new Location
           {
             uri = classDeclBhlDocument.uri,
             range = new Range
             {
-              start = startPos,
-              end = startPos
+              start = start_pos,
+              end = start_pos
             }
           });
         }
@@ -571,16 +567,15 @@ public class TextDocumentGoToService : IService
     
     if(funcDecl != null)
     {
-      var start = funcDeclBhlDocument.Code.GetLineColumn(funcDecl.Start.StartIndex);
-      var startPos = new Position {line = (uint) start.Item1, character = (uint) start.Item2};
+      var start_pos = funcDeclBhlDocument.Code.GetIndexPosition(funcDecl.Start.StartIndex);
         
       return RpcResult.Success(new Location
       {
         uri = funcDeclBhlDocument.uri,
         range = new Range
         {
-          start = startPos,
-          end = startPos
+          start = start_pos,
+          end = start_pos
         }
       });
     }

@@ -12,7 +12,7 @@ public class Workspace
   List<string> roots = new List<string>();
   Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
-  public TextDocumentSyncKind syncKind = TextDocumentSyncKind.Full;
+  public spec.TextDocumentSyncKind syncKind = spec.TextDocumentSyncKind.Full;
 
   public bool declarationLinkSupport;
   public bool definitionLinkSupport;

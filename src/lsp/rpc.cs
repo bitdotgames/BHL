@@ -11,6 +11,8 @@ public interface IJsonRpc
   string Handle(string json);
 }
 
+public interface IService {}
+
 public class JsonRpc : IJsonRpc
 {
   List<IService> services = new List<IService>();
@@ -243,7 +245,7 @@ public abstract class MessageBase
 
 public class RequestMessage : MessageBase
 {
-  public SelectorType<Int32, Int64, string> id { get; set; }
+  public spec.SelectorType<Int32, Int64, string> id { get; set; }
   public string method { get; set; }
   public JToken @params { get; set; }
 }
@@ -257,7 +259,7 @@ public class ResponseError
 
 public class ResponseMessage : MessageBase
 {
-  public SelectorType<Int32, Int64, string> id { get; set; }
+  public spec.SelectorType<Int32, Int64, string> id { get; set; }
   public object result { get; set; }
   public ResponseError error { get; set; }
 }

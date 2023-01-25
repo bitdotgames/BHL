@@ -6,6 +6,28 @@ namespace bhl.lsp {
 
 public class Code
 {
+  public struct Position
+  {
+    public int line;
+    public int column;
+
+    public Position(int line, int column)
+    {
+      this.line = line;
+      this.column = column;
+    }
+
+    public spec.Position ToSpec()
+    {
+      return new spec.Position {line = (uint)line, character = (uint)column};
+    }
+
+    public static implicit operator spec.Position(Position pos)
+    {
+      return pos.ToSpec();
+    }
+  }
+
   public string Text { get; private set; }
 
   List<int> line2byte_offset = new List<int>();
@@ -48,10 +70,10 @@ public class Code
     return -1;
   }
   
-  public (int, int) GetLineColumn(int index)
+  public Position GetIndexPosition(int index)
   {
     if(index >= Text.Length)
-      return (-1, -1); 
+      return new Position(-1, -1); 
 
     // Binary search.
     int low = 0;
@@ -71,7 +93,7 @@ public class Code
     }
     
     var min = low <= high ? i : high;
-    return (min, index - line2byte_offset[min]);
+    return new Position(min, index - line2byte_offset[min]);
   }
 }
 
@@ -114,16 +136,16 @@ public static class Util
     }
   }
   
-  public static List<ParameterInformation> GetInfoParams(bhlParser.FuncDeclContext funcDecl)
+  public static List<spec.ParameterInformation> GetInfoParams(bhlParser.FuncDeclContext funcDecl)
   {
-    List<ParameterInformation> funcParameters = new List<ParameterInformation>();
+    var fn_params = new List<spec.ParameterInformation>();
 
     if(funcDecl.funcParams() is bhlParser.FuncParamsContext funcParams)
     {
-      var funcParamDeclares = funcParams.funcParamDeclare();
-      for (int k = 0; k < funcParamDeclares.Length; k++)
+      var fn_param_decls = funcParams.funcParamDeclare();
+      for (int k = 0; k < fn_param_decls.Length; k++)
       {
-        var fpd = funcParamDeclares[k];
+        var fpd = fn_param_decls[k];
         if(fpd.exception != null)
           continue;
 
@@ -131,7 +153,7 @@ public static class Util
         if(fpd.assignExp() is bhlParser.AssignExpContext assignExp)
           fpdl += assignExp.GetText();
         
-        funcParameters.Add(new ParameterInformation
+        fn_params.Add(new spec.ParameterInformation
         {
           label = fpdl,
           documentation = ""
@@ -139,7 +161,7 @@ public static class Util
       }
     }
     
-    return funcParameters;
+    return fn_params;
   }
 }
 

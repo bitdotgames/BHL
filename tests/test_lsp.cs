@@ -62,29 +62,29 @@ public class TestLSP : BHL_TestBase
     code.Update(bhl);
 
     {
-      var lc = code.GetLineColumn(0);
-      AssertEqual("f", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var pos = code.GetIndexPosition(0);
+      AssertEqual("f", bhl[code.CalcByteIndex(pos.line, pos.column)].ToString());
     }
 
     {
-      var lc = code.GetLineColumn(1);
-      AssertEqual("u", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var pos = code.GetIndexPosition(1);
+      AssertEqual("u", bhl[code.CalcByteIndex(pos.line, pos.column)].ToString());
     }
 
     {
-      var lc = code.GetLineColumn(16);
-      AssertEqual("{", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var pos = code.GetIndexPosition(16);
+      AssertEqual("{", bhl[code.CalcByteIndex(pos.line, pos.column)].ToString());
     }
 
     {
-      var lc = code.GetLineColumn(bhl.Length-1);
-      AssertEqual("}", bhl[code.CalcByteIndex(lc.Item1, lc.Item2)].ToString());
+      var pos = code.GetIndexPosition(bhl.Length-1);
+      AssertEqual("}", bhl[code.CalcByteIndex(pos.line, pos.column)].ToString());
     }
 
     {
-      var lc = code.GetLineColumn(bhl.Length);
-      AssertEqual(-1, lc.Item1);
-      AssertEqual(-1, lc.Item2);
+      var pos = code.GetIndexPosition(bhl.Length);
+      AssertEqual(-1, pos.line);
+      AssertEqual(-1, pos.column);
     }
   }
 
@@ -134,7 +134,7 @@ public class TestLSP : BHL_TestBase
     SubTest("invalid params", () =>
     {
       var rpc = new JsonRpc();
-      rpc.AttachService(new GeneralService(new Workspace()));
+      rpc.AttachService(new bhl.lsp.spec.GeneralService(new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -147,7 +147,7 @@ public class TestLSP : BHL_TestBase
   public void TestInitShutdownExitRpc()
   {
     var rpc = new JsonRpc();
-    rpc.AttachService(new GeneralService(new Workspace()));
+    rpc.AttachService(new bhl.lsp.spec.GeneralService(new Workspace()));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -236,7 +236,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSynchronizationService(ws));
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(ws));
     
     CleanTestFiles();
 
@@ -317,7 +317,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSignatureHelpService(ws));
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSignatureHelpService(ws));
     
     CleanTestFiles();
     
@@ -391,7 +391,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentGoToService(ws));
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentGoToService(ws));
     
     CleanTestFiles();
     
@@ -463,7 +463,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc();
-    rpc.AttachService(new TextDocumentSemanticTokensService(ws));
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSemanticTokensService(ws));
     
     CleanTestFiles();
     
@@ -515,9 +515,9 @@ public class TestLSP : BHL_TestBase
       throw new Exception("Needle not found: " + needle);
     var indexer = new Code();
     indexer.Update(code);
-    var lc = indexer.GetLineColumn(idx);
-    if(lc.Item1 == -1 && lc.Item2 == -1)
-      throw new Exception("Needle not mapped: " + needle);
-    return "{\"line\":" + lc.Item1 + ",\"character\":" + lc.Item2 + "}";
+    var pos = indexer.GetIndexPosition(idx);
+    if(pos.line == -1 && pos.column == -1)
+      throw new Exception("Needle not mapped position: " + needle);
+    return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
   }
 }
