@@ -179,7 +179,7 @@ public class TextDocumentSynchronizationService : IService
       if(workspace.syncKind == TextDocumentSyncKind.Full)
       {
         foreach(var changes in args.contentChanges)
-          document.Sync(changes.text);
+          document.Update(changes.text);
       }
       else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
       {

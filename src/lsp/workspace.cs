@@ -53,14 +53,14 @@ public class Workspace
     BHLDocument document;
     if(documents.TryGetValue(path, out document))
     {
-      document.Sync(text);
+      document.Update(text);
     }
     else
     {
       document = CreateDocument(path);
 
       document.uri = uri;
-      document.Sync(text);
+      document.Update(text);
 
       documents.Add(path, document);
     }
