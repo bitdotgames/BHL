@@ -6,13 +6,13 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp.spec {
 
-public class GeneralService : IService
+public class LifecycleService : IService
 {
   Workspace workspace;
 
   int? processId;
   
-  public GeneralService(Workspace workspace)
+  public LifecycleService(Workspace workspace)
   {
     this.workspace = workspace;
   }
@@ -153,6 +153,84 @@ public class GeneralService : IService
   }
 }
 
+public class TextDocumentSynchronizationService : IService
+{
+  Workspace workspace;
+
+  public TextDocumentSynchronizationService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
+  [RpcMethod("textDocument/didOpen")]
+  public RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
+  {
+    workspace.OpenDocument(args.textDocument.uri, args.textDocument.text);
+
+    return RpcResult.Success();
+  }
+  
+  [RpcMethod("textDocument/didChange")]
+  public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
+  {
+    var document = workspace.FindDocument(args.textDocument.uri);
+    if(document != null)
+    {
+      if(workspace.syncKind == TextDocumentSyncKind.Full)
+      {
+        foreach(var changes in args.contentChanges)
+          document.Sync(changes.text);
+      }
+      else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
+      {
+        return RpcResult.Error(new ResponseError
+        {
+          code = (int)ErrorCodes.RequestFailed,
+          message = "Not supported"
+        });
+      }
+    }
+    
+    return RpcResult.Success();
+  }
+
+  [RpcMethod("textDocument/didClose")]
+  public RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
+  {
+    return RpcResult.Success();
+  }
+  
+  [RpcMethod("textDocument/willSave")]
+  public RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
+  {
+    return RpcResult.Error(new ResponseError
+    {
+      code = (int)ErrorCodes.RequestFailed,
+      message = "Not supported"
+    });
+  }
+
+  [RpcMethod("textDocument/willSaveWaitUntil")]
+  public RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
+  {
+    return RpcResult.Error(new ResponseError
+    {
+      code = (int)ErrorCodes.RequestFailed,
+      message = "Not supported"
+    });
+  }
+
+  [RpcMethod("textDocument/didSave")]
+  public RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
+  {
+    return RpcResult.Error(new ResponseError
+    {
+      code = (int)ErrorCodes.RequestFailed,
+      message = "Not supported"
+    });
+  }
+}
+
 public class TextDocumentSignatureHelpService : IService
 {
   Workspace workspace;
@@ -273,84 +351,6 @@ public class TextDocumentSignatureHelpService : IService
     funcSignature.label = label;
     funcSignature.parameters = funcParameters.ToArray();
     return funcSignature;
-  }
-}
-
-public class TextDocumentSynchronizationService : IService
-{
-  Workspace workspace;
-
-  public TextDocumentSynchronizationService(Workspace workspace)
-  {
-    this.workspace = workspace;
-  }
-
-  [RpcMethod("textDocument/didOpen")]
-  public RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
-  {
-    workspace.OpenDocument(args.textDocument.uri, args.textDocument.text);
-
-    return RpcResult.Success();
-  }
-  
-  [RpcMethod("textDocument/didChange")]
-  public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
-  {
-    var document = workspace.FindDocument(args.textDocument.uri);
-    if(document != null)
-    {
-      if(workspace.syncKind == TextDocumentSyncKind.Full)
-      {
-        foreach(var changes in args.contentChanges)
-          document.Sync(changes.text);
-      }
-      else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
-      {
-        return RpcResult.Error(new ResponseError
-        {
-          code = (int)ErrorCodes.RequestFailed,
-          message = "Not supported"
-        });
-      }
-    }
-    
-    return RpcResult.Success();
-  }
-
-  [RpcMethod("textDocument/didClose")]
-  public RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
-  {
-    return RpcResult.Success();
-  }
-  
-  [RpcMethod("textDocument/willSave")]
-  public RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
-  {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
-  }
-
-  [RpcMethod("textDocument/willSaveWaitUntil")]
-  public RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
-  {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
-  }
-
-  [RpcMethod("textDocument/didSave")]
-  public RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
-  {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
   }
 }
 

@@ -11,20 +11,20 @@ public class BHLDocument
   
   public Code Code = new Code();
 
-  Parser visitor = new Parser();
+  Parser parser = new Parser();
 
   List<IParseTree> nodes = new List<IParseTree>();
   
-  public List<string> Imports => visitor.imports;
-  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => visitor.classDecls;
-  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => visitor.funcDecls;
-  public List<uint> DataSemanticTokens => visitor.dataSemanticTokens;
+  public List<string> Imports => parser.imports;
+  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => parser.classDecls;
+  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => parser.funcDecls;
+  public List<uint> DataSemanticTokens => parser.dataSemanticTokens;
   
   public void Sync(string text)
   {
     Code.Update(text);
 
-    visitor.Parse(this);
+    parser.Parse(this);
 
     foreach(var node in Util.IterateNodes(ToParser().program()))
       nodes.Add(node);
