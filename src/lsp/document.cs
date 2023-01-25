@@ -13,12 +13,12 @@ public class BHLDocument
 
   Parser parser = new Parser();
 
-  List<IParseTree> nodes = new List<IParseTree>();
+  List<IParseTree> rules = new List<IParseTree>();
   
   public List<string> Imports => parser.imports;
-  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => parser.classDecls;
-  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => parser.funcDecls;
-  public List<uint> DataSemanticTokens => parser.dataSemanticTokens;
+  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => parser.class_decls;
+  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => parser.func_decls;
+  public List<uint> DataSemanticTokens => parser.encoded_semantic_tokens;
   
   public void Update(string text)
   {
@@ -26,19 +26,19 @@ public class BHLDocument
 
     parser.Parse(this);
 
-    foreach(var node in Util.IterateNodes(ToParser().program()))
-      nodes.Add(node);
+    foreach(var rule in Parser.IterateRules(ToParser().program()))
+      rules.Add(rule);
   }
 
-  public ParserRuleContext FindNode(int line, int character)
+  public ParserRuleContext FindParserRule(int line, int character)
   {
-    return FindNodeByIndex(Code.CalcByteIndex(line, character));
+    return FindParserRuleByIndex(Code.CalcByteIndex(line, character));
   }
 
-  public ParserRuleContext FindNodeByIndex(int idx)
+  public ParserRuleContext FindParserRuleByIndex(int idx)
   {
     //TODO: use binary search?
-    foreach(var node in nodes)
+    foreach(var node in rules)
     {
       if(node is ParserRuleContext ctx && ctx.Start.StartIndex <= idx && ctx.Stop.StopIndex >= idx)
         return ctx;

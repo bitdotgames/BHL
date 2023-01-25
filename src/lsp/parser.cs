@@ -8,9 +8,9 @@ namespace bhl.lsp {
 public class Parser : bhlBaseVisitor<object>
 {
   public readonly List<string> imports = new List<string>();
-  public readonly Dictionary<string, bhlParser.FuncDeclContext> funcDecls = new Dictionary<string, bhlParser.FuncDeclContext>();
-  public readonly Dictionary<string, bhlParser.ClassDeclContext> classDecls = new Dictionary<string, bhlParser.ClassDeclContext>();
-  public readonly List<uint> dataSemanticTokens = new List<uint>();
+  public readonly Dictionary<string, bhlParser.FuncDeclContext> func_decls = new Dictionary<string, bhlParser.FuncDeclContext>();
+  public readonly Dictionary<string, bhlParser.ClassDeclContext> class_decls = new Dictionary<string, bhlParser.ClassDeclContext>();
+  public readonly List<uint> encoded_semantic_tokens = new List<uint>();
   
   int next_idx;
 
@@ -22,9 +22,9 @@ public class Parser : bhlBaseVisitor<object>
     next_idx = 0;
     
     imports.Clear();
-    funcDecls.Clear();
-    classDecls.Clear();
-    dataSemanticTokens.Clear();
+    func_decls.Clear();
+    class_decls.Clear();
+    encoded_semantic_tokens.Clear();
     
     VisitProgram(document.ToParser().program());
   }
@@ -44,8 +44,8 @@ public class Parser : bhlBaseVisitor<object>
     if(class_name != null)
     {
       var classDeclNameText = class_name.GetText();
-      if(!classDecls.ContainsKey(classDeclNameText))
-        classDecls.Add(classDeclNameText, ctx);
+      if(!class_decls.ContainsKey(classDeclNameText))
+        class_decls.Add(classDeclNameText, ctx);
     }
     
     AddSemanticToken(ctx.Start.StartIndex, class_name.Symbol.StartIndex - 1, spec.SemanticTokenTypes.keyword);
@@ -90,8 +90,8 @@ public class Parser : bhlBaseVisitor<object>
     if(func_name != null)
     {
       var funcDeclNameText = func_name.GetText();
-      if(!funcDecls.ContainsKey(funcDeclNameText))
-        funcDecls.Add(funcDeclNameText, ctx);
+      if(!func_decls.ContainsKey(funcDeclNameText))
+        func_decls.Add(funcDeclNameText, ctx);
     }
     
     var keyword_stop_idx = ret_type?.Start.StartIndex ?? (func_name?.Symbol.StartIndex ?? 0);
@@ -931,17 +931,82 @@ public class Parser : bhlBaseVisitor<object>
     }
     
     // line
-    dataSemanticTokens.Add((uint)diff_line);
+    encoded_semantic_tokens.Add((uint)diff_line);
     // startChar
-    dataSemanticTokens.Add((uint)diff_column);
+    encoded_semantic_tokens.Add((uint)diff_column);
     // length
-    dataSemanticTokens.Add((uint)(stop_idx - start_idx + 1));
+    encoded_semantic_tokens.Add((uint)(stop_idx - start_idx + 1));
     // tokenType
-    dataSemanticTokens.Add((uint)tidx);
+    encoded_semantic_tokens.Add((uint)tidx);
     // tokenModifiers
-    dataSemanticTokens.Add((uint)bitTokenModifiers);
+    encoded_semantic_tokens.Add((uint)bitTokenModifiers);
 
     next_idx = start_idx;
+  }
+
+  public static IEnumerable<IParseTree> IterateRules(IParseTree root)
+  {
+    Stack<IParseTree> toVisit = new Stack<IParseTree>();
+    Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
+    toVisit.Push(root);
+    while(toVisit.Count > 0)
+    {
+      IParseTree node = toVisit.Peek();
+      if(node.ChildCount > 0)
+      {
+        if(visitedAncestors.Count == 0 || visitedAncestors.Peek() != node)
+        {
+          visitedAncestors.Push(node);
+
+          if(node as TerminalNodeImpl == null)
+          {
+            ParserRuleContext internal_node = node as ParserRuleContext;
+            int child_count = internal_node.children.Count;
+            for(int i = child_count - 1; i >= 0; --i)
+            {
+              IParseTree o = internal_node.children[i];
+              toVisit.Push(o);
+            }
+            
+            continue;
+          }
+        }
+        
+        visitedAncestors.Pop();
+      }
+      
+      yield return node;
+      
+      toVisit.Pop();
+    }
+  }
+
+  public static List<spec.ParameterInformation> GetInfoParams(bhlParser.FuncDeclContext funcDecl)
+  {
+    var fn_params = new List<spec.ParameterInformation>();
+
+    if(funcDecl.funcParams() is bhlParser.FuncParamsContext funcParams)
+    {
+      var fn_param_decls = funcParams.funcParamDeclare();
+      for (int k = 0; k < fn_param_decls.Length; k++)
+      {
+        var fpd = fn_param_decls[k];
+        if(fpd.exception != null)
+          continue;
+
+        var fpdl = $"{(fpd.isRef() != null ? "ref " : "")}{fpd.type().nsName().GetText()} {fpd.NAME().GetText()}";
+        if(fpd.assignExp() is bhlParser.AssignExpContext assignExp)
+          fpdl += assignExp.GetText();
+        
+        fn_params.Add(new spec.ParameterInformation
+        {
+          label = fpdl,
+          documentation = ""
+        });
+      }
+    }
+    
+    return fn_params;
   }
 }
 

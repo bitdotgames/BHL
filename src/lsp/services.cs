@@ -314,15 +314,15 @@ public class TextDocumentSignatureHelpService : IService
     
     string label = funcDecl.NAME().GetText()+"(";
     
-    List<ParameterInformation> funcParameters = Util.GetInfoParams(funcDecl);
+    var fn_params = Parser.GetInfoParams(funcDecl);
     
-    if(funcParameters.Count > 0)
+    if(fn_params.Count > 0)
     {
-      for(int k = 0; k < funcParameters.Count; k++)
+      for(int k = 0; k < fn_params.Count; k++)
       {
-        var funcParameter = funcParameters[k];
+        var funcParameter = fn_params[k];
         label += funcParameter.label.Value;
-        if(k != funcParameters.Count - 1)
+        if(k != fn_params.Count - 1)
           label += ", ";
       }
     }
@@ -349,7 +349,7 @@ public class TextDocumentSignatureHelpService : IService
       label += ":void";
 
     funcSignature.label = label;
-    funcSignature.parameters = funcParameters.ToArray();
+    funcSignature.parameters = fn_params.ToArray();
     return funcSignature;
   }
 }
@@ -375,7 +375,7 @@ public class TextDocumentGoToService : IService
     int line = (int)args.position.line;
     int character = (int)args.position.character;
     
-    var node = document.FindNode(line, character);
+    var node = document.FindParserRule(line, character);
     var funcDecl     = node as bhlParser.FuncDeclContext;
     var callExp      = node as bhlParser.CallExpContext;
     var memberAccess = node as bhlParser.MemberAccessContext;
@@ -432,7 +432,7 @@ public class TextDocumentGoToService : IService
           
           if(memberAccessParentFuncDecl?.NAME() != null)
           {
-            foreach(IParseTree memberFuncNode in Util.IterateNodes(memberAccessParentFuncDecl))
+            foreach(IParseTree memberFuncNode in Parser.IterateRules(memberAccessParentFuncDecl))
             {
               if(memberFuncNode is bhlParser.FuncParamDeclareContext funcParamDeclare)
               {
@@ -643,7 +643,7 @@ public class TextDocumentHoverService : IService
     int line = (int)args.position.line;
     int character = (int)args.position.character;
     
-    var node = document.FindNode(line, character);
+    var node = document.FindParserRule(line, character);
 
     var callExp = node as bhlParser.CallExpContext;
     
@@ -665,9 +665,10 @@ public class TextDocumentHoverService : IService
     
     if(funcDecl != null)
     {
+      //TODO: all this information is available for symbols
       string label = funcDecl.NAME().GetText()+"(";
   
-      var funcParameters = Util.GetInfoParams(funcDecl);
+      var funcParameters = Parser.GetInfoParams(funcDecl);
   
       if(funcParameters.Count > 0)
       {
