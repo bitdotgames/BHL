@@ -944,27 +944,28 @@ public class Parser : bhlBaseVisitor<object>
     next_idx = start_idx;
   }
 
-  public static IEnumerable<IParseTree> IterateRules(IParseTree root)
+  public static IEnumerable<IParseTree> TraverseTree(IParseTree root)
   {
-    Stack<IParseTree> toVisit = new Stack<IParseTree>();
-    Stack<IParseTree> visitedAncestors = new Stack<IParseTree>();
+    var toVisit = new Stack<IParseTree>();
+    var visitedAncestors = new Stack<IParseTree>();
     toVisit.Push(root);
+
     while(toVisit.Count > 0)
     {
-      IParseTree node = toVisit.Peek();
+      var node = toVisit.Peek();
+
       if(node.ChildCount > 0)
       {
         if(visitedAncestors.Count == 0 || visitedAncestors.Peek() != node)
         {
           visitedAncestors.Push(node);
 
-          if(node as TerminalNodeImpl == null)
+          if(node is ParserRuleContext rule_node)
           {
-            ParserRuleContext internal_node = node as ParserRuleContext;
-            int child_count = internal_node.children.Count;
+            int child_count = rule_node.children.Count;
             for(int i = child_count - 1; i >= 0; --i)
             {
-              IParseTree o = internal_node.children[i];
+              IParseTree o = rule_node.children[i];
               toVisit.Push(o);
             }
             

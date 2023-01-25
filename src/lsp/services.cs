@@ -371,11 +371,9 @@ public class TextDocumentGoToService : IService
   public RpcResult GotoDefinition(DefinitionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-
-    int line = (int)args.position.line;
-    int character = (int)args.position.character;
     
-    var node = document.FindParserRule(line, character);
+    var node = document.FindParserRule(args.position);
+
     var funcDecl     = node as bhlParser.FuncDeclContext;
     var callExp      = node as bhlParser.CallExpContext;
     var memberAccess = node as bhlParser.MemberAccessContext;
@@ -432,7 +430,7 @@ public class TextDocumentGoToService : IService
           
           if(memberAccessParentFuncDecl?.NAME() != null)
           {
-            foreach(IParseTree memberFuncNode in Parser.IterateRules(memberAccessParentFuncDecl))
+            foreach(var memberFuncNode in Parser.TraverseTree(memberAccessParentFuncDecl))
             {
               if(memberFuncNode is bhlParser.FuncParamDeclareContext funcParamDeclare)
               {
@@ -534,7 +532,7 @@ public class TextDocumentGoToService : IService
         string funcName = string.Empty;
         
         string pattern = @"([a-zA-Z_][a-zA-Z_0-9]*)(\({1}.*?)";
-        MatchCollection matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
+        var matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
         for(int i = 0; i < matches.Count; i++)
         {
           var m = matches[i];
@@ -640,10 +638,7 @@ public class TextDocumentHoverService : IService
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    int line = (int)args.position.line;
-    int character = (int)args.position.character;
-    
-    var node = document.FindParserRule(line, character);
+    var node = document.FindParserRule(args.position);
 
     var callExp = node as bhlParser.CallExpContext;
     

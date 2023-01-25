@@ -26,8 +26,13 @@ public class BHLDocument
 
     parser.Parse(this);
 
-    foreach(var rule in Parser.IterateRules(ToParser().program()))
+    foreach(var rule in Parser.TraverseTree(ToParser().program()))
       rules.Add(rule);
+  }
+
+  public ParserRuleContext FindParserRule(Code.Position pos)
+  {
+    return FindParserRule(pos.line, pos.column);
   }
 
   public ParserRuleContext FindParserRule(int line, int character)
@@ -38,9 +43,9 @@ public class BHLDocument
   public ParserRuleContext FindParserRuleByIndex(int idx)
   {
     //TODO: use binary search?
-    foreach(var node in rules)
+    foreach(var rule in rules)
     {
-      if(node is ParserRuleContext ctx && ctx.Start.StartIndex <= idx && ctx.Stop.StopIndex >= idx)
+      if(rule is ParserRuleContext ctx && ctx.Start.StartIndex <= idx && ctx.Stop.StopIndex >= idx)
         return ctx;
     }
     return null;

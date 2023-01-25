@@ -26,6 +26,11 @@ public class Code
     {
       return pos.ToSpec();
     }
+
+    public static implicit operator Position(spec.Position pos)
+    {
+      return new Position((int)pos.line, (int)pos.character);
+    }
   }
 
   public string Text { get; private set; }
