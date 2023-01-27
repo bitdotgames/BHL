@@ -31,7 +31,7 @@ public class WrappedParseTree
     } 
   }
 
-  public int char_pos { 
+  public int column { 
     get { 
       return tokens.Get(tree.SourceInterval.a).Column;  
     } 
@@ -61,7 +61,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   AST_Module root_ast;
   public Result result;
 
-  ANTLR_Parsed parsed;
+  public ANTLR_Parsed parsed;
 
   Types types;
 
@@ -322,6 +322,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       tree_props.Put(t, w);
     }
     return w;
+  }
+
+  public WrappedParseTree FindWrapped(IParseTree t)
+  {
+    return tree_props.Get(t);
   }
 
   internal void Phase_Outline()
@@ -2200,7 +2205,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(ret_val?.varDeclare() != null)
     {
       var vd = ret_val.varDeclare();
-      PeekAST().AddChild(CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+      PeekAST().AddChild(
+        CommonDeclVar(
+          curr_scope, 
+          vd.NAME(), 
+          vd.type(), 
+          is_ref: false, 
+          func_arg: false, 
+          write: false
+        )
+      );
       return null;
     }
 
@@ -2944,7 +2958,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitVarDecl(bhlParser.VarDeclContext ctx)
   {
     var vd = ctx.varDeclare(); 
-    PeekAST().AddChild(CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false));
+    PeekAST().AddChild(
+      CommonDeclVar(
+        curr_scope, 
+        vd.NAME(), 
+        vd.type(), 
+        is_ref: false, 
+        func_arg: false, 
+        write: false
+      )
+    );
     return null;
   }
 
@@ -3169,7 +3192,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAST();
     }
 
-    var ast = CommonDeclVar(curr_scope, name, ctx.type(), is_ref, func_arg: true, write: false);
+    var ast = CommonDeclVar(
+      curr_scope, 
+      name, 
+      ctx.type(), 
+      is_ref, 
+      func_arg: true, 
+      write: false
+    );
     if(exp_ast != null)
       ast.AddChild(exp_ast);
     PeekAST().AddChild(ast);
@@ -3179,12 +3209,27 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, bhlParser.TypeContext type_ctx, bool is_ref, bool func_arg, bool write)
+  AST_Tree CommonDeclVar(
+    IScope curr_scope, 
+    ITerminalNode name, 
+    bhlParser.TypeContext type_ctx, 
+    bool is_ref, 
+    bool func_arg, 
+    bool write
+  )
   {
-    return CommonDeclVar(curr_scope, name, ParseType(type_ctx), is_ref, func_arg, write);
+    var tp = ParseType(type_ctx);
+    return CommonDeclVar(curr_scope, name, tp, is_ref, func_arg, write);
   }
 
-  AST_Tree CommonDeclVar(IScope curr_scope, ITerminalNode name, Proxy<IType> tp, bool is_ref, bool func_arg, bool write)
+  AST_Tree CommonDeclVar(
+    IScope curr_scope, 
+    ITerminalNode name, 
+    Proxy<IType> tp, 
+    bool is_ref, 
+    bool func_arg, 
+    bool write
+  )
   {
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
       FireError(name, "keyword 'base' is reserved");
@@ -3216,7 +3261,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
     CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
-
     return null;
   }
 
@@ -3617,7 +3661,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
       {
         iter_str_name = vd.NAME().GetText();
-        iter_ast_decl = CommonDeclVar(curr_scope, vd.NAME(), vd.type(), is_ref: false, func_arg: false, write: false);
+        iter_ast_decl = CommonDeclVar(
+          curr_scope, 
+          vd.NAME(), 
+          vd.type(), 
+          is_ref: false, 
+          func_arg: false, 
+          write: false
+        );
         iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
         iter_type = iter_symb.type;
       }
@@ -3717,7 +3768,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
       {
         key_iter_str_name = vd_key.NAME().GetText();
-        key_iter_ast_decl = CommonDeclVar(curr_scope, vd_key.NAME(), vd_key.type(), is_ref: false, func_arg: false, write: false);
+        key_iter_ast_decl = CommonDeclVar(
+          curr_scope, 
+          vd_key.NAME(), 
+          vd_key.type(), 
+          is_ref: false, 
+          func_arg: false, 
+          write: false
+        );
         key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
         key_iter_type = key_iter_symb.type;
       }
@@ -3737,7 +3795,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
       {
         val_iter_str_name = vd_val.NAME().GetText();
-        val_iter_ast_decl = CommonDeclVar(curr_scope, vd_val.NAME(), vd_val.type(), is_ref: false, func_arg: false, write: false);
+        val_iter_ast_decl = CommonDeclVar(
+          curr_scope, 
+          vd_val.NAME(), 
+          vd_val.type(), 
+          is_ref: false, 
+          func_arg: false, 
+          write: false
+        );
         val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
         val_iter_type = val_iter_symb.type;
       }

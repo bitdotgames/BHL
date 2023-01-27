@@ -15,7 +15,7 @@ public interface ICompileError
   string stack_trace { get; }
   string file { get; }
   int line { get; }
-  int char_pos { get; }
+  int column { get; }
 }
 
 public class SyntaxError : Exception, ICompileError
@@ -23,15 +23,15 @@ public class SyntaxError : Exception, ICompileError
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
   public int line { get; }
-  public int char_pos { get; }
+  public int column { get; }
   public string file { get; }
 
-  public SyntaxError(string file, int line, int char_pos, string msg)
-    : base(ErrorUtils.MakeMessage(file, line, char_pos, msg))
+  public SyntaxError(string file, int line, int column, string msg)
+    : base(ErrorUtils.MakeMessage(file, line, column, msg))
   {
     this.text = msg;
     this.line = line;
-    this.char_pos = char_pos;
+    this.column = column;
     this.file = file;
   }
 }
@@ -41,7 +41,7 @@ public class BuildError : Exception, ICompileError
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
   public int line { get { return 0; } }
-  public int char_pos { get { return 0; } }
+  public int column { get { return 0; } }
   public string file { get; }
 
   public BuildError(string file, string msg)
@@ -64,7 +64,7 @@ public class SemanticError : Exception, ICompileError
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
   public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
-  public int char_pos { get { return tokens.Get(place.SourceInterval.a).Column; } }
+  public int column { get { return tokens.Get(place.SourceInterval.a).Column; } }
   public string file { get { return module.file_path; } }
 
   public Module module { get; }

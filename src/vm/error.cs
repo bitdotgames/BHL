@@ -20,7 +20,7 @@ public static class ErrorUtils
       MakeJsonSafe(ie.text),
       ie.file.Replace("\\", "/"),
       ie.line, 
-      ie.char_pos,
+      ie.column,
       MakeJsonSafe(ie.stack_trace)
     );
   }
@@ -108,11 +108,11 @@ public class SymbolError : Exception
       return 0; 
     } 
   }
-  public int char_pos { 
+  public int column { 
     get { 
 #if BHL_FRONT
       if(symbol.parsed != null)
-        return symbol.parsed.char_pos;
+        return symbol.parsed.column;
 #endif
       return 0; 
     } 

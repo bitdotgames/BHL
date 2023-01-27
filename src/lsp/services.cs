@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Antlr4.Runtime;
-using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp.spec {
 
@@ -10,7 +8,7 @@ public class LifecycleService : IService
 {
   Workspace workspace;
 
-  int? processId;
+  int? process_id;
   
   public LifecycleService(Workspace workspace)
   {
@@ -20,7 +18,7 @@ public class LifecycleService : IService
   [RpcMethod("initialize")]
   public RpcResult Initialize(InitializeParams args)
   {
-    processId = args.processId;
+    process_id = args.processId;
     
     if(args.workspaceFolders != null)
     {
@@ -36,8 +34,9 @@ public class LifecycleService : IService
       workspace.AddRoot(args.rootPath);
     }
     
-    //TODO: do indexing in background
-    //workspace.IndexInBackground();
+    var ts = new Types();
+    //TODO: run it in background
+    workspace.IndexFiles(ts);
     
     var capabilities = new ServerCapabilities();
 
@@ -143,7 +142,7 @@ public class LifecycleService : IService
   [RpcMethod("exit")]
   public RpcResult Exit()
   {
-    if(processId != null)
+    if(process_id != null)
     {
       //TODO: in this case success response won't be sent
       Environment.Exit(0);
@@ -178,8 +177,8 @@ public class TextDocumentSynchronizationService : IService
     {
       if(workspace.syncKind == TextDocumentSyncKind.Full)
       {
-        foreach(var changes in args.contentChanges)
-          document.Update(changes.text);
+        //foreach(var changes in args.contentChanges)
+        //  document.Update(changes.text);
       }
       else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
       {
@@ -243,115 +242,115 @@ public class TextDocumentSignatureHelpService : IService
   [RpcMethod("textDocument/signatureHelp")]
   public RpcResult SignatureHelp(SignatureHelpParams args)
   {
-    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+    //var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    int line = (int)args.position.line;
-    int character = (int)args.position.character;
-    
-    int start = document.Code.CalcByteIndex(line);
-    int stop = document.Code.CalcByteIndex(line, character);
-    var text = document.Code.Text;
+    //int line = (int)args.position.line;
+    //int character = (int)args.position.character;
+    //
+    //int start = document.code.CalcByteIndex(line);
+    //int stop = document.code.CalcByteIndex(line, character);
+    //var text = document.code.Text;
 
-    var txtLine = text.Substring(start, stop - start);
-    string funcName = string.Empty;
-    uint activeParameter = 0;
-    
-    if(txtLine.IndexOf("func", StringComparison.Ordinal) == -1)
-    {
-      string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-      MatchCollection matches = Regex.Matches(txtLine, pattern, RegexOptions.Multiline);
-      for(int i = matches.Count-1; i >= 0; i--)
-      {
-        var m = matches[i];
-        if(m.Index < character)
-        {
-          string v = m.Value;
-          int len = v.Length - 1;
+    //var txtLine = text.Substring(start, stop - start);
+    //string funcName = string.Empty;
+    //uint activeParameter = 0;
+    //
+    //if(txtLine.IndexOf("func", StringComparison.Ordinal) == -1)
+    //{
+    //  string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
+    //  MatchCollection matches = Regex.Matches(txtLine, pattern, RegexOptions.Multiline);
+    //  for(int i = matches.Count-1; i >= 0; i--)
+    //  {
+    //    var m = matches[i];
+    //    if(m.Index < character)
+    //    {
+    //      string v = m.Value;
+    //      int len = v.Length - 1;
 
-          if(len > 0)
-          {
-            funcName = txtLine.Substring(m.Index, len);
-            var funcDeclStr = txtLine.Substring(m.Index, Math.Max(0, character - m.Index));
-            activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
-            break;
-          }
-        }
-      }
-    }
-    
-    bhlParser.FuncDeclContext funcDecl = null;
-    if(!string.IsNullOrEmpty(funcName))
-    {
-      foreach(var doc in workspace.ForEachBhlImports(document))
-      {
-        if(doc.FuncDecls.ContainsKey(funcName))
-        {
-          funcDecl = doc.FuncDecls[funcName];
-          break;
-        }
-      }
-    }
-    
-    if(funcDecl != null)
-    {
-      SignatureInformation signInfo = GetFuncSignInfo(funcDecl);
-      signInfo.activeParameter = activeParameter;
-      
-      var result = new SignatureHelp();
-      result.activeSignature = 0;
-      result.signatures = new[] { signInfo };
-      result.activeParameter = signInfo.activeParameter;
-        
-      return RpcResult.Success(result);
-    }
+    //      if(len > 0)
+    //      {
+    //        funcName = txtLine.Substring(m.Index, len);
+    //        var funcDeclStr = txtLine.Substring(m.Index, Math.Max(0, character - m.Index));
+    //        activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
+    //        break;
+    //      }
+    //    }
+    //  }
+    //}
+    //
+    //bhlParser.FuncDeclContext funcDecl = null;
+    //if(!string.IsNullOrEmpty(funcName))
+    //{
+    //  foreach(var doc in workspace.ForEachBhlImports(document))
+    //  {
+    //    if(doc.FuncDecls.ContainsKey(funcName))
+    //    {
+    //      funcDecl = doc.FuncDecls[funcName];
+    //      break;
+    //    }
+    //  }
+    //}
+    //
+    //if(funcDecl != null)
+    //{
+    //  SignatureInformation signInfo = GetFuncSignInfo(funcDecl);
+    //  signInfo.activeParameter = activeParameter;
+    //  
+    //  var result = new SignatureHelp();
+    //  result.activeSignature = 0;
+    //  result.signatures = new[] { signInfo };
+    //  result.activeParameter = signInfo.activeParameter;
+    //    
+    //  return RpcResult.Success(result);
+    //}
     
     return RpcResult.Success();
   }
   
-  SignatureInformation GetFuncSignInfo(bhlParser.FuncDeclContext funcDecl)
-  {
-    SignatureInformation funcSignature = new SignatureInformation();
-    
-    string label = funcDecl.NAME().GetText()+"(";
-    
-    var fn_params = Parser.GetInfoParams(funcDecl);
-    
-    if(fn_params.Count > 0)
-    {
-      for(int k = 0; k < fn_params.Count; k++)
-      {
-        var funcParameter = fn_params[k];
-        label += funcParameter.label.Value;
-        if(k != fn_params.Count - 1)
-          label += ", ";
-      }
-    }
-    else
-      label += "<no parameters>";
+  //SignatureInformation GetFuncSignInfo(bhlParser.FuncDeclContext funcDecl)
+  //{
+  //  SignatureInformation funcSignature = new SignatureInformation();
+  //  
+  //  string label = funcDecl.NAME().GetText()+"(";
+  //  
+  //  var fn_params = ParserAnalyzer.GetInfoParams(funcDecl);
+  //  
+  //  if(fn_params.Count > 0)
+  //  {
+  //    for(int k = 0; k < fn_params.Count; k++)
+  //    {
+  //      var funcParameter = fn_params[k];
+  //      label += funcParameter.label.Value;
+  //      if(k != fn_params.Count - 1)
+  //        label += ", ";
+  //    }
+  //  }
+  //  else
+  //    label += "<no parameters>";
 
-    label += ")";
+  //  label += ")";
 
-    if(funcDecl.retType() is bhlParser.RetTypeContext retType)
-    {
-      label += ":";
+  //  if(funcDecl.retType() is bhlParser.RetTypeContext retType)
+  //  {
+  //    label += ":";
 
-      var types = retType.type();
-      for (int n = 0; n < types.Length; n++)
-      {
-        var t = types[n];
-        if(t.exception != null)
-          continue;
+  //    var types = retType.type();
+  //    for (int n = 0; n < types.Length; n++)
+  //    {
+  //      var t = types[n];
+  //      if(t.exception != null)
+  //        continue;
 
-        label += t.nsName().GetText() + " ";
-      }
-    }
-    else
-      label += ":void";
+  //      label += t.nsName().GetText() + " ";
+  //    }
+  //  }
+  //  else
+  //    label += ":void";
 
-    funcSignature.label = label;
-    funcSignature.parameters = fn_params.ToArray();
-    return funcSignature;
-  }
+  //  funcSignature.label = label;
+  //  funcSignature.parameters = fn_params.ToArray();
+  //  return funcSignature;
+  //}
 }
 
 public class TextDocumentGoToService : IService
@@ -371,211 +370,26 @@ public class TextDocumentGoToService : IService
   public RpcResult GotoDefinition(DefinitionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-    
-    var node = document.FindParserRule(args.position);
-
-    var funcDecl     = node as bhlParser.FuncDeclContext;
-    var callExp      = node as bhlParser.CallExpContext;
-    var memberAccess = node as bhlParser.MemberAccessContext;
-    var type         = node as bhlParser.TypeContext;
-    var statement    = node as bhlParser.StatementContext;
-    var nsName       = node as bhlParser.NsNameContext;
-    var dotName      = node as bhlParser.DotNameContext;
-    
-    BHLDocument funcDeclBhlDocument = null;
-
-    if(funcDecl == null)
+        
+    if(document != null)
     {
-      string classTypeName = string.Empty;
-      string memberClassName = string.Empty;
-      
-      if(type?.nsName() != null)
-      {
-        classTypeName = type.nsName().GetText();
-      }
-      else if(nsName != null)
-      {
-        var nsNameStr = nsName.dotName()?.NAME()?.GetText();
-        if(nsNameStr != null)
-          classTypeName = nsNameStr;
-      }
-      else if(dotName != null)
-      {
-        var nsNameStr = dotName.NAME()?.GetText();
-        if(nsNameStr != null)
-          classTypeName = nsNameStr;
-      }
-      else if(memberAccess != null)
-      {
-        bhlParser.CallExpContext callExpMemberAccess = null;
-        bhlParser.FuncDeclContext memberAccessParentFuncDecl = null;
+      var node = document.FindParserNode(args.position);
 
-        memberClassName = memberAccess.NAME().GetText();
-        
-        for(RuleContext parent = memberAccess.Parent; parent != null; parent = parent.Parent)
-        {
-          if(callExpMemberAccess == null && parent is bhlParser.CallExpContext)
-            callExpMemberAccess = parent as bhlParser.CallExpContext;
-
-          if(parent is bhlParser.FuncDeclContext)
-          {
-            memberAccessParentFuncDecl = parent as bhlParser.FuncDeclContext;
-            break;
-          }
-        }
-        
-        if(callExpMemberAccess != null)
-        {
-          string callExpMemberAccessName = callExpMemberAccess.NAME().GetText();
-          
-          if(memberAccessParentFuncDecl?.NAME() != null)
-          {
-            foreach(var memberFuncNode in Parser.TraverseTree(memberAccessParentFuncDecl))
-            {
-              if(memberFuncNode is bhlParser.FuncParamDeclareContext funcParamDeclare)
-              {
-                bhlParser.TypeContext funcParamDeclareType = funcParamDeclare.type();
-                if(funcParamDeclareType.funcType() != null || funcParamDeclareType.ARR() != null)
-                  continue;
-                
-                if(funcParamDeclare.NAME()?.GetText() == callExpMemberAccessName)
-                {
-                  classTypeName = funcParamDeclareType.GetText();
-                  break;
-                }
-              }
-
-              if(node is bhlParser.VarDeclareContext varDeclare && varDeclare?.NAME().GetText() == callExpMemberAccessName)
-              {
-                classTypeName = varDeclare.type().nsName().GetText();
-                break;
-              }
-            }
-          }
-        }
-      }
-      
-      if(!string.IsNullOrEmpty(classTypeName))
+      if(node != null)
       {
-        bhlParser.ClassDeclContext classDecl = null;
-        BHLDocument classDeclBhlDocument = null;
-        
-        foreach(var doc in workspace.ForEachBhlImports(document))
-        {
-          if(doc.ClassDecls.ContainsKey(classTypeName))
-          {
-            classDecl = doc.ClassDecls[classTypeName];
-            classDeclBhlDocument = doc;
-            break;
-          }
-        }
-        
-        if(classDecl != null)
-        {
-          bhlParser.ClassMemberContext classMember = null;
-
-          if(!string.IsNullOrEmpty(memberClassName))
-          {
-            foreach(var classMemberContext in classDecl.classBlock().classMembers().classMember())
-            {
-              if(classMemberContext.funcDecl()?.NAME()?.GetText() != null)
-              {
-                if(classMemberContext.funcDecl().NAME().GetText() == memberClassName)
-                {
-                  classMember = classMemberContext;
-                  break;
-                }
-              }
-              
-              if(classMemberContext.fldDeclare()?.varDeclare()?.NAME()?.GetText() != null)
-              {
-                if(classMemberContext.fldDeclare().varDeclare().NAME().GetText() == memberClassName)
-                {
-                  classMember = classMemberContext;
-                  break;
-                }
-              }
-            }
-          }
-
-          int classDeclIdx = classMember?.Start.StartIndex ?? classDecl.Start.StartIndex;
-          var start_pos = classDeclBhlDocument.Code.GetIndexPosition(classDeclIdx);
-          return RpcResult.Success(new Location
-          {
-            uri = classDeclBhlDocument.uri,
-            range = new Range
-            {
-              start = start_pos,
-              end = start_pos
-            }
-          });
-        }
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText());
+        var w = document.proc.FindWrapped(node);
+        //Console.WriteLine("WRAPPED " + w.eval_type.GetType().Name);
+        //return RpcResult.Success(new Location
+        //{
+        //  uri = new Uri("file://" + parsed.module.file_path),
+        //  range = new Range
+        //  {
+        //    start = new Position { line = (uint)parsed.line-1, character = (uint)parsed.column },
+        //    end = new Position { line = (uint)parsed.line-1, character = (uint)parsed.column }
+        //  }
+        //});
       }
-      
-      if(callExp != null)
-      {
-        string callExpName = callExp.NAME().GetText();
-        
-        foreach(var doc in workspace.ForEachBhlImports(document))
-        {
-          if(doc.FuncDecls.ContainsKey(callExpName))
-          {
-            funcDecl = doc.FuncDecls[callExpName];
-            funcDeclBhlDocument = doc;
-            break;
-          }
-        }
-      }
-      
-      if(statement != null && funcDecl == null)
-      {
-        string funcName = string.Empty;
-        
-        string pattern = @"([a-zA-Z_][a-zA-Z_0-9]*)(\({1}.*?)";
-        var matches = Regex.Matches(statement.GetText(), pattern, RegexOptions.Multiline);
-        for(int i = 0; i < matches.Count; i++)
-        {
-          var m = matches[i];
-          if(m.Groups.Count > 1)
-          {
-            Group g = m.Groups[1];
-            funcName = g.Value;
-            break;
-          }
-        }
-
-        if(!string.IsNullOrEmpty(funcName))
-        {
-          foreach(var doc in workspace.ForEachBhlImports(document))
-          {
-            if(doc.FuncDecls.ContainsKey(funcName))
-            {
-              funcDecl = doc.FuncDecls[funcName];
-              funcDeclBhlDocument = doc;
-              break;
-            }
-          }
-        }
-      }
-    }
-    else
-    {
-      funcDeclBhlDocument = document;
-    }
-    
-    if(funcDecl != null)
-    {
-      var start_pos = funcDeclBhlDocument.Code.GetIndexPosition(funcDecl.Start.StartIndex);
-        
-      return RpcResult.Success(new Location
-      {
-        uri = funcDeclBhlDocument.uri,
-        range = new Range
-        {
-          start = start_pos,
-          end = start_pos
-        }
-      });
     }
     
     return RpcResult.Success();
@@ -636,76 +450,76 @@ public class TextDocumentHoverService : IService
   [RpcMethod("textDocument/hover")]
   public RpcResult Hover(TextDocumentPositionParams args)
   {
-    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-
-    var node = document.FindParserRule(args.position);
-
-    var callExp = node as bhlParser.CallExpContext;
-    
-    bhlParser.FuncDeclContext funcDecl = null;
-    
-    if(callExp != null)
-    {
-      string callExpName = callExp.NAME().GetText();
-      
-      foreach(var doc in workspace.ForEachBhlImports(document))
-      {
-        if(doc.FuncDecls.ContainsKey(callExpName))
-        {
-          funcDecl = doc.FuncDecls[callExpName];
-          break;
-        }
-      }
-    }
-    
-    if(funcDecl != null)
-    {
-      //TODO: all this information is available for symbols
-      string label = funcDecl.NAME().GetText()+"(";
-  
-      var funcParameters = Parser.GetInfoParams(funcDecl);
-  
-      if(funcParameters.Count > 0)
-      {
-        for(int k = 0; k < funcParameters.Count; k++)
-        {
-          var funcParameter = funcParameters[k];
-          label += funcParameter.label.Value;
-          if(k != funcParameters.Count - 1)
-            label += ", ";
-        }
-      }
-      else
-        label += "<no parameters>";
-
-      label += ")";
-
-      if(funcDecl.retType() is bhlParser.RetTypeContext retType)
-      {
-        label += ":";
-
-        var types = retType.type();
-        for (int n = 0; n < types.Length; n++)
-        {
-          var t = types[n];
-          if(t.exception != null)
-            continue;
-
-          label += t.nsName().GetText() + " ";
-        }
-      }
-      else
-        label += ":void";
-      
-      return RpcResult.Success(new Hover
-      {
-        contents = new MarkupContent
-        {
-          kind = "plaintext",
-          value = label
-        }
-      });
-    }
+//    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+//
+//    var node = document.FindParserRule(args.position);
+//
+//    var callExp = node as bhlParser.CallExpContext;
+//    
+//    bhlParser.FuncDeclContext funcDecl = null;
+//    
+//    if(callExp != null)
+//    {
+//      string callExpName = callExp.NAME().GetText();
+//      
+//      foreach(var doc in workspace.ForEachBhlImports(document))
+//      {
+//        if(doc.FuncDecls.ContainsKey(callExpName))
+//        {
+//          funcDecl = doc.FuncDecls[callExpName];
+//          break;
+//        }
+//      }
+//    }
+//    
+//    if(funcDecl != null)
+//    {
+//      //TODO: all this information is available for symbols
+//      string label = funcDecl.NAME().GetText()+"(";
+//  
+//      var funcParameters = ParserAnalyzer.GetInfoParams(funcDecl);
+//  
+//      if(funcParameters.Count > 0)
+//      {
+//        for(int k = 0; k < funcParameters.Count; k++)
+//        {
+//          var funcParameter = funcParameters[k];
+//          label += funcParameter.label.Value;
+//          if(k != funcParameters.Count - 1)
+//            label += ", ";
+//        }
+//      }
+//      else
+//        label += "<no parameters>";
+//
+//      label += ")";
+//
+//      if(funcDecl.retType() is bhlParser.RetTypeContext retType)
+//      {
+//        label += ":";
+//
+//        var types = retType.type();
+//        for (int n = 0; n < types.Length; n++)
+//        {
+//          var t = types[n];
+//          if(t.exception != null)
+//            continue;
+//
+//          label += t.nsName().GetText() + " ";
+//        }
+//      }
+//      else
+//        label += ":void";
+//      
+//      return RpcResult.Success(new Hover
+//      {
+//        contents = new MarkupContent
+//        {
+//          kind = "plaintext",
+//          value = label
+//        }
+//      });
+//    }
     
     return RpcResult.Success();
   }
@@ -723,12 +537,14 @@ public class TextDocumentSemanticTokensService : IService
   [RpcMethod("textDocument/semanticTokens/full")]
   public RpcResult SemanticTokensFull(SemanticTokensParams args)
   {
-    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+    //var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    return RpcResult.Success(new SemanticTokens
-    {
-      data = document.DataSemanticTokens.ToArray()
-    });
+    //return RpcResult.Success(new SemanticTokens
+    //{
+    //  data = document.DataSemanticTokens.ToArray()
+    //});
+
+    return RpcResult.Success();
   }
 }
 

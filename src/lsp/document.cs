@@ -5,66 +5,6 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp {
 
-public class BHLDocument
-{
-  public Uri uri;
-  
-  public Code Code = new Code();
-
-  Parser parser = new Parser();
-
-  List<IParseTree> rules = new List<IParseTree>();
-  
-  public List<string> Imports => parser.imports;
-  public Dictionary<string, bhlParser.ClassDeclContext> ClassDecls => parser.class_decls;
-  public Dictionary<string, bhlParser.FuncDeclContext> FuncDecls => parser.func_decls;
-  public List<uint> DataSemanticTokens => parser.encoded_semantic_tokens;
-  
-  public void Update(string text)
-  {
-    Code.Update(text);
-
-    parser.Parse(this);
-
-    foreach(var rule in Parser.TraverseTree(ToParser().program()))
-      rules.Add(rule);
-  }
-
-  public ParserRuleContext FindParserRule(Code.Position pos)
-  {
-    return FindParserRule(pos.line, pos.column);
-  }
-
-  public ParserRuleContext FindParserRule(int line, int character)
-  {
-    return FindParserRuleByIndex(Code.CalcByteIndex(line, character));
-  }
-
-  public ParserRuleContext FindParserRuleByIndex(int idx)
-  {
-    //TODO: use binary search?
-    foreach(var rule in rules)
-    {
-      if(rule is ParserRuleContext ctx && ctx.Start.StartIndex <= idx && ctx.Stop.StopIndex >= idx)
-        return ctx;
-    }
-    return null;
-  }
-
-  public bhlParser ToParser()
-  {
-    var ais = new AntlrInputStream(Code.Text.ToStream());
-    var lex = new bhlLexer(ais);
-    var tokens = new CommonTokenStream(lex);
-    var parser = new bhlParser(tokens);
-    
-    lex.RemoveErrorListeners();
-    parser.RemoveErrorListeners();
-
-    return parser;
-  }
-}
-
 public static class BHLSemanticTokens
 {
   public static string[] token_types = 
@@ -91,6 +31,79 @@ public static class BHLSemanticTokens
     spec.SemanticTokenModifiers.documentation, // 256
     spec.SemanticTokenModifiers.defaultLibrary // 512
   };
+}
+
+public class BHLDocument
+{
+  public Uri uri { get; private set; }
+  
+  public Code code { get; private set; } = new Code();
+
+  public ANTLR_Processor proc { get; private set; }
+
+  List<TerminalNodeImpl> nodes = new List<TerminalNodeImpl>();
+
+  public BHLDocument(Uri uri)
+  {
+    this.uri = uri;
+  }
+  
+  public void Update(string text, ANTLR_Processor proc)
+  {
+    this.proc = proc;
+
+    code.Update(text);
+
+    nodes.Clear();
+    GetTerminalNodes(proc.parsed.prog, nodes);
+  }
+
+  public TerminalNodeImpl FindParserNode(Code.Position pos)
+  {
+    return FindParserNode(pos.line, pos.column);
+  }
+
+  public TerminalNodeImpl FindParserNode(int line, int character)
+  {
+    return FindParserNodeByIndex(code.CalcByteIndex(line, character));
+  }
+
+  public TerminalNodeImpl FindParserNodeByIndex(int idx)
+  {
+    //TODO: use binary search?
+    foreach(var node in nodes)
+    {
+      if(node.Symbol.StartIndex <= idx && node.Symbol.StopIndex >= idx)
+        return node;  
+    }
+    return null;
+  }
+
+  bhlParser GetParser()
+  {
+    var ais = new AntlrInputStream(code.Text.ToStream());
+    var lex = new bhlLexer(ais);
+    var tokens = new CommonTokenStream(lex);
+    var parser = new bhlParser(tokens);
+    
+    lex.RemoveErrorListeners();
+    parser.RemoveErrorListeners();
+
+    return parser;
+  }
+
+  public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
+  {
+    //Console.WriteLine("TREE " + tree.GetType().Name + " " + tree.GetText());
+    if(tree is TerminalNodeImpl tn)
+      nodes.Add(tn);
+
+    if(tree is ParserRuleContext rule)
+    {
+      for(int i = rule.children.Count; i-- > 0;)
+        GetTerminalNodes(rule.children[i], nodes);
+    }
+  }
 }
 
 }

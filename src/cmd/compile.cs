@@ -134,7 +134,7 @@ public class CompileCmd : ICmd
     if(err != null)
     {
       if(string.IsNullOrEmpty(err_file))
-        ErrorUtils.OutputError(err.file, err.line, err.char_pos, err.text);
+        ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
       Environment.Exit(ERROR_EXIT_CODE);
     }
   }

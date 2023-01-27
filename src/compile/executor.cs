@@ -403,8 +403,8 @@ public class CompilationExecutor
 
             if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
-              var proc = ANTLR_Processor.Stream2Parser(file, sfs);
-              var parsed = new ANTLR_Parsed(proc.TokenStream, proc.program());
+              var parser = ANTLR_Processor.Stream2Parser(file, sfs);
+              var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
 
               interim.parsed = parsed;
 
@@ -474,7 +474,7 @@ public class CompilationExecutor
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
-    static FileImports ParseImports(IncludePath inc_path, string file, FileStream fs)
+    public static FileImports ParseImports(IncludePath inc_path, string file, FileStream fs)
     {
       var imps = new FileImports();
 
