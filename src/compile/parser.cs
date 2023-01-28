@@ -1434,7 +1434,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_type = PeekJsonType();
 
     if(curr_type == null)
-      FireError(ctx, "{..} not expected");
+      FireError(ctx, "can't determine type of {..} expression");
 
     if(!(curr_type is ClassSymbol) || 
         (curr_type is ArrayTypeSymbol) ||
@@ -1469,7 +1469,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var curr_type = PeekJsonType();
     if(curr_type == null)
-      FireError(ctx, "[..] not expected");
+      FireError(ctx, "can't determine type of [..] expression");
 
     if(!(curr_type is ArrayTypeSymbol) && !(curr_type is MapTypeSymbol))
       FireError(ctx, "type '" + curr_type + "' can't be specified with [..]");

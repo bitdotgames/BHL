@@ -132,7 +132,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "[..] not expected",
+        "can't determine type of [..] expression",
         new PlaceAssert(bhl, @"
       foreach(var n in [1,2,3]) {
 -----------------------^"
