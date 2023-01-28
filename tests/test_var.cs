@@ -56,6 +56,7 @@ public class TestVar : BHL_TestBase
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
   [IsTested()]
   public void TestFuncResult()
   {
@@ -73,6 +74,25 @@ public class TestVar : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestForeach()
+  {
+    string bhl = @"
+    func int test() {
+      []int ns = [1, 2, 3]
+      int summ = 0
+      foreach(var n in ns) {
+        summ += n
+      }
+      return summ
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

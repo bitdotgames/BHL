@@ -3661,10 +3661,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
       {
         iter_str_name = vd.NAME().GetText();
+
+        var vd_type = new Proxy<IType>();
+        if(vd.type().GetText() == "var")
+        {
+          var predicted_arr_type = PredictType(ctx.foreachExp().exp()) as GenericArrayTypeSymbol;
+          if(predicted_arr_type == null)
+            FireError(ctx.foreachExp().exp(), "expression is not of array type");
+          vd_type = predicted_arr_type.item_type;
+        }
+        else
+          vd_type = ParseType(vd.type());
+
         iter_ast_decl = CommonDeclVar(
           curr_scope, 
           vd.NAME(), 
-          vd.type(), 
+          vd_type,
           is_ref: false, 
           func_arg: false, 
           write: false
@@ -3866,6 +3878,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PopScope();
 
     return null;
+  }
+
+  IType PredictType(IParseTree tree)
+  {
+    PushAST(new AST_Interim());
+    Visit(tree);
+    PopAST();
+    return Wrap(tree).eval_type;
   }
 
   AST_Block CommonVisitBlock(BlockType type, IParseTree[] sts)
