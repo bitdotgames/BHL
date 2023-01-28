@@ -102,7 +102,6 @@ public class TestVar : BHL_TestBase
     string bhl = @"
     func test() {
       foreach(var n in 1) {
-        summ += n
       }
     }
     ";
@@ -114,6 +113,28 @@ public class TestVar : BHL_TestBase
         "expression is not of array type",
         new PlaceAssert(bhl, @"
       foreach(var n in 1) {
+-----------------------^"
+       )
+      );
+  }
+
+  [IsTested()]
+  public void TestForeachNonTypedJson()
+  {
+    string bhl = @"
+    func test() {
+      foreach(var n in [1,2,3]) {
+      }
+    }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "[..] not expected",
+        new PlaceAssert(bhl, @"
+      foreach(var n in [1,2,3]) {
 -----------------------^"
        )
       );
