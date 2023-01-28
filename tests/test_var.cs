@@ -97,6 +97,29 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestForeachNotArray()
+  {
+    string bhl = @"
+    func test() {
+      foreach(var n in 1) {
+        summ += n
+      }
+    }
+    ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "expression is not of array type",
+        new PlaceAssert(bhl, @"
+      foreach(var n in 1) {
+-----------------------^"
+       )
+      );
+  }
+
+  [IsTested()]
   public void TestNamespaceClass()
   {
     string bhl = @"
