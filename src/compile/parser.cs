@@ -3762,8 +3762,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       var vod_key = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
       var vd_key = vod_key.varDeclare();
+      var vd_key_type = new Proxy<IType>();
       var vod_val = ctx.foreachExp().varOrDeclares().varOrDeclare()[1];
       var vd_val = vod_val.varDeclare();
+      var vd_val_type = new Proxy<IType>();
+
+      if(vd_key.type().GetText() == "var" || vd_val.type().GetText() == "var")
+      {
+        var predicted_map_type = PredictType(ctx.foreachExp().exp()) as GenericMapTypeSymbol;
+        if(predicted_map_type == null)
+          FireError(ctx.foreachExp().exp(), "expression is not of map type");
+        vd_key_type = predicted_map_type.key_type;
+        vd_val_type = predicted_map_type.val_type;
+      }
+
+      if(vd_key.type().GetText() != "var")
+        vd_key_type = ParseType(vd_key.type());
+
+      if(vd_val.type().GetText() != "var")
+        vd_val_type = ParseType(vd_val.type());
 
       Proxy<IType> key_iter_type;
       string key_iter_str_name = "";
@@ -3783,7 +3800,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         key_iter_ast_decl = CommonDeclVar(
           curr_scope, 
           vd_key.NAME(), 
-          vd_key.type(), 
+          vd_key_type, 
           is_ref: false, 
           func_arg: false, 
           write: false
@@ -3810,7 +3827,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         val_iter_ast_decl = CommonDeclVar(
           curr_scope, 
           vd_val.NAME(), 
-          vd_val.type(), 
+          vd_val_type, 
           is_ref: false, 
           func_arg: false, 
           write: false

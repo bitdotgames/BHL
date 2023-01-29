@@ -78,7 +78,7 @@ public class TestVar : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestForeach()
+  public void TestForeachArray()
   {
     string bhl = @"
     func int test() {
@@ -106,16 +106,16 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "expression is not of array type",
-        new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "expression is not of array type",
+      new PlaceAssert(bhl, @"
       foreach(var n in 1) {
 -----------------------^"
        )
-      );
+     );
   }
 
   [IsTested()]
@@ -128,16 +128,35 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "can't determine type of [..] expression",
-        new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "can't determine type of [..] expression",
+      new PlaceAssert(bhl, @"
       foreach(var n in [1,2,3]) {
 -----------------------^"
-       )
-      );
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestForeachMap()
+  {
+    string bhl = @"
+    func int test() {
+      [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
+      int summ = 0
+      foreach(var k,var v in m) {
+        summ += k
+      }
+      return summ
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
