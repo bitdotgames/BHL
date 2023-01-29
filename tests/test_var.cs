@@ -143,20 +143,96 @@ public class TestVar : BHL_TestBase
   [IsTested()]
   public void TestForeachMap()
   {
-    string bhl = @"
-    func int test() {
-      [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
-      int summ = 0
-      foreach(var k,var v in m) {
-        summ += k
+    SubTest("both var", () => {
+      string bhl = @"
+      func int test() {
+        [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
+        int summ = 0
+        foreach(var k,var v in m) {
+          summ += k
+          trace(v)
+        }
+        return summ
       }
-      return summ
+      ";
+
+      var ts = new Types();
+      var log = new StringBuilder();
+      BindTrace(ts, log);
+
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual("abc", log.ToString());
+      CommonChecks(vm);
+    });
+
+    SubTest("only key", () => {
+      string bhl = @"
+      func int test() {
+        [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
+        int summ = 0
+        foreach(var k,string v in m) {
+          summ += k
+          trace(v)
+        }
+        return summ
+      }
+      ";
+
+      var ts = new Types();
+      var log = new StringBuilder();
+      BindTrace(ts, log);
+
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual("abc", log.ToString());
+      CommonChecks(vm);
+    });
+
+    SubTest("only value", () => {
+      string bhl = @"
+      func int test() {
+        [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
+        int summ = 0
+        foreach(int k,var v in m) {
+          summ += k
+          trace(v)
+        }
+        return summ
+      }
+      ";
+
+      var ts = new Types();
+      var log = new StringBuilder();
+      BindTrace(ts, log);
+
+      var vm = MakeVM(bhl, ts);
+      AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual("abc", log.ToString());
+      CommonChecks(vm);
+    });
+  }
+
+  [IsTested()]
+  public void TestForeachMapNonTypedJson()
+  {
+    string bhl = @"
+    func test() {
+      foreach(var k,var v in [[1, ""a""], [2, ""b""]]) {
+      }
     }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "can't determine type of [..] expression",
+      new PlaceAssert(bhl, @"
+      foreach(var k,var v in [[1, ""a""], [2, ""b""]]) {
+-----------------------------^"
+      )
+    );
   }
 
   [IsTested()]
