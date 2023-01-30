@@ -67,7 +67,7 @@ public class LocalScope : IScope, ISymbolsEnumerable
       next_idx = fss.local_vars_num;
     else if(fallback is LocalScope fallback_ls)
       next_idx = fallback_ls.next_idx;
-    func_owner.current_scope = this;
+    func_owner._current_scope = this;
   }
 
   public void Exit()
@@ -79,7 +79,7 @@ public class LocalScope : IScope, ISymbolsEnumerable
       else //TODO: just for now, trying to spot a possible bug
         fallback_ls.next_idx = next_idx;
 
-      func_owner.current_scope = fallback_ls;
+      func_owner._current_scope = fallback_ls;
     }
   }
 

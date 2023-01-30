@@ -58,17 +58,17 @@ public class BHLDocument
     GetTerminalNodes(proc.parsed.prog, nodes);
   }
 
-  public TerminalNodeImpl FindParserNode(Code.Position pos)
+  public TerminalNodeImpl FindTerminalNode(Code.Position pos)
   {
-    return FindParserNode(pos.line, pos.column);
+    return FindTerminalNode(pos.line, pos.column);
   }
 
-  public TerminalNodeImpl FindParserNode(int line, int character)
+  public TerminalNodeImpl FindTerminalNode(int line, int character)
   {
-    return FindParserNodeByIndex(code.CalcByteIndex(line, character));
+    return FindTerminalNodeByByteIndex(code.CalcByteIndex(line, character));
   }
 
-  public TerminalNodeImpl FindParserNodeByIndex(int idx)
+  public TerminalNodeImpl FindTerminalNodeByByteIndex(int idx)
   {
     //TODO: use binary search?
     foreach(var node in nodes)

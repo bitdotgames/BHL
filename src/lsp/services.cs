@@ -373,22 +373,25 @@ public class TextDocumentGoToService : IService
         
     if(document != null)
     {
-      var node = document.FindParserNode(args.position);
+      var node = document.FindTerminalNode(args.position);
 
       if(node != null)
       {
-        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText());
-        //var w = document.proc.FindWrapped(node);
-        //Console.WriteLine("WRAPPED " + w.eval_type.GetType().Name);
-        //return RpcResult.Success(new Location
-        //{
-        //  uri = new Uri("file://" + parsed.module.file_path),
-        //  range = new Range
-        //  {
-        //    start = new Position { line = (uint)parsed.line-1, character = (uint)parsed.column },
-        //    end = new Position { line = (uint)parsed.line-1, character = (uint)parsed.column }
-        //  }
-        //});
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name);
+        var annd = document.proc.FindAnnotated(node.Parent);
+
+        if(annd.symbol is FuncSymbol fs)
+        {
+          return RpcResult.Success(new Location
+          {
+            uri = new Uri("file://" + fs.parsed.file),
+            range = new Range
+            {
+              start = new Position { line = (uint)fs.parsed.line-1, character = (uint)fs.parsed.column },
+              end = new Position { line = (uint)fs.parsed.line-1, character = (uint)fs.parsed.column }
+            }
+          });
+        }
       }
     }
 

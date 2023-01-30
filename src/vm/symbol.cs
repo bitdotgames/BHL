@@ -11,7 +11,7 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
   public IScope scope;
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
-  public WrappedParseTree parsed;
+  public AnnotatedParseTree parsed;
 #endif
 
   public Symbol(string name) 
@@ -173,7 +173,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 
 #if BHL_FRONT
   public InterfaceSymbol(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name
   )
     : this(name)
@@ -262,7 +262,7 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
 #if BHL_FRONT
   public InterfaceSymbolScript(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name
   )
     : this(name)
@@ -369,7 +369,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
 
 #if BHL_FRONT
   public ClassSymbol(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name, 
     VM.ClassCreator creator = null
   )
@@ -1312,7 +1312,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 
 #if BHL_FRONT
-  public VariableSymbol(WrappedParseTree parsed, string name, Proxy<IType> type) 
+  public VariableSymbol(AnnotatedParseTree parsed, string name, Proxy<IType> type) 
     : this(name, type) 
   {
     this.parsed = parsed;
@@ -1353,7 +1353,7 @@ public class FuncArgSymbol : VariableSymbol
   public bool is_ref;
 
 #if BHL_FRONT
-  public FuncArgSymbol(WrappedParseTree parsed, string name, Proxy<IType> type, bool is_ref = false)
+  public FuncArgSymbol(AnnotatedParseTree parsed, string name, Proxy<IType> type, bool is_ref = false)
     : this(name, type, is_ref)
   {
     this.parsed = parsed;
@@ -1422,7 +1422,7 @@ public class FieldSymbolScript : FieldSymbol
   new public const uint CLASS_ID = 9;
 
 #if BHL_FRONT
-  public FieldSymbolScript(WrappedParseTree parsed, string name, Proxy<IType> type) 
+  public FieldSymbolScript(AnnotatedParseTree parsed, string name, Proxy<IType> type) 
     : this(name, type)
   {
     this.parsed = parsed;
@@ -1532,7 +1532,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
 #if BHL_FRONT
   public FuncSymbol(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name, 
     FuncSignature sig
   ) 
@@ -1670,16 +1670,16 @@ public class FuncSymbolScript : FuncSymbol
   //cached value of CompiledModule, it's set upon module loading in VM and 
   internal CompiledModule _module;
 
+  //used for up values resolving during parsing
+  internal LocalScope _current_scope;
+
   public int local_vars_num;
-
-  public LocalScope current_scope;
-
   public int default_args_num;
   public int ip_addr;
 
 #if BHL_FRONT
   public FuncSymbolScript(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     FuncSignature sig,
     string name,
     int default_args_num = 0,
@@ -1800,7 +1800,7 @@ public class LambdaSymbol : FuncSymbolScript
   List<FuncSymbolScript> fdecl_stack;
 
   public LambdaSymbol(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
@@ -1818,7 +1818,7 @@ public class LambdaSymbol : FuncSymbolScript
 
     //NOTE: we want to avoid possible recursion during resolve
     //      checks that's why we use a 'raw' version
-    this.current_scope.DefineWithoutEnclosingChecks(local);
+    this._current_scope.DefineWithoutEnclosingChecks(local);
 
     var up = new AST_UpVal(
       local.name, 
@@ -1851,9 +1851,9 @@ public class LambdaSymbol : FuncSymbolScript
     {
       var decl = fdecl_stack[i];
 
-      if(decl.current_scope != null)
+      if(decl._current_scope != null)
       {
-        var res = decl.current_scope.ResolveWithFallback(name);
+        var res = decl._current_scope.ResolveWithFallback(name);
         //checking if it's a variable and not a global one
         if(res is VariableSymbol vs && !(vs.scope is Namespace))
           return AssignUpValues(vs, i+1, my_idx);
@@ -2048,7 +2048,7 @@ public class ClassSymbolScript : ClassSymbol
 
 #if BHL_FRONT
   public ClassSymbolScript(
-    WrappedParseTree parsed, 
+    AnnotatedParseTree parsed, 
     string name
   )
     : this(name)
@@ -2111,7 +2111,7 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsEnumerable
   public SymbolsStorage members;
 
 #if BHL_FRONT
-  public EnumSymbol(WrappedParseTree parsed, string name)
+  public EnumSymbol(AnnotatedParseTree parsed, string name)
     : this(name)
   {
     this.parsed = parsed;
@@ -2159,7 +2159,7 @@ public class EnumSymbolScript : EnumSymbol
   public const uint CLASS_ID = 12;
 
 #if BHL_FRONT
-  public EnumSymbolScript(WrappedParseTree parsed, string name)
+  public EnumSymbolScript(AnnotatedParseTree parsed, string name)
     : base(parsed, name)
   {}
 #endif
@@ -2224,7 +2224,7 @@ public class EnumItemSymbol : Symbol, IType
   public int val;
 
 #if BHL_FRONT
-  public EnumItemSymbol(WrappedParseTree parsed, string name, int val = 0) 
+  public EnumItemSymbol(AnnotatedParseTree parsed, string name, int val = 0) 
     : this(name, val) 
   {
     this.parsed = parsed;

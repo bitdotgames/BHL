@@ -707,7 +707,7 @@ public class Types : INamedResolver
   }
 
 #if BHL_FRONT
-  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, WrappedParseTree lhs, WrappedParseTree rhs) 
+  static public IType MatchTypes(Dictionary<Tuple<IType, IType>, IType> table, AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(lhs.eval_type, rhs.eval_type), out result))
@@ -729,7 +729,7 @@ public class Types : INamedResolver
            ;
   }
 
-  public void CheckAssign(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public void CheckAssign(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(!CanAssignTo(lhs.eval_type, rhs.eval_type)) 
       throw new SemanticError(rhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'");
@@ -740,19 +740,19 @@ public class Types : INamedResolver
   //      to a func arg (lhs) and it this case it makes sense
   //      to report about the site where it's actually passed (rhs),
   //      not where it's defined (lhs)
-  public void CheckAssign(IType lhs, WrappedParseTree rhs) 
+  public void CheckAssign(IType lhs, AnnotatedParseTree rhs) 
   {
     if(!CanAssignTo(lhs, rhs.eval_type)) 
       throw new SemanticError(rhs, "incompatible types: '" + lhs?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'");
   }
 
-  public void CheckAssign(WrappedParseTree lhs, IType rhs) 
+  public void CheckAssign(AnnotatedParseTree lhs, IType rhs) 
   {
     if(!CanAssignTo(lhs.eval_type, rhs)) 
       throw new SemanticError(lhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs?.GetFullPath() + "'");
   }
 
-  static public void CheckCast(WrappedParseTree dest, WrappedParseTree from) 
+  static public void CheckCast(AnnotatedParseTree dest, AnnotatedParseTree from) 
   {
     var dest_type = dest.eval_type;
     var from_type = from.eval_type;
@@ -761,7 +761,7 @@ public class Types : INamedResolver
       throw new SemanticError(dest, "incompatible types for casting: '" + dest_type?.GetFullPath() + "' and '" + from_type?.GetFullPath() + "'");
   }
 
-  public IType CheckBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public IType CheckBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(!IsBinOpCompatible(lhs.eval_type))
       throw new SemanticError(lhs, "operator is not overloaded");
@@ -772,14 +772,14 @@ public class Types : INamedResolver
     return MatchTypes(bin_op_res_type, lhs, rhs);
   }
 
-  public IType CheckBinOpOverload(IScope scope, WrappedParseTree lhs, WrappedParseTree rhs, FuncSymbol op_func) 
+  public IType CheckBinOpOverload(IScope scope, AnnotatedParseTree lhs, AnnotatedParseTree rhs, FuncSymbol op_func) 
   {
     var op_func_arg_type = op_func.signature.arg_types[1];
     CheckAssign(op_func_arg_type.Get(), rhs);
     return op_func.GetReturnType();
   }
 
-  public IType CheckRtlBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public IType CheckRtlBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(!IsNumeric(lhs.eval_type))
       throw new SemanticError(lhs, "operator is not overloaded");
@@ -792,7 +792,7 @@ public class Types : INamedResolver
     return Bool;
   }
 
-  public IType CheckEqBinOp(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public IType CheckEqBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(lhs.eval_type == rhs.eval_type)
       return Bool;
@@ -810,7 +810,7 @@ public class Types : INamedResolver
     return Bool;
   }
 
-  public IType CheckUnaryMinus(WrappedParseTree a) 
+  public IType CheckUnaryMinus(AnnotatedParseTree a) 
   {
     if(!(a.eval_type == Int || a.eval_type == Float)) 
       throw new SemanticError(a, "must be numeric type");
@@ -818,7 +818,7 @@ public class Types : INamedResolver
     return a.eval_type;
   }
 
-  public IType CheckBitOp(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public IType CheckBitOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(lhs.eval_type != Int) 
       throw new SemanticError(lhs, "must be int type");
@@ -829,7 +829,7 @@ public class Types : INamedResolver
     return Int;
   }
 
-  public IType CheckLogicalOp(WrappedParseTree lhs, WrappedParseTree rhs) 
+  public IType CheckLogicalOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs) 
   {
     if(lhs.eval_type != Bool) 
       throw new SemanticError(lhs, "must be bool type");
@@ -840,7 +840,7 @@ public class Types : INamedResolver
     return Bool;
   }
 
-  public IType CheckLogicalNot(WrappedParseTree a) 
+  public IType CheckLogicalNot(AnnotatedParseTree a) 
   {
     if(a.eval_type != Bool) 
       throw new SemanticError(a, "must be bool type");

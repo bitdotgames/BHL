@@ -80,7 +80,7 @@ public class SemanticError : Exception, ICompileError
     this.tokens = tokens;
   }
 
-  public SemanticError(WrappedParseTree w, string msg)
+  public SemanticError(AnnotatedParseTree w, string msg)
     : this(w.module, w.tree, w.tokens, msg)
   {}
 }

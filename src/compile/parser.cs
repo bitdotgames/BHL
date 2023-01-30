@@ -18,12 +18,13 @@ public class ANTLR_Parsed
   }
 }
 
-public class WrappedParseTree
+public class AnnotatedParseTree
 {
   public IParseTree tree;
   public Module module;
   public ITokenStream tokens;
   public IType eval_type;
+  public Symbol symbol;
 
   public int line { 
     get { 
@@ -75,7 +76,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   Namespace ns;
 
   ITokenStream tokens;
-  ParseTreeProperty<WrappedParseTree> tree_props = new ParseTreeProperty<WrappedParseTree>();
+  ParseTreeProperty<AnnotatedParseTree> annotated_nodes = new ParseTreeProperty<AnnotatedParseTree>();
 
   class ParserPass
   {
@@ -309,24 +310,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast_stack.Peek();
   }
 
-  WrappedParseTree Wrap(IParseTree t)
+  AnnotatedParseTree Annotate(IParseTree t)
   {
-    var w = tree_props.Get(t);
-    if(w == null)
+    var at = annotated_nodes.Get(t);
+    if(at == null)
     {
-      w = new WrappedParseTree();
-      w.module = module;
-      w.tree = t;
-      w.tokens = tokens;
+      at = new AnnotatedParseTree();
+      at.module = module;
+      at.tree = t;
+      at.tokens = tokens;
 
-      tree_props.Put(t, w);
+      annotated_nodes.Put(t, at);
     }
-    return w;
+    return at;
   }
 
-  public WrappedParseTree FindWrapped(IParseTree t)
+  public AnnotatedParseTree FindAnnotated(IParseTree t)
   {
-    return tree_props.Get(t);
+    return annotated_nodes.Get(t);
   }
 
   internal void Phase_Outline()
@@ -518,7 +519,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.callExp(); 
     Visit(exp);
-    var eval_type = Wrap(exp).eval_type;
+    var eval_type = Annotate(exp).eval_type;
     if(eval_type != null && eval_type != Types.Void)
     {
       bool has_calls = false;
@@ -559,7 +560,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       ctx
     );
 
-    Wrap(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = curr_type;
 
     return null;
   }
@@ -599,6 +600,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(root_name != null)
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+
+      Annotate(chain_ctx).symbol = name_symb;
 
       TryProcessClassBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
 
@@ -910,7 +913,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var arr_exp = arracc.exp();
       Visit(arr_exp);
 
-      if(Wrap(arr_exp).eval_type != Types.Int)
+      if(Annotate(arr_exp).eval_type != Types.Int)
         FireError(arr_exp, "array index expression is not of type int");
 
       type = arr_type.item_type.Get();
@@ -923,7 +926,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var arr_exp = arracc.exp();
       Visit(arr_exp);
 
-      if(!Wrap(arr_exp).eval_type.Equals(map_type.key_type.Get()))
+      if(!Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
         FireError(arr_exp, "not compatible map key types");
 
       type = map_type.val_type.Get();
@@ -1054,11 +1057,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PopJsonType();
           PopCallByRef();
 
-          var wca = Wrap(na.ca);
-
           if(func_arg_symb.type.Get() == null)
             FireError(na.ca, "unresolved type " + func_arg_symb.type);
-          types.CheckAssign(func_arg_symb.type.Get(), wca);
+          types.CheckAssign(func_arg_symb.type.Get(), Annotate(na.ca));
         }
       }
       //checking variadic argument
@@ -1078,7 +1079,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           Visit(variadic_args[0]);
           PopJsonType();
 
-          types.CheckAssign(varg_arr_type, Wrap(variadic_args[0]));
+          types.CheckAssign(varg_arr_type, Annotate(variadic_args[0]));
         }
         else
         {
@@ -1097,7 +1098,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             if(vidx+1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
 
-            types.CheckAssign(varg_type, Wrap(vca));
+            types.CheckAssign(varg_type, Annotate(vca));
           }
           PopJsonType();
           PopAddAST();
@@ -1139,8 +1140,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAddOptimizeAST();
       PopJsonType();
 
-      var wca = Wrap(ca);
-      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, wca);
+      types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca));
 
       if(arg_type_ref.Get() is RefType && ca.isRef() == null)
         FireError(ca, "'ref' is missing");
@@ -1341,7 +1341,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var func_name = Hash.CRC32(module.name) + "_lmb_" + funcLambda.Stop.Line;
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
-      Wrap(ctx), 
+      Annotate(ctx), 
       func_name,
       ParseFuncSignature(funcLambda.coroFlag() != null, tp, funcLambda.funcParams()),
       upvals,
@@ -1366,13 +1366,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     //NOTE: while we are inside lambda the eval type is its return type
-    Wrap(ctx).eval_type = lmb_symb.GetReturnType();
+    Annotate(ctx).eval_type = lmb_symb.GetReturnType();
 
     ParseFuncBlock(funcLambda, funcLambda.funcBlock(), funcLambda.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
     var curr_type = (IType)lmb_symb.signature;
-    Wrap(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = curr_type;
 
     PopScope();
 
@@ -1387,9 +1387,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, funcLambda);
+      ProcChainedCall(
+        curr_scope, 
+        null, 
+        new ExpChain(chain), 
+        ref curr_type, 
+        funcLambda
+      );
       PopAST();
-      Wrap(ctx).eval_type = curr_type;
+      Annotate(ctx).eval_type = curr_type;
       PeekAST().AddChild(interim);
     }
     else
@@ -1400,7 +1406,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.exp();
     Visit(exp);
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    Annotate(ctx).eval_type = Annotate(exp).eval_type;
     return null;
   }
 
@@ -1409,7 +1415,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var json = ctx.jsonObject();
 
     Visit(json);
-    Wrap(ctx).eval_type = Wrap(json).eval_type;
+    Annotate(ctx).eval_type = Annotate(json).eval_type;
     return null;
   }
 
@@ -1417,7 +1423,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var json = ctx.jsonArray();
     Visit(json);
-    Wrap(ctx).eval_type = Wrap(json).eval_type;
+    Annotate(ctx).eval_type = Annotate(json).eval_type;
     return null;
   }
 
@@ -1445,7 +1451,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(curr_type is ClassSymbolNative csn && csn.creator == null)
       FireError(ctx, "constructor is not defined");
 
-    Wrap(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = curr_type;
 
     var ast = new AST_JsonObj(curr_type, ctx.Start.Line);
 
@@ -1496,7 +1502,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PopJsonType();
 
-      Wrap(ctx).eval_type = arr_type;
+      Annotate(ctx).eval_type = arr_type;
 
       PeekAST().AddChild(ast);
     }
@@ -1533,7 +1539,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAST();
 
 
-      Wrap(ctx).eval_type = map_type;
+      Annotate(ctx).eval_type = map_type;
 
       PeekAST().AddChild(ast);
     }
@@ -1564,7 +1570,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     PopJsonType();
 
-    Wrap(ctx).eval_type = member.type.Get();
+    Annotate(ctx).eval_type = member.type.Get();
 
     PeekAST().AddChild(ast);
     return null;
@@ -1576,9 +1582,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var curr_type = PeekJsonType();
     Visit(exp);
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
-    types.CheckAssign(curr_type, Wrap(exp));
+    types.CheckAssign(curr_type, Annotate(exp));
 
     return null;
   }
@@ -1587,7 +1593,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.@typeof().type());
 
-    Wrap(ctx).eval_type = Types.ClassType;
+    Annotate(ctx).eval_type = Types.ClassType;
 
     PeekAST().AddChild(new AST_Typeof(tp.Get()));
 
@@ -1598,7 +1604,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.callExp(); 
     Visit(exp);
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
     ++ref_compatible_exp_counter;
 
@@ -1609,7 +1615,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.funcCallExp();
     CommonYieldFuncCall(ctx, exp);
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
     return null;
   }
@@ -1642,14 +1648,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       yielded: true
     );
 
-    Wrap(fn_call).eval_type = curr_type;
+    Annotate(fn_call).eval_type = curr_type;
   }
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
     var tp = ParseType(ctx.newExp().type());
     var cl = tp.Get();
-    Wrap(ctx).eval_type = cl;
+    Annotate(ctx).eval_type = cl;
 
     if(cl is ClassSymbolNative csn && csn.creator == null)
       FireError(ctx, "constructor is not defined");
@@ -1664,7 +1670,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.exp();
     Visit(exp);
-    Wrap(ctx).eval_type = Wrap(exp).eval_type;
+    Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
     return null;
   }
@@ -1679,9 +1685,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tp.Get();
+    Annotate(ctx).eval_type = tp.Get();
 
-    Types.CheckCast(Wrap(ctx), Wrap(exp)); 
+    Types.CheckCast(Annotate(ctx), Annotate(exp)); 
 
     PeekAST().AddChild(ast);
 
@@ -1698,10 +1704,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = tp.Get();
+    Annotate(ctx).eval_type = tp.Get();
 
     //TODO: do we need to pre-check absolutely unrelated types?
-    //types.CheckCast(Wrap(ctx), Wrap(exp)); 
+    //types.CheckCast(Annotate(ctx), Annotate(exp)); 
 
     PeekAST().AddChild(ast);
 
@@ -1718,10 +1724,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = Types.Bool;
+    Annotate(ctx).eval_type = Types.Bool;
 
     //TODO: do we need to pre-check absolutely unrelated types?
-    //types.CheckCast(Wrap(ctx), Wrap(exp)); 
+    //types.CheckCast(Annotate(ctx), Annotate(exp)); 
 
     PeekAST().AddChild(ast);
 
@@ -1745,9 +1751,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp);
     PopAST();
 
-    Wrap(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-      types.CheckUnaryMinus(Wrap(exp)) : 
-      types.CheckLogicalNot(Wrap(exp));
+    Annotate(ctx).eval_type = type == EnumUnaryOp.NEG ? 
+      types.CheckUnaryMinus(Annotate(exp)) : 
+      types.CheckLogicalNot(Annotate(exp));
 
     PeekAST().AddChild(ast);
 
@@ -1761,18 +1767,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushAST(ast);
     Visit(exp);
 
-    var curr_type = Wrap(exp).eval_type;
+    var curr_type = Annotate(exp).eval_type;
     var chain = ctx.chainExp(); 
     if(chain != null)
     {
-      ProcChainedCall(curr_scope, null, new ExpChain(chain), ref curr_type, exp);
+      ProcChainedCall(
+        curr_scope, 
+        null, 
+        new ExpChain(chain), 
+        ref curr_type, 
+        exp
+      );
       ++ref_compatible_exp_counter;
     }
     PopAST();
     
     PeekAST().AddChild(ast);
     
-    Wrap(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = curr_type;
 
     return null;
   }
@@ -1786,14 +1798,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushAST(ast);
     Visit(exp);
 
-    var curr_type = Wrap(exp).eval_type;
+    var curr_type = Annotate(exp).eval_type;
     var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
-    ProcChainedCall(curr_scope, null, chain, ref curr_type, exp, yielded: true);
+    ProcChainedCall(
+      curr_scope, 
+      null, 
+      chain, 
+      ref curr_type, 
+      exp, 
+      yielded: true
+    );
     PopAST();
     
     PeekAST().AddChild(ast);
     
-    Wrap(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = curr_type;
 
     return null;
   }
@@ -1862,11 +1881,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
-    var wone = Wrap(one_literal_exp);
-    var wcall = Wrap(ctx.callExp());
-    wone.module = wcall.module;
-    wone.tree = wcall.tree;
-    wone.tokens = wcall.tokens;
+    var ann_one = Annotate(one_literal_exp);
+    var ann_call = Annotate(ctx.callExp());
+    ann_one.module = ann_call.module;
+    ann_one.tree = ann_call.tree;
+    ann_one.tokens = ann_call.tokens;
 
     if(ctx.incrementOperator() != null)
       CommonVisitBinOp(ctx, "+", ctx.callExp(), one_literal_exp);
@@ -1940,16 +1959,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(rhs);
     PopAST();
 
-    var wlhs = Wrap(lhs);
-    var wrhs = Wrap(rhs);
+    var ann_lhs = Annotate(lhs);
+    var ann_rhs = Annotate(rhs);
 
-    var class_symb = wlhs.eval_type as ClassSymbol;
+    var class_symb = ann_lhs.eval_type as ClassSymbol;
     //NOTE: checking if there's binary operator overload
     if(class_symb != null && class_symb.Resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
-      Wrap(ctx).eval_type = types.CheckBinOpOverload(ns, wlhs, wrhs, op_func);
+      Annotate(ctx).eval_type = types.CheckBinOpOverload(ns, ann_lhs, ann_rhs, op_func);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
@@ -1963,16 +1982,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       op_type == EnumBinaryOp.EQ || 
       op_type == EnumBinaryOp.NQ
     )
-      Wrap(ctx).eval_type = types.CheckEqBinOp(wlhs, wrhs);
+      Annotate(ctx).eval_type = types.CheckEqBinOp(ann_lhs, ann_rhs);
     else if(
       op_type == EnumBinaryOp.GT || 
       op_type == EnumBinaryOp.GTE ||
       op_type == EnumBinaryOp.LT || 
       op_type == EnumBinaryOp.LTE
     )
-      Wrap(ctx).eval_type = types.CheckRtlBinOp(wlhs, wrhs);
+      Annotate(ctx).eval_type = types.CheckRtlBinOp(ann_lhs, ann_rhs);
     else
-      Wrap(ctx).eval_type = types.CheckBinOp(wlhs, wrhs);
+      Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs);
 
     PeekAST().AddChild(ast);
   }
@@ -1988,7 +2007,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = types.CheckBitOp(Wrap(exp_0), Wrap(exp_1));
+    Annotate(ctx).eval_type = types.CheckBitOp(Annotate(exp_0), Annotate(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -2006,7 +2025,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp_1);
     PopAST();
 
-    Wrap(ctx).eval_type = types.CheckBitOp(Wrap(exp_0), Wrap(exp_1));
+    Annotate(ctx).eval_type = types.CheckBitOp(Annotate(exp_0), Annotate(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -2032,7 +2051,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = types.CheckLogicalOp(Wrap(exp_0), Wrap(exp_1));
+    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -2058,7 +2077,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PopAST();
     ast.AddChild(tmp1);
 
-    Wrap(ctx).eval_type = types.CheckLogicalOp(Wrap(exp_0), Wrap(exp_1));
+    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1));
 
     PeekAST().AddChild(ast);
 
@@ -2077,19 +2096,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(int_num != null)
     {
       ast = new AST_Literal(ConstType.INT);
-      Wrap(ctx).eval_type = Types.Int;
+      Annotate(ctx).eval_type = Types.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
       ast = new AST_Literal(ConstType.FLT);
-      Wrap(ctx).eval_type = Types.Float;
+      Annotate(ctx).eval_type = Types.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
       ast = new AST_Literal(ConstType.INT);
-      Wrap(ctx).eval_type = Types.Int;
+      Annotate(ctx).eval_type = Types.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
     }
     else
@@ -2102,7 +2121,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    Wrap(ctx).eval_type = Types.Bool;
+    Annotate(ctx).eval_type = Types.Bool;
 
     var ast = new AST_Literal(ConstType.BOOL);
     ast.nval = 0;
@@ -2113,7 +2132,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    Wrap(ctx).eval_type = Types.Null;
+    Annotate(ctx).eval_type = Types.Null;
 
     var ast = new AST_Literal(ConstType.NIL);
     PeekAST().AddChild(ast);
@@ -2123,7 +2142,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    Wrap(ctx).eval_type = Types.Bool;
+    Annotate(ctx).eval_type = Types.Bool;
 
     var ast = new AST_Literal(ConstType.BOOL);
     ast.nval = 1;
@@ -2134,7 +2153,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    Wrap(ctx).eval_type = Types.String;
+    Annotate(ctx).eval_type = Types.String;
 
     var ast = new AST_Literal(ConstType.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
@@ -2271,11 +2290,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Visit(exp_item);
         PopJsonType();
 
-        if(Wrap(exp_item).eval_type != Types.Void)
+        if(Annotate(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
-        types.CheckAssign(func_symb.parsed, Wrap(exp_item));
-        Wrap(ctx).eval_type = Wrap(exp_item).eval_type;
+        types.CheckAssign(func_symb.parsed, Annotate(exp_item));
+        Annotate(ctx).eval_type = Annotate(exp_item).eval_type;
       }
       else
       {
@@ -2293,17 +2312,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           var exp = ret_val.exps().exp()[i];
           Visit(exp);
-          ret_type.Add(curr_scope.R().T(Wrap(exp).eval_type));
+          ret_type.Add(curr_scope.R().T(Annotate(exp).eval_type));
         }
 
         //type checking is in proper order
         for(int i=0;i<explen;++i)
         {
           var exp = ret_val.exps().exp()[i];
-          types.CheckAssign(fmret_type[i].Get(), Wrap(exp));
+          types.CheckAssign(fmret_type[i].Get(), Annotate(exp));
         }
 
-        Wrap(ctx).eval_type = ret_type;
+        Annotate(ctx).eval_type = ret_type;
 
         ret_ast.num = fmret_type.Count;
       }
@@ -2318,7 +2337,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(func_symb.GetReturnType() != Types.Void)
         FireError(ctx, "return value is missing");
-      Wrap(ctx).eval_type = Types.Void;
+      Annotate(ctx).eval_type = Types.Void;
       PeekAST().AddChild(ret_ast);
     }
 
@@ -2412,7 +2431,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       FireError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
     pass.func_symb = new FuncSymbolScript(
-      Wrap(pass.func_ctx), 
+      Annotate(pass.func_ctx), 
       new FuncSignature(),
       name
     ); 
@@ -2436,7 +2455,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
-    Wrap(pass.func_ctx).eval_type = pass.func_symb.GetReturnType();
+    Annotate(pass.func_ctx).eval_type = pass.func_symb.GetReturnType();
   }
 
   void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
@@ -2487,7 +2506,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var vd = pass.gvar_ctx.varDeclare(); 
 
-    pass.gvar_symb = new VariableSymbol(Wrap(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
     curr_scope.Define(pass.gvar_symb);
   }
@@ -2499,7 +2518,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var name = pass.iface_ctx.NAME().GetText();
 
-    pass.iface_symb = new InterfaceSymbolScript(Wrap(pass.iface_ctx), name);
+    pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
 
     pass.scope.Define(pass.iface_symb);
   }
@@ -2616,7 +2635,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var name = pass.class_ctx.NAME().GetText();
 
-    pass.class_symb = new ClassSymbolScript(Wrap(pass.class_ctx), name);
+    pass.class_symb = new ClassSymbolScript(Annotate(pass.class_ctx), name);
     pass.scope.Define(pass.class_symb);
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
@@ -2633,7 +2652,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(vd.NAME().GetText() == "this")
           FireError(vd.NAME(), "the keyword \"this\" is reserved");
 
-        var fld_symb = new FieldSymbolScript(Wrap(vd), vd.NAME().GetText(), new Proxy<IType>());
+        var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new Proxy<IType>());
 
         for(int f=0;f<fldd.fldAttribs().Length;++f)
         {
@@ -2659,7 +2678,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           FireError(fd.NAME(), "the keyword \"this\" is reserved");
 
         var func_symb = new FuncSymbolScript(
-            Wrap(fd), 
+            Annotate(fd), 
             new FuncSignature(),
             fd.NAME().GetText()
           );
@@ -2743,7 +2762,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);
 
-        Wrap(fd).eval_type = func_symb.GetReturnType(); 
+        Annotate(fd).eval_type = func_symb.GetReturnType(); 
       }
     }
 
@@ -2854,7 +2873,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      so that it doesn't really make sense to create AST for them.
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
-    var symb = new EnumSymbolScript(Wrap(ctx), enum_name);
+    var symb = new EnumSymbolScript(Annotate(ctx), enum_name);
     curr_scope.Define(symb);
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
@@ -2913,7 +2932,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     if(assign_exp != null)
-      types.CheckAssign(Wrap(vd.NAME()), Wrap(assign_exp));
+      types.CheckAssign(Annotate(vd.NAME()), Annotate(assign_exp));
 
     PopAST();
 
@@ -2983,7 +3002,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var cexp = vdecl_tmp.callExp();
       var vd = vdecl_tmp.varDeclare();
 
-      WrappedParseTree var_ptree = null;
+      AnnotatedParseTree var_ptree = null;
       IType curr_type = null;
       bool is_decl = false;
       bool is_auto_var = false;
@@ -3005,7 +3024,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           write: true
         );
 
-        var_ptree = Wrap(cexp.NAME());
+        var_ptree = Annotate(cexp.NAME());
         var_ptree.eval_type = curr_type;
       }
       else 
@@ -3021,7 +3040,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             FireError(vd, "symbol '" + vd_name + "' not resolved");
           curr_type = vd_symb.type.Get();
 
-          var_ptree = Wrap(vd.NAME());
+          var_ptree = Annotate(vd.NAME());
           var_ptree.eval_type = curr_type;
 
           var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
@@ -3050,7 +3069,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           is_decl = true;
 
-          var_ptree = Wrap(vd.NAME()); 
+          var_ptree = Annotate(vd.NAME()); 
           curr_type = var_ptree.eval_type;
         }
       }
@@ -3092,7 +3111,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         for(int s=stash.children.Count;s-- > 0;)
           root.children.Insert(root_first_idx, stash.children[s]);
 
-        assign_type = Wrap(assign_exp).eval_type;
+        assign_type = Annotate(assign_exp).eval_type;
 
         //NOTE: declaring disabled symbol again
         if(disabled_symbol != null)
@@ -3139,7 +3158,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
             var_symbol.type = new Proxy<IType>(assign_type);
           }
-          types.CheckAssign(var_ptree, Wrap(assign_exp));
+          types.CheckAssign(var_ptree, Annotate(assign_exp));
         }
       }
     }
@@ -3205,7 +3224,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     if(assign_exp != null && !is_null_ref)
-      types.CheckAssign(Wrap(name), Wrap(assign_exp));
+      types.CheckAssign(Annotate(name), Annotate(assign_exp));
     return null;
   }
 
@@ -3234,7 +3253,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
       FireError(name, "keyword 'base' is reserved");
 
-    var var_tree = Wrap(name); 
+    var var_tree = Annotate(name); 
     var_tree.eval_type = tp.Get();
 
     if(is_ref && !func_arg)
@@ -3295,7 +3314,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(main.exp());
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(main.exp()));
+    types.CheckAssign(Types.Bool, Annotate(main.exp()));
 
     var func_symb = PeekFuncDecl();
     bool seen_return = return_found.Contains(func_symb);
@@ -3348,7 +3367,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Visit(item.exp());
       PopAST();
 
-      types.CheckAssign(Types.Bool, Wrap(item.exp()));
+      types.CheckAssign(Types.Bool, Annotate(item.exp()));
 
       seen_return = return_found.Contains(func_symb);
       return_found.Remove(func_symb);
@@ -3394,7 +3413,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(exp_0);
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(exp_0));
+    types.CheckAssign(Types.Bool, Annotate(exp_0));
 
     ast.AddChild(condition);
 
@@ -3412,10 +3431,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ast.AddChild(alternative);
 
-    var wrap_exp_1 = Wrap(exp_1);
-    Wrap(ctx).eval_type = wrap_exp_1.eval_type;
+    var ann_exp_1 = Annotate(exp_1);
+    Annotate(ctx).eval_type = ann_exp_1.eval_type;
 
-    types.CheckAssign(wrap_exp_1, Wrap(exp_2));
+    types.CheckAssign(ann_exp_1, Annotate(exp_2));
     PeekAST().AddChild(ast);
     return null;
   }
@@ -3431,7 +3450,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
+    types.CheckAssign(Types.Bool, Annotate(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -3465,7 +3484,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
+    types.CheckAssign(Types.Bool, Annotate(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -3529,7 +3548,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(for_cond);
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(for_cond.exp()));
+    types.CheckAssign(Types.Bool, Annotate(for_cond.exp()));
 
     ast.AddChild(cond);
 
@@ -3610,7 +3629,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(ctx.exp());
     PopAST();
 
-    types.CheckAssign(Types.Bool, Wrap(ctx.exp()));
+    types.CheckAssign(Types.Bool, Annotate(ctx.exp()));
 
     ast.AddChild(cond);
 
@@ -3691,13 +3710,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //evaluating array expression
       Visit(exp);
       PopJsonType();
-      types.CheckAssign(arr_type, Wrap(exp));
+      types.CheckAssign(arr_type, Annotate(exp));
 
       var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
       var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
       if(arr_tmp_symb == null)
       {
-        arr_tmp_symb = new VariableSymbol(Wrap(exp), arr_tmp_name, curr_scope.R().T(iter_type));
+        arr_tmp_symb = new VariableSymbol(Annotate(exp), arr_tmp_name, curr_scope.R().T(iter_type));
         curr_scope.Define(arr_tmp_symb);
       }
 
@@ -3705,7 +3724,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var arr_cnt_symb = curr_scope.ResolveWithFallback(arr_cnt_name) as VariableSymbol;
       if(arr_cnt_symb == null)
       {
-        arr_cnt_symb = new VariableSymbol(Wrap(exp), arr_cnt_name, Types.Int);
+        arr_cnt_symb = new VariableSymbol(Annotate(exp), arr_cnt_name, Types.Int);
         curr_scope.Define(arr_cnt_symb);
       }
 
@@ -3842,13 +3861,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //evaluating array expression
       Visit(exp);
       PopJsonType();
-      types.CheckAssign(map_type, Wrap(exp));
+      types.CheckAssign(map_type, Annotate(exp));
 
       var map_tmp_en_name = "$foreach_en" + exp.Start.Line + "_" + exp.Start.Column;
       var map_tmp_en_symb = curr_scope.ResolveWithFallback(map_tmp_en_name) as VariableSymbol;
       if(map_tmp_en_symb == null)
       {
-        map_tmp_en_symb = new VariableSymbol(Wrap(exp), map_tmp_en_name, Types.Any);
+        map_tmp_en_symb = new VariableSymbol(Annotate(exp), map_tmp_en_name, Types.Any);
         curr_scope.Define(map_tmp_en_symb);
       }
 
@@ -3902,7 +3921,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushAST(new AST_Interim());
     Visit(tree);
     PopAST();
-    return Wrap(tree).eval_type;
+    return Annotate(tree).eval_type;
   }
 
   AST_Block CommonVisitBlock(BlockType type, IParseTree[] sts)

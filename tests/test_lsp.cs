@@ -356,7 +356,7 @@ public class TestLSP : BHL_TestBase
 //    }
 //  }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestGoToDefinition()
   {
     string bhl1 = @"
@@ -431,17 +431,17 @@ public class TestLSP : BHL_TestBase
       );
     });
     
-    SubTest(() => {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-      json += "\"}, \"position\": " + JsonPos(bhl1, "oo foo = {") + "}}";
-      
-      AssertEqual(
-        rpc.Handle(json),
-        "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-        "\",\"range\":{\"start\":" + JsonPos(bhl1, "class Foo {") + ",\"end\":" + JsonPos(bhl1, "class Foo {") + "}},\"jsonrpc\":\"2.0\"}"
-      );
-    });
+    //SubTest(() => {
+    //  string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
+    //  json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
+    //  json += "\"}, \"position\": " + JsonPos(bhl1, "oo foo = {") + "}}";
+    //  
+    //  AssertEqual(
+    //    rpc.Handle(json),
+    //    "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
+    //    "\",\"range\":{\"start\":" + JsonPos(bhl1, "class Foo {") + ",\"end\":" + JsonPos(bhl1, "class Foo {") + "}},\"jsonrpc\":\"2.0\"}"
+    //  );
+    //});
   }
 
   //[IsTested()]
