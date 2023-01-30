@@ -24,7 +24,7 @@ public class AnnotatedParseTree
   public Module module;
   public ITokenStream tokens;
   public IType eval_type;
-  public Symbol symbol;
+  public Symbol lsp_symbol;
 
   public int line { 
     get { 
@@ -601,7 +601,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
-      Annotate(chain_ctx).symbol = name_symb;
+      //for LSP discovery
+      Annotate(chain_ctx).lsp_symbol = name_symb;
 
       TryProcessClassBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
 
@@ -2906,6 +2907,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
 
+    //for LSP discovery
+    Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.parsed.eval_type as Symbol;
+
     PushAST((AST_Tree)pass.ast);
 
     var assign_exp = pass.gvar_ctx.assignExp();
@@ -3180,7 +3184,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var vdecls = ctx.varsDeclareAssign().varsDeclareOrCallExps().varDeclareOrCallExp();
     var assign_exp = ctx.varsDeclareAssign().assignExp();
-
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
     return null;

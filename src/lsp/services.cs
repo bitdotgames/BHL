@@ -377,18 +377,18 @@ public class TextDocumentGoToService : IService
 
       if(node != null)
       {
-        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name);
-        var annd = document.proc.FindAnnotated(node.Parent);
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetHashCode());
+        var symb = document.proc.FindAnnotated(node.Parent)?.lsp_symbol;
 
-        if(annd.symbol is FuncSymbol fs)
+        if(symb != null)
         {
           return RpcResult.Success(new Location
           {
-            uri = new Uri("file://" + fs.parsed.file),
+            uri = new Uri("file://" + symb.parsed.file),
             range = new Range
             {
-              start = new Position { line = (uint)fs.parsed.line-1, character = (uint)fs.parsed.column },
-              end = new Position { line = (uint)fs.parsed.line-1, character = (uint)fs.parsed.column }
+              start = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column },
+              end = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column }
             }
           });
         }
