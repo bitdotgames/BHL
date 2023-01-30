@@ -103,8 +103,6 @@ public class Workspace
     //TODO: parse document
     //document.Update(text);
 
-    throw new Exception("Not implemented");
-
     return document;
   }
   

@@ -232,11 +232,11 @@ public class TextDocumentSynchronizationService : IService
 
 public class TextDocumentSignatureHelpService : IService
 {
-  Workspace workspace;
+  //Workspace workspace;
 
   public TextDocumentSignatureHelpService(Workspace workspace)
   {
-    this.workspace = workspace;
+    //this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/signatureHelp")]
@@ -378,7 +378,7 @@ public class TextDocumentGoToService : IService
       if(node != null)
       {
         //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText());
-        var w = document.proc.FindWrapped(node);
+        //var w = document.proc.FindWrapped(node);
         //Console.WriteLine("WRAPPED " + w.eval_type.GetType().Name);
         //return RpcResult.Success(new Location
         //{
@@ -391,7 +391,7 @@ public class TextDocumentGoToService : IService
         //});
       }
     }
-    
+
     return RpcResult.Success();
   }
   
@@ -440,11 +440,11 @@ public class TextDocumentGoToService : IService
 
 public class TextDocumentHoverService : IService
 {
-  Workspace workspace;
+  //Workspace workspace;
 
   public TextDocumentHoverService(Workspace workspace)
   {
-    this.workspace = workspace;
+    //this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/hover")]
@@ -527,11 +527,11 @@ public class TextDocumentHoverService : IService
 
 public class TextDocumentSemanticTokensService : IService
 {
-  Workspace workspace;
+  //Workspace workspace;
 
   public TextDocumentSemanticTokensService(Workspace workspace)
   {
-    this.workspace = workspace;
+    //this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/semanticTokens/full")]
