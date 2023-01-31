@@ -300,61 +300,61 @@ public class TestLSP : BHL_TestBase
     }
   }
   
-//  [IsTested()]
-//  public void TestSignatureHelp()
-//  {
-//    string bhl1 = @"
-//    func float test1(float k, float n) 
-//    {
-//      return 0
-//    }
-//
-//    func test2() 
-//    {
-//      test1()
-//    }
-//
-//    func test3() 
-//    {
-//      test1(5.2,)
-//    }
-//    ";
-//    
-//    var ws = new Workspace();
-//
-//    var rpc = new JsonRpc();
-//    rpc.AttachService(new bhl.lsp.spec.TextDocumentSignatureHelpService(ws));
-//    
-//    CleanTestFiles();
-//    
-//    Uri uri = MakeTestDocument("bhl1.bhl", bhl1);
-//
-//    {
-//      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-//      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-//      json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
-//      
-//      AssertEqual(
-//        rpc.Handle(json),
-//        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
-//        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-//        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//    
-//    {
-//      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-//      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-//      json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
-//      
-//      AssertEqual(
-//        rpc.Handle(json),
-//        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
-//        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-//        "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//  }
+  //[IsTested()]
+  public void TestSignatureHelp()
+  {
+    string bhl1 = @"
+    func float test1(float k, float n) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1()
+    }
+
+    func test3() 
+    {
+      test1(5.2,)
+    }
+    ";
+    
+    var ws = new Workspace();
+
+    var rpc = new JsonRpc();
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSignatureHelpService(ws));
+    
+    CleanTestFiles();
+    
+    Uri uri = MakeTestDocument("bhl1.bhl", bhl1);
+
+    {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
+      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
+      json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
+      );
+    }
+    
+    {
+      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
+      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
+      json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"test1(float k, float n):float \",\"documentation\":null,\"parameters\":[" +
+        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+        "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
+      );
+    }
+  }
 
   [IsTested()]
   public void TestGoToDefinition()
