@@ -19898,8 +19898,8 @@ public class TestVM : BHL_TestBase
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript("Enum");
-      Enum.TryAddItem("Type1", 1);
-      Enum.TryAddItem("Type2", 2);
+      Enum.TryAddItem(null, "Type1", 1);
+      Enum.TryAddItem(null, "Type2", 2);
       ns.Define(Enum);
 
       Marshall.Obj2Stream(ns, s);

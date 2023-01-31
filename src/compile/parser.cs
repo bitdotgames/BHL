@@ -2890,7 +2890,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var em_name = em.NAME().GetText();
       int em_val = int.Parse(em.INT().GetText(), System.Globalization.CultureInfo.InvariantCulture);
 
-      int res = symb.TryAddItem(em_name, em_val);
+      int res = symb.TryAddItem(Annotate(em), em_name, em_val);
       if(res == 1)
         FireError(em.NAME(), "duplicate key '" + em_name + "'");
       else if(res == 2)

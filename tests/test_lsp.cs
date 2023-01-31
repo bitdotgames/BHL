@@ -400,7 +400,7 @@ public class TestLSP : BHL_TestBase
       test2()
       foo.BAR = 1
 
-      ErrorCodes err = ErrorCodes.Bad
+      ErrorCodes err = ErrorCodes.Bad //error code 
       return err
     }
     ";
@@ -499,6 +499,13 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
         GoToDefinitionRsp(uri1, "enum ErrorCodes")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
+        GoToDefinitionRsp(uri1, "Bad = 1")
       );
     });
 

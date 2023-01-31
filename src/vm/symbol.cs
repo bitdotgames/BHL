@@ -2174,7 +2174,7 @@ public class EnumSymbolScript : EnumSymbol
   {}
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
-  public int TryAddItem(string name, int val)
+  public int TryAddItem(AnnotatedParseTree parsed, string name, int val)
   {
     for(int i=0;i<members.Count;++i)
     {
@@ -2185,7 +2185,7 @@ public class EnumSymbolScript : EnumSymbol
         return 1;
     }
 
-    var item = new EnumItemSymbol(name, val);
+    var item = new EnumItemSymbol(parsed, name, val);
     //TODO: should be set by SymbolsDictionary
     item.scope = this;
     members.Add(item);
