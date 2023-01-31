@@ -553,11 +553,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
     ProcChainedCall(
+      ctx,
       ctx.GLOBAL() != null ? ns : curr_scope, 
       ctx.NAME(), 
       new ExpChain(ctx.chainExp()), 
-      ref curr_type, 
-      ctx
+      ref curr_type
     );
 
     Annotate(ctx).eval_type = curr_type;
@@ -577,12 +577,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  //TODO: the method below should be heavily refactored some day
   AST_Tree ProcChainedCall(
+    ParserRuleContext chain_ctx,
     IScope root_scope,
     ITerminalNode root_name, 
     IExpChain chain, 
     ref IType curr_type, 
-    ParserRuleContext chain_ctx,
     bool write = false,
     bool yielded = false
    )
@@ -1388,11 +1389,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       interim.AddChild(ast);
       PushAST(interim);
       ProcChainedCall(
+        funcLambda,
         curr_scope, 
         null, 
         new ExpChain(chain), 
-        ref curr_type, 
-        funcLambda
+        ref curr_type
       );
       PopAST();
       Annotate(ctx).eval_type = curr_type;
@@ -1640,11 +1641,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     IType curr_type = null;
     ProcChainedCall(
+      fn_call.callExp(), 
       fn_call.callExp().GLOBAL() != null ? ns : curr_scope, 
       fn_call.callExp().NAME(), 
       chain, 
       ref curr_type, 
-      fn_call.callExp(), 
       yielded: true
     );
 
@@ -1772,11 +1773,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(chain != null)
     {
       ProcChainedCall(
+        exp,
         curr_scope, 
         null, 
         new ExpChain(chain), 
-        ref curr_type, 
-        exp
+        ref curr_type
       );
       ++ref_compatible_exp_counter;
     }
@@ -1801,11 +1802,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_type = Annotate(exp).eval_type;
     var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
     ProcChainedCall(
+      exp, 
       curr_scope, 
       null, 
       chain, 
       ref curr_type, 
-      exp, 
       yielded: true
     );
     PopAST();
@@ -1825,11 +1826,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
+      ctx, 
       ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
       ctx.callExp().NAME(), 
       new ExpChain(ctx.callExp().chainExp()), 
       ref curr_type, 
-      ctx, 
       write: true
      );
 
@@ -1897,11 +1898,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
+      ctx, 
       ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
       ctx.callExp().NAME(), 
       new ExpChain(ctx.callExp().chainExp()), 
       ref curr_type, 
-      ctx, 
       write: true
     );
 
@@ -3018,11 +3019,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
         ProcChainedCall(
+          cexp, 
           cexp.GLOBAL() != null ? ns : curr_scope, 
           cexp.NAME(), 
           new ExpChain(cexp.chainExp()), 
           ref curr_type, 
-          cexp, 
           write: true
         );
 
