@@ -1659,10 +1659,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tp = ParseType(ctx.newExp().type());
     var cl = tp.Get();
     Annotate(ctx).eval_type = cl;
-    Annotate(ctx.newExp().type().nsName().dotName()).lsp_symbol = cl as Symbol;
 
     if(cl is ClassSymbolNative csn && csn.creator == null)
       FireError(ctx, "constructor is not defined");
+
+    if(ctx.newExp().type().nsName() != null)
+      Annotate(ctx.newExp().type().nsName().dotName()).lsp_symbol = cl as Symbol;
 
     var ast = new AST_New(cl, ctx.Start.Line);
     PeekAST().AddChild(ast);
