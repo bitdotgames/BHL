@@ -382,8 +382,10 @@ public class TestLSP : BHL_TestBase
     string bhl2 = @"
     import ""bhl1""
 
-    func float test3(float k, int j) 
+    func float test3(float k, int j)
     {
+      k = 10
+      j = 100
       return 0
     }
 
@@ -432,6 +434,34 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
         GoToDefinitionRsp(uri1, "int BAR")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "AR = 1")),
+        GoToDefinitionRsp(uri1, "int BAR")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
+        GoToDefinitionRsp(uri1, "foo = {")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "k = 10")),
+        GoToDefinitionRsp(uri2, "k, int j)")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "j = 100")),
+        GoToDefinitionRsp(uri2, "j)")
       );
     });
   }
