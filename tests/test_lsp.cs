@@ -427,6 +427,13 @@ public class TestLSP : BHL_TestBase
         GoToDefinitionRsp(uri1, "class Foo {")
       );
     });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
+        GoToDefinitionRsp(uri1, "int BAR")
+      );
+    });
   }
 
   //[IsTested()]

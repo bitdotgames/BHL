@@ -85,9 +85,15 @@ public class BHLDocument
     if(node == null)
       return null;
 
-    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetHashCode());
+    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetText());
 
-    return proc.FindAnnotated(node.Parent)?.lsp_symbol;
+    var annotated = proc.FindAnnotated(node.Parent);
+    if(annotated == null)
+      return null;
+
+    //Console.WriteLine("SYMB " + annotated.lsp_symbol + " " + annotated.lsp_symbol.GetType().Name);
+
+    return annotated.lsp_symbol;
   }
 
   bhlParser GetParser()

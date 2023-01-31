@@ -601,9 +601,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
-      //for LSP discovery
-      Annotate(chain_ctx).lsp_symbol = name_symb;
-
       TryProcessClassBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
 
       if(name_symb == null)
@@ -784,6 +781,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       name_symb = scope.ResolveChained(name.GetText(), is_root: is_root);
       if(name_symb == null)
         FireError(name, "symbol '" + name.GetText() + "' not resolved");
+
+      Annotate(name.Parent).lsp_symbol = name_symb;
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
@@ -2907,7 +2906,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
 
-    //for LSP discovery
     Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.parsed.eval_type as Symbol;
 
     PushAST((AST_Tree)pass.ast);
