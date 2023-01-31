@@ -2173,6 +2173,7 @@ public class EnumSymbolScript : EnumSymbol
     : base(null)
   {}
 
+#if BHL_FRONT
   //0 - OK, 1 - duplicate key, 2 - duplicate value
   public int TryAddItem(AnnotatedParseTree parsed, string name, int val)
   {
@@ -2191,6 +2192,7 @@ public class EnumSymbolScript : EnumSymbol
     members.Add(item);
     return 0;
   }
+#endif
 
   public override uint ClassId()
   {
