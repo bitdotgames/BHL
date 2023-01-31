@@ -375,6 +375,7 @@ public class TestLSP : BHL_TestBase
 
     func test2() 
     {
+      var tmp_foo = new Foo //create new Foo
       test1(42)
     }
     ";
@@ -426,6 +427,13 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
+        GoToDefinitionRsp(uri1, "class Foo {")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
         GoToDefinitionRsp(uri1, "class Foo {")
       );
     });
