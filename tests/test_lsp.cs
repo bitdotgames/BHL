@@ -432,6 +432,13 @@ public class TestLSP : BHL_TestBase
 
     SubTest(() => {
       AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
+        GoToDefinitionRsp(uri1, "int BAR")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
         GoToDefinitionRsp(uri1, "int BAR")
       );
@@ -462,6 +469,13 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "j = 100")),
         GoToDefinitionRsp(uri2, "j)")
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "test4()")),
+        NullResultJson()
       );
     });
   }
@@ -522,6 +536,11 @@ public class TestLSP : BHL_TestBase
     string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\":1,\"result\":{\"uri\":\"" + uri.ToString() +
       "\",\"range\":{\"start\":" + pos + ",\"end\":" + pos + "}},\"jsonrpc\":\"2.0\"}";
+  }
+
+  static string NullResultJson()
+  {
+    return "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}";
   }
   
   static Uri MakeUri(string path)

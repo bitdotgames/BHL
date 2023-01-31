@@ -1560,6 +1560,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(member == null)
       FireError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
 
+    Annotate(ctx).lsp_symbol = member;
+
     var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx);
 
     PushJsonType(member.type.Get());
