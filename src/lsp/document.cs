@@ -79,6 +79,17 @@ public class BHLDocument
     return null;
   }
 
+  public Symbol FindSymbol(Code.Position pos)
+  {
+    var node = FindTerminalNode(pos);
+    if(node == null)
+      return null;
+
+    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetHashCode());
+
+    return proc.FindAnnotated(node.Parent)?.lsp_symbol;
+  }
+
   bhlParser GetParser()
   {
     var ais = new AntlrInputStream(code.Text.ToStream());

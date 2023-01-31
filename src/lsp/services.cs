@@ -373,25 +373,19 @@ public class TextDocumentGoToService : IService
         
     if(document != null)
     {
-      var node = document.FindTerminalNode(args.position);
+      var symb = document.FindSymbol(args.position);
 
-      if(node != null)
+      if(symb != null)
       {
-        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetHashCode());
-        var symb = document.proc.FindAnnotated(node.Parent)?.lsp_symbol;
-
-        if(symb != null)
+        return RpcResult.Success(new Location
         {
-          return RpcResult.Success(new Location
+          uri = new Uri("file://" + symb.parsed.file),
+          range = new Range
           {
-            uri = new Uri("file://" + symb.parsed.file),
-            range = new Range
-            {
-              start = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column },
-              end = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column }
-            }
-          });
-        }
+            start = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column },
+            end = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column }
+          }
+        });
       }
     }
 

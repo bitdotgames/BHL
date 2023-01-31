@@ -144,7 +144,7 @@ public class TestLSP : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestInitShutdownExitRpc()
+  public void TestInitShutdownExit()
   {
     var rpc = new JsonRpc();
     rpc.AttachService(new bhl.lsp.spec.LifecycleService(new Workspace()));
@@ -206,99 +206,99 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-//  [IsTested()]
-//  public void TestSyncDocument()
-//  {
-//    string bhl_v1 = @"
-//    func float test1(float k) 
-//    {
-//      return 0
-//    }
-//
-//    func test2() 
-//    {
-//      test1(1)
-//    }
-//    ";
-//    
-//    string bhl_v2 = @"
-//    func float test1(float k, int j) 
-//    {
-//      return 0
-//    }
-//
-//    func test2() 
-//    {
-//      test1(1, 2)
-//    }
-//    ";
-//    
-//    var ws = new Workspace();
-//
-//    var rpc = new JsonRpc();
-//    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(ws));
-//    
-//    CleanTestFiles();
-//
-//    var uri = MakeUri(MakeTestDocument("bhl1.bhl", bhl_v1));
-//
-//    ws.AddRoot(GetTestDirPath());
-//    
-//    {
-//      ws.IndexFiles(new bhl.Types());
-//
-//      string json =
-//        "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
-//        "\",\"text\":\"" + bhl_v1 +
-//        "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
-//      
-//      AssertEqual(
-//        rpc.Handle(json),
-//        string.Empty
-//      );
-//
-//      var document = ws.FindDocument(uri);
-//      
-//      AssertEqual(
-//        bhl_v1,
-//        document.code.Text
-//      );
-//    }
-//
-//    CleanTestFiles();
-//
-//    {
-//      MakeTestDocument("bhl1.bhl", bhl_v2);
-//
-//      ws.IndexFiles(new bhl.Types());
-//
-//      string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
-//             "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
-//             "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
-//      
-//      AssertEqual(
-//        rpc.Handle(json),
-//        string.Empty
-//      );
-//
-//      var document = ws.FindDocument(uri);
-//
-//      AssertEqual(
-//        bhl_v2,
-//        document.code.Text
-//      );
-//    }
-//    
-//    {
-//      string json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
-//             "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
-//      
-//      AssertEqual(
-//        rpc.Handle(json),
-//        string.Empty
-//      );
-//    }
-//  }
+  [IsTested()]
+  public void TestOpenChangeCloseDocument()
+  {
+    string bhl_v1 = @"
+    func float test1(float k) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1(1)
+    }
+    ";
+    
+    string bhl_v2 = @"
+    func float test1(float k, int j) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1(1, 2)
+    }
+    ";
+    
+    var ws = new Workspace();
+
+    var rpc = new JsonRpc();
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(ws));
+    
+    CleanTestFiles();
+
+    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
+
+    ws.AddRoot(GetTestDirPath());
+    
+    {
+      ws.IndexFiles(new bhl.Types());
+
+      string json =
+        "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
+        "\",\"text\":\"" + bhl_v1 +
+        "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
+
+      var document = ws.FindDocument(uri);
+      
+      AssertEqual(
+        bhl_v1,
+        document.code.Text
+      );
+    }
+
+    CleanTestFiles();
+
+    {
+      MakeTestDocument("bhl1.bhl", bhl_v2);
+
+      ws.IndexFiles(new bhl.Types());
+
+      string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
+             "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
+             "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
+
+      var document = ws.FindDocument(uri);
+
+      AssertEqual(
+        bhl_v2,
+        document.code.Text
+      );
+    }
+    
+    {
+      string json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
+             "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
+      
+      AssertEqual(
+        rpc.Handle(json),
+        string.Empty
+      );
+    }
+  }
   
 //  [IsTested()]
 //  public void TestSignatureHelp()
@@ -327,7 +327,7 @@ public class TestLSP : BHL_TestBase
 //    
 //    CleanTestFiles();
 //    
-//    Uri uri = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
+//    Uri uri = MakeTestDocument("bhl1.bhl", bhl1);
 //
 //    {
 //      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
@@ -401,45 +401,30 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri1 = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
-    Uri uri2 = MakeUri(MakeTestDocument("bhl2.bhl", bhl2));
+    Uri uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+    Uri uri2 = MakeTestDocument("bhl2.bhl", bhl2);
     
     ws.AddRoot(GetTestDirPath());
     ws.IndexFiles(new bhl.Types());
     
     SubTest(() => {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-      json += "\"}, \"position\": " + JsonPos(bhl1, "st1(42)") + "}}";
-      
       AssertEqual(
-          rpc.Handle(json),
-          "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":" + JsonPos(bhl1, "func float test1(float k)") + ",\"end\":" + JsonPos(bhl1, "func float test1(float k)") + "}},\"jsonrpc\":\"2.0\"}"
+        rpc.Handle(GoToDefinitionReq(uri1, "st1(42)")),
+        GoToDefinitionRsp(uri1, "func float test1(float k)")
       );
     });
     
     SubTest(() => {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri2.ToString();
-      json += "\"}, \"position\": " + JsonPos(bhl2, "est2()") + "}}";
-      
       AssertEqual(
-          rpc.Handle(json),
-          "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-          "\",\"range\":{\"start\":" + JsonPos(bhl1, "func test2()") + ",\"end\":" + JsonPos(bhl1, "func test2()") + "}},\"jsonrpc\":\"2.0\"}"
+        rpc.Handle(GoToDefinitionReq(uri2, "est2()")),
+        GoToDefinitionRsp(uri1, "func test2()")
       );
     });
     
     SubTest(() => {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString();
-      json += "\"}, \"position\": " + JsonPos(bhl1, "oo foo = {") + "}}";
-      
       AssertEqual(
-        rpc.Handle(json),
-        "{\"id\":1,\"result\":{\"uri\":\"" + uri1.ToString() +
-        "\",\"range\":{\"start\":" + JsonPos(bhl1, "class Foo {") + ",\"end\":" + JsonPos(bhl1, "class Foo {") + "}},\"jsonrpc\":\"2.0\"}"
+        rpc.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
+        GoToDefinitionRsp(uri1, "class Foo {")
       );
     });
   }
@@ -474,7 +459,7 @@ public class TestLSP : BHL_TestBase
   //  
   //  CleanTestFiles();
   //  
-  //  Uri uri1 = MakeUri(MakeTestDocument("bhl1.bhl", bhl1));
+  //  Uri uri1 = MakeTestDocument("bhl1.bhl", bhl1);
   //  
   //  var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
   //  json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
@@ -486,6 +471,21 @@ public class TestLSP : BHL_TestBase
   //    "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"
   //  );
   //}
+
+  static string GoToDefinitionReq(Uri uri, string needle)
+  {
+    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
+      "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
+      "\"}, \"position\": " + pos + "}}";
+  }
+
+  static string GoToDefinitionRsp(Uri uri, string needle)
+  {
+    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    return "{\"id\":1,\"result\":{\"uri\":\"" + uri.ToString() +
+      "\",\"range\":{\"start\":" + pos + ",\"end\":" + pos + "}},\"jsonrpc\":\"2.0\"}";
+  }
   
   static Uri MakeUri(string path)
   {
@@ -505,14 +505,14 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static string MakeTestDocument(string path, string text, List<string> files = null)
+  static Uri MakeTestDocument(string path, string text, List<string> files = null)
   {
     string full_path = GetTestDirPath() + "/" + path;
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    return full_path;
+    return MakeUri(full_path);
   }
 
   static string JsonPos(string code, string needle)
