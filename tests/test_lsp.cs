@@ -368,6 +368,11 @@ public class TestLSP : BHL_TestBase
       BAR : 0
     }
 
+    enum ErrorCodes {
+      Ok = 0
+      Bad = 1
+    }
+
     func float test1(float k) 
     {
       return 0
@@ -390,10 +395,13 @@ public class TestLSP : BHL_TestBase
       return 0
     }
 
-    func test4() 
+    func ErrorCodes test4() 
     {
       test2()
       foo.BAR = 1
+
+      ErrorCodes err = ErrorCodes.Bad
+      return err
     }
     ";
     
@@ -486,6 +494,14 @@ public class TestLSP : BHL_TestBase
         NullResultJson()
       );
     });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
+        GoToDefinitionRsp(uri1, "enum ErrorCodes")
+      );
+    });
+
   }
 
   //[IsTested()]

@@ -3069,6 +3069,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             //NOTE: in case of 'var' let's temporarily declare var as 'any',
             //      below we'll setup the proper type
             is_auto_var ? Types.Any : ParseType(vd_type), 
+            vd_type,
             is_ref: false, 
             func_arg: false, 
             write: assign_exp != null
@@ -3238,20 +3239,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   AST_Tree CommonDeclVar(
     IScope curr_scope, 
     ITerminalNode name, 
-    bhlParser.TypeContext type_ctx, 
+    bhlParser.TypeContext tp_ctx, 
     bool is_ref, 
     bool func_arg, 
     bool write
   )
   {
-    var tp = ParseType(type_ctx);
-    return CommonDeclVar(curr_scope, name, tp, is_ref, func_arg, write);
+    var tp = ParseType(tp_ctx);
+    return CommonDeclVar(curr_scope, name, tp, tp_ctx, is_ref, func_arg, write);
   }
 
   AST_Tree CommonDeclVar(
     IScope curr_scope, 
     ITerminalNode name, 
     Proxy<IType> tp, 
+    bhlParser.TypeContext tp_ctx, //can be null 
     bool is_ref, 
     bool func_arg, 
     bool write
@@ -3262,6 +3264,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var var_tree = Annotate(name); 
     var_tree.eval_type = tp.Get();
+
+    if(tp_ctx?.nsName() != null)
+      Annotate(tp_ctx.nsName().dotName()).lsp_symbol = var_tree.eval_type as Symbol;
 
     if(is_ref && !func_arg)
       FireError(name, "'ref' is only allowed in function declaration");
@@ -3703,6 +3708,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           curr_scope, 
           vd.NAME(), 
           vd_type,
+          vd.type(),
           is_ref: false, 
           func_arg: false, 
           write: false
@@ -3827,6 +3833,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           curr_scope, 
           vd_key.NAME(), 
           vd_key_type, 
+          vd_key.type(),
           is_ref: false, 
           func_arg: false, 
           write: false
@@ -3854,6 +3861,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           curr_scope, 
           vd_val.NAME(), 
           vd_val_type, 
+          vd_val.type(),
           is_ref: false, 
           func_arg: false, 
           write: false
