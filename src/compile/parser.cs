@@ -76,7 +76,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   Namespace ns;
 
   ITokenStream tokens;
-  ParseTreeProperty<AnnotatedParseTree> annotated_nodes = new ParseTreeProperty<AnnotatedParseTree>();
+  Dictionary<IParseTree, AnnotatedParseTree> annotated_nodes = new Dictionary<IParseTree, AnnotatedParseTree>();
 
   class ParserPass
   {
@@ -312,22 +312,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   AnnotatedParseTree Annotate(IParseTree t)
   {
-    var at = annotated_nodes.Get(t);
-    if(at == null)
+    AnnotatedParseTree at;
+    if(!annotated_nodes.TryGetValue(t, out at))
     {
       at = new AnnotatedParseTree();
       at.module = module;
       at.tree = t;
       at.tokens = tokens;
 
-      annotated_nodes.Put(t, at);
+      annotated_nodes.Add(t, at);
     }
     return at;
   }
 
   public AnnotatedParseTree FindAnnotated(IParseTree t)
   {
-    return annotated_nodes.Get(t);
+    AnnotatedParseTree at;
+    annotated_nodes.TryGetValue(t, out at);
+    return at;
   }
 
   internal void Phase_Outline()
@@ -3253,7 +3255,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IScope curr_scope, 
     ITerminalNode name, 
     Proxy<IType> tp, 
-    bhlParser.TypeContext tp_ctx, //can be null 
+    bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery 
     bool is_ref, 
     bool func_arg, 
     bool write
