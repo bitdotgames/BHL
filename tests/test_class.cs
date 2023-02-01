@@ -2212,7 +2212,9 @@ public class TestClasses : BHL_TestBase
   {
     string bhl = @"
       class Foo {
+        int b
         int this
+        int a
       }
     ";
 
@@ -2238,6 +2240,8 @@ public class TestClasses : BHL_TestBase
         {
           return false
         }
+
+        func bar() {}
       }
     ";
 
