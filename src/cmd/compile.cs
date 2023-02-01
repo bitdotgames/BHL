@@ -130,11 +130,14 @@ public class CompileCmd : ICmd
     conf.verbose = verbose;
 
     var cmp = new CompilationExecutor();
-    var err = cmp.Exec(conf);
-    if(err != null)
+    var errors = cmp.Exec(conf);
+    if(errors.Count > 0)
     {
       if(string.IsNullOrEmpty(err_file))
-        ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
+      {
+        foreach(var err in errors)
+          ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
+      }
       Environment.Exit(ERROR_EXIT_CODE);
     }
   }

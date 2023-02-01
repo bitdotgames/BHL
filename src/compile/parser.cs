@@ -391,7 +391,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var reg_mod = types.FindRegisteredModule(kv.Value);
       if(reg_mod != null)
       {
-        ns.Link(reg_mod.ns);
+        try
+        {
+          ns.Link(reg_mod.ns);
+        }
+        catch(SymbolError se)
+        {
+          errors.Add(se);
+        }
         continue;
       }
 
@@ -412,7 +419,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       for(int i=0;i<imported_module.local_gvars_num;++i)
         module.gvars.index.Add(imported_module.gvars.index[i]);
 
-      ns.Link(imported_module.ns);
+      try
+      {
+        ns.Link(imported_module.ns);
+      }
+      catch(SymbolError se)
+      {
+        errors.Add(se);
+        continue;
+      }
 
       ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
     }
@@ -2940,7 +2955,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(vd.NAME().GetText() == "this")
         {
-          AddSemanticError(vd.NAME(), "the keyword \"this\" is reserved");
+          AddSemanticError(vd.NAME(), "the keyword 'this' is reserved");
           return;
         }
 
@@ -2968,7 +2983,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(fd.NAME().GetText() == "this")
         {
-          AddSemanticError(fd.NAME(), "the keyword \"this\" is reserved");
+          AddSemanticError(fd.NAME(), "the keyword 'this' is reserved");
           return;
         }
 
@@ -3040,6 +3055,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var vd = fldd.varDeclare();
         var fld_symb = (FieldSymbolScript)pass.class_symb.members.Find(vd.NAME().GetText());
+        if(fld_symb == null)
+          break;
         fld_symb.type = ParseType(vd.type());
       }
 
@@ -3047,6 +3064,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
+        if(func_symb == null)
+          break;
 
         func_symb.signature = ParseFuncSignature(
           fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].coroFlag() != null, 
@@ -3105,7 +3124,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         else if(ext is InterfaceSymbol ifs)
         {
           if(implements.IndexOf(ifs) != -1)
+          {
             AddSemanticError(ext_name, "interface is implemented already");
+            return;
+          }
 
           if(ifs is InterfaceSymbolNative)
           {
@@ -3156,6 +3178,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
+        if(func_symb == null)
+          break;
+
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
         if(func_ast == null)
           throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
@@ -3268,17 +3293,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fp.assignExp() != null)
       {
         if(curr_scope is LambdaSymbol)
-        {
           AddSemanticError(fp.NAME(), "default argument values not allowed for lambdas");
-          return null;
-        }
 
         found_default_arg = true;
       }
       else if(found_default_arg && fp.VARIADIC() == null)
       {
         AddSemanticError(fp.NAME(), "missing default argument expression");
-        return null;
       }
 
       bool pop_json_type = false;
@@ -3405,6 +3426,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             func_arg: false, 
             write: assign_exp != null
           );
+          if(ast == null)
+            return;
           root.AddChild(ast);
 
           is_decl = true;
@@ -3608,7 +3631,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
     {
       AddSemanticError(name, "keyword 'base' is reserved");
-      return new AST_Interim();
+      return null;
     }
 
     var var_tree = Annotate(name); 
@@ -3620,7 +3643,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(is_ref && !func_arg)
     {
       AddSemanticError(name, "'ref' is only allowed in function declaration");
-      return new AST_Interim();
+      return null;
     }
 
     VariableSymbol symb = func_arg ? 
@@ -4213,6 +4236,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           func_arg: false, 
           write: false
         );
+        if(key_iter_ast_decl == null)
+          goto Bail;
         key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
         key_iter_type = key_iter_symb.type;
       }
@@ -4244,6 +4269,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           func_arg: false, 
           write: false
         );
+        if(val_iter_ast_decl == null)
+          goto Bail;
         val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
         val_iter_type = val_iter_symb.type;
       }

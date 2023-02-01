@@ -71,11 +71,12 @@ public class RunCmd : ICmd
     conf.verbose = false;
 
     var cmp = new CompilationExecutor();
-    var err = cmp.Exec(conf);
+    var errors = cmp.Exec(conf);
 
-    if(err != null)
+    if(errors.Count > 0)
     {
-      ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
+      foreach(var err in errors)
+        ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
       Environment.Exit(ERROR_EXIT_CODE);
     }
 

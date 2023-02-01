@@ -2220,7 +2220,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "the keyword \"this\" is reserved",
+      "the keyword 'this' is reserved",
       new PlaceAssert(bhl, @"
         int this
 ------------^"
@@ -2245,7 +2245,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "the keyword \"this\" is reserved",
+      "the keyword 'this' is reserved",
       new PlaceAssert(bhl, @"
         func bool this()
 ------------------^"
