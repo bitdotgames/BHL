@@ -66,6 +66,14 @@ public class IncludePath
     }
   }
 
+  public IncludePath()
+  {}
+
+  public IncludePath(IList<string> items)
+  {
+    this.items.AddRange(items);
+  }
+
   public void Add(string path)
   {
     items.Add(Util.NormalizeFilePath(path));

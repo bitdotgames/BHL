@@ -456,7 +456,7 @@ public class TestLSP : BHL_TestBase
 
   }
 
-  //TODO: possible once we have fault-tolerant parsing
+  //TODO: this one requires fault-tolerant parsing
   //[IsTested()]
   public void TestSignatureHelp()
   {
@@ -468,12 +468,12 @@ public class TestLSP : BHL_TestBase
 
     func test2() 
     {
-      test1()
+      test1() //signature help 1
     }
 
     func test3() 
     {
-      test1(5.2,)
+      test1(5.2,) //signature help 2
     }
     ";
     
@@ -491,12 +491,8 @@ public class TestLSP : BHL_TestBase
     ws.IndexFiles(new bhl.Types());
 
     {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-      json += "\"}, \"position\": {\"line\": 8, \"character\": 12}}}";
-      
       AssertEqual(
-        rpc.Handle(json),
+        rpc.Handle(SignatureHelpReq(uri, ") //signature help 1")),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float\",\"documentation\":\"\"},{\"label\":\"float\",\"documentation\":\"\"}]," +
         "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
@@ -504,12 +500,8 @@ public class TestLSP : BHL_TestBase
     }
     
     {
-      string json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":";
-      json += "{\"textDocument\": {\"uri\": \"" + uri.ToString();
-      json += "\"}, \"position\": {\"line\": 13, \"character\": 16}}}";
-      
       AssertEqual(
-        rpc.Handle(json),
+        rpc.Handle(SignatureHelpReq(uri, ") //signature help 2")),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float\",\"documentation\":\"\"},{\"label\":\"float\",\"documentation\":\"\"}]," +
         "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
@@ -574,6 +566,14 @@ public class TestLSP : BHL_TestBase
     string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\":1,\"result\":{\"uri\":\"" + uri.ToString() +
       "\",\"range\":{\"start\":" + pos + ",\"end\":" + pos + "}},\"jsonrpc\":\"2.0\"}";
+  }
+
+  static string SignatureHelpReq(Uri uri, string needle)
+  {
+    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
+      "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
+      "\"}, \"position\": " + pos + "}}";
   }
 
   static string NullResultJson()

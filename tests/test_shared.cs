@@ -883,15 +883,21 @@ public class BHL_TestBase
 
   static public Stream CompileFiles(CompilationExecutor exec, CompileConf conf)
   {
-    var err = exec.Exec(conf);
-    if(err != null)
+    var errors = exec.Exec(conf);
+    if(errors.Count > 0)
     {
-      if(conf.verbose && !string.IsNullOrEmpty(err.stack_trace))
+      if(conf.verbose)
       {
-        Console.Error.WriteLine(err.stack_trace);
-        Console.Error.WriteLine("==========");
+        foreach(var err in errors)
+        {
+          if(!string.IsNullOrEmpty(err.stack_trace))
+          {
+            Console.Error.WriteLine(err.stack_trace);
+            Console.Error.WriteLine("==========");
+          }
+        }
       }
-      throw (Exception)err;
+      throw (Exception)errors[0];
     }
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
@@ -915,6 +921,9 @@ public class BHL_TestBase
 
     var proc = ANTLR_Processor.MakeProcessor(mdl, new FileImports(), bhl.ToStream(), ts);
     ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
+
+    if(proc.result.errors.Count > 0)
+      throw (Exception)proc.result.errors[0];
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);

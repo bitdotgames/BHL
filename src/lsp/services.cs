@@ -232,125 +232,31 @@ public class TextDocumentSynchronizationService : IService
 
 public class TextDocumentSignatureHelpService : IService
 {
-  //Workspace workspace;
+  Workspace workspace;
 
   public TextDocumentSignatureHelpService(Workspace workspace)
   {
-    //this.workspace = workspace;
+    this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/signatureHelp")]
   public RpcResult SignatureHelp(SignatureHelpParams args)
   {
-    //var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    //int line = (int)args.position.line;
-    //int character = (int)args.position.character;
-    //
-    //int start = document.code.CalcByteIndex(line);
-    //int stop = document.code.CalcByteIndex(line, character);
-    //var text = document.code.Text;
-
-    //var txtLine = text.Substring(start, stop - start);
-    //string funcName = string.Empty;
-    //uint activeParameter = 0;
-    //
-    //if(txtLine.IndexOf("func", StringComparison.Ordinal) == -1)
-    //{
-    //  string pattern = @"[a-zA-Z_][a-zA-Z_0-9]*\({1}.*?";
-    //  MatchCollection matches = Regex.Matches(txtLine, pattern, RegexOptions.Multiline);
-    //  for(int i = matches.Count-1; i >= 0; i--)
-    //  {
-    //    var m = matches[i];
-    //    if(m.Index < character)
-    //    {
-    //      string v = m.Value;
-    //      int len = v.Length - 1;
-
-    //      if(len > 0)
-    //      {
-    //        funcName = txtLine.Substring(m.Index, len);
-    //        var funcDeclStr = txtLine.Substring(m.Index, Math.Max(0, character - m.Index));
-    //        activeParameter = (uint)Math.Max(0, funcDeclStr.Split(',').Length - 1);
-    //        break;
-    //      }
-    //    }
-    //  }
-    //}
-    //
-    //bhlParser.FuncDeclContext funcDecl = null;
-    //if(!string.IsNullOrEmpty(funcName))
-    //{
-    //  foreach(var doc in workspace.ForEachBhlImports(document))
-    //  {
-    //    if(doc.FuncDecls.ContainsKey(funcName))
-    //    {
-    //      funcDecl = doc.FuncDecls[funcName];
-    //      break;
-    //    }
-    //  }
-    //}
-    //
-    //if(funcDecl != null)
-    //{
-    //  SignatureInformation signInfo = GetFuncSignInfo(funcDecl);
-    //  signInfo.activeParameter = activeParameter;
-    //  
-    //  var result = new SignatureHelp();
-    //  result.activeSignature = 0;
-    //  result.signatures = new[] { signInfo };
-    //  result.activeParameter = signInfo.activeParameter;
-    //    
-    //  return RpcResult.Success(result);
-    //}
+    if(document != null)
+    {
+      var node = document.FindTerminalNode(args.position);
+      if(node != null)
+      {
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetText());
+        //var symb = document.FindFuncSignatureSymbol(node);
+        //Console.WriteLine(symb?.GetType().Name);
+      }
+    }
     
     return RpcResult.Success();
   }
-  
-  //SignatureInformation GetFuncSignInfo(bhlParser.FuncDeclContext funcDecl)
-  //{
-  //  SignatureInformation funcSignature = new SignatureInformation();
-  //  
-  //  string label = funcDecl.NAME().GetText()+"(";
-  //  
-  //  var fn_params = ParserAnalyzer.GetInfoParams(funcDecl);
-  //  
-  //  if(fn_params.Count > 0)
-  //  {
-  //    for(int k = 0; k < fn_params.Count; k++)
-  //    {
-  //      var funcParameter = fn_params[k];
-  //      label += funcParameter.label.Value;
-  //      if(k != fn_params.Count - 1)
-  //        label += ", ";
-  //    }
-  //  }
-  //  else
-  //    label += "<no parameters>";
-
-  //  label += ")";
-
-  //  if(funcDecl.retType() is bhlParser.RetTypeContext retType)
-  //  {
-  //    label += ":";
-
-  //    var types = retType.type();
-  //    for (int n = 0; n < types.Length; n++)
-  //    {
-  //      var t = types[n];
-  //      if(t.exception != null)
-  //        continue;
-
-  //      label += t.nsName().GetText() + " ";
-  //    }
-  //  }
-  //  else
-  //    label += ":void";
-
-  //  funcSignature.label = label;
-  //  funcSignature.parameters = fn_params.ToArray();
-  //  return funcSignature;
-  //}
 }
 
 public class TextDocumentGoToService : IService

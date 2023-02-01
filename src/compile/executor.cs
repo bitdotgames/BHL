@@ -46,27 +46,22 @@ public class CompilationExecutor
   public int compile_cache_hits { get; private set; }
   public int compile_cache_miss { get; private set; }
 
-  public ICompileError Exec(CompileConf conf)
+  public CompileErrors Exec(CompileConf conf)
   {
     var sw = new Stopwatch();
     sw.Start();
 
-    ICompileError err;
+    var errors = new CompileErrors();
 
     try
     {
-      err = DoExec(conf);
+      DoExec(conf, errors);
     }
     catch(Exception e)
     {
-      if(e is ICompileError ie)
-        err = ie;
-      else
-      {
-        if(conf.verbose)
-          Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-        err = new BuildError("?", e);
-      }
+      if(conf.verbose)
+        Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+      errors.Add(new BuildError("?", e));
     }
 
     sw.Stop();
@@ -74,21 +69,25 @@ public class CompilationExecutor
     if(conf.verbose)
       Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
-    if(err != null)
+    if(errors.Count > 0)
     {
       if(!string.IsNullOrEmpty(conf.err_file))
       {
+        string err_str = "";
+        foreach(var err in errors)
+          err_str += ErrorUtils.ToJson(err) + "\n";
+        
         if(conf.err_file == "-")
-          Console.Error.WriteLine(ErrorUtils.ToJson(err));
+          Console.Error.WriteLine(err_str);
         else
-          File.WriteAllText(conf.err_file, ErrorUtils.ToJson(err));
+          File.WriteAllText(conf.err_file, err_str);
       }
     }
 
-    return err;
+    return errors;
   }
 
-  ICompileError DoExec(CompileConf conf)
+  void DoExec(CompileConf conf, CompileErrors errors)
   {
     if(!string.IsNullOrEmpty(conf.err_file))
       File.Delete(conf.err_file);
@@ -108,7 +107,7 @@ public class CompilationExecutor
     {
       if(conf.verbose)
         Console.WriteLine("No stale files detected");
-      return null;
+      return;
     }
 
     var ts = conf.ts;
@@ -125,10 +124,9 @@ public class CompilationExecutor
       pw.Join();
     
     foreach(var pw in parse_workers)
-    {
-      if(pw.error != null)
-        return pw.error;
-    }
+      errors.AddRange(pw.errors);
+    if(errors.Count > 0)
+      return;
 
     //3. create ANTLR processors
     var file2interim = new Dictionary<string, InterimResult>();
@@ -151,6 +149,11 @@ public class CompilationExecutor
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
+
+    foreach(var kv in file2proc)
+      errors.AddRange(kv.Value.result.errors);
+    if(errors.Count > 0)
+      return;
     
     //5. compile to bytecode 
     var compiler_workers = StartAndWaitCompilerWorkers(
@@ -162,10 +165,9 @@ public class CompilationExecutor
     );
 
     foreach(var cw in compiler_workers)
-    {
-      if(cw.error != null)
-        return cw.error;
-    }
+      errors.AddRange(cw.errors);
+    if(errors.Count > 0)
+      return;
 
     foreach(var cw in compiler_workers)
     {
@@ -177,7 +179,10 @@ public class CompilationExecutor
 
     var check_err = CheckUniqueSymbols(compiler_workers);
     if(check_err != null)
-      return check_err;
+    {
+      errors.Add(check_err);
+      return;
+    }
 
     WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file);
 
@@ -186,8 +191,6 @@ public class CompilationExecutor
     File.Move(tmp_res_file, conf.res_file);
 
     conf.postproc.Tally();
-
-    return null;
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)
@@ -353,7 +356,7 @@ public class CompilationExecutor
     public int start;
     public int count;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-    public ICompileError error = null;
+    public CompileErrors errors = new CompileErrors();
     public int cache_hit;
     public int cache_miss;
 
@@ -425,12 +428,12 @@ public class CompilationExecutor
       catch(Exception e)
       {
         if(e is ICompileError ie)
-          w.error = ie;
+          w.errors.Add(ie);
         else
         {
           if(w.conf.verbose)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(w.conf.files[i], e);
+          w.errors.Add(new BuildError(w.conf.files[i], e));
         }
       }
 
@@ -521,7 +524,7 @@ public class CompilationExecutor
     public int start;
     public int count;
     public IFrontPostProcessor postproc;
-    public ICompileError error = null;
+    public CompileErrors errors = new CompileErrors();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModulePath> file2modpath = new Dictionary<string, ModulePath>();
@@ -598,12 +601,12 @@ public class CompilationExecutor
       catch(Exception e)
       {
         if(e is ICompileError ie)
-          w.error = ie;
+          w.errors.Add(ie);
         else
         {
           if(w.conf.verbose)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.error = new BuildError(current_file, e);
+          w.errors.Add(new BuildError(current_file, e));
         }
       }
 

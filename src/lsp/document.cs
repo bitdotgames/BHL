@@ -48,14 +48,14 @@ public class BHLDocument
     this.uri = uri;
   }
   
-  public void Update(string text, ANTLR_Processor proc)
+  public void Update(string text, ANTLR_Parsed parsed, ANTLR_Processor proc)
   {
     this.proc = proc;
 
     code.Update(text);
 
     nodes.Clear();
-    GetTerminalNodes(proc.parsed.prog, nodes);
+    GetTerminalNodes(parsed.prog, nodes);
   }
 
   public TerminalNodeImpl FindTerminalNode(Code.Position pos)
@@ -96,18 +96,24 @@ public class BHLDocument
     return annotated.lsp_symbol;
   }
 
-  bhlParser GetParser()
-  {
-    var ais = new AntlrInputStream(code.Text.ToStream());
-    var lex = new bhlLexer(ais);
-    var tokens = new CommonTokenStream(lex);
-    var parser = new bhlParser(tokens);
-    
-    lex.RemoveErrorListeners();
-    parser.RemoveErrorListeners();
+  //public Symbol FindFuncSignatureSymbol(TerminalNodeImpl node)
+  //{
+  //  IParseTree tmp = node;
+  //  while(tmp.Parent != null)
+  //  {
+  //    if(tmp is bhlParser.CallExpContext)
+  //      break;
+  //    tmp = tmp.Parent;
+  //  }
 
-    return parser;
-  }
+  //  if(tmp is bhlParser.CallExpContext ctx)
+  //  {
+  //    var chain = new ANTLR_Processor.ExpChain(ctx.chainExp());
+  //    Console.WriteLine("CALLEXP " + tmp.GetText() + " " + chain.Length);
+  //  }
+
+  //  return null;
+  //}
 
   public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
   {
@@ -115,7 +121,7 @@ public class BHLDocument
     if(tree is TerminalNodeImpl tn)
       nodes.Add(tn);
 
-    if(tree is ParserRuleContext rule)
+    if(tree is ParserRuleContext rule && rule.children != null)
     {
       for(int i = rule.children.Count; i-- > 0;)
         GetTerminalNodes(rule.children[i], nodes);

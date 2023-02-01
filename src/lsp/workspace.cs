@@ -36,10 +36,9 @@ public class Workspace
   {
     documents.Clear();
 
-    var inc_path = new IncludePath();
-    foreach(var path in roots)
-      inc_path.Add(path);
+    var inc_path = new IncludePath(roots);
 
+    var file2parsed = new Dictionary<string, ANTLR_Parsed>(); 
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
     var file2text = new Dictionary<string, string>();
 
@@ -51,10 +50,14 @@ public class Workspace
         using(var sfs = File.OpenRead(file))
         {
           var imports = CompilationExecutor.ParseWorker.ParseImports(inc_path, file, sfs);
-          var mdl = new bhl.Module(ts, inc_path.FilePath2ModuleName(file), file);
-          var parser = ANTLR_Processor.Stream2Parser(file, sfs);
+          var module = new bhl.Module(ts, inc_path.FilePath2ModuleName(file), file);
+
+          var parser = ANTLR_Processor.Stream2Parser(file, sfs, handle_errors: false);
+
           var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
-          var proc = ANTLR_Processor.MakeProcessor(mdl, imports, parsed, ts);
+          var proc = ANTLR_Processor.MakeProcessor(module, imports, parsed, ts);
+
+          file2parsed.Add(file, parsed);
           file2proc.Add(file, proc);
           file2text.Add(file, File.ReadAllText(file));
         }
@@ -66,7 +69,7 @@ public class Workspace
     foreach(var kv in file2proc)
     {
       var doc = new BHLDocument(new Uri("file://" + kv.Key)); 
-      doc.Update(file2text[kv.Key], kv.Value);
+      doc.Update(file2text[kv.Key], file2parsed[kv.Key], kv.Value);
       documents.Add(kv.Key, doc);
     }
   }

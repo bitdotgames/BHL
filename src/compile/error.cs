@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 using Antlr4.Runtime;
@@ -17,6 +18,8 @@ public interface ICompileError
   int line { get; }
   int column { get; }
 }
+
+public class CompileErrors : List<ICompileError> { }
 
 public class SyntaxError : Exception, ICompileError
 {
