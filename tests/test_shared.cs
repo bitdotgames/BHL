@@ -50,6 +50,7 @@ public class BHL_TestRunner
     Run(names, new TestStd(), verbose);
     Run(names, new TestPerf(), verbose);
     Run(names, new TestLSP(), verbose);
+    Run(names, new TestErrors(), verbose);
   }
 
   static void Run(IList<string> names, BHL_TestBase test, bool verbose)
@@ -827,7 +828,15 @@ public class BHL_TestBase
       err = e;
     }
 
-    AssertTrue(err != null, "Error didn't occur"); 
+    AssertError(err, msg, place_assert);
+  }
+
+  public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
+  {
+    //TODO: looks a bit ugly
+    if(err is MultiCompileErrors mex)
+      err = (Exception)mex.errors[0];
+
     var idx = err.ToString().IndexOf(msg);
     AssertTrue(idx != -1, "Error message is: " + err);
 
@@ -843,7 +852,6 @@ public class BHL_TestBase
       else
         AssertTrue(false, "No ICompileError occured, got " + err?.GetType().Name); 
     }
-
   }
 
   public class PlaceAssert
@@ -923,7 +931,12 @@ public class BHL_TestBase
     ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
     if(proc.result.errors.Count > 0)
-      throw (Exception)proc.result.errors[0];
+    {
+      if(proc.result.errors.Count == 1)
+        throw (Exception)proc.result.errors[0];
+      else
+        throw new MultiCompileErrors(proc.result.errors);
+    }
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);

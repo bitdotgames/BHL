@@ -21,6 +21,17 @@ public interface ICompileError
 
 public class CompileErrors : List<ICompileError> { }
 
+public class MultiCompileErrors : Exception
+{
+  public CompileErrors errors;
+
+  public MultiCompileErrors(CompileErrors errors)
+    : base("Multiple compilation errors (" + errors.Count + ")")
+  {
+    this.errors = errors;
+  }
+}
+
 public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }

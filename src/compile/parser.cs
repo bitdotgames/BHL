@@ -3827,7 +3827,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ann_exp_1 = Annotate(exp_1);
     Annotate(ctx).eval_type = ann_exp_1.eval_type;
 
-    types.CheckAssign(ann_exp_1, Annotate(exp_2), errors);
+    if(!types.CheckAssign(ann_exp_1, Annotate(exp_2), errors))
+      return null;
     PeekAST().AddChild(ast);
     return null;
   }

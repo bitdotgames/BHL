@@ -439,12 +439,16 @@ public static class ScopeExtensions
 
   public static string GetFullPath(this Symbol sym)
   {
+    if(sym == null)
+      return "?";
     return sym.scope.GetFullPath(sym.name);
   }
 
   public static string GetFullPath(this IType type)
   {
-    if(type is Symbol s)
+    if(type == null)
+      return "?";
+    else if(type is Symbol s)
       return s.GetFullPath();
     else
       return type.ToString();
@@ -452,7 +456,10 @@ public static class ScopeExtensions
 
   public static string GetFullPath(this IScope scope, string name)
   {
-    if(name == null || name.IndexOf('.') != -1)
+    if(name == null)
+      return "?";
+
+    if(name.IndexOf('.') != -1)
       return name;
 
     while(scope != null)

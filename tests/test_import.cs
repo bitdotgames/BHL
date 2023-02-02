@@ -5,6 +5,77 @@ using bhl;
 public class TestImport : BHL_TestBase
 {
   [IsTested()]
+  public void TestSimpleImport()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float bhl1() 
+    {
+      return bhl2(23)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+
+    func float bhl2(float k)
+    {
+      return bhl3(k)
+    }
+    ";
+
+    string bhl3 = @"
+    func float bhl3(float k)
+    {
+      return k
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new ModuleLoader(ts, CompileFiles(files));
+
+    AssertEqual(loader.Load("bhl1", ts, null), 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.Constant, new int[] { 0 })
+      .EmitThen(Opcodes.CallFunc, new int[] { 1, 1 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+    );
+    AssertEqual(loader.Load("bhl2", ts, null), 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.ArgVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.CallFunc, new int[] { 0, 1 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+    );
+    AssertEqual(loader.Load("bhl3", ts, null), 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.ArgVar, new int[] { 0 })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+    );
+
+    var vm = new VM(ts, loader);
+    vm.LoadModule("bhl1");
+    AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBadImport()
   {
     string bhl1 = @"

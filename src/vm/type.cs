@@ -711,7 +711,7 @@ public class Types : INamedResolver
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(lhs.eval_type, rhs.eval_type), out result))
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'"));
+      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
     return result;
   }
 
@@ -733,7 +733,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs.eval_type)) 
     {
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'"));
+      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -748,7 +748,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs, rhs.eval_type)) 
     {
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs?.GetFullPath() + "' and '" + rhs.eval_type?.GetFullPath() + "'"));
+      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -758,7 +758,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs)) 
     {
-      errors.Add(new SemanticError(lhs, "incompatible types: '" + lhs.eval_type?.GetFullPath() + "' and '" + rhs?.GetFullPath() + "'"));
+      errors.Add(new SemanticError(lhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -771,7 +771,7 @@ public class Types : INamedResolver
 
     if(!CheckCast(dest_type, from_type))
     {
-      errors.Add(new SemanticError(dest, "incompatible types for casting: '" + dest_type?.GetFullPath() + "' and '" + from_type?.GetFullPath() + "'"));
+      errors.Add(new SemanticError(dest, "incompatible types for casting: '" + dest_type.GetFullPath() + "' and '" + from_type.GetFullPath() + "'"));
       return false;
     }
     return true;
