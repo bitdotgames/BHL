@@ -248,11 +248,11 @@ public class CompilationExecutor
       compiler_workers.Add(cw);
     }
 
-    foreach(var w in compiler_workers)
-      w.Start();
+    foreach(var cw in compiler_workers)
+      cw.Start();
 
-    foreach(var w in compiler_workers)
-      w.Join();
+    foreach(var cw in compiler_workers)
+      cw.Join();
 
     return compiler_workers;
   }
@@ -261,9 +261,9 @@ public class CompilationExecutor
   {
     //used as a global namespace for unique symbols check
     var ns = new Namespace();
-    foreach(var w in compiler_workers)
+    foreach(var cw in compiler_workers)
     {
-      var check_err = CheckUniqueSymbols(ns, w);
+      var check_err = CheckUniqueSymbols(ns, cw);
       if(check_err != null)
         return check_err;
     }
@@ -280,8 +280,8 @@ public class CompilationExecutor
       mwriter.Write(FILE_VERSION);
 
       int total_modules = 0;
-      foreach(var w in compiler_workers)
-        total_modules += w.file2modpath.Count;
+      foreach(var cw in compiler_workers)
+        total_modules += cw.file2modpath.Count;
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
@@ -289,12 +289,12 @@ public class CompilationExecutor
       {
         var file = conf.files[file_idx];
 
-        foreach(var w in compiler_workers)
+        foreach(var cw in compiler_workers)
         {
-          if(file_idx >= w.start && file_idx < w.start + w.count) 
+          if(file_idx >= cw.start && file_idx < cw.start + cw.count) 
           {
-            var path = w.file2modpath[file];
-            var compiled_file = w.file2compiled[file];
+            var path = cw.file2modpath[file];
+            var compiled_file = cw.file2compiled[file];
 
             mwriter.Write((byte)conf.module_fmt);
             mwriter.Write(path.name);
