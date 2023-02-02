@@ -6,7 +6,7 @@ using bhl;
 public class TestErrors : BHL_TestBase
 {
   [IsTested()]
-  public void TestSeveralErrorsInOneFile()
+  public void TestSeveralSemanticErrorsInOneFile()
   {
     string bhl = @"
     func int foo() 
@@ -46,7 +46,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSeveralErrorsInManyFiles()
+  public void TestSeveralSemanticErrorsInManyFiles()
   {
     string bhl1 = @"
     func float bhl1() 
@@ -96,7 +96,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSeveralErrorsIntoErrorFile()
+  public void TestSeveralSemanticErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
     func int foo() 
@@ -129,5 +129,29 @@ public class TestErrors : BHL_TestBase
 
     AssertTrue(lines[1].Contains("{\"error\": \"incompatible types: 'void' and 'int'\","));
     AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
+  }
+
+  [IsTested()]
+  public void TestSyntaxError()
+  {
+    string bhl = @"
+    func foo() { }
+
+    func test() 
+    {
+      foo(
+    }
+    ";
+
+    AssertError<SyntaxError>(
+      delegate() {
+        Compile(bhl);
+      },
+      "no viable alternative at input 'foo(\\n",
+      new PlaceAssert(bhl, @"
+    }
+----^"
+      )
+    );
   }
 }
