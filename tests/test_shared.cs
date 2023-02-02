@@ -26,9 +26,11 @@ public static class BHL_TestExt
 
 public class BHL_TestRunner
 {
+  static public bool verbose { get; private set; }
+
   public static void Main(string[] args)
   {
-    bool verbose = false;
+    verbose = false;
     var p = new OptionSet() {
       { "verbose", "be verbose",
         v => verbose = v != null },
@@ -36,28 +38,28 @@ public class BHL_TestRunner
 
     var names = p.Parse(args);
 
-    Run(names, new TestNodes(), verbose);
-    Run(names, new TestVM(), verbose);
-    Run(names, new TestYield(), verbose);
-    Run(names, new TestImport(), verbose);
-    Run(names, new TestVariadic(), verbose);
-    Run(names, new TestClasses(), verbose);
-    Run(names, new TestInterfaces(), verbose);
-    Run(names, new TestTypeCasts(), verbose);
-    Run(names, new TestNamespace(), verbose);
-    Run(names, new TestVar(), verbose);
-    Run(names, new TestMaps(), verbose);
-    Run(names, new TestStd(), verbose);
-    Run(names, new TestPerf(), verbose);
-    Run(names, new TestLSP(), verbose);
-    Run(names, new TestErrors(), verbose);
+    Run(names, new TestNodes());
+    Run(names, new TestVM());
+    Run(names, new TestYield());
+    Run(names, new TestImport());
+    Run(names, new TestVariadic());
+    Run(names, new TestClasses());
+    Run(names, new TestInterfaces());
+    Run(names, new TestTypeCasts());
+    Run(names, new TestNamespace());
+    Run(names, new TestVar());
+    Run(names, new TestMaps());
+    Run(names, new TestStd());
+    Run(names, new TestPerf());
+    Run(names, new TestLSP());
+    Run(names, new TestErrors());
   }
 
-  static void Run(IList<string> names, BHL_TestBase test, bool verbose)
+  static void Run(IList<string> names, BHL_TestBase test)
   {
     try
     {
-      _Run(names, test, verbose);
+      _Run(names, test);
     }
     catch(Exception e)
     {
@@ -75,7 +77,7 @@ public class BHL_TestRunner
     internal int sub_test_idx_filter; 
   }
 
-  static void _Run(IList<string> names, BHL_TestBase test, bool verbose)
+  static void _Run(IList<string> names, BHL_TestBase test)
   {
     var tested_methods = new List<MethodToTest>();
 
@@ -95,7 +97,6 @@ public class BHL_TestRunner
         if(verbose)
           Console.WriteLine(">>>>> " + test.GetType().Name + "." + to_test.method.Name);
 
-        test.verbose = verbose;
         test.sub_test_idx_filter = to_test.sub_test_idx_filter;
         test.sub_test_idx = -1;
         to_test.method.Invoke(test, new object[] {});
@@ -160,7 +161,6 @@ public class BHL_TestRunner
 
 public class BHL_TestBase
 {
-  internal bool verbose;
   internal int sub_test_idx;
   //TODO: make it a set?
   internal int sub_test_idx_filter;
@@ -738,7 +738,7 @@ public class BHL_TestBase
     ++sub_test_idx;
     if(sub_test_idx_filter == -1 || sub_test_idx_filter == sub_test_idx)
     {
-      if(verbose)
+      if(BHL_TestRunner.verbose)
         Console.WriteLine(">>>>>> Sub Test(" + sub_test_idx + ") : " + name);
       fn();
     }
@@ -884,7 +884,7 @@ public class BHL_TestBase
     conf.tmp_dir = TestDirPath() + "/cache";
     conf.err_file = TestDirPath() + "/error.log";
     conf.use_cache = use_cache;
-    conf.verbose = true;
+    conf.verbose = BHL_TestRunner.verbose;
 
     return conf;
   }
@@ -898,14 +898,13 @@ public class BHL_TestBase
       {
         foreach(var err in errors)
         {
+          Console.Error.WriteLine(err.ToString());
           if(!string.IsNullOrEmpty(err.stack_trace))
-          {
             Console.Error.WriteLine(err.stack_trace);
-            Console.Error.WriteLine("==========");
-          }
+          Console.Error.WriteLine("==========");
         }
       }
-      throw (Exception)errors[0];
+      throw new MultiCompileErrors(errors);
     }
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
@@ -931,12 +930,7 @@ public class BHL_TestBase
     ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
     if(proc.result.errors.Count > 0)
-    {
-      if(proc.result.errors.Count == 1)
-        throw (Exception)proc.result.errors[0];
-      else
-        throw new MultiCompileErrors(proc.result.errors);
-    }
+      throw new MultiCompileErrors(proc.result.errors);
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);
