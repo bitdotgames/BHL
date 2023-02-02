@@ -76,6 +76,7 @@ public class CompilationExecutor
         string err_str = "";
         foreach(var err in errors)
           err_str += ErrorUtils.ToJson(err) + "\n";
+        err_str = err_str.Trim();
         
         if(conf.err_file == "-")
           Console.Error.WriteLine(err_str);

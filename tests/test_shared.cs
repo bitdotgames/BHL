@@ -889,6 +889,7 @@ public class BHL_TestBase
     return conf;
   }
 
+  //NOTE: returns stream of bhl compiled data
   static public Stream CompileFiles(CompilationExecutor exec, CompileConf conf)
   {
     var errors = exec.Exec(conf);
@@ -912,7 +913,11 @@ public class BHL_TestBase
 
   static public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
   {
-    var conf = MakeCompileConf(files, ts, use_cache, max_threads);
+    return CompileFiles(MakeCompileConf(files, ts, use_cache, max_threads));
+  }
+
+  static public Stream CompileFiles(CompileConf conf)
+  {
     return CompileFiles(new CompilationExecutor(), conf);
   }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using bhl;
 
 public class TestErrors : BHL_TestBase
@@ -92,5 +93,41 @@ public class TestErrors : BHL_TestBase
         )
       );
     }
+  }
+
+  [IsTested()]
+  public void TestSeveralErrorsIntoErrorFile()
+  {
+    string bhl1 = @"
+    func int foo() 
+    {
+    }
+
+    func bar() 
+    {
+      return 1
+    }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+
+    var conf = MakeCompileConf(files);
+    try
+    {
+      CompileFiles(conf);
+    }
+    catch(Exception) 
+    {}
+
+    var lines = File.ReadAllText(conf.err_file).Split('\n');
+    AssertEqual(2, lines.Length);
+
+    AssertTrue(lines[0].Contains("{\"error\": \"matching 'return' statement not found\","));
+    AssertTrue(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
+
+    AssertTrue(lines[1].Contains("{\"error\": \"incompatible types: 'void' and 'int'\","));
+    AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
   }
 }
