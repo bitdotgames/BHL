@@ -152,18 +152,47 @@ public class TestErrors : BHL_TestBase
     }
     catch(MultiCompileErrors m)
     {
-      AssertEqual(2, m.errors.Count);
-    }
+      AssertEqual(5, m.errors.Count);
 
-//    AssertError<SyntaxError>(
-//      delegate() {
-//        Compile(bhl);
-//      },
-//      "no viable alternative at input 'foo(\\n",
-//      new PlaceAssert(bhl, @"
-//    }
-//----^"
-//      )
-//    );
+      AssertError((Exception)m.errors[0],
+        "no viable alternative at input 'foo(",
+        new PlaceAssert(bhl, @"
+    }
+----^"
+        )
+      );
+
+      AssertError((Exception)m.errors[1],
+        "mismatched input '}' expecting {",
+        new PlaceAssert(bhl, @"
+    }
+----^"
+        )
+      );
+
+      AssertError((Exception)m.errors[2],
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+      int i =
+------^"
+        )
+      );
+
+      AssertError((Exception)m.errors[3],
+        "useless statement",
+        new PlaceAssert(bhl, @"
+      int i =
+------^"
+        )
+      );
+
+      AssertError((Exception)m.errors[4],
+        "symbol 'i' not resolved",
+        new PlaceAssert(bhl, @"
+      int i =
+----------^"
+        )
+      );
+    }
   }
 }

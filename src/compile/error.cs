@@ -19,7 +19,14 @@ public interface ICompileError
   int column { get; }
 }
 
-public class CompileErrors : List<ICompileError> { }
+public class CompileErrors : List<ICompileError> 
+{ 
+  public void Dump()
+  {
+    foreach(var err in this)
+      Console.WriteLine(err);
+  }
+}
 
 public class MultiCompileErrors : Exception
 {
