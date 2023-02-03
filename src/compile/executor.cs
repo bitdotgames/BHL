@@ -140,7 +140,15 @@ public class CompilationExecutor
       foreach(var kv in pw.file2interim)
       {
         var file_module = new Module(ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
-        var proc = ANTLR_Processor.MakeProcessor(file_module, kv.Value.imports, kv.Value.parsed, ts);
+        var proc_errs = new CompileErrors();
+        var proc = ANTLR_Processor.MakeProcessor(
+          file_module, 
+          kv.Value.imports, 
+          kv.Value.parsed, 
+          ts, 
+          proc_errs,
+          ErrorHandlers.MakeCommon(kv.Key, proc_errs)
+        );
 
         file2proc.Add(kv.Key, proc);
         file2interim.Add(kv.Key, kv.Value);
@@ -407,7 +415,11 @@ public class CompilationExecutor
 
             if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
-              var parser = ANTLR_Processor.Stream2Parser(file, sfs);
+              var parser = ANTLR_Processor.Stream2Parser(
+                file, 
+                sfs, 
+                ErrorHandlers.MakeCommon(file, new CompileErrors())
+              );
               var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
 
               interim.parsed = parsed;

@@ -99,38 +99,61 @@ public class SemanticError : Exception, ICompileError
   {}
 }
 
+public class ErrorHandlers
+{
+  public IAntlrErrorListener<int> lexer_listener;
+  public IParserErrorListener parser_listener; 
+  public IAntlrErrorStrategy error_strategy;
+
+  static public ErrorHandlers MakeCommon(string file, CompileErrors errors)
+  {
+    var eh = new ErrorHandlers();
+    eh.lexer_listener = new ErrorLexerListener(file, errors); 
+    eh.parser_listener = new ErrorParserListener(file, errors);
+    eh.error_strategy = new ErrorStrategy();
+    return eh;
+  }
+}
+
 public class ErrorLexerListener : IAntlrErrorListener<int>
 {
+  CompileErrors errors;
   string file_path;
 
-  public ErrorLexerListener(string file_path)
+  public ErrorLexerListener(string file_path, CompileErrors errors)
   {
     this.file_path = file_path;
+    this.errors = errors;
   }
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, int offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    throw new SyntaxError(file_path, line, char_pos, msg);
+    errors.Add(new SyntaxError(file_path, line, char_pos, msg));
   }
 }
 
 public class ErrorStrategy : DefaultErrorStrategy
 {
-  public override void Sync(Antlr4.Runtime.Parser recognizer) {}
+  public override void Sync(Antlr4.Runtime.Parser recognizer) 
+  {
+    base.Sync(recognizer);
+  }
 }
 
 public class ErrorParserListener : IParserErrorListener
 {
+  CompileErrors errors;
   string file_path;
 
-  public ErrorParserListener(string file_path)
+  public ErrorParserListener(string file_path, CompileErrors errors)
   {
     this.file_path = file_path;
+    this.errors = errors;
   }
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, IToken offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    throw new SyntaxError(file_path, line, char_pos, msg);
+    errors.Add(new SyntaxError(file_path, line, char_pos, msg));
   }
 
   public virtual void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)

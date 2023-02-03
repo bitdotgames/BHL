@@ -72,7 +72,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public FileImports imports { get; private set; } 
 
-  CompileErrors errors = new CompileErrors();
+  //NOTE: passed from above
+  CompileErrors errors;
 
   Dictionary<bhlParser.MimportContext, string> parsed_imports = new Dictionary<bhlParser.MimportContext, string>();
 
@@ -141,52 +142,91 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
-  public static CommonTokenStream Stream2Tokens(string file, Stream s, bool handle_errors = true)
+  public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
   {
     var ais = new AntlrInputStream(s);
     var lex = new bhlLexer(ais);
-    if(handle_errors)
-      lex.AddErrorListener(new ErrorLexerListener(file));
-    else
+
+    if(handlers.lexer_listener != null)
+    {
       lex.RemoveErrorListeners();
+      lex.AddErrorListener(handlers.lexer_listener);
+    }
+
     return new CommonTokenStream(lex);
   }
 
-  public static bhlParser Stream2Parser(string file, Stream src, bool handle_errors = true)
+  public static bhlParser Stream2Parser(string file, Stream src, ErrorHandlers handlers)
   {
-    var tokens = Stream2Tokens(file, src, handle_errors);
+    var tokens = Stream2Tokens(file, src, handlers);
     var p = new bhlParser(tokens);
-    if(handle_errors)
+
+    if(handlers.parser_listener != null)
     {
-      p.AddErrorListener(new ErrorParserListener(file));
-      p.ErrorHandler = new ErrorStrategy();
-    }
-    else
       p.RemoveErrorListeners();
+      p.AddErrorListener(handlers.parser_listener);
+    }
+
+    if(handlers.error_strategy != null)
+      p.ErrorHandler = handlers.error_strategy;
+
     return p;
   }
   
-  public static ANTLR_Processor MakeProcessor(Module module, FileImports imports, ANTLR_Parsed parsed/*can be null*/, Types ts)
+  public static ANTLR_Processor MakeProcessor(
+    Module module, 
+    FileImports imports, 
+    ANTLR_Parsed parsed/*can be null*/, 
+    Types ts, 
+    CompileErrors errors,
+    ErrorHandlers err_handlers
+    )
   {
     if(parsed == null)
     {
       using(var sfs = File.OpenRead(module.file_path))
       {
-        return MakeProcessor(module, imports, sfs, ts);
+        return MakeProcessor(
+          module, 
+          imports, 
+          sfs, 
+          ts, 
+          errors,
+          err_handlers
+        );
       }
     }
     else 
-      return new ANTLR_Processor(parsed, module, imports, ts);
+      return new ANTLR_Processor(
+        parsed, 
+        module, 
+        imports, 
+        ts,
+        errors
+      );
   }
 
-  public static ANTLR_Processor MakeProcessor(Module module, FileImports imports, Stream src, Types ts)
+  public static ANTLR_Processor MakeProcessor(
+    Module module, 
+    FileImports imports, 
+    Stream src, 
+    Types ts, 
+    CompileErrors errors,
+    ErrorHandlers err_handlers
+    )
   {
-    var p = Stream2Parser(module.file_path, src);
+    var p = Stream2Parser(module.file_path, src, err_handlers);
     var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
-    return new ANTLR_Processor(parsed, module, imports, ts);
+    return new ANTLR_Processor(parsed, module, imports, ts, errors);
   }
 
-  public ANTLR_Processor(ANTLR_Parsed parsed, Module module, FileImports imports, Types types)
+  public ANTLR_Processor(
+      ANTLR_Parsed parsed, 
+      Module module, 
+      FileImports imports, 
+      Types types,
+      CompileErrors errors
+    )
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -194,6 +234,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     this.types = types;
     this.module = module;
     this.imports = imports;
+
+    this.errors = errors;
 
     ns = module.ns;
     ns.Link(types.ns);
@@ -2120,9 +2162,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   bhlParser.ExpContext _one_literal_exp;
   bhlParser.ExpContext one_literal_exp {
     get {
+      //TODO: make expression AST on the fly somehow?
+      //var exp = new ExpContext(); 
+      //exp.Add(new ExpLiteralNumContext("1"));
       if(_one_literal_exp == null)
       {
-        _one_literal_exp = Stream2Parser("", new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1"))).exp();
+        var tmp_parser = Stream2Parser(
+          "", 
+          new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
+          ErrorHandlers.MakeCommon("", new CompileErrors())
+        );
+        _one_literal_exp = tmp_parser.exp();
       }
       return _one_literal_exp;
     }

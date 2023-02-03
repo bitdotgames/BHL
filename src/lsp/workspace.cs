@@ -52,10 +52,20 @@ public class Workspace
           var imports = CompilationExecutor.ParseWorker.ParseImports(inc_path, file, sfs);
           var module = new bhl.Module(ts, inc_path.FilePath2ModuleName(file), file);
 
-          var parser = ANTLR_Processor.Stream2Parser(file, sfs, handle_errors: false);
+          var errors = new CompileErrors();
+
+          var parser = ANTLR_Processor.Stream2Parser(file, sfs, null/*TODO*/);
 
           var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
-          var proc = ANTLR_Processor.MakeProcessor(module, imports, parsed, ts);
+
+          var proc = ANTLR_Processor.MakeProcessor(
+            module, 
+            imports, 
+            parsed, 
+            ts, 
+            errors, 
+            null/*TODO*/
+          );
 
           file2parsed.Add(file, parsed);
           file2proc.Add(file, proc);

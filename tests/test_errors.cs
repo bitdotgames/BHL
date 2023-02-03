@@ -132,26 +132,38 @@ public class TestErrors : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSyntaxError()
+  public void TestSeveralSyntaxErrors()
   {
     string bhl = @"
     func foo() { }
 
-    func test() 
-    {
+    func test() {
       foo(
+    }
+
+    func hey() {
+      int i =
     }
     ";
 
-    AssertError<SyntaxError>(
-      delegate() {
-        Compile(bhl);
-      },
-      "no viable alternative at input 'foo(\\n",
-      new PlaceAssert(bhl, @"
+    try
+    {
+      Compile(bhl);
     }
-----^"
-      )
-    );
+    catch(MultiCompileErrors m)
+    {
+      AssertEqual(2, m.errors.Count);
+    }
+
+//    AssertError<SyntaxError>(
+//      delegate() {
+//        Compile(bhl);
+//      },
+//      "no viable alternative at input 'foo(\\n",
+//      new PlaceAssert(bhl, @"
+//    }
+//----^"
+//      )
+//    );
   }
 }

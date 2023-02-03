@@ -931,7 +931,15 @@ public class BHL_TestBase
 
     var mdl = new bhl.Module(ts, "", "");
 
-    var proc = ANTLR_Processor.MakeProcessor(mdl, new FileImports(), bhl.ToStream(), ts);
+    var errors = new CompileErrors();
+    var proc = ANTLR_Processor.MakeProcessor(
+      mdl, 
+      new FileImports(), 
+      bhl.ToStream(), 
+      ts, 
+      errors,
+      ErrorHandlers.MakeCommon("", errors)
+    );
     ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
     if(proc.result.errors.Count > 0)
