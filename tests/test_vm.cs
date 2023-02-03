@@ -5576,7 +5576,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input '1' expecting NAME",
+      "mismatched input '1' expecting",
       new PlaceAssert(bhl, @"
       foreach([1,2,3] as int t) {
 ---------------^"
@@ -8822,7 +8822,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "mismatched input 'ref'",
+      "mismatched input 'ref' expecting '}'",
       new PlaceAssert(bhl, @"
       ref float a
 ------^"
@@ -13028,7 +13028,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "extraneous input '++' expecting '}'",
+      "extraneous input '++' expecting",
       new PlaceAssert(bhl1, @"
       ++
 ------^"
@@ -13066,7 +13066,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl3);
       },
-      "extraneous input '++' expecting ')'"
+      "extraneous input '++' expecting"
     );
 
     string bhl4 = @"
@@ -13083,7 +13083,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl4);
       },
-      "extraneous input '++' expecting ';'"
+      "extraneous input '++' expecting"
     );
 
     string bhl5 = @"

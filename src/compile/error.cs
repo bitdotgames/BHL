@@ -37,6 +37,11 @@ public class MultiCompileErrors : Exception
   {
     this.errors = errors;
   }
+
+  public void Dump()
+  {
+    errors.Dump();
+  }
 }
 
 public class SyntaxError : Exception, ICompileError
@@ -143,7 +148,8 @@ public class ErrorStrategy : DefaultErrorStrategy
 {
   public override void Sync(Antlr4.Runtime.Parser recognizer) 
   {
-    base.Sync(recognizer);
+    //TODO: investigate if re-sync if required
+    //base.Sync(recognizer);
   }
 }
 

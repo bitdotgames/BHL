@@ -833,9 +833,12 @@ public class BHL_TestBase
 
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
-    //TODO: looks a bit ugly
+    //TODO: in case of multi errors we consider only the first one,
+    //      probably it should be more flexible
     if(err is MultiCompileErrors mex)
+    {
       err = (Exception)mex.errors[0];
+    }
 
     var idx = err.ToString().IndexOf(msg);
     AssertTrue(idx != -1, "Error message is: " + err);

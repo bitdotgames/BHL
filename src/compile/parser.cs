@@ -147,7 +147,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ais = new AntlrInputStream(s);
     var lex = new bhlLexer(ais);
 
-    if(handlers.lexer_listener != null)
+    if(handlers?.lexer_listener != null)
     {
       lex.RemoveErrorListeners();
       lex.AddErrorListener(handlers.lexer_listener);
@@ -161,13 +161,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tokens = Stream2Tokens(file, src, handlers);
     var p = new bhlParser(tokens);
 
-    if(handlers.parser_listener != null)
+    if(handlers?.parser_listener != null)
     {
       p.RemoveErrorListeners();
       p.AddErrorListener(handlers.parser_listener);
     }
 
-    if(handlers.error_strategy != null)
+    if(handlers?.error_strategy != null)
       p.ErrorHandler = handlers.error_strategy;
 
     return p;
@@ -398,6 +398,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     root_ast = new AST_Module(module.name);
 
     passes.Clear();
+
+    //NOTE: let's skip processing if there are any errors already present
+    if(errors.Count > 0)
+      return;
 
     PushAST(root_ast);
     VisitProgram(parsed.prog);
