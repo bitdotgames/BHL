@@ -122,7 +122,7 @@ public class ErrorHandlers
     var eh = new ErrorHandlers();
     eh.lexer_listener = new ErrorLexerListener(file, errors); 
     eh.parser_listener = new ErrorParserListener(file, errors);
-    eh.error_strategy = new ErrorStrategy();
+    eh.error_strategy = new ErrorStrategy(false);
     return eh;
   }
 }
@@ -146,10 +146,17 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
 public class ErrorStrategy : DefaultErrorStrategy
 {
+  bool do_sync;
+
+  public ErrorStrategy(bool do_sync)
+  {
+    this.do_sync = do_sync;
+  }
+
   public override void Sync(Antlr4.Runtime.Parser recognizer) 
   {
-    //TODO: investigate if re-sync if required
-    //base.Sync(recognizer);
+    if(do_sync)
+      base.Sync(recognizer);
   }
 }
 
