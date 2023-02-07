@@ -25,7 +25,7 @@ public class TestErrors : BHL_TestBase
     {
       Compile(bhl);
     }
-    catch(MultiCompileErrors m)
+    catch(CompileErrorsException m)
     {
       AssertEqual(2, m.errors.Count);
 
@@ -75,7 +75,7 @@ public class TestErrors : BHL_TestBase
     {
       CompileFiles(files);
     }
-    catch(MultiCompileErrors m)
+    catch(CompileErrorsException m)
     {
       AssertEqual(2, m.errors.Count);
 
@@ -152,7 +152,7 @@ public class TestErrors : BHL_TestBase
     {
       Compile(bhl);
     }
-    catch(MultiCompileErrors m)
+    catch(CompileErrorsException m)
     {
       AssertEqual(2 + 3, m.errors.Count);
 

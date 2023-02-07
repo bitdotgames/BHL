@@ -35,11 +35,11 @@ public class CompileErrors : List<ICompileError>
   }
 }
 
-public class MultiCompileErrors : Exception
+public class CompileErrorsException : Exception
 {
   public CompileErrors errors;
 
-  public MultiCompileErrors(CompileErrors errors)
+  public CompileErrorsException(CompileErrors errors)
     : base("Multiple compilation errors (" + errors.Count + "):\n" + errors)
   {
     this.errors = errors;

@@ -836,7 +836,7 @@ public class BHL_TestBase
   {
     //TODO: in case of multi errors we consider only the first one,
     //      probably it should be more flexible
-    if(err is MultiCompileErrors mex)
+    if(err is CompileErrorsException mex)
     {
       err = (Exception)mex.errors[0];
     }
@@ -909,7 +909,7 @@ public class BHL_TestBase
           Console.Error.WriteLine("==========");
         }
       }
-      throw new MultiCompileErrors(errors);
+      throw new CompileErrorsException(errors);
     }
 
     return new MemoryStream(File.ReadAllBytes(conf.res_file));
@@ -965,7 +965,7 @@ public class BHL_TestBase
       AST_Dumper.Dump(proc.result.ast);
 
     if(throw_errors && proc.result.errors.Count > 0)
-      throw new MultiCompileErrors(proc.result.errors);
+      throw new CompileErrorsException(proc.result.errors);
 
     return proc;
   }
