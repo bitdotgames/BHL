@@ -1651,7 +1651,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl);
+        Compile(bhl, null, show_parse_tree: true);
       },
       @"mismatched input",
       new PlaceAssert(bhl, @"

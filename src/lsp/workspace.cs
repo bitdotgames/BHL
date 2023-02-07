@@ -56,7 +56,7 @@ public class Workspace
 
           var parser = ANTLR_Processor.Stream2Parser(file, sfs, null/*TODO*/);
 
-          var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
+          var parsed = new ANTLR_Parsed(parser);
 
           var proc = ANTLR_Processor.MakeProcessor(
             module, 

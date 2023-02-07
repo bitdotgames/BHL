@@ -420,7 +420,7 @@ public class CompilationExecutor
                 sfs, 
                 ErrorHandlers.MakeCommon(file, new CompileErrors())
               );
-              var parsed = new ANTLR_Parsed(parser.TokenStream, parser.program());
+              var parsed = new ANTLR_Parsed(parser);
 
               interim.parsed = parsed;
 

@@ -47,29 +47,17 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitProgram([NotNull] bhlParser.ProgramContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.progblock"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.declOrImport"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterProgblock([NotNull] bhlParser.ProgblockContext context) { }
+	public virtual void EnterDeclOrImport([NotNull] bhlParser.DeclOrImportContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.progblock"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.declOrImport"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitProgblock([NotNull] bhlParser.ProgblockContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.imports"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterImports([NotNull] bhlParser.ImportsContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.imports"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitImports([NotNull] bhlParser.ImportsContext context) { }
+	public virtual void ExitDeclOrImport([NotNull] bhlParser.DeclOrImportContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mimport"/>.
 	/// <para>The default implementation does nothing.</para>

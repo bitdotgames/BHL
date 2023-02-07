@@ -21,10 +21,17 @@ public interface ICompileError
 
 public class CompileErrors : List<ICompileError> 
 { 
+  public override string ToString() 
+  {
+    string str = "";
+    for(int i=0;i<Count;++i)
+      str += "#" + (i+1) + " " + this[i] + "\n";
+    return str;
+  }
+
   public void Dump()
   {
-    foreach(var err in this)
-      Console.WriteLine(err);
+    Console.WriteLine(this);
   }
 }
 
@@ -33,7 +40,7 @@ public class MultiCompileErrors : Exception
   public CompileErrors errors;
 
   public MultiCompileErrors(CompileErrors errors)
-    : base("Multiple compilation errors (" + errors.Count + ")")
+    : base("Multiple compilation errors (" + errors.Count + "):\n" + errors)
   {
     this.errors = errors;
   }
@@ -122,7 +129,7 @@ public class ErrorHandlers
     var eh = new ErrorHandlers();
     eh.lexer_listener = new ErrorLexerListener(file, errors); 
     eh.parser_listener = new ErrorParserListener(file, errors);
-    eh.error_strategy = new ErrorStrategy(false);
+    eh.error_strategy = new ErrorStrategy();
     return eh;
   }
 }
@@ -146,17 +153,15 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
 public class ErrorStrategy : DefaultErrorStrategy
 {
-  bool do_sync;
-
-  public ErrorStrategy(bool do_sync)
+  public override void Sync(Antlr4.Runtime.Parser parser) 
   {
-    this.do_sync = do_sync;
+    //NOTE: don't do sync since it's way too 'smart' and removes extra tokens
+    //base.Sync(parser);
   }
 
-  public override void Sync(Antlr4.Runtime.Parser recognizer) 
+  protected override IToken SingleTokenDeletion(Parser recognizer)
   {
-    if(do_sync)
-      base.Sync(recognizer);
+    return null;
   }
 }
 

@@ -41,25 +41,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitProgram([NotNull] bhlParser.ProgramContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.progblock"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.declOrImport"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterProgblock([NotNull] bhlParser.ProgblockContext context);
+	void EnterDeclOrImport([NotNull] bhlParser.DeclOrImportContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.progblock"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.declOrImport"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitProgblock([NotNull] bhlParser.ProgblockContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.imports"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterImports([NotNull] bhlParser.ImportsContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.imports"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitImports([NotNull] bhlParser.ImportsContext context);
+	void ExitDeclOrImport([NotNull] bhlParser.DeclOrImportContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mimport"/>.
 	/// </summary>

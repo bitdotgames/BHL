@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using Mono.Options;
 using bhl;
+using Antlr4.Runtime.Tree;
 
 public class IsTestedAttribute : Attribute
 {
@@ -924,7 +925,7 @@ public class BHL_TestBase
     return CompileFiles(new CompilationExecutor(), conf);
   }
 
-  public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
+  public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
     if(ts == null)
       ts = new Types();
@@ -932,8 +933,18 @@ public class BHL_TestBase
       //NOTE: we don't want to affect the original ts
       ts = ts.Clone();
 
-    var mdl = new bhl.Module(ts, "", "");
+    var proc = Parse(bhl, ts, show_ast: show_ast, show_parse_tree: show_parse_tree, throw_errors: true);
 
+    var c  = new ModuleCompiler(proc.result);
+    var cm = c.Compile();
+    if(show_bytes)
+      Dump(c);
+    return cm;
+  }
+
+  public ANTLR_Processor Parse(string bhl, Types ts, bool show_ast = false, bool show_parse_tree = false, bool throw_errors = false) 
+  {
+    var mdl = new bhl.Module(ts, "", "");
     var errors = new CompileErrors();
     var proc = ANTLR_Processor.MakeProcessor(
       mdl, 
@@ -943,18 +954,20 @@ public class BHL_TestBase
       errors,
       ErrorHandlers.MakeCommon("", errors)
     );
-    ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
-    if(proc.result.errors.Count > 0)
-      throw new MultiCompileErrors(proc.result.errors);
+    if(show_parse_tree)
+      //Console.WriteLine(Trees.ToStringTree(proc.parsed.prog, proc.parsed.parser.RuleNames));
+      Console.WriteLine(proc.parsed);
+
+    ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);
-    var c  = new ModuleCompiler(proc.result);
-    var cm = c.Compile();
-    if(show_bytes)
-      Dump(c);
-    return cm;
+
+    if(throw_errors && proc.result.errors.Count > 0)
+      throw new MultiCompileErrors(proc.result.errors);
+
+    return proc;
   }
 
   public static string ByteArrayToString(byte[] ba)

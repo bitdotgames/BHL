@@ -38,17 +38,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitProgram([NotNull] bhlParser.ProgramContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.progblock"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.declOrImport"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitProgblock([NotNull] bhlParser.ProgblockContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.imports"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitImports([NotNull] bhlParser.ImportsContext context);
+	Result VisitDeclOrImport([NotNull] bhlParser.DeclOrImportContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.mimport"/>.
 	/// </summary>

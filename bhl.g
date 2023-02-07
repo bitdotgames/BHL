@@ -1,15 +1,12 @@
 grammar bhl;
 
 program
-  : progblock* EOF
+  : declOrImport* EOF
   ;
 
-progblock
-  : imports? decls
-  ;
-
-imports 
-  : mimport+
+declOrImport
+  : decl
+  | mimport
   ;
 
 mimport

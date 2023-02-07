@@ -8,13 +8,47 @@ namespace bhl {
 
 public class ANTLR_Parsed
 {
+  public bhlParser parser { get; private set; }
   public ITokenStream tokens { get; private set; }
-  public bhlParser.ProgramContext prog { get; private set; }
+  public bhlParser.ProgramContext program_tree { get; private set; }
 
-  public ANTLR_Parsed(ITokenStream tokens, bhlParser.ProgramContext prog)
+  public ANTLR_Parsed(bhlParser parser)
   {
-    this.tokens = tokens;
-    this.prog = prog;
+    this.parser = parser;
+    this.tokens = parser.TokenStream;
+    this.program_tree = parser.program();
+  }
+
+  public override string ToString()
+  {
+    return PrintTree(parser, program_tree);
+  }
+
+  public static string PrintTree(Parser parser, IParseTree root)
+  {
+    var sb = new System.Text.StringBuilder();
+    DoPrintTree(root, sb, 0, parser.RuleNames);
+    return sb.ToString();
+  }
+
+  static void DoPrintTree(IParseTree root, System.Text.StringBuilder sb, int offset, IList<String> rule_names) 
+  {
+    for(int i = 0; i < offset; i++)
+      sb.Append("  ");
+    
+    sb.Append(Trees.GetNodeText(root, rule_names)).Append("\n");
+    if(root is ParserRuleContext prc) 
+    {
+      if(prc.children != null) 
+      {
+        foreach(var child in prc.children)
+        {
+          if(child is IErrorNode)
+            sb.Append("!");
+          DoPrintTree(child, sb, offset + 1, rule_names);
+        }
+      }
+    }
   }
 }
 
@@ -216,7 +250,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     )
   {
     var p = Stream2Parser(module.file_path, src, err_handlers);
-    var parsed = new ANTLR_Parsed(p.TokenStream, p.program());
+    var parsed = new ANTLR_Parsed(p);
     return new ANTLR_Processor(parsed, module, imports, ts, errors);
   }
 
@@ -399,12 +433,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     passes.Clear();
 
-    //NOTE: let's skip processing if there are any errors already present
-    if(errors.Count > 0)
-      return;
-
     PushAST(root_ast);
-    VisitProgram(parsed.prog);
+    VisitProgram(parsed.program_tree);
     PopAST();
 
     for(int p=0;p<passes.Count;++p)
@@ -429,6 +459,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
   {
+    if(parsed_imports.Count == 0)
+      return;
+
     var ast_import = new AST_Import();
 
     foreach(var kv in parsed_imports)
@@ -566,22 +599,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)
   {
-    for(int i=0;i<ctx.progblock().Length;++i)
-      Visit(ctx.progblock()[i]);
-
-    return null;
-  }
-
-  public override object VisitProgblock(bhlParser.ProgblockContext ctx)
-  { 
-    var imps = ctx.imports();
-    if(imps != null)
+    foreach(var item in ctx.declOrImport())
     {
-      for(int i=0;i<imps.mimport().Length;++i)
-        ParseImport(imps.mimport()[i]);
+      if(item.mimport() != null)
+        ParseImport(item.mimport());
     }
 
-    Visit(ctx.decls()); 
+    foreach(var item in ctx.declOrImport())
+    {
+      if(item.decl() != null)
+        ParseDecl(item.decl());
+    }
 
     return null;
   }
@@ -2718,50 +2746,44 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitDecls(bhlParser.DeclsContext ctx)
+  void ParseDecl(bhlParser.DeclContext ctx)
   {
-    var decls = ctx.decl();
-    for(int i=0;i<decls.Length;++i)
+    var nsdecl = ctx.nsDecl();
+    if(nsdecl != null)
     {
-      var nsdecl = decls[i].nsDecl();
-      if(nsdecl != null)
-      {
-        Visit(nsdecl);
-        continue;
-      }
-      var vdecl = decls[i].varDeclareAssign();
-      if(vdecl != null)
-      {
-        AddPass(vdecl, curr_scope, PeekAST()); 
-        continue;
-      }
-      var fndecl = decls[i].funcDecl();
-      if(fndecl != null)
-      {
-        AddPass(fndecl, curr_scope, PeekAST());
-        continue;
-      }
-      var cldecl = decls[i].classDecl();
-      if(cldecl != null)
-      {
-        AddPass(cldecl, curr_scope, PeekAST());
-        continue;
-      }
-      var ifacedecl = decls[i].interfaceDecl();
-      if(ifacedecl != null)
-      {
-        AddPass(ifacedecl, curr_scope, PeekAST());
-        continue;
-      }
-      var edecl = decls[i].enumDecl();
-      if(edecl != null)
-      {
-        AddPass(edecl, curr_scope, PeekAST());
-        continue;
-      }
+      Visit(nsdecl);
+      return;
     }
-
-    return null;
+    var vdecl = ctx.varDeclareAssign();
+    if(vdecl != null)
+    {
+      AddPass(vdecl, curr_scope, PeekAST()); 
+      return;
+    }
+    var fndecl = ctx.funcDecl();
+    if(fndecl != null)
+    {
+      AddPass(fndecl, curr_scope, PeekAST());
+      return;
+    }
+    var cldecl = ctx.classDecl();
+    if(cldecl != null)
+    {
+      AddPass(cldecl, curr_scope, PeekAST());
+      return;
+    }
+    var ifacedecl = ctx.interfaceDecl();
+    if(ifacedecl != null)
+    {
+      AddPass(ifacedecl, curr_scope, PeekAST());
+      return;
+    }
+    var edecl = ctx.enumDecl();
+    if(edecl != null)
+    {
+      AddPass(edecl, curr_scope, PeekAST());
+      return;
+    }
   }
 
   void Pass_OutlineFuncDecl(ParserPass pass)

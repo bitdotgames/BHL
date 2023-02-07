@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using bhl;
+using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 
 public class TestErrors : BHL_TestBase
 {
@@ -152,7 +154,7 @@ public class TestErrors : BHL_TestBase
     }
     catch(MultiCompileErrors m)
     {
-      AssertEqual(2/* + 3*/, m.errors.Count);
+      AssertEqual(2 + 3, m.errors.Count);
 
       AssertError((Exception)m.errors[0],
         "no viable alternative at input 'foo(",
@@ -170,29 +172,96 @@ public class TestErrors : BHL_TestBase
         )
       );
 
-//      AssertError((Exception)m.errors[2],
-//        "symbol usage is not valid",
-//        new PlaceAssert(bhl, @"
-//      int i =
-//------^"
-//        )
-//      );
-//
-//      AssertError((Exception)m.errors[3],
-//        "useless statement",
-//        new PlaceAssert(bhl, @"
-//      int i =
-//------^"
-//        )
-//      );
-//
-//      AssertError((Exception)m.errors[4],
-//        "symbol 'i' not resolved",
-//        new PlaceAssert(bhl, @"
-//      int i =
-//----------^"
-//        )
-//      );
+      AssertError((Exception)m.errors[2],
+        "symbol usage is not valid",
+        new PlaceAssert(bhl, @"
+      int i =
+------^"
+        )
+      );
+
+      AssertError((Exception)m.errors[3],
+        "useless statement",
+        new PlaceAssert(bhl, @"
+      int i =
+------^"
+        )
+      );
+
+      AssertError((Exception)m.errors[4],
+        "symbol 'i' not resolved",
+        new PlaceAssert(bhl, @"
+      int i =
+----------^"
+        )
+      );
     }
   }
+
+//  [IsTested()]
+//  public void TestErrorNodes()
+//  {
+//    string bhl = @"
+//
+//    func test() {
+//      var f = new Foo
+//      f[0].foo(
+//      //f.k(,1)
+//      //f.k(1,
+//    }
+//
+//    class Foo
+//    {
+//      int a
+//      func int foo (int f, int z) {
+//        return 1
+//      }
+//    }
+//
+//    ";
+//
+//    var proc = Parse(bhl, new Types(), show_ast: true);
+//
+//    var test = (FuncSymbol)proc.result.module.ns.Resolve("test");
+//    AssertTrue(test != null);
+//
+//    var foo = (ClassSymbol)proc.result.module.ns.Resolve("Foo");
+//    AssertTrue(foo != null);
+//
+//    proc.result.errors.Dump();
+//
+//    var descs = Trees.Descendants(proc.parsed.prog);
+//    IErrorNode en = null;
+//    var derrs = new List<IErrorNode>();
+//    foreach(var d in descs)
+//    {
+//      if(d is IErrorNode _en)
+//      {
+//        en = _en;
+//        Console.WriteLine("ERR " + _en/* + " " + en.Parent.GetText() + " " + en.Parent.GetType().Name + " " + en.Parent.Parent.GetText() + " " + en.Parent.Parent.GetType().Name*/);
+//        derrs.Add(_en);
+//      }
+//    }
+//
+//    if(en != null)
+//    {
+//      var errs = new List<IErrorNode>();
+//
+//      var ctx = en.Parent as ParserRuleContext;
+//      if(ctx != null)
+//      {
+//        foreach(var c in ctx.children)
+//        {
+//          if(c is IErrorNode cen)
+//            errs.Add(cen);
+//        }
+//      }
+//
+//      Console.WriteLine(errs.Count + " VS " + derrs.Count + " " + en.ToString());
+//    }
+//
+//    //Console.WriteLine(proc.parsed);
+//    //Console.WriteLine(Trees.ToStringTree(proc.parsed.prog, proc.parsed.parser.RuleNames));
+//    Console.WriteLine(proc.parsed);
+//  }
 }
