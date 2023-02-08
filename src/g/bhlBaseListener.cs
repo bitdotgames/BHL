@@ -797,20 +797,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVarIncDec([NotNull] bhlParser.VarIncDecContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>FuncCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterFuncCall([NotNull] bhlParser.FuncCallContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>FuncCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitFuncCall([NotNull] bhlParser.FuncCallContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>UselessAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -824,6 +810,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitUselessAccess([NotNull] bhlParser.UselessAccessContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncCall([NotNull] bhlParser.FuncCallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncCall([NotNull] bhlParser.FuncCallContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>UselessVarAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

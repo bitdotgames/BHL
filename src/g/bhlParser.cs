@@ -3130,17 +3130,17 @@ public partial class bhlParser : Parser {
 				}
 				break;
 			case 6:
-				_localctx = new FuncCallContext(_localctx);
+				_localctx = new UselessAccessContext(_localctx);
 				EnterOuterAlt(_localctx, 6);
 				{
-				State = 418; funcCallExp();
+				State = 418; chainedExp();
 				}
 				break;
 			case 7:
-				_localctx = new UselessAccessContext(_localctx);
+				_localctx = new FuncCallContext(_localctx);
 				EnterOuterAlt(_localctx, 7);
 				{
-				State = 419; chainedExp();
+				State = 419; funcCallExp();
 				}
 				break;
 			case 8:
@@ -7738,8 +7738,8 @@ public partial class bhlParser : Parser {
 		'\x19F', '\x1A0', '\x5', '\x46', '$', '\x2', '\x1A0', '\x1A1', '\x5', 
 		'\xA4', 'S', '\x2', '\x1A1', '\x1A2', '\x5', '\x18', '\r', '\x2', '\x1A2', 
 		'\x1E1', '\x3', '\x2', '\x2', '\x2', '\x1A3', '\x1E1', '\x5', '.', '\x18', 
-		'\x2', '\x1A4', '\x1E1', '\x5', '\x42', '\"', '\x2', '\x1A5', '\x1E1', 
-		'\x5', '>', ' ', '\x2', '\x1A6', '\x1E1', '\x5', '\x46', '$', '\x2', '\x1A7', 
+		'\x2', '\x1A4', '\x1E1', '\x5', '>', ' ', '\x2', '\x1A5', '\x1E1', '\x5', 
+		'\x42', '\"', '\x2', '\x1A6', '\x1E1', '\x5', '\x46', '$', '\x2', '\x1A7', 
 		'\x1AB', '\x5', '\x38', '\x1D', '\x2', '\x1A8', '\x1AA', '\x5', ':', '\x1E', 
 		'\x2', '\x1A9', '\x1A8', '\x3', '\x2', '\x2', '\x2', '\x1AA', '\x1AD', 
 		'\x3', '\x2', '\x2', '\x2', '\x1AB', '\x1A9', '\x3', '\x2', '\x2', '\x2', 

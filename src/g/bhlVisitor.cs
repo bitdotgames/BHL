@@ -413,19 +413,19 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarIncDec([NotNull] bhlParser.VarIncDecContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>FuncCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFuncCall([NotNull] bhlParser.FuncCallContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>UselessAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitUselessAccess([NotNull] bhlParser.UselessAccessContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>FuncCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFuncCall([NotNull] bhlParser.FuncCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>UselessVarAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

@@ -677,18 +677,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVarIncDec([NotNull] bhlParser.VarIncDecContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>FuncCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterFuncCall([NotNull] bhlParser.FuncCallContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>FuncCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitFuncCall([NotNull] bhlParser.FuncCallContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>UselessAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -700,6 +688,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitUselessAccess([NotNull] bhlParser.UselessAccessContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncCall([NotNull] bhlParser.FuncCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncCall([NotNull] bhlParser.FuncCallContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>UselessVarAccess</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

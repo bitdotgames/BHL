@@ -145,8 +145,8 @@ statement
   | varAccessExp assignExp                     #VarAccessAssign
   | varAccessExp operatorPostOpAssign exp      #VarPostOpAssign
   | varPostIncDec                              #VarIncDec
-  | funcCallExp                                #FuncCall
   | chainedExp                                 #UselessAccess
+  | funcCallExp                                #FuncCall
   | varAccessExp                               #UselessVarAccess
   | mainIf elseIf* else?                       #If
   | 'while' '(' exp ')' block                  #While
