@@ -189,6 +189,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpOr([NotNull] bhlParser.ExpOrContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpAccess</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpAccess([NotNull] bhlParser.ExpAccessContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpAccess</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpAccess([NotNull] bhlParser.ExpAccessContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralFalse</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>

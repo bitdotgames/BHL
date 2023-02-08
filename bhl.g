@@ -57,10 +57,9 @@ exp
   | string                                   #ExpLiteralStr
   | name                                     #ExpName
   | 'yield' funcCallExp                      #ExpYieldCall
+  | exp chainExpItem+												 #ExpAccess
   | exp chainExpItem* callArgs               #ExpCall
   | exp chainExpItem* memberAccess           #ExpMemberAccess
-  //| '(' exp ')' chainExp*                  #ExpParenChain
-  //| 'yield' '(' exp ')' chainExp+ callArgs #ExpYieldParen
   | typeof                                   #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
