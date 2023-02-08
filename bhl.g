@@ -50,33 +50,36 @@ returnVal
   ;
 
 exp
-  : 'null'                                                  #ExpLiteralNull
-  | 'false'                                                 #ExpLiteralFalse
-  | 'true'                                                  #ExpLiteralTrue
-  | number                                                  #ExpLiteralNum
-  | string                                                  #ExpLiteralStr
-  | 'yield' funcCallExp                                     #ExpYieldCall
-  | callExp                                                 #ExpCall
-  | typeof                                                  #ExpTypeof
-  | jsonObject                                              #ExpJsonObj
-  | jsonArray                                               #ExpJsonArr
-  | funcLambda                                              #ExpLambda
-  | 'yield' funcLambda                                      #ExpYieldLambda
-  | '(' type ')' exp                                        #ExpTypeCast
-  | exp 'as' type                                           #ExpAs
-  | exp 'is' type                                           #ExpIs
-  | operatorUnary exp                                       #ExpUnary
-  | '(' exp ')' chainExp*                                   #ExpParen
-  | 'yield' '(' exp ')' chainExp+ callArgs                  #ExpYieldParen
-  | exp operatorBitAnd exp                                  #ExpBitAnd
-  | exp operatorBitOr exp                                   #ExpBitOr
-  | exp operatorMulDivMod exp                               #ExpMulDivMod
-  | exp operatorAddSub exp                                  #ExpAddSub
-  | exp operatorComparison exp                              #ExpCompare
-  | exp operatorAnd exp                                     #ExpAnd
-  | exp operatorOr exp                                      #ExpOr
-  | newExp                                                  #ExpNew
-  | exp ternaryIfExp                                        #ExpTernaryIf
+  : 'null'                                   #ExpLiteralNull
+  | 'false'                                  #ExpLiteralFalse
+  | 'true'                                   #ExpLiteralTrue
+  | number                                   #ExpLiteralNum
+  | string                                   #ExpLiteralStr
+  | name                                     #ExpName
+  | 'yield' funcCallExp                      #ExpYieldCall
+  | exp chainExpItem* callArgs               #ExpCall
+  | exp chainExpItem* memberAccess           #ExpMemberAccess
+  //| '(' exp ')' chainExp*                  #ExpParenChain
+  //| 'yield' '(' exp ')' chainExp+ callArgs #ExpYieldParen
+  | typeof                                   #ExpTypeof
+  | jsonObject                               #ExpJsonObj
+  | jsonArray                                #ExpJsonArr
+  | funcLambda                               #ExpLambda
+  | 'yield' funcLambda                       #ExpYieldLambda
+  | '(' type ')' exp                         #ExpTypeCast
+  | exp 'as' type                            #ExpAs
+  | exp 'is' type                            #ExpIs
+  | operatorUnary exp                        #ExpUnary
+  | exp operatorBitAnd exp                   #ExpBitAnd
+  | exp operatorBitOr exp                    #ExpBitOr
+  | exp operatorMulDivMod exp                #ExpMulDivMod
+  | exp operatorAddSub exp                   #ExpAddSub
+  | exp operatorComparison exp               #ExpCompare
+  | exp operatorAnd exp                      #ExpAnd
+  | exp operatorOr exp                       #ExpOr
+  | exp ternaryIfExp                         #ExpTernaryIf
+  | newExp                                   #ExpNew
+  | '(' exp ')'                              #ExpParen
   ;
 
 ternaryIfExp
@@ -91,16 +94,16 @@ foreachExp
   : '(' varOrDeclares 'in' exp ')' 
   ;
 
-forStmt
-  : (varsDeclareOrCallExps assignExp) | callPostIncDec
+forInsideStmnt
+  : varDeclareAssign | varPostIncDec
   ;
 
-forStmts
-  : forStmt (',' forStmt)*
+forInsideStmnts
+  : forInsideStmnt (',' forInsideStmnt)*
   ;
 
-forPre
-  : forStmts
+forPreIter
+  : forInsideStmnts
   ;
 
 forCond
@@ -108,19 +111,19 @@ forCond
   ;
 
 forPostIter
-  : forStmts
+  : forInsideStmnts
   ;
 
 forExp
-  : '(' forPre? SEPARATOR forCond SEPARATOR forPostIter? ')' 
+  : '(' forPreIter? SEPARATOR forCond SEPARATOR forPostIter? ')' 
   ;
 
 varDeclareAssign
   : varDeclare assignExp?
   ;
 
-callPostIncDec
-  : callExp (incrementOperator | decrementOperator)
+varPostIncDec
+  : varAccessExp (incrementOperator | decrementOperator)
   ;
 
 incrementOperator
@@ -132,33 +135,35 @@ decrementOperator
   ;
 
 varsDeclareAssign
-  : varsDeclareOrCallExps assignExp
+  : varsDeclares assignExp?
   ;
 
 //statements
 statement
-  : funcLambda                                                  #LambdaCall
-  | varsDeclareAssign                                           #DeclAssign
-  | varDeclare                                                  #VarDecl
-  | callExp operatorPostOpAssign exp                            #VarPostOpAssign
-  | callPostIncDec                                              #VarPostIncDec
-  | callExp                                                     #SymbCall
-  | mainIf elseIf* else?                                        #If
-  | 'while' '(' exp ')' block                                   #While
-  | 'do' block 'while' '(' exp ')'                              #DoWhile
-  | 'for' forExp block                                          #For
-  | 'foreach' foreachExp block                                  #Foreach
-  | 'yield' '(' ')'                                             #Yield
-  | 'yield' funcCallExp                                         #YieldFunc
-  | 'yield' funcLambda                                          #YieldLambdaCall
-  | 'yield' 'while' '(' exp ')'                                 #YieldWhile
-  | 'break'                                                     #Break
-  | 'continue'                                                  #Continue
-  | 'return' returnVal?                                         #Return
-  | 'paral' block                                               #Paral
-  | 'paral_all' block                                           #ParalAll
-  | 'defer' block                                               #Defer
-  | block                                                       #BlockNested
+  : funcLambda                                 #LambdaCall
+  | varsDeclareAssign                          #DeclAssign
+  | varAccessExp assignExp                     #VarAccessAssign
+  | varAccessExp operatorPostOpAssign exp      #VarPostOpAssign
+  | varPostIncDec                              #VarIncDec
+  | funcCallExp                                #FuncCall
+  | chainedExp                                 #UselessAccess
+  | varAccessExp                               #UselessVarAccess
+  | mainIf elseIf* else?                       #If
+  | 'while' '(' exp ')' block                  #While
+  | 'do' block 'while' '(' exp ')'             #DoWhile
+  | 'for' forExp block                         #For
+  | 'foreach' foreachExp block                 #Foreach
+  | 'yield' '(' ')'                            #Yield
+  | 'yield' funcCallExp                        #YieldFunc
+  | 'yield' funcLambda                         #YieldLambdaCall
+  | 'yield' 'while' '(' exp ')'                #YieldWhile
+  | 'break'                                    #Break
+  | 'continue'                                 #Continue
+  | 'return' returnVal?                        #Return
+  | 'paral' block                              #Paral
+  | 'paral_all' block                          #ParalAll
+  | 'defer' block                              #Defer
+  | block                                      #BlockNested
   ;
 
 mainIf
@@ -172,18 +177,35 @@ elseIf
 else
   : 'else' block
   ;
+  
 
-//vars && funcs
-callExp
-  : GLOBAL? NAME chainExp* 
+//foo()
+//bar.foo()
+//((bar[0]).foo()).hey
+//(((bar[0]).foo()).hey)
+chainedExp
+  : exp chainExpItem*
   ;
 
-chainExp
+chainExpItem
   : callArgs | memberAccess | arrAccess
   ;
 
 funcCallExp
-  : callExp callArgs
+  : chainedExp callArgs
+  ;
+
+name 
+  : GLOBAL? NAME
+  ;
+  
+varAccessExp
+  : name
+  | memberAccessExp
+  ;
+
+memberAccessExp
+  : chainedExp memberAccess
   ;
 
 typeof 
@@ -310,7 +332,7 @@ interfaceFuncDecl
   ;
 
 funcLambda
-  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExp*
+  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExpItem*
   ;
 
 refType
@@ -333,7 +355,7 @@ funcParamDeclare
   : isRef? VARIADIC? type NAME assignExp?
   ;
 
-varsDeclare
+varsDeclares
   : varDeclare ( ',' varDeclare )*
   ;
 
@@ -347,14 +369,6 @@ varOrDeclare
 
 varOrDeclares
   : varOrDeclare (',' varOrDeclare)*
-  ;
-
-varsDeclareOrCallExps
-  : varDeclareOrCallExp ( ',' varDeclareOrCallExp )*
-  ;
-
-varDeclareOrCallExp
-  : varDeclare | callExp
   ;
 
 assignExp
@@ -510,4 +524,5 @@ DELIMITED_COMMENT
 WS
   : [ \r\t\u000C\n]+ -> channel(HIDDEN)
   ;
+
 
