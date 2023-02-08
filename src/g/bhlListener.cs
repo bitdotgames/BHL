@@ -599,26 +599,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -1416,6 +1396,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitAssignExp([NotNull] bhlParser.AssignExpContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.assignExps"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAssignExps([NotNull] bhlParser.AssignExpsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.assignExps"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAssignExps([NotNull] bhlParser.AssignExpsContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorOr"/>.
 	/// </summary>

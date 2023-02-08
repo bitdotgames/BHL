@@ -705,30 +705,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -1676,6 +1652,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAssignExp([NotNull] bhlParser.AssignExpContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.assignExps"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAssignExps([NotNull] bhlParser.AssignExpsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.assignExps"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAssignExps([NotNull] bhlParser.AssignExpsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorOr"/>.
 	/// <para>The default implementation does nothing.</para>

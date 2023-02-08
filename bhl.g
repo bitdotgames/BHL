@@ -57,9 +57,11 @@ exp
   | string                                   #ExpLiteralStr
   | name                                     #ExpName
   | 'yield' funcCallExp                      #ExpYieldCall
-  | exp chainExpItem+												 #ExpAccess
+  | exp chainExpItem+                        #ExpAccess    
   | exp chainExpItem* callArgs               #ExpCall
   | exp chainExpItem* memberAccess           #ExpMemberAccess
+  //| '(' exp ')' chainExp*                  #ExpParenChain
+  //| 'yield' '(' exp ')' chainExp+ callArgs #ExpYieldParen
   | typeof                                   #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
@@ -122,19 +124,12 @@ varDeclareAssign
   ;
 
 varPostIncDec
-  : varAccessExp (incrementOperator | decrementOperator)
+  : varAccessExp (INC | DEC)
   ;
 
-incrementOperator
-  : '++'
-  ;
-
-decrementOperator
-  : '--'
-  ;
 
 varsDeclareAssign
-  : varsDeclares assignExp?
+  : varsDeclares assignExps?
   ;
 
 //statements
@@ -177,7 +172,6 @@ else
   : 'else' block
   ;
   
-
 //foo()
 //bar.foo()
 //((bar[0]).foo()).hey
@@ -373,6 +367,10 @@ varOrDeclares
 assignExp
   : '=' exp
   ;
+  
+assignExps
+  : '=' exps
+  ;
 
 operatorOr 
   : '||'
@@ -469,6 +467,14 @@ VARIADIC
 
 SEPARATOR
   : ';'
+  ;
+  
+INC
+  : '+' '+'
+  ;
+
+DEC
+  : '-' '-'
   ;
 
 NORMALSTRING

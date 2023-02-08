@@ -367,18 +367,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.incrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIncrementOperator([NotNull] bhlParser.IncrementOperatorContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.decrementOperator"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDecrementOperator([NotNull] bhlParser.DecrementOperatorContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -852,6 +840,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAssignExp([NotNull] bhlParser.AssignExpContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.assignExps"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAssignExps([NotNull] bhlParser.AssignExpsContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorOr"/>.
 	/// </summary>
