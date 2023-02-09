@@ -400,12 +400,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmVarIncDec([NotNull] bhlParser.StmVarIncDecContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>StmChained</c>
+	/// Visit a parse tree produced by the <c>StmComplexExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStmChained([NotNull] bhlParser.StmChainedContext context);
+	Result VisitStmComplexExp([NotNull] bhlParser.StmComplexExpContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StmIf</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -537,11 +537,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitElse([NotNull] bhlParser.ElseContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.chainedExp"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.complexExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitChainedExp([NotNull] bhlParser.ChainedExpContext context);
+	Result VisitComplexExp([NotNull] bhlParser.ComplexExpContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.chainExpItem"/>.
 	/// </summary>

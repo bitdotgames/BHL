@@ -55,7 +55,7 @@ public partial class bhlParser : Parser {
 		RULE_forPreIter = 17, RULE_forCond = 18, RULE_forPostIter = 19, RULE_forExp = 20, 
 		RULE_varDeclareAssign = 21, RULE_varPostIncDec = 22, RULE_varsDeclares = 23, 
 		RULE_varsDeclareAssign = 24, RULE_statement = 25, RULE_mainIf = 26, RULE_elseIf = 27, 
-		RULE_else = 28, RULE_chainedExp = 29, RULE_chainExpItem = 30, RULE_funcCallExp = 31, 
+		RULE_else = 28, RULE_complexExp = 29, RULE_chainExpItem = 30, RULE_funcCallExp = 31, 
 		RULE_varAccessExp = 32, RULE_arrAccess = 33, RULE_memberAccess = 34, RULE_callArgs = 35, 
 		RULE_callArg = 36, RULE_block = 37, RULE_extensions = 38, RULE_nsDecl = 39, 
 		RULE_classDecl = 40, RULE_classBlock = 41, RULE_classMembers = 42, RULE_fldAttribs = 43, 
@@ -78,7 +78,7 @@ public partial class bhlParser : Parser {
 		"type", "mapType", "exps", "returnVal", "exp", "ternaryIfExp", "newExp", 
 		"foreachExp", "forInsideStmnt", "forInsideStmnts", "forPreIter", "forCond", 
 		"forPostIter", "forExp", "varDeclareAssign", "varPostIncDec", "varsDeclares", 
-		"varsDeclareAssign", "statement", "mainIf", "elseIf", "else", "chainedExp", 
+		"varsDeclareAssign", "statement", "mainIf", "elseIf", "else", "complexExp", 
 		"chainExpItem", "funcCallExp", "varAccessExp", "arrAccess", "memberAccess", 
 		"callArgs", "callArg", "block", "extensions", "nsDecl", "classDecl", "classBlock", 
 		"classMembers", "fldAttribs", "fldDeclare", "classMember", "interfaceDecl", 
@@ -2608,25 +2608,6 @@ public partial class bhlParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class StmChainedContext : StatementContext {
-		public ChainedExpContext chainedExp() {
-			return GetRuleContext<ChainedExpContext>(0);
-		}
-		public StmChainedContext(StatementContext context) { CopyFrom(context); }
-		public override void EnterRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterStmChained(this);
-		}
-		public override void ExitRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitStmChained(this);
-		}
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitStmChained(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 	public partial class StmParalContext : StatementContext {
 		public BlockContext block() {
 			return GetRuleContext<BlockContext>(0);
@@ -2804,6 +2785,25 @@ public partial class bhlParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitStmBlockNested(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class StmComplexExpContext : StatementContext {
+		public ComplexExpContext complexExp() {
+			return GetRuleContext<ComplexExpContext>(0);
+		}
+		public StmComplexExpContext(StatementContext context) { CopyFrom(context); }
+		public override void EnterRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.EnterStmComplexExp(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.ExitStmComplexExp(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitStmComplexExp(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -3018,10 +3018,10 @@ public partial class bhlParser : Parser {
 				}
 				break;
 			case 6:
-				_localctx = new StmChainedContext(_localctx);
+				_localctx = new StmComplexExpContext(_localctx);
 				EnterOuterAlt(_localctx, 6);
 				{
-				State = 407; chainedExp();
+				State = 407; complexExp();
 				}
 				break;
 			case 7:
@@ -3357,7 +3357,7 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class ChainedExpContext : ParserRuleContext {
+	public partial class ComplexExpContext : ParserRuleContext {
 		public ExpContext exp() {
 			return GetRuleContext<ExpContext>(0);
 		}
@@ -3367,30 +3367,30 @@ public partial class bhlParser : Parser {
 		public ChainExpItemContext chainExpItem(int i) {
 			return GetRuleContext<ChainExpItemContext>(i);
 		}
-		public ChainedExpContext(ParserRuleContext parent, int invokingState)
+		public ComplexExpContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_chainedExp; } }
+		public override int RuleIndex { get { return RULE_complexExp; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterChainedExp(this);
+			if (typedListener != null) typedListener.EnterComplexExp(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitChainedExp(this);
+			if (typedListener != null) typedListener.ExitComplexExp(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitChainedExp(this);
+			if (typedVisitor != null) return typedVisitor.VisitComplexExp(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public ChainedExpContext chainedExp() {
-		ChainedExpContext _localctx = new ChainedExpContext(Context, State);
-		EnterRule(_localctx, 58, RULE_chainedExp);
+	public ComplexExpContext complexExp() {
+		ComplexExpContext _localctx = new ComplexExpContext(Context, State);
+		EnterRule(_localctx, 58, RULE_complexExp);
 		try {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
@@ -3496,8 +3496,8 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class FuncCallExpContext : ParserRuleContext {
-		public ChainedExpContext chainedExp() {
-			return GetRuleContext<ChainedExpContext>(0);
+		public ComplexExpContext complexExp() {
+			return GetRuleContext<ComplexExpContext>(0);
 		}
 		public CallArgsContext callArgs() {
 			return GetRuleContext<CallArgsContext>(0);
@@ -3529,7 +3529,7 @@ public partial class bhlParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 495; chainedExp();
+			State = 495; complexExp();
 			State = 496; callArgs();
 			}
 		}
@@ -3545,8 +3545,8 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class VarAccessExpContext : ParserRuleContext {
-		public ChainedExpContext chainedExp() {
-			return GetRuleContext<ChainedExpContext>(0);
+		public ComplexExpContext complexExp() {
+			return GetRuleContext<ComplexExpContext>(0);
 		}
 		public MemberAccessContext memberAccess() {
 			return GetRuleContext<MemberAccessContext>(0);
@@ -3581,7 +3581,7 @@ public partial class bhlParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 498; chainedExp();
+			State = 498; complexExp();
 			State = 501;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {

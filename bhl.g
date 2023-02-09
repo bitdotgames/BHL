@@ -59,7 +59,7 @@ exp
   //NOTE: special case for standalone variables which also 
   //      can be the beginning of the expression chain
   | GLOBAL? NAME                             #ExpName
-  //NOTE: chainedExp 'flattened' to avoid left recursion, we also
+  //NOTE: complexExp 'flattened' to avoid left recursion, we also
   //      require at least one chain item to be present
   | exp chainExpItem+                        #ExpChain
   | 'typeof' '(' type ')'                    #ExpTypeof
@@ -143,7 +143,7 @@ statement
   | varAccessExp operatorPostOpAssign exp      #StmVarPostOpAssign
   | varPostIncDec                              #StmVarIncDec
   //func/method calls, variable and members access
-  | chainedExp                                 #StmChained
+  | complexExp                                 #StmComplexExp
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
@@ -174,7 +174,7 @@ else
   : 'else' block
   ;
   
-chainedExp
+complexExp
   : exp chainExpItem*
   ;
 
@@ -182,12 +182,14 @@ chainExpItem
   : callArgs | memberAccess | arrAccess
   ;
 
+//NOTE: makes sure it's a func call
 funcCallExp
-  : chainedExp callArgs
+  : complexExp callArgs
   ;
 
+//NOTE: makes sure it's a variable access
 varAccessExp
-  : chainedExp (memberAccess | arrAccess)
+  : complexExp (memberAccess | arrAccess)
   ;
 
 arrAccess

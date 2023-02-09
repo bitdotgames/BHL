@@ -629,9 +629,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-  public override object VisitStmChained(bhlParser.StmChainedContext ctx)
+  public override object VisitStmComplexExp(bhlParser.StmComplexExpContext ctx)
   {
-    var exp = ctx.chainedExp(); 
+    var exp = ctx.complexExp(); 
     Visit(exp);
 
     var eval_type = Annotate(exp).eval_type;
@@ -4492,7 +4492,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
     {}
 
-    public ExpChain(bhlParser.ChainedExpContext ctx)
+    public ExpChain(bhlParser.ComplexExpContext ctx)
       : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
     {}
 
@@ -4537,7 +4537,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
-      : this(new ExpChain(ctx.chainedExp()), ctx.callArgs())
+      : this(new ExpChain(ctx.complexExp()), ctx.callArgs())
     {}
 
     public IParseTree At(int i) 
@@ -4589,7 +4589,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
-      orig = new ExpChain(ctx.chainedExp());
+      orig = new ExpChain(ctx.complexExp());
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }

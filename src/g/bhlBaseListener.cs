@@ -771,19 +771,19 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStmVarIncDec([NotNull] bhlParser.StmVarIncDecContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>StmChained</c>
+	/// Enter a parse tree produced by the <c>StmComplexExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStmChained([NotNull] bhlParser.StmChainedContext context) { }
+	public virtual void EnterStmComplexExp([NotNull] bhlParser.StmComplexExpContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by the <c>StmChained</c>
+	/// Exit a parse tree produced by the <c>StmComplexExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStmChained([NotNull] bhlParser.StmChainedContext context) { }
+	public virtual void ExitStmComplexExp([NotNull] bhlParser.StmComplexExpContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>StmIf</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -1045,17 +1045,17 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitElse([NotNull] bhlParser.ElseContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.chainedExp"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.complexExp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterChainedExp([NotNull] bhlParser.ChainedExpContext context) { }
+	public virtual void EnterComplexExp([NotNull] bhlParser.ComplexExpContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.chainedExp"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.complexExp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitChainedExp([NotNull] bhlParser.ChainedExpContext context) { }
+	public virtual void ExitComplexExp([NotNull] bhlParser.ComplexExpContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.chainExpItem"/>.
 	/// <para>The default implementation does nothing.</para>
