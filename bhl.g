@@ -184,7 +184,7 @@ funcCallExp
   ;
 
 varAccessExp
-  : chainedExp memberAccess
+  : chainedExp (memberAccess | arrAccess)
   ;
 
 typeof 
