@@ -678,7 +678,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   //TODO: the method below should be heavily refactored some day
-  AST_Tree ProcChainedCall(
+  AST_Tree ProcExpChain(
     IExpChain chain, 
     IScope root_scope,
     ref IType curr_type, 
@@ -873,7 +873,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(name_symb is Namespace ns && chain != null)
     {
       scope = ns;
-      for(chain_offset=0; chain_offset<chain.Length; )
+      for(chain_offset=0; chain_offset<chain.Length;)
       {
         var macc = chain.memberAccess(chain_offset);
         if(macc == null)
@@ -1648,7 +1648,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcChainedCall(
+      ProcExpChain(
         new ExpChain(funcLambda, null, chain_items), 
         curr_scope, 
         ref curr_type
@@ -1672,7 +1672,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
   {
     var json = ctx.jsonObject();
-
     Visit(json);
     Annotate(ctx).eval_type = Annotate(json).eval_type;
     return null;
@@ -1894,11 +1893,28 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitExpName(bhlParser.ExpNameContext ctx)
+  {
+    IType curr_type = null;
+    var chain = new ExpChain(ctx, ctx, null);
+    ProcExpChain(
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
+      ref curr_type
+    );
+
+    ++ref_compatible_exp_counter;
+
+    Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
+
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
     IType curr_type = null;
     var chain = new ExpChain(ctx, null, ctx.chainExpItem());
-    ProcChainedCall(
+    ProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type
@@ -1945,7 +1961,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChainFuncCall(ctx);
 
     IType curr_type = null;
-    ProcChainedCall(
+    ProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
@@ -2096,7 +2112,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   //  var curr_type = Annotate(exp).eval_type;
   //  var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
-  //  ProcChainedCall(
+  //  ProcExpChain(
   //    chain,
   //    curr_scope, 
   //    ref curr_type, 
@@ -2118,7 +2134,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChainVarAccess(ctx.varAccessExp());
 
      IType curr_type = null;
-     ProcChainedCall(
+     ProcExpChain(
       chain, 
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
@@ -2204,7 +2220,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
      //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
-     ProcChainedCall(
+     ProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
@@ -3401,7 +3417,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //   var chain = new ExpChain(cexp.chainExp()), 
       //  //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
-      //  ProcChainedCall(
+      //  ProcExpChain(
       //    chain,
       //    chain.IsGlobalNs ? ns : curr_scope, 
       //    ref curr_type, 
@@ -4463,7 +4479,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
 
-    public int Length { get { return items.Length; } }
+    public int Length { get { return items == null ? 0 : items.Length; } }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ExpNameContext root_name, bhlParser.ChainExpItemContext[] items)
     {

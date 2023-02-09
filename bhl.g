@@ -55,9 +55,12 @@ exp
   | 'true'                                   #ExpLiteralTrue
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
-  | GLOBAL? NAME                             #ExpName
   | 'yield' funcCallExp                      #ExpYieldCall
-  //NOTE: chainedExp 'flattened' to avoid left recursion
+  //NOTE: special case for standalone variables which also 
+  //      can be the beginning of the expression chain
+  | GLOBAL? NAME                             #ExpName
+  //NOTE: chainedExp 'flattened' to avoid left recursion, we also
+  //      require at least one chain item to be present
   | exp chainExpItem+                        #ExpChain
   | typeof                                   #ExpTypeof
   | jsonObject                               #ExpJsonObj
