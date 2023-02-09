@@ -929,16 +929,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVarAccessExp([NotNull] bhlParser.VarAccessExpContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.typeof"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterTypeof([NotNull] bhlParser.TypeofContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.typeof"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitTypeof([NotNull] bhlParser.TypeofContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

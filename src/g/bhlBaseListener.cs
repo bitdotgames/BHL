@@ -1093,18 +1093,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVarAccessExp([NotNull] bhlParser.VarAccessExpContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.typeof"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterTypeof([NotNull] bhlParser.TypeofContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.typeof"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitTypeof([NotNull] bhlParser.TypeofContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

@@ -1884,7 +1884,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
-    var tp = ParseType(ctx.@typeof().type());
+    var tp = ParseType(ctx.type());
 
     Annotate(ctx).eval_type = Types.ClassType;
 

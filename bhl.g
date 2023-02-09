@@ -62,7 +62,7 @@ exp
   //NOTE: chainedExp 'flattened' to avoid left recursion, we also
   //      require at least one chain item to be present
   | exp chainExpItem+                        #ExpChain
-  | typeof                                   #ExpTypeof
+  | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
   | funcLambda                               #ExpLambda
@@ -188,10 +188,6 @@ funcCallExp
 
 varAccessExp
   : chainedExp (memberAccess | arrAccess)
-  ;
-
-typeof 
-  : 'typeof' '(' type ')'
   ;
 
 arrAccess

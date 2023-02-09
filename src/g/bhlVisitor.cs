@@ -561,12 +561,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVarAccessExp([NotNull] bhlParser.VarAccessExpContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.typeof"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitTypeof([NotNull] bhlParser.TypeofContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.arrAccess"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
