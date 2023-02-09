@@ -56,10 +56,13 @@ exp
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
   | name                                     #ExpName
-  | 'yield' funcCallExp chainExpItem*        #ExpYieldCall
-  | exp chainExpItem+                        #ExpAccess    
-  | exp chainExpItem* callArgs               #ExpCall
-  | exp chainExpItem* memberAccess           #ExpMemberAccess
+  | 'yield' funcCallExp                      #ExpYieldCall
+  //NOTE: chainedExp 'flattened' to avoid left recursion
+  | exp chainExpItem+                        #ExpChain
+  ////NOTE: funcCallExp 'flattened' to avoid left recursion
+  //| exp chainExpItem* callArgs               #ExpCall
+  ////NOTE: memberAccessExp 'flattened' to avoid left recursion
+  //| exp chainExpItem* memberAccess           #ExpMemberAccess
   | typeof                                   #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
@@ -125,37 +128,39 @@ varPostIncDec
   : varAccessExp (INC | DEC)
   ;
 
-
-varsDeclareAssign
-  : varsDeclares assignExps?
+varsDeclares
+  : varDeclare ( ',' varDeclare )*
   ;
 
-//statements
+varsDeclareAssign
+  : varsDeclares assignExp?
+  ;
+
+//NOTE: statements, order is important
 statement
-  : funcLambda                                 #LambdaCall
-  | varsDeclareAssign                          #DeclAssign
-  | varAccessExp assignExp                     #VarAccessAssign
-  | varAccessExp operatorPostOpAssign exp      #VarPostOpAssign
-  | varPostIncDec                              #VarIncDec
-  | chainedExp                                 #UselessAccess
-  | funcCallExp                                #FuncCall
-  | varAccessExp                               #UselessVarAccess
-  | mainIf elseIf* else?                       #If
-  | 'while' '(' exp ')' block                  #While
-  | 'do' block 'while' '(' exp ')'             #DoWhile
-  | 'for' forExp block                         #For
-  | 'foreach' foreachExp block                 #Foreach
-  | 'yield' '(' ')'                            #Yield
-  | 'yield' funcCallExp                        #YieldFunc
-  | 'yield' funcLambda                         #YieldLambdaCall
-  | 'yield' 'while' '(' exp ')'                #YieldWhile
-  | 'break'                                    #Break
-  | 'continue'                                 #Continue
-  | 'return' returnVal?                        #Return
-  | 'paral' block                              #Paral
-  | 'paral_all' block                          #ParalAll
-  | 'defer' block                              #Defer
-  | block                                      #BlockNested
+  : funcLambda                                 #StmLambdaCall
+  | varsDeclareAssign                          #StmDeclAssign
+  | varAccessExp assignExp                     #StmVarAccessAssign
+  | varAccessExp operatorPostOpAssign exp      #StmVarPostOpAssign
+  | varPostIncDec                              #StmVarIncDec
+  //func/method calls, variable and members access
+  | chainedExp                                 #StmChained
+  | mainIf elseIf* else?                       #StmIf
+  | 'while' '(' exp ')' block                  #StmWhile
+  | 'do' block 'while' '(' exp ')'             #StmDoWhile
+  | 'for' forExp block                         #StmFor
+  | 'foreach' foreachExp block                 #StmForeach
+  | 'yield' '(' ')'                            #StmYield                                                                   
+  | 'yield' funcCallExp                        #StmYieldFunc
+  | 'yield' funcLambda                         #StmYieldLambdaCall
+  | 'yield' 'while' '(' exp ')'                #StmYieldWhile
+  | 'break'                                    #StmBreak
+  | 'continue'                                 #StmContinue
+  | 'return' returnVal?                        #StmReturn
+  | 'paral' block                              #StmParal
+  | 'paral_all' block                          #StmParalAll
+  | 'defer' block                              #StmDefer
+  | block                                      #StmBlockNested
   ;
 
 mainIf
@@ -170,10 +175,6 @@ else
   : 'else' block
   ;
   
-//foo()
-//bar.foo()
-//((bar[0]).foo()).hey
-//(((bar[0]).foo()).hey)
 chainedExp
   : exp chainExpItem*
   ;
@@ -346,10 +347,6 @@ funcParamDeclare
   : isRef? VARIADIC? type NAME assignExp?
   ;
 
-varsDeclares
-  : varDeclare ( ',' varDeclare )*
-  ;
-
 varDeclare
   : type NAME
   ;
@@ -366,10 +363,6 @@ assignExp
   : '=' exp
   ;
   
-assignExps
-  : '=' exps
-  ;
-
 operatorOr 
   : '||'
   ;
