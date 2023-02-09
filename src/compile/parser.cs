@@ -172,6 +172,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
+  //NOTE: used for tracking whether an expression is passable by 'ref'
   int ref_compatible_exp_counter;
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
@@ -664,24 +665,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //public override object VisitCallExp(bhlParser.CallExpContext ctx)
-  //{
-  //  IType curr_type = null;
-
-  //  //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
-  //  ProcChainedCall(
-  //    ctx,
-  //    ctx.GLOBAL() != null ? ns : curr_scope, 
-  //    ctx.NAME(), 
-  //    new ExpChain(ctx.chainExp()), 
-  //    ref curr_type
-  //  );
-
-  //  Annotate(ctx).eval_type = curr_type;
-
-  //  return null;
-  //}
-
   public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
   {
     CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
@@ -696,10 +679,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   //TODO: the method below should be heavily refactored some day
   AST_Tree ProcChainedCall(
-    ParserRuleContext chain_ctx,
-    IScope root_scope,
-    ITerminalNode root_name, 
     IExpChain chain, 
+    IScope root_scope,
     ref IType curr_type, 
     bool write = false,
     bool yielded = false
@@ -707,11 +688,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     IScope scope = root_scope;
 
-    int line = chain_ctx.Start.Line;  
+    int line = chain.RootCtx.Start.Line;  
 
     PushAST(new AST_Interim());
 
-    ITerminalNode curr_name = root_name;
+    var root_name = chain.RootName?.NAME();
+    var curr_name = root_name;
 
     int chain_offset = 0;
 
@@ -796,14 +778,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain_ast = PeekAST();
     PopAST();
 
-    ValidateChainCall(chain, chain_ctx, chain_ast, yielded);
+    ValidateChainCall(chain, chain_ast, yielded);
 
     PeekAST().AddChildren(chain_ast);
 
     return chain_ast;
   }
   
-  void ValidateChainCall(IExpChain chain, ParserRuleContext chain_ctx, AST_Tree chain_ast, bool yielded)
+  void ValidateChainCall(IExpChain chain, AST_Tree chain_ast, bool yielded)
   {
     for(int i = 0; i < chain_ast.children.Count; ++i)
     {
@@ -812,21 +794,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) &&
             call.symb is FuncSymbol fs)
         {
-          ValidateFuncCall(chain, chain_ctx, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
+          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
         }
         else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
         {
-          ValidateFuncCall(chain, chain_ctx, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
   }
 
-  void ValidateFuncCall(IExpChain chain, ParserRuleContext chain_ctx, int idx, bool is_last, FuncSignature fsig, bool yielded)
+  void ValidateFuncCall(IExpChain chain, int idx, bool is_last, FuncSignature fsig, bool yielded)
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(idx == 0 ? chain_ctx : chain.At(idx-1), "function calls not allowed in global context");
+      AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "function calls not allowed in global context");
       return;
     }
 
@@ -834,12 +816,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain_ctx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain_ctx : chain.At(idx-1), "not a coro function");
+        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "not a coro function");
         return;
       }
     }
@@ -847,7 +829,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain_ctx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "coro function must be called via yield");
         return;
       }
     }
@@ -1667,10 +1649,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       interim.AddChild(ast);
       PushAST(interim);
       ProcChainedCall(
-        funcLambda,
-        curr_scope, 
-        null, 
         new ExpChain(funcLambda, null, chain_items), 
+        curr_scope, 
         ref curr_type
       );
       PopAST();
@@ -1914,17 +1894,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //TODO: do we need this one?
-  //public override object VisitExpCall(bhlParser.ExpCallContext ctx)
-  //{
-  //  var exp = ctx.callExp(); 
-  //  Visit(exp);
-  //  Annotate(ctx).eval_type = Annotate(exp).eval_type;
+  public override object VisitExpChain(bhlParser.ExpChainContext ctx)
+  {
+    IType curr_type = null;
+    var chain = new ExpChain(ctx, null, ctx.chainExpItem());
+    ProcChainedCall(
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
+      ref curr_type
+    );
 
-  //  ++ref_compatible_exp_counter;
+    ++ref_compatible_exp_counter;
 
-  //  return null;
-  //}
+    Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
@@ -1961,10 +1946,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     IType curr_type = null;
     ProcChainedCall(
-      ctx.callExp(), 
-      ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
-      ctx.callExp().NAME(), 
-      chain, 
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
       yielded: true
     );
@@ -2093,21 +2076,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var exp = ctx.exp(); 
     PushAST(ast);
     Visit(exp);
-
-    //var curr_type = Annotate(exp).eval_type;
-    //var chain = ctx.chainExp(); 
-    //if(chain != null)
-    //{
-    //  ProcChainedCall(
-    //    exp,
-    //    curr_scope, 
-    //    null, 
-    //    new ExpChain(chain), 
-    //    ref curr_type
-    //  );
-    //  ++ref_compatible_exp_counter;
-    //}
-
     PopAST();
     PeekAST().AddChild(ast);
     
@@ -2129,10 +2097,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   //  var curr_type = Annotate(exp).eval_type;
   //  var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
   //  ProcChainedCall(
-  //    exp, 
+  //    chain,
   //    curr_scope, 
-  //    null, 
-  //    chain, 
   //    ref curr_type, 
   //    yielded: true
   //  );
@@ -2148,15 +2114,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitStmVarPostOpAssign(bhlParser.StmVarPostOpAssignContext ctx)
   {
     string post_op = ctx.operatorPostOpAssign().GetText();
-    CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.callExp(), ctx.exp());
+    CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
+    var chain = new ExpChainVarAccess(ctx.varAccessExp());
 
-     //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
-      ctx, 
-      ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
-      ctx.callExp().NAME(), 
-      new ExpChain(ctx.callExp().chainExp()), 
+      chain, 
+      chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
       write: true
      );
@@ -2193,7 +2157,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   
   public override object VisitStmVarIncDec(bhlParser.StmVarIncDecContext ctx)
   {
-    CommonVisitPostIncDec(ctx.callPostIncDec());
+    CommonVisitPostIncDec(ctx.varPostIncDec());
     return null;
   }
 
@@ -2236,13 +2200,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
     }
 
+    var chain = new ExpChainVarAccess(ctx.varAccessExp()); 
+
      //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
      IType curr_type = null;
      ProcChainedCall(
-      ctx, 
-      ctx.callExp().GLOBAL() != null ? ns : curr_scope, 
-      ctx.callExp().NAME(), 
-      new ExpChain(ctx.callExp().chainExp()), 
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
       write: true
     );
@@ -2592,7 +2556,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //
     if(ret_val?.varsDeclareAssign() != null)
     {
-      var vdecls = ret_val.varsDeclareAssign().varsDeclareOrCallExps().varDeclareOrCallExp();
+      var vdecls = ret_val.varsDeclareAssign().varsDeclares().varDeclare();
       var assign_exp = ret_val.varsDeclareAssign().assignExp();
       CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
       return null;
@@ -3401,6 +3365,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  void CommonDeclOrAssign(bhlParser.VarDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
+  {
+    CommonDeclOrAssign(new bhlParser.VarDeclareContext[] {vdecl}, assign_exp, start_line);
+  }
+
   void CommonDeclOrAssign(bhlParser.VarDeclareContext[] vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var root = PeekAST();
@@ -3430,12 +3399,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //    return;
       //  }
 
+      //   var chain = new ExpChain(cexp.chainExp()), 
       //  //NOTE: if expression starts with '..' we consider the global namespace instead of current scope
       //  ProcChainedCall(
-      //    cexp, 
-      //    cexp.GLOBAL() != null ? ns : curr_scope, 
-      //    cexp.NAME(), 
-      //    new ExpChain(cexp.chainExp()), 
+      //    chain,
+      //    chain.IsGlobalNs ? ns : curr_scope, 
       //    ref curr_type, 
       //    write: true
       //  );
@@ -3634,7 +3602,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDeclAssign(bhlParser.StmDeclAssignContext ctx)
   {
-    var vdecls = ctx.varsDeclareAssign().varsDeclareOrCallExps().varDeclareOrCallExp();
+    var vdecls = ctx.varsDeclareAssign().varsDeclares().varDeclare();
     var assign_exp = ctx.varsDeclareAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3989,29 +3957,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushScope(local_scope);
     local_scope.Enter();
     
-    var for_pre = ctx.forExp().forPre();
+    var for_pre = ctx.forExp().forPreIter();
     if(for_pre != null)
-    {
-      var for_pre_stmts = for_pre.forStmts();
-      for(int i=0;i<for_pre_stmts.forStmt().Length;++i)
-      {
-        var stmt = for_pre_stmts.forStmt()[i];
-        var vdoce = stmt.varsDeclareOrCallExps();
-        
-        if(vdoce != null)
-        {
-          var pre_vdecls = vdoce.varDeclareOrCallExp();
-          var pre_assign_exp = stmt.assignExp();
-          CommonDeclOrAssign(pre_vdecls, pre_assign_exp, ctx.Start.Line);
-        }
-        else
-        {
-          var cpo = stmt.callPostIncDec();
-          if(cpo != null)
-            CommonVisitPostIncDec(cpo);
-        }
-      }
-    }
+      CommmonProcessForInsideStatements(for_pre.forInsideStmnts(), ctx.Start.Line);
 
     var for_cond = ctx.forExp().forCond();
     var for_post_iter = ctx.forExp().forPostIter();
@@ -4038,25 +3986,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PushAST(block);
       
       PeekAST().AddChild(new AST_Continue(jump_marker: true));
-      var for_post_iter_stmts = for_post_iter.forStmts();
-      for(int i=0;i<for_post_iter_stmts.forStmt().Length;++i)
-      {
-        var stmt = for_post_iter_stmts.forStmt()[i];
-        var vdoce = stmt.varsDeclareOrCallExps();
-        
-        if(vdoce != null)
-        {
-          var post_vdecls = vdoce.varDeclareOrCallExp();
-          var post_assign_exp = stmt.assignExp();
-          CommonDeclOrAssign(post_vdecls, post_assign_exp, ctx.Start.Line);
-        }
-        else
-        {
-          var cpo = stmt.callPostIncDec();
-          if(cpo != null)
-            CommonVisitPostIncDec(cpo);
-        }
-      }
+
+      CommmonProcessForInsideStatements(for_post_iter.forInsideStmnts(), ctx.Start.Line);
+
       PopAST();
     }
     PopAST();
@@ -4071,6 +4003,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return_found.Remove(PeekFuncDecl());
 
     return null;
+  }
+
+  void CommmonProcessForInsideStatements(bhlParser.ForInsideStmntsContext inside, int start_line)
+  {
+    foreach(var stmt in inside.forInsideStmnt())
+    {
+      var vdecl = stmt.varDeclareAssign();
+
+      if(vdecl != null)
+        CommonDeclOrAssign(vdecl.varDeclare(), vdecl.assignExp(), start_line);
+      else
+      {
+        var vp = stmt.varPostIncDec();
+        if(vp != null)
+          CommonVisitPostIncDec(vp);
+      }
+    }
   }
 
   public override object VisitStmYield(bhlParser.StmYieldContext ctx)
@@ -4491,7 +4440,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: can be null, if it's not a 'terminal' chain, e.g:
     // (hey())[1]()
     // (func() {})()
-    ITerminalNode  RootName { get; }
+    bhlParser.ExpNameContext  RootName { get; }
 
     int Length { get; }
 
@@ -4505,16 +4454,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public class ExpChain : IExpChain 
   {
     ParserRuleContext ctx;
-    ITerminalNode root_name;
+    bhlParser.ExpNameContext root_name;
     bhlParser.ChainExpItemContext[] items; 
 
     public ParserRuleContext RootCtx { get { return ctx; } }
 
-    public ITerminalNode RootName { get { return root_name; } }
+    public bhlParser.ExpNameContext RootName { get { return root_name; } }
+
+    public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
 
     public int Length { get { return items.Length; } }
 
-    public ExpChain(ParserRuleContext ctx, ITerminalNode root_name, bhlParser.ChainExpItemContext[] items)
+    public ExpChain(ParserRuleContext ctx, bhlParser.ExpNameContext root_name, bhlParser.ChainExpItemContext[] items)
     {
       this.ctx = ctx;
       this.root_name = root_name;
@@ -4522,7 +4473,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     public ExpChain(bhlParser.ChainedExpContext ctx)
-      : this(ctx.exp(), (ctx.exp() as bhlParser.ExpNameContext)?.name().NAME(), ctx.chainExpItem())
+      : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
     {}
 
     public IParseTree At(int i) 
@@ -4553,7 +4504,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ParserRuleContext RootCtx { get { return orig.RootCtx; } }
 
-    public ITerminalNode RootName { get { return orig.RootName; } }
+    public bhlParser.ExpNameContext RootName { get { return orig.RootName; } }
+
+    public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
 
     public int Length { get { return orig.Length + 1; } }
 
@@ -4595,6 +4548,60 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(orig.Length == i)
         return null;
+      else
+        return orig.arrAccess(i);
+    }
+  }
+
+  public class ExpChainVarAccess : IExpChain 
+  {
+    IExpChain orig;
+    bhlParser.MemberAccessContext member_ctx;
+    bhlParser.ArrAccessContext arr_ctx;
+
+    public ParserRuleContext RootCtx { get { return orig.RootCtx; } }
+
+    public bhlParser.ExpNameContext RootName { get { return orig.RootName; } }
+
+    public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
+
+    public int Length { get { return orig.Length + 1; } }
+
+    public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
+    {
+      orig = new ExpChain(ctx.chainedExp());
+      member_ctx = ctx.memberAccess();
+      arr_ctx = ctx.arrAccess();
+    }
+
+    public IParseTree At(int i) 
+    {
+      if(orig.Length == i)
+        return arr_ctx != null ? (IParseTree)arr_ctx : (IParseTree)member_ctx;
+      else
+        return orig.At(i);
+    }
+
+    public bhlParser.CallArgsContext callArgs(int i) 
+    {
+      if(orig.Length == i)
+        return null;
+      else
+        return orig.callArgs(i);
+    }
+
+    public bhlParser.MemberAccessContext memberAccess(int i)
+    {
+      if(orig.Length == i)
+        return member_ctx;
+      else
+        return orig.memberAccess(i);
+    }
+
+    public bhlParser.ArrAccessContext arrAccess(int i)
+    {
+      if(orig.Length == i)
+        return arr_ctx;
       else
         return orig.arrAccess(i);
     }
