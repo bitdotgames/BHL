@@ -1913,7 +1913,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
     IType curr_type = null;
-    var chain = new ExpChain(ctx);
+    var chain = new ExpChain(ctx.exp(), ctx.chainExpItem());
     ProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
@@ -4488,12 +4488,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.items = items;
     }
 
-    public ExpChain(bhlParser.ExpChainContext ctx)
-      : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
-    {}
-
-    public ExpChain(bhlParser.ComplexExpContext ctx)
-      : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
+    public ExpChain(bhlParser.ExpContext exp, bhlParser.ChainExpItemContext[] items)
+      : this(exp, exp as bhlParser.ExpNameContext, items)
     {}
 
     public IParseTree At(int i) 
@@ -4537,7 +4533,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
-      : this(new ExpChain(ctx.complexExp()), ctx.callArgs())
+      : this(new ExpChain(ctx.complexExp().exp(), ctx.complexExp().chainExpItem()), ctx.callArgs())
     {}
 
     public IParseTree At(int i) 
@@ -4589,7 +4585,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
-      orig = new ExpChain(ctx.complexExp());
+      orig = new ExpChain(ctx.complexExp().exp(), ctx.complexExp().chainExpItem());
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }
