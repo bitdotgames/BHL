@@ -1913,7 +1913,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
     IType curr_type = null;
-    var chain = new ExpChain(ctx, null, ctx.chainExpItem());
+    var chain = new ExpChain(ctx);
     ProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
@@ -4487,6 +4487,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.root_name = root_name;
       this.items = items;
     }
+
+    public ExpChain(bhlParser.ExpChainContext ctx)
+      : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
+    {}
 
     public ExpChain(bhlParser.ChainedExpContext ctx)
       : this(ctx.exp(), ctx.exp() as bhlParser.ExpNameContext, ctx.chainExpItem())
