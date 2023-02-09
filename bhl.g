@@ -55,14 +55,10 @@ exp
   | 'true'                                   #ExpLiteralTrue
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
-  | name                                     #ExpName
+  | GLOBAL? NAME                             #ExpName
   | 'yield' funcCallExp                      #ExpYieldCall
   //NOTE: chainedExp 'flattened' to avoid left recursion
   | exp chainExpItem+                        #ExpChain
-  ////NOTE: funcCallExp 'flattened' to avoid left recursion
-  //| exp chainExpItem* callArgs               #ExpCall
-  ////NOTE: memberAccessExp 'flattened' to avoid left recursion
-  //| exp chainExpItem* memberAccess           #ExpMemberAccess
   | typeof                                   #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
@@ -187,16 +183,7 @@ funcCallExp
   : chainedExp callArgs
   ;
 
-name 
-  : GLOBAL? NAME
-  ;
-  
 varAccessExp
-  : name
-  | memberAccessExp
-  ;
-
-memberAccessExp
   : chainedExp memberAccess
   ;
 

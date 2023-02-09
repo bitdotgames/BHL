@@ -555,23 +555,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncCallExp([NotNull] bhlParser.FuncCallExpContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.name"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitName([NotNull] bhlParser.NameContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varAccessExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVarAccessExp([NotNull] bhlParser.VarAccessExpContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.memberAccessExp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMemberAccessExp([NotNull] bhlParser.MemberAccessExpContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.typeof"/>.
 	/// </summary>

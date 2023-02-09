@@ -1660,8 +1660,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      (for regular funcs this number is taken from a symbol)
     ast.local_vars_num = lmb_symb.local_vars_num;
 
-    var chain = funcLambda.chainExp(); 
-    if(chain != null)
+    var chain_items = funcLambda.chainExpItem(); 
+    if(chain_items != null)
     {
       var interim = new AST_Interim();
       interim.AddChild(ast);
@@ -1670,7 +1670,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         funcLambda,
         curr_scope, 
         null, 
-        new ExpChain(funcLambda, chain), 
+        new ExpChain(funcLambda, null, chain_items), 
         ref curr_type
       );
       PopAST();
@@ -4485,7 +4485,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public interface IExpChain
   {
-    IParseTree Root { get; }
+    //NOTE: a root context this chain is attached to
+    ParserRuleContext RootCtx { get; }
+
+    //NOTE: can be null, if it's not a 'terminal' chain, e.g:
+    // (hey())[1]()
+    // (func() {})()
+    ITerminalNode  RootName { get; }
 
     int Length { get; }
 
@@ -4498,21 +4504,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public class ExpChain : IExpChain 
   {
-    IParseTree root;
+    ParserRuleContext ctx;
+    ITerminalNode root_name;
     bhlParser.ChainExpItemContext[] items; 
+
+    public ParserRuleContext RootCtx { get { return ctx; } }
+
+    public ITerminalNode RootName { get { return root_name; } }
 
     public int Length { get { return items.Length; } }
 
-    public IParseTree Root { get { return root; } }
-
-    public ExpChain(IParseTree root, bhlParser.ChainExpItemContext[] items)
+    public ExpChain(ParserRuleContext ctx, ITerminalNode root_name, bhlParser.ChainExpItemContext[] items)
     {
-      this.root = root;
+      this.ctx = ctx;
+      this.root_name = root_name;
       this.items = items;
     }
 
     public ExpChain(bhlParser.ChainedExpContext ctx)
-      : this(ctx.exp(), ctx.chainExpItem())
+      : this(ctx.exp(), (ctx.exp() as bhlParser.ExpNameContext)?.name().NAME(), ctx.chainExpItem())
     {}
 
     public IParseTree At(int i) 
@@ -4541,7 +4551,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IExpChain orig;
     bhlParser.CallArgsContext fn_call;
 
-    public IParseTree Root { get { return orig.Root; } }
+    public ParserRuleContext RootCtx { get { return orig.RootCtx; } }
+
+    public ITerminalNode RootName { get { return orig.RootName; } }
 
     public int Length { get { return orig.Length + 1; } }
 
