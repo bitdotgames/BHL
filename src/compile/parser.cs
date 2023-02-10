@@ -609,7 +609,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var item in ctx.declOrImport())
     {
       if(item.decl() != null)
-        ParseDecl(item.decl());
+        ProcessDecl(item.decl());
     }
 
     return null;
@@ -2754,7 +2754,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void ParseDecl(bhlParser.DeclContext ctx)
+  void ProcessDecl(bhlParser.DeclContext ctx)
   {
     var nsdecl = ctx.nsDecl();
     if(nsdecl != null)
@@ -2762,7 +2762,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Visit(nsdecl);
       return;
     }
-    var vdecl = ctx.varDeclareAssign();
+    var vdecl = ctx.varDeclareOptAssign();
     if(vdecl != null)
     {
       AddPass(vdecl, curr_scope, PeekAST()); 
@@ -3502,7 +3502,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     members.Replace(subst_symbol, disabled_symbol);
   }
 
-  public override object VisitStmDeclAssign(bhlParser.StmDeclAssignContext ctx)
+  public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
+  {
+    var vdecls = ctx.varDeclaresOptAssign().varDeclares().varDeclare();
+    var assign_exp = ctx.varDeclaresOptAssign().assignExp();
+    CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+
+    return null;
+  }
+
+  public override object VisitStmVarOrDeclAssign(bhlParser.StmVarOrDeclAssignContext ctx)
   {
     var vdecls = ctx.varOrDeclaresAssign().varOrDeclares().varOrDeclare();
     var assign_exp = ctx.varOrDeclaresAssign().assignExp();

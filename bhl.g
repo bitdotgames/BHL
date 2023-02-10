@@ -18,7 +18,7 @@ decls
   ;
 
 decl
-  : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareAssign | enumDecl)
+  : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareOptAssign | enumDecl)
   ;
 
 dotName
@@ -122,7 +122,8 @@ forExp
 //NOTE: statements, order is important
 statement
   : funcLambda                                 #StmLambdaCall
-  | varOrDeclaresAssign                        #StmDeclAssign
+  | varDeclaresOptAssign                       #StmDeclOptAssign
+  | varOrDeclaresAssign                        #StmVarOrDeclAssign
   | varAccessExp assignExp                     #StmVarAccessAssign
   | varAccessExp operatorPostOpAssign exp      #StmVarPostOpAssign
   | varPostIncDec                              #StmVarIncDec
@@ -324,10 +325,14 @@ varDeclare
   ;
 
 varDeclareAssign
+  : varDeclare assignExp
+  ;
+
+varDeclareOptAssign
   : varDeclare assignExp?
   ;
 
-varsDeclares
+varDeclares
   : varDeclare ( ',' varDeclare )*
   ;
 
@@ -340,10 +345,18 @@ varOrDeclares
   ;
 
 varOrDeclareAssign
-  : varOrDeclare assignExp?
+  : varOrDeclare assignExp
   ;
 
 varOrDeclaresAssign
+  : varOrDeclares assignExp
+  ;
+
+varDeclaresOptAssign
+  : varDeclares assignExp?
+  ;
+
+varOrDeclaresOptAssign
   : varOrDeclares assignExp?
   ;
 
