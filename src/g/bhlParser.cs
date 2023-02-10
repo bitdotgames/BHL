@@ -65,8 +65,8 @@ public partial class bhlParser : Parser {
 		RULE_funcType = 55, RULE_funcBlock = 56, RULE_interfaceFuncDecl = 57, 
 		RULE_funcLambda = 58, RULE_refType = 59, RULE_retType = 60, RULE_types = 61, 
 		RULE_funcParams = 62, RULE_funcParamDeclare = 63, RULE_varDeclare = 64, 
-		RULE_varOrDeclare = 65, RULE_varOrDeclares = 66, RULE_varDeclareAssign = 67, 
-		RULE_varsDeclares = 68, RULE_varOrDeclareAssign = 69, RULE_varOrDeclaresAssign = 70, 
+		RULE_varDeclareAssign = 65, RULE_varsDeclares = 66, RULE_varOrDeclare = 67, 
+		RULE_varOrDeclares = 68, RULE_varOrDeclareAssign = 69, RULE_varOrDeclaresAssign = 70, 
 		RULE_varPostIncDec = 71, RULE_assignExp = 72, RULE_operatorOr = 73, RULE_operatorAnd = 74, 
 		RULE_operatorBitOr = 75, RULE_operatorBitAnd = 76, RULE_operatorPostOpAssign = 77, 
 		RULE_operatorComparison = 78, RULE_operatorAddSub = 79, RULE_operatorMulDivMod = 80, 
@@ -85,7 +85,7 @@ public partial class bhlParser : Parser {
 		"enumMember", "virtualFlag", "overrideFlag", "staticFlag", "coroFlag", 
 		"funcAttribs", "funcDecl", "funcType", "funcBlock", "interfaceFuncDecl", 
 		"funcLambda", "refType", "retType", "types", "funcParams", "funcParamDeclare", 
-		"varDeclare", "varOrDeclare", "varOrDeclares", "varDeclareAssign", "varsDeclares", 
+		"varDeclare", "varDeclareAssign", "varsDeclares", "varOrDeclare", "varOrDeclares", 
 		"varOrDeclareAssign", "varOrDeclaresAssign", "varPostIncDec", "assignExp", 
 		"operatorOr", "operatorAnd", "operatorBitOr", "operatorBitAnd", "operatorPostOpAssign", 
 		"operatorComparison", "operatorAddSub", "operatorMulDivMod", "operatorUnary", 
@@ -823,8 +823,8 @@ public partial class bhlParser : Parser {
 		public VarDeclareContext varDeclare() {
 			return GetRuleContext<VarDeclareContext>(0);
 		}
-		public VarOrDeclaresAssignContext varOrDeclaresAssign() {
-			return GetRuleContext<VarOrDeclaresAssignContext>(0);
+		public VarDeclareAssignContext varDeclareAssign() {
+			return GetRuleContext<VarDeclareAssignContext>(0);
 		}
 		public ExpsContext exps() {
 			return GetRuleContext<ExpsContext>(0);
@@ -866,7 +866,7 @@ public partial class bhlParser : Parser {
 				break;
 			case 2:
 				{
-				State = 248; varOrDeclaresAssign();
+				State = 248; varDeclareAssign();
 				}
 				break;
 			case 3:
@@ -5626,127 +5626,6 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class VarOrDeclareContext : ParserRuleContext {
-		public VarDeclareContext varDeclare() {
-			return GetRuleContext<VarDeclareContext>(0);
-		}
-		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
-		public VarOrDeclareContext(ParserRuleContext parent, int invokingState)
-			: base(parent, invokingState)
-		{
-		}
-		public override int RuleIndex { get { return RULE_varOrDeclare; } }
-		public override void EnterRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterVarOrDeclare(this);
-		}
-		public override void ExitRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitVarOrDeclare(this);
-		}
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitVarOrDeclare(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-
-	[RuleVersion(0)]
-	public VarOrDeclareContext varOrDeclare() {
-		VarOrDeclareContext _localctx = new VarOrDeclareContext(Context, State);
-		EnterRule(_localctx, 130, RULE_varOrDeclare);
-		try {
-			State = 750;
-			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,66,Context) ) {
-			case 1:
-				EnterOuterAlt(_localctx, 1);
-				{
-				State = 748; varDeclare();
-				}
-				break;
-			case 2:
-				EnterOuterAlt(_localctx, 2);
-				{
-				State = 749; Match(NAME);
-				}
-				break;
-			}
-		}
-		catch (RecognitionException re) {
-			_localctx.exception = re;
-			ErrorHandler.ReportError(this, re);
-			ErrorHandler.Recover(this, re);
-		}
-		finally {
-			ExitRule();
-		}
-		return _localctx;
-	}
-
-	public partial class VarOrDeclaresContext : ParserRuleContext {
-		public VarOrDeclareContext[] varOrDeclare() {
-			return GetRuleContexts<VarOrDeclareContext>();
-		}
-		public VarOrDeclareContext varOrDeclare(int i) {
-			return GetRuleContext<VarOrDeclareContext>(i);
-		}
-		public VarOrDeclaresContext(ParserRuleContext parent, int invokingState)
-			: base(parent, invokingState)
-		{
-		}
-		public override int RuleIndex { get { return RULE_varOrDeclares; } }
-		public override void EnterRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterVarOrDeclares(this);
-		}
-		public override void ExitRule(IParseTreeListener listener) {
-			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitVarOrDeclares(this);
-		}
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitVarOrDeclares(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-
-	[RuleVersion(0)]
-	public VarOrDeclaresContext varOrDeclares() {
-		VarOrDeclaresContext _localctx = new VarOrDeclaresContext(Context, State);
-		EnterRule(_localctx, 132, RULE_varOrDeclares);
-		int _la;
-		try {
-			EnterOuterAlt(_localctx, 1);
-			{
-			State = 752; varOrDeclare();
-			State = 757;
-			ErrorHandler.Sync(this);
-			_la = TokenStream.LA(1);
-			while (_la==T__3) {
-				{
-				{
-				State = 753; Match(T__3);
-				State = 754; varOrDeclare();
-				}
-				}
-				State = 759;
-				ErrorHandler.Sync(this);
-				_la = TokenStream.LA(1);
-			}
-			}
-		}
-		catch (RecognitionException re) {
-			_localctx.exception = re;
-			ErrorHandler.ReportError(this, re);
-			ErrorHandler.Recover(this, re);
-		}
-		finally {
-			ExitRule();
-		}
-		return _localctx;
-	}
-
 	public partial class VarDeclareAssignContext : ParserRuleContext {
 		public VarDeclareContext varDeclare() {
 			return GetRuleContext<VarDeclareContext>(0);
@@ -5777,18 +5656,18 @@ public partial class bhlParser : Parser {
 	[RuleVersion(0)]
 	public VarDeclareAssignContext varDeclareAssign() {
 		VarDeclareAssignContext _localctx = new VarDeclareAssignContext(Context, State);
-		EnterRule(_localctx, 134, RULE_varDeclareAssign);
+		EnterRule(_localctx, 130, RULE_varDeclareAssign);
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 760; varDeclare();
-			State = 762;
+			State = 748; varDeclare();
+			State = 750;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==T__37) {
 				{
-				State = 761; assignExp();
+				State = 749; assignExp();
 				}
 			}
 
@@ -5835,12 +5714,133 @@ public partial class bhlParser : Parser {
 	[RuleVersion(0)]
 	public VarsDeclaresContext varsDeclares() {
 		VarsDeclaresContext _localctx = new VarsDeclaresContext(Context, State);
-		EnterRule(_localctx, 136, RULE_varsDeclares);
+		EnterRule(_localctx, 132, RULE_varsDeclares);
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 764; varDeclare();
+			State = 752; varDeclare();
+			State = 757;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			while (_la==T__3) {
+				{
+				{
+				State = 753; Match(T__3);
+				State = 754; varDeclare();
+				}
+				}
+				State = 759;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+			}
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class VarOrDeclareContext : ParserRuleContext {
+		public VarDeclareContext varDeclare() {
+			return GetRuleContext<VarDeclareContext>(0);
+		}
+		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
+		public VarOrDeclareContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_varOrDeclare; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.EnterVarOrDeclare(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.ExitVarOrDeclare(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitVarOrDeclare(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public VarOrDeclareContext varOrDeclare() {
+		VarOrDeclareContext _localctx = new VarOrDeclareContext(Context, State);
+		EnterRule(_localctx, 134, RULE_varOrDeclare);
+		try {
+			State = 762;
+			ErrorHandler.Sync(this);
+			switch ( Interpreter.AdaptivePredict(TokenStream,68,Context) ) {
+			case 1:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 760; varDeclare();
+				}
+				break;
+			case 2:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 761; Match(NAME);
+				}
+				break;
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class VarOrDeclaresContext : ParserRuleContext {
+		public VarOrDeclareContext[] varOrDeclare() {
+			return GetRuleContexts<VarOrDeclareContext>();
+		}
+		public VarOrDeclareContext varOrDeclare(int i) {
+			return GetRuleContext<VarOrDeclareContext>(i);
+		}
+		public VarOrDeclaresContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_varOrDeclares; } }
+		public override void EnterRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.EnterVarOrDeclares(this);
+		}
+		public override void ExitRule(IParseTreeListener listener) {
+			IbhlListener typedListener = listener as IbhlListener;
+			if (typedListener != null) typedListener.ExitVarOrDeclares(this);
+		}
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitVarOrDeclares(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public VarOrDeclaresContext varOrDeclares() {
+		VarOrDeclaresContext _localctx = new VarOrDeclaresContext(Context, State);
+		EnterRule(_localctx, 136, RULE_varOrDeclares);
+		int _la;
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 764; varOrDeclare();
 			State = 769;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
@@ -5848,7 +5848,7 @@ public partial class bhlParser : Parser {
 				{
 				{
 				State = 765; Match(T__3);
-				State = 766; varDeclare();
+				State = 766; varOrDeclare();
 				}
 				}
 				State = 771;
@@ -7266,9 +7266,9 @@ public partial class bhlParser : Parser {
 		'\x2', '\x2', 'x', '\x2C4', '\x3', '\x2', '\x2', '\x2', 'z', '\x2C8', 
 		'\x3', '\x2', '\x2', '\x2', '|', '\x2D0', '\x3', '\x2', '\x2', '\x2', 
 		'~', '\x2D8', '\x3', '\x2', '\x2', '\x2', '\x80', '\x2E1', '\x3', '\x2', 
-		'\x2', '\x2', '\x82', '\x2EB', '\x3', '\x2', '\x2', '\x2', '\x84', '\x2F0', 
+		'\x2', '\x2', '\x82', '\x2EB', '\x3', '\x2', '\x2', '\x2', '\x84', '\x2EE', 
 		'\x3', '\x2', '\x2', '\x2', '\x86', '\x2F2', '\x3', '\x2', '\x2', '\x2', 
-		'\x88', '\x2FA', '\x3', '\x2', '\x2', '\x2', '\x8A', '\x2FE', '\x3', '\x2', 
+		'\x88', '\x2FC', '\x3', '\x2', '\x2', '\x2', '\x8A', '\x2FE', '\x3', '\x2', 
 		'\x2', '\x2', '\x8C', '\x306', '\x3', '\x2', '\x2', '\x2', '\x8E', '\x30A', 
 		'\x3', '\x2', '\x2', '\x2', '\x90', '\x30E', '\x3', '\x2', '\x2', '\x2', 
 		'\x92', '\x311', '\x3', '\x2', '\x2', '\x2', '\x94', '\x314', '\x3', '\x2', 
@@ -7302,7 +7302,7 @@ public partial class bhlParser : Parser {
 		'\x2', '\xD0', '\t', '\x3', '\x2', '\x2', '\x2', '\xD1', '\xD8', '\x5', 
 		'H', '%', '\x2', '\xD2', '\xD8', '\x5', 'J', '&', '\x2', '\xD3', '\xD8', 
 		'\x5', 'V', ',', '\x2', '\xD4', '\xD8', '\x5', 'n', '\x38', '\x2', '\xD5', 
-		'\xD8', '\x5', '\x88', '\x45', '\x2', '\xD6', '\xD8', '\x5', '^', '\x30', 
+		'\xD8', '\x5', '\x84', '\x43', '\x2', '\xD6', '\xD8', '\x5', '^', '\x30', 
 		'\x2', '\xD7', '\xD1', '\x3', '\x2', '\x2', '\x2', '\xD7', '\xD2', '\x3', 
 		'\x2', '\x2', '\x2', '\xD7', '\xD3', '\x3', '\x2', '\x2', '\x2', '\xD7', 
 		'\xD4', '\x3', '\x2', '\x2', '\x2', '\xD7', '\xD5', '\x3', '\x2', '\x2', 
@@ -7330,8 +7330,8 @@ public partial class bhlParser : Parser {
 		'\xF5', '\xF8', '\x3', '\x2', '\x2', '\x2', '\xF6', '\xF4', '\x3', '\x2', 
 		'\x2', '\x2', '\xF6', '\xF7', '\x3', '\x2', '\x2', '\x2', '\xF7', '\x15', 
 		'\x3', '\x2', '\x2', '\x2', '\xF8', '\xF6', '\x3', '\x2', '\x2', '\x2', 
-		'\xF9', '\xFD', '\x5', '\x82', '\x42', '\x2', '\xFA', '\xFD', '\x5', '\x8E', 
-		'H', '\x2', '\xFB', '\xFD', '\x5', '\x14', '\v', '\x2', '\xFC', '\xF9', 
+		'\xF9', '\xFD', '\x5', '\x82', '\x42', '\x2', '\xFA', '\xFD', '\x5', '\x84', 
+		'\x43', '\x2', '\xFB', '\xFD', '\x5', '\x14', '\v', '\x2', '\xFC', '\xF9', 
 		'\x3', '\x2', '\x2', '\x2', '\xFC', '\xFA', '\x3', '\x2', '\x2', '\x2', 
 		'\xFC', '\xFB', '\x3', '\x2', '\x2', '\x2', '\xFD', '\x17', '\x3', '\x2', 
 		'\x2', '\x2', '\xFE', '\xFF', '\b', '\r', '\x1', '\x2', '\xFF', '\x122', 
@@ -7409,7 +7409,7 @@ public partial class bhlParser : Parser {
 		'\r', '\x2', '\x156', '\x1B', '\x3', '\x2', '\x2', '\x2', '\x157', '\x158', 
 		'\a', '\x12', '\x2', '\x2', '\x158', '\x159', '\x5', '\x10', '\t', '\x2', 
 		'\x159', '\x1D', '\x3', '\x2', '\x2', '\x2', '\x15A', '\x15B', '\a', '\f', 
-		'\x2', '\x2', '\x15B', '\x15C', '\x5', '\x86', '\x44', '\x2', '\x15C', 
+		'\x2', '\x2', '\x15B', '\x15C', '\x5', '\x8A', '\x46', '\x2', '\x15C', 
 		'\x15D', '\a', '\x13', '\x2', '\x2', '\x15D', '\x15E', '\x5', '\x18', 
 		'\r', '\x2', '\x15E', '\x15F', '\a', '\r', '\x2', '\x2', '\x15F', '\x1F', 
 		'\x3', '\x2', '\x2', '\x2', '\x160', '\x163', '\x5', '\x8C', 'G', '\x2', 
@@ -7703,28 +7703,28 @@ public partial class bhlParser : Parser {
 		'\x2', '\x2', '\x2', '\x2E9', '\x2EA', '\x3', '\x2', '\x2', '\x2', '\x2EA', 
 		'\x81', '\x3', '\x2', '\x2', '\x2', '\x2EB', '\x2EC', '\x5', '\x10', '\t', 
 		'\x2', '\x2EC', '\x2ED', '\a', '\x43', '\x2', '\x2', '\x2ED', '\x83', 
-		'\x3', '\x2', '\x2', '\x2', '\x2EE', '\x2F1', '\x5', '\x82', '\x42', '\x2', 
-		'\x2EF', '\x2F1', '\a', '\x43', '\x2', '\x2', '\x2F0', '\x2EE', '\x3', 
-		'\x2', '\x2', '\x2', '\x2F0', '\x2EF', '\x3', '\x2', '\x2', '\x2', '\x2F1', 
-		'\x85', '\x3', '\x2', '\x2', '\x2', '\x2F2', '\x2F7', '\x5', '\x84', '\x43', 
+		'\x3', '\x2', '\x2', '\x2', '\x2EE', '\x2F0', '\x5', '\x82', '\x42', '\x2', 
+		'\x2EF', '\x2F1', '\x5', '\x92', 'J', '\x2', '\x2F0', '\x2EF', '\x3', 
+		'\x2', '\x2', '\x2', '\x2F0', '\x2F1', '\x3', '\x2', '\x2', '\x2', '\x2F1', 
+		'\x85', '\x3', '\x2', '\x2', '\x2', '\x2F2', '\x2F7', '\x5', '\x82', '\x42', 
 		'\x2', '\x2F3', '\x2F4', '\a', '\x6', '\x2', '\x2', '\x2F4', '\x2F6', 
-		'\x5', '\x84', '\x43', '\x2', '\x2F5', '\x2F3', '\x3', '\x2', '\x2', '\x2', 
+		'\x5', '\x82', '\x42', '\x2', '\x2F5', '\x2F3', '\x3', '\x2', '\x2', '\x2', 
 		'\x2F6', '\x2F9', '\x3', '\x2', '\x2', '\x2', '\x2F7', '\x2F5', '\x3', 
 		'\x2', '\x2', '\x2', '\x2F7', '\x2F8', '\x3', '\x2', '\x2', '\x2', '\x2F8', 
 		'\x87', '\x3', '\x2', '\x2', '\x2', '\x2F9', '\x2F7', '\x3', '\x2', '\x2', 
-		'\x2', '\x2FA', '\x2FC', '\x5', '\x82', '\x42', '\x2', '\x2FB', '\x2FD', 
-		'\x5', '\x92', 'J', '\x2', '\x2FC', '\x2FB', '\x3', '\x2', '\x2', '\x2', 
-		'\x2FC', '\x2FD', '\x3', '\x2', '\x2', '\x2', '\x2FD', '\x89', '\x3', 
-		'\x2', '\x2', '\x2', '\x2FE', '\x303', '\x5', '\x82', '\x42', '\x2', '\x2FF', 
-		'\x300', '\a', '\x6', '\x2', '\x2', '\x300', '\x302', '\x5', '\x82', '\x42', 
+		'\x2', '\x2FA', '\x2FD', '\x5', '\x82', '\x42', '\x2', '\x2FB', '\x2FD', 
+		'\a', '\x43', '\x2', '\x2', '\x2FC', '\x2FA', '\x3', '\x2', '\x2', '\x2', 
+		'\x2FC', '\x2FB', '\x3', '\x2', '\x2', '\x2', '\x2FD', '\x89', '\x3', 
+		'\x2', '\x2', '\x2', '\x2FE', '\x303', '\x5', '\x88', '\x45', '\x2', '\x2FF', 
+		'\x300', '\a', '\x6', '\x2', '\x2', '\x300', '\x302', '\x5', '\x88', '\x45', 
 		'\x2', '\x301', '\x2FF', '\x3', '\x2', '\x2', '\x2', '\x302', '\x305', 
 		'\x3', '\x2', '\x2', '\x2', '\x303', '\x301', '\x3', '\x2', '\x2', '\x2', 
 		'\x303', '\x304', '\x3', '\x2', '\x2', '\x2', '\x304', '\x8B', '\x3', 
 		'\x2', '\x2', '\x2', '\x305', '\x303', '\x3', '\x2', '\x2', '\x2', '\x306', 
-		'\x308', '\x5', '\x84', '\x43', '\x2', '\x307', '\x309', '\x5', '\x92', 
+		'\x308', '\x5', '\x88', '\x45', '\x2', '\x307', '\x309', '\x5', '\x92', 
 		'J', '\x2', '\x308', '\x307', '\x3', '\x2', '\x2', '\x2', '\x308', '\x309', 
 		'\x3', '\x2', '\x2', '\x2', '\x309', '\x8D', '\x3', '\x2', '\x2', '\x2', 
-		'\x30A', '\x30C', '\x5', '\x86', '\x44', '\x2', '\x30B', '\x30D', '\x5', 
+		'\x30A', '\x30C', '\x5', '\x8A', '\x46', '\x2', '\x30B', '\x30D', '\x5', 
 		'\x92', 'J', '\x2', '\x30C', '\x30B', '\x3', '\x2', '\x2', '\x2', '\x30C', 
 		'\x30D', '\x3', '\x2', '\x2', '\x2', '\x30D', '\x8F', '\x3', '\x2', '\x2', 
 		'\x2', '\x30E', '\x30F', '\x5', ':', '\x1E', '\x2', '\x30F', '\x310', 

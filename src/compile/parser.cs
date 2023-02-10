@@ -2552,6 +2552,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(ret_val?.varDeclare() != null)
     {
       var vd = ret_val.varDeclare();
+      VariableSymbol vd_symb;
       PeekAST().AddChild(
         CommonDeclVar(
           curr_scope, 
@@ -2559,7 +2560,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vd.type(), 
           is_ref: false, 
           func_arg: false, 
-          write: false
+          write: false,
+          symb: out vd_symb
         )
       );
       return null;
@@ -2570,11 +2572,32 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      return
     //      int foo = 1
     //
-    if(ret_val?.varOrDeclaresAssign() != null)
+    if(ret_val?.varDeclareAssign() != null)
     {
-      var vdecls = ret_val.varOrDeclaresAssign().varOrDeclares().varOrDeclare();
-      var assign_exp = ret_val.varOrDeclaresAssign().assignExp();
-      CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+      //var vdecls = ret_val.varDeclareAssign().varDeclare();
+      //var assign_exp = ret_val.varDeclareAssign().assignExp();
+      //CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+      var vd = ret_val.varDeclareAssign().varDeclare();
+      VariableSymbol vd_symb;
+      var root = PeekAST();
+      root.AddChild(
+        CommonDeclVar(
+          curr_scope, 
+          vd.NAME(), 
+          vd.type(), 
+          is_ref: false, 
+          func_arg: false, 
+          write: false,
+          symb: out vd_symb
+        )
+      );
+      CommonAssignToVar(
+        root, 
+        vd_symb, 
+        is_decl: true, 
+        assign_vars_num: 1, 
+        assign_exp: ret_val.varDeclareAssign().assignExp()
+      );
       return null;
     }
 
@@ -3389,9 +3412,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void CommonDeclOrAssign(bhlParser.VarOrDeclareContext[] vodecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var root = PeekAST();
-    int root_first_idx = root.children.Count;
-
-    IType assign_type = null;
 
     for(int i=0;i<vodecls.Length;++i)
     {
@@ -3455,106 +3475,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Annotate(vodecl).eval_type = vd_symb.type.Get();
       }
 
-      //NOTE: if there is an assignment we have to visit it and push current
-      //      json type if required
       if(assign_exp != null)
       {
-        //NOTE: look forward at expression and push json type 
-        //      if it's a json-init-expression
-        bool pop_json_type = false;
-        if((assign_exp.exp() is bhlParser.ExpJsonObjContext || 
-          assign_exp.exp() is bhlParser.ExpJsonArrContext))
-        {
-          if(vodecls.Length != 1)
-          {
-            AddSemanticError(assign_exp, "multi assign not supported for JSON expression");
-            return;
-          }
-
-          pop_json_type = true;
-
-          PushJsonType(vd_symb.type.Get());
-        }
-
-        //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
-        //      assignment expression in order to avoid error like: float k = k
-        VariableSymbol disabled_symbol = null;
-        VariableSymbol subst_symbol = null;
-        if(is_decl)
-        {
-          var symbols = ((LocalScope)curr_scope).members;
-          disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-          subst_symbol = DisableVar(symbols, disabled_symbol);
-        }
-
-        //NOTE: need to put expression nodes first
-        var stash = new AST_Interim();
-        PushAST(stash);
-        Visit(assign_exp);
-        PopAST();
-        for(int s=stash.children.Count;s-- > 0;)
-          root.children.Insert(root_first_idx, stash.children[s]);
-
-        assign_type = Annotate(assign_exp).eval_type;
-
-        //NOTE: declaring disabled symbol again
-        if(disabled_symbol != null)
-        {
-          var symbols = ((LocalScope)curr_scope).members;
-          EnableVar(symbols, disabled_symbol, subst_symbol);
-        }
-
-        if(pop_json_type)
-          PopJsonType();
-
-        var assign_tuple = assign_type as TupleType; 
-        if(vodecls.Length > 1)
-        {
-          if(assign_tuple == null)
-          {
-            AddSemanticError(assign_exp, "multi return expected");
-            return;
-          }
-
-          if(assign_tuple.Count != vodecls.Length)
-          {
-            AddSemanticError(assign_exp, "multi return size doesn't match destination");
-            return;
-          }
-        }
-        else if(assign_tuple != null)
-        {
-          AddSemanticError(assign_exp, "multi return size doesn't match destination");
+        if(!CommonAssignToVar(
+          root, 
+          vd_symb,
+          is_decl,
+          vodecls.Length,
+          assign_exp
+        ))
           return;
-        }
-      }
-
-      if(assign_type != null)
-      {
-        if(assign_type is TupleType assign_tuple)
-        {
-          //NOTE: let's setup the proper 'var' type
-          if(is_auto_var)
-          {
-            var symbols = ((LocalScope)curr_scope).members;
-            var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-            var_symbol.type = new Proxy<IType>(assign_tuple[i].Get());
-            Annotate(vodecl).eval_type = var_symbol.type.Get();
-          }
-          types.CheckAssign(Annotate(vodecl), assign_tuple[i].Get(), errors);
-        }
-        else
-        {
-          //NOTE: let's setup the proper 'var' type
-          if(is_auto_var)
-          {
-            var symbols = ((LocalScope)curr_scope).members;
-            var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-            var_symbol.type = new Proxy<IType>(assign_type);
-            Annotate(vodecl).eval_type = var_symbol.type.Get();
-          }
-          types.CheckAssign(Annotate(vodecl), Annotate(assign_exp), errors);
-        }
       }
     }
   }
@@ -3608,13 +3538,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAST();
     }
 
+    VariableSymbol vd_symb;
     var ast = CommonDeclVar(
       curr_scope, 
       name, 
       ctx.type(), 
       is_ref, 
       func_arg: true, 
-      write: false
+      write: false,
+      symb: out vd_symb
     );
     if(exp_ast != null)
       ast.AddChild(exp_ast);
@@ -3631,11 +3563,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.TypeContext tp_ctx, 
     bool is_ref, 
     bool func_arg, 
-    bool write
+    bool write,
+    out VariableSymbol symb
   )
   {
     var tp = ParseType(tp_ctx);
-    VariableSymbol symb;
     return CommonDeclVar(
       curr_scope, 
       name, 
@@ -3689,6 +3621,86 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb);
     else
       return new AST_VarDecl(symb, is_ref);
+  }
+
+  bool CommonAssignToVar(
+    AST_Tree root,
+    VariableSymbol vd_symb,
+    bool is_decl,
+    int assign_vars_num,
+    bhlParser.AssignExpContext assign_exp
+  )
+  {
+    int root_first_idx = root.children.Count;
+
+    //NOTE: look forward at expression and push json type 
+    //      if it's a json-init-expression
+    bool pop_json_type = false;
+    if((assign_exp.exp() is bhlParser.ExpJsonObjContext || 
+      assign_exp.exp() is bhlParser.ExpJsonArrContext))
+    {
+      if(assign_vars_num != 1)
+      {
+        AddSemanticError(assign_exp, "multi assign not supported for JSON expression");
+        return false;
+      }
+
+      pop_json_type = true;
+
+      PushJsonType(vd_symb.type.Get());
+    }
+
+    //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
+    //      assignment expression in order to avoid error like: float k = k
+    VariableSymbol disabled_symbol = null;
+    VariableSymbol subst_symbol = null;
+    if(is_decl)
+    {
+      var symbols = ((LocalScope)curr_scope).members;
+      disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
+      subst_symbol = DisableVar(symbols, disabled_symbol);
+    }
+
+    //NOTE: need to put expression nodes first
+    var stash = new AST_Interim();
+    PushAST(stash);
+    Visit(assign_exp);
+    PopAST();
+    for(int s=stash.children.Count;s-- > 0;)
+      root.children.Insert(root_first_idx, stash.children[s]);
+
+    //NOTE: declaring disabled symbol again
+    if(disabled_symbol != null)
+    {
+      var symbols = ((LocalScope)curr_scope).members;
+      EnableVar(symbols, disabled_symbol, subst_symbol);
+    }
+
+    if(pop_json_type)
+      PopJsonType();
+
+    var assign_tuple = Annotate(assign_exp).eval_type as TupleType; 
+    if(assign_vars_num > 1)
+    {
+      if(assign_tuple == null)
+      {
+        AddSemanticError(assign_exp, "multi return expected");
+        return false;
+      }
+
+      if(assign_tuple.Count != assign_vars_num)
+      {
+        AddSemanticError(assign_exp, "multi return size doesn't match destination");
+        return false;
+      }
+    }
+    else if(assign_tuple != null)
+    {
+      AddSemanticError(assign_exp, "multi return size doesn't match destination");
+      return false;
+    }
+
+    return true;
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
