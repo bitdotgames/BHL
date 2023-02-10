@@ -2580,6 +2580,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vd = ret_val.varDeclareAssign().varDeclare();
       VariableSymbol vd_symb;
       var root = PeekAST();
+      int root_first_idx = root.children.Count;
       root.AddChild(
         CommonDeclVar(
           curr_scope, 
@@ -2593,6 +2594,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       );
       CommonAssignToVar(
         root, 
+        root_first_idx,
         vd_symb, 
         is_decl: true, 
         assign_vars_num: 1, 
@@ -3412,6 +3414,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void CommonDeclOrAssign(bhlParser.VarOrDeclareContext[] vodecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var root = PeekAST();
+    int root_first_idx = root.children.Count;
 
     for(int i=0;i<vodecls.Length;++i)
     {
@@ -3479,6 +3482,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(!CommonAssignToVar(
           root, 
+          root_first_idx,
           vd_symb,
           is_decl,
           vodecls.Length,
@@ -3625,14 +3629,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool CommonAssignToVar(
     AST_Tree root,
+    int root_first_idx,
     VariableSymbol vd_symb,
     bool is_decl,
     int assign_vars_num,
     bhlParser.AssignExpContext assign_exp
   )
   {
-    int root_first_idx = root.children.Count;
-
     //NOTE: look forward at expression and push json type 
     //      if it's a json-init-expression
     bool pop_json_type = false;
