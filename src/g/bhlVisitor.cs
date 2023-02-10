@@ -341,30 +341,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForExp([NotNull] bhlParser.ForExpContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.varPostIncDec"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclares"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitVarsDeclares([NotNull] bhlParser.VarsDeclaresContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclareAssign"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitVarsDeclareAssign([NotNull] bhlParser.VarsDeclareAssignContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>StmLambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -788,6 +764,36 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVarOrDeclares([NotNull] bhlParser.VarOrDeclaresContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varsDeclares"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarsDeclares([NotNull] bhlParser.VarsDeclaresContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varOrDeclareAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarOrDeclareAssign([NotNull] bhlParser.VarOrDeclareAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varOrDeclaresAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarOrDeclaresAssign([NotNull] bhlParser.VarOrDeclaresAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.varPostIncDec"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVarPostIncDec([NotNull] bhlParser.VarPostIncDecContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.assignExp"/>.
 	/// </summary>

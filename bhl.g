@@ -46,7 +46,7 @@ returnVal
   //parser improperly captures the next statement
   //which is not part of return but we need
   //to process that as well
-  : (varDeclare | varsDeclareAssign | exps)
+  : (varDeclare | varOrDeclaresAssign | exps)
   ;
 
 exp
@@ -96,7 +96,7 @@ foreachExp
   ;
 
 forInsideStmnt
-  : varDeclareAssign | varPostIncDec
+  : varOrDeclareAssign | varPostIncDec
   ;
 
 forInsideStmnts
@@ -119,26 +119,10 @@ forExp
   : '(' forPreIter? SEPARATOR forCond SEPARATOR forPostIter? ')' 
   ;
 
-varDeclareAssign
-  : varDeclare assignExp?
-  ;
-
-varPostIncDec
-  : varAccessExp (INC | DEC)
-  ;
-
-varsDeclares
-  : varDeclare ( ',' varDeclare )*
-  ;
-
-varsDeclareAssign
-  : varsDeclares assignExp?
-  ;
-
 //NOTE: statements, order is important
 statement
   : funcLambda                                 #StmLambdaCall
-  | varsDeclareAssign                          #StmDeclAssign
+  | varOrDeclaresAssign                        #StmDeclAssign
   | varAccessExp assignExp                     #StmVarAccessAssign
   | varAccessExp operatorPostOpAssign exp      #StmVarPostOpAssign
   | varPostIncDec                              #StmVarIncDec
@@ -345,6 +329,26 @@ varOrDeclare
 
 varOrDeclares
   : varOrDeclare (',' varOrDeclare)*
+  ;
+
+varDeclareAssign
+  : varDeclare assignExp?
+  ;
+
+varsDeclares
+  : varDeclare ( ',' varDeclare )*
+  ;
+
+varOrDeclareAssign
+  : varOrDeclare assignExp?
+  ;
+
+varOrDeclaresAssign
+  : varOrDeclares assignExp?
+  ;
+
+varPostIncDec
+  : varAccessExp (INC | DEC)
   ;
 
 assignExp
