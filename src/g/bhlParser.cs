@@ -5627,10 +5627,10 @@ public partial class bhlParser : Parser {
 	}
 
 	public partial class VarOrDeclareContext : ParserRuleContext {
-		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
 		public VarDeclareContext varDeclare() {
 			return GetRuleContext<VarDeclareContext>(0);
 		}
+		public ITerminalNode NAME() { return GetToken(bhlParser.NAME, 0); }
 		public VarOrDeclareContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -5662,13 +5662,13 @@ public partial class bhlParser : Parser {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 748; Match(NAME);
+				State = 748; varDeclare();
 				}
 				break;
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 749; varDeclare();
+				State = 749; Match(NAME);
 				}
 				break;
 			}
@@ -7703,8 +7703,8 @@ public partial class bhlParser : Parser {
 		'\x2', '\x2', '\x2', '\x2E9', '\x2EA', '\x3', '\x2', '\x2', '\x2', '\x2EA', 
 		'\x81', '\x3', '\x2', '\x2', '\x2', '\x2EB', '\x2EC', '\x5', '\x10', '\t', 
 		'\x2', '\x2EC', '\x2ED', '\a', '\x43', '\x2', '\x2', '\x2ED', '\x83', 
-		'\x3', '\x2', '\x2', '\x2', '\x2EE', '\x2F1', '\a', '\x43', '\x2', '\x2', 
-		'\x2EF', '\x2F1', '\x5', '\x82', '\x42', '\x2', '\x2F0', '\x2EE', '\x3', 
+		'\x3', '\x2', '\x2', '\x2', '\x2EE', '\x2F1', '\x5', '\x82', '\x42', '\x2', 
+		'\x2EF', '\x2F1', '\a', '\x43', '\x2', '\x2', '\x2F0', '\x2EE', '\x3', 
 		'\x2', '\x2', '\x2', '\x2F0', '\x2EF', '\x3', '\x2', '\x2', '\x2', '\x2F1', 
 		'\x85', '\x3', '\x2', '\x2', '\x2', '\x2F2', '\x2F7', '\x5', '\x84', '\x43', 
 		'\x2', '\x2F3', '\x2F4', '\a', '\x6', '\x2', '\x2', '\x2F4', '\x2F6', 

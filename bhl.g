@@ -324,7 +324,7 @@ varDeclare
   ;
 
 varOrDeclare
-  : NAME | varDeclare
+  : varDeclare | NAME
   ;
 
 varOrDeclares
