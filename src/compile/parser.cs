@@ -2574,9 +2574,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //
     if(ret_val?.varDeclareAssign() != null)
     {
-      //var vdecls = ret_val.varDeclareAssign().varDeclare();
-      //var assign_exp = ret_val.varDeclareAssign().assignExp();
-      //CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
       var vd = ret_val.varDeclareAssign().varDeclare();
       VariableSymbol vd_symb;
       var root = PeekAST();
