@@ -3405,61 +3405,113 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    CommonDeclOrAssign(new bhlParser.VarOrDeclareContext[] {vdecl}, assign_exp, start_line);
+    CommonDeclOrAssign(new VarsDecls(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
   }
 
-  void CommonDeclOrAssign(bhlParser.VarOrDeclareContext[] vodecls, bhlParser.AssignExpContext assign_exp, int start_line)
+  interface IVarDecl
+  {
+    bhlParser.TypeContext Type { get; } 
+    ITerminalNode Name { get; }
+  }
+
+  class VarsDecls
+  {
+    bhlParser.VarDeclareContext[] vdecls;
+    bhlParser.VarOrDeclareContext[] vodecls;
+
+    public int Count { 
+      get {
+        return vdecls != null ? vdecls.Length : vodecls.Length;
+      }
+    }
+
+    public VarsDecls(bhlParser.VarDeclareContext[] vdecls)
+    {
+      this.vdecls = vdecls;
+    }
+
+    public VarsDecls(bhlParser.VarOrDeclareContext[] vodecls)
+    {
+      this.vodecls = vodecls;
+    }
+
+    public IParseTree At(int i)
+    {
+      return vdecls != null ? (IParseTree)vdecls[i] : (IParseTree)vodecls[i];
+    }
+
+    public bool IsDeclAt(int i)
+    {
+      return vdecls != null ? 
+        vdecls[i].type() != null : 
+        vodecls[i].NAME() == null;
+    }
+
+    public bhlParser.TypeContext TypeAt(int i)
+    {
+      return vdecls != null ? 
+        vdecls[i].type() : 
+        vodecls[i].varDeclare().type();
+    }
+
+    public ITerminalNode NameAt(int i)
+    {
+      return vdecls != null ? 
+        vdecls[i].NAME() : 
+        vodecls[i].NAME();
+    }
+  }
+
+  void CommonDeclOrAssign(VarsDecls vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var root = PeekAST();
     int root_first_idx = root.children.Count;
 
-    for(int i=0;i<vodecls.Length;++i)
+    for(int i=0;i<vdecls.Count;++i)
     {
-      var vodecl = vodecls[i];
-
       bool is_decl = false;
       bool is_auto_var = false;
 
       VariableSymbol vd_symb;
 
       //check if we declare a var or use an existing one
-      if(vodecl.NAME() != null)
+      if(!vdecls.IsDeclAt(i))
       {
-        string vd_name = vodecl.NAME().GetText(); 
+        string vd_name = vdecls.NameAt(i).GetText(); 
         vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
         if(vd_symb == null)
         {
-          AddSemanticError(vodecl, "symbol '" + vd_name + "' not resolved");
+          AddSemanticError(vdecls.At(i), "symbol '" + vd_name + "' not resolved");
           return;
         }
 
-        Annotate(vodecl).eval_type = vd_symb.type.Get();
+        Annotate(vdecls.At(i)).eval_type = vd_symb.type.Get();
 
         var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
         root.AddChild(ast);
       }
       else
       {
-        is_auto_var = vodecl.varDeclare().type().GetText() == "var";
+        is_auto_var = vdecls.TypeAt(i).GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
         {
-          AddSemanticError(vodecl.varDeclare().type(), "invalid usage context");
+          AddSemanticError(vdecls.TypeAt(i), "invalid usage context");
           return;
         }
         else if(is_auto_var && assign_exp?.GetText() == "=null")
         {
-          AddSemanticError(vodecl.varDeclare().type(), "invalid usage context");
+          AddSemanticError(vdecls.TypeAt(i), "invalid usage context");
           return;
         }
 
         var ast = CommonDeclVar(
           curr_scope, 
-          vodecl.varDeclare().NAME(), 
+          vdecls.NameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
-          is_auto_var ? Types.Any : ParseType(vodecl.varDeclare().type()), 
-          vodecl.varDeclare().type(),
+          is_auto_var ? Types.Any : ParseType(vdecls.TypeAt(i)), 
+          vdecls.TypeAt(i),
           is_ref: false, 
           func_arg: false, 
           write: assign_exp != null,
@@ -3472,7 +3524,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         is_decl = true;
 
-        Annotate(vodecl).eval_type = vd_symb.type.Get();
+        Annotate(vdecls.At(i)).eval_type = vd_symb.type.Get();
       }
 
       if(assign_exp != null)
@@ -3482,7 +3534,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           root_first_idx,
           vd_symb,
           is_decl,
-          vodecls.Length,
+          vdecls.Count,
           assign_exp
         ))
           return;
@@ -3504,7 +3556,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
   {
-    var vdecls = ctx.varDeclaresOptAssign().varDeclares().varDeclare();
+    var vdecls = new VarsDecls(ctx.varDeclaresOptAssign().varDeclares().varDeclare());
     var assign_exp = ctx.varDeclaresOptAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3513,7 +3565,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmVarOrDeclAssign(bhlParser.StmVarOrDeclAssignContext ctx)
   {
-    var vdecls = ctx.varOrDeclaresAssign().varOrDeclares().varOrDeclare();
+    var vdecls = new VarsDecls(ctx.varOrDeclaresAssign().varOrDeclares().varOrDeclare());
     var assign_exp = ctx.varOrDeclaresAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
