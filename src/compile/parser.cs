@@ -3397,25 +3397,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var vodecl = vodecls[i];
 
-      var vd_ann = Annotate(vodecl); 
-
-      IType curr_type = null;
       bool is_decl = false;
       bool is_auto_var = false;
+
+      VariableSymbol vd_symb;
 
       //check if we declare a var or use an existing one
       if(vodecl.NAME() != null)
       {
         string vd_name = vodecl.NAME().GetText(); 
-        var vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
+        vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
         if(vd_symb == null)
         {
           AddSemanticError(vodecl, "symbol '" + vd_name + "' not resolved");
           return;
         }
-        curr_type = vd_symb.type.Get();
 
-        vd_ann.eval_type = curr_type;
+        Annotate(vodecl).eval_type = vd_symb.type.Get();
 
         var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
         root.AddChild(ast);
@@ -3444,7 +3442,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vodecl.varDeclare().type(),
           is_ref: false, 
           func_arg: false, 
-          write: assign_exp != null
+          write: assign_exp != null,
+          symb: out vd_symb
         );
         //checking if it's valid
         if(ast == null)
@@ -3453,7 +3452,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         is_decl = true;
 
-        curr_type = Annotate(vodecl.varDeclare().NAME()).eval_type;
+        Annotate(vodecl).eval_type = vd_symb.type.Get();
       }
 
       //NOTE: if there is an assignment we have to visit it and push current
@@ -3474,7 +3473,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           pop_json_type = true;
 
-          PushJsonType(curr_type);
+          PushJsonType(vd_symb.type.Get());
         }
 
         //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
@@ -3540,8 +3539,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             var symbols = ((LocalScope)curr_scope).members;
             var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
             var_symbol.type = new Proxy<IType>(assign_tuple[i].Get());
+            Annotate(vodecl).eval_type = var_symbol.type.Get();
           }
-          types.CheckAssign(vd_ann, assign_tuple[i].Get(), errors);
+          types.CheckAssign(Annotate(vodecl), assign_tuple[i].Get(), errors);
         }
         else
         {
@@ -3551,8 +3551,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             var symbols = ((LocalScope)curr_scope).members;
             var var_symbol = (VariableSymbol)symbols[symbols.Count - 1];
             var_symbol.type = new Proxy<IType>(assign_type);
+            Annotate(vodecl).eval_type = var_symbol.type.Get();
           }
-          types.CheckAssign(vd_ann, Annotate(assign_exp), errors);
+          types.CheckAssign(Annotate(vodecl), Annotate(assign_exp), errors);
         }
       }
     }
@@ -3634,7 +3635,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   )
   {
     var tp = ParseType(tp_ctx);
-    return CommonDeclVar(curr_scope, name, tp, tp_ctx, is_ref, func_arg, write);
+    VariableSymbol symb;
+    return CommonDeclVar(
+      curr_scope, 
+      name, 
+      tp, 
+      tp_ctx, 
+      is_ref, 
+      func_arg, 
+      write,
+      out symb
+    );
   }
 
   AST_Tree CommonDeclVar(
@@ -3644,9 +3655,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery 
     bool is_ref, 
     bool func_arg, 
-    bool write
+    bool write,
+    out VariableSymbol symb 
   )
   {
+    symb = null;
+
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
     {
       AddSemanticError(name, "keyword 'base' is reserved");
@@ -3665,7 +3679,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    VariableSymbol symb = func_arg ? 
+    symb = func_arg ? 
       (VariableSymbol) new FuncArgSymbol(var_ann, name.GetText(), tp, is_ref) :
       new VariableSymbol(var_ann, name.GetText(), tp);
 
@@ -4064,13 +4078,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vod = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
       var vd = vod.varDeclare();
       Proxy<IType> iter_type;
-      string iter_str_name = "";
       AST_Tree iter_ast_decl = null;
       VariableSymbol iter_symb = null;
       if(vod.NAME() != null)
       {
-        iter_str_name = vod.NAME().GetText();
-        iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
+        iter_symb = curr_scope.ResolveWithFallback(vod.NAME().GetText()) as VariableSymbol;
         if(iter_symb == null)
         {
           AddSemanticError(vod.NAME(), "symbol is not a valid variable");
@@ -4080,8 +4092,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        iter_str_name = vd.NAME().GetText();
-
         var vd_type = new Proxy<IType>();
         if(vd.type().GetText() == "var")
         {
@@ -4103,9 +4113,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vd.type(),
           is_ref: false, 
           func_arg: false, 
-          write: false
+          write: false,
+          symb: out iter_symb
         );
-        iter_symb = curr_scope.ResolveWithFallback(iter_str_name) as VariableSymbol;
         iter_type = iter_symb.type;
       }
       var arr_type = (ArrayTypeSymbol)curr_scope.R().TArr(iter_type).Get();
@@ -4211,13 +4221,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         vd_val_type = ParseType(vd_val.type());
 
       Proxy<IType> key_iter_type;
-      string key_iter_str_name = "";
       AST_Tree key_iter_ast_decl = null;
       VariableSymbol key_iter_symb = null;
       if(vod_key.NAME() != null)
       {
-        key_iter_str_name = vod_key.NAME().GetText();
-        key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
+        key_iter_symb = curr_scope.ResolveWithFallback(vod_key.NAME().GetText()) as VariableSymbol;
         if(key_iter_symb == null)
         {
           AddSemanticError(vod_key.NAME(), "symbol is not a valid variable");
@@ -4227,7 +4235,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        key_iter_str_name = vd_key.NAME().GetText();
         key_iter_ast_decl = CommonDeclVar(
           curr_scope, 
           vd_key.NAME(), 
@@ -4235,22 +4242,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vd_key.type(),
           is_ref: false, 
           func_arg: false, 
-          write: false
+          write: false,
+          symb: out key_iter_symb 
         );
         if(key_iter_ast_decl == null)
           goto Bail;
-        key_iter_symb = curr_scope.ResolveWithFallback(key_iter_str_name) as VariableSymbol;
         key_iter_type = key_iter_symb.type;
       }
 
       Proxy<IType> val_iter_type;
-      string val_iter_str_name = "";
       AST_Tree val_iter_ast_decl = null;
       VariableSymbol val_iter_symb = null;
       if(vod_val.NAME() != null)
       {
-        val_iter_str_name = vod_val.NAME().GetText();
-        val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
+        val_iter_symb = curr_scope.ResolveWithFallback(vod_val.NAME().GetText()) as VariableSymbol;
         if(val_iter_symb == null)
         {
           AddSemanticError(vod_val.NAME(), "symbol is not a valid variable");
@@ -4260,7 +4265,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        val_iter_str_name = vd_val.NAME().GetText();
         val_iter_ast_decl = CommonDeclVar(
           curr_scope, 
           vd_val.NAME(), 
@@ -4268,11 +4272,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vd_val.type(),
           is_ref: false, 
           func_arg: false, 
-          write: false
+          write: false,
+          symb: out val_iter_symb
         );
         if(val_iter_ast_decl == null)
           goto Bail;
-        val_iter_symb = curr_scope.ResolveWithFallback(val_iter_str_name) as VariableSymbol;
         val_iter_type = val_iter_symb.type;
       }
       var map_type = (MapTypeSymbol)curr_scope.R().TMap(key_iter_type, val_iter_type).Get();

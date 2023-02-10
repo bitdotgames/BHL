@@ -323,20 +323,20 @@ varDeclare
   : type NAME
   ;
 
-varOrDeclare
-  : varDeclare | NAME
-  ;
-
-varOrDeclares
-  : varOrDeclare (',' varOrDeclare)*
-  ;
-
 varDeclareAssign
   : varDeclare assignExp?
   ;
 
 varsDeclares
   : varDeclare ( ',' varDeclare )*
+  ;
+
+varOrDeclare
+  : varDeclare | NAME
+  ;
+
+varOrDeclares
+  : varOrDeclare (',' varOrDeclare)*
   ;
 
 varOrDeclareAssign
