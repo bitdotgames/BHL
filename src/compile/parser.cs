@@ -3458,7 +3458,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       return vdecls != null ? 
         vdecls[i].NAME() : 
-        vodecls[i].NAME();
+        (vodecls[i].NAME() != null ? vodecls[i].NAME() : vodecls[i].varDeclare().NAME());
     }
   }
 
