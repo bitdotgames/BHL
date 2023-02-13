@@ -4623,6 +4623,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       : this(exp, exp.name(), null)
     {}
 
+    public static ExpChain Make(bhlParser.ExpContext ctx)
+    {
+      if(ctx is bhlParser.ExpNameContext nexp)
+        return new ExpChain(nexp);
+      else if(ctx is bhlParser.ExpChainContext cexp)
+        return new ExpChain(cexp);
+      else
+        return new ExpChain(ctx, null, null);
+    }
+
     public IParseTree At(int i) 
     {
       return items[i];
@@ -4661,12 +4671,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
     {
       this.ctx = ctx;
-      if(ctx.exp() is bhlParser.ExpNameContext nexp)
-        exp_chain = new ExpChain(nexp);
-      else if(ctx.exp() is bhlParser.ExpChainContext cexp)
-        exp_chain = new ExpChain(cexp);
-      else
-        exp_chain = new ExpChain(ctx, null, null);
+      exp_chain = ExpChain.Make(ctx.exp());
       fn_call = ctx.callArgs();
     }
 
@@ -4733,12 +4738,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
       this.ctx = ctx;
-      if(ctx.exp() is bhlParser.ExpNameContext nexp)
-        exp_chain = new ExpChain(nexp);
-      else if(ctx.exp() is bhlParser.ExpChainContext cexp)
-        exp_chain = new ExpChain(cexp);
-      else
-        exp_chain = new ExpChain(ctx, null, null);
+      exp_chain = ExpChain.Make(ctx.exp());
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }
