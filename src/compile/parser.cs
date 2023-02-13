@@ -399,13 +399,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast_stack.Peek();
   }
 
-  AST_Tree PeekPopAST()
-  {
-    var tmp = PeekAST();
-    PopAST();
-    return tmp;
-  }
-
   AnnotatedParseTree Annotate(IParseTree t)
   {
     AnnotatedParseTree at;
@@ -1113,7 +1106,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
     {
-      AddSemanticError(arracc, "accessing not an array/map type '" + type.GetName() + "'");
+      AddSemanticError(arracc, "accessing not an array/map type '" + type?.GetName() + "'");
       return;
     }
   }
@@ -4603,6 +4596,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.items = items;
     }
 
+    public ExpChain(bhlParser.ExpContext exp)
+    {
+      this.ctx = exp;
+
+      if(exp is bhlParser.ExpNameContext nexp)
+        this.root_name = nexp.name();
+      else if(exp is bhlParser.ExpChainContext cexp)
+      {
+        if(cexp.exp() is bhlParser.ExpNameContext ncexp) 
+          this.root_name = ncexp.name();
+        this.items = cexp.chainExpItem();
+      }
+    }
+
     public ExpChain(bhlParser.ExpContext exp, bhlParser.ChainExpItemContext[] items)
       : this(exp, (exp as bhlParser.ExpNameContext)?.name(), items)
     {}
@@ -4630,10 +4637,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public class ExpChainFuncCall : IExpChain 
   {
+    bhlParser.FuncCallExpContext ctx;
     IExpChain exp_chain;
     bhlParser.CallArgsContext fn_call;
 
-    public ParserRuleContext RootCtx { get { return exp_chain.RootCtx; } }
+    public ParserRuleContext RootCtx { get { return ctx; } }
 
     public bhlParser.NameContext RootName { get { return exp_chain.RootName; } }
 
@@ -4641,15 +4649,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public int Length { get { return exp_chain.Length + 1; } }
 
-    public ExpChainFuncCall(IExpChain chain, bhlParser.CallArgsContext extra_call)
-    {
-      this.exp_chain = chain;
-      this.fn_call = extra_call;
-    }
-
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
-      : this(new ExpChain(ctx.complexExp().exp(), ctx.complexExp().chainExpItem()), ctx.callArgs())
-    {}
+    {
+      this.ctx = ctx;
+      this.exp_chain = new ExpChain(ctx.exp());
+      this.fn_call = ctx.callArgs();
+    }
 
     public IParseTree At(int i) 
     {
@@ -4693,7 +4698,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ParserRuleContext RootCtx { 
       get { 
-        return ctx.name() != null ? ctx : exp_chain.RootCtx; 
+        return ctx;
       } 
     }
 
@@ -4714,11 +4719,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
       this.ctx = ctx;
-
-      exp_chain = new ExpChain(
-        ctx.complexExp().exp(), 
-        ctx.complexExp().chainExpItem()
-      );
+      exp_chain = new ExpChain(ctx.exp());
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }

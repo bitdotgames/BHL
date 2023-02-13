@@ -150,7 +150,7 @@ else
   ;
   
 complexExp
-  : exp chainExpItem*
+  : exp chainExpItem+
   ;
 
 chainExpItem
@@ -159,13 +159,13 @@ chainExpItem
 
 //NOTE: makes sure it's a func call
 funcCallExp
-  : complexExp callArgs
+  : exp callArgs
   ;
 
 //NOTE: makes sure it's a variable access
 varAccessExp
   : name 
-  | complexExp (memberAccess | arrAccess)
+  | exp (memberAccess | arrAccess)
   ;
 
 arrAccess

@@ -40,7 +40,7 @@ public class CompileErrorsException : Exception
   public CompileErrors errors;
 
   public CompileErrorsException(CompileErrors errors)
-    : base("Multiple compilation errors (" + errors.Count + "):\n" + errors)
+    : base("Compile errors (" + errors.Count + "):\n" + errors)
   {
     this.errors = errors;
   }

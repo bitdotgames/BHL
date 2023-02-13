@@ -861,7 +861,6 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultipleVarAssignArrItem2()
   {
     string bhl = @"
-
     func float,string foo() 
     {
       return 100,""bar""
