@@ -2100,7 +2100,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //TODO:???
+  //TODO: is it still relevant?
   //public override object VisitExpYieldParen(bhlParser.ExpYieldParenContext ctx)
   //{
   //  CheckCoroCallValidity(ctx);
@@ -2127,31 +2127,31 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   //  return null;
   //}
 
-  public override object VisitStmVarPostOpAssign(bhlParser.StmVarPostOpAssignContext ctx)
-  {
-    string post_op = ctx.operatorPostOpAssign().GetText();
-    CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
-    var chain = new ExpChainVarAccess(ctx.varAccessExp());
+  //public override object VisitStmVarPostOpAssign(bhlParser.StmVarPostOpAssignContext ctx)
+  //{
+  //  string post_op = ctx.operatorPostOpAssign().GetText();
+  //  CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
+  //  var chain = new ExpChainVarAccess(ctx.varAccessExp());
 
-     IType curr_type = null;
-     ProcExpChain(
-      chain, 
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type, 
-      write: true
-     );
+  //   IType curr_type = null;
+  //   ProcExpChain(
+  //    chain, 
+  //    chain.IsGlobalNs ? ns : curr_scope, 
+  //    ref curr_type, 
+  //    write: true
+  //   );
 
-    if(curr_type == Types.String && post_op == "+=")
-      return null;
+  //  if(curr_type == Types.String && post_op == "+=")
+  //    return null;
 
-    if(!Types.IsNumeric(curr_type))
-    {
-      AddSemanticError(ctx, "is not numeric type");
-      return null;
-    }
+  //  if(!Types.IsNumeric(curr_type))
+  //  {
+  //    AddSemanticError(ctx, "is not numeric type");
+  //    return null;
+  //  }
 
-    return null;
-  }
+  //  return null;
+  //}
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
@@ -2171,11 +2171,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
   
-  public override object VisitStmVarIncDec(bhlParser.StmVarIncDecContext ctx)
-  {
-    CommonVisitPostIncDec(ctx.varPostIncDec());
-    return null;
-  }
+  //public override object VisitStmVarIncDec(bhlParser.StmVarIncDecContext ctx)
+  //{
+  //  CommonVisitPostIncDec(ctx.varPostIncDec());
+  //  return null;
+  //}
 
   bhlParser.ExpContext _one_literal_exp;
   bhlParser.ExpContext one_literal_exp {
@@ -3444,7 +3444,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       return vdecls != null ? 
         vdecls[i].type() != null : 
-        vodecls[i].NAME() == null;
+        vodecls[i].varDeclare() != null;
     }
 
     public bhlParser.TypeContext TypeAt(int i)
@@ -3458,7 +3458,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       return vdecls != null ? 
         vdecls[i].NAME() : 
-        (vodecls[i].NAME() != null ? vodecls[i].NAME() : vodecls[i].varDeclare().NAME());
+        (vodecls[i].varAccessExp() != null ? 
+          vodecls[i].varAccessExp().NAME()
+         : vodecls[i].varDeclare().NAME());
     }
   }
 

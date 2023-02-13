@@ -92,41 +92,27 @@ newExp
   ;
 
 foreachExp
-  : '(' varOrDeclares 'in' exp ')' 
-  ;
-
-forInsideStmnt
-  : varOrDeclareAssign | varPostIncDec
-  ;
-
-forInsideStmnts
-  : forInsideStmnt (',' forInsideStmnt)*
+  : '(' varOrDeclare (',' varOrDeclare)* 'in' exp ')' 
   ;
 
 forPreIter
-  : forInsideStmnts
-  ;
-
-forCond
-  : exp
+  : varOrDeclareAssign (',' varOrDeclareAssign)*
   ;
 
 forPostIter
-  : forInsideStmnts
+  : varPostOp (',' varPostOp)*
   ;
 
 forExp
-  : '(' forPreIter? SEPARATOR forCond SEPARATOR forPostIter? ')' 
+  : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
 //NOTE: statements, order is important
 statement
   : funcLambda                                 #StmLambdaCall
   | varDeclaresOptAssign                       #StmDeclOptAssign
-  | varOrDeclaresAssign                        #StmVarOrDeclAssign
-  | varAccessExp assignExp                     #StmVarAccessAssign
-  | varAccessExp operatorPostOpAssign exp      #StmVarPostOpAssign
-  | varPostIncDec                              #StmVarIncDec
+  | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
+  | varPostOp                                  #StmVarPostOp
   //func/method calls, variable and members access
   | complexExp                                 #StmComplexExp
   | mainIf elseIf* else?                       #StmIf
@@ -175,6 +161,7 @@ funcCallExp
 //NOTE: makes sure it's a variable access
 varAccessExp
   : complexExp (memberAccess | arrAccess)
+  | GLOBAL? NAME
   ;
 
 arrAccess
@@ -332,36 +319,33 @@ varDeclareOptAssign
   : varDeclare assignExp?
   ;
 
-varDeclares
-  : varDeclare ( ',' varDeclare )*
-  ;
-
 varOrDeclare
   : varDeclare | NAME
   ;
 
-varOrDeclares
-  : varOrDeclare (',' varOrDeclare)*
+varAccessOrDeclare
+  : varDeclare | varAccessExp
   ;
 
 varOrDeclareAssign
   : varOrDeclare assignExp
   ;
 
-varOrDeclaresAssign
-  : varOrDeclares assignExp
+varAccessOrDeclaresAssign
+  : varAccessOrDeclare (',' varAccessOrDeclare)* assignExp
   ;
 
 varDeclaresOptAssign
-  : varDeclares assignExp?
-  ;
-
-varOrDeclaresOptAssign
-  : varOrDeclares assignExp?
+  : varDeclare ( ',' varDeclare )* assignExp?
   ;
 
 varPostIncDec
   : varAccessExp (INC | DEC)
+  ;
+
+varPostOp
+  : varPostIncDec
+  | varAccessExp operatorPostOpAssign exp
   ;
 
 assignExp
