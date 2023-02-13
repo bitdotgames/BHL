@@ -3418,10 +3418,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     bhlParser.VarDeclareContext[] vdecls;
     bhlParser.VarOrDeclareContext[] vodecls;
+    bhlParser.VarAccessOrDeclareContext[] vaodecls;
 
     public int Count { 
       get {
-        return vdecls != null ? vdecls.Length : vodecls.Length;
+        if(vdecls != null)
+          return vdecls.Length;
+        if(vodecls != null)
+          return vodecls.Length;
+        if(vaodecls != null)
+          return vaodecls.Length;
+        return -1;
       }
     }
 
@@ -3435,32 +3442,57 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.vodecls = vodecls;
     }
 
-    public IParseTree At(int i)
+    public VarsDecls(bhlParser.VarAccessOrDeclareContext[] vaodecls)
     {
-      return vdecls != null ? (IParseTree)vdecls[i] : (IParseTree)vodecls[i];
+      this.vaodecls = vaodecls;
     }
 
-    public bool IsDeclAt(int i)
+    public IParseTree At(int i)
     {
-      return vdecls != null ? 
-        vdecls[i].type() != null : 
-        vodecls[i].varDeclare() != null;
+      if(vdecls != null)
+        return (IParseTree)vdecls[i];
+      if(vodecls != null)
+        return (IParseTree)vodecls[i];
+      if(vaodecls != null)
+        return (IParseTree)vaodecls[i];
+
+      return null;
     }
 
     public bhlParser.TypeContext TypeAt(int i)
     {
-      return vdecls != null ? 
-        vdecls[i].type() : 
-        vodecls[i].varDeclare().type();
+      if(vdecls != null)
+        return vdecls[i].type();
+      if(vodecls != null)
+        return vodecls[i].varDeclare()?.type();
+      if(vaodecls != null)
+        return vaodecls[i].varDeclare()?.type();
+
+      return null;
     }
 
-    public ITerminalNode NameAt(int i)
+    public bhlParser.VarAccessExpContext VarAccessAt(int i)
     {
-      return vdecls != null ? 
-        vdecls[i].NAME() : 
-        (vodecls[i].varAccessExp() != null ? 
-          vodecls[i].varAccessExp().NAME()
-         : vodecls[i].varDeclare().NAME());
+      if(vdecls != null)
+        return null;
+      if(vodecls != null)
+        return null;
+      if(vaodecls != null)
+        return vaodecls[i].varAccessExp();
+
+      return null;
+    }
+
+    public ITerminalNode LocalNameAt(int i)
+    {
+      if(vdecls != null)
+        return vdecls[i].NAME();
+      if(vodecls != null)
+        return vodecls[i].varDeclare()?.NAME();
+      if(vaodecls != null && vaodecls[i].varAccessExp() != null && vaodecls[i].varAccessExp().GLOBAL() == null)
+        return vaodecls[i].varAccessExp().NAME();
+      
+      return null;
     }
   }
 
@@ -3474,12 +3506,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       bool is_decl = false;
       bool is_auto_var = false;
 
-      VariableSymbol vd_symb;
+      VariableSymbol vd_symb = null;
 
       //check if we declare a var or use an existing one
-      if(!vdecls.IsDeclAt(i))
+      if(vdecls.LocalNameAt(i) != null)
       {
-        string vd_name = vdecls.NameAt(i).GetText(); 
+        string vd_name = vdecls.LocalNameAt(i).GetText(); 
         vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
         if(vd_symb == null)
         {
@@ -3492,7 +3524,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
         root.AddChild(ast);
       }
-      else
+      else if(vdecls.TypeAt(i) != null)
       {
         is_auto_var = vdecls.TypeAt(i).GetText() == "var";
 
@@ -3509,7 +3541,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var ast = CommonDeclVar(
           curr_scope, 
-          vdecls.NameAt(i), 
+          vdecls.LocalNameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
           is_auto_var ? Types.Any : ParseType(vdecls.TypeAt(i)), 
@@ -3527,6 +3559,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         is_decl = true;
 
         Annotate(vdecls.At(i)).eval_type = vd_symb.type.Get();
+      }
+      else if(vdecls.VarAccessAt(i) != null)
+      {
+        throw new Exception("Not implemented");
       }
 
       if(assign_exp != null)
@@ -3558,7 +3594,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
   {
-    var vdecls = new VarsDecls(ctx.varDeclaresOptAssign().varDeclares().varDeclare());
+    var vdecls = new VarsDecls(ctx.varDeclaresOptAssign().varDeclare());
     var assign_exp = ctx.varDeclaresOptAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3567,8 +3603,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmVarOrDeclAssign(bhlParser.StmVarOrDeclAssignContext ctx)
   {
-    var vdecls = new VarsDecls(ctx.varOrDeclaresAssign().varOrDeclares().varOrDeclare());
-    var assign_exp = ctx.varOrDeclaresAssign().assignExp();
+    var vdecls = new VarsDecls(ctx.varAccessOrDeclaresAssign().varAccessOrDeclare());
+    var assign_exp = ctx.varAccessOrDeclaresAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
     return null;
@@ -4018,9 +4054,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     
     var for_pre = ctx.forExp().forPreIter();
     if(for_pre != null)
-      CommmonProcessForInsideStatements(for_pre.forInsideStmnts(), ctx.Start.Line);
+      CommmonProcessForPreStatements(for_pre, ctx.Start.Line);
 
-    var for_cond = ctx.forExp().forCond();
+    var for_cond = ctx.forExp().exp();
     var for_post_iter = ctx.forExp().forPostIter();
 
     var ast = new AST_Block(BlockType.WHILE);
@@ -4032,7 +4068,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(for_cond);
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(for_cond.exp()), errors))
+    if(!types.CheckAssign(Types.Bool, Annotate(for_cond), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4046,7 +4082,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       
       PeekAST().AddChild(new AST_Continue(jump_marker: true));
 
-      CommmonProcessForInsideStatements(for_post_iter.forInsideStmnts(), ctx.Start.Line);
+      CommmonProcessForPostStatements(for_post_iter, ctx.Start.Line);
 
       PopAST();
     }
@@ -4064,20 +4100,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void CommmonProcessForInsideStatements(bhlParser.ForInsideStmntsContext inside, int start_line)
+  void CommmonProcessForPreStatements(bhlParser.ForPreIterContext pre, int start_line)
   {
-    foreach(var stmt in inside.forInsideStmnt())
+    foreach(var vdecl in pre.varOrDeclareAssign())
     {
-      var vdecl = stmt.varOrDeclareAssign();
+      CommonDeclOrAssign(vdecl.varOrDeclare(), vdecl.assignExp(), start_line);
+    }
+  }
 
-      if(vdecl != null)
-        CommonDeclOrAssign(vdecl.varOrDeclare(), vdecl.assignExp(), start_line);
-      else
-      {
-        var vp = stmt.varPostIncDec();
-        if(vp != null)
-          CommonVisitPostIncDec(vp);
-      }
+  void CommmonProcessForPostStatements(bhlParser.ForPostIterContext post, int start_line)
+  {
+    foreach(var vp in post.varPostOp())
+    {
+      //TODO:
+      //CommonVisitPostOp(vp);
     }
   }
 
@@ -4137,7 +4173,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushScope(local_scope);
     local_scope.Enter();
 
-    if(ctx.foreachExp().varOrDeclares().varOrDeclare().Length == 1)
+    if(ctx.foreachExp().varOrDeclare().Length == 1)
     {
       //NOTE: we're going to generate the following code
       //
@@ -4150,7 +4186,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       // $foreach_cnt++
       //}
     
-      var vod = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
+      var vod = ctx.foreachExp().varOrDeclare()[0];
       var vd = vod.varDeclare();
       Proxy<IType> iter_type;
       AST_Tree iter_ast_decl = null;
@@ -4258,7 +4294,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PopBlock(ast);
     }
-    else if(ctx.foreachExp().varOrDeclares().varOrDeclare().Length == 2)
+    else if(ctx.foreachExp().varOrDeclare().Length == 2)
     {
       //NOTE: we're going to generate the following code
       //
@@ -4270,10 +4306,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       // ...
       //}
 
-      var vod_key = ctx.foreachExp().varOrDeclares().varOrDeclare()[0];
+      var vod_key = ctx.foreachExp().varOrDeclare()[0];
       var vd_key = vod_key.varDeclare();
       var vd_key_type = new Proxy<IType>();
-      var vod_val = ctx.foreachExp().varOrDeclares().varOrDeclare()[1];
+      var vod_val = ctx.foreachExp().varOrDeclare()[1];
       var vd_val = vod_val.varDeclare();
       var vd_val_type = new Proxy<IType>();
 
@@ -4409,7 +4445,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopBlock(ast);
     }
     else
-      AddSemanticError(ctx.foreachExp().varOrDeclares(), "invalid 'foreach' syntax");
+      AddSemanticError(ctx.foreachExp(), "invalid 'foreach' syntax");
 
   Bail:
     local_scope.Exit();
