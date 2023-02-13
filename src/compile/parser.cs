@@ -1907,6 +1907,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  //TODO: code duplication here and in method below
+  public override object VisitComplexExp(bhlParser.ComplexExpContext ctx)
+  {
+    IType curr_type = null;
+    var chain = new ExpChain(ctx.exp(), ctx.chainExpItem());
+    ProcExpChain(
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
+      ref curr_type
+    );
+
+    ++ref_compatible_exp_counter;
+
+    Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
+
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
     IType curr_type = null;
