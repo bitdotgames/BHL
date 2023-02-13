@@ -108,10 +108,6 @@ forExp
   : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
-complexExp
-  : exp chainExpItem+
-  ;
-
 //NOTE: statements, order is important
 statement
   : funcLambda                                 #StmLambdaCall
@@ -119,7 +115,7 @@ statement
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
   //func/method calls, variable and members access
-  | complexExp                                 #StmComplexExp
+  | exp chainExpItem+                          #StmComplexExp
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile

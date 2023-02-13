@@ -622,17 +622,36 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
+  IType CommonVisitComplexExp(bhlParser.ExpContext ctx, bhlParser.ChainExpItemContext[] items)
+  {
+    IType curr_type = null;
+    var chain = new ExpChain(ctx, (ctx as bhlParser.ExpNameContext)?.name(), items);
+
+    //if it's not 'terminal' let's visit it
+    if(chain.RootName == null)
+      Visit(ctx);
+
+    ProcExpChain(
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope, 
+      ref curr_type
+    );
+
+    ++ref_compatible_exp_counter;
+
+    Annotate(ctx).eval_type = curr_type;
+    return curr_type;
+  }
+
   public override object VisitStmComplexExp(bhlParser.StmComplexExpContext ctx)
   {
-    var exp = ctx.complexExp();
-    Visit(exp);
+    var eval_type = CommonVisitComplexExp(ctx.exp(), ctx.chainExpItem());
 
-    var eval_type = Annotate(exp).eval_type;
     if(eval_type != null && eval_type != Types.Void)
     {
       //1. let's check if it's a func call
       bool has_call_args = false;
-      foreach(var item in exp.chainExpItem())
+      foreach(var item in ctx.chainExpItem())
       {
         if(item.callArgs() != null)
         {
@@ -643,7 +662,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //2. ...and if not let's add an error
       if(!has_call_args)
-        AddSemanticError(exp, "useless statement");
+        AddSemanticError(ctx, "useless statement");
 
       //let's pop unused returned value
       var tuple = eval_type as TupleType;
@@ -681,7 +700,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     IScope scope = root_scope;
 
-    int line = chain.RootCtx.Start.Line;  
+    int line = chain.RuleCtx.Start.Line;  
 
     PushAST(new AST_Interim());
 
@@ -805,7 +824,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "function calls not allowed in global context");
+      AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "function calls not allowed in global context");
       return;
     }
 
@@ -813,12 +832,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "not a coro function");
+        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "not a coro function");
         return;
       }
     }
@@ -826,7 +845,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RootCtx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "coro function must be called via yield");
         return;
       }
     }
@@ -1907,37 +1926,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //TODO: code duplication here and in method below
-  public override object VisitComplexExp(bhlParser.ComplexExpContext ctx)
-  {
-    IType curr_type = null;
-    var chain = new ExpChain(ctx.exp(), ctx.chainExpItem());
-    ProcExpChain(
-      chain,
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type
-    );
-
-    ++ref_compatible_exp_counter;
-
-    Annotate(ctx).eval_type = curr_type;
-
-    return null;
-  }
-
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
-    IType curr_type = null;
-    var chain = new ExpChain(ctx.exp(), ctx.chainExpItem());
-    ProcExpChain(
-      chain,
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type
-    );
+    var exp_type = CommonVisitComplexExp(ctx.exp(), ctx.chainExpItem());
 
-    ++ref_compatible_exp_counter;
-
-    Annotate(ctx).eval_type = curr_type;
+    Annotate(ctx).eval_type = exp_type;
 
     return null;
   }
@@ -1974,6 +1967,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     CheckCoroCallValidity(ctx);
 
     var chain = new ExpChainFuncCall(ctx);
+    //if it's not 'terminal' let's visit it
+    if(chain.RootName == null)
+      Visit(ctx.exp());
 
     IType curr_type = null;
     ProcExpChain(
@@ -3611,6 +3607,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
 
         var chain = new ExpChainVarAccess(var_exp);
+
+        //if it's not 'terminal' let's visit it
+        if(chain.RootName == null)
+          Visit(var_exp.exp());
+
         if(!ProcExpChain(
           chain,
           chain.IsGlobalNs ? ns : curr_scope, 
@@ -4577,12 +4578,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public interface IExpChain
   {
     //NOTE: a root context this chain is attached to
-    ParserRuleContext RootCtx { get; }
+    ParserRuleContext RuleCtx { get; }
 
     //NOTE: can be null, if it's not a 'terminal' chain, e.g:
     // (hey())[1]()
     // (func() {})()
-    bhlParser.NameContext  RootName { get; }
+    bhlParser.NameContext RootName { get; }
 
     int Length { get; }
 
@@ -4599,7 +4600,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.NameContext root_name;
     bhlParser.ChainExpItemContext[] items; 
 
-    public ParserRuleContext RootCtx { get { return ctx; } }
+    public ParserRuleContext RuleCtx { get { return ctx; } }
 
     public bhlParser.NameContext RootName { get { return root_name; } }
 
@@ -4614,22 +4615,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.items = items;
     }
 
-    public ExpChain(bhlParser.ExpContext exp)
-    {
-      this.ctx = exp;
+    public ExpChain(bhlParser.ExpChainContext exp)
+      : this(exp, (exp.exp() as bhlParser.ExpNameContext)?.name(), exp.chainExpItem())
+    {}
 
-      if(exp is bhlParser.ExpNameContext nexp)
-        this.root_name = nexp.name();
-      else if(exp is bhlParser.ExpChainContext cexp)
-      {
-        if(cexp.exp() is bhlParser.ExpNameContext ncexp) 
-          this.root_name = ncexp.name();
-        this.items = cexp.chainExpItem();
-      }
-    }
-
-    public ExpChain(bhlParser.ExpContext exp, bhlParser.ChainExpItemContext[] items)
-      : this(exp, (exp as bhlParser.ExpNameContext)?.name(), items)
+    public ExpChain(bhlParser.ExpNameContext exp)
+      : this(exp, exp.name(), null)
     {}
 
     public IParseTree At(int i) 
@@ -4659,7 +4650,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IExpChain exp_chain;
     bhlParser.CallArgsContext fn_call;
 
-    public ParserRuleContext RootCtx { get { return ctx; } }
+    public ParserRuleContext RuleCtx { get { return ctx; } }
 
     public bhlParser.NameContext RootName { get { return exp_chain.RootName; } }
 
@@ -4670,8 +4661,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
     {
       this.ctx = ctx;
-      this.exp_chain = new ExpChain(ctx.exp());
-      this.fn_call = ctx.callArgs();
+      if(ctx.exp() is bhlParser.ExpNameContext nexp)
+        exp_chain = new ExpChain(nexp);
+      else if(ctx.exp() is bhlParser.ExpChainContext cexp)
+        exp_chain = new ExpChain(cexp);
+      else
+        exp_chain = new ExpChain(ctx, null, null);
+      fn_call = ctx.callArgs();
     }
 
     public IParseTree At(int i) 
@@ -4714,7 +4710,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.MemberAccessContext member_ctx;
     bhlParser.ArrAccessContext arr_ctx;
 
-    public ParserRuleContext RootCtx { 
+    public ParserRuleContext RuleCtx { 
       get { 
         return ctx;
       } 
@@ -4737,7 +4733,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
       this.ctx = ctx;
-      exp_chain = new ExpChain(ctx.exp());
+      if(ctx.exp() is bhlParser.ExpNameContext nexp)
+        exp_chain = new ExpChain(nexp);
+      else if(ctx.exp() is bhlParser.ExpChainContext cexp)
+        exp_chain = new ExpChain(cexp);
+      else
+        exp_chain = new ExpChain(ctx, null, null);
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }

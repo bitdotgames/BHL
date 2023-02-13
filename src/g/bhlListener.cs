@@ -535,16 +535,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitForExp([NotNull] bhlParser.ForExpContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.complexExp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterComplexExp([NotNull] bhlParser.ComplexExpContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.complexExp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitComplexExp([NotNull] bhlParser.ComplexExpContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>StmLambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
