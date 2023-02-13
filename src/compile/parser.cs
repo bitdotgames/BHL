@@ -624,7 +624,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmComplexExp(bhlParser.StmComplexExpContext ctx)
   {
-    var exp = ctx.exp();
+    var exp = ctx.complexExp();
     Visit(exp);
 
     var eval_type = Annotate(exp).eval_type;
@@ -632,7 +632,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       //1. let's check if it's a func call
       bool has_call_args = false;
-      foreach(var item in ctx.chainExpItem())
+      foreach(var item in exp.chainExpItem())
       {
         if(item.callArgs() != null)
         {

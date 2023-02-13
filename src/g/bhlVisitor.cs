@@ -329,6 +329,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForExp([NotNull] bhlParser.ForExpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.complexExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitComplexExp([NotNull] bhlParser.ComplexExpContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StmLambdaCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

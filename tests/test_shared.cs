@@ -834,6 +834,9 @@ public class BHL_TestBase
 
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
+    if(err == null)
+      AssertTrue(false, "No error happened, expected: " + msg);
+
     //TODO: in case of multi errors we consider only the first one,
     //      probably it should be more flexible
     if(err is CompileErrorsException mex)

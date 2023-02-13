@@ -61,6 +61,7 @@ exp
   | string                                   #ExpLiteralStr
   | 'yield' funcCallExp                      #ExpYieldCall
   | name                                     #ExpName
+  //NOTE: complexExp 'flattened' to avoid left recursion
   | exp chainExpItem+                        #ExpChain
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
@@ -107,6 +108,10 @@ forExp
   : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
+complexExp
+  : exp chainExpItem+
+  ;
+
 //NOTE: statements, order is important
 statement
   : funcLambda                                 #StmLambdaCall
@@ -114,7 +119,7 @@ statement
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
   //func/method calls, variable and members access
-  | exp chainExpItem+                          #StmComplexExp
+  | complexExp                                 #StmComplexExp
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
