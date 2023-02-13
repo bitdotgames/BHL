@@ -3488,9 +3488,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(vdecls != null)
         return vdecls[i].NAME();
       if(vodecls != null)
-        return vodecls[i].varDeclare()?.NAME();
-      if(vaodecls != null && vaodecls[i].varAccessExp() != null && vaodecls[i].varAccessExp().GLOBAL() == null)
-        return vaodecls[i].varAccessExp().NAME();
+      {
+        if(vodecls[i].varDeclare() != null)
+          return vodecls[i].varDeclare().NAME();
+        else
+          return vodecls[i].NAME();
+      }
+      if(vaodecls != null)
+      {
+        if(vaodecls[i].varDeclare() != null)
+          return vaodecls[i].varDeclare().NAME();
+        else if(vaodecls[i].varAccessExp().GLOBAL() == null)
+          return vaodecls[i].varAccessExp().NAME();
+      }
       
       return null;
     }
@@ -3509,33 +3519,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       VariableSymbol vd_symb = null;
 
       //check if we declare a var or use an existing one
-      if(vdecls.LocalNameAt(i) != null)
+      if(vdecls.TypeAt(i) != null)
       {
-        string vd_name = vdecls.LocalNameAt(i).GetText(); 
-        vd_symb = curr_scope.ResolveWithFallback(vd_name) as VariableSymbol;
-        if(vd_symb == null)
-        {
-          AddSemanticError(vdecls.At(i), "symbol '" + vd_name + "' not resolved");
-          return;
-        }
-
-        Annotate(vdecls.At(i)).eval_type = vd_symb.type.Get();
-
-        var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
-        root.AddChild(ast);
-      }
-      else if(vdecls.TypeAt(i) != null)
-      {
-        is_auto_var = vdecls.TypeAt(i).GetText() == "var";
+        var vd_type = vdecls.TypeAt(i);
+        is_auto_var = vd_type.GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
         {
-          AddSemanticError(vdecls.TypeAt(i), "invalid usage context");
+          AddSemanticError(vd_type, "invalid usage context");
           return;
         }
         else if(is_auto_var && assign_exp?.GetText() == "=null")
         {
-          AddSemanticError(vdecls.TypeAt(i), "invalid usage context");
+          AddSemanticError(vd_type, "invalid usage context");
           return;
         }
 
@@ -3544,8 +3540,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vdecls.LocalNameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
-          is_auto_var ? Types.Any : ParseType(vdecls.TypeAt(i)), 
-          vdecls.TypeAt(i),
+          is_auto_var ? Types.Any : ParseType(vd_type), 
+          vd_type,
           is_ref: false, 
           func_arg: false, 
           write: assign_exp != null,
@@ -3559,6 +3555,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         is_decl = true;
 
         Annotate(vdecls.At(i)).eval_type = vd_symb.type.Get();
+      }
+      else if(vdecls.LocalNameAt(i) != null)
+      {
+        var vd_name = vdecls.LocalNameAt(i);
+        vd_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
+        if(vd_symb == null)
+        {
+          AddSemanticError(vd_name, "symbol '" + vd_name.GetText() + "' not resolved");
+          return;
+        }
+
+        Annotate(vd_name).eval_type = vd_symb.type.Get();
+
+        var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
+        root.AddChild(ast);
       }
       else if(vdecls.VarAccessAt(i) != null)
       {
