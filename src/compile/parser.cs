@@ -2131,31 +2131,40 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   //  return null;
   //}
 
-  //public override object VisitStmVarPostOpAssign(bhlParser.StmVarPostOpAssignContext ctx)
-  //{
-  //  string post_op = ctx.operatorPostOpAssign().GetText();
-  //  CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
-  //  var chain = new ExpChainVarAccess(ctx.varAccessExp());
+  bool CommonVisitVarPostOp(bhlParser.VarPostOpContext ctx)
+  {
+    if(ctx.operatorPostOpAssign() != null)
+    {
+      string post_op = ctx.operatorPostOpAssign().GetText();
+      CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
+      var chain = new ExpChainVarAccess(ctx.varAccessExp());
 
-  //   IType curr_type = null;
-  //   ProcExpChain(
-  //    chain, 
-  //    chain.IsGlobalNs ? ns : curr_scope, 
-  //    ref curr_type, 
-  //    write: true
-  //   );
+       IType curr_type = null;
+       if(!ProcExpChain(
+        chain, 
+        chain.IsGlobalNs ? ns : curr_scope, 
+        ref curr_type, 
+        write: true
+       ))
+         return false;
 
-  //  if(curr_type == Types.String && post_op == "+=")
-  //    return null;
+      //NOTE: strings concat special case
+      if(curr_type == Types.String && post_op == "+=")
+        return true;
 
-  //  if(!Types.IsNumeric(curr_type))
-  //  {
-  //    AddSemanticError(ctx, "is not numeric type");
-  //    return null;
-  //  }
+      if(!Types.IsNumeric(curr_type))
+      {
+        AddSemanticError(ctx, "is not numeric type");
+        return false;
+      }
 
-  //  return null;
-  //}
+      return true;
+    }
+    else 
+    {
+      return CommonVisitPostIncDec(ctx.varPostIncDec());
+    }
+  }
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
@@ -2175,11 +2184,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
   
-  //public override object VisitStmVarIncDec(bhlParser.StmVarIncDecContext ctx)
-  //{
-  //  CommonVisitPostIncDec(ctx.varPostIncDec());
-  //  return null;
-  //}
+  public override object VisitStmVarPostOp(bhlParser.StmVarPostOpContext ctx)
+  {
+    CommonVisitVarPostOp(ctx.varPostOp());
+    return null;
+  }
 
   bhlParser.ExpContext _one_literal_exp;
   bhlParser.ExpContext one_literal_exp {
@@ -2200,7 +2209,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void CommonVisitPostIncDec(bhlParser.VarPostIncDecContext ctx)
+  bool CommonVisitPostIncDec(bhlParser.VarPostIncDecContext ctx)
   {
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
@@ -2217,7 +2226,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     else
     {
       AddSemanticError(ctx, "unknown operator");
-      return;
+      return false;
     }
 
     var chain = new ExpChainVarAccess(ctx.varAccessExp()); 
@@ -2228,13 +2237,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         ref curr_type, 
         write: true
       ))
-       return;
+       return false;
 
     if(!Types.IsNumeric(curr_type))
     {
       AddSemanticError(ctx, "only numeric types supported");
-      return;
+      return false;
     }
+    return true;
   }
   
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
@@ -4149,8 +4159,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     foreach(var vp in post.varPostOp())
     {
-      //TODO:
-      //CommonVisitPostOp(vp);
+      CommonVisitVarPostOp(vp);
     }
   }
 
