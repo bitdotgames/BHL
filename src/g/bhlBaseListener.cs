@@ -959,18 +959,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitElse([NotNull] bhlParser.ElseContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.complexExp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterComplexExp([NotNull] bhlParser.ComplexExpContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.complexExp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitComplexExp([NotNull] bhlParser.ComplexExpContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.chainExpItem"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

@@ -60,11 +60,7 @@ exp
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
   | 'yield' funcCallExp                      #ExpYieldCall
-  //NOTE: special case for standalone variables which also 
-  //      can be the beginning of the expression chain
   | name                                     #ExpName
-  //NOTE: complexExp 'flattened' to avoid left recursion, we also
-  //      require at least one chain item to be present
   | exp chainExpItem+                        #ExpChain
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
@@ -118,7 +114,7 @@ statement
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
   //func/method calls, variable and members access
-  | complexExp                                 #StmComplexExp
+  | exp chainExpItem+                          #StmComplexExp
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
@@ -149,10 +145,6 @@ else
   : 'else' block
   ;
   
-complexExp
-  : exp chainExpItem+
-  ;
-
 chainExpItem
   : callArgs | memberAccess | arrAccess
   ;
