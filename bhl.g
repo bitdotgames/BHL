@@ -49,6 +49,10 @@ returnVal
   : (varDeclare | varDeclareAssign | exps)
   ;
 
+name
+  : GLOBAL? NAME
+  ;
+
 exp
   : 'null'                                   #ExpLiteralNull
   | 'false'                                  #ExpLiteralFalse
@@ -58,7 +62,7 @@ exp
   | 'yield' funcCallExp                      #ExpYieldCall
   //NOTE: special case for standalone variables which also 
   //      can be the beginning of the expression chain
-  | GLOBAL? NAME                             #ExpName
+  | name                                     #ExpName
   //NOTE: complexExp 'flattened' to avoid left recursion, we also
   //      require at least one chain item to be present
   | exp chainExpItem+                        #ExpChain
@@ -160,8 +164,8 @@ funcCallExp
 
 //NOTE: makes sure it's a variable access
 varAccessExp
-  : complexExp (memberAccess | arrAccess)
-  | GLOBAL? NAME
+  : name 
+  | complexExp (memberAccess | arrAccess)
   ;
 
 arrAccess
