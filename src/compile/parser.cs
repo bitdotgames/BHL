@@ -681,9 +681,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    )
   {
     var root_name = chain.RootName?.NAME();
+    //TODO: probably we should do this always without
+    //      'terminal name' logic below?
     //if it's not 'terminal' let's visit deeper
     if(root_name == null)
+    {
       Visit(chain.RootExp);
+      curr_type = Annotate(chain.RootExp).eval_type;
+    }
 
     IScope scope = root_scope;
 
