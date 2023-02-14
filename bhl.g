@@ -61,19 +61,21 @@ parenChain
   : '(' exp ')' chainExpItem+
   ;
 
+chain
+  : namedChain
+  | parenChain
+  ;
+
 exp
   : 'null'                                   #ExpLiteralNull
   | 'false'                                  #ExpLiteralFalse
   | 'true'                                   #ExpLiteralTrue
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
-  | namedChain                               #ExpNamedChain
-  | parenChain                               #ExpParenChain
+  | chain                                    #ExpChain
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
-  | funcLambda                               #ExpLambda
-  | 'yield' funcLambda                       #ExpYieldLambda
   | 'yield' funcCallExp                      #ExpYieldCall
   | '(' type ')' exp                         #ExpTypeCast
   | exp 'as' type                            #ExpAs
@@ -117,22 +119,19 @@ forExp
 
 //NOTE: statements, order is important
 statement
-  : funcLambda                                 #StmLambdaCall
+  : funcCallExp                                #StmCall
   | varDeclaresOptAssign                       #StmDeclOptAssign
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
   | funcCallExp assignExp                      #StmInvalidAssign
   | varAccessExp                               #StmVarUseless
-  | namedChain                                 #StmNameChain
-  | parenChain                                 #StmParenChain
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
   | 'for' forExp block                         #StmFor
   | 'foreach' foreachExp block                 #StmForeach
   | 'yield' '(' ')'                            #StmYield                                                                   
-  | 'yield' funcCallExp                        #StmYieldFunc
-  | 'yield' funcLambda                         #StmYieldLambdaCall
+  | 'yield' funcCallExp                        #StmYieldCall
   | 'yield' 'while' '(' exp ')'                #StmYieldWhile
   | 'break'                                    #StmBreak
   | 'continue'                                 #StmContinue
@@ -161,7 +160,8 @@ chainExpItem
 
 //NOTE: makes sure it's a func call
 funcCallExp
-  : exp callArgs
+  : funcLambda callArgs
+  | exp callArgs
   ;
 
 //NOTE: makes sure it's a variable access

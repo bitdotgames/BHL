@@ -116,12 +116,18 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitParenChain([NotNull] bhlParser.ParenChainContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpParenChain</c>
+	/// Visit a parse tree produced by <see cref="bhlParser.chain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitChain([NotNull] bhlParser.ChainContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpParenChain([NotNull] bhlParser.ExpParenChainContext context);
+	Result VisitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpTypeof</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -129,13 +135,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpTypeof([NotNull] bhlParser.ExpTypeofContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpYieldLambda</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpYieldLambda([NotNull] bhlParser.ExpYieldLambdaContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpIs</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -172,12 +171,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpMulDivMod([NotNull] bhlParser.ExpMulDivModContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpNamedChain</c>
+	/// Visit a parse tree produced by the <c>ExpCompare</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpNamedChain([NotNull] bhlParser.ExpNamedChainContext context);
+	Result VisitExpCompare([NotNull] bhlParser.ExpCompareContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpAs</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -185,6 +184,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpAs([NotNull] bhlParser.ExpAsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpLiteralStr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpLiteralStr([NotNull] bhlParser.ExpLiteralStrContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpLiteralTrue</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -199,69 +205,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpJsonObj([NotNull] bhlParser.ExpJsonObjContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpYieldCall([NotNull] bhlParser.ExpYieldCallContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpTernaryIf</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpLambda</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpAnd</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpAnd([NotNull] bhlParser.ExpAndContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpParen</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpJsonArr([NotNull] bhlParser.ExpJsonArrContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpCompare</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpCompare([NotNull] bhlParser.ExpCompareContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpLiteralStr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpLiteralStr([NotNull] bhlParser.ExpLiteralStrContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpUnary</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -284,6 +227,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpYieldCall([NotNull] bhlParser.ExpYieldCallContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpBitAnd</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -304,6 +254,41 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpTypeCast([NotNull] bhlParser.ExpTypeCastContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpTernaryIf</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpAnd([NotNull] bhlParser.ExpAndContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpChain</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpChain([NotNull] bhlParser.ExpChainContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpBitOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpParen</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>
@@ -341,12 +326,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForExp([NotNull] bhlParser.ForExpContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>StmLambdaCall</c>
+	/// Visit a parse tree produced by the <c>StmCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStmLambdaCall([NotNull] bhlParser.StmLambdaCallContext context);
+	Result VisitStmCall([NotNull] bhlParser.StmCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StmDeclOptAssign</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -382,20 +367,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStmVarUseless([NotNull] bhlParser.StmVarUselessContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmNameChain</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmNameChain([NotNull] bhlParser.StmNameChainContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmParenChain</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmParenChain([NotNull] bhlParser.StmParenChainContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StmIf</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -439,19 +410,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmYield([NotNull] bhlParser.StmYieldContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>StmYieldFunc</c>
+	/// Visit a parse tree produced by the <c>StmYieldCall</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitStmYieldFunc([NotNull] bhlParser.StmYieldFuncContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmYieldLambdaCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmYieldLambdaCall([NotNull] bhlParser.StmYieldLambdaCallContext context);
+	Result VisitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StmYieldWhile</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
