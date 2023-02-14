@@ -2612,9 +2612,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       CommonAssignToVar(
         root, 
         root_first_idx,
-        vd_symb.type.Get(), 
+        Annotate(vd.NAME()),
         is_decl: true, 
-        assign_vars_num: 1, 
+        var_idx: 0,
+        vars_num: 1, 
         assign_exp: ret_val.varDeclareAssign().assignExp()
       );
       return null;
@@ -3425,16 +3426,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    CommonDeclOrAssign(new VarsDecls(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
+    CommonDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
   }
 
-  interface IVarDecl
-  {
-    bhlParser.TypeContext Type { get; } 
-    ITerminalNode Name { get; }
-  }
-
-  class VarsDecls
+  class VarsDeclsProxy
   {
     bhlParser.VarDeclareContext[] vdecls;
     bhlParser.VarOrDeclareContext[] vodecls;
@@ -3452,17 +3447,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    public VarsDecls(bhlParser.VarDeclareContext[] vdecls)
+    public VarsDeclsProxy(bhlParser.VarDeclareContext[] vdecls)
     {
       this.vdecls = vdecls;
     }
 
-    public VarsDecls(bhlParser.VarOrDeclareContext[] vodecls)
+    public VarsDeclsProxy(bhlParser.VarOrDeclareContext[] vodecls)
     {
       this.vodecls = vodecls;
     }
 
-    public VarsDecls(bhlParser.VarAccessOrDeclareContext[] vaodecls)
+    public VarsDeclsProxy(bhlParser.VarAccessOrDeclareContext[] vaodecls)
     {
       this.vaodecls = vaodecls;
     }
@@ -3527,7 +3522,35 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void CommonDeclOrAssign(VarsDecls vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
+  struct MultiTypeProxy
+  {
+    IType type;
+
+    public int Count {
+      get {
+        if(type is TupleType tt)
+          return tt.Count;
+        return 1;
+      }
+    }
+
+    public MultiTypeProxy(IType type)
+    {
+      this.type = type;
+    }
+
+    public IType At(int i) 
+    {
+      if(type is TupleType tt)
+        return tt[i].Get();
+      else if(i == 0)
+        return type;
+      else
+        throw new Exception("Out of bounds: " + i);
+    }
+  }
+
+  void CommonDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var root = PeekAST();
     int root_first_idx = root.children.Count;
@@ -3537,7 +3560,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       bool is_decl = false;
       bool is_auto_var = false;
 
-      IType var_type = null;
+      AnnotatedParseTree var_ann = null;
 
       //check if we declare a var or use an existing one
       if(vdecls.TypeAt(i) != null)
@@ -3575,10 +3598,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         root.AddChild(ast);
 
         is_decl = true;
-        
-        var_type = vd_symb.type.Get();
 
-        Annotate(vdecls.At(i)).eval_type = var_type;
+        var_ann = vd_symb.parsed;
+        var_ann.eval_type = vd_symb.type.Get();
       }
       else if(vdecls.LocalNameAt(i) != null)
       {
@@ -3590,9 +3612,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        var_type = vd_symb.type.Get();
-
-        Annotate(vd_name).eval_type = var_type;
+        var_ann = Annotate(vd_name);
+        var_ann.eval_type = vd_symb.type.Get();
 
         var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
         root.AddChild(ast);
@@ -3612,6 +3633,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(chain.RootName == null)
           Visit(var_exp.exp());
 
+        IType var_type = null;
         if(!ProcExpChain(
           chain,
           chain.IsGlobalNs ? ns : curr_scope, 
@@ -3620,7 +3642,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         ))
           return;
 
-        Annotate(var_exp).eval_type = var_type;
+        var_ann = Annotate(var_exp);
+        var_ann.eval_type = var_type;
       }
 
       if(assign_exp != null)
@@ -3628,8 +3651,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(!CommonAssignToVar(
           root, 
           root_first_idx,
-          var_type,
+          var_ann,
           is_decl,
+          i,
           vdecls.Count,
           assign_exp
         ))
@@ -3652,7 +3676,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
   {
-    var vdecls = new VarsDecls(ctx.varDeclaresOptAssign().varDeclare());
+    var vdecls = new VarsDeclsProxy(ctx.varDeclaresOptAssign().varDeclare());
     var assign_exp = ctx.varDeclaresOptAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3661,7 +3685,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmVarOrDeclAssign(bhlParser.StmVarOrDeclAssignContext ctx)
   {
-    var vdecls = new VarsDecls(ctx.varAccessOrDeclaresAssign().varAccessOrDeclare());
+    var vdecls = new VarsDeclsProxy(ctx.varAccessOrDeclaresAssign().varAccessOrDeclare());
     var assign_exp = ctx.varAccessOrDeclaresAssign().assignExp();
     CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
@@ -3785,19 +3809,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     AST_Tree root,
     //TODO: get rid of this a bit ugly argument
     int root_first_idx,
-    IType var_type,
+    AnnotatedParseTree var_ann, 
     bool is_decl,
-    int assign_vars_num,
+    int var_idx,
+    int vars_num,
     bhlParser.AssignExpContext assign_exp
   )
   {
+    var var_type = var_ann.eval_type;
+
     //NOTE: look forward at expression and push json type 
     //      if it's a json-init-expression
     bool pop_json_type = false;
     if((assign_exp.exp() is bhlParser.ExpJsonObjContext || 
       assign_exp.exp() is bhlParser.ExpJsonArrContext))
     {
-      if(assign_vars_num != 1)
+      if(vars_num != 1)
       {
         AddSemanticError(assign_exp, "multi assign not supported for JSON expression");
         return false;
@@ -3837,28 +3864,28 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pop_json_type)
       PopJsonType();
 
-    var assign_tuple = Annotate(assign_exp).eval_type as TupleType; 
-    if(assign_vars_num > 1)
+    var assign_type = new MultiTypeProxy(Annotate(assign_exp).eval_type); 
+    if(vars_num > 1)
     {
-      if(assign_tuple == null)
+      if(assign_type.Count == 1)
       {
         AddSemanticError(assign_exp, "multi return expected");
         return false;
       }
 
-      if(assign_tuple.Count != assign_vars_num)
+      if(assign_type.Count != vars_num)
       {
         AddSemanticError(assign_exp, "multi return size doesn't match destination");
         return false;
       }
     }
-    else if(assign_tuple != null)
+    else if(assign_type.Count > 1)
     {
       AddSemanticError(assign_exp, "multi return size doesn't match destination");
       return false;
     }
 
-    return true;
+    return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
   }
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
