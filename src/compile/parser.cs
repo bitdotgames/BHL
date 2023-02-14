@@ -2044,6 +2044,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitAssignExp(bhlParser.AssignExpContext ctx)
   {
     var exp = ctx.exp();
+
+    //TODO: use more generic protection against parse errors
+    if(exp == null)
+      return false;
+
     Visit(exp);
     Annotate(ctx).eval_type = Annotate(exp).eval_type;
 

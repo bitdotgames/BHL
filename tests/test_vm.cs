@@ -4930,7 +4930,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      "no viable alternative at input 'i ;",
+      "mismatched input ';' expecting '='",
       new PlaceAssert(bhl, @"
       for(i ; i < 3; i = i + 1) {
 ------------^"
