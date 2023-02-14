@@ -3836,13 +3836,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
     //      assignment expression in order to avoid error like: float k = k
-    VariableSymbol disabled_symbol = null;
-    VariableSymbol subst_symbol = null;
+    VariableSymbol subst_symb = null;
     if(is_decl)
     {
-      var symbols = ((LocalScope)curr_scope).members;
-      disabled_symbol = (VariableSymbol)symbols[symbols.Count - 1];
-      subst_symbol = DisableVar(symbols, disabled_symbol);
+      var symbols = ((LocalScope)var_symb.scope).members;
+      subst_symb = DisableVar(symbols, var_symb);
     }
 
     //NOTE: need to put expression nodes first
@@ -3857,10 +3855,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       root.children.Insert(root_first_idx, stash.children[s]);
 
     //NOTE: declaring disabled symbol again
-    if(disabled_symbol != null)
+    if(subst_symb != null)
     {
-      var symbols = ((LocalScope)curr_scope).members;
-      EnableVar(symbols, disabled_symbol, subst_symbol);
+      var symbols = ((LocalScope)var_symb.scope).members;
+      EnableVar(symbols, var_symb, subst_symb);
     }
 
     if(pop_json_type)
