@@ -677,6 +677,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitStmVarUseless(bhlParser.StmVarUselessContext ctx)
+  {
+    AddSemanticError(ctx, "useless statement");
+    return null;
+  }
+
   public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
   {
     CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
@@ -2111,33 +2117,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //TODO: is it still relevant?
-  //public override object VisitExpYieldParen(bhlParser.ExpYieldParenContext ctx)
-  //{
-  //  CheckCoroCallValidity(ctx);
-
-  //  var ast = new AST_Interim();
-  //  var exp = ctx.exp(); 
-  //  PushAST(ast);
-  //  Visit(exp);
-
-  //  var curr_type = Annotate(exp).eval_type;
-  //  var chain = new ExpChainExtraCall(new ExpChain(ctx.chainExp()), ctx.callArgs());
-  //  ProcExpChain(
-  //    chain,
-  //    curr_scope, 
-  //    ref curr_type, 
-  //    yielded: true
-  //  );
-  //  PopAST();
-  //  
-  //  PeekAST().AddChild(ast);
-  //  
-  //  Annotate(ctx).eval_type = curr_type;
-
-  //  return null;
-  //}
-
   bool CommonVisitVarPostOp(bhlParser.VarPostOpContext ctx)
   {
     if(ctx.operatorPostOpAssign() != null)
@@ -2596,9 +2575,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var vd = ret_val.varDeclareAssign().varDeclare();
       VariableSymbol vd_symb;
-      var root = PeekAST();
-      int root_first_idx = root.children.Count;
-      root.AddChild(
+      var vd_ast = PeekAST();
+      int vd_assign_idx = vd_ast.children.Count;
+      vd_ast.AddChild(
         CommonDeclVar(
           curr_scope, 
           vd.NAME(), 
@@ -2610,8 +2589,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         )
       );
       CommonAssignToVar(
-        root, 
-        root_first_idx,
+        vd_ast, 
+        vd_assign_idx,
         Annotate(vd.NAME()),
         is_decl: true, 
         var_symb: vd_symb,
@@ -3553,8 +3532,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void CommonDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    var root = PeekAST();
-    int root_first_idx = root.children.Count;
+    var var_ast = PeekAST();
+    int var_assign_insert_idx = var_ast.children.Count;
 
     for(int i=0;i<vdecls.Count;++i)
     {
@@ -3594,7 +3573,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //checking if it's valid
         if(ast == null)
           return;
-        root.AddChild(ast);
+        var_ast.AddChild(ast);
 
         is_decl = true;
 
@@ -3615,7 +3594,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var_ann.eval_type = var_symb.type.Get();
 
         var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
-        root.AddChild(ast);
+        var_ast.AddChild(ast);
       }
       else if(vdecls.VarAccessAt(i) != null)
       {
@@ -3648,8 +3627,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(assign_exp != null)
       {
         if(!CommonAssignToVar(
-          root, 
-          root_first_idx,
+          var_ast, 
+          var_assign_insert_idx,
           var_ann,
           is_decl,
           var_symb,

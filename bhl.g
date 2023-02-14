@@ -114,6 +114,7 @@ statement
   | varDeclaresOptAssign                       #StmDeclOptAssign
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
+  | varAccessExp                               #StmVarUseless
   //func/method calls, variable and members access
   | exp chainExpItem+                          #StmComplexExp
   | mainIf elseIf* else?                       #StmIf

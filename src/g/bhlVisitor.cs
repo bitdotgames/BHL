@@ -357,6 +357,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmVarPostOp([NotNull] bhlParser.StmVarPostOpContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StmVarUseless</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmVarUseless([NotNull] bhlParser.StmVarUselessContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StmComplexExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
