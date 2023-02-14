@@ -3637,11 +3637,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        Visit(var_exp);
-        var_ann = Annotate(var_exp);
-        //check if there's no error
-        if(var_ann.eval_type == null)
+        var chain = new ExpChainVarAccess(var_exp);
+        IType curr_type = null;
+        if(!CommonProcExpChain(
+          chain, 
+          chain.IsGlobalNs ? ns : curr_scope, 
+          ref curr_type,
+          write: true
+        ))
           return;
+
+        var_ann = Annotate(var_exp);
+        var_ann.eval_type = curr_type;
       }
 
       if(assign_exp != null)
@@ -4658,16 +4665,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChain(bhlParser.ExpNameContext exp)
       : this(exp, exp, null)
     {}
-
-    public static ExpChain Make(bhlParser.ExpContext ctx)
-    {
-      if(ctx is bhlParser.ExpNameContext nexp)
-        return new ExpChain(nexp);
-      else if(ctx is bhlParser.ExpChainContext cexp)
-        return new ExpChain(cexp);
-      else
-        return new ExpChain(ctx, null, null);
-    }
 
     public IParseTree At(int i) 
     {

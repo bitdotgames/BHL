@@ -636,7 +636,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_Return node)
   {
-    Console.Write("(RET " + node.num + " " + node.line_num);
+    Console.Write("(RET " + node.num);
     VisitChildren(node);
     Console.Write(")");
   }
