@@ -345,6 +345,7 @@ varPostIncDec
 varPostOp
   : varPostIncDec
   | varAccessExp operatorPostOpAssign exp
+  | varAccessExp assignExp
   ;
 
 assignExp

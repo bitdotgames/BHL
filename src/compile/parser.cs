@@ -2178,10 +2178,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       return true;
     }
-    else 
-    {
+    else if(ctx.varPostIncDec() != null) 
       return CommonVisitPostIncDec(ctx.varPostIncDec());
+    else if(ctx.assignExp() != null) 
+    {
+      var vproxy = new VarsDeclsProxy(new bhlParser.VarAccessExpContext[] { ctx.varAccessExp() });
+      return CommonDeclOrAssign(vproxy, ctx.assignExp(), ctx.Start.Line);
     }
+    
+    return true;
   }
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
@@ -3446,9 +3451,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    CommonDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
+    return CommonDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
   }
 
   class VarsDeclsProxy
@@ -3456,15 +3461,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.VarDeclareContext[] vdecls;
     bhlParser.VarOrDeclareContext[] vodecls;
     bhlParser.VarAccessOrDeclareContext[] vaodecls;
+    bhlParser.VarAccessExpContext[] vaccs;
 
     public int Count { 
       get {
         if(vdecls != null)
           return vdecls.Length;
-        if(vodecls != null)
+        else if(vodecls != null)
           return vodecls.Length;
-        if(vaodecls != null)
+        else if(vaodecls != null)
           return vaodecls.Length;
+        else if(vaccs != null)
+          return vaccs.Length;
         return -1;
       }
     }
@@ -3484,14 +3492,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.vaodecls = vaodecls;
     }
 
+    public VarsDeclsProxy(bhlParser.VarAccessExpContext[] vaccs)
+    {
+      this.vaccs = vaccs;
+    }
+
     public IParseTree At(int i)
     {
       if(vdecls != null)
         return (IParseTree)vdecls[i];
-      if(vodecls != null)
+      else if(vodecls != null)
         return (IParseTree)vodecls[i];
-      if(vaodecls != null)
+      else if(vaodecls != null)
         return (IParseTree)vaodecls[i];
+      else if(vaccs != null)
+        return (IParseTree)vaccs[i];
 
       return null;
     }
@@ -3500,10 +3515,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(vdecls != null)
         return vdecls[i].type();
-      if(vodecls != null)
+      else if(vodecls != null)
         return vodecls[i].varDeclare()?.type();
-      if(vaodecls != null)
+      else if(vaodecls != null)
         return vaodecls[i].varDeclare()?.type();
+      else if(vaccs != null)
+        return null;
 
       return null;
     }
@@ -3512,10 +3529,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(vdecls != null)
         return null;
-      if(vodecls != null)
+      else if(vodecls != null)
         return null;
-      if(vaodecls != null)
+      else if(vaodecls != null)
         return vaodecls[i].varAccessExp();
+      else if(vaccs != null)
+        return vaccs[i];
 
       return null;
     }
@@ -3524,14 +3543,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(vdecls != null)
         return vdecls[i].NAME();
-      if(vodecls != null)
+      else if(vodecls != null)
       {
         if(vodecls[i].varDeclare() != null)
           return vodecls[i].varDeclare().NAME();
         else
           return vodecls[i].NAME();
       }
-      if(vaodecls != null)
+      else if(vaodecls != null)
       {
         if(vaodecls[i].varDeclare() != null)
           return vaodecls[i].varDeclare().NAME();
@@ -3539,6 +3558,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
                 vaodecls[i].varAccessExp().name().GLOBAL() == null)
           return vaodecls[i].varAccessExp().name().NAME();
       }
+      else if(vaccs != null)
+        return null;
       
       return null;
     }
@@ -3572,7 +3593,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void CommonDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool CommonDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var var_ast = PeekAST();
     int var_assign_insert_idx = var_ast.children.Count;
@@ -3592,12 +3613,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(is_auto_var && assign_exp == null)
         {
           AddSemanticError(vd_type, "invalid usage context");
-          return;
+          return false;
         }
         else if(is_auto_var && assign_exp?.GetText() == "=null")
         {
           AddSemanticError(vd_type, "invalid usage context");
-          return;
+          return false;
         }
 
         var ast = CommonDeclVar(
@@ -3614,7 +3635,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         );
         //checking if it's valid
         if(ast == null)
-          return;
+          return false;
         var_ast.AddChild(ast);
 
         is_decl = true;
@@ -3629,7 +3650,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(var_symb == null)
         {
           AddSemanticError(vd_name, "symbol '" + vd_name.GetText() + "' not resolved");
-          return;
+          return false;
         }
 
         var_ann = Annotate(vd_name);
@@ -3644,7 +3665,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(assign_exp == null)
         {
           AddSemanticError(var_exp, "assign expression expected");
-          return;
+          return false;
         }
 
         var chain = new ExpChainVarAccess(var_exp);
@@ -3655,7 +3676,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           ref curr_type,
           write: true
         ))
-          return;
+          return false;
 
         var_ann = Annotate(var_exp);
         var_ann.eval_type = curr_type;
@@ -3673,9 +3694,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           vdecls.Count,
           assign_exp
         ))
-          return;
+          return false;
       }
     }
+    return true;
   }
 
   static VariableSymbol DisableVar(SymbolsStorage members, VariableSymbol disabled_symbol)
