@@ -114,6 +114,7 @@ statement
   | varDeclaresOptAssign                       #StmDeclOptAssign
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
+  | funcCallExp assignExp                      #StmInvalidAssign
   | varAccessExp                               #StmVarUseless
   //func/method calls, variable and members access
   | exp chainExpItem+                          #StmComplexExp

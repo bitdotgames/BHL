@@ -3221,7 +3221,7 @@ public class TestVM : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "mismatched input",
+        "invalid assignment",
         new PlaceAssert(bhl, @"
         func int () { return 1 }() = 1
 -----------------------------------^"

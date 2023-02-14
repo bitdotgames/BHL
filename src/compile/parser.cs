@@ -659,6 +659,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitStmInvalidAssign(bhlParser.StmInvalidAssignContext ctx)
+  {
+    AddSemanticError(ctx.assignExp(), "invalid assignment");
+    return null;
+  }
+
   public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
   {
     CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
@@ -681,10 +687,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    )
   {
     var root_name = chain.RootName?.NAME();
-    //TODO: probably we should do this always without
-    //      'terminal name' logic below?
-    //if it's not 'terminal' let's visit deeper
-    if(root_name == null)
+
+    //NOTE: if it's not 'terminal' let's visit it deeper
+    if(root_name == null && chain.RootExp != null)
     {
       Visit(chain.RootExp);
       curr_type = Annotate(chain.RootExp).eval_type;

@@ -685,6 +685,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStmVarPostOp([NotNull] bhlParser.StmVarPostOpContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>StmInvalidAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStmInvalidAssign([NotNull] bhlParser.StmInvalidAssignContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmInvalidAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStmInvalidAssign([NotNull] bhlParser.StmInvalidAssignContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>StmVarUseless</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
