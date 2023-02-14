@@ -3806,9 +3806,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   bool CommonAssignToVar(
-    AST_Tree root,
-    //TODO: get rid of this a bit ugly argument
-    int root_first_idx,
+    AST_Tree ast_dest,
+    int ast_insert_idx,
     AnnotatedParseTree var_ann, 
     bool is_decl,
     VariableSymbol var_symb, //can be null
@@ -3843,16 +3842,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       subst_symb = DisableVar(symbols, var_symb);
     }
 
-    //NOTE: need to put expression nodes first
-    var stash = new AST_Interim();
-    PushAST(stash);
+    var assign_ast = new AST_Interim();
+    PushAST(assign_ast);
     Visit(assign_exp);
     PopAST();
 
     var assign_type = new MultiTypeProxy(Annotate(assign_exp).eval_type); 
 
-    for(int s=stash.children.Count;s-- > 0;)
-      root.children.Insert(root_first_idx, stash.children[s]);
+    for(int s=assign_ast.children.Count;s-- > 0;)
+      ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
 
     //NOTE: declaring disabled symbol again
     if(subst_symb != null)
