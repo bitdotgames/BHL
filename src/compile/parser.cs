@@ -625,11 +625,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   IType CommonVisitComplexExp(bhlParser.ExpContext ctx, bhlParser.ChainExpItemContext[] items)
   {
     IType curr_type = null;
-    var chain = new ExpChain(ctx, (ctx as bhlParser.ExpNameContext)?.name(), items);
-
-    //if it's not 'terminal' let's visit it
-    if(chain.RootName == null)
-      Visit(ctx);
+    var chain = new ExpChain(ctx, ctx, items);
 
     CommonProcExpChain(
       chain,
@@ -649,23 +645,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(eval_type != null && eval_type != Types.Void)
     {
-      //1. let's check if it's a func call
-      bool has_call_args = false;
-      foreach(var item in ctx.chainExpItem())
-      {
-        if(item.callArgs() != null)
-        {
-          has_call_args = true;
-          break;
-        }
-      }
-
-      //2. ...and if not let's add an error
-      if(!has_call_args)
-        AddSemanticError(ctx, "useless statement");
-
-      var eval_type_proxy = new MultiTypeProxy(eval_type);
       //let's pop unused returned value
+      var eval_type_proxy = new MultiTypeProxy(eval_type);
       for(int i=0;i<eval_type_proxy.Count;++i)
         PeekAST().AddChild(new AST_PopValue());
     }
@@ -699,13 +680,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool yielded = false
    )
   {
-    IScope scope = root_scope;
+    var root_name = chain.RootName?.NAME();
+    //if it's not 'terminal' let's visit deeper
+    if(root_name == null)
+      Visit(chain.RootExp);
 
-    int line = chain.RuleCtx.Start.Line;  
+    IScope scope = root_scope;
 
     PushAST(new AST_Interim());
 
-    var root_name = chain.RootName?.NAME();
     var curr_name = root_name;
 
     int chain_offset = 0;
@@ -714,7 +697,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
-      TryProcessClassBaseCall(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain, line);
+      TryProcessClassBaseCall(
+        ref curr_name, 
+        ref scope, 
+        ref name_symb, 
+        ref chain_offset, 
+        chain, 
+        root_name.Symbol.Line
+      );
 
       if(name_symb == null)
       {
@@ -723,7 +713,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return false;
       }
 
-      TryApplyNamespaceOffset(ref curr_name, ref scope, ref name_symb, ref chain_offset, chain);
+      TryApplyNamespaceOffset(
+        ref curr_name, 
+        ref scope, 
+        ref name_symb, 
+        ref chain_offset, 
+        chain
+      );
 
       if(name_symb is IType)
         curr_type = (IType)name_symb;
@@ -739,57 +735,91 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    if(chain != null)
+    for(int c=chain_offset;c<chain.Length;++c)
     {
-      for(int c=chain_offset;c<chain.Length;++c)
+      var cargs = chain.callArgs(c);
+      var macc = chain.memberAccess(c);
+      var arracc = chain.arrAccess(c);
+      bool is_last = c == chain.Length-1;
+
+      if(cargs != null)
       {
-        var cargs = chain.callArgs(c);
-        var macc = chain.memberAccess(c);
-        var arracc = chain.arrAccess(c);
-        bool is_last = c == chain.Length-1;
+        ProcCallChainItem(
+          scope, 
+          curr_name, 
+          cargs, 
+          null, 
+          ref curr_type, 
+          cargs.Start.Line, 
+          write: false, 
+          is_root: c == chain_offset
+        );
+        curr_name = null;
+      }
+      else if(arracc != null)
+      {
+        ProcCallChainItem(
+          scope, 
+          curr_name, 
+          null, 
+          arracc, 
+          ref curr_type, 
+          arracc.Start.Line, 
+          write: write && is_last, 
+          is_root: c == chain_offset
+        );
+        curr_name = null;
+      }
+      else if(macc != null)
+      {
+        Symbol macc_name_symb = null;
+        if(curr_name != null)
+          macc_name_symb = ProcCallChainItem(
+            scope, 
+            curr_name, 
+            null, 
+            null, 
+            ref curr_type, 
+            macc.Start.Line, 
+            write: false, 
+            is_root: c == chain_offset
+          );
 
-        if(cargs != null)
+        scope = curr_type as IScope;
+        if(!(scope is IInstanceType) && !(scope is EnumSymbol))
         {
-          ProcCallChainItem(scope, curr_name, cargs, null, ref curr_type, line, write: false, is_root: c == chain_offset);
-          curr_name = null;
+          AddSemanticError(macc, "type doesn't support member access via '.'");
+          PopAST();
+          return false;
         }
-        else if(arracc != null)
+
+        if(!(macc_name_symb is ClassSymbol) && 
+            scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
+            macc_fs.attribs.HasFlag(FuncAttrib.Static))
         {
-          ProcCallChainItem(scope, curr_name, null, arracc, ref curr_type, line, write: write && is_last, is_root: c == chain_offset);
-          curr_name = null;
+          AddSemanticError(macc, "calling static method on instance is forbidden");
+          PopAST();
+          return false;
         }
-        else if(macc != null)
-        {
-          Symbol macc_name_symb = null;
-          if(curr_name != null)
-            macc_name_symb = ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write: false, is_root: c == chain_offset);
 
-          scope = curr_type as IScope;
-          if(!(scope is IInstanceType) && !(scope is EnumSymbol))
-          {
-            AddSemanticError(macc, "type doesn't support member access via '.'");
-            PopAST();
-            return false;
-          }
-
-          if(!(macc_name_symb is ClassSymbol) && 
-              scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
-              macc_fs.attribs.HasFlag(FuncAttrib.Static))
-          {
-            AddSemanticError(macc, "calling static method on instance is forbidden");
-            PopAST();
-            return false;
-          }
-
-          curr_name = macc.NAME();
-        }
+        curr_name = macc.NAME();
       }
     }
 
     if(curr_name != null)
     {
       //checking the leftover of the call chain or a root call
-      ProcCallChainItem(scope, curr_name, null, null, ref curr_type, line, write, is_leftover: true, is_root: chain?.Length == 0);
+      ProcCallChainItem(
+        scope, 
+        curr_name, 
+        null, 
+        null, 
+        ref curr_type, 
+        curr_name.Symbol.Line, 
+        write, 
+        is_leftover: true, 
+        is_root: chain?.Length == 0
+      );
     }
 
     var chain_ast = PeekAST();
@@ -1913,7 +1943,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpName(bhlParser.ExpNameContext ctx)
   {
     IType curr_type = null;
-    var chain = new ExpChain(ctx, ctx.name(), null);
+    var chain = new ExpChain(ctx);
     CommonProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
@@ -1968,9 +1998,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     CheckCoroCallValidity(ctx);
 
     var chain = new ExpChainFuncCall(ctx);
-    //if it's not 'terminal' let's visit it
-    if(chain.RootName == null)
-      Visit(ctx.exp());
 
     IType curr_type = null;
     CommonProcExpChain(
@@ -2118,11 +2145,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       string post_op = ctx.operatorPostOpAssign().GetText();
       CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
-      var curr_type = Annotate(ctx.varAccessExp()).eval_type;
 
-      //check if there's no error
-     if(curr_type == null)
-       return false;
+      var chain = new ExpChainVarAccess(ctx.varAccessExp());
+      IType curr_type = null;
+      if(!CommonProcExpChain(
+        chain, 
+        chain.IsGlobalNs ? ns : curr_scope, 
+        ref curr_type,
+        write: true
+      ))
+        return false;
 
       //NOTE: strings concat special case
       if(curr_type == Types.String && post_op == "+=")
@@ -3393,16 +3425,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var chain = new ExpChainVarAccess(ctx);
 
-    //if it's not 'terminal' let's visit it deeper
-    if(ctx.exp() != null && chain.RootName == null)
-      Visit(ctx.exp());
-
     IType curr_type = null;
     CommonProcExpChain(
       chain, 
       chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type, 
-      write: true
+      ref curr_type
     );
     Annotate(ctx).eval_type = curr_type;
 
@@ -4576,6 +4603,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: a root context this chain is attached to
     ParserRuleContext RuleCtx { get; }
 
+    bhlParser.ExpContext RootExp { get; }
+
     //NOTE: can be null, if it's not a 'terminal' chain, e.g:
     // (hey())[1]()
     // (func() {})()
@@ -4593,30 +4622,41 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public class ExpChain : IExpChain 
   {
     ParserRuleContext ctx;
+
+    bhlParser.ExpContext root_exp;
     bhlParser.NameContext root_name;
     bhlParser.ChainExpItemContext[] items; 
 
     public ParserRuleContext RuleCtx { get { return ctx; } }
 
     public bhlParser.NameContext RootName { get { return root_name; } }
+    public bhlParser.ExpContext RootExp { get { return root_exp; } }
 
     public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
 
     public int Length { get { return items == null ? 0 : items.Length; } }
 
-    public ExpChain(ParserRuleContext ctx, bhlParser.NameContext root_name, bhlParser.ChainExpItemContext[] items)
+    public ExpChain(
+      ParserRuleContext ctx, 
+      bhlParser.ExpContext root_exp,
+      bhlParser.ChainExpItemContext[] items
+    )
     {
       this.ctx = ctx;
-      this.root_name = root_name;
+      this.root_exp = root_exp;
+
+      if(root_exp is bhlParser.ExpNameContext nexp)
+        this.root_name = nexp.name();
+
       this.items = items;
     }
 
     public ExpChain(bhlParser.ExpChainContext exp)
-      : this(exp, (exp.exp() as bhlParser.ExpNameContext)?.name(), exp.chainExpItem())
+      : this(exp, exp.exp(), exp.chainExpItem())
     {}
 
     public ExpChain(bhlParser.ExpNameContext exp)
-      : this(exp, exp.name(), null)
+      : this(exp, exp, null)
     {}
 
     public static ExpChain Make(bhlParser.ExpContext ctx)
@@ -4658,6 +4698,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ParserRuleContext RuleCtx { get { return ctx; } }
 
+    public bhlParser.ExpContext RootExp { get { return exp_chain.RootExp; } }
+
     public bhlParser.NameContext RootName { get { return exp_chain.RootName; } }
 
     public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
@@ -4667,7 +4709,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
     {
       this.ctx = ctx;
-      exp_chain = ExpChain.Make(ctx.exp());
+      exp_chain = new ExpChain(ctx, ctx.exp(), null);
       fn_call = ctx.callArgs();
     }
 
@@ -4717,6 +4759,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       } 
     }
 
+    public bhlParser.ExpContext RootExp { get { return exp_chain.RootExp; } }
+
     public bhlParser.NameContext RootName { 
       get { 
         return ctx.name() != null ? ctx.name() : exp_chain.RootName; 
@@ -4734,7 +4778,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
       this.ctx = ctx;
-      exp_chain = ExpChain.Make(ctx.exp());
+      exp_chain = new ExpChain(ctx, ctx.exp(), null);
       member_ctx = ctx.memberAccess();
       arr_ctx = ctx.arrAccess();
     }
