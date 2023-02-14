@@ -1649,12 +1649,12 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, null, show_parse_tree: true);
+        Compile(bhl);
       },
-      @"mismatched input",
+      @"no viable alternative",
       new PlaceAssert(bhl, @"
       ().foo
-------^"
+-------^"
       )
     );
   }
@@ -1707,10 +1707,10 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input",
+      "no viable alternative at input",
       new PlaceAssert(bhl, @"
       ()
-------^"
+-------^"
       )
     );
   }
