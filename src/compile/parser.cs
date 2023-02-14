@@ -3721,7 +3721,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     VariableSymbol vd_symb;
-    var ast = CommonDeclVar(
+    var decl_ast = CommonDeclVar(
       curr_scope, 
       name, 
       ctx.type(), 
@@ -3731,8 +3731,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       symb: out vd_symb
     );
     if(exp_ast != null)
-      ast.AddChild(exp_ast);
-    PeekAST().AddChild(ast);
+      decl_ast.AddChild(exp_ast);
+    PeekAST().AddChild(decl_ast);
 
     if(assign_exp != null && !is_null_ref)
       types.CheckAssign(Annotate(name), Annotate(assign_exp), errors);
