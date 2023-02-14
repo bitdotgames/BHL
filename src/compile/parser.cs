@@ -2614,6 +2614,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         root_first_idx,
         Annotate(vd.NAME()),
         is_decl: true, 
+        var_symb: vd_symb,
         var_idx: 0,
         vars_num: 1, 
         assign_exp: ret_val.varDeclareAssign().assignExp()
@@ -3557,16 +3558,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     for(int i=0;i<vdecls.Count;++i)
     {
-      bool is_decl = false;
-      bool is_auto_var = false;
-
+      VariableSymbol var_symb = null;
       AnnotatedParseTree var_ann = null;
+      bool is_decl = false;
 
       //check if we declare a var or use an existing one
       if(vdecls.TypeAt(i) != null)
       {
         var vd_type = vdecls.TypeAt(i);
-        is_auto_var = vd_type.GetText() == "var";
+        bool is_auto_var = vd_type.GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
         {
@@ -3579,7 +3579,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        VariableSymbol vd_symb;
         var ast = CommonDeclVar(
           curr_scope, 
           vdecls.LocalNameAt(i), 
@@ -3590,7 +3589,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           is_ref: false, 
           func_arg: false, 
           write: assign_exp != null,
-          symb: out vd_symb
+          symb: out var_symb
         );
         //checking if it's valid
         if(ast == null)
@@ -3599,23 +3598,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         is_decl = true;
 
-        var_ann = vd_symb.parsed;
-        var_ann.eval_type = vd_symb.type.Get();
+        var_ann = var_symb.parsed;
+        var_ann.eval_type = var_symb.type.Get();
       }
       else if(vdecls.LocalNameAt(i) != null)
       {
         var vd_name = vdecls.LocalNameAt(i);
-        var vd_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
-        if(vd_symb == null)
+        var_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
+        if(var_symb == null)
         {
           AddSemanticError(vd_name, "symbol '" + vd_name.GetText() + "' not resolved");
           return;
         }
 
         var_ann = Annotate(vd_name);
-        var_ann.eval_type = vd_symb.type.Get();
+        var_ann.eval_type = var_symb.type.Get();
 
-        var ast = new AST_Call(EnumCall.VARW, start_line, vd_symb);
+        var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
         root.AddChild(ast);
       }
       else if(vdecls.VarAccessAt(i) != null)
@@ -3653,6 +3652,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           root_first_idx,
           var_ann,
           is_decl,
+          var_symb,
           i,
           vdecls.Count,
           assign_exp
@@ -3811,13 +3811,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     int root_first_idx,
     AnnotatedParseTree var_ann, 
     bool is_decl,
+    VariableSymbol var_symb, //can be null
     int var_idx,
     int vars_num,
     bhlParser.AssignExpContext assign_exp
   )
   {
-    var var_type = var_ann.eval_type;
-
     //NOTE: look forward at expression and push json type 
     //      if it's a json-init-expression
     bool pop_json_type = false;
@@ -3832,7 +3831,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       pop_json_type = true;
 
-      PushJsonType(var_type);
+      PushJsonType(var_ann.eval_type);
     }
 
     //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
@@ -3851,6 +3850,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushAST(stash);
     Visit(assign_exp);
     PopAST();
+
+    var assign_type = new MultiTypeProxy(Annotate(assign_exp).eval_type); 
+
     for(int s=stash.children.Count;s-- > 0;)
       root.children.Insert(root_first_idx, stash.children[s]);
 
@@ -3864,7 +3866,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pop_json_type)
       PopJsonType();
 
-    var assign_type = new MultiTypeProxy(Annotate(assign_exp).eval_type); 
     if(vars_num > 1)
     {
       if(assign_type.Count == 1)
