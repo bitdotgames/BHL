@@ -801,7 +801,7 @@ public class Types : INamedResolver
     return op_func.GetReturnType();
   }
 
-  public IType CheckRtlBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors) 
+  public IType CheckRelationalBinOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors) 
   {
     if(!IsNumeric(lhs.eval_type))
     {

@@ -631,7 +631,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(chain.RootName == null)
       Visit(ctx);
 
-    ProcExpChain(
+    CommonProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type
@@ -664,14 +664,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(!has_call_args)
         AddSemanticError(ctx, "useless statement");
 
+      var eval_type_proxy = new MultiTypeProxy(eval_type);
       //let's pop unused returned value
-      var tuple = eval_type as TupleType;
-      if(tuple != null)
-      {
-        for(int i=0;i<tuple.Count;++i)
-          PeekAST().AddChild(new AST_PopValue());
-      }
-      else
+      for(int i=0;i<eval_type_proxy.Count;++i)
         PeekAST().AddChild(new AST_PopValue());
     }
     return null;
@@ -696,7 +691,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   //TODO: the method below should be heavily refactored some day
-  bool ProcExpChain(
+  bool CommonProcExpChain(
     IExpChain chain, 
     IScope root_scope,
     ref IType curr_type, 
@@ -1670,7 +1665,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var interim = new AST_Interim();
       interim.AddChild(ast);
       PushAST(interim);
-      ProcExpChain(
+      CommonProcExpChain(
         new ExpChain(funcLambda, null, chain_items), 
         curr_scope, 
         ref curr_type
@@ -1919,7 +1914,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     IType curr_type = null;
     var chain = new ExpChain(ctx, ctx.name(), null);
-    ProcExpChain(
+    CommonProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type
@@ -1978,7 +1973,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Visit(ctx.exp());
 
     IType curr_type = null;
-    ProcExpChain(
+    CommonProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
       ref curr_type, 
@@ -2123,16 +2118,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       string post_op = ctx.operatorPostOpAssign().GetText();
       CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
-      var chain = new ExpChainVarAccess(ctx.varAccessExp());
+      var curr_type = Annotate(ctx.varAccessExp()).eval_type;
 
-       IType curr_type = null;
-       if(!ProcExpChain(
-        chain, 
-        chain.IsGlobalNs ? ns : curr_scope, 
-        ref curr_type, 
-        write: true
-       ))
-         return false;
+      //check if there's no error
+     if(curr_type == null)
+       return false;
 
       //NOTE: strings concat special case
       if(curr_type == Types.String && post_op == "+=")
@@ -2215,15 +2205,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return false;
     }
 
-    var chain = new ExpChainVarAccess(ctx.varAccessExp()); 
-     IType curr_type = null;
-     if(!ProcExpChain(
-        chain,
-        chain.IsGlobalNs ? ns : curr_scope, 
-        ref curr_type, 
-        write: true
-      ))
-       return false;
+    var curr_type = Annotate(ctx.varAccessExp()).eval_type;
+    //check if there's no error
+    if(curr_type == null)
+      return false;
 
     if(!Types.IsNumeric(curr_type))
     {
@@ -2313,7 +2298,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       op_type == EnumBinaryOp.LT || 
       op_type == EnumBinaryOp.LTE
     )
-      Annotate(ctx).eval_type = types.CheckRtlBinOp(ann_lhs, ann_rhs, errors);
+      Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
       Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
 
@@ -3404,6 +3389,26 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitVarAccessExp(bhlParser.VarAccessExpContext ctx)
+  {
+    var chain = new ExpChainVarAccess(ctx);
+
+    //if it's not 'terminal' let's visit it deeper
+    if(ctx.exp() != null && chain.RootName == null)
+      Visit(ctx.exp());
+
+    IType curr_type = null;
+    CommonProcExpChain(
+      chain, 
+      chain.IsGlobalNs ? ns : curr_scope, 
+      ref curr_type, 
+      write: true
+    );
+    Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
+
   void CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     CommonDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
@@ -3605,23 +3610,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        var chain = new ExpChainVarAccess(var_exp);
-
-        //if it's not 'terminal' let's visit it
-        if(chain.RootName == null)
-          Visit(var_exp.exp());
-
-        IType var_type = null;
-        if(!ProcExpChain(
-          chain,
-          chain.IsGlobalNs ? ns : curr_scope, 
-          ref var_type,
-          write: true
-        ))
-          return;
-
+        Visit(var_exp);
         var_ann = Annotate(var_exp);
-        var_ann.eval_type = var_type;
+        //check if there's no error
+        if(var_ann.eval_type == null)
+          return;
       }
 
       if(assign_exp != null)
