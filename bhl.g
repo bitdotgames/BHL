@@ -53,21 +53,28 @@ name
   : GLOBAL? NAME
   ;
 
+namedChain
+  : name chainExpItem*
+  ;
+  
+parenChain
+  : '(' exp ')' chainExpItem+
+  ;
+
 exp
   : 'null'                                   #ExpLiteralNull
   | 'false'                                  #ExpLiteralFalse
   | 'true'                                   #ExpLiteralTrue
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
-  | 'yield' funcCallExp                      #ExpYieldCall
-  | name                                     #ExpName
-  //NOTE: complexExp 'flattened' to avoid left recursion
-  | exp chainExpItem+                        #ExpChain
+  | namedChain                               #ExpNamedChain
+  | parenChain                               #ExpParenChain
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
   | funcLambda                               #ExpLambda
   | 'yield' funcLambda                       #ExpYieldLambda
+  | 'yield' funcCallExp                      #ExpYieldCall
   | '(' type ')' exp                         #ExpTypeCast
   | exp 'as' type                            #ExpAs
   | exp 'is' type                            #ExpIs
@@ -116,8 +123,8 @@ statement
   | varPostOp                                  #StmVarPostOp
   | funcCallExp assignExp                      #StmInvalidAssign
   | varAccessExp                               #StmVarUseless
-  //func/method calls, variable and members access
-  | exp chainExpItem+                          #StmComplexExp
+  | namedChain                                 #StmNameChain
+  | parenChain                                 #StmParenChain
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
