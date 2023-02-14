@@ -4835,7 +4835,6 @@ public class TestVM : BHL_TestBase
   public void TestForUseExternalVar()
   {
     string bhl = @"
-
     func test() 
     {
       int i

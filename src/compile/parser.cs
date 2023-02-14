@@ -828,7 +828,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         curr_name.Symbol.Line, 
         write, 
         is_leftover: true, 
-        is_root: chain?.Length == 0
+        is_root: chain.Length == 0
       );
     }
 
@@ -4200,11 +4200,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(for_post_iter != null)
     {
       PushAST(block);
-      
       PeekAST().AddChild(new AST_Continue(jump_marker: true));
-
       CommmonProcessForPostStatements(for_post_iter, ctx.Start.Line);
-
       PopAST();
     }
     PopAST();
@@ -4802,7 +4799,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       } 
     }
 
-    public int Length { get { return exp_chain.Length + 1; } }
+    public int Length { get { return ctx.name() != null ? 0 : exp_chain.Length + 1; } }
 
     public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
     {
