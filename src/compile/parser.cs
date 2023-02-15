@@ -4733,11 +4733,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     void _Add(ParserRuleContext ctx)
     {
       //let's make a copy
+      //TODO: a hybrid approach can be used instead
       if(items_lst == null)
       {
         items_lst = new List<ParserRuleContext>();
-        foreach(var item in items_arr)
-          items_lst.Add(_Get(item));
+        if(items_arr != null)
+        {
+          foreach(var item in items_arr)
+            items_lst.Add(_Get(item));
+        }
       }
       items_lst.Add(ctx);
     }
