@@ -4727,7 +4727,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(items_lst != null)
         return items_lst[i];
 
-      var item = items_arr[i];
+      return _Get(items_arr[i]);
+    }
+
+    void _Add(ParserRuleContext ctx)
+    {
+      //let's make a copy
+      if(items_lst == null)
+      {
+        items_lst = new List<ParserRuleContext>();
+        foreach(var item in items_arr)
+          items_lst.Add(_Get(item));
+      }
+      items_lst.Add(ctx);
+    }
+
+    static ParserRuleContext _Get(bhlParser.ChainExpItemContext item)
+    {
       if(item.callArgs() != null)
         return item.callArgs();
       else if(item.memberAccess() != null)
@@ -4736,21 +4752,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return item.arrAccess();
     }
 
-    void _Add(ParserRuleContext ctx)
-    {
-      if(items_lst == null)
-        items_lst = new List<ParserRuleContext>();
-      items_lst.Add(ctx);
-    }
-
     public void Add(bhlParser.ChainExpItemContext item)
     {
-      if(item.callArgs() != null)
-        Add(item.callArgs());
-      else if(item.memberAccess() != null)
-        Add(item.memberAccess());
-      else
-        Add(item.arrAccess());
+      _Add(_Get(item));
     }
 
     public void Add(bhlParser.ChainExpItemContext[] items)
