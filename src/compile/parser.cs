@@ -3619,12 +3619,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(vaodecls[i].varDeclare() != null)
           return vaodecls[i].varDeclare().NAME();
-        else if(vaodecls[i].varAccessExp().chain().namedChain().name() != null && 
-                vaodecls[i].varAccessExp().chain().namedChain().name().GLOBAL() == null)
-          return vaodecls[i].varAccessExp().chain().namedChain().name().NAME();
+        else if(vaodecls[i].varAccessExp().name() != null && 
+                vaodecls[i].varAccessExp().name().GLOBAL() == null)
+          return vaodecls[i].varAccessExp().name().NAME();
       }
       else if(vaccs != null)
+      {
+        if(vaccs[i].name() != null && vaccs[i].name().GLOBAL() == null)
+          return vaccs[i].name().NAME();
         return null;
+      }
       
       return null;
     }
@@ -4706,7 +4710,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public int Count {
       get {
-        return items_lst != null ? items_lst.Count : items_arr.Length;
+        if(items_lst != null)
+          return items_lst.Count;
+        return items_arr == null ? 0 : items_arr.Length;
       }
     }
 
@@ -4818,12 +4824,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.lambda_call = null;
       items = new ExpChainItems();
 
-      Init(ctx, ctx.chain());
+      if(ctx.chain() != null)
+      {
+        Init(ctx, ctx.chain());
 
-      if(ctx.memberAccess() != null)
-        items.Add(ctx.memberAccess());
+        if(ctx.memberAccess() != null)
+          items.Add(ctx.memberAccess());
+        else
+          items.Add(ctx.arrAccess());
+      }
       else
-        items.Add(ctx.arrAccess());
+        name_ctx = ctx.name();
     }
 
     void Init(ParserRuleContext ctx, bhlParser.ChainContext chain)

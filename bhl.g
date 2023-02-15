@@ -177,7 +177,8 @@ funcCallExp
 
 //NOTE: makes sure it's a variable access
 varAccessExp
-  : chain (memberAccess | arrAccess)
+  : name
+  | chain (memberAccess | arrAccess)
   ;
 
 arrAccess
