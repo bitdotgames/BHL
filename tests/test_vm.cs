@@ -7340,7 +7340,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'func bool(int)' and 'func void(int)'",
       new PlaceAssert(bhl, @"
       func bool(int) ptr = foo
--------------------------^"
+---------------------^"
       )
     );
   }
@@ -7364,7 +7364,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'func void(float)' and 'func void(int)'",
       new PlaceAssert(bhl, @"
       func(float) ptr = foo
-----------------------^"
+------------------^"
       )
     );
   }
@@ -7441,7 +7441,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'func void(int,float)' and 'func void(int,ref float)'",
       new PlaceAssert(bhl, @"
       func(int, float) ptr = foo
----------------------------^"
+-----------------------^"
       )
     );
   }
@@ -7484,7 +7484,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'func void(int,string,ref bool)' and 'func void(int,string,refbool)'",
       new PlaceAssert(bhl, @"
       func(int,string,ref bool) ptr = foo
-------------------------------------^"
+--------------------------------^"
      )
     );
   }
