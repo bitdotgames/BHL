@@ -1092,7 +1092,7 @@ public class TestVM : BHL_TestBase
 
     func test() 
     {
-      func bool() { foo() }
+      func bool() { foo() }()
     }
     ";
 
@@ -1102,7 +1102,7 @@ public class TestVM : BHL_TestBase
       },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-      func bool() { foo() }
+      func bool() { foo() }()
 -----------^"
       )
     );

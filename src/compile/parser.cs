@@ -637,12 +637,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(exp);
 
     IType curr_type = null;
-    CommonProcExpChain(
-      chain,
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type,
-      yielded: yielded
-    );
+    CommonProcExpChain(chain, ref curr_type, yielded: yielded);
 
     if(curr_type != null && curr_type != Types.Void)
     {
@@ -685,7 +680,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     return CommonProcExpChain(
       chain,
-      chain.IsGlobalNs ? ns : curr_scope,
       ref curr_type,
       write,
       yielded
@@ -694,12 +688,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool CommonProcExpChain(
     ExpChain chain,
-    IScope root_scope,
     ref IType curr_type, 
     bool write = false,
-    bool yielded = false
+    bool yielded = false,
+    IScope root_scope = null
    )
   {
+    if(root_scope == null)
+      root_scope = chain.IsGlobalNs ? ns : curr_scope;
+
     if(chain.lambda_call != null)
     {
       if(!CommonVisitLambdaCall(
@@ -2221,12 +2218,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       var chain = new ExpChain(ctx.varAccessExp());
       IType curr_type = null;
-      if(!CommonProcExpChain(
-        chain, 
-        chain.IsGlobalNs ? ns : curr_scope, 
-        ref curr_type,
-        write: true
-      ))
+      if(!CommonProcExpChain(chain, ref curr_type, write: true))
         return false;
 
       //NOTE: strings concat special case
@@ -3504,11 +3496,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(ctx);
 
     IType curr_type = null;
-    CommonProcExpChain(
-      chain, 
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type
-    );
+    CommonProcExpChain(chain, ref curr_type);
     Annotate(ctx).eval_type = curr_type;
 
     return null;
@@ -3738,12 +3726,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var chain = new ExpChain(var_exp);
 
         IType curr_type = null;
-        if(!CommonProcExpChain(
-          chain, 
-          chain.IsGlobalNs ? ns : curr_scope, 
-          ref curr_type,
-          write: true
-        ))
+        if(!CommonProcExpChain(chain, ref curr_type, write: true))
           return false;
 
         var_ann = Annotate(var_exp);
