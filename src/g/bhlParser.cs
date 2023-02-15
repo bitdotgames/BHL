@@ -1829,57 +1829,57 @@ public partial class bhlParser : Parser {
 				break;
 			case 6:
 				{
-				_localctx = new ExpChainContext(_localctx);
+				_localctx = new ExpTypeCastContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 302; chain();
+				State = 302; Match(T__4);
+				State = 303; type();
+				State = 304; Match(T__5);
+				State = 305; exp(18);
 				}
 				break;
 			case 7:
 				{
-				_localctx = new ExpTypeofContext(_localctx);
+				_localctx = new ExpChainContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 303; Match(T__9);
-				State = 304; Match(T__4);
-				State = 305; type();
-				State = 306; Match(T__5);
+				State = 307; chain();
 				}
 				break;
 			case 8:
 				{
-				_localctx = new ExpJsonObjContext(_localctx);
+				_localctx = new ExpTypeofContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 308; jsonObject();
+				State = 308; Match(T__9);
+				State = 309; Match(T__4);
+				State = 310; type();
+				State = 311; Match(T__5);
 				}
 				break;
 			case 9:
 				{
-				_localctx = new ExpJsonArrContext(_localctx);
+				_localctx = new ExpJsonObjContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 309; jsonArray();
+				State = 313; jsonObject();
 				}
 				break;
 			case 10:
 				{
-				_localctx = new ExpYieldCallContext(_localctx);
+				_localctx = new ExpJsonArrContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 310; Match(T__10);
-				State = 311; funcCallExp();
+				State = 314; jsonArray();
 				}
 				break;
 			case 11:
 				{
-				_localctx = new ExpTypeCastContext(_localctx);
+				_localctx = new ExpYieldCallContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 312; Match(T__4);
-				State = 313; type();
-				State = 314; Match(T__5);
-				State = 315; exp(13);
+				State = 315; Match(T__10);
+				State = 316; funcCallExp();
 				}
 				break;
 			case 12:
@@ -7522,25 +7522,25 @@ public partial class bhlParser : Parser {
 		'\x2', '\x12B', '\x144', '\a', '\t', '\x2', '\x2', '\x12C', '\x144', '\a', 
 		'\n', '\x2', '\x2', '\x12D', '\x144', '\a', '\v', '\x2', '\x2', '\x12E', 
 		'\x144', '\x5', '\xB0', 'Y', '\x2', '\x12F', '\x144', '\x5', '\xB2', 'Z', 
-		'\x2', '\x130', '\x144', '\x5', '\"', '\x12', '\x2', '\x131', '\x132', 
-		'\a', '\f', '\x2', '\x2', '\x132', '\x133', '\a', '\a', '\x2', '\x2', 
-		'\x133', '\x134', '\x5', '\x10', '\t', '\x2', '\x134', '\x135', '\a', 
-		'\b', '\x2', '\x2', '\x135', '\x144', '\x3', '\x2', '\x2', '\x2', '\x136', 
-		'\x144', '\x5', '\xB4', '[', '\x2', '\x137', '\x144', '\x5', '\xBA', '^', 
-		'\x2', '\x138', '\x139', '\a', '\r', '\x2', '\x2', '\x139', '\x144', '\x5', 
-		'<', '\x1F', '\x2', '\x13A', '\x13B', '\a', '\a', '\x2', '\x2', '\x13B', 
-		'\x13C', '\x5', '\x10', '\t', '\x2', '\x13C', '\x13D', '\a', '\b', '\x2', 
-		'\x2', '\x13D', '\x13E', '\x5', '$', '\x13', '\xF', '\x13E', '\x144', 
-		'\x3', '\x2', '\x2', '\x2', '\x13F', '\x140', '\x5', '\xAC', 'W', '\x2', 
-		'\x140', '\x141', '\x5', '$', '\x13', '\f', '\x141', '\x144', '\x3', '\x2', 
-		'\x2', '\x2', '\x142', '\x144', '\x5', '(', '\x15', '\x2', '\x143', '\x12A', 
+		'\x2', '\x130', '\x131', '\a', '\a', '\x2', '\x2', '\x131', '\x132', '\x5', 
+		'\x10', '\t', '\x2', '\x132', '\x133', '\a', '\b', '\x2', '\x2', '\x133', 
+		'\x134', '\x5', '$', '\x13', '\x14', '\x134', '\x144', '\x3', '\x2', '\x2', 
+		'\x2', '\x135', '\x144', '\x5', '\"', '\x12', '\x2', '\x136', '\x137', 
+		'\a', '\f', '\x2', '\x2', '\x137', '\x138', '\a', '\a', '\x2', '\x2', 
+		'\x138', '\x139', '\x5', '\x10', '\t', '\x2', '\x139', '\x13A', '\a', 
+		'\b', '\x2', '\x2', '\x13A', '\x144', '\x3', '\x2', '\x2', '\x2', '\x13B', 
+		'\x144', '\x5', '\xB4', '[', '\x2', '\x13C', '\x144', '\x5', '\xBA', '^', 
+		'\x2', '\x13D', '\x13E', '\a', '\r', '\x2', '\x2', '\x13E', '\x144', '\x5', 
+		'<', '\x1F', '\x2', '\x13F', '\x140', '\x5', '\xAC', 'W', '\x2', '\x140', 
+		'\x141', '\x5', '$', '\x13', '\f', '\x141', '\x144', '\x3', '\x2', '\x2', 
+		'\x2', '\x142', '\x144', '\x5', '(', '\x15', '\x2', '\x143', '\x12A', 
 		'\x3', '\x2', '\x2', '\x2', '\x143', '\x12C', '\x3', '\x2', '\x2', '\x2', 
 		'\x143', '\x12D', '\x3', '\x2', '\x2', '\x2', '\x143', '\x12E', '\x3', 
 		'\x2', '\x2', '\x2', '\x143', '\x12F', '\x3', '\x2', '\x2', '\x2', '\x143', 
-		'\x130', '\x3', '\x2', '\x2', '\x2', '\x143', '\x131', '\x3', '\x2', '\x2', 
-		'\x2', '\x143', '\x136', '\x3', '\x2', '\x2', '\x2', '\x143', '\x137', 
-		'\x3', '\x2', '\x2', '\x2', '\x143', '\x138', '\x3', '\x2', '\x2', '\x2', 
-		'\x143', '\x13A', '\x3', '\x2', '\x2', '\x2', '\x143', '\x13F', '\x3', 
+		'\x130', '\x3', '\x2', '\x2', '\x2', '\x143', '\x135', '\x3', '\x2', '\x2', 
+		'\x2', '\x143', '\x136', '\x3', '\x2', '\x2', '\x2', '\x143', '\x13B', 
+		'\x3', '\x2', '\x2', '\x2', '\x143', '\x13C', '\x3', '\x2', '\x2', '\x2', 
+		'\x143', '\x13D', '\x3', '\x2', '\x2', '\x2', '\x143', '\x13F', '\x3', 
 		'\x2', '\x2', '\x2', '\x143', '\x142', '\x3', '\x2', '\x2', '\x2', '\x144', 
 		'\x16B', '\x3', '\x2', '\x2', '\x2', '\x145', '\x146', '\f', '\v', '\x2', 
 		'\x2', '\x146', '\x147', '\x5', '\xA2', 'R', '\x2', '\x147', '\x148', 

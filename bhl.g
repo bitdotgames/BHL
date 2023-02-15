@@ -81,12 +81,12 @@ exp
   | 'true'                                   #ExpLiteralTrue
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
+  | '(' type ')' exp                         #ExpTypeCast
   | chain                                    #ExpChain
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
   | 'yield' funcCallExp                      #ExpYieldCall
-  | '(' type ')' exp                         #ExpTypeCast
   | exp 'as' type                            #ExpAs
   | exp 'is' type                            #ExpIs
   | operatorUnary exp                        #ExpUnary

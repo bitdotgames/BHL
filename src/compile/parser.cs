@@ -4730,7 +4730,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return item.arrAccess();
     }
 
-    void Add(ParserRuleContext ctx)
+    void _Add(ParserRuleContext ctx)
     {
       if(items_lst == null)
         items_lst = new List<ParserRuleContext>();
@@ -4755,17 +4755,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public void Add(bhlParser.MemberAccessContext macc)
     {
-      Add(macc);
+      _Add(macc);
     }
 
     public void Add(bhlParser.CallArgsContext cargs)
     {
-      Add(cargs);
+      _Add(cargs);
     }
 
     public void Add(bhlParser.ArrAccessContext acc)
     {
-      Add(acc);
+      _Add(acc);
     }
   }
 
@@ -4777,7 +4777,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bhlParser.LambdaCallContext lambda_call;
     public ExpChainItems items; 
 
-    public bool IsGlobalNs { get { return name_ctx.GLOBAL() != null; } }
+    public bool IsGlobalNs { get { return name_ctx?.GLOBAL() != null; } }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
