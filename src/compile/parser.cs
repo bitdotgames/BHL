@@ -1649,7 +1649,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    return tp;
   }
 
-  void CommonVisitLambda(ParserRuleContext ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
+  IType CommonVisitLambda(ParserRuleContext ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
   {
     if(yielded)
       CheckCoroCallValidity(ctx);
@@ -1716,6 +1716,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
       PeekAST().AddChild(ast);
+
+    return curr_type;
   }
   
   public override object VisitCallArg(bhlParser.CallArgContext ctx)

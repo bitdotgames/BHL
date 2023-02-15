@@ -58,12 +58,21 @@ namedChain
   ;
   
 parenChain
-  : '(' exp ')' chainExpItem+
+  : '(' exp ')' chainExpItem*
   ;
 
+lambdaCall
+  : funcLambda callArgs
+  ;
+  
+lambdaChain
+  : lambdaCall chainExpItem*
+  ;
+  
 chain
   : namedChain
   | parenChain
+  | lambdaChain
   ;
 
 exp
@@ -90,7 +99,6 @@ exp
   | exp operatorOr exp                       #ExpOr
   | exp ternaryIfExp                         #ExpTernaryIf
   | newExp                                   #ExpNew
-  | '(' exp ')'                              #ExpParen
   ;
 
 ternaryIfExp
@@ -160,14 +168,15 @@ chainExpItem
 
 //NOTE: makes sure it's a func call
 funcCallExp
-  : funcLambda callArgs
-  | exp callArgs
+  : chain callArgs
+  //need this special case since lambdaCall already contains
+  //callArgs
+  | lambdaCall
   ;
 
 //NOTE: makes sure it's a variable access
 varAccessExp
-  : name 
-  | exp (memberAccess | arrAccess)
+  : chain (memberAccess | arrAccess)
   ;
 
 arrAccess
@@ -290,7 +299,7 @@ interfaceFuncDecl
   ;
 
 funcLambda
-  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock chainExpItem*
+  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock
   ;
 
 refType
@@ -516,5 +525,6 @@ DELIMITED_COMMENT
 WS
   : [ \r\t\u000C\n]+ -> channel(HIDDEN)
   ;
+
 
 

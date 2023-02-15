@@ -171,6 +171,26 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitParenChain([NotNull] bhlParser.ParenChainContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.lambdaCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterLambdaCall([NotNull] bhlParser.LambdaCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.lambdaCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitLambdaCall([NotNull] bhlParser.LambdaCallContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.lambdaChain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterLambdaChain([NotNull] bhlParser.LambdaChainContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.lambdaChain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitLambdaChain([NotNull] bhlParser.LambdaChainContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.chain"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -456,18 +476,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpParen</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpParen([NotNull] bhlParser.ExpParenContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpParen</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpParen([NotNull] bhlParser.ExpParenContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.ternaryIfExp"/>.
 	/// </summary>
