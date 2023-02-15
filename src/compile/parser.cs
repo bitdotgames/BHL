@@ -622,31 +622,40 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-	IType CommonVisitFuncCallExp(bhlParser.FuncCallExpContext exp)
+	IType CommonVisitFuncCallExp(
+    ParserRuleContext ctx,
+    bhlParser.FuncCallExpContext exp,
+    bool yielded
+  )
   {
-    var chain = new ExpChainFuncCall(exp);
+    if(yielded)
+      CheckCoroCallValidity(ctx);
+
+    var chain = new ExpChain(exp);
 
     IType curr_type = null;
     CommonProcExpChain(
       chain,
       chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type
+      ref curr_type,
+      yielded: yielded
     );
 
-    return curr_type;
-  }
-
-  public override object VisitStmCallExp(bhlParser.StmCallExpContext ctx)
-  {
-    var eval_type = CommonVisitFuncCallExp(ctx.funcCallExp());
-
-    if(eval_type != null && eval_type != Types.Void)
+    if(curr_type != null && curr_type != Types.Void)
     {
       //let's pop unused returned value
       var eval_type_proxy = new MultiTypeProxy(eval_type);
       for(int i=0;i<eval_type_proxy.Count;++i)
         PeekAST().AddChild(new AST_PopValue());
     }
+
+    return curr_type;
+  }
+
+  public override object VisitStmCallExp(bhlParser.StmCallExpContext ctx)
+  {
+    CommonVisitFuncCallExp(ctx, ctx.funcCallExp());
+
     return null;
   }
 
@@ -662,58 +671,31 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
-  {
-    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
-    return null;
-  }
+  //public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
+  //{
+  //  CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
+  //  return null;
+  //}
 
-  public override object VisitStmYieldLambdaCall(bhlParser.StmYieldLambdaCallContext ctx)
+  public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    CommonVisitLambda(ctx, ctx.funcLambda(), yielded: true);
+    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
     return null;
   }
 
   bool CommonProcExpChain(
     ParserRuleContext ctx,
-    bhlParser.ChainContext chain,
+    bhlParser.ChainContext chain_ctx,
     ref IType curr_type,
     bool write = false,
     bool yielded = false
   )
   {
-    bhlParser.NameContext name_ctx = null;
-    bhlParser.ExpContext exp_ctx = null;
-    bhlParser.LambdaCallContext lambda_call = null;
-
-    IExpChainItems chain_items = null;
-
-    if(chain.namedChain() != null)
-    {
-      name_ctx = chain.namedChain().name();
-      chain_items = new ExpChainItemsFixed(chain.namedChain().chainExpItem());
-    }
-    else if(chain.parenChain() != null)
-    {
-      exp_ctx = chain.parenChain().exp();
-      chain_items = new ExpChainItemsFixed(chain.parenChain().chainExpItem());
-    }
-    else if(chain.lambdaChain() != null)
-    {
-      lambda_call = chain.lambdaChain().lambdaCall();
-      var _chain_items = new ExpChainItems();
-      _chain_items.Add(lambda_call.callArgs());
-      _chain_items.Add(chain.lambdaChain().chainExpItem());
-      chain_items = _chain_items;
-    }
+    var chain = new ExpChain(ctx, chain_ctx);
 
     return CommonProcExpChain(
-      ctx,
-      name_ctx,
-      exp_ctx,
-      lambda_call,
-      chain_items,
-      name_ctx?.GLOBAL() != null ? ns : curr_scope,
+      chain,
+      chain.IsGlobalNs ? ns : curr_scope,
       ref curr_type,
       write,
       yielded
@@ -721,23 +703,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   bool CommonProcExpChain(
-    ParserRuleContext ctx,
-    bhlParser.NameContext name_ctx, //can be null
-    bhlParser.ExpContext exp_ctx, //can be null
-    bhlParser.LambdaCallContext lambda_call, //can be null
-    IExpChainItems chain_items, 
+    ExpChain chain,
     IScope root_scope,
     ref IType curr_type, 
     bool write = false,
     bool yielded = false
    )
   {
-    if(lambda_call != null)
+    if(chain.lambda_call != null)
     {
       if(!CommonVisitLambdaCall(
-        ctx,
-        lambda_call,
-        chain_items,
+        chain.ctx,
+        chain.lambda_call,
+        chain.items,
         ref curr_type,
         write,
         yielded
@@ -746,13 +724,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
     {
-      var root_name = name_ctx?.NAME();
+      var root_name = chain.name_ctx?.NAME();
 
       //NOTE: if it's not 'terminal' let's visit it deeper
-      if(exp_ctx != null)
+      if(chain.exp_ctx != null)
       {
-        Visit(exp_ctx);
-        curr_type = Annotate(exp_ctx).eval_type;
+        Visit(chain.exp_ctx);
+        curr_type = Annotate(chain.exp_ctx).eval_type;
       }
 
       IScope scope = root_scope;
@@ -772,7 +750,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           ref scope, 
           ref name_symb, 
           ref chain_offset, 
-          chain_items, 
+          chain.items, 
           root_name.Symbol.Line
         );
 
@@ -788,7 +766,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           ref scope, 
           ref name_symb, 
           ref chain_offset, 
-          chain_items
+          chain.items
         );
 
         if(name_symb is IType)
@@ -806,7 +784,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
 
       if(!CommonVisitChainItems(
-          chain_items, 
+          chain.items, 
           chain_offset,
           ref curr_name,
           ref scope,
@@ -830,7 +808,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           curr_name.Symbol.Line, 
           write, 
           is_leftover: true, 
-          is_root: chain_items.Count == 0
+          is_root: chain.items.Count == 0
         );
       }
 
@@ -838,8 +816,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopAST();
 
       ValidateChainCall(
-        ctx, 
-        chain_items, 
+        chain.ctx, 
+        chain.items, 
         0,
         chain_ast.children, 
         yielded
@@ -2103,10 +2081,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    var exp = ctx.funcCallExp();
-    CommonYieldFuncCall(ctx, exp);
-    Annotate(ctx).eval_type = Annotate(exp).eval_type;
-
+    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
     return null;
   }
 
@@ -2126,23 +2101,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     has_yield_calls.Add(curr_func);
-  }
-
-  void CommonYieldFuncCall(ParserRuleContext pctx, bhlParser.FuncCallExpContext ctx)
-  {
-    CheckCoroCallValidity(ctx);
-
-    var chain = new ExpChainFuncCall(ctx);
-
-    IType curr_type = null;
-    CommonProcExpChain(
-      chain,
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type, 
-      yielded: true
-    );
-
-    Annotate(ctx).eval_type = curr_type;
   }
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
@@ -4375,9 +4333,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitStmYieldFunc(bhlParser.StmYieldFuncContext ctx)
+  public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    CommonYieldFuncCall(ctx, ctx.funcCallExp());
+    CommonVisitFuncCallExp(
+      ctx, 
+      ctx.funcCallExp(),
+      yielded: true
+    );
 
     return null;
   }
@@ -4764,23 +4726,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast;
   }
 
-  public interface IExpChain
-  {
-    //NOTE: a root context this chain is attached to
-    ParserRuleContext RuleCtx { get; }
-
-    //NOTE: can be null, if it's not a 'terminal' chain, e.g:
-    // (hey())[1]()
-    // (func() {})()
-    bhlParser.NameContext RootName { get; }
-    bhlParser.ExpContext RootExp { get; }
-    bhlParser.LambdaCallContext LambdaCall { get; }
-
-    int Length { get; }
-
-    IParseTree At(int i); 
-  }
-
   public interface IExpChainItems
   {
     int Count { get; }
@@ -4865,94 +4810,55 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  public class ExpChain : IExpChain 
+  public struct ExpChain
   {
-    ParserRuleContext ctx;
+    public ParserRuleContext ctx;
+    public bhlParser.NameContext name_ctx;
+    public bhlParser.ExpContext exp_ctx;
+    public bhlParser.LambdaCallContext lambda_call;
+    public IExpChainItems items; 
 
-    bhlParser.ExpContext root_exp;
-    bhlParser.NameContext root_name;
-    bhlParser.LambdaCallContext lambda_call;
-    bhlParser.ChainExpItemContext[] items; 
-
-    public ParserRuleContext RuleCtx { get { return ctx; } }
-
-    public bhlParser.NameContext RootName { get { return root_name; } }
-    public bhlParser.ExpContext RootExp { get { return root_exp; } }
-    public bhlParser.LambdaCallContext LambdaCall { get { return lambda_call; } }
-
-    public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
-
-    public int Length { get { return items == null ? 0 : items.Length; } }
+    public bool IsGlobalNs { get { return name_ctx.GLOBAL() != null; } }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
-      this.ctx = ctx;
+      Init(ctx, chain);
+    }
 
+    public ExpChain(bhlParser.FuncCallExpContext ctx)
+    {
+      if(ctx.chain() != null)
+      {
+        Init(ctx, ctx.chain());
+        items.Add(ctx.callArgs());
+      }
+      else
+      {
+        lambda_call = ctx.lambdaCall();
+        items.Add(ctx.lambdaCall().callArgs());
+      }
+    }
+
+    void Init(ParserRuleContext ctx, bhlParser.ChainContext chain)
+    {
       if(chain.namedChain() != null)
       {
-        this.root_name = chain.namedChain().name();
-        this.items = chain.namedChain().chainExpItem();
+        name_ctx = chain.namedChain().name();
+        items = new ExpChainItemsFixed(chain.namedChain().chainExpItem());
       }
       else if(chain.parenChain() != null)
       {
-        this.root_exp = chain.parenChain().exp();
-        this.items = chain.parenChain().chainExpItem();
+        exp_ctx = chain.parenChain().exp();
+        items = new ExpChainItemsFixed(chain.parenChain().chainExpItem());
       }
       else if(chain.lambdaChain() != null)
       {
-        this.lambda_call = chain.lambdaChain().lambdaCall();
-        this.items = chain.lambdaChain().chainExpItem();
+        lambda_call = chain.lambdaChain().lambdaCall();
+        var _items = new ExpChainItems();
+        _items.Add(lambda_call.callArgs());
+        _items.Add(chain.lambdaChain().chainExpItem());
+        items = _items;
       }
-    }
-
-    public ExpChain(bhlParser.ExpChainContext exp)
-      : this(exp, exp.chain())
-    {}
-
-    public IParseTree At(int i) 
-    {
-      return items[i];
-    }
-  }
-
-  public class ExpChainFuncCall : IExpChain 
-  {
-    bhlParser.FuncCallExpContext ctx;
-    IExpChain exp_chain;
-    bhlParser.CallArgsContext fn_call;
-
-    public ParserRuleContext RuleCtx { get { return ctx; } }
-
-    public bhlParser.NameContext RootName { get { return exp_chain.RootName; } }
-    public bhlParser.ExpContext RootExp { get { return exp_chain.RootExp; } }
-    public bhlParser.LambdaCallContext LambdaCall { get { return exp_chain.LambdaCall; } }
-
-    public bool IsGlobalNs { get { return RootName?.GLOBAL() != null; } }
-
-    public int Length { get { return exp_chain.Length + 1; } }
-
-    public ExpChainFuncCall(bhlParser.FuncCallExpContext ctx)
-    {
-      this.ctx = ctx;
-      if(ctx.chain() != null)
-      {
-        exp_chain = new ExpChain(ctx, ctx.chain());
-        fn_call = ctx.callArgs();
-      }
-      else if(ctx.lambdaCall() != null)
-      {
-        //TODO:?
-        //exp_chain = new ExpChain(ctx, ctx.lambdaCall());
-        fn_call = ctx.lambdaCall().callArgs();
-      }
-    }
-
-    public IParseTree At(int i) 
-    {
-      if(exp_chain.Length == i)
-        return fn_call;
-      else
-        return exp_chain.At(i);
     }
   }
 
