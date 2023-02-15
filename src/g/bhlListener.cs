@@ -441,6 +441,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpLambda([NotNull] bhlParser.ExpLambdaContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpAnd</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>

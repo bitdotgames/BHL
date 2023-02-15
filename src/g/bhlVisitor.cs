@@ -274,6 +274,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpAnd</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>

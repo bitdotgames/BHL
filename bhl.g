@@ -83,6 +83,7 @@ exp
   | string                                   #ExpLiteralStr
   | '(' type ')' exp                         #ExpTypeCast
   | chain                                    #ExpChain
+  | funcLambda                               #ExpLambda
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr

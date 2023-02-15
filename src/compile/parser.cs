@@ -1716,7 +1716,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      ParserRuleContext ctx, 
      bhlParser.FuncLambdaContext funcLambda, 
      ref IType curr_type,
-     bool yielded
+     bool yielded = false
    )
   {
     if(yielded)
@@ -2061,6 +2061,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ++ref_compatible_exp_counter;
 
     Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
+  
+  public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
+  {
+    IType curr_type = null;
+    var ast = CommonVisitLambda(
+      ctx, 
+      ctx.funcLambda(), 
+      ref curr_type
+    );
+
+    Annotate(ctx).eval_type = curr_type;
+    PeekAST().AddChild(ast);
 
     return null;
   }

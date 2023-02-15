@@ -519,6 +519,20 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpLambda([NotNull] bhlParser.ExpLambdaContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpLambda</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpLambda([NotNull] bhlParser.ExpLambdaContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpAnd</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
