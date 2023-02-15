@@ -169,8 +169,9 @@ chainExpItem
 //NOTE: makes sure it's a func call
 funcCallExp
   : chain callArgs
-  //need this special case since lambdaCall already contains
-  //callArgs
+  //need this special case since the rule above won't match the following:
+  //   func() {}()
+  //because 'chain' contains 'lambdaChain' and it already contains 'callArgs'
   | lambdaCall
   ;
 
