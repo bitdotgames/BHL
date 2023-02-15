@@ -674,120 +674,185 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //TODO: the method below should be heavily refactored some day
   bool CommonProcExpChain(
-    IExpChain chain, 
+    ParserRuleContext ctx,
+    bhlParser.ChainContext chain,
+    ref IType curr_type,
+    bool write = false,
+    bool yielded = false
+  )
+  {
+    bhlParser.NameContext name_ctx = null;
+    bhlParser.ExpContext exp_ctx = null;
+    bhlParser.LambdaCallContext lambda_call = null;
+
+    IExpChainItems chain_items = null;
+
+    if(chain.namedChain() != null)
+    {
+      name_ctx = chain.namedChain().name();
+      chain_items = new ExpChainItemsFixed(chain.namedChain().chainExpItem());
+    }
+    else if(chain.parenChain() != null)
+    {
+      exp_ctx = chain.parenChain().exp();
+      chain_items = new ExpChainItemsFixed(chain.parenChain().chainExpItem());
+    }
+    else if(chain.lambdaChain() != null)
+    {
+      lambda_call = chain.lambdaChain().lambdaCall();
+      var _chain_items = new ExpChainItems();
+      _chain_items.Add(lambda_call.callArgs());
+      _chain_items.Add(chain.lambdaChain().chainExpItem());
+      chain_items = _chain_items;
+    }
+
+    return CommonProcExpChain(
+      ctx,
+      name_ctx,
+      exp_ctx,
+      lambda_call,
+      chain_items,
+      name_ctx?.GLOBAL() != null ? ns : curr_scope,
+      ref curr_type,
+      write,
+      yielded
+    );
+  }
+
+  bool CommonProcExpChain(
+    ParserRuleContext ctx,
+    bhlParser.NameContext name_ctx, //can be null
+    bhlParser.ExpContext exp_ctx, //can be null
+    bhlParser.LambdaCallContext lambda_call, //can be null
+    IExpChainItems chain_items, 
     IScope root_scope,
     ref IType curr_type, 
     bool write = false,
     bool yielded = false
    )
   {
-    var root_name = chain.RootName?.NAME();
-
-    //NOTE: if it's not 'terminal' let's visit it deeper
-    if(root_name == null && chain.RootExp != null)
+    if(lambda_call != null)
     {
-      Visit(chain.RootExp);
-      curr_type = Annotate(chain.RootExp).eval_type;
-    }
-
-    //if(chain.LambdaCall != null)
-    //{
-    //  curr_type = CommonVisitLambdaCall();
-    //}
-
-    IScope scope = root_scope;
-
-    PushAST(new AST_Interim());
-
-    var curr_name = root_name;
-
-    int chain_offset = 0;
-
-    if(root_name != null)
-    {
-      var name_symb = scope.ResolveWithFallback(curr_name.GetText());
-
-      TryProcessClassBaseCall(
-        ref curr_name, 
-        ref scope, 
-        ref name_symb, 
-        ref chain_offset, 
-        chain, 
-        root_name.Symbol.Line
-      );
-
-      if(name_symb == null)
-      {
-        AddSemanticError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
-        PopAST();
-        return false;
-      }
-
-      TryApplyNamespaceOffset(
-        ref curr_name, 
-        ref scope, 
-        ref name_symb, 
-        ref chain_offset, 
-        chain
-      );
-
-      if(name_symb is IType)
-        curr_type = (IType)name_symb;
-      else if(name_symb is ITyped typed)
-        curr_type = typed.GetIType();
-      else
-        curr_type = null;
-      if(curr_type == null)
-      {
-        AddSemanticError(root_name, "bad chain call");
-        PopAST();
-        return false;
-      }
-    }
-
-    if(!CommonVisitChainItems(
-        chain, 
-        chain_offset,
-        ref curr_name,
-        ref scope,
-        ref curr_type
-        write
+      if(!CommonVisitLambdaCall(
+        ctx,
+        lambda_call,
+        chain_items,
+        ref curr_type,
+        write,
+        yielded
       ))
+        return false;
+    }
+    else
     {
+      var root_name = name_ctx?.NAME();
+
+      //NOTE: if it's not 'terminal' let's visit it deeper
+      if(exp_ctx != null)
+      {
+        Visit(exp_ctx);
+        curr_type = Annotate(exp_ctx).eval_type;
+      }
+
+      IScope scope = root_scope;
+
+      PushAST(new AST_Interim());
+
+      var curr_name = root_name;
+
+      int chain_offset = 0;
+
+      if(root_name != null)
+      {
+        var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+
+        TryProcessClassBaseCall(
+          ref curr_name, 
+          ref scope, 
+          ref name_symb, 
+          ref chain_offset, 
+          chain_items, 
+          root_name.Symbol.Line
+        );
+
+        if(name_symb == null)
+        {
+          AddSemanticError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
+          PopAST();
+          return false;
+        }
+
+        TryApplyNamespaceOffset(
+          ref curr_name, 
+          ref scope, 
+          ref name_symb, 
+          ref chain_offset, 
+          chain_items
+        );
+
+        if(name_symb is IType)
+          curr_type = (IType)name_symb;
+        else if(name_symb is ITyped typed)
+          curr_type = typed.GetIType();
+        else
+          curr_type = null;
+        if(curr_type == null)
+        {
+          AddSemanticError(root_name, "bad chain call");
+          PopAST();
+          return false;
+        }
+      }
+
+      if(!CommonVisitChainItems(
+          chain_items, 
+          chain_offset,
+          ref curr_name,
+          ref scope,
+          ref curr_type
+          write
+        ))
+      {
+        PopAST();
+        return false;
+      }
+
+      if(curr_name != null)
+      {
+        //checking the leftover of the call chain or a root call
+        CommonChainItem(
+          scope, 
+          curr_name, 
+          null, 
+          null, 
+          ref curr_type, 
+          curr_name.Symbol.Line, 
+          write, 
+          is_leftover: true, 
+          is_root: chain_items.Count == 0
+        );
+      }
+
+      var chain_ast = PeekAST();
       PopAST();
-      return false;
-    }
 
-    if(curr_name != null)
-    {
-      //checking the leftover of the call chain or a root call
-      CommonChainItem(
-        scope, 
-        curr_name, 
-        null, 
-        null, 
-        ref curr_type, 
-        curr_name.Symbol.Line, 
-        write, 
-        is_leftover: true, 
-        is_root: chain.Length == 0
+      ValidateChainCall(
+        ctx, 
+        chain_items, 
+        0,
+        chain_ast.children, 
+        yielded
       );
+
+      PeekAST().AddChildren(chain_ast);
     }
-
-    var chain_ast = PeekAST();
-    PopAST();
-
-    ValidateChainCall(chain, chain_ast, yielded);
-
-    PeekAST().AddChildren(chain_ast);
 
     return true;
   }
 
   bool CommonVisitChainItems(
-    IExpChain chain, 
+    IExpChainItems chain_items, 
     int chain_offset, 
     ref ITerminalNode curr_name, 
     ref IScope scope, 
@@ -795,13 +860,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool write
     )
   {
-    for(int c=chain_offset;c<chain.Length;++c)
+    for(int c=chain_offset;c<chain_items.Count;++c)
     {
-      var item = chain.At(c);
+      var item = chain_items.At(c);
       var cargs = item as bhlParser.CallArgContext;
       var macc = item as bhlParser.MemberAccessContext;
       var arracc = item as bhlParser.ArrAccessContext;
-      bool is_last = c == chain.Length-1;
+      bool is_last = c == chain_items.Count-1;
 
       if(cargs != null)
       {
@@ -868,30 +933,36 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return true;
   }
   
-  void ValidateChainCall(IExpChain chain, AST_Tree chain_ast, bool yielded)
+  void ValidateChainCall(
+    ParserRuleContext ctx, 
+    IExpChainItems chain_items, 
+    int offset,
+    List<IAST> chain_ast, 
+    bool yielded
+  )
   {
-    for(int i = 0; i < chain_ast.children.Count; ++i)
+    for(int i = offset; i < chain_ast.Count; ++i)
     {
-      if(chain_ast.children[i] is AST_Call call)
+      if(chain_ast[i] is AST_Call call)
       {
         if((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) &&
             call.symb is FuncSymbol fs)
         {
-          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, fs.signature, yielded);
+          ValidateFuncCall(ctx, chain_items, i, chain_ast.Count-1 == i, fs.signature, yielded);
         }
         else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
         {
-          ValidateFuncCall(chain, i, chain_ast.children.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+          ValidateFuncCall(ctx, chain_items, i, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
   }
 
-  void ValidateFuncCall(IExpChain chain, int idx, bool is_last, FuncSignature fsig, bool yielded)
+  void ValidateFuncCall(ParserRuleContext ctx, IExpChainItems chain_items, int idx, bool is_last, FuncSignature fsig, bool yielded)
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "function calls not allowed in global context");
+      AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "function calls not allowed in global context");
       return;
     }
 
@@ -899,12 +970,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "not a coro function");
+        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "not a coro function");
         return;
       }
     }
@@ -912,13 +983,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? chain.RuleCtx : chain.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "coro function must be called via yield");
         return;
       }
     }
   }
 
-  void TryProcessClassBaseCall(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, IExpChain chain, int line)
+  void TryProcessClassBaseCall(
+    ref ITerminalNode curr_name, 
+    ref IScope scope, 
+    ref Symbol name_symb, 
+    ref int chain_offset, 
+    IExpChainItems chain_items, 
+    int line
+  )
   {
     if(curr_name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol cs)
     {
@@ -931,15 +1009,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         name_symb = cs.super_class; 
         scope = cs.super_class;
-        if(chain.Length <= chain_offset)
+        if(chain_items.Count <= chain_offset)
         {
           AddSemanticError(curr_name, "bad base call");
           return;
         }
-        var macc = chain.memberAccess(chain_offset);
+        var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
         if(macc == null)
         {
-          AddSemanticError(chain.At(chain_offset), "bad base call");
+          AddSemanticError(chain_items.At(chain_offset), "bad base call");
           return;
         }
         curr_name = macc.NAME(); 
@@ -951,17 +1029,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void TryApplyNamespaceOffset(ref ITerminalNode curr_name, ref IScope scope, ref Symbol name_symb, ref int chain_offset, IExpChain chain)
+  void TryApplyNamespaceOffset(
+    ref ITerminalNode curr_name, 
+    ref IScope scope, 
+    ref Symbol name_symb, 
+    ref int chain_offset, 
+    IExpChainItems chain_items
+  )
   {
-    if(name_symb is Namespace ns && chain != null)
+    if(name_symb is Namespace ns && chain_items != null)
     {
       scope = ns;
-      for(chain_offset=0; chain_offset<chain.Length;)
+      for(chain_offset=0; chain_offset<chain_items.Count;)
       {
-        var macc = chain.memberAccess(chain_offset);
+        var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
         if(macc == null)
         {
-          AddSemanticError(chain.At(chain_offset), "bad chain call");
+          AddSemanticError(chain_items.At(chain_offset), "bad chain call");
           return;
         }
         name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
@@ -1728,24 +1812,49 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast;
   }
 
-  IType CommonVisitLambdaCall(ParserRuleContext ctx, bhlParser.FuncLambdaCallContext call, bhlParser.ChainExpItemContext[] chain_items, bool yielded)
+  bool CommonVisitLambdaCall(
+    ParserRuleContext ctx, 
+    bhlParser.LambdaCallContext call, 
+    IExpChainItems chain_items,
+    ref IType curr_type,
+    bool write
+    bool yielded
+  )
   {
     var ast = CommonVisitLambda(ctx, call.funcLambda(), yielded);
 
     var interim = new AST_Interim();
     interim.AddChild(ast);
     PushAST(interim);
-    IType curr_type = null;
-    CommonProcExpChain(
-      new ExpChain(funcLambda, null, chain_items), 
-      curr_scope, 
-      ref curr_type
+
+    var scope = curr_scope;
+    ITerminalNode curr_name = null;
+
+    if(!CommonVisitChainItems(
+      chain_items,
+      0,
+      ref curr_name,
+      ref scope, 
+      ref curr_type,
+    ))
+    {
+      PopAST();
+      return false;
+    }
+
+    ValidateChainCall(
+      ctx, 
+      chain_items, 
+      1,
+      interim.children, 
+      yielded
     );
+
     PopAST();
     Annotate(ctx).eval_type = curr_type;
     PeekAST().AddChild(interim);
 
-    return curr_type;
+    return true;
   }
   
   public override object VisitCallArg(bhlParser.CallArgContext ctx)
@@ -1980,33 +2089,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  //public override object VisitExpName(bhlParser.ExpNameContext ctx)
-  //{
-  //  IType curr_type = null;
-  //  var chain = new ExpChain(ctx);
-  //  CommonProcExpChain(
-  //    chain,
-  //    chain.IsGlobalNs ? ns : curr_scope, 
-  //    ref curr_type
-  //  );
-
-  //  ++ref_compatible_exp_counter;
-
-  //  Annotate(ctx).eval_type = curr_type;
-
-  //  return null;
-  //}
-
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
-    var chain = new ExpChain(ctx.chain());
-
     IType curr_type = null;
-    CommonProcExpChain(
-      chain,
-      chain.IsGlobalNs ? ns : curr_scope, 
-      ref curr_type
-    );
+    CommonProcExpChain(ctx, ctx.chain(), ref curr_type);
 
     ++ref_compatible_exp_counter;
 
@@ -4693,6 +4779,90 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     int Length { get; }
 
     IParseTree At(int i); 
+  }
+
+  public interface IExpChainItems
+  {
+    int Count { get; }
+    //NOTE: can be callArgs, memberAccess or arrAccess
+    ParserRuleContext At(int i); 
+  }
+
+  public struct ExpChainItemsFixed : IExpChainItems 
+  {
+    bhlParser.ChainExpItemContext[] items; 
+
+    public int Count {
+      get {
+        return items.Length;
+      }
+    }
+
+    public ExpChainItemsFixed(bhlParser.ChainExpItemContext[] items)
+    {
+      this.items = items;
+    }
+    
+    public ParserRuleContext At(int i)
+    {
+      var item = items[i];
+      if(item.callArgs() != null)
+        return item.callArgs();
+      else if(item.memberAccess() != null)
+        return item.memberAccess();
+      else
+        return item.arrAccess();
+    }
+  }
+
+  public class ExpChainItems : IExpChainItems
+  {
+    List<ParserRuleContext> items = new List<ParserRuleContext>();
+
+    public int Count {
+      get {
+        return items.Count;
+      }
+    }
+
+    public ExpChainItems()
+    {}
+
+    public void Add(bhlParser.ChainExpItemContext[] items)
+    {
+      foreach(var item in items)
+        Add(item);
+    }
+
+    public void Add(bhlParser.ChainExpItemContext item)
+    {
+      if(item.callArgs() != null)
+        items.Add(item.callArgs());
+      else if(item.memberAccess() != null)
+        items.Add(item.memberAccess());
+      else
+        items.Add(item.arrAccess());
+    }
+
+    public void Add(bhlParser.MemberAccessContext macc)
+    {
+      items.Add(macc);
+    }
+
+    public void Add(bhlParser.CallArgsContext cargs)
+    {
+      items.Add(cargs);
+    }
+
+    public void Add(bhlParser.ArrAccessContext acc)
+    {
+      items.Add(acc);
+    }
+
+    public ParserRuleContext At(int i)
+    {
+      return items[i];
+    }
   }
 
   public class ExpChain : IExpChain 
