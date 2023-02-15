@@ -1317,6 +1317,30 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaUselessStatement()
+  {
+    string bhl = @"
+
+    func test() 
+    {
+      int a = 1
+      func() {}
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"useless statement",
+      new PlaceAssert(bhl, @"
+      func() {}
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestFuncPtrArrReturnNonConsumed()
   {
     string bhl = @"

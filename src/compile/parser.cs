@@ -662,6 +662,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
+  public override object VisitStmLambdaUseless(bhlParser.StmLambdaUselessContext ctx)
+  {
+    AddSemanticError(ctx, "useless statement");
+    return null;
+  }
+
   public override object VisitStmInvalidAssign(bhlParser.StmInvalidAssignContext ctx)
   {
     AddSemanticError(ctx.assignExp(), "invalid assignment");

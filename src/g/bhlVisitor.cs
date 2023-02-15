@@ -380,6 +380,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmVarUseless([NotNull] bhlParser.StmVarUselessContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StmLambdaUseless</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmLambdaUseless([NotNull] bhlParser.StmLambdaUselessContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StmIf</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

@@ -621,6 +621,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStmVarUseless([NotNull] bhlParser.StmVarUselessContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>StmLambdaUseless</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStmLambdaUseless([NotNull] bhlParser.StmLambdaUselessContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmLambdaUseless</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStmLambdaUseless([NotNull] bhlParser.StmLambdaUselessContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>StmIf</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>

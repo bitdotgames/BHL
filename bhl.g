@@ -134,6 +134,7 @@ statement
   | varPostOp                                  #StmVarPostOp
   | funcCallExp assignExp                      #StmInvalidAssign
   | varAccessExp                               #StmVarUseless
+  | funcLambda                                 #StmLambdaUseless
   | mainIf elseIf* else?                       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
