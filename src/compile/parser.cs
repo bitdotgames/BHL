@@ -830,7 +830,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   bool CommonVisitChainItems(
-    IExpChainItems chain_items, 
+    ExpChainItems chain_items, 
     int chain_offset, 
     ref ITerminalNode curr_name, 
     ref IScope scope, 
@@ -913,7 +913,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   
   void ValidateChainCall(
     ParserRuleContext ctx, 
-    IExpChainItems chain_items, 
+    ExpChainItems chain_items, 
     int offset,
     List<IAST> chain_ast, 
     bool yielded
@@ -936,7 +936,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void ValidateFuncCall(ParserRuleContext ctx, IExpChainItems chain_items, int idx, bool is_last, FuncSignature fsig, bool yielded)
+  void ValidateFuncCall(ParserRuleContext ctx, ExpChainItems chain_items, int idx, bool is_last, FuncSignature fsig, bool yielded)
   {
     if(PeekFuncDecl() == null)
     {
@@ -972,7 +972,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ref IScope scope, 
     ref Symbol name_symb, 
     ref int chain_offset, 
-    IExpChainItems chain_items, 
+    ExpChainItems chain_items, 
     int line
   )
   {
@@ -1012,7 +1012,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ref IScope scope, 
     ref Symbol name_symb, 
     ref int chain_offset, 
-    IExpChainItems chain_items
+    ExpChainItems chain_items
   )
   {
     if(name_symb is Namespace ns && chain_items != null)
@@ -1793,7 +1793,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   bool CommonVisitLambdaCall(
     ParserRuleContext ctx, 
     bhlParser.LambdaCallContext call, 
-    IExpChainItems chain_items,
+    ExpChainItems chain_items,
     ref IType curr_type,
     bool write
     bool yielded
@@ -2244,7 +2244,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       string post_op = ctx.operatorPostOpAssign().GetText();
       CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
 
-      var chain = new ExpChainVarAccess(ctx.varAccessExp());
+      var chain = new ExpChain(ctx.varAccessExp());
       IType curr_type = null;
       if(!CommonProcExpChain(
         chain, 
@@ -3526,7 +3526,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitVarAccessExp(bhlParser.VarAccessExpContext ctx)
   {
-    var chain = new ExpChainVarAccess(ctx);
+    var chain = new ExpChain(ctx);
 
     IType curr_type = null;
     CommonProcExpChain(
@@ -3756,7 +3756,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return false;
         }
 
-        var chain = new ExpChainVarAccess(var_exp);
+        var chain = new ExpChain(var_exp);
+
         IType curr_type = null;
         if(!CommonProcExpChain(
           chain, 
@@ -4726,31 +4727,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast;
   }
 
-  public interface IExpChainItems
+  public struct ExpChainItems
   {
-    int Count { get; }
-    //NOTE: can be callArgs, memberAccess or arrAccess
-    ParserRuleContext At(int i); 
-  }
-
-  public struct ExpChainItemsFixed : IExpChainItems 
-  {
-    bhlParser.ChainExpItemContext[] items; 
+    bhlParser.ChainExpItemContext[] items_arr; 
+    List<ParserRuleContext> items_lst;
 
     public int Count {
       get {
-        return items.Length;
+        return items_lst != null ? items_lst.Count : items_arr.Length;
       }
     }
 
-    public ExpChainItemsFixed(bhlParser.ChainExpItemContext[] items)
+    public ExpChainItems(bhlParser.ChainExpItemContext[] items)
     {
-      this.items = items;
+      items_arr = items;
+      items_lst = null;
     }
     
     public ParserRuleContext At(int i)
     {
-      var item = items[i];
+      if(items_lst != null)
+        return items_lst[i];
+
+      var item = items_arr[i];
       if(item.callArgs() != null)
         return item.callArgs();
       else if(item.memberAccess() != null)
@@ -4758,20 +4757,23 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
         return item.arrAccess();
     }
-  }
 
-  public class ExpChainItems : IExpChainItems
-  {
-    List<ParserRuleContext> items = new List<ParserRuleContext>();
-
-    public int Count {
-      get {
-        return items.Count;
-      }
+    void Add(ParserRuleContext ctx)
+    {
+      if(items_lst == null)
+        items_lst = new List<ParserRuleContext>();
+      items_lst.Add(ctx);
     }
 
-    public ExpChainItems()
-    {}
+    public void Add(bhlParser.ChainExpItemContext item)
+    {
+      if(item.callArgs() != null)
+        Add(item.callArgs());
+      else if(item.memberAccess() != null)
+        Add(item.memberAccess());
+      else
+        Add(item.arrAccess());
+    }
 
     public void Add(bhlParser.ChainExpItemContext[] items)
     {
@@ -4779,34 +4781,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Add(item);
     }
 
-    public void Add(bhlParser.ChainExpItemContext item)
-    {
-      if(item.callArgs() != null)
-        items.Add(item.callArgs());
-      else if(item.memberAccess() != null)
-        items.Add(item.memberAccess());
-      else
-        items.Add(item.arrAccess());
-    }
-
     public void Add(bhlParser.MemberAccessContext macc)
     {
-      items.Add(macc);
+      Add(macc);
     }
 
     public void Add(bhlParser.CallArgsContext cargs)
     {
-      items.Add(cargs);
+      Add(cargs);
     }
 
     public void Add(bhlParser.ArrAccessContext acc)
     {
-      items.Add(acc);
-    }
-
-    public ParserRuleContext At(int i)
-    {
-      return items[i];
+      Add(acc);
     }
   }
 
@@ -4816,17 +4803,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bhlParser.NameContext name_ctx;
     public bhlParser.ExpContext exp_ctx;
     public bhlParser.LambdaCallContext lambda_call;
-    public IExpChainItems items; 
+    public ExpChainItems items; 
 
     public bool IsGlobalNs { get { return name_ctx.GLOBAL() != null; } }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
+      items = new ExpChainItems();
+
       Init(ctx, chain);
     }
 
     public ExpChain(bhlParser.FuncCallExpContext ctx)
     {
+      items = new ExpChainItems();
+
       if(ctx.chain() != null)
       {
         Init(ctx, ctx.chain());
@@ -4839,17 +4830,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
+    public ExpChain(bhlParser.VarAccessExpContext ctx)
+    {
+      items = new ExpChainItems();
+
+      Init(ctx, ctx.chain());
+
+      if(ctx.memberAccess() != null)
+        items.Add(ctx.memberAccess());
+      else
+        items.Add(ctx.arrAccess());
+    }
+
     void Init(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
       if(chain.namedChain() != null)
       {
         name_ctx = chain.namedChain().name();
-        items = new ExpChainItemsFixed(chain.namedChain().chainExpItem());
+        items = new ExpChainItems(chain.namedChain().chainExpItem());
       }
       else if(chain.parenChain() != null)
       {
         exp_ctx = chain.parenChain().exp();
-        items = new ExpChainItemsFixed(chain.parenChain().chainExpItem());
+        items = new ExpChainItems(chain.parenChain().chainExpItem());
       }
       else if(chain.lambdaChain() != null)
       {
@@ -4859,52 +4862,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         _items.Add(chain.lambdaChain().chainExpItem());
         items = _items;
       }
-    }
-  }
-
-  public class ExpChainVarAccess : IExpChain 
-  {
-    bhlParser.VarAccessExpContext ctx;
-    IExpChain exp_chain;
-    bhlParser.MemberAccessContext member_ctx;
-    bhlParser.ArrAccessContext arr_ctx;
-
-    public ParserRuleContext RuleCtx { 
-      get { 
-        return ctx;
-      } 
-    }
-
-    public bhlParser.NameContext RootName { 
-      get { 
-        return exp_chain.RootName; 
-      } 
-    }
-    public bhlParser.ExpContext RootExp { get { return exp_chain.RootExp; } }
-    public bhlParser.LambdaCallContext LambdaCall { get { return exp_chain.LambdaCall; } }
-
-    public bool IsGlobalNs { 
-      get { 
-        return RootName?.GLOBAL() != null; 
-      } 
-    }
-
-    public int Length { get { return exp_chain.Length + 1; } }
-
-    public ExpChainVarAccess(bhlParser.VarAccessExpContext ctx)
-    {
-      this.ctx = ctx;
-      exp_chain = new ExpChain(ctx, ctx.chain());
-      member_ctx = ctx.memberAccess();
-      arr_ctx = ctx.arrAccess();
-    }
-
-    public IParseTree At(int i) 
-    {
-      if(exp_chain.Length == i)
-        return arr_ctx != null ? (IParseTree)arr_ctx : (IParseTree)member_ctx;
-      else
-        return exp_chain.At(i);
     }
   }
 }
