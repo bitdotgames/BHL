@@ -1591,18 +1591,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return cargs;
   }
 
-  //public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
-  //{
-  //  CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
-  //  return null;
-  //}
-
-  //public override object VisitExpYieldLambda(bhlParser.ExpYieldLambdaContext ctx)
-  //{
-  //  CommonVisitLambda(ctx, ctx.funcLambda(), yielded: true);
-  //  return null;
-  //}
-
   FuncSignature ParseFuncSignature(bool is_async, bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
     var ret_type = ParseType(ret_ctx);
@@ -1727,7 +1715,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    return tp;
   }
 
-  AST_Tree CommonVisitLambda(ParserRuleContext ctx, bhlParser.FuncLambdaContext funcLambda, bool yielded)
+  AST_Tree CommonVisitLambda(
+     ParserRuleContext ctx, 
+     bhlParser.FuncLambdaContext funcLambda, 
+     ref IType curr_type,
+     bool yielded
+   )
   {
     if(yielded)
       CheckCoroCallValidity(ctx);
@@ -1767,7 +1760,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ParseFuncBlock(funcLambda, funcLambda.funcBlock(), funcLambda.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    var curr_type = (IType)lmb_symb.signature;
+    curr_type = (IType)lmb_symb.signature;
     Annotate(ctx).eval_type = curr_type;
 
     PopScope();
@@ -1789,7 +1782,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool yielded
   )
   {
-    var ast = CommonVisitLambda(ctx, call.funcLambda(), yielded);
+    var ast = CommonVisitLambda(
+      ctx, 
+      call.funcLambda(), 
+      ref curr_type,
+      yielded
+    );
 
     var interim = new AST_Interim();
     interim.AddChild(ast);
@@ -4795,7 +4793,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
-      this.ctx = null;
+      this.ctx = ctx;
       this.name_ctx = null;
       this.exp_ctx = null;
       this.lambda_call = null;
@@ -4806,7 +4804,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(bhlParser.FuncCallExpContext ctx)
     {
-      this.ctx = null;
+      this.ctx = ctx;
       this.name_ctx = null;
       this.exp_ctx = null;
       this.lambda_call = null;
@@ -4826,7 +4824,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(bhlParser.VarAccessExpContext ctx)
     {
-      this.ctx = null;
+      this.ctx = ctx;
       this.name_ctx = null;
       this.exp_ctx = null;
       this.lambda_call = null;
@@ -4847,6 +4845,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     void Init(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
+      this.ctx = ctx;
+
       if(chain.namedChain() != null)
       {
         name_ctx = chain.namedChain().name();
