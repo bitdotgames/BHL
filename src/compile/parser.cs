@@ -172,7 +172,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  //NOTE: used for tracking whether an expression is passable by 'ref'
+  //NOTE: used for tracking whether an expression is passable by 'ref',
+  //      before visiting an expression we remember the old value and
+  //      compare it to the new one: if they differ expression is not  
+  //      passable by 'ref'
   int ref_compatible_exp_counter;
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
@@ -625,7 +628,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 	IType CommonVisitFuncCallExp(
     ParserRuleContext ctx,
     bhlParser.FuncCallExpContext exp,
-    bool yielded
+    bool yielded = false
   )
   {
     if(yielded)
@@ -644,18 +647,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(curr_type != null && curr_type != Types.Void)
     {
       //let's pop unused returned value
-      var eval_type_proxy = new MultiTypeProxy(eval_type);
-      for(int i=0;i<eval_type_proxy.Count;++i)
+      var multi_type = new MultiTypeProxy(curr_type);
+      for(int i=0;i<multi_type.Count;++i)
         PeekAST().AddChild(new AST_PopValue());
     }
 
     return curr_type;
   }
 
-  public override object VisitStmCallExp(bhlParser.StmCallExpContext ctx)
+  public override object VisitStmCall(bhlParser.StmCallContext ctx)
   {
     CommonVisitFuncCallExp(ctx, ctx.funcCallExp());
-
     return null;
   }
 
@@ -668,18 +670,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitStmInvalidAssign(bhlParser.StmInvalidAssignContext ctx)
   {
     AddSemanticError(ctx.assignExp(), "invalid assignment");
-    return null;
-  }
-
-  //public override object VisitStmLambdaCall(bhlParser.StmLambdaCallContext ctx)
-  //{
-  //  CommonVisitLambda(ctx, ctx.funcLambda(), yielded: false);
-  //  return null;
-  //}
-
-  public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
-  {
-    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
     return null;
   }
 
@@ -788,7 +778,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           chain_offset,
           ref curr_name,
           ref scope,
-          ref curr_type
+          ref curr_type,
           write
         ))
       {
@@ -841,7 +831,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int c=chain_offset;c<chain_items.Count;++c)
     {
       var item = chain_items.At(c);
-      var cargs = item as bhlParser.CallArgContext;
+      var cargs = item as bhlParser.CallArgsContext;
       var macc = item as bhlParser.MemberAccessContext;
       var arracc = item as bhlParser.ArrAccessContext;
       bool is_last = c == chain_items.Count-1;
@@ -1015,7 +1005,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ExpChainItems chain_items
   )
   {
-    if(name_symb is Namespace ns && chain_items != null)
+    if(name_symb is Namespace ns && chain_items.Count > 0)
     {
       scope = ns;
       for(chain_offset=0; chain_offset<chain_items.Count;)
@@ -1795,7 +1785,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bhlParser.LambdaCallContext call, 
     ExpChainItems chain_items,
     ref IType curr_type,
-    bool write
+    bool write,
     bool yielded
   )
   {
@@ -1814,6 +1804,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       ref curr_name,
       ref scope, 
       ref curr_type,
+      write
     ))
     {
       PopAST();
@@ -2219,20 +2210,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       types.CheckLogicalNot(Annotate(exp), errors);
 
     PeekAST().AddChild(ast);
-
-    return null;
-  }
-
-  public override object VisitExpParen(bhlParser.ExpParenContext ctx)
-  {
-    var ast = new AST_Interim();
-    var exp = ctx.exp(); 
-    PushAST(ast);
-    Visit(exp);
-    PopAST();
-    PeekAST().AddChild(ast);
-    
-    Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
     return null;
   }
@@ -3642,9 +3619,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(vaodecls[i].varDeclare() != null)
           return vaodecls[i].varDeclare().NAME();
-        else if(vaodecls[i].varAccessExp().name() != null && 
-                vaodecls[i].varAccessExp().name().GLOBAL() == null)
-          return vaodecls[i].varAccessExp().name().NAME();
+        else if(vaodecls[i].varAccessExp().chain().namedChain().name() != null && 
+                vaodecls[i].varAccessExp().chain().namedChain().name().GLOBAL() == null)
+          return vaodecls[i].varAccessExp().chain().namedChain().name().NAME();
       }
       else if(vaccs != null)
         return null;
@@ -4336,12 +4313,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    CommonVisitFuncCallExp(
-      ctx, 
-      ctx.funcCallExp(),
-      yielded: true
-    );
-
+    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
     return null;
   }
 
@@ -4809,6 +4781,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
     {
+      this.ctx = null;
+      this.name_ctx = null;
+      this.exp_ctx = null;
+      this.lambda_call = null;
       items = new ExpChainItems();
 
       Init(ctx, chain);
@@ -4816,6 +4792,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(bhlParser.FuncCallExpContext ctx)
     {
+      this.ctx = null;
+      this.name_ctx = null;
+      this.exp_ctx = null;
+      this.lambda_call = null;
       items = new ExpChainItems();
 
       if(ctx.chain() != null)
@@ -4832,6 +4812,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     public ExpChain(bhlParser.VarAccessExpContext ctx)
     {
+      this.ctx = null;
+      this.name_ctx = null;
+      this.exp_ctx = null;
+      this.lambda_call = null;
       items = new ExpChainItems();
 
       Init(ctx, ctx.chain());
