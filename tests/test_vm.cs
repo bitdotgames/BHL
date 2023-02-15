@@ -6350,7 +6350,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "type doesn't support member access via '.'",
+      "mismatched input '.'",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }.foo 
 ----------------------------------------------^"
@@ -6373,10 +6373,10 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "accessing not an array/map type 'func bool(int)'",
+      "no viable alternative at input",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }[10] 
-----------------------------------------------^"
+-----------------------------------------------^"
       )
     );
   }
@@ -6532,7 +6532,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func test()
     {
-      func int(int c, int b = 1) {
+      var p = func int(int c, int b = 1) {
       }
     }
     ";
@@ -6543,8 +6543,8 @@ public class TestVM : BHL_TestBase
       },
       "default argument values not allowed for lambdas",
       new PlaceAssert(bhl, @"
-      func int(int c, int b = 1) {
---------------------------^"
+      var p = func int(int c, int b = 1) {
+----------------------------------^"
       )
     );
   }
