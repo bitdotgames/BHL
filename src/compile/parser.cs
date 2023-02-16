@@ -1643,25 +1643,40 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var vd = fparams.funcParamDeclare()[i];
 
-        var tp = ParseType(vd.type());
-        if(vd.isRef() != null)
-          tp = curr_scope.R().T(new RefType(tp));
-
         if(vd.VARIADIC() != null)
         {
           if(vd.isRef() != null)
+          {
             AddSemanticError(vd.isRef(), "pass by ref not allowed");
+            break;
+          }
 
           if(i != fparams.funcParamDeclare().Length-1)
+          {
             AddSemanticError(vd, "variadic argument must be last");
+            break;
+          }
 
           if(vd.assignExp() != null)
+          {
             AddSemanticError(vd.assignExp(), "default argument is not allowed");
+            break;
+          }
+
+          //TODO: use more generic protection against parse errors
+          if(vd.type()?.nsName() == null)
+            break;
+
           sig.has_variadic = true;
           ++default_args_num;
         }
         else if(vd.assignExp() != null)
           ++default_args_num;
+
+        var tp = ParseType(vd.type());
+        if(vd.isRef() != null)
+          tp = curr_scope.R().T(new RefType(tp));
+
         sig.AddArg(tp);
       }
     }
@@ -2981,6 +2996,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
+    //TODO: use more generic protection against parse errors
+    if(pass.func_ctx.funcBlock() == null)
+      return;
+
     PushScope(pass.func_ast.symbol);
     ParseFuncBlock(pass.func_ctx, pass.func_ctx.funcBlock(), pass.func_ctx.retType(), pass.func_ast);
     PopScope();
@@ -3833,6 +3852,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.isRef() != null;
     bool is_null_ref = false;
+
+    //TODO: use more generic protection against parse errors
+    if(ctx.type()?.nsName() == null)
+      return null;
 
     if(is_ref && assign_exp != null)
     {
