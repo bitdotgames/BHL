@@ -13279,7 +13279,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl3);
       },
-      "extraneous input '--' expecting ')'"
+      "mismatched input '--'"
     );
 
     string bhl4 = @"
@@ -13296,7 +13296,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl4);
       },
-      "extraneous input '--' expecting ';'"
+      "mismatched input '--'"
     );
 
     string bhl5 = @"
@@ -13317,7 +13317,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "no viable alternative at input 'foo(i--'"
+      "no viable alternative at input '(i--'"
     );
 
     string bhl6 = @"
@@ -13333,7 +13333,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "no viable alternative at input '[i--'"
+      "no viable alternative at input 'int j = arr[i--'"
     );
 
     string bhl7 = @"
@@ -13364,7 +13364,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "extraneous input '--' expecting '}'"
+      "mismatched input '--'"
     );
 
     string bhl9 = @"

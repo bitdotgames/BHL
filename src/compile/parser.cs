@@ -2325,7 +2325,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(ctx.INC() != null)
       CommonVisitBinOp(ctx, "+", ctx.varAccessExp(), one_literal_exp);
-    else if(ctx.INC() != null)
+    else if(ctx.DEC() != null)
       CommonVisitBinOp(ctx, "-", ctx.varAccessExp(), one_literal_exp);
     else
     {
