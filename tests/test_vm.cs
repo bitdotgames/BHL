@@ -13014,7 +13014,7 @@ public class TestVM : BHL_TestBase
         trace((string)j)
       }
 
-      for(int j = 0, int k = 0, k++; j < 3; j++, k++) {
+      for(int j = 0, int k = 1; j < 3; j++, k++) {
         trace((string)j)
         trace((string)k)
       }
@@ -13049,7 +13049,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "extraneous input '++' expecting",
+      "mismatched input '++'",
       new PlaceAssert(bhl1, @"
       ++
 ------^"
@@ -13087,7 +13087,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl3);
       },
-      "extraneous input '++' expecting"
+      "mismatched input '++'"
     );
 
     string bhl4 = @"
@@ -13104,13 +13104,13 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl4);
       },
-      "extraneous input '++' expecting"
+      "mismatched input '++'"
     );
 
     string bhl5 = @"
     func test()
     {
-      for(j = 0, k++, int k = 0; j < 3; j++, k++) {
+      for(j = 0, int k = 0; j < 3; j++, k++) {
         trace((string)j)
         trace((string)k)
       }
@@ -13142,7 +13142,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "no viable alternative at input 'foo(i++'"
+      "no viable alternative at input '(i++'"
     );
 
     string bhl7 = @"
@@ -13158,7 +13158,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl7);
       },
-      "no viable alternative at input '[i++'"
+      "no viable alternative at input 'int j = arr[i++'"
     );
 
     string bhl8 = @"
@@ -13176,7 +13176,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "no viable alternative at input 'foo(i++'"
+      "no viable alternative at input '(i++'"
     );
 
     string bhl9 = @"
@@ -13207,7 +13207,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl10);
       },
-      "extraneous input '++' expecting '}'"
+      "mismatched input '++'",
+      new PlaceAssert(bhl10, @"
+      return j, i++
+-----------------^"
+      )
     );
 
     string bhl11 = @"
@@ -13223,7 +13227,11 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl11);
       },
-      "mismatched input ',' expecting '}'"
+      "mismatched input",
+      new PlaceAssert(bhl11, @"
+      return j++, i
+----------------^"
+      )
     );
   }
 
@@ -13241,7 +13249,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "extraneous input '--' expecting '}'"
+      "mismatched input '--' expecting '}'"
     );
 
     string bhl2 = @"
