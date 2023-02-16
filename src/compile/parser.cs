@@ -639,20 +639,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
     CommonProcExpChain(chain, ref curr_type, yielded: yielded);
 
-    if(curr_type != null && curr_type != Types.Void)
-    {
-      //let's pop unused returned value
-      var multi_type = new MultiTypeProxy(curr_type);
-      for(int i=0;i<multi_type.Count;++i)
-        PeekAST().AddChild(new AST_PopValue());
-    }
-
     return curr_type;
+  }
+
+  void CommonPopNonConsumed(IType ret_type)
+  {
+    if(ret_type == null || ret_type == Types.Void)
+      return;
+    
+    //let's pop unused returned value
+    var multi_type = new MultiTypeProxy(ret_type);
+    for(int i=0;i<multi_type.Count;++i)
+      PeekAST().AddChild(new AST_PopValue());
   }
 
   public override object VisitStmCall(bhlParser.StmCallContext ctx)
   {
-    CommonVisitFuncCallExp(ctx, ctx.funcCallExp());
+    var ret_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp());
+    CommonPopNonConsumed(ret_type);
     return null;
   }
 
@@ -789,9 +793,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return false;
       }
 
+      //checking the leftover of the call chain or a root call
       if(curr_name != null)
       {
-        //checking the leftover of the call chain or a root call
         CommonChainItem(
           scope, 
           curr_name, 
@@ -2088,7 +2092,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    var exp_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    Annotate(ctx).eval_type = exp_type;
     return null;
   }
 
@@ -4320,7 +4325,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    var ret_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    CommonPopNonConsumed(ret_type);
     return null;
   }
 
