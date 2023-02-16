@@ -14558,7 +14558,7 @@ public class TestVM : BHL_TestBase
       "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
       ColorAlpha c = new Color {g: 10, r: 100}
--------------------^"
+-----------------^"
       )
     );
   }
