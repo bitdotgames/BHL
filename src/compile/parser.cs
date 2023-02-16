@@ -2328,9 +2328,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return false;
     }
 
-    var curr_type = Annotate(ctx.varAccessExp()).eval_type;
-    //check if there's no error
-    if(curr_type == null)
+    var chain = new ExpChain(ctx.varAccessExp());
+
+    IType curr_type = null;
+    if(!CommonProcExpChain(chain, ref curr_type, write: true))
       return false;
 
     if(!Types.IsNumeric(curr_type))
