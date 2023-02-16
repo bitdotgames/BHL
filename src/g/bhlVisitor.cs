@@ -50,12 +50,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMimport([NotNull] bhlParser.MimportContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.decls"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDecls([NotNull] bhlParser.DeclsContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.decl"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

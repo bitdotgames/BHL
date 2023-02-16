@@ -13,10 +13,6 @@ mimport
   : 'import' NORMALSTRING SEPARATOR*
   ;
 
-decls 
-  : decl+
-  ;
-
 decl
   : (nsDecl | classDecl | interfaceDecl | funcDecl | varDeclareOptAssign | enumDecl)
   ;
@@ -209,7 +205,7 @@ extensions
   ;
 
 nsDecl
-  : 'namespace' dotName '{' decls '}'
+  : 'namespace' dotName '{' decl* '}'
   ;
 
 classDecl

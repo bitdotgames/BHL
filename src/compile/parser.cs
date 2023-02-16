@@ -3137,7 +3137,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     } while(true);
 
-    VisitDecls(ctx.decls());
+    foreach(var decl in ctx.decl())
+      ProcessDecl(decl);
 
     for(int i = 0; i <= n; ++i) 
       PopScope();
