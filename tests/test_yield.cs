@@ -446,7 +446,7 @@ public class TestYield : BHL_TestBase
       func test()
       {
         var foo = new Foo
-        foo.bar().number
+        int n = foo.bar().number
       }
       ";
 
@@ -456,8 +456,8 @@ public class TestYield : BHL_TestBase
         },
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
-        foo.bar().number
------------^"
+        int n = foo.bar().number
+-------------------^"
         )
       );
     }
@@ -483,7 +483,7 @@ public class TestYield : BHL_TestBase
       func test()
       {
         var foo = new Foo
-        foo.bar().ptr().number
+        int n = foo.bar().ptr().number
       }
       ";
 
@@ -493,8 +493,8 @@ public class TestYield : BHL_TestBase
         },
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
-        foo.bar().ptr().number
------------------^"
+        int n = foo.bar().ptr().number
+-------------------------^"
         )
       );
     }
@@ -767,7 +767,7 @@ public class TestYield : BHL_TestBase
       "incompatible types: 'func int()' and 'coro func int()'",
       new PlaceAssert(bhl, @"
       func int() p = coro func int() {
--------------------^"
+-----------------^"
       )
     );
   }
