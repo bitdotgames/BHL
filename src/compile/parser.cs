@@ -3006,6 +3006,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var vd = pass.gvar_decl_ctx;
 
+    //TODO: use more generic protection against parse errors
+    if(vd.NAME() == null)
+      return;
+
     pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
     curr_scope.Define(pass.gvar_symb);
@@ -3444,7 +3448,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void Pass_ParseGlobalVar(ParserPass pass)
   {
-    if(pass.gvar_decl_ctx == null)
+    if(pass.gvar_symb == null)
       return;
 
     var vd = pass.gvar_decl_ctx;
