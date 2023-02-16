@@ -154,10 +154,10 @@ public class TestErrors : BHL_TestBase
     }
     catch(CompileErrorsException m)
     {
-      AssertEqual(2 + 3, m.errors.Count);
+      AssertEqual(2 + 2, m.errors.Count);
 
       AssertError((Exception)m.errors[0],
-        "no viable alternative at input 'foo(",
+        "no viable alternative at input '(",
         new PlaceAssert(bhl, @"
     }
 ----^"
@@ -165,7 +165,7 @@ public class TestErrors : BHL_TestBase
       );
 
       AssertError((Exception)m.errors[1],
-        "no viable alternative at input '}'",
+        "no viable alternative at input 'i =",
         new PlaceAssert(bhl, @"
     }
 ----^"
@@ -173,9 +173,9 @@ public class TestErrors : BHL_TestBase
       );
 
       AssertError((Exception)m.errors[2],
-        "symbol usage is not valid",
+        "useless statement",
         new PlaceAssert(bhl, @"
-      int i =
+      foo(
 ------^"
         )
       );
@@ -185,14 +185,6 @@ public class TestErrors : BHL_TestBase
         new PlaceAssert(bhl, @"
       int i =
 ------^"
-        )
-      );
-
-      AssertError((Exception)m.errors[4],
-        "symbol 'i' not resolved",
-        new PlaceAssert(bhl, @"
-      int i =
-----------^"
         )
       );
     }

@@ -3765,6 +3765,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var_ann = Annotate(vd_name);
         var_ann.eval_type = var_symb.type.Get();
+        Annotate(vd_name.Parent).lsp_symbol = var_symb;
 
         bool is_global = var_symb.scope is Namespace;
         var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);

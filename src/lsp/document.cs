@@ -85,7 +85,7 @@ public class BHLDocument
     if(node == null)
       return null;
 
-    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetText());
+    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; " + node.Parent.GetType().Name + " " + node.Parent.GetText());
 
     var annotated = proc.FindAnnotated(node.Parent);
     if(annotated == null)
