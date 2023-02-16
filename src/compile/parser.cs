@@ -658,8 +658,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
     
     //let's pop unused returned value
-    var multi_type = new MultiTypeProxy(ret_type);
-    for(int i=0;i<multi_type.Count;++i)
+    var ret_type_arr = new TypeAsArr(ret_type);
+    for(int i=0;i<ret_type_arr.Count;++i)
       PeekAST().AddChild(new AST_PopValue());
   }
 
@@ -2127,8 +2127,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    var tp = ParseType(ctx.newExp().type());
-    var cl = tp.Get();
+    var cl = ParseType(ctx.newExp().type()).Get();
     Annotate(ctx).eval_type = cl;
 
     if(cl is ClassSymbolNative csn && csn.creator == null)
@@ -2716,6 +2715,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         vd_ast, 
         vd_assign_idx,
         Annotate(vd.NAME()),
+        is_auto_var: vd.type().GetText() == "var",
         is_decl: true, 
         var_symb: vd_symb,
         var_idx: 0,
@@ -3662,7 +3662,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  struct MultiTypeProxy
+  struct TypeAsArr
   {
     IType type;
 
@@ -3674,7 +3674,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    public MultiTypeProxy(IType type)
+    public TypeAsArr(IType type)
     {
       this.type = type;
     }
@@ -3700,12 +3700,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       VariableSymbol var_symb = null;
       AnnotatedParseTree var_ann = null;
       bool is_decl = false;
+      bool is_auto_var = false;
 
       //check if we declare a var or use an existing one
       if(vdecls.TypeAt(i) != null)
       {
         var vd_type = vdecls.TypeAt(i);
-        bool is_auto_var = vd_type.GetText() == "var";
+        is_auto_var = vd_type.GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
         {
@@ -3783,6 +3784,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var_assign_insert_idx,
           var_ann,
           is_decl,
+          is_auto_var,
           var_symb,
           i,
           vdecls.Count,
@@ -3942,7 +3944,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     int ast_insert_idx,
     AnnotatedParseTree var_ann, 
     bool is_decl,
-    VariableSymbol var_symb, //can be null
+    bool is_auto_var,
+    VariableSymbol var_symb,
     int var_idx,
     int vars_num,
     bhlParser.AssignExpContext assign_exp
@@ -3979,7 +3982,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Visit(assign_exp);
     PopAST();
 
-    var assign_type = new MultiTypeProxy(Annotate(assign_exp).eval_type); 
+    var assign_type = new TypeAsArr(Annotate(assign_exp).eval_type); 
 
     for(int s=assign_ast.children.Count;s-- > 0;)
       ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
@@ -4013,6 +4016,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       AddSemanticError(assign_exp, "multi return size doesn't match destination");
       return false;
     }
+
+    if(is_auto_var)
+      var_symb.type = new Proxy<IType>(assign_type.At(var_idx)); 
 
     return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
   }
