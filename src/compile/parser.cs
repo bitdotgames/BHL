@@ -122,7 +122,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public IAST ast;
     public IScope scope;
 
-    public bhlParser.VarDeclareAssignContext gvar_ctx;
+    public bhlParser.VarDeclareContext gvar_decl_ctx;
+    public bhlParser.AssignExpContext gvar_assign_ctx;
     public VariableSymbol gvar_symb;
 
     public bhlParser.FuncDeclContext func_ctx;
@@ -142,7 +143,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       this.ast = ast;
       this.scope = scope;
-      this.gvar_ctx = ctx as bhlParser.VarDeclareAssignContext;
+      if(ctx is bhlParser.VarDeclareAssignContext vda)
+      {
+        this.gvar_decl_ctx = vda.varDeclare();
+        this.gvar_assign_ctx = vda.assignExp();
+      }
+      else if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
+      {
+        this.gvar_decl_ctx = vdoa.varDeclare();
+        this.gvar_assign_ctx = vdoa.assignExp();
+      }
       this.func_ctx = ctx as bhlParser.FuncDeclContext;
       this.class_ctx = ctx as bhlParser.ClassDeclContext;
       this.iface_ctx = ctx as bhlParser.InterfaceDeclContext;
@@ -2991,10 +3001,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void Pass_OutlineGlobalVar(ParserPass pass)
   {
-    if(pass.gvar_ctx == null)
+    if(pass.gvar_decl_ctx == null)
       return;
 
-    var vd = pass.gvar_ctx.varDeclare(); 
+    var vd = pass.gvar_decl_ctx;
 
     pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
@@ -3434,10 +3444,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void Pass_ParseGlobalVar(ParserPass pass)
   {
-    if(pass.gvar_ctx == null)
+    if(pass.gvar_decl_ctx == null)
       return;
 
-    var vd = pass.gvar_ctx.varDeclare(); 
+    var vd = pass.gvar_decl_ctx;
 
     //NOTE: we want to temprarily 'disable' the symbol so that it doesn't
     //      interfere with type lookups and invalid self assignments
@@ -3450,7 +3460,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     PushAST((AST_Tree)pass.ast);
 
-    var assign_exp = pass.gvar_ctx.assignExp();
+    var assign_exp = pass.gvar_assign_ctx;
 
     AST_Interim exp_ast = null;
     if(assign_exp != null)

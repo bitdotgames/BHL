@@ -17773,40 +17773,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportAbsolutePath()
-  {
-    string file_unit = @"
-      class Unit {
-        int test
-      }
-      Unit u = {test: 23}
-    ";
-
-    string file_test = @"
-    import ""/units/unit""
-
-    func int test() 
-    {
-      return u.test
-    }
-    ";
-
-    CleanTestDir();
-
-    var files = new List<string>();
-    NewTestFile("units/unit.bhl", file_unit, ref files);
-    NewTestFile("tests/test.bhl", file_test, ref files);
-
-    {
-      var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("tests/test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-    }
-  }
-
-  [IsTested()]
   public void TestStartLambdaInScriptMgr()
   {
     string bhl = @"
@@ -18985,7 +18951,6 @@ public class TestVM : BHL_TestBase
   public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"
-
     float foo
       
     func float test() 

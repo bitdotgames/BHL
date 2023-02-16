@@ -103,6 +103,233 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIncrementalBuildOfChangedFiles()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""garbage"";import ""unit"";  
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    string file_garbage = @"
+      func garbage() {}
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("garbage.bhl", file_garbage, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.parse_cache_hits, 0);
+      AssertEqual(exec.parse_cache_miss, 3);
+      AssertEqual(exec.compile_cache_hits, 0);
+      AssertEqual(exec.compile_cache_miss, 3);
+    }
+
+    string new_file_unit = @"
+      class Unit {
+        string new_field
+        int test
+      }
+      Unit u = {test: 32}
+    ";
+    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+      AssertEqual(exec.parse_cache_hits, 1);
+      AssertEqual(exec.parse_cache_miss, 1+1);
+      AssertEqual(exec.compile_cache_hits, 1);
+      AssertEqual(exec.compile_cache_miss, 1+1);
+    }
+  }
+
+  [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 23}
+      return u
+    }
+    ";
+
+    string file_test = @"
+    import ""get""
+
+    func int test() {
+      return get().test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.parse_cache_hits, 0);
+      AssertEqual(exec.parse_cache_miss, 3);
+      AssertEqual(exec.compile_cache_hits, 0);
+      AssertEqual(exec.compile_cache_miss, 3);
+    }
+
+    string new_file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 32}
+      return u
+    }
+    ";
+    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
+      AssertEqual(exec.parse_cache_hits, 1);
+      AssertEqual(exec.parse_cache_miss, 1+1);
+      AssertEqual(exec.compile_cache_hits, 1);
+      AssertEqual(exec.compile_cache_miss, 1+1);
+    }
+  }
+
+  [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""/collections/unit""
+
+    Unit global_unit
+
+    func Unit get() { 
+      Unit u = {test: 23}
+      return u
+    }
+    ";
+
+    string file_use =  @"
+    import ""/collections/unit""
+
+    func use_unit() { 
+      Unit u = {test: 42}
+    }
+    ";                 
+
+    string file_test = @"
+    import ""/try/get""
+
+    func int test() {
+      return get().test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("collections/unit.bhl", file_unit, ref files);
+    NewTestFile("try/get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("use/use.bhl", file_use, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+
+    string new_file_test = @"
+    import ""/try/get""
+
+    namespace foo {
+      func int get_add() {
+        return get().test + 1
+      }
+    }
+
+    func int test() {
+      return foo.get_add()
+    }
+    ";
+    NewTestFile("test.bhl", new_file_test, ref files, replace: true);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 24);
+      AssertEqual(exec.parse_cache_hits, 3);
+      AssertEqual(exec.parse_cache_miss, 1);
+      AssertEqual(exec.compile_cache_hits, 3);
+      AssertEqual(exec.compile_cache_miss, 1);
+    }
+  }
+
+  [IsTested()]
   public void TestImportEnum()
   {
     string bhl1 = @"
@@ -635,7 +862,7 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestIncrementalBuildOfChangedFiles()
+  public void TestImportAbsolutePath()
   {
     string file_unit = @"
       class Unit {
@@ -645,7 +872,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_test = @"
-    import ""garbage"";import ""unit"";  
+    import ""/units/unit""
 
     func int test() 
     {
@@ -653,211 +880,19 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    string file_garbage = @"
-      func garbage() {}
-    ";
-
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile("unit.bhl", file_unit, ref files);
-    NewTestFile("test.bhl", file_test, ref files);
-    NewTestFile("garbage.bhl", file_garbage, ref files);
+    NewTestFile("units/unit.bhl", file_unit, ref files);
+    NewTestFile("tests/test.bhl", file_test, ref files);
 
     {
       var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
       var vm = new VM(ts, loader);
-      vm.LoadModule("test");
+      vm.LoadModule("tests/test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-      AssertEqual(exec.parse_cache_hits, 0);
-      AssertEqual(exec.parse_cache_miss, 3);
-      AssertEqual(exec.compile_cache_hits, 0);
-      AssertEqual(exec.compile_cache_miss, 3);
-    }
-
-    string new_file_unit = @"
-      class Unit {
-        string new_field
-        int test
-      }
-      Unit u = {test: 32}
-    ";
-    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
-
-    {
-      var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
-      AssertEqual(exec.parse_cache_hits, 1);
-      AssertEqual(exec.parse_cache_miss, 1+1);
-      AssertEqual(exec.compile_cache_hits, 1);
-      AssertEqual(exec.compile_cache_miss, 1+1);
     }
   }
 
-  [IsTested()]
-  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile()
-  {
-    string file_unit = @"
-      class Unit {
-        int test
-      }
-    ";
-
-    string file_get = @"
-    import ""unit""
-
-    func Unit get() { 
-      Unit u = {test: 23}
-      return u
-    }
-    ";
-
-    string file_test = @"
-    import ""get""
-
-    func int test() {
-      return get().test
-    }
-    ";
-
-    CleanTestDir();
-
-    var files = new List<string>();
-    NewTestFile("unit.bhl", file_unit, ref files);
-    NewTestFile("get.bhl", file_get, ref files);
-    NewTestFile("test.bhl", file_test, ref files);
-
-    {
-      var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-      AssertEqual(exec.parse_cache_hits, 0);
-      AssertEqual(exec.parse_cache_miss, 3);
-      AssertEqual(exec.compile_cache_hits, 0);
-      AssertEqual(exec.compile_cache_miss, 3);
-    }
-
-    string new_file_get = @"
-    import ""unit""
-
-    func Unit get() { 
-      Unit u = {test: 32}
-      return u
-    }
-    ";
-    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
-
-    {
-      var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
-      AssertEqual(exec.parse_cache_hits, 1);
-      AssertEqual(exec.parse_cache_miss, 1+1);
-      AssertEqual(exec.compile_cache_hits, 1);
-      AssertEqual(exec.compile_cache_miss, 1+1);
-    }
-  }
-
-  [IsTested()]
-  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
-  {
-    string file_unit = @"
-      class Unit {
-        int test
-      }
-    ";
-
-    string file_get = @"
-    import ""/collections/unit""
-
-    Unit global_unit
-
-    func Unit get() { 
-      Unit u = {test: 23}
-      return u
-    }
-    ";
-
-    string file_use =  @"
-    import ""/collections/unit""
-
-    func use_unit() { 
-      Unit u = {test: 42}
-    }
-    ";                 
-
-    string file_test = @"
-    import ""/try/get""
-
-    func int test() {
-      return get().test
-    }
-    ";
-
-    CleanTestDir();
-
-    var files = new List<string>();
-    NewTestFile("collections/unit.bhl", file_unit, ref files);
-    NewTestFile("try/get.bhl", file_get, ref files);
-    NewTestFile("test.bhl", file_test, ref files);
-    NewTestFile("use/use.bhl", file_use, ref files);
-
-    {
-      var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-    }
-
-    string new_file_test = @"
-    import ""/try/get""
-
-    namespace foo {
-      func int get_add() {
-        return get().test + 1
-      }
-    }
-
-    func int test() {
-      return foo.get_add()
-    }
-    ";
-    NewTestFile("test.bhl", new_file_test, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
-
-    {
-      var ts = new Types();
-      var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
-      var vm = new VM(ts, loader);
-      vm.LoadModule("test");
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 24);
-      AssertEqual(exec.parse_cache_hits, 3);
-      AssertEqual(exec.parse_cache_miss, 1);
-      AssertEqual(exec.compile_cache_hits, 3);
-      AssertEqual(exec.compile_cache_miss, 1);
-    }
-  }
 }
