@@ -1498,7 +1498,7 @@ public class TestNamespace : BHL_TestBase
       "incompatible types: 'ecs.Entity' and 'ecs.sub.Entity'",
       new PlaceAssert(bhl, @"
         Entity es = sub.fetch()
-------------------^"
+---------------^"
       )
     );
    }
@@ -1532,7 +1532,7 @@ public class TestNamespace : BHL_TestBase
       "incompatible types: '[]ecs.Entity' and '[]ecs.sub.Entity'",
       new PlaceAssert(bhl, @"
         []Entity es = sub.fetch()
---------------------^"
+-----------------^"
       )
     );
    }

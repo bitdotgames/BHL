@@ -2122,7 +2122,7 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestTmpUserClassWriteFieldNotAllowed()
+  public void TestTmpUserClassWriteFieldAllowed()
   {
     string bhl = @"
 
@@ -2136,16 +2136,9 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      @"mismatched input '(' expecting '}'",
-      new PlaceAssert(bhl, @"
-      (new Foo{c: 10}).c = 20
-------^"
-      )
-    );
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
   }
 
   [IsTested()]

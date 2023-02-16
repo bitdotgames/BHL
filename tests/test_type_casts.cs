@@ -593,7 +593,7 @@ public class TestTypeCasts : BHL_TestBase
       "incompatible types: 'Foo' and 'Color'",
       new PlaceAssert(bhl, @"
       Foo tmp = new Color
---------------^"
+----------^"
       )
     );
   }
