@@ -3480,6 +3480,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     AST_Tree ast = assign_exp != null ? 
+      //NOTE: we're in the global 'init' code, we use VARW instead of GVARW
       (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
       (AST_Tree)new AST_VarDecl(pass.gvar_symb);
 
@@ -3752,7 +3753,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var_ann = Annotate(vd_name);
         var_ann.eval_type = var_symb.type.Get();
 
-        var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
+        bool is_global = var_symb.scope is Namespace;
+        var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);
         var_ast.AddChild(ast);
       }
       else if(vdecls.VarAccessAt(i) != null)

@@ -18983,7 +18983,6 @@ public class TestVM : BHL_TestBase
   public void TestGlobalVariableWriteRead()
   {
     string bhl = @"
-
     float foo = 10
       
     func float test() 
@@ -19212,7 +19211,7 @@ public class TestVM : BHL_TestBase
         @"function calls not allowed in global context",
         new PlaceAssert(bhl, @"
       int foo = (new Foo).make()
------------------^"
+----------------^"
         )
       );
     }
