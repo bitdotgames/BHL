@@ -843,6 +843,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitChainExpItem([NotNull] bhlParser.ChainExpItemContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.incompleteFuncCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIncompleteFuncCall([NotNull] bhlParser.IncompleteFuncCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.incompleteFuncCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIncompleteFuncCall([NotNull] bhlParser.IncompleteFuncCallContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcCallExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -852,6 +862,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncCallExp([NotNull] bhlParser.FuncCallExpContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.incompleteMemberAccess"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIncompleteMemberAccess([NotNull] bhlParser.IncompleteMemberAccessContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.incompleteMemberAccess"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIncompleteMemberAccess([NotNull] bhlParser.IncompleteMemberAccessContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varAccessExp"/>.
 	/// </summary>

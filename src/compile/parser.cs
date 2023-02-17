@@ -36,7 +36,7 @@ public class ANTLR_Parsed
     for(int i = 0; i < offset; i++)
       sb.Append("  ");
     
-    sb.Append(Trees.GetNodeText(root, rule_names)).Append("\n");
+    sb.Append(Trees.GetNodeText(root, rule_names)).Append(" ("+root.GetType().Name+")").Append("\n");
     if(root is ParserRuleContext prc) 
     {
       if(prc.children != null) 
@@ -4869,7 +4869,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         Init(ctx, ctx.chain());
         items.Add(ctx.callArgs());
       }
-      else
+      else if(ctx.lambdaCall() != null)
       {
         lambda_call = ctx.lambdaCall();
         items.Add(ctx.lambdaCall().callArgs());

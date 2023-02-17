@@ -959,7 +959,6 @@ public class BHL_TestBase
     );
 
     if(show_parse_tree)
-      //Console.WriteLine(Trees.ToStringTree(proc.parsed.prog, proc.parsed.parser.RuleNames));
       Console.WriteLine(proc.parsed);
 
     ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());

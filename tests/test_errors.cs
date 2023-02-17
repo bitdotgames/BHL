@@ -134,6 +134,18 @@ public class TestErrors : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBorkedInput()
+  {
+    string bhl = @"
+    func test() {
+      foo(wow(arg,fdf
+      //foo.foo(f,
+    }
+    ";
+    Compile(bhl, show_parse_tree: true, show_ast: true);
+  }
+
+  [IsTested()]
   public void TestSeveralSyntaxErrors()
   {
     string bhl = @"

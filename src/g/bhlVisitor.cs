@@ -510,11 +510,23 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitChainExpItem([NotNull] bhlParser.ChainExpItemContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.incompleteFuncCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncompleteFuncCall([NotNull] bhlParser.IncompleteFuncCallContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.funcCallExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitFuncCallExp([NotNull] bhlParser.FuncCallExpContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.incompleteMemberAccess"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncompleteMemberAccess([NotNull] bhlParser.IncompleteMemberAccessContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.varAccessExp"/>.
 	/// </summary>

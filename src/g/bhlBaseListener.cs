@@ -991,6 +991,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitChainExpItem([NotNull] bhlParser.ChainExpItemContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.incompleteFuncCall"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIncompleteFuncCall([NotNull] bhlParser.IncompleteFuncCallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.incompleteFuncCall"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIncompleteFuncCall([NotNull] bhlParser.IncompleteFuncCallContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcCallExp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -1002,6 +1014,18 @@ public partial class bhlBaseListener : IbhlListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncCallExp([NotNull] bhlParser.FuncCallExpContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.incompleteMemberAccess"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIncompleteMemberAccess([NotNull] bhlParser.IncompleteMemberAccessContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.incompleteMemberAccess"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIncompleteMemberAccess([NotNull] bhlParser.IncompleteMemberAccessContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varAccessExp"/>.
 	/// <para>The default implementation does nothing.</para>

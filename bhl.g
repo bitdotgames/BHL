@@ -164,6 +164,10 @@ chainExpItem
   : callArgs | memberAccess | arrAccess
   ;
 
+incompleteFuncCall
+  : chain '(' callArg? (',' callArg)*
+  ;
+
 //NOTE: makes sure it's a func call
 funcCallExp
   : chain callArgs
@@ -171,12 +175,19 @@ funcCallExp
   //   func() {}()
   //because 'chain' contains 'lambdaChain' and it already contains 'callArgs'
   | lambdaCall
+  | incompleteFuncCall
+  ;
+
+incompleteMemberAccess
+  : name '.'
+  | chain '.'
   ;
 
 //NOTE: makes sure it's a variable access
 varAccessExp
   : name
   | chain (memberAccess | arrAccess)
+  | incompleteMemberAccess
   ;
 
 arrAccess
