@@ -137,8 +137,8 @@ public class TestErrors : BHL_TestBase
   public void TestBorkedInput()
   {
     string bhl = @"
-    func test() {
-      foo(wow(arg,fdf
+    func test(fdf,sff=0) {
+      //foo(wow(arg,fdf
       //foo.foo(f,
     }
     ";
