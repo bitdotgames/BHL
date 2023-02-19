@@ -124,7 +124,7 @@ public class ErrorHandlers
   public IParserErrorListener parser_listener; 
   public IAntlrErrorStrategy error_strategy;
 
-  static public ErrorHandlers MakeCommon(string file, CompileErrors errors)
+  static public ErrorHandlers MakeStandard(string file, CompileErrors errors)
   {
     var eh = new ErrorHandlers();
     eh.lexer_listener = new ErrorLexerListener(file, errors); 

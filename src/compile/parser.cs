@@ -635,7 +635,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-	IType CommonVisitFuncCallExp(
+	IType ProcFuncCallExp(
     ParserRuleContext ctx,
     bhlParser.FuncCallExpContext exp,
     bool yielded = false
@@ -647,12 +647,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(exp);
 
     IType curr_type = null;
-    CommonProcExpChain(chain, ref curr_type, yielded: yielded);
+    ProcExpChain(chain, ref curr_type, yielded: yielded);
 
     return curr_type;
   }
 
-  void CommonPopNonConsumed(IType ret_type)
+  void ProcPopNonConsumed(IType ret_type)
   {
     if(ret_type == null || ret_type == Types.Void)
       return;
@@ -665,8 +665,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmCall(bhlParser.StmCallContext ctx)
   {
-    var ret_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp());
-    CommonPopNonConsumed(ret_type);
+    var ret_type = ProcFuncCallExp(ctx, ctx.funcCallExp());
+    ProcPopNonConsumed(ret_type);
     return null;
   }
 
@@ -688,7 +688,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  bool CommonProcExpChain(
+  bool ProcExpChain(
     ParserRuleContext ctx,
     bhlParser.ChainContext chain_ctx,
     ref IType curr_type,
@@ -698,7 +698,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var chain = new ExpChain(ctx, chain_ctx);
 
-    return CommonProcExpChain(
+    return ProcExpChain(
       chain,
       ref curr_type,
       write,
@@ -706,7 +706,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     );
   }
 
-  bool CommonProcExpChain(
+  bool ProcExpChain(
     ExpChain chain,
     ref IType curr_type, 
     bool write = false,
@@ -719,7 +719,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(chain.lambda_call != null)
     {
-      if(!CommonVisitLambdaCall(
+      if(!ProcLambdaCall(
         chain.ctx,
         chain.lambda_call,
         chain.items,
@@ -790,7 +790,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
       }
 
-      if(!CommonVisitChainItems(
+      if(!ProcChainItems(
           chain.items, 
           chain_offset,
           ref curr_name,
@@ -806,7 +806,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //checking the leftover of the call chain or a root call
       if(curr_name != null)
       {
-        CommonChainItem(
+        ProcChainItem(
           scope, 
           curr_name, 
           null, 
@@ -836,7 +836,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return true;
   }
 
-  bool CommonVisitChainItems(
+  bool ProcChainItems(
     ExpChainItems chain_items, 
     int chain_offset, 
     ref ITerminalNode curr_name, 
@@ -855,7 +855,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(cargs != null)
       {
-        CommonChainItem(
+        ProcChainItem(
           scope, 
           curr_name, 
           cargs, 
@@ -869,7 +869,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else if(arracc != null)
       {
-        CommonChainItem(
+        ProcChainItem(
           scope, 
           curr_name, 
           null, 
@@ -885,7 +885,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         Symbol macc_name_symb = null;
         if(curr_name != null)
-          macc_name_symb = CommonChainItem(
+          macc_name_symb = ProcChainItem(
             scope, 
             curr_name, 
             null, 
@@ -1049,7 +1049,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  Symbol CommonChainItem(
+  Symbol ProcChainItem(
     IScope scope, 
     ITerminalNode name, 
     bhlParser.CallArgsContext cargs, 
@@ -1739,7 +1739,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    return tp;
   }
 
-  AST_Tree CommonVisitLambda(
+  AST_Tree ProcLambda(
      ParserRuleContext ctx, 
      bhlParser.FuncLambdaContext funcLambda, 
      ref IType curr_type,
@@ -1797,7 +1797,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return ast;
   }
 
-  bool CommonVisitLambdaCall(
+  bool ProcLambdaCall(
     ParserRuleContext ctx, 
     bhlParser.LambdaCallContext call, 
     ExpChainItems chain_items,
@@ -1806,7 +1806,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     bool yielded
   )
   {
-    var ast = CommonVisitLambda(
+    var ast = ProcLambda(
       ctx, 
       call.funcLambda(), 
       ref curr_type,
@@ -1820,7 +1820,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var scope = curr_scope;
     ITerminalNode curr_name = null;
 
-    if(!CommonVisitChainItems(
+    if(!ProcChainItems(
       chain_items,
       0,
       ref curr_name,
@@ -2083,7 +2083,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpChain(bhlParser.ExpChainContext ctx)
   {
     IType curr_type = null;
-    CommonProcExpChain(ctx, ctx.chain(), ref curr_type);
+    ProcExpChain(ctx, ctx.chain(), ref curr_type);
 
     ++ref_compatible_exp_counter;
 
@@ -2095,7 +2095,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
     IType curr_type = null;
-    var ast = CommonVisitLambda(
+    var ast = ProcLambda(
       ctx, 
       ctx.funcLambda(), 
       ref curr_type
@@ -2109,7 +2109,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
-    var exp_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    var exp_type = ProcFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
     Annotate(ctx).eval_type = exp_type;
     return null;
   }
@@ -2251,16 +2251,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  bool CommonVisitVarPostOp(bhlParser.VarPostOpContext ctx)
+  bool ProcVarPostOp(bhlParser.VarPostOpContext ctx)
   {
     if(ctx.operatorPostOpAssign() != null)
     {
       string post_op = ctx.operatorPostOpAssign().GetText();
-      CommonVisitBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
+      ProcBinOp(ctx, post_op.Substring(0, 1), ctx.varAccessExp(), ctx.exp());
 
       var chain = new ExpChain(ctx.varAccessExp());
       IType curr_type = null;
-      if(!CommonProcExpChain(chain, ref curr_type, write: true))
+      if(!ProcExpChain(chain, ref curr_type, write: true))
         return false;
 
       //NOTE: strings concat special case
@@ -2276,11 +2276,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return true;
     }
     else if(ctx.varPostIncDec() != null) 
-      return CommonVisitPostIncDec(ctx.varPostIncDec());
+      return ProcPostIncDec(ctx.varPostIncDec());
     else if(ctx.assignExp() != null) 
     {
       var vproxy = new VarsDeclsProxy(new bhlParser.VarAccessExpContext[] { ctx.varAccessExp() });
-      return CommonDeclOrAssign(vproxy, ctx.assignExp(), ctx.Start.Line);
+      return ProcDeclOrAssign(vproxy, ctx.assignExp(), ctx.Start.Line);
     }
     
     return true;
@@ -2290,7 +2290,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var op = ctx.operatorAddSub().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+    ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
@@ -2299,14 +2299,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var op = ctx.operatorMulDivMod().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+    ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
   
   public override object VisitStmVarPostOp(bhlParser.StmVarPostOpContext ctx)
   {
-    CommonVisitVarPostOp(ctx.varPostOp());
+    ProcVarPostOp(ctx.varPostOp());
     return null;
   }
 
@@ -2321,7 +2321,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var tmp_parser = Stream2Parser(
           "", 
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
-          ErrorHandlers.MakeCommon("", new CompileErrors())
+          ErrorHandlers.MakeStandard("", new CompileErrors())
         );
         _one_literal_exp = tmp_parser.exp();
       }
@@ -2329,7 +2329,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool CommonVisitPostIncDec(bhlParser.VarPostIncDecContext ctx)
+  bool ProcPostIncDec(bhlParser.VarPostIncDecContext ctx)
   {
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
@@ -2340,9 +2340,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ann_one.tokens = ann_call.tokens;
 
     if(ctx.INC() != null)
-      CommonVisitBinOp(ctx, "+", ctx.varAccessExp(), one_literal_exp);
+      ProcBinOp(ctx, "+", ctx.varAccessExp(), one_literal_exp);
     else if(ctx.DEC() != null)
-      CommonVisitBinOp(ctx, "-", ctx.varAccessExp(), one_literal_exp);
+      ProcBinOp(ctx, "-", ctx.varAccessExp(), one_literal_exp);
     else
     {
       AddSemanticError(ctx, "unknown operator");
@@ -2352,7 +2352,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(ctx.varAccessExp());
 
     IType curr_type = null;
-    if(!CommonProcExpChain(chain, ref curr_type, write: true))
+    if(!ProcExpChain(chain, ref curr_type, write: true))
       return false;
 
     if(!Types.IsNumeric(curr_type))
@@ -2367,7 +2367,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var op = ctx.operatorComparison().GetText(); 
 
-    CommonVisitBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
+    ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
     return null;
   }
@@ -2404,7 +2404,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return op_type;
   }
 
-  void CommonVisitBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
+  void ProcBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
     AST_Tree ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
@@ -2683,7 +2683,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vd = ret_val.varDeclare();
       VariableSymbol vd_symb;
       PeekAST().AddChild(
-        CommonDeclVar(
+        ProcDeclVar(
           curr_scope, 
           vd.NAME(), 
           vd.type(), 
@@ -2708,7 +2708,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vd_ast = PeekAST();
       int vd_assign_idx = vd_ast.children.Count;
       vd_ast.AddChild(
-        CommonDeclVar(
+        ProcDeclVar(
           curr_scope, 
           vd.NAME(), 
           vd.type(), 
@@ -2718,7 +2718,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           symb: out vd_symb
         )
       );
-      CommonAssignToVar(
+      ProcAssignToVar(
         vd_ast, 
         vd_assign_idx,
         Annotate(vd.NAME()),
@@ -3551,15 +3551,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(ctx);
 
     IType curr_type = null;
-    CommonProcExpChain(chain, ref curr_type);
+    ProcExpChain(chain, ref curr_type);
     Annotate(ctx).eval_type = curr_type;
 
     return null;
   }
 
-  bool CommonDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool ProcDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    return CommonDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
+    return ProcDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
   }
 
   class VarsDeclsProxy
@@ -3703,7 +3703,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool CommonDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool ProcDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var var_ast = PeekAST();
     int var_assign_insert_idx = var_ast.children.Count;
@@ -3732,7 +3732,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return false;
         }
 
-        var ast = CommonDeclVar(
+        var ast = ProcDeclVar(
           curr_scope, 
           vdecls.LocalNameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
@@ -3784,7 +3784,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var chain = new ExpChain(var_exp);
 
         IType curr_type = null;
-        if(!CommonProcExpChain(chain, ref curr_type, write: true))
+        if(!ProcExpChain(chain, ref curr_type, write: true))
           return false;
 
         var_ann = Annotate(var_exp);
@@ -3793,7 +3793,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(assign_exp != null)
       {
-        if(!CommonAssignToVar(
+        if(!ProcAssignToVar(
           var_ast, 
           var_assign_insert_idx,
           var_ann,
@@ -3826,7 +3826,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var vdecls = new VarsDeclsProxy(ctx.varDeclaresOptAssign().varDeclare());
     var assign_exp = ctx.varDeclaresOptAssign().assignExp();
-    CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+    ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
     return null;
   }
@@ -3835,7 +3835,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var vdecls = new VarsDeclsProxy(ctx.varAccessOrDeclaresAssign().varAccessOrDeclare());
     var assign_exp = ctx.varAccessOrDeclaresAssign().assignExp();
-    CommonDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
+    ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
     return null;
   }
@@ -3874,7 +3874,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     VariableSymbol vd_symb;
-    var decl_ast = CommonDeclVar(
+    var decl_ast = ProcDeclVar(
       curr_scope, 
       name, 
       ctx.type(), 
@@ -3892,7 +3892,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  AST_Tree CommonDeclVar(
+  AST_Tree ProcDeclVar(
     IScope curr_scope, 
     ITerminalNode name, 
     bhlParser.TypeContext tp_ctx, 
@@ -3903,7 +3903,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   )
   {
     var tp = ParseType(tp_ctx);
-    return CommonDeclVar(
+    return ProcDeclVar(
       curr_scope, 
       name, 
       tp, 
@@ -3915,7 +3915,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     );
   }
 
-  AST_Tree CommonDeclVar(
+  AST_Tree ProcDeclVar(
     IScope curr_scope, 
     ITerminalNode name, 
     Proxy<IType> tp, 
@@ -3958,7 +3958,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return new AST_VarDecl(symb, is_ref);
   }
 
-  bool CommonAssignToVar(
+  bool ProcAssignToVar(
     AST_Tree ast_dest,
     int ast_insert_idx,
     AnnotatedParseTree var_ann, 
@@ -4044,25 +4044,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitBlock(bhlParser.BlockContext ctx)
   {
-    CommonVisitBlock(BlockType.SEQ, ctx.statement());
+    ProcBlock(BlockType.SEQ, ctx.statement());
     return null;
   }
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    CommonVisitBlock(BlockType.FUNC, ctx.block().statement());
+    ProcBlock(BlockType.FUNC, ctx.block().statement());
     return null;
   }
 
   public override object VisitStmParal(bhlParser.StmParalContext ctx)
   {
-    CommonVisitBlock(BlockType.PARAL, ctx.block().statement());
+    ProcBlock(BlockType.PARAL, ctx.block().statement());
     return null;
   }
 
   public override object VisitStmParalAll(bhlParser.StmParalAllContext ctx)
   {
-    CommonVisitBlock(BlockType.PARAL_ALL, ctx.block().statement());
+    ProcBlock(BlockType.PARAL_ALL, ctx.block().statement());
     return null;
   }
 
@@ -4073,7 +4073,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       AddSemanticError(ctx, "nested defers are not allowed");
       return null;
     }
-    CommonVisitBlock(BlockType.DEFER, ctx.block().statement());
+    ProcBlock(BlockType.DEFER, ctx.block().statement());
     return null;
   }
 
@@ -4097,7 +4097,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, main.block().statement());
+    ProcBlock(BlockType.SEQ, main.block().statement());
     PopAST();
 
     //NOTE: if in the block before there were no 'return' statements and in the current block
@@ -4150,7 +4150,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      CommonVisitBlock(BlockType.SEQ, item.block().statement());
+      ProcBlock(BlockType.SEQ, item.block().statement());
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -4164,7 +4164,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return_found.Remove(func_symb);
 
       PushAST(ast);
-      CommonVisitBlock(BlockType.SEQ, @else.block().statement());
+      ProcBlock(BlockType.SEQ, @else.block().statement());
       PopAST();
 
       if(!seen_return && return_found.Contains(func_symb))
@@ -4234,7 +4234,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+    ProcBlock(BlockType.SEQ, ctx.block().statement());
     PopAST();
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
@@ -4254,7 +4254,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushBlock(ast);
 
     PushAST(ast);
-    CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+    ProcBlock(BlockType.SEQ, ctx.block().statement());
     PopAST();
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
@@ -4294,7 +4294,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     
     var for_pre = ctx.forExp().forPreIter();
     if(for_pre != null)
-      CommmonProcessForPreStatements(for_pre, ctx.Start.Line);
+      ProcForPreStatements(for_pre, ctx.Start.Line);
 
     var for_cond = ctx.forExp().exp();
     //TODO: use more generic protection against parse errors
@@ -4317,13 +4317,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+    var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
     //appending post iteration code
     if(for_post_iter != null)
     {
       PushAST(block);
       PeekAST().AddChild(new AST_Continue(jump_marker: true));
-      CommmonProcessForPostStatements(for_post_iter, ctx.Start.Line);
+      ProcForPostStatements(for_post_iter, ctx.Start.Line);
       PopAST();
     }
     PopAST();
@@ -4340,19 +4340,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  void CommmonProcessForPreStatements(bhlParser.ForPreIterContext pre, int start_line)
+  void ProcForPreStatements(bhlParser.ForPreIterContext pre, int start_line)
   {
     foreach(var vdecl in pre.varOrDeclareAssign())
     {
-      CommonDeclOrAssign(vdecl.varOrDeclare(), vdecl.assignExp(), start_line);
+      ProcDeclOrAssign(vdecl.varOrDeclare(), vdecl.assignExp(), start_line);
     }
   }
 
-  void CommmonProcessForPostStatements(bhlParser.ForPostIterContext post, int start_line)
+  void ProcForPostStatements(bhlParser.ForPostIterContext post, int start_line)
   {
     foreach(var vp in post.varPostOp())
     {
-      CommonVisitVarPostOp(vp);
+      ProcVarPostOp(vp);
     }
   }
 
@@ -4369,8 +4369,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    var ret_type = CommonVisitFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
-    CommonPopNonConsumed(ret_type);
+    var ret_type = ProcFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    ProcPopNonConsumed(ret_type);
     return null;
   }
 
@@ -4456,7 +4456,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         else
           vd_type = ParseType(vd.type());
 
-        iter_ast_decl = CommonDeclVar(
+        iter_ast_decl = ProcDeclVar(
           curr_scope, 
           vd.NAME(), 
           vd_type,
@@ -4516,7 +4516,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //while body
       PushAST(ast);
-      var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+      var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
       //prepending filling of the iterator var
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
       var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
@@ -4585,7 +4585,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        key_iter_ast_decl = CommonDeclVar(
+        key_iter_ast_decl = ProcDeclVar(
           curr_scope, 
           vd_key.NAME(), 
           vd_key_type, 
@@ -4615,7 +4615,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        val_iter_ast_decl = CommonDeclVar(
+        val_iter_ast_decl = ProcDeclVar(
           curr_scope, 
           vd_val.NAME(), 
           vd_val_type, 
@@ -4669,7 +4669,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //while body
       PushAST(ast);
-      var block = CommonVisitBlock(BlockType.SEQ, ctx.block().statement());
+      var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
       //prepending filling of k/v
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, val_iter_symb));
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, key_iter_symb));
@@ -4701,7 +4701,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return Annotate(tree).eval_type;
   }
 
-  AST_Block CommonVisitBlock(BlockType type, IParseTree[] sts)
+  AST_Block ProcBlock(BlockType type, IParseTree[] sts)
   {
     bool is_paral = 
       type == BlockType.PARAL || 

@@ -147,7 +147,7 @@ public class CompilationExecutor
           kv.Value.parsed, 
           ts, 
           proc_errs,
-          ErrorHandlers.MakeCommon(kv.Key, proc_errs)
+          ErrorHandlers.MakeStandard(kv.Key, proc_errs)
         );
 
         file2proc.Add(kv.Key, proc);
@@ -418,7 +418,7 @@ public class CompilationExecutor
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
                 sfs, 
-                ErrorHandlers.MakeCommon(file, new CompileErrors())
+                ErrorHandlers.MakeStandard(file, new CompileErrors())
               );
               var parsed = new ANTLR_Parsed(parser);
 

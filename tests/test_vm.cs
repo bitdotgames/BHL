@@ -13142,7 +13142,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "no viable alternative at input '(i++'"
+      "mismatched input ')'"
     );
 
     string bhl7 = @"
@@ -13176,7 +13176,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "no viable alternative at input '(i++'"
+      "mismatched input ')'"
     );
 
     string bhl9 = @"
@@ -13317,7 +13317,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "no viable alternative at input '(i--'"
+      "mismatched input ')'"
     );
 
     string bhl6 = @"

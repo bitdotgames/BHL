@@ -955,7 +955,7 @@ public class BHL_TestBase
       bhl.ToStream(), 
       ts, 
       errors,
-      ErrorHandlers.MakeCommon("", errors)
+      ErrorHandlers.MakeStandard("", errors)
     );
 
     if(show_parse_tree)
