@@ -750,41 +750,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(root_name != null)
       {
-        var name_symb = scope.ResolveWithFallback(curr_name.GetText());
-
-        TryProcessClassBaseCall(
+        if(!ProcChainStartingName(
+          chain,
+          root_name, 
           ref curr_name, 
-          ref scope, 
-          ref name_symb, 
-          ref chain_offset, 
-          chain.items, 
-          root_name.Symbol.Line
-        );
-
-        if(name_symb == null)
+          ref scope,
+          ref curr_type,
+          ref chain_offset
+        ))
         {
-          AddSemanticError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
-          PopAST();
-          return false;
-        }
-
-        TryApplyNamespaceOffset(
-          ref curr_name, 
-          ref scope, 
-          ref name_symb, 
-          ref chain_offset, 
-          chain.items
-        );
-
-        if(name_symb is IType)
-          curr_type = (IType)name_symb;
-        else if(name_symb is ITyped typed)
-          curr_type = typed.GetIType();
-        else
-          curr_type = null;
-        if(curr_type == null)
-        {
-          AddSemanticError(root_name, "bad chain call");
           PopAST();
           return false;
         }
@@ -831,6 +805,56 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       );
 
       PeekAST().AddChildren(chain_ast);
+    }
+
+    return true;
+  }
+
+  bool ProcChainStartingName(
+    ExpChain chain,
+    ITerminalNode root_name,
+    ref ITerminalNode curr_name,
+    ref IScope scope,
+    ref IType curr_type,
+    ref int chain_offset
+   )
+  {
+    var name_symb = scope.ResolveWithFallback(curr_name.GetText());
+
+    TryProcessClassBaseCall(
+      ref curr_name, 
+      ref scope, 
+      ref name_symb, 
+      ref chain_offset, 
+      chain.items, 
+      root_name.Symbol.Line
+     );
+
+    if(name_symb == null)
+    {
+      AddSemanticError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
+      return false;
+    }
+
+    TryApplyNamespaceOffset(
+      ref curr_name, 
+      ref scope, 
+      ref name_symb, 
+      ref chain_offset, 
+      chain.items
+     );
+
+    if(name_symb is IType)
+      curr_type = (IType)name_symb;
+    else if(name_symb is ITyped typed)
+      curr_type = typed.GetIType();
+    else
+      curr_type = null;
+
+    if(curr_type == null)
+    {
+      AddSemanticError(root_name, "bad chain call");
+      return false;
     }
 
     return true;
