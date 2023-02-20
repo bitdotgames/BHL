@@ -231,6 +231,7 @@ public class TestVariadic : BHL_TestBase
   [IsTested()]
   public void TestNoRefAllowed()
   {
+    SubTest(() =>
     {
       string bhl = @"
       func sum(ref ...[]int ns) {
@@ -247,8 +248,9 @@ public class TestVariadic : BHL_TestBase
 ---------------^"
         )
       );
-    }
+    });
 
+    SubTest(() =>
     {
       string bhl = @"
       func sum(...[]ref int ns) {
@@ -265,7 +267,7 @@ public class TestVariadic : BHL_TestBase
 --------------------^"
         )
       );
-    }
+    });
   }
 
   [IsTested()]

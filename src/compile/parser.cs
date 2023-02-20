@@ -1730,35 +1730,50 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Proxy<IType> ParseType(bhlParser.TypeContext ctx)
   {
-    Proxy<IType> tp;
-    if(ctx.funcType() == null)
+    var tp = new Proxy<IType>();
+    if(ctx.nsName() != null)
     {
       if(ctx.nsName().GetText() == "var")
+      {
         AddSemanticError(ctx.nsName(), "invalid usage context");
+        return tp;
+      }
 
       tp = curr_scope.R().T(ctx.nsName().GetText());
     }
-    else
+    else if(ctx.funcType() != null)
       tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
 
     if(ctx.ARR() != null)
     {
       if(tp.Get() == null)
-        AddSemanticError(ctx.nsName(), "type '" + tp.path + "' not found");
+      {
+        AddSemanticError(ctx, "type '" + tp.path + "' not found");
+        return tp;
+      }
       tp = curr_scope.R().TArr(tp);
     }
     else if(ctx.mapType() != null)
     {
       if(tp.Get() == null)
-        AddSemanticError(ctx.nsName(), "type '" + tp.path + "' not found");
+      {
+        AddSemanticError(ctx, "type '" + tp.path + "' not found");
+        return tp;
+      }
       var ktp = curr_scope.R().T(ctx.mapType().nsName().GetText());
       if(ktp.Get() == null)
-        AddSemanticError(ctx.mapType().nsName(), "type '" + ktp.path + "' not found");
+      {
+        AddSemanticError(ctx, "type '" + ktp.path + "' not found");
+        return tp;
+      }
       tp = curr_scope.R().TMap(ktp, tp);
     }
 
     if(tp.Get() == null)
+    {
       AddSemanticError(ctx, "type '" + tp.path + "' not found");
+      return tp;
+    }
 
    return tp;
   }
@@ -3866,11 +3881,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
   {
-    //TODO: use more generic protection against parse errors
-    if(ctx.type() == null || 
-       (ctx.type().nsName() == null && ctx.type().funcType() == null))
-      return null;
-
     var name = ctx.NAME();
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.isRef() != null;

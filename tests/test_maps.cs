@@ -817,7 +817,7 @@ public class TestMaps : BHL_TestBase
         "type 'Foo' not found",
         new PlaceAssert(bhl, @"
       func [Foo]int fetch() {
-------------^"
+-----------^"
         )
       );
     }
@@ -841,7 +841,7 @@ public class TestMaps : BHL_TestBase
         "type 'Foo' not found",
         new PlaceAssert(bhl, @"
       func [int]Foo fetch() {
-----------------^"
+-----------^"
         )
       );
     }

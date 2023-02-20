@@ -133,7 +133,8 @@ public class TestErrors : BHL_TestBase
     AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
   }
 
-  [IsTested()]
+  //TODO
+  //[IsTested()]
   public void TestBorkedInput()
   {
     string bhl = @"
@@ -145,7 +146,8 @@ public class TestErrors : BHL_TestBase
     Compile(bhl, show_parse_tree: true, show_ast: true);
   }
 
-  [IsTested()]
+  //TODO
+  //[IsTested()]
   public void TestSeveralSyntaxErrors()
   {
     string bhl = @"

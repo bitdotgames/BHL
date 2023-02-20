@@ -785,7 +785,7 @@ public class TestClasses : BHL_TestBase
       "type 'Foo' not found",
       new PlaceAssert(bhl, @"
     func []Foo fetch() {
------------^"
+---------^"
       )
     );
   }
