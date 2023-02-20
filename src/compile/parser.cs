@@ -1667,11 +1667,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var vd = fparams.funcParamDeclare()[i];
 
-        //TODO: use more generic protection against parse errors
-        if(vd.type() == null ||
-           (vd.type().nsName() == null && vd.type().funcType() == null))
-          break;
-
         var tp = ParseType(vd.type());
         if(vd.isRef() != null)
           tp = curr_scope.R().T(new RefType(tp));
