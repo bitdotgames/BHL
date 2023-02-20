@@ -4938,7 +4938,6 @@ public class TestVM : BHL_TestBase
   public void TestForBadPreSection()
   {
     string bhl = @"
-
     func test() 
     {
       int i = 0
@@ -4952,7 +4951,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts, show_parse_tree: true);
       },
       "mismatched input ';' expecting '='",
       new PlaceAssert(bhl, @"
