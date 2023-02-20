@@ -4023,7 +4023,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var assign_ast = new AST_Interim();
     PushAST(assign_ast);
-    Visit(assign_exp);
+    if(assign_exp.ChildCount > 0)
+      Visit(assign_exp);
     PopAST();
 
     var assign_type = new TypeAsArr(Annotate(assign_exp).eval_type); 

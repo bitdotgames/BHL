@@ -4951,7 +4951,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts, show_parse_tree: true);
+        Compile(bhl, ts);
       },
       "mismatched input ';' expecting '='",
       new PlaceAssert(bhl, @"
