@@ -3496,8 +3496,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.gvar_symb.type = ParseType(vd.type());
     pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
 
-    if(pass.gvar_symb.type.Get() is VariableSymbol)
-      Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.parsed.eval_type as Symbol;
+    if(vd.type().nsName() != null)
+      Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.type.Get() as Symbol;
 
     PushAST((AST_Tree)pass.ast);
 
