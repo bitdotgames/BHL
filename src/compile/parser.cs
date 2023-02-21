@@ -60,15 +60,9 @@ public class AnnotatedParseTree
   public IType eval_type;
   public Symbol lsp_symbol;
 
-  public int line { 
+  public SourceRange range { 
     get { 
-      return tokens.Get(tree.SourceInterval.a).Line;  
-    } 
-  }
-
-  public int column { 
-    get { 
-      return tokens.Get(tree.SourceInterval.a).Column;  
+      return new SourceRange(tree.SourceInterval, tokens);
     } 
   }
 

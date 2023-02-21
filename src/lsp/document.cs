@@ -58,7 +58,7 @@ public class BHLDocument
     GetTerminalNodes(parsed.program_tree, nodes);
   }
 
-  public TerminalNodeImpl FindTerminalNode(Code.Position pos)
+  public TerminalNodeImpl FindTerminalNode(SourcePos pos)
   {
     return FindTerminalNode(pos.line, pos.column);
   }
@@ -79,7 +79,7 @@ public class BHLDocument
     return null;
   }
 
-  public Symbol FindSymbol(Code.Position pos)
+  public Symbol FindSymbol(SourcePos pos)
   {
     var node = FindTerminalNode(pos);
     if(node == null)

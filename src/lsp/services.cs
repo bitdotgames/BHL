@@ -283,14 +283,12 @@ public class TextDocumentGoToService : IService
 
       if(symb != null)
       {
+        var range = (Range)symb.parsed.range;
+        range.DecrementLine();
         return RpcResult.Success(new Location
         {
           uri = new Uri("file://" + symb.parsed.file),
-          range = new Range
-          {
-            start = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column },
-            end = new Position { line = (uint)symb.parsed.line-1, character = (uint)symb.parsed.column }
-          }
+          range = range
         });
       }
     }

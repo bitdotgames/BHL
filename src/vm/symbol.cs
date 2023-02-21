@@ -1825,7 +1825,7 @@ public class LambdaSymbol : FuncSymbolScript
       local.scope_idx, 
       src.scope_idx,
       //TODO: should be the line of its usage
-      src.parsed.line
+      src.parsed.range.start.line
     ); 
     upvals.Add(up);
 

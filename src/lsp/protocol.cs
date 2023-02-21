@@ -1262,6 +1262,21 @@ public class Position
    * * to the line length.
    */
   public uint character;
+
+  public static implicit operator Position(SourcePos pos)
+  {
+    return new Position() { line = (uint)pos.line, character = (uint)pos.column }; 
+  }
+
+  public static implicit operator SourcePos(Position pos)
+  {
+    return new SourcePos((int)pos.line, (int)pos.character); 
+  }
+
+  public void DecLine()
+  {
+    line = line - 1;
+  }
 }
 
 public class Range
@@ -1275,6 +1290,17 @@ public class Range
    * The range's end position.
    */
   public Position end;
+
+  public static implicit operator Range(SourceRange range)
+  {
+    return new Range() { start = range.start, end = range.end }; 
+  }
+
+  public void DecrementLine()
+  {
+    start.DecLine();
+    end.DecLine();
+  }
 }
 
 public class TextDocumentContentChangeEvent

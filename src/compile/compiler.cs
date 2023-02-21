@@ -864,7 +864,7 @@ public class ModuleCompiler : AST_Visitor
 
     Emit(Opcodes.InitFrame, 
       new int[] { fsymb.local_vars_num + 1/*cargs bits*/}, 
-      ast.symbol.parsed.line
+      ast.symbol.parsed.range.start.line
     );
     VisitChildren(ast);
 
@@ -881,7 +881,7 @@ public class ModuleCompiler : AST_Visitor
     //skipping lambda opcode
     Emit(Opcodes.InitFrame, 
       new int[] { ast.local_vars_num + 1/*cargs bits*/},
-      ast.symbol.parsed.line
+      ast.symbol.parsed.range.start.line
     );
     VisitChildren(ast);
     Emit(Opcodes.ExitFrame, null, ast.last_line_num);

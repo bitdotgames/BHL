@@ -366,56 +366,56 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "st1(42)")),
-        GoToDefinitionRsp(uri1, "func float test1(float k)")
+        GoToDefinitionRsp(uri1, "func float test1(float k)", line_offset: 3)
       );
     });
     
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "est2()")),
-        GoToDefinitionRsp(uri1, "func test2()")
+        GoToDefinitionRsp(uri1, "func test2()", line_offset: 4)
       );
     });
     
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
-        GoToDefinitionRsp(uri1, "class Foo {")
+        GoToDefinitionRsp(uri1, "class Foo {", line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
-        GoToDefinitionRsp(uri1, "class Foo {")
+        GoToDefinitionRsp(uri1, "class Foo {", line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
-        GoToDefinitionRsp(uri1, "int BAR")
+        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
-        GoToDefinitionRsp(uri1, "int BAR")
+        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "AR = 1")),
-        GoToDefinitionRsp(uri1, "int BAR")
+        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
-        GoToDefinitionRsp(uri1, "foo = {")
+        GoToDefinitionRsp(uri1, "foo = {", column_offset: 2)
       );
     });
 
@@ -443,14 +443,14 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
-        GoToDefinitionRsp(uri1, "enum ErrorCodes")
+        GoToDefinitionRsp(uri1, "enum ErrorCodes", line_offset: 3)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
-        GoToDefinitionRsp(uri1, "Bad = 1")
+        GoToDefinitionRsp(uri1, "Bad = 1", column_offset: 6)
       );
     });
 
@@ -555,25 +555,26 @@ public class TestLSP : BHL_TestBase
 
   static string GoToDefinitionReq(Uri uri, string needle)
   {
-    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
       "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
-      "\"}, \"position\": " + pos + "}}";
+      "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  static string GoToDefinitionRsp(Uri uri, string needle)
+  static string GoToDefinitionRsp(Uri uri, string needle, int line_offset = 0, int column_offset = 0)
   {
-    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    var start = Pos(File.ReadAllText(uri.LocalPath), needle);
+    var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
     return "{\"id\":1,\"result\":{\"uri\":\"" + uri.ToString() +
-      "\",\"range\":{\"start\":" + pos + ",\"end\":" + pos + "}},\"jsonrpc\":\"2.0\"}";
+      "\",\"range\":{\"start\":" + AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
 
   static string SignatureHelpReq(Uri uri, string needle)
   {
-    string pos = JsonPos(File.ReadAllText(uri.LocalPath), needle);
+    var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
       "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
-      "\"}, \"position\": " + pos + "}}";
+      "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
   static string NullResultJson()
@@ -609,7 +610,7 @@ public class TestLSP : BHL_TestBase
     return MakeUri(full_path);
   }
 
-  static string JsonPos(string code, string needle)
+  static bhl.SourcePos Pos(string code, string needle)
   {
     int idx = code.IndexOf(needle);
     if(idx == -1)
@@ -619,6 +620,11 @@ public class TestLSP : BHL_TestBase
     var pos = indexer.GetIndexPosition(idx);
     if(pos.line == -1 && pos.column == -1)
       throw new Exception("Needle not mapped position: " + needle);
+    return pos;
+  }
+
+  static string AsJson(bhl.SourcePos pos)
+  {
     return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
   }
 }

@@ -15,8 +15,7 @@ public interface ICompileError
   string text { get; }
   string stack_trace { get; }
   string file { get; }
-  int line { get; }
-  int column { get; }
+  SourceRange range { get; }
 }
 
 public class CompileErrors : List<ICompileError> 
@@ -55,16 +54,14 @@ public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
-  public int line { get; }
-  public int column { get; }
+  public SourceRange range { get; }
   public string file { get; }
 
-  public SyntaxError(string file, int line, int column, string msg)
-    : base(ErrorUtils.MakeMessage(file, line, column, msg))
+  public SyntaxError(string file, SourceRange range, string msg)
+    : base(ErrorUtils.MakeMessage(file, range, msg))
   {
     this.text = msg;
-    this.line = line;
-    this.column = column;
+    this.range = range;
     this.file = file;
   }
 }
@@ -73,19 +70,18 @@ public class BuildError : Exception, ICompileError
 {
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
-  public int line { get { return 0; } }
-  public int column { get { return 0; } }
+  public SourceRange range { get { return new SourceRange(); } }
   public string file { get; }
 
   public BuildError(string file, string msg)
-    : base(ErrorUtils.MakeMessage(file, 0, 0, msg))
+    : base(ErrorUtils.MakeMessage(file, new SourceRange(), msg))
   {
     this.text = msg;
     this.file = file;
   }
 
   public BuildError(string file, Exception inner)
-    : base(ErrorUtils.MakeMessage(file, 0, 0, inner.Message), inner)
+    : base(ErrorUtils.MakeMessage(file, new SourceRange(), inner.Message), inner)
   {
     this.text = inner.Message;
     this.file = file;
@@ -96,8 +92,13 @@ public class SemanticError : Exception, ICompileError
 {
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
-  public int line { get { return tokens.Get(place.SourceInterval.a).Line; } }
-  public int column { get { return tokens.Get(place.SourceInterval.a).Column; } }
+
+  public SourceRange range { 
+    get {
+      return new SourceRange(place.SourceInterval, tokens);
+    }
+  }
+
   public string file { get { return module.file_path; } }
 
   public Module module { get; }
@@ -147,7 +148,7 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, int offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    errors.Add(new SyntaxError(file_path, line, char_pos, msg));
+    errors.Add(new SyntaxError(file_path, new SourceRange(line, char_pos), msg));
   }
 }
 
@@ -178,7 +179,7 @@ public class ErrorParserListener : IParserErrorListener
 
   public virtual void SyntaxError(TextWriter tw, IRecognizer recognizer, IToken offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
   {
-    errors.Add(new SyntaxError(file_path, line, char_pos, msg));
+    errors.Add(new SyntaxError(file_path, new SourceRange(line, char_pos), msg));
   }
 
   public virtual void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)

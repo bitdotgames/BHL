@@ -6,33 +6,6 @@ namespace bhl.lsp {
 
 public class Code
 {
-  public struct Position
-  {
-    public int line;
-    public int column;
-
-    public Position(int line, int column)
-    {
-      this.line = line;
-      this.column = column;
-    }
-
-    public spec.Position ToSpec()
-    {
-      return new spec.Position {line = (uint)line, character = (uint)column};
-    }
-
-    public static implicit operator spec.Position(Position pos)
-    {
-      return pos.ToSpec();
-    }
-
-    public static implicit operator Position(spec.Position pos)
-    {
-      return new Position((int)pos.line, (int)pos.character);
-    }
-  }
-
   public string Text { get; private set; }
 
   List<int> line2byte_offset = new List<int>();
@@ -75,10 +48,10 @@ public class Code
     return -1;
   }
   
-  public Position GetIndexPosition(int index)
+  public SourcePos GetIndexPosition(int index)
   {
     if(index >= Text.Length)
-      return new Position(-1, -1); 
+      return new SourcePos(-1, -1); 
 
     // Binary search.
     int low = 0;
@@ -98,7 +71,7 @@ public class Code
     }
     
     var min = low <= high ? i : high;
-    return new Position(min, index - line2byte_offset[min]);
+    return new SourcePos(min, index - line2byte_offset[min]);
   }
 }
 
