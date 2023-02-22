@@ -156,13 +156,8 @@ public class ErrorStrategy : DefaultErrorStrategy
 {
   public override void Sync(Antlr4.Runtime.Parser parser) 
   {
-    //NOTE: don't do sync since it's way too 'smart' and removes extra tokens
-    //base.Sync(parser);
-  }
-
-  protected override IToken SingleTokenDeletion(Parser recognizer)
-  {
-    return null;
+    //NOTE: base sync is 'smart' and removes extra tokens
+    base.Sync(parser);
   }
 }
 

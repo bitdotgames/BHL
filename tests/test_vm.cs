@@ -5014,7 +5014,6 @@ public class TestVM : BHL_TestBase
   public void TestForBadPostSection()
   {
     string bhl = @"
-
     func test() 
     {
       for(int i = 0 ; i < 3; i) {
@@ -5051,7 +5050,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no viable alternative at input ';'",
+      "mismatched input ';'",
       new PlaceAssert(bhl, @"
       for(;;) {
 -----------^"
@@ -6338,7 +6337,6 @@ public class TestVM : BHL_TestBase
   public void TestCallLambdaInPlaceInvalid()
   {
     string bhl = @"
-
     func bool test(int a) 
     {
       return func bool(int a) { return a > 2 }.foo 
@@ -6349,7 +6347,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "mismatched input '.'",
+      "extraneous input '.'",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }.foo 
 ----------------------------------------------^"
@@ -8842,7 +8840,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "mismatched input 'ref' expecting '}'",
+      "extraneous input 'ref'",
       new PlaceAssert(bhl, @"
       ref float a
 ------^"
@@ -13048,7 +13046,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "mismatched input '++'",
+      "extraneous input '++'",
       new PlaceAssert(bhl1, @"
       ++
 ------^"
@@ -13086,7 +13084,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl3);
       },
-      "mismatched input '++'"
+      "extraneous input '++'"
     );
 
     string bhl4 = @"
@@ -13103,7 +13101,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl4);
       },
-      "mismatched input '++'"
+      "extraneous input '++'"
     );
 
     string bhl5 = @"
@@ -13124,7 +13122,6 @@ public class TestVM : BHL_TestBase
     );
 
     string bhl6 = @"
-    
     func foo(float a)
     {
     }
