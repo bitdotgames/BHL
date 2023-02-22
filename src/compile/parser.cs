@@ -3012,10 +3012,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    //TODO: use more generic protection against parse errors
-    if(pass.func_ctx.funcBlock() == null)
-      return;
-
     PushScope(pass.func_ast.symbol);
     ParseFuncBlock(pass.func_ctx, pass.func_ctx.funcBlock(), pass.func_ctx.retType(), pass.func_ast);
     PopScope();
@@ -4943,7 +4939,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void VisitValid(IParseTree tree)
   {
-    if(tree.ChildCount > 0)
+    if(tree != null && tree.ChildCount > 0)
       Visit(tree);
   }
 }
