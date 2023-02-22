@@ -70,14 +70,12 @@ public static class ErrorUtils
     var lines = source.Split('\n');
     if(line > 0 && line <= lines.Length)
     {
-      string hint = lines[line-1].Replace("\t", "    ") + "\n";
+      string hint = lines[line-1];
+      //replacing tabs with spaces
+      hint = hint.Replace("\t", "    ") + "\n";
       for(int c=0;c<char_pos;++c)
-      {
-        if(lines[line-1][c] == '\t')
-          hint += "----";
-        else
-          hint += "-";
-      }
+        hint += "-";
+
       hint += "^";
       return hint;
     }
