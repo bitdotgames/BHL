@@ -4935,7 +4935,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void VisitValid(IParseTree tree)
   {
-    if(tree != null && tree.ChildCount > 0)
+    if(tree.ChildCount > 0)
       Visit(tree);
   }
 }
