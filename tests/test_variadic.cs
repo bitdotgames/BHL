@@ -261,7 +261,7 @@ public class TestVariadic : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "no viable alternative at input 'ref'",
+        "extraneous input 'ref'",
         new PlaceAssert(bhl, @"
       func sum(...[]ref int ns) {
 --------------------^"

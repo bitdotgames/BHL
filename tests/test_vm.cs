@@ -13138,7 +13138,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "mismatched input ')'"
+      "extraneous input ')'"
     );
 
     string bhl7 = @"
@@ -13172,7 +13172,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "mismatched input ')'"
+      "extraneous input ')'"
     );
 
     string bhl9 = @"
@@ -13203,7 +13203,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl10);
       },
-      "mismatched input '++'",
+      "extraneous input '++'",
       new PlaceAssert(bhl10, @"
       return j, i++
 -----------------^"
@@ -13223,7 +13223,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl11);
       },
-      "mismatched input",
+      "extraneous input ','",
       new PlaceAssert(bhl11, @"
       return j++, i
 ----------------^"
@@ -13245,7 +13245,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl1);
       },
-      "mismatched input '--' expecting '}'"
+      "extraneous input '--'"
     );
 
     string bhl2 = @"
@@ -13275,7 +13275,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl3);
       },
-      "mismatched input '--'"
+      "extraneous input '--'"
     );
 
     string bhl4 = @"
@@ -13292,7 +13292,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl4);
       },
-      "mismatched input '--'"
+      "extraneous input '--'"
     );
 
     string bhl5 = @"
@@ -13313,7 +13313,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "mismatched input ')'"
+      "extraneous input ')'"
     );
 
     string bhl6 = @"
@@ -13360,7 +13360,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "mismatched input '--'"
+      "extraneous input '--'"
     );
 
     string bhl9 = @"
@@ -13376,7 +13376,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl9);
       },
-      "mismatched input ',' expecting '}'"
+      "extraneous input ','"
     );
   }
 
