@@ -249,9 +249,21 @@ public class TextDocumentSignatureHelpService : IService
       var node = document.FindTerminalNode(args.position);
       if(node != null)
       {
-        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.Parent.GetType().Name + " " + node.Parent.GetText());
-        //var symb = document.FindFuncSignatureSymbol(node);
-        //Console.WriteLine(symb?.GetType().Name);
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + ", parent " + node.Parent.GetType().Name + " " + node.Parent.GetText() + " parent parent " + node.Parent.Parent.GetType().Name);
+        var symb = document.FindFuncSignatureSymbol(node);
+        if(symb != null)
+        {
+          return RpcResult.Success(new SignatureHelp() {
+              signatures = new SignatureInformation[] {
+                new SignatureInformation() {
+                  label = symb.ToString()
+                }
+              },
+              activeSignature = 0,
+              activeParameter = 0
+            }
+          );
+        }
       }
     }
     

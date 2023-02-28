@@ -96,24 +96,31 @@ public class BHLDocument
     return annotated.lsp_symbol;
   }
 
-  //public Symbol FindFuncSignatureSymbol(TerminalNodeImpl node)
-  //{
-  //  IParseTree tmp = node;
-  //  while(tmp.Parent != null)
-  //  {
-  //    if(tmp is bhlParser.CallExpContext)
-  //      break;
-  //    tmp = tmp.Parent;
-  //  }
+  public FuncSymbol FindFuncSignatureSymbol(TerminalNodeImpl node)
+  {
+    IParseTree tmp = node;
+    while(tmp.Parent != null)
+    {
+      if(tmp is bhlParser.FuncCallExpContext)
+        break;
+      tmp = tmp.Parent;
+    }
 
-  //  if(tmp is bhlParser.CallExpContext ctx)
-  //  {
-  //    var chain = new ANTLR_Processor.ExpChain(ctx.chainExp());
-  //    Console.WriteLine("CALLEXP " + tmp.GetText() + " " + chain.Length);
-  //  }
+    if(tmp is bhlParser.FuncCallExpContext ctx)
+    {
+      var chain = new ANTLR_Processor.ExpChain(ctx);
 
-  //  return null;
-  //}
+      //Console.WriteLine("NAME " + chain.name_ctx.GetText());
+      var annotated = proc.FindAnnotated(chain.name_ctx);
+
+      return annotated?.lsp_symbol as FuncSymbol;
+
+      //Console.WriteLine("SYMB " + annotated.lsp_symbol);
+      //Console.WriteLine("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
+    }
+
+    return null;
+  }
 
   public static void GetTerminalNodes(IParseTree tree, List<TerminalNodeImpl> nodes)
   {
