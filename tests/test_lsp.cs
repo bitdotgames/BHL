@@ -456,8 +456,7 @@ public class TestLSP : BHL_TestBase
 
   }
 
-  //TODO: this one requires fault-tolerant parsing
-  //[IsTested()]
+  [IsTested()]
   public void TestSignatureHelp()
   {
     string bhl1 = @"
@@ -473,7 +472,7 @@ public class TestLSP : BHL_TestBase
 
     func test3() 
     {
-      test1(5.2,) //signature help 2
+      test1(5.2, //signature help 2
     }
     ";
     
@@ -508,7 +507,6 @@ public class TestLSP : BHL_TestBase
       );
     }
   }
-
 
   //[IsTested()]
   //public void TestSemanticTokens()

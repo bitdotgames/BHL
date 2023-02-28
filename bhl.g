@@ -165,7 +165,7 @@ chainExpItem
   ;
 
 incompleteFuncCall
-  : chain '(' callArg? (',' callArg)*
+  : chain '(' callArg? (',' callArg)* ','?
   ;
 
 //NOTE: makes sure it's a func call
