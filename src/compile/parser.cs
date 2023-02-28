@@ -4308,9 +4308,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       ProcForPreStatements(for_pre, ctx.Start.Line);
 
     var for_cond = ctx.forExp().exp();
-    //TODO: use more generic protection against parse errors
-    if(for_cond == null)
-      return null;
     var for_post_iter = ctx.forExp().forPostIter();
 
     var ast = new AST_Block(BlockType.WHILE);
