@@ -1293,6 +1293,52 @@ public class VM : INamedResolver
     return fb;
   }
 
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
+  {
+    var fb = Fiber.New(this);
+    Register(fb);
+
+    //checking native call
+    if(ptr.native != null)
+    {
+      //let's create a fake frame for a native call
+      var frame = Frame.New(this);
+      frame.Init(fb, curr_frame, curr_stack, null, null, RETURN_BYTES, 0);
+
+      for(int i=args.Length;i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+      //cargs bits
+      frame._stack.Push(Val.NewInt(this, args.Length));
+
+      Attach(fb, frame);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(fb.exec.coroutine != null)
+        --fb.exec.ip;
+    }
+    else
+    {
+      var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
+
+      for(int i=args.Length;i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+
+      Attach(fb, frame);
+      //cargs bits
+      frame._stack.Push(Val.NewNum(this, args.Length));
+    }
+
+    return fb;
+  }
+
   public void Detach(Fiber fb)
   {
     fibers.Remove(fb);
