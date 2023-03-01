@@ -249,14 +249,21 @@ public class TextDocumentSignatureHelpService : IService
       var node = document.FindTerminalNode(args.position);
       if(node != null)
       {
-        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + ", parent " + node.Parent.GetType().Name + " " + node.Parent.GetText() + " parent parent " + node.Parent.Parent.GetType().Name);
-        var symb = document.FindFuncSignatureSymbol(node);
+        //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + 
+        //  ", parent " + node.Parent.GetType().Name + " " + node.Parent.GetText() + 
+        //  " parent parent " + node.Parent.Parent.GetType().Name
+        //);
+        var symb = document.FindFuncByCallStatement(node);
         if(symb != null)
         {
+          var ps = GetSignatureParams(symb);
+
           return RpcResult.Success(new SignatureHelp() {
               signatures = new SignatureInformation[] {
                 new SignatureInformation() {
-                  label = symb.ToString()
+                  label = symb.ToString(),
+                  parameters = ps,
+                  activeParameter = 0
                 }
               },
               activeSignature = 0,
@@ -268,6 +275,23 @@ public class TextDocumentSignatureHelpService : IService
     }
     
     return RpcResult.Success();
+  }
+
+  static ParameterInformation[] GetSignatureParams(FuncSymbol symb)
+  {
+    var en = symb.GetSymbolsEnumerator();
+
+    var ps = new ParameterInformation[en.Count];
+
+    for(int i=0;i<en.Count;++i)
+    {
+      ps[i] = new ParameterInformation() {
+        label = (en[i] as VariableSymbol).type.Get() + " " + en[i],
+        documentation = ""
+      };
+    }
+
+    return ps;
   }
 }
 

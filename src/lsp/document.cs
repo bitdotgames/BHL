@@ -96,20 +96,26 @@ public class BHLDocument
     return annotated.lsp_symbol;
   }
 
-  public FuncSymbol FindFuncSignatureSymbol(TerminalNodeImpl node)
+  static T GoUpUntil<T>(TerminalNodeImpl node) where T : class,IParseTree
   {
     IParseTree tmp = node;
     while(tmp.Parent != null)
     {
-      if(tmp is bhlParser.FuncCallExpContext)
+      if(tmp is T)
         break;
       tmp = tmp.Parent;
     }
+    return tmp as T;
+  }
 
-    if(tmp is bhlParser.FuncCallExpContext ctx)
+  public FuncSymbol FindFuncByCallStatement(TerminalNodeImpl node)
+  {
+    var ctx = GoUpUntil<bhlParser.FuncCallExpContext>(node);
+
+    if(ctx != null)
     {
+      //Console.WriteLine("CTX " + ctx.GetText());
       var chain = new ANTLR_Processor.ExpChain(ctx);
-
       //Console.WriteLine("NAME " + chain.name_ctx.GetText());
       var annotated = proc.FindAnnotated(chain.name_ctx);
 

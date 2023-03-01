@@ -44,26 +44,26 @@ public interface ISelectorType
 }
 
 [JsonConverter(typeof(SelectorTypeJsonConverter))]
-public struct SelectorType<T1, T2> : IEquatable<SelectorType<T1, T2>>, ISelectorType
+public struct EitherType<T1, T2> : IEquatable<EitherType<T1, T2>>, ISelectorType
 {
   public object Value { get; }
 
-  public SelectorType(T1 val)
+  public EitherType(T1 val)
   {
     Value = val;
   }
 
-  public SelectorType(T2 val)
+  public EitherType(T2 val)
   {
     Value = val;
   }
 
   public override bool Equals(object obj)
   {
-    return obj is SelectorType<T1, T2> other && Equals(other);
+    return obj is EitherType<T1, T2> other && Equals(other);
   }
 
-  public bool Equals(SelectorType<T1, T2> other)
+  public bool Equals(EitherType<T1, T2> other)
   {
     return EqualityComparer<object>.Default.Equals(Value, other.Value);
   }
@@ -73,27 +73,27 @@ public struct SelectorType<T1, T2> : IEquatable<SelectorType<T1, T2>>, ISelector
     return EqualityComparer<object>.Default.GetHashCode(Value) - 1937169414;
   }
 
-  public static bool operator ==(SelectorType<T1, T2> left, SelectorType<T1, T2> right)
+  public static bool operator ==(EitherType<T1, T2> left, EitherType<T1, T2> right)
   {
     return left.Equals(right);
   }
 
-  public static bool operator !=(SelectorType<T1, T2> left, SelectorType<T1, T2> right)
+  public static bool operator !=(EitherType<T1, T2> left, EitherType<T1, T2> right)
   {
     return !(left == right);
   }
 
-  public static implicit operator SelectorType<T1, T2>(T1 val)
+  public static implicit operator EitherType<T1, T2>(T1 val)
   {
-    return new SelectorType<T1, T2>(val);
+    return new EitherType<T1, T2>(val);
   }
 
-  public static implicit operator SelectorType<T1, T2>(T2 val)
+  public static implicit operator EitherType<T1, T2>(T2 val)
   {
-    return new SelectorType<T1, T2>(val);
+    return new EitherType<T1, T2>(val);
   }
 
-  public static explicit operator T1(SelectorType<T1, T2> sum)
+  public static explicit operator T1(EitherType<T1, T2> sum)
   {
     if(sum.Value is T1 obj1)
       return obj1;
@@ -101,7 +101,7 @@ public struct SelectorType<T1, T2> : IEquatable<SelectorType<T1, T2>>, ISelector
     throw new InvalidCastException();
   }
 
-  public static explicit operator T2(SelectorType<T1, T2> sum)
+  public static explicit operator T2(EitherType<T1, T2> sum)
   {
     if(sum.Value is T2 obj2)
       return obj2;
@@ -348,7 +348,7 @@ public class TextDocumentSyncOptions
    * If present save notifications are sent to the server. If omitted the
    * notification should not be sent.
    */
-  public SelectorType<bool, SaveOptions> save;
+  public EitherType<bool, SaveOptions> save;
 }
 
 public class ImplementationOptions : WorkDoneProgressOptions
@@ -503,15 +503,15 @@ public class SemanticTokensOptionFull
 public class SemanticTokensOptions : WorkDoneProgressOptions
 {
   public SemanticTokensLegend legend;
-  public SelectorType<bool, SemanticTokensOptionRange> range;
-  public SelectorType<bool, SemanticTokensOptionFull> full;
+  public EitherType<bool, SemanticTokensOptionRange> range;
+  public EitherType<bool, SemanticTokensOptionFull> full;
 }
 
 public class SemanticTokensRegistrationOptions : TextDocumentRegistrationOptions
 {
   public SemanticTokensLegend legend;
-  public SelectorType<bool, object> range;
-  public SelectorType<bool, object> full;
+  public EitherType<bool, object> range;
+  public EitherType<bool, object> full;
   public string id;
   public bool? workDoneProgress;
 }
@@ -531,7 +531,7 @@ public class WorkspaceSymbolOptions : WorkDoneProgressOptions
 
 public class WorkDoneProgressParams
 {
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 }
 
 public class SignatureHelpClientCapabilities
@@ -715,13 +715,13 @@ public class SemanticTokensClientCapabilities
      * The client will send the `textDocument/semanticTokens/range` request
      * if the server provides a corresponding handler.
      */
-    public SelectorType<bool, object> range;
+    public EitherType<bool, object> range;
 
     /**
      * The client will send the `textDocument/semanticTokens/full` request
      * if the server provides a corresponding handler.
      */
-    public SelectorType<bool, object> full;
+    public EitherType<bool, object> full;
   }
 
   /**
@@ -969,7 +969,7 @@ public class ServerCapabilities
   public class WorkspaceFoldersServerCapabilities
   {
     public bool? supported;
-    public SelectorType<string, bool> changeNotifications;
+    public EitherType<string, bool> changeNotifications;
   }
 
   public class ServerCapabilitiesWorkspaceFileOperations
@@ -1005,7 +1005,7 @@ public class ServerCapabilities
    * TextDocumentSyncKind number. If omitted it defaults to
    * `TextDocumentSyncKind.None`.
    */
-  public SelectorType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync;
+  public EitherType<TextDocumentSyncOptions, TextDocumentSyncKind> textDocumentSync;
 
   /**
    * The server provides completion support.
@@ -1015,7 +1015,7 @@ public class ServerCapabilities
   /**
    * The server provides hover support.
    */
-  public SelectorType<bool, HoverOptions> hoverProvider;
+  public EitherType<bool, HoverOptions> hoverProvider;
 
   /**
    * The server provides signature help support.
@@ -1051,24 +1051,24 @@ public class ServerCapabilities
   /**
    * The server provides find references support.
    */
-  public SelectorType<bool, ReferenceOptions> referencesProvider;
+  public EitherType<bool, ReferenceOptions> referencesProvider;
 
   /**
    * The server provides document highlight support.
    */
-  public SelectorType<bool, DocumentHighlightOptions> documentHighlightProvider;
+  public EitherType<bool, DocumentHighlightOptions> documentHighlightProvider;
 
   /**
    * The server provides document symbol support.
    */
-  public SelectorType<bool, DocumentSymbolOptions> documentSymbolProvider;
+  public EitherType<bool, DocumentSymbolOptions> documentSymbolProvider;
 
   /**
    * The server provides code actions. The `CodeActionOptions` return type is
    * only valid if the client signals code action literal support via the
    * property `textDocument.codeAction.codeActionLiteralSupport`.
    */
-  public SelectorType<bool, CodeActionOptions> codeActionProvider;
+  public EitherType<bool, CodeActionOptions> codeActionProvider;
 
   /**
    * The server provides code lens.
@@ -1090,12 +1090,12 @@ public class ServerCapabilities
   /**
    * The server provides document formatting.
    */
-  public SelectorType<bool, DocumentFormattingOptions> documentFormattingProvider;
+  public EitherType<bool, DocumentFormattingOptions> documentFormattingProvider;
 
   /**
    * The server provides document range formatting.
    */
-  public SelectorType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider;
+  public EitherType<bool, DocumentRangeFormattingOptions> documentRangeFormattingProvider;
 
   /**
    * The server provides document formatting on typing.
@@ -1107,7 +1107,7 @@ public class ServerCapabilities
    * specified if the client states that it supports
    * `prepareSupport` in its initial `initialize` request.
    */
-  public SelectorType<bool, RenameOptions> renameProvider;
+  public EitherType<bool, RenameOptions> renameProvider;
 
   /**
    * The server provides folding provider support.
@@ -1147,7 +1147,7 @@ public class ServerCapabilities
    *
    * @since 3.16.0
    */
-  public SelectorType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider;
+  public EitherType<SemanticTokensOptions, SemanticTokensRegistrationOptions> semanticTokensProvider;
 
   /**
    * Whether server provides moniker support.
@@ -1159,7 +1159,7 @@ public class ServerCapabilities
   /**
    * The server provides workspace symbol support.
    */
-  public SelectorType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider;
+  public EitherType<bool, WorkspaceSymbolOptions> workspaceSymbolProvider;
 
   /**
    * Workspace specific server capabilities
@@ -1441,13 +1441,13 @@ public class CompletionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public enum CompletionItemKind
@@ -1600,7 +1600,7 @@ public class CompletionItem
   /**
    * A human-readable string that represents a doc-comment.
    */
-  public SelectorType<string, MarkupContent> documentation;
+  public EitherType<string, MarkupContent> documentation;
 
   /**
    * Indicates if this item is deprecated.
@@ -1690,7 +1690,7 @@ public class CompletionItem
    * *
    * * @since 3.16.0 additional type `InsertReplaceEdit`
    */
-  public SelectorType<TextEdit, InsertReplaceEdit>? textEdit;
+  public EitherType<TextEdit, InsertReplaceEdit>? textEdit;
 
   /**
    * * An optional array of additional text edits that are applied when
@@ -1740,13 +1740,13 @@ public class ReferenceParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class DocumentSymbolParams : WorkDoneProgressParams
@@ -1760,7 +1760,7 @@ public class DocumentSymbolParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class DocumentColorParams : WorkDoneProgressParams
@@ -1773,7 +1773,7 @@ public class DocumentColorParams : WorkDoneProgressParams
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class Color
@@ -1819,7 +1819,7 @@ public class ColorPresentationParams : WorkDoneProgressParams
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class FormattingOptions
@@ -1963,7 +1963,7 @@ public class Diagnostic
   /**
    * The diagnostic's code, which might appear in the user interface.
    */
-  public SelectorType<string, int> code;
+  public EitherType<string, int> code;
 
   /**
    * An optional property to describe the error code.
@@ -2048,7 +2048,7 @@ public class CodeActionParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class CodeLensParams : WorkDoneProgressParams
@@ -2062,7 +2062,7 @@ public class CodeLensParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class CodeLens
@@ -2095,7 +2095,7 @@ public class DocumentLinkParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class DocumentLink
@@ -2141,7 +2141,7 @@ public class RenameParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 }
 
 public class FoldingRangeParams : WorkDoneProgressParams
@@ -2155,7 +2155,7 @@ public class FoldingRangeParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class WorkspaceFoldersChangeEvent
@@ -2227,7 +2227,7 @@ public class WorkspaceSymbolParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g. streaming) to
    * the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class ExecuteCommandParams : WorkDoneProgressParams
@@ -2264,13 +2264,13 @@ public class ParameterInformation
    * signature label. Its intended use case is to highlight the parameter
    * label part in the `SignatureInformation.label`.
    */
-  public SelectorType<string, List<uint>> label;
+  public EitherType<string, List<uint>> label;
 
   /**
    * The human-readable doc-comment of this parameter. Will be shown
    * in the UI but can be omitted.
    */
-  public SelectorType<string, MarkupContent> documentation;
+  public EitherType<string, MarkupContent> documentation;
 }
 
 public class SignatureInformation
@@ -2285,7 +2285,7 @@ public class SignatureInformation
    * The human-readable doc-comment of this signature. Will be shown
    * in the UI but can be omitted.
    */
-  public SelectorType<string, MarkupContent> documentation;
+  public EitherType<string, MarkupContent> documentation;
 
   /**
    * The parameters of this signature.
@@ -2382,7 +2382,7 @@ public class SignatureHelpParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 }
 
 public class DeclarationParams : TextDocumentPositionParams
@@ -2390,12 +2390,12 @@ public class DeclarationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class DefinitionParams : TextDocumentPositionParams
@@ -2403,12 +2403,12 @@ public class DefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class TypeDefinitionParams : TextDocumentPositionParams
@@ -2416,12 +2416,12 @@ public class TypeDefinitionParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g. streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class ImplementationParams : TextDocumentPositionParams
@@ -2429,13 +2429,13 @@ public class ImplementationParams : TextDocumentPositionParams
   /**
    * An optional token that a server can use to report work done progress.
    */
-  public SelectorType<string, int> workDoneToken;
+  public EitherType<string, int> workDoneToken;
 
   /**
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class Hover
@@ -2463,7 +2463,7 @@ public class SemanticTokensParams : WorkDoneProgressParams
    * An optional token that a server can use to report partial results (e.g.
    * streaming) to the client.
    */
-  public SelectorType<int, string> partialResultToken;
+  public EitherType<int, string> partialResultToken;
 }
 
 public class SemanticTokens
