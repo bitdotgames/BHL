@@ -118,11 +118,9 @@ public class BHLDocument
       var chain = new ANTLR_Processor.ExpChain(ctx);
       //Console.WriteLine("NAME " + chain.name_ctx.GetText());
       var annotated = proc.FindAnnotated(chain.name_ctx);
-
-      return annotated?.lsp_symbol as FuncSymbol;
-
       //Console.WriteLine("SYMB " + annotated.lsp_symbol);
       //Console.WriteLine("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
+      return annotated?.lsp_symbol as FuncSymbol;
     }
 
     return null;

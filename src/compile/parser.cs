@@ -866,7 +866,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int c=chain_offset;c<chain_items.Count;++c)
     {
       var item = chain_items.At(c);
-      var cargs = item as bhlParser.CallArgsContext;
+      var cargs = item as bhlParser.CallArgsInContext;
       var macc = item as bhlParser.MemberAccessContext;
       var arracc = item as bhlParser.ArrAccessContext;
       bool is_last = c == chain_items.Count-1;
@@ -1070,7 +1070,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   Symbol ProcChainItem(
     IScope scope, 
     ITerminalNode name, 
-    bhlParser.CallArgsContext cargs, 
+    bhlParser.CallArgsInContext cargs, 
     bhlParser.ArrAccessContext arracc, 
     ref IType type, 
     int line, 
@@ -1291,7 +1291,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bool variadic;
   }
 
-  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call)
+  void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsInContext cargs, ref AST_Call call)
   {     
     var func_args = func_symb.GetArgs();
     int total_args_num = func_symb.GetTotalArgsNum();
@@ -1518,7 +1518,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     call.cargs_bits = args_info.bits;
   }
 
-  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call)
+  void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsInContext cargs, ref AST_Call call)
   {     
     var func_args = func_type.arg_types;
     int ca_len = cargs.callArg().Length; 
@@ -1613,7 +1613,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return false;
   }
 
-  IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
+  IParseTree FindNextCallArg(bhlParser.CallArgsInContext cargs, IParseTree curr)
   {
     for(int i=0;i<cargs.callArg().Length;++i)
     {
@@ -4809,7 +4809,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     static ParserRuleContext _Get(bhlParser.ChainExpItemContext item)
     {
       if(item.callArgs() != null)
-        return item.callArgs();
+        return item.callArgs().callArgsIn();
       else if(item.memberAccess() != null)
         return item.memberAccess();
       else
@@ -4832,7 +4832,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       _Add(macc);
     }
 
-    public void Add(bhlParser.CallArgsContext cargs)
+    public void Add(bhlParser.CallArgsInContext cargs)
     {
       _Add(cargs);
     }
@@ -4875,12 +4875,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(ctx.chain() != null)
       {
         Init(ctx, ctx.chain());
-        items.Add(ctx.callArgs());
+        items.Add(ctx.callArgs().callArgsIn());
       }
       else if(ctx.lambdaCall() != null)
       {
         lambda_call = ctx.lambdaCall();
-        items.Add(ctx.lambdaCall().callArgs());
+        items.Add(ctx.lambdaCall().callArgs().callArgsIn());
+      }
+      //TODO: mark chain as invalid
+      else if(ctx.incompleteFuncCall() != null)
+      {
+        Init(ctx, ctx.incompleteFuncCall().chain());
+        items.Add(ctx.incompleteFuncCall().callArgsIn());
       }
     }
 
@@ -4923,7 +4929,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         lambda_call = chain.lambdaChain().lambdaCall();
         var _items = new ExpChainItems();
-        _items.Add(lambda_call.callArgs());
+        _items.Add(lambda_call.callArgs().callArgsIn());
         _items.Add(chain.lambdaChain().chainExpItem());
         items = _items;
       }

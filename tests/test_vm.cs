@@ -1761,7 +1761,7 @@ public class TestVM : BHL_TestBase
       "no func to call",
       new PlaceAssert(bhl, @"
       foo() ()
-------------^"
+-------------^"
       )
     );
   }
@@ -7506,7 +7506,7 @@ public class TestVM : BHL_TestBase
       "missing argument of type 'int'",
       new PlaceAssert(bhl, @"
       ptr()
----------^"
+----------^"
      )
     );
   }
@@ -7531,7 +7531,7 @@ public class TestVM : BHL_TestBase
       "missing argument of type 'float'",
       new PlaceAssert(bhl, @"
       ptr(10)
----------^"
+----------^"
      )
     );
   }
@@ -7556,7 +7556,7 @@ public class TestVM : BHL_TestBase
       "too many arguments",
       new PlaceAssert(bhl, @"
       ptr(10, 30)
----------^"
+----------^"
      )
     );
   }
@@ -8255,7 +8255,7 @@ public class TestVM : BHL_TestBase
       "max default arguments reached",
       new PlaceAssert(bhl, @"
       return foo()
-----------------^"
+-----------------^"
      )
     );
   }
@@ -8283,7 +8283,7 @@ public class TestVM : BHL_TestBase
       "missing argument 'k'",
       new PlaceAssert(bhl, @"
       return foo()
-----------------^"
+-----------------^"
      )
     );
   }
@@ -8339,7 +8339,7 @@ public class TestVM : BHL_TestBase
       "missing argument 'radius'",
       new PlaceAssert(bhl, @"
       return foo()
-----------------^"
+-----------------^"
      )
     );
   }

@@ -501,9 +501,9 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(SignatureHelpReq(uri, ", //signature help 2")),
-        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
-        "{\"label\":\"float\",\"documentation\":\"\"},{\"label\":\"float\",\"documentation\":\"\"}]," +
-        "\"activeParameter\":1}],\"activeSignature\":0,\"activeParameter\":1},\"jsonrpc\":\"2.0\"}"
+        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
+        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
       );
     });
   }

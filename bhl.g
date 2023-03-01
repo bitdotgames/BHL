@@ -165,7 +165,7 @@ chainExpItem
   ;
 
 incompleteFuncCall
-  : chain '(' callArg? (',' callArg)* ','?
+  : chain '(' callArgsIn ','?
   ;
 
 //NOTE: makes sure it's a func call
@@ -199,7 +199,11 @@ memberAccess
   ;
   
 callArgs
-  : '(' callArg? (',' callArg)* ')'
+  : '(' callArgsIn ')'
+  ;
+
+callArgsIn
+  : callArg? (',' callArg)*
   ;
 
 callArg

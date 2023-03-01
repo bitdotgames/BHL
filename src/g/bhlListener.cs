@@ -913,6 +913,16 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitCallArgs([NotNull] bhlParser.CallArgsContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.callArgsIn"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCallArgsIn([NotNull] bhlParser.CallArgsInContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.callArgsIn"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCallArgsIn([NotNull] bhlParser.CallArgsInContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.callArg"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

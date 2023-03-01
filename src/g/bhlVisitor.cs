@@ -552,6 +552,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCallArgs([NotNull] bhlParser.CallArgsContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.callArgsIn"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCallArgsIn([NotNull] bhlParser.CallArgsInContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.callArg"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
