@@ -136,7 +136,7 @@ public class CompileCmd : ICmd
       if(string.IsNullOrEmpty(err_file))
       {
         foreach(var err in errors)
-          ErrorUtils.OutputError(err.file, err.line, err.column, err.text);
+          ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
       }
       Environment.Exit(ERROR_EXIT_CODE);
     }
