@@ -1825,6 +1825,7 @@ public class LambdaSymbol : FuncSymbolScript
       local.scope_idx, 
       src.scope_idx,
       //TODO: should be the line of its usage
+      //in case of 'this' there's no associated parse tree
       src.parsed != null ? src.parsed.line : 0
     ); 
     upvals.Add(up);
