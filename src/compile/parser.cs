@@ -640,6 +640,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var chain = new ExpChain(exp);
 
+    if(chain.incomplete)
+      AddSemanticError(exp, "incomplete statement");
+
     IType curr_type = null;
     ProcExpChain(chain, ref curr_type, yielded: yielded);
 
@@ -666,7 +669,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmVarUseless(bhlParser.StmVarUselessContext ctx)
   {
-    AddSemanticError(ctx, "useless statement");
+    //NOTE: even though it's incomplete we traverse it for LSP
+    if(ctx.varAccessExp().incompleteMemberAccess() != null)
+    {
+      var chain = new ExpChain(ctx.varAccessExp());
+      IType curr_type = null;
+      ProcExpChain(chain, ref curr_type);
+
+      AddSemanticError(ctx, "incomplete statement");
+    }
+    else
+      AddSemanticError(ctx, "useless statement");
     return null;
   }
 
@@ -2287,6 +2300,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(!ProcExpChain(chain, ref curr_type, write: true))
         return false;
 
+      if(chain.incomplete)
+      {
+        AddSemanticError(ctx, "incomplete statement");
+        return false;
+      }
+
       //NOTE: strings concat special case
       if(curr_type == Types.String && post_op == "+=")
         return true;
@@ -2378,6 +2397,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
     if(!ProcExpChain(chain, ref curr_type, write: true))
       return false;
+
+    if(chain.incomplete)
+    {
+      AddSemanticError(ctx, "incomplete statement");
+      return false;
+    }
 
     if(!Types.IsNumeric(curr_type))
     {
@@ -3570,6 +3595,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ProcExpChain(chain, ref curr_type);
     Annotate(ctx).eval_type = curr_type;
 
+    if(chain.incomplete)
+    {
+      AddSemanticError(ctx, "incomplete statement");
+      return false;
+    }
+
     return null;
   }
 
@@ -3802,6 +3833,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         IType curr_type = null;
         if(!ProcExpChain(chain, ref curr_type, write: true))
           return false;
+
+        if(chain.incomplete)
+        {
+          AddSemanticError(var_exp, "incomplete statement");
+          return false;
+        }
 
         var_ann = Annotate(var_exp);
         var_ann.eval_type = curr_type;
@@ -4851,6 +4888,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bhlParser.LambdaCallContext lambda_call;
     public ExpChainItems items; 
 
+    public bool incomplete;
+
     public bool IsGlobalNs { get { return name_ctx?.GLOBAL() != null; } }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainContext chain)
@@ -4860,6 +4899,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.exp_ctx = null;
       this.lambda_call = null;
       items = new ExpChainItems();
+
+      incomplete = false;
 
       Init(ctx, chain);
     }
@@ -4872,6 +4913,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.lambda_call = null;
       items = new ExpChainItems();
 
+      incomplete = false;
+
       if(ctx.chain() != null)
       {
         Init(ctx, ctx.chain());
@@ -4882,9 +4925,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         lambda_call = ctx.lambdaCall();
         items.Add(ctx.lambdaCall().callArgs().callArgsIn());
       }
-      //TODO: mark chain as invalid
       else if(ctx.incompleteFuncCall() != null)
       {
+        incomplete = true;
+
         Init(ctx, ctx.incompleteFuncCall().chain());
         items.Add(ctx.incompleteFuncCall().callArgsIn());
       }
@@ -4898,6 +4942,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.lambda_call = null;
       items = new ExpChainItems();
 
+      incomplete = false;
+
       if(ctx.chain() != null)
       {
         Init(ctx, ctx.chain());
@@ -4907,8 +4953,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         else
           items.Add(ctx.arrAccess());
       }
-      else
+      else if(ctx.name() != null)
         name_ctx = ctx.name();
+      else if(ctx.incompleteMemberAccess() != null)
+      {
+        incomplete = true;
+
+        if(ctx.incompleteMemberAccess().name() != null)
+          name_ctx = ctx.incompleteMemberAccess().name();
+        else if(ctx.incompleteMemberAccess().chain() != null)
+          Init(ctx, ctx.incompleteMemberAccess().chain());
+      }
     }
 
     void Init(ParserRuleContext ctx, bhlParser.ChainContext chain)

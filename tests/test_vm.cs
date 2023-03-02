@@ -5603,7 +5603,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestForeachBadSyntaxInNamespace()
   {
     string bhl = @"
@@ -5621,7 +5621,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "mismatched input '1' expecting NAME",
+      "mismatched input '1'",
       new PlaceAssert(bhl, @"
       foreach([1,2,3] as int t) {
 ---------------^"

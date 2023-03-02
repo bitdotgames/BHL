@@ -8,6 +8,56 @@ using Antlr4.Runtime.Tree;
 public class TestErrors : BHL_TestBase
 {
   [IsTested()]
+  public void TestIncompleteFuncCall()
+  {
+    string bhl = @"
+    func foo(int a) {
+    }
+
+    func test() {
+      foo(1,
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incomplete statement",
+      new PlaceAssert(bhl, @"
+      foo(1,
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestIncompleteMemberAccess()
+  {
+    string bhl = @"
+    class Foo {
+      int a
+    }
+
+    func test() {
+      var f = new Foo
+      f.
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incomplete statement",
+      new PlaceAssert(bhl, @"
+      f.
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestSeveralSemanticErrorsInOneFile()
   {
     string bhl = @"
