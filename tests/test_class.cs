@@ -1172,6 +1172,34 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestThisInLambda()
+  {
+    string bhl = @"
+
+    class Foo {
+      
+      int a
+
+      func int getA() 
+      {
+        return func int() { return this.a }()
+      }
+    }
+
+    func int test()
+    {
+      Foo f = {}
+      f.a = 10
+      return f.getA()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBaseNotAllowedInRootClass()
   {
     string bhl = @"
