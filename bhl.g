@@ -73,8 +73,7 @@ exp
   | exp 'as' type                             #ExpAs
   | exp 'is' type                             #ExpIs
   | operatorUnary exp                         #ExpUnary
-  | exp operatorBitAnd exp                    #ExpBitAnd
-  | exp operatorBitOr exp                     #ExpBitOr
+  | exp operatorBitwise exp                   #ExpBitwise
   | exp operatorMulDivMod exp                 #ExpMulDivMod
   | exp operatorAddSub exp                    #ExpAddSub
   | exp operatorComparison exp                #ExpCompare
@@ -112,7 +111,7 @@ forExp
   ;
 
 postOp
-  : assignExp | INC | DEC | (operatorSelfOp exp)
+  : assignExp | operatorIncDec | (operatorSelfOp exp)
   ;
 
 //NOTE: statements, order is important
@@ -317,7 +316,7 @@ varOrDeclareAssign
   ;
 
 varPostOp
-  : chainExp (assignExp | INC | DEC | (operatorSelfOp exp))
+  : chainExp (assignExp | operatorIncDec | (operatorSelfOp exp))
   ;
 
 assignExp
@@ -332,12 +331,12 @@ operatorAnd
   : '&&'
   ;
 
-operatorBitOr 
-  : '|'
+operatorBitwise
+  : '|' | '&'
   ;
 
-operatorBitAnd 
-  : '&'
+operatorIncDec
+  : '++' | '--'; 
   ;
 
 operatorSelfOp
@@ -421,14 +420,6 @@ SEPARATOR
   : ';'
   ;
   
-INC
-  : '+' '+'
-  ;
-
-DEC
-  : '-' '-'
-  ;
-
 NORMALSTRING
   : '"' ( EscapeSequence | ~('\\'|'"') )* '"'  //" let's keep text editor happy
   ;
