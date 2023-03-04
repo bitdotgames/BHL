@@ -58,32 +58,33 @@ chainExp
   ;
 
 exp
-  : 'null'                                   #ExpLiteralNull
-  | 'false'                                  #ExpLiteralFalse
-  | 'true'                                   #ExpLiteralTrue
-  | number                                   #ExpLiteralNum
-  | string                                   #ExpLiteralStr
-  | '(' type ')' exp                         #ExpTypeCast
-  | chainExp                                 #ExpChain
-  | funcLambda                               #ExpLambda
-  | 'typeof' '(' type ')'                    #ExpTypeof
-  | jsonObject                               #ExpJsonObj
-  | jsonArray                                #ExpJsonArr
-  | 'yield' chainExp                         #ExpYieldCall
-  | exp 'as' type                            #ExpAs
-  | exp 'is' type                            #ExpIs
-  | operatorUnary exp                        #ExpUnary
-  | exp operatorBitAnd exp                   #ExpBitAnd
-  | exp operatorBitOr exp                    #ExpBitOr
-  | exp operatorMulDivMod exp                #ExpMulDivMod
-  | exp operatorAddSub exp                   #ExpAddSub
-  | exp operatorComparison exp               #ExpCompare
-  | exp operatorAnd exp                      #ExpAnd
-  | exp operatorOr exp                       #ExpOr
-  | exp ternaryIfExp                         #ExpTernaryIf
-  | newExp                                   #ExpNew
-  | chainExp '.'                             #ExpIncompleteMember
-  | chainExp '(' callArgsIn ','?             #ExpIncompleteCall
+  : 'null'                                    #ExpLiteralNull
+  | 'false'                                   #ExpLiteralFalse
+  | 'true'                                    #ExpLiteralTrue
+  | number                                    #ExpLiteralNum
+  | string                                    #ExpLiteralStr
+  | '(' type ')' exp                          #ExpTypeCast
+  | chainExp                                  #ExpChain
+  | funcLambda                                #ExpLambda
+  | 'typeof' '(' type ')'                     #ExpTypeof
+  | jsonObject                                #ExpJsonObj
+  | jsonArray                                 #ExpJsonArr
+  | 'yield' chainExp                          #ExpYieldCall
+  | exp 'as' type                             #ExpAs
+  | exp 'is' type                             #ExpIs
+  | operatorUnary exp                         #ExpUnary
+  | exp operatorBitAnd exp                    #ExpBitAnd
+  | exp operatorBitOr exp                     #ExpBitOr
+  | exp operatorMulDivMod exp                 #ExpMulDivMod
+  | exp operatorAddSub exp                    #ExpAddSub
+  | exp operatorComparison exp                #ExpCompare
+  | exp operatorAnd exp                       #ExpAnd
+  | exp operatorOr exp                        #ExpOr
+  | exp ternaryIfExp                          #ExpTernaryIf
+  | newExp                                    #ExpNew
+  //TODO: move it under ExpChain
+  | chainExp '.'                              #ExpIncompleteMember
+  | chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
   ;
 
 ternaryIfExp
@@ -110,13 +111,15 @@ forExp
   : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
+postOp
+  : assignExp | INC | DEC | (operatorSelfOp exp)
+  ;
+
 //NOTE: statements, order is important
 statement
   : ';'                                        #StmSeparator
-  | chainExp                                   #StmCall
-  | varDeclaresOptAssign                       #StmDeclOptAssign
-  | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
-  | varPostOp                                  #StmVarPostOp
+  | chainExp postOp?                           #StmChainExp
+  | varDeclare ( ',' varDeclare )* assignExp?  #StmDeclOptAssign
   | 'if' '(' exp ')' block elseIf* else?       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
@@ -155,11 +158,11 @@ memberAccess
   ;
   
 callArgs
-  : '(' callArgsIn ')'
+  : '(' callArgsList? ')'
   ;
 
-callArgsIn
-  : callArg? (',' callArg)*
+callArgsList
+  :  callArg (',' callArg)*
   ;
 
 callArg
@@ -309,24 +312,12 @@ varOrDeclare
   : varDeclare | NAME
   ;
 
-varAccessOrDeclare
-  : varDeclare | chainExp
-  ;
-
 varOrDeclareAssign
   : varOrDeclare assignExp
   ;
 
-varAccessOrDeclaresAssign
-  : varAccessOrDeclare (',' varAccessOrDeclare)* assignExp
-  ;
-
-varDeclaresOptAssign
-  : varDeclare ( ',' varDeclare )* assignExp?
-  ;
-
 varPostOp
-  : chainExp (assignExp | INC | DEC | (operatorPostOpAssign exp))
+  : chainExp (assignExp | INC | DEC | (operatorSelfOp exp))
   ;
 
 assignExp
@@ -349,7 +340,7 @@ operatorBitAnd
   : '&'
   ;
 
-operatorPostOpAssign
+operatorSelfOp
   : '+=' | '-=' | '*=' | '/='
   ;
 
