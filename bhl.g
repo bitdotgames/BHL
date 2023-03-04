@@ -49,26 +49,12 @@ name
   : GLOBAL? NAME
   ;
 
-namedChain
-  : name chainExpItem*
-  ;
-  
-parenChain
-  : '(' exp ')' chainExpItem*
-  ;
-
 lambdaCall
   : funcLambda callArgs
   ;
   
-lambdaChain
-  : lambdaCall chainExpItem*
-  ;
-  
-chain
-  : namedChain
-  | parenChain
-  | lambdaChain
+chainExp
+  : (name | '(' exp ')' | lambdaCall) chainExpItem*
   ;
 
 exp
@@ -78,12 +64,12 @@ exp
   | number                                   #ExpLiteralNum
   | string                                   #ExpLiteralStr
   | '(' type ')' exp                         #ExpTypeCast
-  | chain                                    #ExpChain
+  | chainExp                                 #ExpChain
   | funcLambda                               #ExpLambda
   | 'typeof' '(' type ')'                    #ExpTypeof
   | jsonObject                               #ExpJsonObj
   | jsonArray                                #ExpJsonArr
-  | 'yield' funcCallExp                      #ExpYieldCall
+  | 'yield' chainExp                         #ExpYieldCall
   | exp 'as' type                            #ExpAs
   | exp 'is' type                            #ExpIs
   | operatorUnary exp                        #ExpUnary
@@ -96,6 +82,8 @@ exp
   | exp operatorOr exp                       #ExpOr
   | exp ternaryIfExp                         #ExpTernaryIf
   | newExp                                   #ExpNew
+  | chainExp '.'                             #ExpIncompleteMember
+  | chainExp '(' callArgsIn ','?             #ExpIncompleteCall
   ;
 
 ternaryIfExp
@@ -125,20 +113,17 @@ forExp
 //NOTE: statements, order is important
 statement
   : ';'                                        #StmSeparator
-  | funcCallExp                                #StmCall
+  | chainExp                                   #StmCall
   | varDeclaresOptAssign                       #StmDeclOptAssign
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
-  //| funcCallExp assignExp                      #StmInvalidAssign
-  //| varAccessExp                               #StmVarUseless
-  //| funcLambda                                 #StmLambdaUseless
   | 'if' '(' exp ')' block elseIf* else?       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
   | 'for' forExp block                         #StmFor
   | 'foreach' foreachExp block                 #StmForeach
   | 'yield' '(' ')'                            #StmYield                                                                   
-  | 'yield' funcCallExp                        #StmYieldCall
+  | 'yield' chainExp                           #StmYieldCall
   | 'yield' 'while' '(' exp ')'                #StmYieldWhile
   | 'break'                                    #StmBreak
   | 'continue'                                 #StmContinue
@@ -159,32 +144,6 @@ else
   
 chainExpItem
   : callArgs | memberAccess | arrAccess
-  ;
-
-incompleteFuncCall
-  : chain '(' callArgsIn ','?
-  ;
-
-//NOTE: makes sure it's a func call
-funcCallExp
-  : chain callArgs
-  //need this special case since the rule above won't match the following:
-  //   func() {}()
-  //because 'chain' contains 'lambdaChain' and it already contains 'callArgs'
-  | lambdaCall
-  | incompleteFuncCall
-  ;
-
-incompleteMemberAccess
-  : name '.'
-  | chain '.'
-  ;
-
-//NOTE: makes sure it's a variable access
-varAccessExp
-  : name
-  | chain (memberAccess | arrAccess)
-  | incompleteMemberAccess
   ;
 
 arrAccess
@@ -351,7 +310,7 @@ varOrDeclare
   ;
 
 varAccessOrDeclare
-  : varDeclare | varAccessExp
+  : varDeclare | chainExp
   ;
 
 varOrDeclareAssign
@@ -367,7 +326,7 @@ varDeclaresOptAssign
   ;
 
 varPostOp
-  : varAccessExp (assignExp | INC | DEC | (operatorPostOpAssign exp))
+  : chainExp (assignExp | INC | DEC | (operatorPostOpAssign exp))
   ;
 
 assignExp
