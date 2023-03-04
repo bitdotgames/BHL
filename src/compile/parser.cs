@@ -10,13 +10,19 @@ public class ANTLR_Parsed
 {
   public bhlParser parser { get; private set; }
   public ITokenStream tokens { get; private set; }
-  public bhlParser.ProgramContext program_tree { get; private set; }
+  bhlParser.ProgramContext _program_tree;
+  public bhlParser.ProgramContext program_tree { 
+    get {
+      if(_program_tree == null)
+        _program_tree = parser.program();
+      return _program_tree;
+    }
+  }
 
   public ANTLR_Parsed(bhlParser parser)
   {
     this.parser = parser;
     this.tokens = parser.TokenStream;
-    this.program_tree = parser.program();
   }
 
   public override string ToString()
@@ -239,6 +245,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
     else 
+    {
       return new ANTLR_Processor(
         parsed, 
         module, 
@@ -246,6 +253,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         ts,
         errors
       );
+    }
   }
 
   public static ANTLR_Processor MakeProcessor(
@@ -667,33 +675,33 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitStmVarUseless(bhlParser.StmVarUselessContext ctx)
-  {
-    //NOTE: even though it's incomplete we traverse it for LSP
-    if(ctx.varAccessExp().incompleteMemberAccess() != null)
-    {
-      var chain = new ExpChain(ctx.varAccessExp());
-      IType curr_type = null;
-      ProcExpChain(chain, ref curr_type);
+  //public override object VisitStmVarUseless(bhlParser.StmVarUselessContext ctx)
+  //{
+  //  //NOTE: even though it's incomplete we traverse it for LSP
+  //  if(ctx.varAccessExp().incompleteMemberAccess() != null)
+  //  {
+  //    var chain = new ExpChain(ctx.varAccessExp());
+  //    IType curr_type = null;
+  //    ProcExpChain(chain, ref curr_type);
 
-      AddSemanticError(ctx, "incomplete statement");
-    }
-    else
-      AddSemanticError(ctx, "useless statement");
-    return null;
-  }
+  //    AddSemanticError(ctx, "incomplete statement");
+  //  }
+  //  else
+  //    AddSemanticError(ctx, "useless statement");
+  //  return null;
+  //}
 
-  public override object VisitStmLambdaUseless(bhlParser.StmLambdaUselessContext ctx)
-  {
-    AddSemanticError(ctx, "useless statement");
-    return null;
-  }
+  //public override object VisitStmLambdaUseless(bhlParser.StmLambdaUselessContext ctx)
+  //{
+  //  AddSemanticError(ctx, "useless statement");
+  //  return null;
+  //}
 
-  public override object VisitStmInvalidAssign(bhlParser.StmInvalidAssignContext ctx)
-  {
-    AddSemanticError(ctx.assignExp(), "invalid assignment");
-    return null;
-  }
+  //public override object VisitStmInvalidAssign(bhlParser.StmInvalidAssignContext ctx)
+  //{
+  //  AddSemanticError(ctx.assignExp(), "invalid assignment");
+  //  return null;
+  //}
 
   bool ProcExpChain(
     ParserRuleContext ctx,
@@ -2318,8 +2326,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       return true;
     }
-    else if(ctx.varPostIncDec() != null) 
-      return ProcPostIncDec(ctx.varPostIncDec());
+    else if(ctx.INC() != null || ctx.DEC() != null)
+      return ProcPostIncDec(ctx);
     else if(ctx.assignExp() != null) 
     {
       var vproxy = new VarsDeclsProxy(new bhlParser.VarAccessExpContext[] { ctx.varAccessExp() });
@@ -2372,7 +2380,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool ProcPostIncDec(bhlParser.VarPostIncDecContext ctx)
+  bool ProcPostIncDec(bhlParser.VarPostOpContext ctx)
   {
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
@@ -4129,14 +4137,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.IF);
 
-    var main = ctx.mainIf();
-
     var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
-    VisitValid(main.exp());
+    VisitValid(ctx.exp());
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(main.exp()), errors))
+    if(!types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     var func_symb = PeekFuncDecl();
@@ -4145,7 +4151,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    ProcBlock(BlockType.SEQ, main.block().statement());
+    ProcBlock(BlockType.SEQ, ctx.block().statement());
     PopAST();
 
     //NOTE: if in the block before there were no 'return' statements and in the current block

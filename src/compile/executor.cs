@@ -48,8 +48,7 @@ public class CompilationExecutor
 
   public CompileErrors Exec(CompileConf conf)
   {
-    var sw = new Stopwatch();
-    sw.Start();
+    var sw = Stopwatch.StartNew();
 
     var errors = new CompileErrors();
 
@@ -90,6 +89,8 @@ public class CompilationExecutor
 
   void DoExec(CompileConf conf, CompileErrors errors)
   {
+    Stopwatch sw;
+
     if(!string.IsNullOrEmpty(conf.err_file))
       File.Delete(conf.err_file);
 
@@ -117,12 +118,16 @@ public class CompilationExecutor
 
     conf.userbindings.Register(ts);
 
+    sw = Stopwatch.StartNew();
     //1. start parse workers
     var parse_workers = StartParseWorkers(conf);
 
     //2. wait for the completion of parse workers
     foreach(var pw in parse_workers)
       pw.Join();
+
+    sw.Stop();
+    Console.WriteLine("Parse done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -132,6 +137,8 @@ public class CompilationExecutor
     //3. create ANTLR processors
     var file2interim = new Dictionary<string, InterimResult>();
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
+
+    sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
     {
       parse_cache_hits += pw.cache_hit;
@@ -154,10 +161,15 @@ public class CompilationExecutor
         file2interim.Add(kv.Key, kv.Value);
       }
     }
+    sw.Stop();
+    Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
+    sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
+    sw.Stop();
+    Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     foreach(var kv in file2proc)
       errors.AddRange(kv.Value.result.errors);
@@ -165,6 +177,7 @@ public class CompilationExecutor
       return;
     
     //5. compile to bytecode 
+    sw = Stopwatch.StartNew();
     var compiler_workers = StartAndWaitCompilerWorkers(
       conf, 
       ts, 
@@ -172,6 +185,8 @@ public class CompilationExecutor
       file2interim,
       file2proc
     );
+    sw.Stop();
+    Console.WriteLine("Compile done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -186,7 +201,9 @@ public class CompilationExecutor
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
+    sw = Stopwatch.StartNew();
     var check_err = CheckUniqueSymbols(compiler_workers);
+    Console.WriteLine("Check done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     if(check_err != null)
     {
       errors.Add(check_err);
@@ -199,14 +216,19 @@ public class CompilationExecutor
       File.Delete(conf.res_file);
     File.Move(tmp_res_file, conf.res_file);
 
+    sw = Stopwatch.StartNew();
     conf.postproc.Tally();
+    Console.WriteLine("Postproc done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)
   {
     var parse_workers = new List<ParseWorker>();
 
+    //conf.max_threads = 4;
     int files_per_worker = conf.files.Count < conf.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.max_threads);
+
+    Console.WriteLine("MAX THREADS " + conf.max_threads);
 
     int idx = 0;
     int wid = 0;
@@ -413,7 +435,7 @@ public class CompilationExecutor
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
+            //if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
@@ -423,16 +445,18 @@ public class CompilationExecutor
               var parsed = new ANTLR_Parsed(parser);
 
               interim.parsed = parsed;
+              var tmp = parsed.program_tree;
+              tmp = null;
 
               ++w.cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
-            else
-            {
-              interim.use_file_cache = true;
+            //else
+            //{
+            //  interim.use_file_cache = true;
 
-              ++w.cache_hit;
-            }
+            //  ++w.cache_hit;
+            //}
 
             w.file2interim[file] = interim;
           }

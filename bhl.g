@@ -124,14 +124,15 @@ forExp
 
 //NOTE: statements, order is important
 statement
-  : funcCallExp                                #StmCall
+  : ';'                                        #StmSeparator
+  | funcCallExp                                #StmCall
   | varDeclaresOptAssign                       #StmDeclOptAssign
   | varAccessOrDeclaresAssign                  #StmVarOrDeclAssign
   | varPostOp                                  #StmVarPostOp
-  | funcCallExp assignExp                      #StmInvalidAssign
-  | varAccessExp                               #StmVarUseless
-  | funcLambda                                 #StmLambdaUseless
-  | mainIf elseIf* else?                       #StmIf
+  //| funcCallExp assignExp                      #StmInvalidAssign
+  //| varAccessExp                               #StmVarUseless
+  //| funcLambda                                 #StmLambdaUseless
+  | 'if' '(' exp ')' block elseIf* else?       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
   | 'for' forExp block                         #StmFor
@@ -146,10 +147,6 @@ statement
   | 'paral_all' block                          #StmParalAll
   | 'defer' block                              #StmDefer
   | block                                      #StmBlockNested
-  ;
-
-mainIf
-  : 'if' '(' exp ')' block 
   ;
 
 elseIf
@@ -211,7 +208,7 @@ callArg
   ;
 
 block 
-  : '{' (statement SEPARATOR*)* '}'
+  : '{' statement* '}'
   | '{}'
   ;
 
@@ -369,14 +366,8 @@ varDeclaresOptAssign
   : varDeclare ( ',' varDeclare )* assignExp?
   ;
 
-varPostIncDec
-  : varAccessExp (INC | DEC)
-  ;
-
 varPostOp
-  : varPostIncDec
-  | varAccessExp operatorPostOpAssign exp
-  | varAccessExp assignExp
+  : varAccessExp (assignExp | INC | DEC | (operatorPostOpAssign exp))
   ;
 
 assignExp
