@@ -2398,6 +2398,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool ProcPostIncDec(bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
   {
+    var chain = new ExpChain(chain_exp);
+    if(chain.Incomplete)
+    {
+      AddSemanticError(ctx, "incomplete statement");
+      return false;
+    }
+
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
     var ann_one = Annotate(one_literal_exp);
@@ -2406,17 +2413,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ann_one.tree = ann_exp.tree;
     ann_one.tokens = ann_exp.tokens;
 
-    if(inc_dec.GetText() == "++")
-      ProcBinOp(ctx, inc_dec.GetText() == "++" ? "+" : "-", chain_exp, one_literal_exp);
+    //1. let's add/sub expression and '1' 
+    ProcBinOp(ctx, inc_dec.GetText() == "++" ? "+" : "-", chain_exp, one_literal_exp);
 
-    var chain = new ExpChain(chain_exp);
-
-    if(chain.Incomplete)
-    {
-      AddSemanticError(ctx, "incomplete statement");
-      return false;
-    }
-
+    //2. now let's write the operation result 
     IType curr_type = null;
     if(!ProcExpChain(chain, ref curr_type, write: true))
       return false;
