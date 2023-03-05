@@ -110,17 +110,17 @@ public class BHLDocument
 
   public FuncSymbol FindFuncByCallStatement(TerminalNodeImpl node)
   {
-    var ctx = GoUpUntil<bhlParser.FuncCallExpContext>(node);
+    var ctx = GoUpUntil<bhlParser.ChainExpContext>(node);
 
     if(ctx != null)
     {
-      //Console.WriteLine("CTX " + ctx.GetText());
-      var chain = new ANTLR_Processor.ExpChain(ctx);
-      //Console.WriteLine("NAME " + chain.name_ctx.GetText());
-      var annotated = proc.FindAnnotated(chain.name_ctx);
-      //Console.WriteLine("SYMB " + annotated.lsp_symbol);
-      //Console.WriteLine("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
-      return annotated?.lsp_symbol as FuncSymbol;
+      ////Console.WriteLine("CTX " + ctx.GetText());
+      //var chain = new ANTLR_Processor.ExpChain(ctx);
+      ////Console.WriteLine("NAME " + chain.name_ctx.GetText());
+      //var annotated = proc.FindAnnotated(chain.name_ctx);
+      ////Console.WriteLine("SYMB " + annotated.lsp_symbol);
+      ////Console.WriteLine("CHAIN" + chain.items.At(chain.items.Count-1).GetText());
+      //return annotated?.lsp_symbol as FuncSymbol;
     }
 
     return null;

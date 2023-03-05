@@ -2349,11 +2349,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return true;
     }
     else if(op_ctx.operatorIncDec() != null)
-      return ProcPostIncDec(chain_ctx, op_ctx.operatorIncDec());
+      return ProcPostIncDec(ctx, chain_ctx, op_ctx.operatorIncDec());
     else if(op_ctx.assignExp() != null) 
     {
-      var vproxy = new VarsDeclsProxy(new bhlParser.VarAccessExpContext[] { ctx.varAccessExp() });
-      return ProcDeclOrAssign(vproxy, op_ctx.assignExp(), op_ctx.Start.Line);
+      //var vproxy = new VarsDeclsProxy(new bhlParser.ChainExpContext[] { chain_ctx });
+      //return ProcDeclOrAssign(vproxy, op_ctx.assignExp(), op_ctx.Start.Line);
     }
     
     return true;
@@ -2396,9 +2396,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool ProcPostIncDec(bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
+  bool ProcPostIncDec(ParserRuleContext ctx, bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
   {
-    var chain = new ExpChain(chain_exp);
+    var chain = new ExpChain(ctx, chain_exp);
     if(chain.Incomplete)
     {
       AddSemanticError(ctx, "incomplete statement");
@@ -3649,7 +3649,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return vdecls[i].type();
       else if(vodecls != null)
         return vodecls[i].varDeclare()?.type();
-        return null;
 
       return null;
     }
@@ -3698,12 +3697,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool ProcDeclOrAssign(VarsDeclsProxy vdecls, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool ProcDeclOrAssign(VarsDeclsProxy vproxy, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var var_ast = PeekAST();
     int var_assign_insert_idx = var_ast.children.Count;
 
-    for(int i=0;i<vdecls.Count;++i)
+    for(int i=0;i<vproxy.Count;++i)
     {
       VariableSymbol var_symb = null;
       AnnotatedParseTree var_ann = null;
@@ -3711,9 +3710,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       bool is_auto_var = false;
 
       //check if we declare a var or use an existing one
-      if(vdecls.TypeAt(i) != null)
+      if(vproxy.TypeAt(i) != null)
       {
-        var vd_type = vdecls.TypeAt(i);
+        var vd_type = vproxy.TypeAt(i);
         is_auto_var = vd_type.GetText() == "var";
 
         if(is_auto_var && assign_exp == null)
@@ -3729,7 +3728,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var ast = ProcDeclVar(
           curr_scope, 
-          vdecls.LocalNameAt(i), 
+          vproxy.LocalNameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
           is_auto_var ? Types.Any : ParseType(vd_type), 
@@ -3749,9 +3748,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var_ann = var_symb.parsed;
         var_ann.eval_type = var_symb.type.Get();
       }
-      else if(vdecls.LocalNameAt(i) != null)
+      else if(vproxy.LocalNameAt(i) != null)
       {
-        var vd_name = vdecls.LocalNameAt(i);
+        var vd_name = vproxy.LocalNameAt(i);
         var_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
         if(var_symb == null)
         {
@@ -3767,30 +3766,30 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);
         var_ast.AddChild(ast);
       }
-      else if(vdecls.VarAccessAt(i) != null)
-      {
-        var var_exp = vdecls.VarAccessAt(i);
-        if(assign_exp == null)
-        {
-          AddSemanticError(var_exp, "assign expression expected");
-          return false;
-        }
+      //else if(vproxy.VarAccessAt(i) != null)
+      //{
+      //  var var_exp = vproxy.VarAccessAt(i);
+      //  if(assign_exp == null)
+      //  {
+      //    AddSemanticError(var_exp, "assign expression expected");
+      //    return false;
+      //  }
 
-        var chain = new ExpChain(var_exp);
+      //  var chain = new ExpChain(var_exp);
 
-        IType curr_type = null;
-        if(!ProcExpChain(chain, ref curr_type, write: true))
-          return false;
+      //  IType curr_type = null;
+      //  if(!ProcExpChain(chain, ref curr_type, write: true))
+      //    return false;
 
-        if(chain.Incomplete)
-        {
-          AddSemanticError(var_exp, "incomplete statement");
-          return false;
-        }
+      //  if(chain.Incomplete)
+      //  {
+      //    AddSemanticError(var_exp, "incomplete statement");
+      //    return false;
+      //  }
 
-        var_ann = Annotate(var_exp);
-        var_ann.eval_type = curr_type;
-      }
+      //  var_ann = Annotate(var_exp);
+      //  var_ann.eval_type = curr_type;
+      //}
 
       if(assign_exp != null)
       {
@@ -3802,7 +3801,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           is_auto_var,
           var_symb,
           i,
-          vdecls.Count,
+          vproxy.Count,
           assign_exp
         ))
           return false;
@@ -4360,7 +4359,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    var ret_type = ProcFuncCallExp(ctx, ctx.funcCallExp(), yielded: true);
+    var ret_type = ProcFuncCallExp(ctx, ctx.chainExp(), yielded: true);
     ProcPopNonConsumed(ret_type);
     return null;
   }
