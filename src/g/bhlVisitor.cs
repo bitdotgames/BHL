@@ -215,13 +215,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpChain([NotNull] bhlParser.ExpChainContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -264,12 +257,12 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpBitAnd</c>
+	/// Visit a parse tree produced by the <c>ExpBitwise</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	Result VisitExpBitwise([NotNull] bhlParser.ExpBitwiseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpLiteralNull</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -748,17 +741,17 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitOperatorAnd([NotNull] bhlParser.OperatorAndContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.operatorBitOr"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitOperatorBitOr([NotNull] bhlParser.OperatorBitOrContext context);
+	Result VisitOperatorBitwise([NotNull] bhlParser.OperatorBitwiseContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.operatorBitAnd"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.operatorIncDec"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context);
+	Result VisitOperatorIncDec([NotNull] bhlParser.OperatorIncDecContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorSelfOp"/>.
 	/// </summary>

@@ -336,7 +336,7 @@ operatorBitwise
   ;
 
 operatorIncDec
-  : '++' | '--'; 
+  : '++' | '--'
   ;
 
 operatorSelfOp

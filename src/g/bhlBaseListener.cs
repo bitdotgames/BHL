@@ -401,20 +401,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpChain([NotNull] bhlParser.ExpChainContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExpBitOr([NotNull] bhlParser.ExpBitOrContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExpBitOr([NotNull] bhlParser.ExpBitOrContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -499,19 +485,19 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitAnd</c>
+	/// Enter a parse tree produced by the <c>ExpBitwise</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExpBitAnd([NotNull] bhlParser.ExpBitAndContext context) { }
+	public virtual void EnterExpBitwise([NotNull] bhlParser.ExpBitwiseContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitAnd</c>
+	/// Exit a parse tree produced by the <c>ExpBitwise</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExpBitAnd([NotNull] bhlParser.ExpBitAndContext context) { }
+	public virtual void ExitExpBitwise([NotNull] bhlParser.ExpBitwiseContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralNull</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -1467,29 +1453,29 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitOperatorAnd([NotNull] bhlParser.OperatorAndContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitOr"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterOperatorBitOr([NotNull] bhlParser.OperatorBitOrContext context) { }
+	public virtual void EnterOperatorBitwise([NotNull] bhlParser.OperatorBitwiseContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitOr"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitOperatorBitOr([NotNull] bhlParser.OperatorBitOrContext context) { }
+	public virtual void ExitOperatorBitwise([NotNull] bhlParser.OperatorBitwiseContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitAnd"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorIncDec"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context) { }
+	public virtual void EnterOperatorIncDec([NotNull] bhlParser.OperatorIncDecContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitAnd"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorIncDec"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context) { }
+	public virtual void ExitOperatorIncDec([NotNull] bhlParser.OperatorIncDecContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorSelfOp"/>.
 	/// <para>The default implementation does nothing.</para>

@@ -341,18 +341,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpChain([NotNull] bhlParser.ExpChainContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpBitOr([NotNull] bhlParser.ExpBitOrContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpJsonArr</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -425,17 +413,17 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpBitAnd</c>
+	/// Enter a parse tree produced by the <c>ExpBitwise</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	void EnterExpBitwise([NotNull] bhlParser.ExpBitwiseContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpBitAnd</c>
+	/// Exit a parse tree produced by the <c>ExpBitwise</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpBitAnd([NotNull] bhlParser.ExpBitAndContext context);
+	void ExitExpBitwise([NotNull] bhlParser.ExpBitwiseContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralNull</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -1239,25 +1227,25 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitOperatorAnd([NotNull] bhlParser.OperatorAndContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitOr"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterOperatorBitOr([NotNull] bhlParser.OperatorBitOrContext context);
+	void EnterOperatorBitwise([NotNull] bhlParser.OperatorBitwiseContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitOr"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitOperatorBitOr([NotNull] bhlParser.OperatorBitOrContext context);
+	void ExitOperatorBitwise([NotNull] bhlParser.OperatorBitwiseContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitAnd"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorIncDec"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context);
+	void EnterOperatorIncDec([NotNull] bhlParser.OperatorIncDecContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorBitAnd"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorIncDec"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitOperatorBitAnd([NotNull] bhlParser.OperatorBitAndContext context);
+	void ExitOperatorIncDec([NotNull] bhlParser.OperatorIncDecContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorSelfOp"/>.
 	/// </summary>
