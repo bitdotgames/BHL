@@ -81,7 +81,7 @@ exp
   | exp operatorOr exp                        #ExpOr
   | exp ternaryIfExp                          #ExpTernaryIf
   | newExp                                    #ExpNew
-  //TODO: move it under ExpChain
+  //TODO: move it under ExpChain?
   | chainExp '.'                              #ExpIncompleteMember
   | chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
   ;
@@ -316,7 +316,7 @@ varOrDeclareAssign
   ;
 
 varPostOp
-  : chainExp (assignExp | operatorIncDec | (operatorSelfOp exp))
+  : chainExp postOp
   ;
 
 assignExp
