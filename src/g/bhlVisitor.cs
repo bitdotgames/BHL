@@ -80,11 +80,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMapType([NotNull] bhlParser.MapTypeContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.exps"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.expList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExps([NotNull] bhlParser.ExpsContext context);
+	Result VisitExpList([NotNull] bhlParser.ExpListContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.returnVal"/>.
 	/// </summary>

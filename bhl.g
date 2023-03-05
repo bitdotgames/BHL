@@ -33,7 +33,7 @@ mapType
   : '[' nsName ']' 
   ;
 
-exps
+expList
   : exp (',' exp)*
   ;
 
@@ -42,7 +42,7 @@ returnVal
   //parser improperly captures the next statement
   //which is not part of return but we need
   //to process that as well
-  : (varDeclare | varDeclareAssign | exps)
+  : (varDeclare | varDeclareAssign | expList)
   ;
 
 name

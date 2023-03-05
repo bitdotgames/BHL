@@ -50,7 +50,7 @@ public partial class bhlParser : Parser {
 		WS=78;
 	public const int
 		RULE_program = 0, RULE_declOrImport = 1, RULE_mimport = 2, RULE_decl = 3, 
-		RULE_dotName = 4, RULE_nsName = 5, RULE_type = 6, RULE_mapType = 7, RULE_exps = 8, 
+		RULE_dotName = 4, RULE_nsName = 5, RULE_type = 6, RULE_mapType = 7, RULE_expList = 8, 
 		RULE_returnVal = 9, RULE_name = 10, RULE_lambdaCall = 11, RULE_chainExp = 12, 
 		RULE_exp = 13, RULE_ternaryIfExp = 14, RULE_newExp = 15, RULE_foreachExp = 16, 
 		RULE_forPreIter = 17, RULE_forPostIter = 18, RULE_forExp = 19, RULE_postOp = 20, 
@@ -75,7 +75,7 @@ public partial class bhlParser : Parser {
 		RULE_jsonValue = 85;
 	public static readonly string[] ruleNames = {
 		"program", "declOrImport", "mimport", "decl", "dotName", "nsName", "type", 
-		"mapType", "exps", "returnVal", "name", "lambdaCall", "chainExp", "exp", 
+		"mapType", "expList", "returnVal", "name", "lambdaCall", "chainExp", "exp", 
 		"ternaryIfExp", "newExp", "foreachExp", "forPreIter", "forPostIter", "forExp", 
 		"postOp", "statement", "elseIf", "else", "chainExpItem", "arrAccess", 
 		"memberAccess", "callArgs", "callArgsList", "callArg", "block", "extensions", 
@@ -694,37 +694,37 @@ public partial class bhlParser : Parser {
 		return _localctx;
 	}
 
-	public partial class ExpsContext : ParserRuleContext {
+	public partial class ExpListContext : ParserRuleContext {
 		public ExpContext[] exp() {
 			return GetRuleContexts<ExpContext>();
 		}
 		public ExpContext exp(int i) {
 			return GetRuleContext<ExpContext>(i);
 		}
-		public ExpsContext(ParserRuleContext parent, int invokingState)
+		public ExpListContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
-		public override int RuleIndex { get { return RULE_exps; } }
+		public override int RuleIndex { get { return RULE_expList; } }
 		public override void EnterRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.EnterExps(this);
+			if (typedListener != null) typedListener.EnterExpList(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
 			IbhlListener typedListener = listener as IbhlListener;
-			if (typedListener != null) typedListener.ExitExps(this);
+			if (typedListener != null) typedListener.ExitExpList(this);
 		}
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IbhlVisitor<TResult> typedVisitor = visitor as IbhlVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitExps(this);
+			if (typedVisitor != null) return typedVisitor.VisitExpList(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
 
 	[RuleVersion(0)]
-	public ExpsContext exps() {
-		ExpsContext _localctx = new ExpsContext(Context, State);
-		EnterRule(_localctx, 16, RULE_exps);
+	public ExpListContext expList() {
+		ExpListContext _localctx = new ExpListContext(Context, State);
+		EnterRule(_localctx, 16, RULE_expList);
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
@@ -764,8 +764,8 @@ public partial class bhlParser : Parser {
 		public VarDeclareAssignContext varDeclareAssign() {
 			return GetRuleContext<VarDeclareAssignContext>(0);
 		}
-		public ExpsContext exps() {
-			return GetRuleContext<ExpsContext>(0);
+		public ExpListContext expList() {
+			return GetRuleContext<ExpListContext>(0);
 		}
 		public ReturnValContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -809,7 +809,7 @@ public partial class bhlParser : Parser {
 				break;
 			case 3:
 				{
-				State = 234; exps();
+				State = 234; expList();
 				}
 				break;
 			}

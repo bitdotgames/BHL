@@ -2797,7 +2797,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     
     if(ret_val != null)
     {
-      int explen = ret_val.exps().exp().Length;
+      int explen = ret_val.expList().exp().Length;
 
       var fret_type = func_symb.GetReturnType();
 
@@ -2819,7 +2819,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //      where foo has the following signature: func int,string foo() {..}
       if(explen == 1)
       {
-        var exp_item = ret_val.exps().exp()[0];
+        var exp_item = ret_val.expList().exp()[0];
         PushJsonType(fret_type);
         VisitValid(exp_item);
         PopJsonType();
@@ -2851,7 +2851,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //      values are properly placed on a stack
         for(int i=explen;i-- > 0;)
         {
-          var exp = ret_val.exps().exp()[i];
+          var exp = ret_val.expList().exp()[i];
           VisitValid(exp);
           var exp_eval_type = Annotate(exp).eval_type;
           if(exp_eval_type == null)
@@ -2862,7 +2862,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //type checking is in proper order
         for(int i=0;i<explen;++i)
         {
-          var exp = ret_val.exps().exp()[i];
+          var exp = ret_val.expList().exp()[i];
           if(!types.CheckAssign(fmret_type[i].Get(), Annotate(exp), errors))
             return null;
         }
