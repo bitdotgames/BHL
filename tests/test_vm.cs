@@ -1261,7 +1261,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"useless statement",
+      @"invalid usage context",
       new PlaceAssert(bhl, @"
       foo
 ------^"
@@ -1305,7 +1305,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"useless statement",
+      @"invalid usage context",
       new PlaceAssert(bhl, @"
       suspend
 ------^"
@@ -1329,7 +1329,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"useless statement",
+      @"invalid usage context",
       new PlaceAssert(bhl, @"
       func() {}
 ------^"
@@ -1378,7 +1378,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts);
       },
-      @"useless statement",
+      @"invalid usage context",
       new PlaceAssert(bhl, @"
       c.r
 ------^"
@@ -1758,7 +1758,7 @@ public class TestVM : BHL_TestBase
       "no func to call",
       new PlaceAssert(bhl, @"
       foo() ()
--------------^"
+------------^"
       )
     );
   }

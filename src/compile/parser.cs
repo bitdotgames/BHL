@@ -647,7 +647,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!chain.IsFuncCall)
     {
-      AddSemanticError(exp, "not a function call");
+      AddSemanticError(exp, "invalid usage context");
       return null;
     }
 
