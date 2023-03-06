@@ -2711,7 +2711,6 @@ public class TestVM : BHL_TestBase
   public void TestPostOpAddAssign()
   {
     string bhl = @"
-      
     func int test() 
     {
       int k

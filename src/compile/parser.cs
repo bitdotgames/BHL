@@ -2284,7 +2284,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  bool ProcExpModifyOp(ParserRuleContext ctx, bhlParser.ChainExpContext chain_ctx, bhlParser.ModifyOpContext op_ctx)
+  bool ProcExpModifyOp(
+    ParserRuleContext ctx, 
+    bhlParser.ChainExpContext chain_ctx, 
+    bhlParser.ModifyOpContext op_ctx
+  )
   {
     if(op_ctx.operatorSelfOp() != null)
     {
@@ -2294,7 +2298,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var chain = new ExpChain(ctx, chain_ctx);
       if(!chain.IsVarAccess)
       {
-        AddSemanticError(chain_ctx, "not a writeable expression");
+        AddSemanticError(chain_ctx, "invalid usage context");
         return false;
       }
 
