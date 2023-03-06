@@ -225,10 +225,7 @@ public class CompilationExecutor
   {
     var parse_workers = new List<ParseWorker>();
 
-    //conf.max_threads = 4;
     int files_per_worker = conf.files.Count < conf.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.max_threads);
-
-    Console.WriteLine("MAX THREADS " + conf.max_threads);
 
     int idx = 0;
     int wid = 0;
