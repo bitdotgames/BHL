@@ -82,8 +82,8 @@ exp
   | exp ternaryIfExp                          #ExpTernaryIf
   | newExp                                    #ExpNew
   //TODO: move it under ExpChain?
-  | chainExp '.'                              #ExpIncompleteMember
-  | chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
+  //| chainExp '.'                              #ExpIncompleteMember
+  //| chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
   ;
 
 ternaryIfExp
@@ -114,7 +114,7 @@ forExp
 statement
   : ';'                                        #StmSeparator
   | varDeclareList assignExp?                  #StmDeclOptAssign
-  | varDeclaresOrChainExps assignExp           #StmDeclAssign
+  | varDeclaresOrChainExps assignExp           #StmDeclOrExpAssign
   //func call or variable/member read/write access
   | chainExp modifyOp?                         #StmChainExp
   | 'if' '(' exp ')' block elseIf* else?       #StmIf
