@@ -49,12 +49,8 @@ name
   : GLOBAL? NAME
   ;
 
-lambdaCall
-  : funcLambda callArgs
-  ;
-  
 chainExp
-  : (name | '(' exp ')' | lambdaCall) chainExpItem*
+  : (name | '(' exp ')' | funcLambda) chainExpItem*
   ;
 
 exp

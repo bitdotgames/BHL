@@ -916,7 +916,6 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
-
     func float,string test() 
     {
       return func float,string () 

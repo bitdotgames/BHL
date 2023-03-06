@@ -720,11 +720,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(root_scope == null)
       root_scope = chain.IsGlobalNs ? ns : curr_scope;
 
-    if(chain.lambda_call != null)
+    if(chain.lmb_ctx != null)
     {
       if(!ProcLambdaCall(
         chain.ctx,
-        chain.lambda_call,
+        chain.lmb_ctx,
         chain.items,
         ref curr_type,
         write,
@@ -1778,7 +1778,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   AST_Tree ProcLambda(
      ParserRuleContext ctx, 
-     bhlParser.FuncLambdaContext funcLambda, 
+     bhlParser.FuncLambdaContext lmb_ctx, 
      ref IType curr_type,
      bool yielded = false
    )
@@ -1786,19 +1786,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(yielded)
       CheckCoroCallValidity(ctx);
 
-    var tp = ParseType(funcLambda.retType());
+    var tp = ParseType(lmb_ctx.retType());
 
-    var func_name = Hash.CRC32(module.name) + "_lmb_" + funcLambda.Stop.Line;
+    var func_name = Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line;
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Annotate(ctx), 
       func_name,
-      ParseFuncSignature(funcLambda.coroFlag() != null, tp, funcLambda.funcParams()),
+      ParseFuncSignature(lmb_ctx.coroFlag() != null, tp, lmb_ctx.funcParams()),
       upvals,
       this.func_decl_stack
     );
 
-    var ast = new AST_LambdaDecl(lmb_symb, upvals, funcLambda.Stop.Line);
+    var ast = new AST_LambdaDecl(lmb_symb, upvals, lmb_ctx.Stop.Line);
 
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
@@ -1807,7 +1807,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      fallback we set the scope to the one it's actually defined in during body parsing 
     lmb_symb.scope = scope_backup;
 
-    var fparams = funcLambda.funcParams();
+    var fparams = lmb_ctx.funcParams();
     if(fparams != null)
     {
       PushAST(ast.fparams());
@@ -1818,7 +1818,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: while we are inside lambda the eval type is its return type
     Annotate(ctx).eval_type = lmb_symb.GetReturnType();
 
-    ParseFuncBlock(funcLambda, funcLambda.funcBlock(), funcLambda.retType(), ast);
+    ParseFuncBlock(lmb_ctx, lmb_ctx.funcBlock(), lmb_ctx.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
     curr_type = (IType)lmb_symb.signature;
@@ -1836,7 +1836,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool ProcLambdaCall(
     ParserRuleContext ctx, 
-    bhlParser.LambdaCallContext call, 
+    bhlParser.FuncLambdaContext lmb_ctx, 
     ExpChainItems chain_items,
     ref IType curr_type,
     bool write,
@@ -1845,7 +1845,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = ProcLambda(
       ctx, 
-      call.funcLambda(), 
+      lmb_ctx, 
       ref curr_type,
       yielded
     );
@@ -4844,7 +4844,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public ParserRuleContext ctx;
     public bhlParser.NameContext name_ctx;
     public bhlParser.ExpContext paren_exp_ctx;
-    public bhlParser.LambdaCallContext lambda_call;
+    public bhlParser.FuncLambdaContext lmb_ctx;
     public ExpChainItems items; 
 
     public bool Incomplete { get ; private set; }
@@ -4877,7 +4877,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       this.ctx = ctx;
       this.name_ctx = null;
       this.paren_exp_ctx = null;
-      this.lambda_call = null;
+      this.lmb_ctx = null;
       items = new ExpChainItems();
 
       Incomplete = false;
@@ -4894,8 +4894,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //paren chain
       else if(chain.exp() != null)
         paren_exp_ctx = chain.exp();
-      else if(chain.lambdaCall() != null)
-        lambda_call = chain.lambdaCall();
+      else if(chain.funcLambda() != null)
+        lmb_ctx = chain.funcLambda();
       items = new ExpChainItems(chain.chainExpItem());
     }
   }

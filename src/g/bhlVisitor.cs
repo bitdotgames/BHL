@@ -98,12 +98,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitName([NotNull] bhlParser.NameContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.lambdaCall"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLambdaCall([NotNull] bhlParser.LambdaCallContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.chainExp"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
