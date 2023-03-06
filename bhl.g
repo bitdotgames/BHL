@@ -103,22 +103,23 @@ forPreIter
   ;
 
 forPostIter
-  : varPostOp (',' varPostOp)*
+  : expModifyOp (',' expModifyOp)*
   ;
 
 forExp
   : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
-postOp
+modifyOp
   : assignExp | operatorIncDec | (operatorSelfOp exp)
   ;
 
 //NOTE: statements, order is important
 statement
   : ';'                                        #StmSeparator
-  | chainExp postOp?                           #StmChainExp
-  | varDeclare ( ',' varDeclare )* assignExp?  #StmDeclOptAssign
+  | varDeclareList assignExp?                  #StmDeclOptAssign
+  //func call or variable/member read/write access
+  | chainExp modifyOp?                         #StmChainExp
   | 'if' '(' exp ')' block elseIf* else?       #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
@@ -299,6 +300,10 @@ varDeclare
   : type NAME
   ;
 
+varDeclareList
+  : varDeclare ( ',' varDeclare )*
+  ;
+
 varDeclareAssign
   : varDeclare assignExp
   ;
@@ -315,8 +320,8 @@ varOrDeclareAssign
   : varOrDeclare assignExp
   ;
 
-varPostOp
-  : chainExp postOp
+expModifyOp
+  : chainExp modifyOp
   ;
 
 assignExp

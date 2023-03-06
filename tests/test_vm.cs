@@ -319,7 +319,6 @@ public class TestVM : BHL_TestBase
   public void TestStrConcat()
   {
     string bhl = @"
-      
     func string test(int k) 
     {
       return (string)k + (string)(k*2)
@@ -336,7 +335,6 @@ public class TestVM : BHL_TestBase
   public void TestStrConcatIncompatibleTypes()
   {
     string bhl = @"
-      
     func foo(string s) 
     {}
 

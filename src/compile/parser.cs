@@ -679,14 +679,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmChainExp(bhlParser.StmChainExpContext ctx)
   {
-    if(ctx.postOp() == null)
+    if(ctx.modifyOp() == null)
     {
       var ret_type = ProcFuncCallExp(ctx, ctx.chainExp());
       ProcPopNonConsumed(ret_type);
     }
     else 
     {
-      ProcVarPostOp(ctx, ctx.chainExp(), ctx.postOp());
+      ProcExpModifyOp(ctx, ctx.chainExp(), ctx.modifyOp());
     }
     return null;
   }
@@ -2312,7 +2312,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  bool ProcVarPostOp(ParserRuleContext ctx, bhlParser.ChainExpContext chain_ctx, bhlParser.PostOpContext op_ctx)
+  bool ProcExpModifyOp(ParserRuleContext ctx, bhlParser.ChainExpContext chain_ctx, bhlParser.ModifyOpContext op_ctx)
   {
     if(op_ctx.operatorSelfOp() != null)
     {
@@ -3605,10 +3605,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool ProcDeclOrAssign(bhlParser.VarOrDeclareContext vdecl, bhlParser.AssignExpContext assign_exp, int start_line)
   {
-    return ProcDeclOrAssign(new VarsDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
+    return ProcDeclOrAssign(new VarsOrDeclsProxy(new bhlParser.VarOrDeclareContext[] {vdecl}), assign_exp, start_line);
   }
 
-  class VarsDeclsProxy
+  class VarsOrDeclsProxy
   {
     bhlParser.VarDeclareContext[] vdecls;
     bhlParser.VarOrDeclareContext[] vodecls;
@@ -3623,12 +3623,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
     }
 
-    public VarsDeclsProxy(bhlParser.VarDeclareContext[] vdecls)
+    public VarsOrDeclsProxy(bhlParser.VarDeclareContext[] vdecls)
     {
       this.vdecls = vdecls;
     }
 
-    public VarsDeclsProxy(bhlParser.VarOrDeclareContext[] vodecls)
+    public VarsOrDeclsProxy(bhlParser.VarOrDeclareContext[] vodecls)
     {
       this.vodecls = vodecls;
     }
@@ -3697,7 +3697,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  bool ProcDeclOrAssign(VarsDeclsProxy vproxy, bhlParser.AssignExpContext assign_exp, int start_line)
+  bool ProcDeclOrAssign(VarsOrDeclsProxy vproxy, bhlParser.AssignExpContext assign_exp, int start_line)
   {
     var var_ast = PeekAST();
     int var_assign_insert_idx = var_ast.children.Count;
@@ -3824,21 +3824,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDeclOptAssign(bhlParser.StmDeclOptAssignContext ctx)
   {
-    var vdecls = new VarsDeclsProxy(ctx.varDeclare());
+    var vdecls = new VarsOrDeclsProxy(ctx.varDeclareList().varDeclare());
     var assign_exp = ctx.assignExp();
     ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
 
     return null;
   }
-
-  //public override object VisitStmVarOrDeclAssign(bhlParser.StmVarOrDeclAssignContext ctx)
-  //{
-  //  var vdecls = new VarsDeclsProxy(ctx.varAccessOrDeclaresAssign().varAccessOrDeclare());
-  //  var assign_exp = ctx.varAccessOrDeclaresAssign().assignExp();
-  //  ProcDeclOrAssign(vdecls, assign_exp, ctx.Start.Line);
-
-  //  return null;
-  //}
 
   public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
   {
@@ -4340,9 +4331,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ProcForPostStatements(bhlParser.ForPostIterContext post, int start_line)
   {
-    foreach(var vp in post.varPostOp())
+    foreach(var exp in post.expModifyOp())
     {
-      ProcVarPostOp(vp, vp.chainExp(), vp.postOp());
+      ProcExpModifyOp(exp, exp.chainExp(), exp.modifyOp());
     }
   }
 
@@ -4844,15 +4835,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public bool IsFuncCall {
       get { 
         return items.Count > 0 && 
-          items.At(items.Count-1) is bhlParser.CallArgContext;
+          items.At(items.Count-1) is bhlParser.CallArgsContext;
       } 
     }
 
     public bool IsVarAccess {
       get { 
-        return items.Count > 0 && 
+        return 
+          (items.Count == 0 && name_ctx != null) || 
+          (items.Count > 0 && 
           (items.At(items.Count-1) is bhlParser.MemberAccessContext || 
-           items.At(items.Count-1) is bhlParser.ArrAccessContext);
+           items.At(items.Count-1) is bhlParser.ArrAccessContext));
       } 
     }
 
@@ -4868,38 +4861,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       Init(ctx, chain);
     }
-
-    //public ExpChain(bhlParser.VarAccessExpContext ctx)
-    //{
-    //  this.ctx = ctx;
-    //  this.name_ctx = null;
-    //  this.exp_ctx = null;
-    //  this.lambda_call = null;
-    //  items = new ExpChainItems();
-
-    //  incomplete = false;
-
-    //  if(ctx.chain() != null)
-    //  {
-    //    Init(ctx, ctx.chain());
-
-    //    if(ctx.memberAccess() != null)
-    //      items.Add(ctx.memberAccess());
-    //    else
-    //      items.Add(ctx.arrAccess());
-    //  }
-    //  else if(ctx.name() != null)
-    //    name_ctx = ctx.name();
-    //  else if(ctx.incompleteMemberAccess() != null)
-    //  {
-    //    incomplete = true;
-
-    //    if(ctx.incompleteMemberAccess().name() != null)
-    //      name_ctx = ctx.incompleteMemberAccess().name();
-    //    else if(ctx.incompleteMemberAccess().chain() != null)
-    //      Init(ctx, ctx.incompleteMemberAccess().chain());
-    //  }
-    //}
 
     void Init(ParserRuleContext ctx, bhlParser.ChainExpContext chain)
     {
