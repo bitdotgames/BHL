@@ -110,14 +110,11 @@ forExp
   : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
   ;
 
-modifyOp
-  : assignExp | operatorIncDec | (operatorSelfOp exp)
-  ;
-
 //NOTE: statements, order is important
 statement
   : ';'                                        #StmSeparator
   | varDeclareList assignExp?                  #StmDeclOptAssign
+  | varDeclaresOrChainExps assignExp           #StmDeclAssign
   //func call or variable/member read/write access
   | chainExp modifyOp?                         #StmChainExp
   | 'if' '(' exp ')' block elseIf* else?       #StmIf
@@ -318,6 +315,19 @@ varOrDeclare
 
 varOrDeclareAssign
   : varOrDeclare assignExp
+  ;
+
+varDeclareOrChainExp
+  : varDeclare 
+  | chainExp
+  ;
+
+varDeclaresOrChainExps
+  : varDeclareOrChainExp (',' varDeclareOrChainExp)*
+  ;
+
+modifyOp
+  : assignExp | operatorIncDec | (operatorSelfOp exp)
   ;
 
 expModifyOp

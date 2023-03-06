@@ -521,16 +521,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitForExp([NotNull] bhlParser.ForExpContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.modifyOp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterModifyOp([NotNull] bhlParser.ModifyOpContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.modifyOp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitModifyOp([NotNull] bhlParser.ModifyOpContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>StmSeparator</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -554,6 +544,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitStmDeclOptAssign([NotNull] bhlParser.StmDeclOptAssignContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StmDeclAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStmDeclAssign([NotNull] bhlParser.StmDeclAssignContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmDeclAssign</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStmDeclAssign([NotNull] bhlParser.StmDeclAssignContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>StmChainExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
@@ -1196,6 +1198,36 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitVarOrDeclareAssign([NotNull] bhlParser.VarOrDeclareAssignContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareOrChainExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVarDeclareOrChainExp([NotNull] bhlParser.VarDeclareOrChainExpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.varDeclareOrChainExp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVarDeclareOrChainExp([NotNull] bhlParser.VarDeclareOrChainExpContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.varDeclaresOrChainExps"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterVarDeclaresOrChainExps([NotNull] bhlParser.VarDeclaresOrChainExpsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.varDeclaresOrChainExps"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitVarDeclaresOrChainExps([NotNull] bhlParser.VarDeclaresOrChainExpsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.modifyOp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterModifyOp([NotNull] bhlParser.ModifyOpContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.modifyOp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitModifyOp([NotNull] bhlParser.ModifyOpContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.expModifyOp"/>.
 	/// </summary>
