@@ -182,12 +182,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<bool> call_by_ref_stack = new Stack<bool>();
 
-  //NOTE: used for tracking whether an expression is passable by 'ref',
-  //      before visiting an expression we remember the old value and
-  //      compare it to the new one: if they differ expression is not  
-  //      passable by 'ref'
-  int ref_compatible_exp_counter;
-
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
@@ -960,21 +954,27 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) &&
             call.symb is FuncSymbol fs)
         {
-          ValidateFuncCall(ctx, chain_items, i, chain_ast.Count-1 == i, fs.signature, yielded);
+          ValidateFuncCall(chain_items, i, chain_ast.Count-1 == i, fs.signature, yielded);
         }
         else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
         {
-          ValidateFuncCall(ctx, chain_items, i, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+          ValidateFuncCall(chain_items, i, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
   }
 
-  void ValidateFuncCall(ParserRuleContext ctx, ExpChainItems chain_items, int idx, bool is_last, FuncSignature fsig, bool yielded)
+  void ValidateFuncCall(
+    ExpChainItems chain_items, 
+    int idx, 
+    bool is_last, 
+    FuncSignature fsig, 
+    bool yielded
+  )
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "function calls not allowed in global context");
+      AddSemanticError(chain_items.At(idx), "function calls not allowed in global context");
       return;
     }
 
@@ -982,12 +982,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(chain_items.At(idx), "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "not a coro function");
+        AddSemanticError(chain_items.At(idx), "not a coro function");
         return;
       }
     }
@@ -995,7 +995,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(idx == 0 ? ctx : chain_items.At(idx-1), "coro function must be called via yield");
+        AddSemanticError(chain_items.At(idx), "coro function must be called via yield");
         return;
       }
     }
@@ -1437,15 +1437,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PushCallByRef(is_ref);
           PushJsonType(func_arg_type);
           PushAST(new AST_Interim());
-          int old_ref_counter = ref_compatible_exp_counter;
+          
           VisitValid(na.ca);
 
-          if(is_ref && ref_compatible_exp_counter == old_ref_counter)
+          //let's check if there were any expressions compatible to be passed by ref
+          if(is_ref)
           {
-            AddSemanticError(na.ca, "expression is not passable by 'ref'");
-            PopAST();
-            PopAST();
-            return;
+            if(!(na.ca.exp() is bhlParser.ExpChainContext ca_chain_exp) ||
+                !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsVarAccess)) 
+            {
+              AddSemanticError(na.ca, "expression is not passable by 'ref'");
+              PopAST();
+              PopAST();
+              return;
+            }
           }
 
           PopAddOptimizeAST();
@@ -2122,7 +2127,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     IType curr_type = null;
     ProcExpChain(ctx, ctx.chainExp(), ref curr_type);
 
-    ++ref_compatible_exp_counter;
+    Annotate(ctx).eval_type = curr_type;
+
+    return null;
+  }
+  
+  //TODO: this is almost a copy paste of the code above, it's used 
+  //      when we need to traverse chainExp rule when it is not a part of
+  //      #ExpChain 
+  public override object VisitChainExp(bhlParser.ChainExpContext ctx)
+  {
+    IType curr_type = null;
+    ProcExpChain(ctx, ctx, ref curr_type);
 
     Annotate(ctx).eval_type = curr_type;
 
@@ -3805,7 +3821,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
       else
       {
-        AddSemanticError(vproxy.At(i), "invalid expression");
+        if(assign_exp != null)
+          AddSemanticError(assign_exp, "invalid assignment");
+        else
+          AddSemanticError(vproxy.At(i), "invalid expression");
         return false;
       }
 

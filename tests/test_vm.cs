@@ -5022,7 +5022,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "no viable alternative at input 'i)'",
+      "mismatched input ')'",
       new PlaceAssert(bhl, @"
       for(int i = 0 ; i < 3; i) {
 ------------------------------^"
@@ -6343,7 +6343,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "extraneous input '.'",
+      "type doesn't support member access via '.'",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }.foo 
 ----------------------------------------------^"
@@ -6366,10 +6366,10 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl);
       },
-      "no viable alternative at input",
+      "accessing not an array/map type",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }[10] 
------------------------------------------------^"
+----------------------------------------------^"
       )
     );
   }
@@ -7502,7 +7502,7 @@ public class TestVM : BHL_TestBase
       "missing argument of type 'int'",
       new PlaceAssert(bhl, @"
       ptr()
-----------^"
+---------^"
      )
     );
   }
@@ -7527,7 +7527,7 @@ public class TestVM : BHL_TestBase
       "missing argument of type 'float'",
       new PlaceAssert(bhl, @"
       ptr(10)
-----------^"
+---------^"
      )
     );
   }
@@ -7552,7 +7552,7 @@ public class TestVM : BHL_TestBase
       "too many arguments",
       new PlaceAssert(bhl, @"
       ptr(10, 30)
-----------^"
+---------^"
      )
     );
   }
@@ -8251,7 +8251,7 @@ public class TestVM : BHL_TestBase
       "max default arguments reached",
       new PlaceAssert(bhl, @"
       return foo()
------------------^"
+----------------^"
      )
     );
   }
@@ -8279,7 +8279,7 @@ public class TestVM : BHL_TestBase
       "missing argument 'k'",
       new PlaceAssert(bhl, @"
       return foo()
------------------^"
+----------------^"
      )
     );
   }
@@ -8335,7 +8335,7 @@ public class TestVM : BHL_TestBase
       "missing argument 'radius'",
       new PlaceAssert(bhl, @"
       return foo()
------------------^"
+----------------^"
      )
     );
   }
@@ -13134,7 +13134,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "extraneous input ')'"
+      "no viable alternative at input '(i++'"
     );
 
     string bhl7 = @"
@@ -13168,7 +13168,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "extraneous input ')'"
+      "no viable alternative at input '(i++'"
     );
 
     string bhl9 = @"
@@ -13309,7 +13309,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "extraneous input ')'"
+      "no viable alternative at input '(i--'"
     );
 
     string bhl6 = @"
@@ -19162,7 +19162,6 @@ public class TestVM : BHL_TestBase
   {
     {
       string bhl = @"
-
       func int make()
       {
         return 10
@@ -19178,7 +19177,7 @@ public class TestVM : BHL_TestBase
         @"function calls not allowed in global context",
         new PlaceAssert(bhl, @"
       int foo = make()
-----------------^"
+--------------------^"
         )
       );
     }
@@ -19203,7 +19202,7 @@ public class TestVM : BHL_TestBase
         @"function calls not allowed in global context",
         new PlaceAssert(bhl, @"
       int foo = (new Foo).make()
-----------------^"
+-------------------------^"
         )
       );
     }

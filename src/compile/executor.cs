@@ -435,7 +435,7 @@ public class CompilationExecutor
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            //if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
+            if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
             {
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
@@ -451,12 +451,12 @@ public class CompilationExecutor
               ++w.cache_miss;
               //Console.WriteLine("PARSE " + file + " " + cache_file);
             }
-            //else
-            //{
-            //  interim.use_file_cache = true;
+            else
+            {
+              interim.use_file_cache = true;
 
-            //  ++w.cache_hit;
-            //}
+              ++w.cache_hit;
+            }
 
             w.file2interim[file] = interim;
           }

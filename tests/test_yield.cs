@@ -396,7 +396,7 @@ public class TestYield : BHL_TestBase
       "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
-------^"
+-------------^"
       )
     );
   }
@@ -424,7 +424,7 @@ public class TestYield : BHL_TestBase
       "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       foo.bar()
----------^"
+-------------^"
       )
     );
   }
@@ -457,7 +457,7 @@ public class TestYield : BHL_TestBase
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         int n = foo.bar().number
--------------------^"
+-----------------------^"
         )
       );
     }
@@ -494,7 +494,7 @@ public class TestYield : BHL_TestBase
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         int n = foo.bar().ptr().number
--------------------------^"
+-----------------------------^"
         )
       );
     }
@@ -720,7 +720,7 @@ public class TestYield : BHL_TestBase
       "not a coro function",
       new PlaceAssert(bhl, @"
       yield foo()
-------------^"
+---------------^"
       )
     );
   }
@@ -742,7 +742,7 @@ public class TestYield : BHL_TestBase
       "not a coro function",
       new PlaceAssert(bhl, @"
       yield p()
-------------^"
+-------------^"
       )
     );
   }

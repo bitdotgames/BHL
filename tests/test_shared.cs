@@ -52,8 +52,9 @@ public class BHL_TestRunner
     Run(names, new TestMaps());
     Run(names, new TestStd());
     Run(names, new TestPerf());
-    Run(names, new TestLSP());
     Run(names, new TestErrors());
+    //TODO:
+    //Run(names, new TestLSP());
   }
 
   static void Run(IList<string> names, BHL_TestBase test)

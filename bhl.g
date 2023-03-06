@@ -110,6 +110,7 @@ forExp
 statement
   : ';'                                        #StmSeparator
   | varDeclareList assignExp?                  #StmDeclOptAssign
+  //int a, c.r = foo()
   | varDeclaresOrChainExps assignExp           #StmDeclOrExpAssign
   //func call or variable/member read/write access
   | chainExp modifyOp?                         #StmChainExp
