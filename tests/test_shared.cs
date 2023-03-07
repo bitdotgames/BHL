@@ -916,7 +916,8 @@ public class BHL_TestBase
       throw new CompileErrorsException(errors);
     }
 
-    return new MemoryStream(File.ReadAllBytes(conf.res_file));
+    var ms = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    return ms;
   }
 
   static public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)

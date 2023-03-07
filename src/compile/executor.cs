@@ -318,9 +318,7 @@ public class CompilationExecutor
       mwriter.Write(ModuleLoader.COMPILE_FMT);
       mwriter.Write(FILE_VERSION);
 
-      int total_modules = 0;
-      foreach(var cw in compiler_workers)
-        total_modules += cw.file2interim.Count;
+      int total_modules = conf.files.Count;
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
