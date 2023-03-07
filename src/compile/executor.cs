@@ -128,7 +128,7 @@ public class CompilationExecutor
       pw.Join();
 
     sw.Stop();
-    Console.WriteLine("Parse done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    //Console.WriteLine("Parse done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -171,14 +171,14 @@ public class CompilationExecutor
       }
     }
     sw.Stop();
-    Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.inc_path);
     sw.Stop();
-    Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    //Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     foreach(var kv in file2proc)
       errors.AddRange(kv.Value.result.errors);
@@ -195,7 +195,7 @@ public class CompilationExecutor
       file2proc
     );
     sw.Stop();
-    Console.WriteLine("Compile done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    //Console.WriteLine("Compile done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -212,7 +212,8 @@ public class CompilationExecutor
 
     sw = Stopwatch.StartNew();
     var check_err = CheckUniqueSymbols(compiler_workers);
-    Console.WriteLine("Check done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    sw.Stop();
+    //Console.WriteLine("Check done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     if(check_err != null)
     {
       errors.Add(check_err);
@@ -227,7 +228,8 @@ public class CompilationExecutor
 
     sw = Stopwatch.StartNew();
     conf.postproc.Tally();
-    Console.WriteLine("Postproc done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    sw.Stop();
+    //Console.WriteLine("Postproc done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)

@@ -74,7 +74,8 @@ public class Workspace
       }
     }
 
-    ANTLR_Processor.ProcessAll(file2proc, inc_path);
+    //TODO: use compiled cache if needed
+    ANTLR_Processor.ProcessAll(file2proc, null, inc_path);
 
     foreach(var kv in file2proc)
     {

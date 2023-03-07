@@ -457,6 +457,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_LinkImports(
     Dictionary<string, ANTLR_Processor> file2proc, 
+    //can be null
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
@@ -494,7 +495,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       
       CompiledModule cm;
       //let's try toe fetch from the cache first
-      if(file2compiled.TryGetValue(file_path, out cm))
+      if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
         imported_module = cm;
       else
         imported_module = file2proc[file_path].module;
@@ -590,7 +591,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     result = new Result(module, root_ast, errors);
   }
 
-  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, Dictionary<string, CompiledModule> file2compiled, IncludePath inc_path)
+  static public void ProcessAll(
+    Dictionary<string, ANTLR_Processor> file2proc, 
+    //can be null
+    Dictionary<string, CompiledModule> file2compiled, 
+    IncludePath inc_path
+  )
   {
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();

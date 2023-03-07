@@ -962,7 +962,11 @@ public class BHL_TestBase
     if(show_parse_tree)
       Console.WriteLine(proc.parsed);
 
-    ANTLR_Processor.ProcessAll(new Dictionary<string, ANTLR_Processor>() {{"", proc}}, new IncludePath());
+    ANTLR_Processor.ProcessAll(
+      new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
+      null,
+      new IncludePath()
+    );
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);
