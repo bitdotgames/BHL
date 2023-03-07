@@ -50,7 +50,7 @@ public class CompileCmd : ICmd
         v => userbindings_dll_path = v },
       { "error=", "error file",
         v => err_file = v },
-      { "deterministic=", "deterministic build (sorts files by name)",
+      { "deterministic", "deterministic build (sorts files by name)",
         v => deterministic = v != null },
       { "threads=", "number of threads",
           v => max_threads = int.Parse(v) },
