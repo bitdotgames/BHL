@@ -205,11 +205,16 @@ public class ModulePath
   }
 }
 
-//TODO: there's a CompiledModule as well and probably this 
-//      one must be unified with CompiledModule (or CompiledModule
-//      should be convertable to Module)
+public interface IModule
+{
+  string Name { get ; }
+  Namespace Ns { get ; }
+  int VarsNum { get; }
+  VariableSymbol GetVar(int idx);
+}
+
 //NOTE: represents a module which can be registered in Types
-public class Module
+public class Module : IModule
 {
   public string name {
     get {
@@ -232,14 +237,33 @@ public class Module
   }
   public Namespace ns;
 
+  public string Name {
+    get {
+      return name;
+    }
+  }
+
+  public Namespace Ns {
+    get {
+      return ns;
+    }
+  }
+
+  public int VarsNum {
+    get {
+      return local_gvars_num;
+    }
+  }
+
+  public VariableSymbol GetVar(int idx) 
+  {
+    return gvars[idx];
+  }
+
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
     ns = new Namespace(ts.nfunc_index, "", name, gvars);
-  }
-
-  int Hey() {
-    return 1;
   }
 
   public Module(Types ts, string name, string file_path)
@@ -2432,7 +2456,7 @@ public class Ip2SrcLine
   }
 }
 
-public class CompiledModule
+public class CompiledModule : IModule
 {
   const uint HEADER_VERSION = 1;
   public const int MAX_GLOBALS = 128;
@@ -2447,6 +2471,30 @@ public class CompiledModule
   public int local_gvars_num;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
+
+  public string Name {
+    get {
+      return name;
+    }
+  }
+
+  public Namespace Ns {
+    get {
+      return ns;
+    }
+  }
+
+  public int VarsNum {
+    get {
+      return local_gvars_num;
+    }
+  }
+
+  //TODO: implement it?
+  public VariableSymbol GetVar(int idx) 
+  {
+    return null;
+  }
 
   public CompiledModule(
     string name,
@@ -2472,7 +2520,12 @@ public class CompiledModule
     gvars.Resize(init_gvars_num);
   }
 
-  static public CompiledModule FromStream(Types types, Stream src, INamedResolver resolver = null, System.Action<string, string> on_import = null)
+  static public CompiledModule FromStream(
+    Types types, 
+    Stream src, 
+    INamedResolver resolver = null, 
+    System.Action<string, string> on_import = null
+  )
   {
     var ns = new Namespace(types.nfunc_index);
     //NOTE: it's assumed types.ns is always linked by each module, 

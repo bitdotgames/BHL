@@ -10,24 +10,19 @@ public class ANTLR_Parsed
 {
   public bhlParser parser { get; private set; }
   public ITokenStream tokens { get; private set; }
-  bhlParser.ProgramContext _program_tree;
-  public bhlParser.ProgramContext program_tree { 
-    get {
-      if(_program_tree == null)
-        _program_tree = parser.program();
-      return _program_tree;
-    }
-  }
+  public bhlParser.ProgramContext parse_tree { get; private set; }
 
   public ANTLR_Parsed(bhlParser parser)
   {
     this.parser = parser;
     this.tokens = parser.TokenStream;
+    //NOTE: parsing happens here 
+    parse_tree = parser.program();
   }
 
   public override string ToString()
   {
-    return PrintTree(parser, program_tree);
+    return PrintTree(parser, parse_tree);
   }
 
   public static string PrintTree(Parser parser, IParseTree root)
@@ -437,7 +432,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     passes.Clear();
 
     PushAST(root_ast);
-    VisitProgram(parsed.program_tree);
+    VisitProgram(parsed.parse_tree);
     PopAST();
 
     for(int p=0;p<passes.Count;++p)
@@ -460,7 +455,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  internal void Phase_LinkImports(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
+  internal void Phase_LinkImports(
+    Dictionary<string, ANTLR_Processor> file2proc, 
+    Dictionary<string, CompiledModule> file2compiled, 
+    IncludePath inc_path)
   {
     if(parsed_imports.Count == 0)
       return;
@@ -492,18 +490,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         continue;
       }
 
-      var imported_module = file2proc[file_path].module;
+      IModule imported_module = null;
+      
+      CompiledModule cm;
+      //let's try toe fetch from the cache first
+      if(file2compiled.TryGetValue(file_path, out cm))
+        imported_module = cm;
+      else
+        imported_module = file2proc[file_path].module;
 
       //NOTE: let's add imported global vars to module's global vars index
       if(module.local_gvars_mark == -1)
         module.local_gvars_mark = module.gvars.Count;
 
-      for(int i=0;i<imported_module.local_gvars_num;++i)
-        module.gvars.index.Add(imported_module.gvars.index[i]);
+      for(int i=0;i<imported_module.VarsNum;++i)
+        module.gvars.index.Add(imported_module.GetVar(i));
 
       try
       {
-        ns.Link(imported_module.ns);
+        ns.Link(imported_module.Ns);
       }
       catch(SymbolError se)
       {
@@ -578,17 +583,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       PopScope();
     }
+  }
 
+  internal void Phase_SetResult()
+  {
     result = new Result(module, root_ast, errors);
   }
 
-  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, IncludePath inc_path)
+  static public void ProcessAll(Dictionary<string, ANTLR_Processor> file2proc, Dictionary<string, CompiledModule> file2compiled, IncludePath inc_path)
   {
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_LinkImports(file2proc, inc_path);
+      kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
 
     foreach(var kv in file2proc)
       kv.Value.Phase_ParseTypes1();
@@ -598,6 +606,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     foreach(var kv in file2proc)
       kv.Value.Phase_ParseFuncBodies();
+
+    foreach(var kv in file2proc)
+      kv.Value.Phase_SetResult();
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

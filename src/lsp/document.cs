@@ -55,7 +55,7 @@ public class BHLDocument
     code.Update(text);
 
     nodes.Clear();
-    GetTerminalNodes(parsed.program_tree, nodes);
+    GetTerminalNodes(parsed.parse_tree, nodes);
   }
 
   public TerminalNodeImpl FindTerminalNode(SourcePos pos)

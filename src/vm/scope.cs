@@ -151,7 +151,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
     : this(null, name, "", null)
   {}
 
-  public Namespace(NativeFuncIndex nfunc_index, string name, string module_name, VarIndex module_vars = null)
+  public Namespace(
+    NativeFuncIndex nfunc_index, 
+    string name, 
+    string module_name, 
+    VarIndex module_vars = null
+  )
     : base(name)
   {
     this.module_vars = module_vars;
@@ -161,7 +166,10 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
   }
 
   //marshall version 
-  public Namespace(NativeFuncIndex nfunc_index = null, VarIndex module_vars = null)
+  public Namespace(
+    NativeFuncIndex nfunc_index = null, 
+    VarIndex module_vars = null
+  )
     : this(nfunc_index, "", "", module_vars)
   {}
 

@@ -34,10 +34,12 @@ public class CompilationExecutor
 
   public struct InterimResult
   {
-    public bool use_file_cache;
+    public ModulePath module_path;
     public string compiled_file;
     public FileImports imports;
     public ANTLR_Parsed parsed;
+    //loaded from cache compiled result
+    public CompiledModule compiled;
   }
 
   public int parse_cache_hits { get; private set; }
@@ -112,11 +114,10 @@ public class CompilationExecutor
       return;
     }
 
-    var ts = conf.ts;
-    if(ts == null)
-      ts = new Types();
+    if(conf.ts == null)
+      conf.ts = new Types();
 
-    conf.userbindings.Register(ts);
+    conf.userbindings.Register(conf.ts);
 
     sw = Stopwatch.StartNew();
     //1. start parse workers
@@ -134,9 +135,12 @@ public class CompilationExecutor
     if(errors.Count > 0)
       return;
 
-    //3. create ANTLR processors
+    //2.1 let's collect all interim results collected in parse workers
     var file2interim = new Dictionary<string, InterimResult>();
+
+    //3. create ANTLR processors for non-compiled files
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
+    var file2compiled = new Dictionary<string, CompiledModule>(); 
 
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
@@ -146,18 +150,23 @@ public class CompilationExecutor
 
       foreach(var kv in pw.file2interim)
       {
-        var file_module = new Module(ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
-        var proc_errs = new CompileErrors();
-        var proc = ANTLR_Processor.MakeProcessor(
-          file_module, 
-          kv.Value.imports, 
-          kv.Value.parsed, 
-          ts, 
-          proc_errs,
-          ErrorHandlers.MakeStandard(kv.Key, proc_errs)
-        );
+        if(kv.Value.compiled == null)
+        {
+          var file_module = new Module(conf.ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
+          var proc_errs = new CompileErrors();
+          var proc = ANTLR_Processor.MakeProcessor(
+            file_module, 
+            kv.Value.imports, 
+            kv.Value.parsed, 
+            conf.ts, 
+            proc_errs,
+            ErrorHandlers.MakeStandard(kv.Key, proc_errs)
+          );
+          file2proc.Add(kv.Key, proc);
+        }
+        else
+          file2compiled.Add(kv.Key, kv.Value.compiled);
 
-        file2proc.Add(kv.Key, proc);
         file2interim.Add(kv.Key, kv.Value);
       }
     }
@@ -167,7 +176,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
-    ANTLR_Processor.ProcessAll(file2proc, conf.inc_path);
+    ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.inc_path);
     sw.Stop();
     Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
@@ -180,7 +189,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     var compiler_workers = StartAndWaitCompilerWorkers(
       conf, 
-      ts, 
+      conf.ts, 
       parse_workers, 
       file2interim,
       file2proc
@@ -309,7 +318,7 @@ public class CompilationExecutor
 
       int total_modules = 0;
       foreach(var cw in compiler_workers)
-        total_modules += cw.file2modpath.Count;
+        total_modules += cw.file2interim.Count;
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
@@ -321,8 +330,8 @@ public class CompilationExecutor
         {
           if(file_idx >= cw.start && file_idx < cw.start + cw.count) 
           {
-            var path = cw.file2modpath[file];
-            var compiled_file = cw.file2compiled[file];
+            var path = cw.file2interim[file].module_path;
+            var compiled_file = cw.file2interim[file].compiled_file;
 
             mwriter.Write((byte)conf.module_fmt);
             mwriter.Write(path.name);
@@ -387,6 +396,7 @@ public class CompilationExecutor
     public CompileErrors errors = new CompileErrors();
     public int cache_hit;
     public int cache_miss;
+    public int cache_errs;
 
     public void Start()
     {
@@ -429,30 +439,36 @@ public class CompilationExecutor
             var compiled_file = GetCompiledCacheFile(w.conf.tmp_dir, file);
 
             var interim = new InterimResult();
+            interim.module_path = new ModulePath(w.conf.inc_path.FilePath2ModuleName(file), file);
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            if(!w.conf.use_cache || BuildUtil.NeedToRegen(compiled_file, deps))
+            bool use_cache = w.conf.use_cache && !BuildUtil.NeedToRegen(compiled_file, deps);
+
+            if(use_cache)
+            {
+              try
+              {
+                interim.compiled = CompiledModule.FromFile(compiled_file, w.conf.ts);
+                ++w.cache_hit;
+              }
+              catch(Exception)
+              {
+                use_cache = false;
+                ++w.cache_errs;
+              }
+            }
+
+            if(!use_cache)
             {
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
                 sfs, 
                 ErrorHandlers.MakeStandard(file, new CompileErrors())
               );
-              var parsed = new ANTLR_Parsed(parser);
-
-              interim.parsed = parsed;
-              var tmp = parsed.program_tree;
-              tmp = null;
+              interim.parsed = new ANTLR_Parsed(parser);
 
               ++w.cache_miss;
-              //Console.WriteLine("PARSE " + file + " " + cache_file);
-            }
-            else
-            {
-              interim.use_file_cache = true;
-
-              ++w.cache_hit;
             }
 
             w.file2interim[file] = interim;
@@ -473,7 +489,7 @@ public class CompilationExecutor
 
       sw.Stop();
       if(w.conf.verbose)
-        Console.WriteLine("BHL parser {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss);
+        Console.WriteLine("BHL parser {0} done(hit/miss/err:{2}/{3}/{4}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss, w.cache_errs);
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -561,8 +577,6 @@ public class CompilationExecutor
     public CompileErrors errors = new CompileErrors();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
-    public Dictionary<string, ModulePath> file2modpath = new Dictionary<string, ModulePath>();
-    public Dictionary<string, string> file2compiled = new Dictionary<string, string>();
     public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
     public int cache_hit;
     public int cache_miss;
@@ -596,37 +610,25 @@ public class CompilationExecutor
           current_file = w.conf.files[i]; 
 
           var interim = w.file2interim[current_file];
-          var proc = w.file2proc[current_file];
 
-          w.file2compiled.Add(current_file, interim.compiled_file);
-          w.file2modpath.Add(current_file, proc.module.path);
-
-          bool file_cache_ok = false;
-          if(interim.use_file_cache)
+          if(interim.compiled != null)
           {
-            try
-            {
-              var cm = CompiledModule.FromFile(interim.compiled_file, w.ts);
-              w.file2ns.Add(current_file, cm.ns);
+            ++w.cache_hit;
 
-              ++w.cache_hit;
-              file_cache_ok = true;
-            }
-            catch(Exception)
-            {}
+            w.file2ns.Add(current_file, interim.compiled.ns);
           }
-
-          if(!file_cache_ok)
+          else
           {
             ++w.cache_miss;
+
+            var proc = w.file2proc[current_file];
 
             var proc_result = w.postproc.Patch(proc.result, current_file);
 
             var c  = new ModuleCompiler(proc_result);
             var cm = c.Compile();
 
-            var compiled_file = w.file2compiled[current_file];
-            CompiledModule.ToFile(cm, compiled_file);
+            CompiledModule.ToFile(cm, interim.compiled_file);
 
             w.file2ns.Add(current_file, proc_result.module.ns);
           }
@@ -716,7 +718,7 @@ public static class BuildUtil
     {
       if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
       {
-        //Console.WriteLine("Stale " + dep + " " + file);
+        //Console.WriteLine("Stale " + dep + " " + file + " : " + GetLastWriteTime(dep) + " VS " + fmtime);
         return true;
       }
     }
