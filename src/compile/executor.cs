@@ -174,14 +174,7 @@ public class CompilationExecutor
     //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     //3.1 let's link cached compiled modules where neccessary
-    var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
-    foreach(var kv in file2compiled)
-      mod_name2compiled.Add(kv.Value.name, kv.Value);
-    foreach(var kv in file2compiled)
-    {
-      foreach(string import in kv.Value.imports)
-        kv.Value.ns.Link(mod_name2compiled[import].ns);
-    }
+    LinkCompiledModules(file2compiled);
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
@@ -270,6 +263,18 @@ public class CompilationExecutor
     }
 
     return parse_workers;
+  }
+
+  static void LinkCompiledModules(Dictionary<string, CompiledModule> file2compiled)
+  {
+    var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
+    foreach(var kv in file2compiled)
+      mod_name2compiled.Add(kv.Value.name, kv.Value);
+    foreach(var kv in file2compiled)
+    {
+      foreach(string import in kv.Value.imports)
+        kv.Value.ns.Link(mod_name2compiled[import].ns);
+    }
   }
 
   static List<CompilerWorker> StartAndWaitCompilerWorkers(
