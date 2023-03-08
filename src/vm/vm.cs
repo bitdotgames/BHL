@@ -2466,6 +2466,7 @@ public class CompiledModule : IModule
   public Namespace ns;
   public byte[] initcode;
   public byte[] bytecode;
+  //NOTE: normalized module names, not actual import paths
   public List<string> imports;
   public List<Const> constants;
   public int local_gvars_num;

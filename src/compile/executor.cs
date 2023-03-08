@@ -173,6 +173,15 @@ public class CompilationExecutor
     sw.Stop();
     //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
+    var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
+    foreach(var kv in file2compiled)
+      mod_name2compiled.Add(kv.Value.name, kv.Value);
+    foreach(var kv in file2compiled)
+    {
+      foreach(string import in kv.Value.imports)
+        kv.Value.ns.Link(mod_name2compiled[import].ns);
+    }
+
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet

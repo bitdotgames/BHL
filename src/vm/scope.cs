@@ -624,7 +624,7 @@ public static class ScopeExtensions
         else if(m is IScope s)
           str += s.DumpMembers(level+1) + "\n";
         else if(m is ITyped typed)
-          str += new String(' ', level+1) + m.name + " : " + typed.GetIType().GetName() + "(" + m.GetType().Name + ")\n";
+          str += new String(' ', level+1) + m.name + " : " + typed.GetIType()?.GetName() + "(" + m.GetType().Name + ")\n";
         else
           str += new String(' ', level+1) + m.name + " : " + m.GetType().Name + "\n";
       }

@@ -494,9 +494,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       IModule imported_module = null;
       
       CompiledModule cm;
-      //let's try toe fetch from the cache first
+      //let's try to fetch from the cache first
       if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
+      {
         imported_module = cm;
+        //Console.WriteLine(cm.ns.DumpMembers());
+      }
       else
         imported_module = file2proc[file_path].module;
 
