@@ -173,6 +173,7 @@ public class CompilationExecutor
     sw.Stop();
     //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
+    //3.1 let's link cached compiled modules where neccessary
     var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
     foreach(var kv in file2compiled)
       mod_name2compiled.Add(kv.Value.name, kv.Value);
