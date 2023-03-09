@@ -56,14 +56,14 @@ public class TestMarshall : BHL_TestBase
       var ns = new Namespace();
       ns.Link(ts.ns);
 
-      var factory = new SymbolFactory(ts, ns);
+      var factory = new SymbolFactory(ts, resolver: ns);
 
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
       ns.SetupSymbols();
 
-      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsEnumerator().Count);
+      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIterator().Count);
       AssertEqual(8, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
@@ -122,7 +122,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Foo.scope, ns);
       AssertTrue(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
-      AssertEqual(Foo.GetSymbolsEnumerator().Count, 2);
+      AssertEqual(Foo.GetSymbolsIterator().Count, 2);
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       AssertEqual(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
@@ -141,7 +141,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Bar.scope, ns);
       AssertEqual(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      AssertEqual(Bar.GetSymbolsEnumerator().Count, 2/*from parent*/+2);
+      AssertEqual(Bar.GetSymbolsIterator().Count, 2/*from parent*/+2);
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       AssertEqual(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");

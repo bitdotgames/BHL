@@ -28,7 +28,7 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
-      AssertEqual(0, foo.GetSymbolsEnumerator().Count);
+      AssertEqual(0, foo.GetSymbolsIterator().Count);
     }
   }
 
@@ -115,11 +115,11 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
-      AssertEqual(1, foo.GetSymbolsEnumerator().Count);
+      AssertEqual(1, foo.GetSymbolsIterator().Count);
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
-      AssertEqual(2, foo_sub.GetSymbolsEnumerator().Count);
+      AssertEqual(2, foo_sub.GetSymbolsIterator().Count);
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
@@ -129,11 +129,11 @@ public class TestNamespace : BHL_TestBase
 
       var bar = ns2.Resolve("bar") as Namespace;
       AssertTrue(bar != null);
-      AssertEqual(0, bar.GetSymbolsEnumerator().Count);
+      AssertEqual(0, bar.GetSymbolsIterator().Count);
 
       var wow = ns2.Resolve("wow") as Namespace;
       AssertTrue(wow != null);
-      AssertEqual(0, wow.GetSymbolsEnumerator().Count);
+      AssertEqual(0, wow.GetSymbolsIterator().Count);
     }
 
     AssertEqual("foo", ns2.ResolveNamedByPath("foo").GetName());
@@ -251,11 +251,11 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
-      AssertEqual(1, foo.GetSymbolsEnumerator().Count);
+      AssertEqual(1, foo.GetSymbolsIterator().Count);
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
-      AssertEqual(1, foo_sub.GetSymbolsEnumerator().Count);
+      AssertEqual(1, foo_sub.GetSymbolsIterator().Count);
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow == null);
@@ -376,11 +376,11 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       AssertTrue(foo != null);
-      AssertEqual(1, foo.GetSymbolsEnumerator().Count);
+      AssertEqual(1, foo.GetSymbolsIterator().Count);
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
-      AssertEqual(1, foo_sub.GetSymbolsEnumerator().Count);
+      AssertEqual(1, foo_sub.GetSymbolsIterator().Count);
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow == null);
@@ -481,12 +481,12 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(1, foo.GetSymbolsEnumerator().Count);
+    AssertEqual(1, foo.GetSymbolsIterator().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(1, bar.GetSymbolsEnumerator().Count);
+    AssertEqual(1, bar.GetSymbolsIterator().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
   }
 
@@ -520,13 +520,13 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(2, foo.GetSymbolsEnumerator().Count);
+    AssertEqual(2, foo.GetSymbolsIterator().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(1, bar.GetSymbolsEnumerator().Count);
+    AssertEqual(1, bar.GetSymbolsIterator().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
   }
 
@@ -574,14 +574,14 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(3, foo.GetSymbolsEnumerator().Count);
+    AssertEqual(3, foo.GetSymbolsIterator().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(2, bar.GetSymbolsEnumerator().Count);
+    AssertEqual(2, bar.GetSymbolsIterator().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
     AssertTrue(bar.Resolve("foo") is Namespace);
   }
@@ -630,14 +630,14 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.ResolveNamedByPath("foo") as Namespace;
     AssertTrue(foo != null);
-    AssertEqual(3, foo.GetSymbolsEnumerator().Count);
+    AssertEqual(3, foo.GetSymbolsIterator().Count);
     AssertTrue(foo.Resolve("test") is FuncSymbol);
     AssertTrue(foo.Resolve("what") is FuncSymbol);
     AssertTrue(foo.Resolve("bar") is Namespace);
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     AssertTrue(bar != null);
-    AssertEqual(2, bar.GetSymbolsEnumerator().Count);
+    AssertEqual(2, bar.GetSymbolsIterator().Count);
     AssertTrue(bar.Resolve("test") is FuncSymbol);
     AssertTrue(bar.Resolve("foo") is Namespace);
   }

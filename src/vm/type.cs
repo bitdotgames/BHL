@@ -24,6 +24,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   //TODO: we need to serialize/unserialize the original resolver
   public INamedResolver resolver;
 
+  //NOTE: for symbols it's a full absolute path from the very top namespace
   string _path;
   public string path 
   { 

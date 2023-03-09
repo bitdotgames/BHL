@@ -163,7 +163,7 @@ public class VarSymbol : BuiltInSymbolType
   }
 }
 
-public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
+public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsIteratable
 {
   internal SymbolsStorage members;
 
@@ -219,7 +219,7 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsE
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
+  public ISymbolsIterator GetSymbolsIterator() { return members; }
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -337,7 +337,7 @@ public class InterfaceSymbolNative : InterfaceSymbol
   }
 }
 
-public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnumerable
+public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsIteratable
 {
   public ClassSymbol super_class {
     get {
@@ -400,7 +400,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsEnume
       SetImplementedInterfaces(implements);
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return _all_members; }
+  public ISymbolsIterator GetSymbolsIterator() { return _all_members; }
 
   public IScope GetFallbackScope() 
   {
@@ -1501,7 +1501,7 @@ public enum FuncAttrib : byte
   Coro        = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsEnumerable
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsIteratable
 {
   FuncSignature _signature;
   public FuncSignature signature {
@@ -1586,7 +1586,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     members.Add(sym);
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
+  public ISymbolsIterator GetSymbolsIterator() { return members; }
 
   internal struct EnforceThisScope : IScope
   {
@@ -2131,7 +2131,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : Symbol, IScope, IType, ISymbolsEnumerable
+public class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
 {
   public SymbolsStorage members;
 
@@ -2161,7 +2161,7 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsEnumerable
     members.Add(sym);
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
+  public ISymbolsIterator GetSymbolsIterator() { return members; }
 
   public EnumItemSymbol FindValue(string name)
   {
@@ -2281,7 +2281,7 @@ public class EnumItemSymbol : Symbol, IType
   }
 }
 
-public class SymbolsStorage : marshall.IMarshallable, ISymbolsEnumerator
+public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
 {
   IScope scope;
   List<Symbol> list = new List<Symbol>();
@@ -2513,10 +2513,10 @@ public class SymbolFactory : marshall.IFactory
   public Types types;
   public INamedResolver resolver;
 
-  public SymbolFactory(Types types, INamedResolver res) 
+  public SymbolFactory(Types types, INamedResolver resolver) 
   {
     this.types = types;
-    this.resolver = res; 
+    this.resolver = resolver; 
   }
 
   public marshall.IMarshallableGeneric CreateById(uint id) 

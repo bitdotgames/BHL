@@ -279,7 +279,7 @@ public class TextDocumentSignatureHelpService : IService
 
   static ParameterInformation[] GetSignatureParams(FuncSymbol symb)
   {
-    var en = symb.GetSymbolsEnumerator();
+    var en = symb.GetSymbolsIterator();
 
     var ps = new ParameterInformation[en.Count];
 

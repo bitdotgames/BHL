@@ -986,6 +986,7 @@ public class VM : INamedResolver
     lm.name = module_name;
     loading_modules.Add(lm);
 
+    //NOTE: passing self as a type proxies 'resolver'
     var loaded = loader.Load(module_name, this, OnImport);
 
     //if no such a module let's remove it from the loading list
@@ -2529,11 +2530,13 @@ public class CompiledModule : IModule
   )
   {
     var ns = new Namespace(types.nfunc_index);
-    //NOTE: it's assumed types.ns is always linked by each module, 
-    //      however we add it directly to links list in order
-    //      avoid duplicate symbols error during un-marshalling
+    //NOTE: we link the types.ns directly without any checks  
+    //      for performance purposes (since new namespace is 
+    //      clean anyway)
     ns.links.Add(types.ns);
 
+    //NOTE: if resolver (used for type proxies resolving) is not
+    //      passed we use the namespace itself
     if(resolver == null)
       resolver = ns.R();
 

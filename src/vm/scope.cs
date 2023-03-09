@@ -21,16 +21,16 @@ public interface INamedResolver
   INamed ResolveNamedByPath(string path);
 }
 
-public interface ISymbolsEnumerator
+public interface ISymbolsIterator
 {
   int Count { get; }
   Symbol this[int index] { get; }
 }
 
-public interface ISymbolsEnumerable
+public interface ISymbolsIteratable
 {
   // A read-only symbols accessing interface 
-  ISymbolsEnumerator GetSymbolsEnumerator();
+  ISymbolsIterator GetSymbolsIterator();
 }
 
 public interface IInstanceType : IType, IScope 
@@ -38,7 +38,7 @@ public interface IInstanceType : IType, IScope
   HashSet<IInstanceType> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolsEnumerable
+public class LocalScope : IScope, ISymbolsIteratable
 {
   bool is_paral;
   int next_idx;
@@ -83,7 +83,7 @@ public class LocalScope : IScope, ISymbolsEnumerable
     }
   }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() { return members; }
+  public ISymbolsIterator GetSymbolsIterator() { return members; }
 
   public Symbol Resolve(string name) 
   {
@@ -128,7 +128,7 @@ public class LocalScope : IScope, ISymbolsEnumerable
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumerable, INamedResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIteratable, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -354,7 +354,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsEnumera
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsEnumerator GetSymbolsEnumerator() 
+  public ISymbolsIterator GetSymbolsIterator() 
   { 
     var all = new SymbolsStorage(this);
     var it = GetIterator();
@@ -613,9 +613,9 @@ public static class ScopeExtensions
     else
       str += " {\n";
 
-    if(scope is ISymbolsEnumerable isi)
+    if(scope is ISymbolsIteratable isi)
     {
-      var idx = isi.GetSymbolsEnumerator();
+      var idx = isi.GetSymbolsIterator();
       for(int i=0;i<idx.Count;++i)
       {
         var m = idx[i];
@@ -638,10 +638,10 @@ public static class ScopeExtensions
 
   public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
   {
-    if(!(scope is ISymbolsEnumerable isi))
+    if(!(scope is ISymbolsIteratable isi))
       return;
     
-    var idx = isi.GetSymbolsEnumerator();
+    var idx = isi.GetSymbolsIterator();
     for(int i=0;i<idx.Count;++i)
     {
       var m = idx[i];

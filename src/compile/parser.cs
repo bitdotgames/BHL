@@ -1475,13 +1475,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PopJsonType();
           PopCallByRef();
 
-          if(func_arg_symb.type.Get() == null)
+          if(func_arg_type == null)
           {
             AddSemanticError(na.ca, "unresolved type " + func_arg_symb.type);
             PopAST();
             return;
           }
-          if(!types.CheckAssign(func_arg_symb.type.Get(), Annotate(na.ca), errors))
+          if(!types.CheckAssign(func_arg_type, Annotate(na.ca), errors))
           {
             PopAST();
             return;
