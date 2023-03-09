@@ -133,9 +133,9 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
   public const uint CLASS_ID = 20;
 
   //TODO: probably these don't belong to this place
-  internal string module_name = "";
-  internal VarIndex module_vars;
-  internal NativeFuncIndex nfunc_index;
+  public string module_name = "";
+  public VarIndex module_vars;
+  public NativeFuncIndex nfunc_index;
 
   public SymbolsStorage members;
 
@@ -146,31 +146,24 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     return CLASS_ID;
   }
 
-  //for tests
-  public Namespace(string name)
-    : this(null, name, "", null)
-  {}
-
   public Namespace(
-    NativeFuncIndex nfunc_index, 
     string name, 
-    string module_name, 
-    VarIndex module_vars = null
+    string module_name
   )
     : base(name)
   {
-    this.module_vars = module_vars;
-    this.nfunc_index = nfunc_index;
     this.module_name = module_name;
     this.members = new SymbolsStorage(this);
   }
 
+  //for tests
+  public Namespace(string name)
+    : this(name, "")
+  {}
+
   //marshall version 
-  public Namespace(
-    NativeFuncIndex nfunc_index = null, 
-    VarIndex module_vars = null
-  )
-    : this(nfunc_index, "", "", module_vars)
+  public Namespace()
+    : this("", "")
   {}
 
   public INamed ResolveNamedByPath(string path)
@@ -199,7 +192,10 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
     if(sym == null)
     {
-      sym = new Namespace(nfunc_index, name, module_name, module_vars);
+      var ns = new Namespace(name, module_name);
+      ns.nfunc_index = nfunc_index;
+      ns.module_vars = module_vars;
+      sym = ns;
       Define(sym);
     }
 
@@ -208,7 +204,9 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
   public Namespace Clone()
   {
-    var copy = new Namespace(nfunc_index, name, module_name, module_vars);
+    var copy = new Namespace(name, module_name);
+    copy.nfunc_index = nfunc_index;
+    copy.module_vars = module_vars;
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -269,7 +267,9 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
         {
           //NOTE: let's create a local version of the linked namespace
           //      which is linked to the original one
-          var ns = new Namespace(nfunc_index, other_ns.name, module_name);
+          var ns = new Namespace(other_ns.name, module_name);
+          ns.nfunc_index = nfunc_index;
+          ns.module_vars = module_vars;
           ns.links.Add(other_ns);
           members.Add(ns);
         }
@@ -391,9 +391,9 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
-    if(sym is FuncSymbolNative fsn)
+    if(nfunc_index != null && sym is FuncSymbolNative fsn)
       nfunc_index.Index(fsn);
-    else if(sym is VariableSymbol vs)
+    else if(module_vars != null && sym is VariableSymbol vs)
       module_vars.Index(vs);
 
     members.Add(sym);

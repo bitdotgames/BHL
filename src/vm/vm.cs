@@ -220,34 +220,35 @@ public class Module
   }
   public ModulePath path;
 
-  public VarIndex gvars = new VarIndex();
   public int local_gvars_mark = -1;
   public int local_gvars_num {
     get {
-      return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
+      return local_gvars_mark == -1 ? 0 : local_gvars_mark;
     }
   }
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)
-  {
-    this.path = path;
-    ns = new Namespace(ts.nfunc_index, "", name, gvars);
-  }
+    : this(ts, path, new Namespace("", path.name), 0)
+  {}
 
-  public Module(Types ts, string name, string file_path)
-    : this(ts, new ModulePath(name, file_path))
+  public Module(Types ts, string name, string file_path = "")
+    : this(
+        ts, 
+        new ModulePath(name, file_path), 
+        new Namespace("", name), 
+        0)
   {}
 
   public Module(
-    Types ts, 
-    string name, 
-    string file_path, 
+    Types ts,
+    ModulePath path,
     Namespace ns,
     int local_gvars_mark
   )
-    : this(ts, new ModulePath(name, file_path))
   {
+    ns.nfunc_index = ts.nfunc_index;
+    this.path = path;
     this.ns = ns;
     this.local_gvars_mark = local_gvars_mark;
   }
@@ -2501,7 +2502,7 @@ public class CompiledModule
     System.Action<string, string> on_import = null
   )
   {
-    var ns = new Namespace(types.nfunc_index);
+    var ns = new Namespace();
 
     //NOTE: if resolver (used for type proxies resolving) is not
     //      passed we use the namespace itself
@@ -2573,7 +2574,12 @@ public class CompiledModule
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
 
-    var m = new Module(types, name, file_path, ns, local_gvars_num);
+    var m = new Module(
+      types,
+      new ModulePath(name, file_path), 
+      ns, 
+      local_gvars_num
+    );
 
     return new 
       CompiledModule(

@@ -9,6 +9,7 @@ public class ModuleCompiler : AST_Visitor
   CompiledModule compiled;
 
   Module module;
+  VarIndex module_vars;
 
   List<Const> constants = new List<Const>();
   List<string> imports = new List<string>();
@@ -161,6 +162,7 @@ public class ModuleCompiler : AST_Visitor
   public ModuleCompiler(ANTLR_Processor.Result fres)
   {
     module = fres.module;
+    module_vars = fres.module_vars;
     ast = fres.ast;
     curr_scope = module.ns;
 
@@ -170,7 +172,8 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    module = new Module(new Types(), "", "");
+    module = new Module(new Types(), "");
+    module_vars = new VarIndex();
     curr_scope = module.ns;
 
     UseInit();
@@ -208,7 +211,7 @@ public class ModuleCompiler : AST_Visitor
         module,
         imports,
         constants, 
-        module.gvars.Count,
+        module_vars.Count,
         init_bytes,
         code_bytes,
         ip2src_line
@@ -1149,7 +1152,7 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {module_vars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
@@ -1159,7 +1162,7 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {module_vars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:

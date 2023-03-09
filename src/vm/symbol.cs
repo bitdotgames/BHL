@@ -2562,7 +2562,7 @@ public class SymbolFactory : marshall.IFactory
       case TupleType.CLASS_ID:
         return new TupleType();
       case Namespace.CLASS_ID:
-        return new Namespace(types.nfunc_index);
+        return new Namespace();
       default:
         return null;
     }

@@ -152,7 +152,11 @@ public class CompilationExecutor
       {
         if(kv.Value.compiled == null)
         {
-          var file_module = new Module(conf.ts, conf.inc_path.FilePath2ModuleName(kv.Key), kv.Key);
+          var file_module = new Module(
+            conf.ts,
+            conf.inc_path.FilePath2ModuleName(kv.Key), 
+            kv.Key
+          );
           var proc_errs = new CompileErrors();
           var proc = ANTLR_Processor.MakeProcessor(
             file_module, 

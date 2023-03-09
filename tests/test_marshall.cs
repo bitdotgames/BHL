@@ -14,7 +14,8 @@ public class TestMarshall : BHL_TestBase
     {
       var ts = new Types();
 
-      var ns = new Namespace(null, new VarIndex());
+      var ns = new Namespace();
+      ns.module_vars = new VarIndex();
       ns.Link(ts.ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));

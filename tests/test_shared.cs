@@ -950,7 +950,7 @@ public class BHL_TestBase
 
   public ANTLR_Processor Parse(string bhl, Types ts, bool show_ast = false, bool show_parse_tree = false, bool throw_errors = false) 
   {
-    var mdl = new bhl.Module(ts, "", "");
+    var mdl = new bhl.Module(ts, "");
     var errors = new CompileErrors();
     var proc = ANTLR_Processor.MakeProcessor(
       mdl, 

@@ -79,12 +79,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public class Result
   {
     public Module module { get; private set; }
+    public VarIndex module_vars { get; private set; }
     public AST_Module ast { get; private set; }
     public CompileErrors errors { get; private set; }
 
-    public Result(Module module, AST_Module ast, CompileErrors errors)
+    public Result(Module module, VarIndex module_vars, AST_Module ast, CompileErrors errors)
     {
       this.module = module;
+      this.module_vars = module_vars;
       this.ast = ast;
       this.errors = errors;
     }
@@ -98,6 +100,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public ANTLR_Parsed parsed { get; private set; }
 
   public Module module { get; private set; }
+  public VarIndex module_vars = new VarIndex();
 
   public FileImports imports { get; private set; } 
 
@@ -277,6 +280,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     this.errors = errors;
 
     ns = module.ns;
+    //NOTE: we need to properly index symbols only in compilation phase,
+    //      so we assign indexers here 
+    ns.nfunc_index = types.nfunc_index;
+    ns.module_vars = module_vars;
     ns.Link(types.ns);
 
     PushScope(ns);
@@ -492,6 +499,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
 
       Module imported_module = null;
+      VarIndex imported_module_vars = null;
       
       CompiledModule cm;
       //let's try to fetch from the cache first
@@ -501,16 +509,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //Console.WriteLine(cm.ns.DumpMembers());
       }
       else
+      {
         imported_module = file2proc[file_path].module;
+        imported_module_vars = file2proc[file_path].module_vars;
+      }
 
       //NOTE: let's add imported global vars to module's global vars index
       if(module.local_gvars_mark == -1)
-        module.local_gvars_mark = module.gvars.Count;
+        module.local_gvars_mark = module_vars.Count;
 
       for(int i=0;i<imported_module.local_gvars_num;++i)
-        module.gvars.index.Add(
-          imported_module.gvars.Count > i ? 
-            imported_module.gvars[i] : null
+        module_vars.index.Add(
+          imported_module_vars?.Count > i ? 
+            imported_module_vars[i] : null
         );
 
       try
@@ -594,7 +605,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   internal void Phase_SetResult()
   {
-    result = new Result(module, root_ast, errors);
+    result = new Result(module, module_vars, root_ast, errors);
   }
 
   static public void ProcessAll(
@@ -3187,7 +3198,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var ns = curr_scope.Resolve(name) as Namespace;
       if(ns == null)
       {
-        ns = new Namespace(types.nfunc_index, name, module.name, module.gvars);
+        ns = new Namespace(name, module.name);
+        ns.nfunc_index = types.nfunc_index;
+        ns.module_vars = module_vars;
         curr_scope.Define(ns);
       }
       else if(ns.module_name != module.name)
@@ -3441,7 +3454,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int m=0;m<pass.class_symb.members.Count;++m)
     {
       if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
-        pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvars.IndexOf(fld)));
+        pass.class_ast.AddChild(new AST_VarDecl(fld, module_vars.IndexOf(fld)));
 
     }
   }

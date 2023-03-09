@@ -6,7 +6,7 @@ public static class std
 {
   static public Module MakeModule(Types ts)
   {
-    var m = new Module(ts, "std", null);
+    var m = new Module(ts, "std");
     return m;
   }
 
@@ -14,7 +14,7 @@ public static class std
   {
     static public Module MakeModule(Types ts)
     {
-      var m = new Module(ts, "std/io", null);
+      var m = new Module(ts, "std/io");
 
       var io = m.ns.Nest("std").Nest("io");
 
