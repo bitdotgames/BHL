@@ -772,6 +772,7 @@ public class TestNamespace : BHL_TestBase
     var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "foo.test").result.PopRelease().num);
     AssertEqual(0, Execute(vm, "bar.test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -793,6 +794,7 @@ public class TestNamespace : BHL_TestBase
       ";
       var vm = MakeVM(bhl);
       AssertEqual(1, Execute(vm, "bar.test").result.PopRelease().num);
+      CommonChecks(vm);
     }
 
     {
@@ -815,44 +817,76 @@ public class TestNamespace : BHL_TestBase
       ";
       var vm = MakeVM(bhl);
       AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
+      CommonChecks(vm);
     }
   }
 
   [IsTested()]
-  public void TestCallNativeFuncByPath()
+  public void TestMixNativeAndUserland()
   {
-    {
-      string bhl = @"
-      namespace bar {
-        func int test() {
-          return foo.wow() + wow()
-        }
-      }
-      ";
-      var ts = new Types();
-      {
-        var fn = new FuncSymbolNative("wow", ts.T("int"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              stack.Push(Val.NewInt(frm.vm, 1)); 
-              return null;
-            }
-        );
-        ts.ns.Nest("foo").Define(fn);
-      }
-      {
-        var fn = new FuncSymbolNative("wow", ts.T("int"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              stack.Push(Val.NewInt(frm.vm, 10)); 
-              return null;
-            }
-        );
-        //NOTE: let's mix namespace defined natively and the one in bhl code
-        ts.ns.Nest("bar").Define(fn);
-      }
-
-      var vm = MakeVM(bhl, ts);
-      AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
+    string test_bhl = @"
+    namespace bar {
     }
+    ";
+    var ts = new Types();
+    {
+      var fn = new FuncSymbolNative("wow", ts.T("void"),
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            return null;
+          }
+      );
+      ts.ns.Nest("bar").Define(fn);
+    }
+
+    var files = new List<string>();
+    NewTestFile("test.bhl", test_bhl, ref files);
+
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+    var vm = new VM(ts, loader);
+    vm.LoadModule("test");
+    var cm = vm.FindModule("test");
+    //NOTE: there should only one namespace 
+    AssertEqual(cm.ns.members.Count, 1);
+    AssertTrue(cm.ns.members[0] is Namespace);
+    AssertEqual(cm.ns.members[0].name, "bar");
+    Execute(vm, "bar.wow");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMixNativeAndUserlandWithCall()
+  {
+    string bhl = @"
+    namespace bar {
+      func int test() {
+        return foo.wow() + wow()
+      }
+    }
+    ";
+    var ts = new Types();
+    {
+      var fn = new FuncSymbolNative("wow", ts.T("int"),
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            stack.Push(Val.NewInt(frm.vm, 1)); 
+            return null;
+          }
+      );
+      ts.ns.Nest("foo").Define(fn);
+    }
+    {
+      var fn = new FuncSymbolNative("wow", ts.T("int"),
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            stack.Push(Val.NewInt(frm.vm, 10)); 
+            return null;
+          }
+      );
+      //NOTE: let's mix namespace defined natively and the one in bhl code
+      ts.ns.Nest("bar").Define(fn);
+    }
+
+    var vm = MakeVM(bhl, ts);
+    AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   //NOTE: this is quite contraversary
@@ -875,6 +909,7 @@ public class TestNamespace : BHL_TestBase
     ";
     var vm = MakeVM(bhl);
     AssertEqual(10, Execute(vm, "foo.test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -900,6 +935,7 @@ public class TestNamespace : BHL_TestBase
     ";
     var vm = MakeVM(bhl);
     AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -947,6 +983,7 @@ public class TestNamespace : BHL_TestBase
     );
     vm.LoadModule("bhl2");
     AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -996,6 +1033,7 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(11, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1016,6 +1054,7 @@ public class TestNamespace : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
@@ -1037,6 +1076,7 @@ public class TestNamespace : BHL_TestBase
     ";
     var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "foo.test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]

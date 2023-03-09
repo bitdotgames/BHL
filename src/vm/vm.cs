@@ -970,6 +970,14 @@ public class VM : INamedResolver
     FinishRegistration(cm);
   }
 
+  //NOTE: this method is public only for testing convenience
+  public CompiledModule FindModule(string module_name)
+  {
+    CompiledModule cm;
+    compiled_mods.TryGetValue(module_name, out cm);
+    return cm;
+  }
+
   //NOTE: returns false is module is already loaded
   bool TryAddToLoadingList(string module_name)
   {
