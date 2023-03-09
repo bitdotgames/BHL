@@ -12,4 +12,6 @@ if [ $EXE -ot $SRC ]; then
   mcs $SRC -debug -r:$DIR/deps/mono_opts.dll -out:$EXE
 fi
 
+#debugger version
+#mono --debug --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556 $EXE $*
 mono --debug $EXE $*

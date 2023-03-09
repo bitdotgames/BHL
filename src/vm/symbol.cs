@@ -1350,6 +1350,8 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 
 public class FuncArgSymbol : VariableSymbol
 {
+  new public const uint CLASS_ID = 19;
+
   public bool is_ref;
 
 #if BHL_FRONT
@@ -1364,6 +1366,23 @@ public class FuncArgSymbol : VariableSymbol
     : base(name, type)
   {
     this.is_ref = is_ref;
+  }
+
+  //marshall factory version
+  public FuncArgSymbol()
+    : this("", new Proxy<IType>())
+  {}
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    marshall.Marshall.Sync(ctx, ref is_ref);
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
   }
 }
 
@@ -1646,6 +1665,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref _signature);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
+    marshall.Marshall.Sync(ctx, ref members);
   }
 
   public override string ToString()
@@ -2513,6 +2533,8 @@ public class SymbolFactory : marshall.IFactory
         return Types.Void;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
+      case FuncArgSymbol.CLASS_ID:
+        return new FuncArgSymbol(); 
       case FieldSymbolScript.CLASS_ID:
         return new FieldSymbolScript(); 
       case GenericArrayTypeSymbol.CLASS_ID:

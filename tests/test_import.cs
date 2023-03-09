@@ -330,6 +330,91 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile3()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""/collections/unit""
+
+    Unit global_unit
+
+    func Unit get(int a) { 
+      Unit u = {test: 23 + a}
+      return u
+    }
+    ";
+
+    string file_use =  @"
+    import ""/collections/unit""
+
+    func use_unit() { 
+      Unit u = {test: 42}
+    }
+    ";                 
+
+    string file_test = @"
+    import ""/try/get""
+
+    func int test() {
+      return get(1).test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("collections/unit.bhl", file_unit, ref files);
+    NewTestFile("try/get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+    NewTestFile("use/use.bhl", file_use, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23 + 1);
+    }
+
+    string new_file_test = @"
+    import ""/try/get""
+
+    namespace foo {
+      func int get_add() {
+        return get(2).test + 1
+      }
+    }
+
+    func int test() {
+      return foo.get_add()
+    }
+    ";
+    NewTestFile("test.bhl", new_file_test, ref files, replace: true);
+    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 24 + 2);
+      AssertEqual(exec.parse_cache_hits, 3);
+      AssertEqual(exec.parse_cache_miss, 1);
+      AssertEqual(exec.compile_cache_hits, 3);
+      AssertEqual(exec.compile_cache_miss, 1);
+    }
+  }
+
+  [IsTested()]
   public void TestImportEnum()
   {
     string bhl1 = @"
