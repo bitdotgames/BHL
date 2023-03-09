@@ -776,6 +776,22 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyNamespace()
+  {
+    string bhl = @"
+    namespace bar {
+    }
+    ";
+    var vm = MakeVM(bhl);
+
+    var cm = vm.FindModule("");
+    AssertEqual(cm.ns.members.Count, 1);
+    AssertTrue(cm.ns.members[0] is Namespace);
+    AssertEqual(cm.ns.members[0].name, "bar");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCallFuncByPath()
   {
     {
