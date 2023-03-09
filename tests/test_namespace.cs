@@ -153,6 +153,115 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLinkSeveralSimilarNamespaces()
+  {
+    /*
+    {
+      foo {
+        foo_sub {
+          class Wow {}
+        }
+      }
+
+      wow {
+      }
+    }
+    */
+    var ns1 = new Namespace();
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+
+      var cl = new ClassSymbolNative("Wow", null);
+      foo_sub.Define(cl);
+
+      foo.Define(foo_sub);
+
+      ns1.Define(foo);
+
+      var wow = new Namespace("wow");
+      ns1.Define(wow);
+    }
+
+    /*
+    {
+      foo {
+        foo_sub {
+        }
+      }
+
+      bar {
+      }
+    }
+    */
+    var ns2 = new Namespace();
+    {
+      var foo = new Namespace("foo");
+
+      var foo_sub = new Namespace("foo_sub");
+      foo.Define(foo_sub);
+
+      ns2.Define(foo);
+
+      var bar = new Namespace("bar");
+      ns2.Define(bar);
+    }
+
+    ns2.Link(ns1);
+
+    /*
+    {
+      foo {
+        foo_sub {
+          class Wow {}
+        }
+      }
+
+      wow {
+      }
+
+      bar {
+      }
+    }
+    */
+    {
+      var foo = ns2.Resolve("foo") as Namespace;
+      AssertTrue(foo != null);
+      AssertEqual(1, foo.GetSymbolsIterator().Count);
+
+      var foo_sub = foo.Resolve("foo_sub") as Namespace;
+      AssertTrue(foo_sub != null);
+      AssertEqual(1, foo_sub.GetSymbolsIterator().Count);
+
+      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
+      AssertTrue(cl_wow != null);
+
+      var bar = ns2.Resolve("bar") as Namespace;
+      AssertTrue(bar != null);
+      AssertEqual(0, bar.GetSymbolsIterator().Count);
+
+      var wow = ns2.Resolve("wow") as Namespace;
+      AssertTrue(wow != null);
+      AssertEqual(0, wow.GetSymbolsIterator().Count);
+    }
+
+    AssertEqual("foo", ns2.ResolveNamedByPath("foo").GetName());
+    AssertEqual("foo_sub", ns2.ResolveNamedByPath("foo.foo_sub").GetName());
+    AssertEqual("Wow", ns2.ResolveNamedByPath("foo.foo_sub.Wow").GetName());
+    AssertEqual("wow", ns2.ResolveNamedByPath("wow").GetName());
+    AssertEqual("bar", ns2.ResolveNamedByPath("bar").GetName());
+
+    AssertTrue(ns2.ResolveNamedByPath("") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo.") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".foo.") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo..") == null);
+    AssertTrue(ns2.ResolveNamedByPath("foo.bar") == null);
+    AssertTrue(ns2.ResolveNamedByPath(".foo.foo_sub..") == null);
+  }
+
+  [IsTested()]
   public void TestUnlink()
   {
     /*

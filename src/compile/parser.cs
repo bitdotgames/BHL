@@ -1114,7 +1114,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(name != null)
     {
-      name_symb = scope.ResolveChained(name.GetText(), is_root: is_root);
+      name_symb = is_root ? scope.ResolveWithFallback(name.GetText()) : scope.ResolveRelatedOnly(name.GetText());
+
       if(name_symb == null)
       {
         AddSemanticError(name, "symbol '" + name.GetText() + "' not resolved");

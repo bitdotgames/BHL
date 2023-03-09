@@ -537,7 +537,8 @@ public static class ScopeExtensions
         (start_idx == 0 ? path : path.Substring(start_idx)) : 
         path.Substring(start_idx, next_idx - start_idx);
 
-      var symb = scope.ResolveChained(name, is_root: start_idx == 0);
+      //NOTE: for the root item let's resolve with fallback
+      var symb = start_idx == 0 ? scope.ResolveWithFallback(name) : scope.ResolveRelatedOnly(name);
 
       if(symb == null)
         break;
@@ -572,11 +573,8 @@ public static class ScopeExtensions
     return null;
   }
 
-  public static Symbol ResolveChained(this IScope scope, string name, bool is_root)
+  public static Symbol ResolveRelatedOnly(this IScope scope, string name)
   {
-    if(is_root)
-      return scope.ResolveWithFallback(name);
-
     if(scope is IInstanceType iitype)
     {
       var type_set = iitype.GetAllRelatedTypesSet();
