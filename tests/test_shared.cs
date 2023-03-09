@@ -206,7 +206,7 @@ public class BHL_TestBase
     public Color c = new Color();
   }
 
-  public ClassSymbolNative BindColor(Types ts, bool setup = true)
+  public ClassSymbolNative BindColor(Types ts, bool call_setup = true)
   {
     var cl = new ClassSymbolNative("Color", null,
       delegate(VM.Frame frm, ref Val v, IType type) 
@@ -309,7 +309,7 @@ public class BHL_TestBase
 
     ts.ns.Define(new ArrayTypeSymbolT<Color>("ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
 
-    if(setup)
+    if(call_setup)
       cl.Setup();
     return cl;
   }

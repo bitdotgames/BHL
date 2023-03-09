@@ -2530,10 +2530,6 @@ public class CompiledModule : IModule
   )
   {
     var ns = new Namespace(types.nfunc_index);
-    //NOTE: we link the types.ns directly without any checks  
-    //      for performance purposes (since new namespace is 
-    //      clean anyway)
-    ns.links.Add(types.ns);
 
     //NOTE: if resolver (used for type proxies resolving) is not
     //      passed we use the namespace itself
@@ -2594,6 +2590,11 @@ public class CompiledModule : IModule
       on_import?.Invoke(name, import);
 
     marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+
+    //NOTE: we link native namespace after our own namespace was loaded,
+    //      this way we make sure namespace members are properly linked
+    //      and there are no duplicates
+    ns.Link(types.ns);
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);

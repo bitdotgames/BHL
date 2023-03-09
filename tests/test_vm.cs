@@ -16497,7 +16497,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts, setup: false);
+    var cl = BindColor(ts, call_setup: false);
     var op = new FuncSymbolNative("+", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
@@ -16541,7 +16541,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts, setup: false);
+    var cl = BindColor(ts, call_setup: false);
     var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
@@ -16586,7 +16586,7 @@ public class TestVM : BHL_TestBase
 
     var ts = new Types();
     
-    var cl = BindColor(ts, setup: false);
+    var cl = BindColor(ts, call_setup: false);
     {
       var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -16662,7 +16662,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
     
-    var cl = BindColor(ts, setup: false);
+    var cl = BindColor(ts, call_setup: false);
     var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {
@@ -16704,7 +16704,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
     BindTrace(ts, log);
     
-    var cl = BindColor(ts, setup: false);
+    var cl = BindColor(ts, call_setup: false);
     var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
       {

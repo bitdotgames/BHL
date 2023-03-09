@@ -268,6 +268,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
         else
         {
           //NOTE: let's create a local version of the linked namespace
+          //      which is linked to the original one
           var ns = new Namespace(nfunc_index, other_ns.name, module_name);
           ns.links.Add(other_ns);
           members.Add(ns);
@@ -538,7 +539,9 @@ public static class ScopeExtensions
         path.Substring(start_idx, next_idx - start_idx);
 
       //NOTE: for the root item let's resolve with fallback
-      var symb = start_idx == 0 ? scope.ResolveWithFallback(name) : scope.ResolveRelatedOnly(name);
+      var symb = start_idx == 0 ? 
+        scope.ResolveWithFallback(name) : 
+        scope.ResolveRelatedOnly(name);
 
       if(symb == null)
         break;

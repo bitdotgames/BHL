@@ -846,6 +846,7 @@ public class TestNamespace : BHL_TestBase
               return null;
             }
         );
+        //NOTE: let's mix namespace defined natively and the one in bhl code
         ts.ns.Nest("bar").Define(fn);
       }
 
