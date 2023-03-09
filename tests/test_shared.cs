@@ -51,10 +51,11 @@ public class BHL_TestRunner
     Run(names, new TestVar());
     Run(names, new TestMaps());
     Run(names, new TestStd());
-    Run(names, new TestPerf());
     Run(names, new TestErrors());
+    Run(names, new TestMarshall());
     //TODO:
     //Run(names, new TestLSP());
+    Run(names, new TestPerf());
   }
 
   static void Run(IList<string> names, BHL_TestBase test)
