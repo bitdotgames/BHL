@@ -205,12 +205,10 @@ public class ModuleCompiler : AST_Visitor
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
       compiled = new CompiledModule(
-        module.name, 
-        module.ns,
+        module,
         imports,
         constants, 
         module.gvars.Count,
-        module.local_gvars_num,
         init_bytes,
         code_bytes,
         ip2src_line

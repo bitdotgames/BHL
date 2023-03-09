@@ -205,16 +205,8 @@ public class ModulePath
   }
 }
 
-public interface IModule
-{
-  string Name { get ; }
-  Namespace Ns { get ; }
-  int VarsNum { get; }
-  VariableSymbol GetVar(int idx);
-}
-
 //NOTE: represents a module which can be registered in Types
-public class Module : IModule
+public class Module
 {
   public string name {
     get {
@@ -237,29 +229,6 @@ public class Module : IModule
   }
   public Namespace ns;
 
-  public string Name {
-    get {
-      return name;
-    }
-  }
-
-  public Namespace Ns {
-    get {
-      return ns;
-    }
-  }
-
-  public int VarsNum {
-    get {
-      return local_gvars_num;
-    }
-  }
-
-  public VariableSymbol GetVar(int idx) 
-  {
-    return gvars[idx];
-  }
-
   public Module(Types ts, ModulePath path)
   {
     this.path = path;
@@ -269,6 +238,19 @@ public class Module : IModule
   public Module(Types ts, string name, string file_path)
     : this(ts, new ModulePath(name, file_path))
   {}
+
+  public Module(
+    Types ts, 
+    string name, 
+    string file_path, 
+    Namespace ns,
+    int local_gvars_mark
+  )
+    : this(ts, new ModulePath(name, file_path))
+  {
+    this.ns = ns;
+    this.local_gvars_mark = local_gvars_mark;
+  }
 }
 
 public class VM : INamedResolver
@@ -1025,7 +1007,7 @@ public class VM : INamedResolver
     compiled_mods[cm.name] = cm;
 
     //let's init all our own global variables
-    for(int g=0;g<cm.local_gvars_num;++g)
+    for(int g=0;g<cm.module.local_gvars_num;++g)
       cm.gvars[g] = Val.New(this); 
   }
 
@@ -1052,7 +1034,7 @@ public class VM : INamedResolver
     foreach(var imp in cm.imports)
       cm.ns.Link(FindModuleNamespace(imp));
 
-    int gvars_offset = cm.local_gvars_num;
+    int gvars_offset = cm.module.local_gvars_num;
     foreach(var imp in cm.imports)
     {
       CompiledModule imp_mod;
@@ -1061,7 +1043,7 @@ public class VM : INamedResolver
         continue;
       
       //NOTE: taking only local module's gvars
-      for(int g=0;g<imp_mod.local_gvars_num;++g)
+      for(int g=0;g<imp_mod.module.local_gvars_num;++g)
       {
         var imp_gvar = imp_mod.gvars[g];
         imp_gvar.Retain();
@@ -2465,68 +2447,50 @@ public class Ip2SrcLine
   }
 }
 
-public class CompiledModule : IModule
+public class CompiledModule
 {
   const uint HEADER_VERSION = 1;
   public const int MAX_GLOBALS = 128;
 
-  public uint id;
-  public string name;
-  public Namespace ns;
+  public Module module;
+
+  public string name {
+    get {
+      return module.name;
+    }
+  }
+
+  public Namespace ns {
+    get {
+      return module.ns;
+    }
+  }
+
   public byte[] initcode;
   public byte[] bytecode;
   //NOTE: normalized module names, not actual import paths
   public List<string> imports;
   public List<Const> constants;
-  public int local_gvars_num;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
 
-  public string Name {
-    get {
-      return name;
-    }
-  }
-
-  public Namespace Ns {
-    get {
-      return ns;
-    }
-  }
-
-  public int VarsNum {
-    get {
-      return local_gvars_num;
-    }
-  }
-
-  //TODO: implement it?
-  public VariableSymbol GetVar(int idx) 
-  {
-    return null;
-  }
-
   public CompiledModule(
-    string name,
-    Namespace ns,
+    Module module,
     List<string> imports,
     List<Const> constants, 
     int init_gvars_num,
-    int local_gvars_num,
     byte[] initcode,
     byte[] bytecode, 
     Ip2SrcLine ip2src_line = null
   )
   {
-    this.name = name;
-    this.ns = ns;
+    this.module = module;
     this.imports = imports;
     this.constants = constants;
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
 
-    this.local_gvars_num = local_gvars_num;
     gvars.Resize(init_gvars_num);
   }
 
@@ -2547,6 +2511,7 @@ public class CompiledModule : IModule
     var symb_factory = new SymbolFactory(types, resolver);
 
     string name = "";
+    string file_path = "";
     var imports = new List<string>();
     int constants_len = 0;
     int init_gvars_num = 0;
@@ -2566,6 +2531,7 @@ public class CompiledModule : IModule
         throw new Exception("Unsupported version: " + version);
 
       name = r.ReadString();
+      file_path = r.ReadString();
 
       int imports_len = r.ReadInt32();
       for(int i=0;i<imports_len;++i)
@@ -2607,14 +2573,14 @@ public class CompiledModule : IModule
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
 
+    var m = new Module(types, name, file_path, ns, local_gvars_num);
+
     return new 
       CompiledModule(
-        name, 
-        ns, 
+        m,
         imports,
         constants, 
         init_gvars_num,
-        local_gvars_num,
         initcode, 
         bytecode, 
         ip2src_line
@@ -2670,13 +2636,14 @@ public class CompiledModule : IModule
       //TODO: introduce header info with offsets to data
       w.Write(HEADER_VERSION);
 
-      w.Write(cm.name);
+      w.Write(cm.module.name);
+      w.Write(cm.module.file_path);
 
       w.Write(cm.imports.Count);
       foreach(var import in cm.imports)
         w.Write(import);
 
-      var symb_bytes = marshall.Marshall.Obj2Bytes(cm.ns);
+      var symb_bytes = marshall.Marshall.Obj2Bytes(cm.module.ns);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
@@ -2694,7 +2661,7 @@ public class CompiledModule : IModule
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
       w.Write(cm.gvars.Count);
-      w.Write(cm.local_gvars_num);
+      w.Write(cm.module.local_gvars_num);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);

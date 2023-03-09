@@ -491,13 +491,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         continue;
       }
 
-      IModule imported_module = null;
+      Module imported_module = null;
       
       CompiledModule cm;
       //let's try to fetch from the cache first
       if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
       {
-        imported_module = cm;
+        imported_module = cm.module;
         //Console.WriteLine(cm.ns.DumpMembers());
       }
       else
@@ -507,12 +507,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(module.local_gvars_mark == -1)
         module.local_gvars_mark = module.gvars.Count;
 
-      for(int i=0;i<imported_module.VarsNum;++i)
-        module.gvars.index.Add(imported_module.GetVar(i));
+      for(int i=0;i<imported_module.local_gvars_num;++i)
+        module.gvars.index.Add(
+          imported_module.gvars.Count > i ? 
+            imported_module.gvars[i] : null
+        );
 
       try
       {
-        ns.Link(imported_module.Ns);
+        ns.Link(imported_module.ns);
       }
       catch(SymbolError se)
       {

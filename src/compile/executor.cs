@@ -269,11 +269,11 @@ public class CompilationExecutor
   {
     var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
     foreach(var kv in file2compiled)
-      mod_name2compiled.Add(kv.Value.name, kv.Value);
+      mod_name2compiled.Add(kv.Value.module.name, kv.Value);
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.ns.Link(mod_name2compiled[import].ns);
+        kv.Value.module.ns.Link(mod_name2compiled[import].module.ns);
     }
   }
 
@@ -630,7 +630,7 @@ public class CompilationExecutor
           {
             ++w.cache_hit;
 
-            w.file2ns.Add(current_file, interim.compiled.ns);
+            w.file2ns.Add(current_file, interim.compiled.module.ns);
           }
           else
           {
