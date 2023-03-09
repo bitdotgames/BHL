@@ -1637,17 +1637,6 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     return signature.ret_type.Get();
   }
 
-  public SymbolsStorage GetArgs()
-  {
-    //let's skip hidden 'this' argument which is stored at 0 idx
-    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
-
-    var args = new SymbolsStorage(this);
-    for(int i=0;i<signature.arg_types.Count;++i)
-      args.Add((FuncArgSymbol)members[this_offset + i]);
-    return args;
-  }
-
   public int GetTotalArgsNum() { return signature.arg_types.Count; }
   public abstract int GetDefaultArgsNum();
   public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
@@ -1657,6 +1646,21 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     if(i >= GetTotalArgsNum())
       return false;
     return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
+  }
+
+  public FuncArgSymbol GetArg(int idx)
+  {
+    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
+    return (FuncArgSymbol)members[this_offset + idx];
+  }
+
+  public int FindArgIdx(string name)
+  {
+    int idx = members.IndexOf(name);
+    if(idx == -1)
+      return idx;
+    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
+    return idx - this_offset;
   }
 
   public override void Sync(marshall.SyncContext ctx)

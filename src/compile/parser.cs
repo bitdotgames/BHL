@@ -1322,9 +1322,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call)
   {     
-    var func_args = func_symb.GetArgs();
     int total_args_num = func_symb.GetTotalArgsNum();
-    //Console.WriteLine(func_args.Count + " " + total_args_num);
     int default_args_num = func_symb.GetDefaultArgsNum();
     int required_args_num = total_args_num - default_args_num;
     var args_info = new FuncArgsInfo();
@@ -1333,7 +1331,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<total_args_num;++i)
     {
       var arg = new NormCallArg();
-      arg.orig = (Symbol)func_args[i];
+      arg.orig = func_symb.GetArg(i);
       norm_cargs.Add(arg); 
     }
 
@@ -1351,7 +1349,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //NOTE: checking if it's a named arg and finding its index
       if(ca_name != null)
       {
-        idx = func_args.IndexOf(ca_name.GetText());
+        idx = func_symb.FindArgIdx(ca_name.GetText());
         if(idx == -1)
         {
           AddSemanticError(ca_name, "no such named argument");
@@ -1365,11 +1363,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
       }
 
-      if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs) && idx >= func_args.Count-1)
+      if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs) && idx >= func_symb.GetTotalArgsNum() - 1)
         variadic_args.Add(ca);
-      else if(idx >= func_args.Count)
+      else if(idx >= func_symb.GetTotalArgsNum())
       {
-        AddSemanticError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_args.Count);
+        AddSemanticError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_symb.GetTotalArgsNum());
         return;
       }
       else
@@ -1437,7 +1435,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             return;
           }
 
-          var func_arg_symb = (FuncArgSymbol)func_args[i];
+          var func_arg_symb = func_symb.GetArg(i);
           var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
           bool is_ref = na.ca.isRef() != null;
@@ -1500,7 +1498,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        var func_arg_symb = (FuncArgSymbol)func_args[i];
+        var func_arg_symb = func_symb.GetArg(i);
         var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
 
         var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
