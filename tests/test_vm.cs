@@ -6769,28 +6769,43 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestDefaultFuncLambdaArg()
+  public void TestDefaultFuncOtherFunc()
   {
     string bhl = @"
-    func int effect_body(
-        int dummy, 
-        func(int) on_create_fn = func(int _) {} 
-    ) {
-      return dummy
+    func int bar(int i) {
+      return i
     }
 
-    func int effect(int dummy) {
-      return effect_body(dummy)
+    func int foo(int a, func int(int) cb = bar) {
+      return a + cb(1)
     }
 
     func int test()
     {
-      return effect(10)
+      return foo(10)
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
+  public void TestDefaultFuncLambdaFunc()
+  {
+    string bhl = @"
+    func int foo(int a, func int(int) cb = func int (int i) { return i} ) {
+      return a + cb(1)
+    }
+
+    func int test()
+    {
+      return foo(10)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
   }
 
   [IsTested()]
