@@ -225,6 +225,8 @@ public class Module
   //used for assigning incremental indexes to native funcs
   public NativeFuncIndexer nfuncs;
 
+  //if set this mark is the index starting from which 
+  //*imported* module variables are stored in gvars
   public int local_gvars_mark = -1;
   public int local_gvars_num {
     get {
@@ -2480,9 +2482,9 @@ public class CompiledModule
 
   public CompiledModule(
     Module module,
+    int total_gvars_num,
     List<string> imports,
     List<Const> constants, 
-    int init_gvars_num,
     byte[] initcode,
     byte[] bytecode, 
     Ip2SrcLine ip2src_line = null
@@ -2495,7 +2497,7 @@ public class CompiledModule
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
 
-    gvars.Resize(init_gvars_num);
+    gvars.Resize(total_gvars_num);
   }
 
   static public CompiledModule FromStream(
@@ -2518,7 +2520,7 @@ public class CompiledModule
     string file_path = "";
     var imports = new List<string>();
     int constants_len = 0;
-    int init_gvars_num = 0;
+    int total_gvars_num = 0;
     byte[] constant_bytes = null;
     var constants = new List<Const>();
     byte[] symb_bytes = null;
@@ -2556,7 +2558,7 @@ public class CompiledModule
       if(constants_len > 0)
         constant_bytes = r.ReadBytes(constants_len);
 
-      init_gvars_num = r.ReadInt32();
+      total_gvars_num = r.ReadInt32();
 
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
@@ -2578,7 +2580,7 @@ public class CompiledModule
         if(s is Namespace ns)
           ns.module = module;
         else if(s is VariableSymbol vs && vs.scope is Namespace)
-          module.gvars.Index(vs);
+          module.gvars.index.Add(vs);
       }
     );
 
@@ -2588,9 +2590,11 @@ public class CompiledModule
     return new 
       CompiledModule(
         module,
+        //we use a separate variable since at this moment 
+        //we don't have all variables module.gvars  
+        total_gvars_num,
         imports,
         constants, 
-        init_gvars_num,
         initcode, 
         bytecode, 
         ip2src_line
@@ -2670,7 +2674,7 @@ public class CompiledModule
       if(constant_bytes.Length > 0)
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
-      w.Write(cm.gvars.Count);
+      w.Write(cm.module.gvars.Count);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);

@@ -206,9 +206,9 @@ public class ModuleCompiler : AST_Visitor
 
       compiled = new CompiledModule(
         module,
+        module.gvars.Count,
         imports,
         constants, 
-        module.gvars.Count,
         init_bytes,
         code_bytes,
         ip2src_line

@@ -629,7 +629,7 @@ public static class ScopeExtensions
       return;
     
     var idx = isi.GetSymbolsIterator();
-    for(int i=0;i<idx.Count;++i)
+    for(int i=0;i<idx?.Count;++i)
     {
       var m = idx[i];
       cb(m);
