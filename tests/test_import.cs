@@ -500,7 +500,7 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportGlobalObjectVarWithCycles()
+  public void TestImportGlobalObjectVarWithDepCycles()
   {
     string main_bhl = @"
     import ""g""  
@@ -513,12 +513,10 @@ public class TestImport : BHL_TestBase
     ";
 
     string g_bhl = @"
-
     class G
     {
       float x
     }
-
     ";
 
     string input_bhl = @"

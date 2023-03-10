@@ -220,7 +220,8 @@ public class Module
   }
   public ModulePath path;
 
-  //used for assigning incremental indexes to module global vars
+  //used for assigning incremental indexes to module global vars,
+  //contains imported variables as well
   public VarIndexer gvars = new VarIndexer();
   //used for assigning incremental indexes to native funcs
   public NativeFuncIndexer nfuncs;
@@ -228,6 +229,9 @@ public class Module
   //if set this mark is the index starting from which 
   //*imported* module variables are stored in gvars
   public int local_gvars_mark = -1;
+
+  //an amount of *local* to this module global variables 
+  //stored in gvars
   public int local_gvars_num {
     get {
       return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
@@ -1048,7 +1052,7 @@ public class VM : INamedResolver
       if(!compiled_mods.TryGetValue(imp, out imp_mod))
         continue;
       
-      //NOTE: taking only local module's gvars
+      //NOTE: taking only local imported module's gvars
       for(int g=0;g<imp_mod.module.local_gvars_num;++g)
       {
         var imp_gvar = imp_mod.gvars[g];
@@ -2521,6 +2525,7 @@ public class CompiledModule
     var imports = new List<string>();
     int constants_len = 0;
     int total_gvars_num = 0;
+    int local_gvars_num = 0;
     byte[] constant_bytes = null;
     var constants = new List<Const>();
     byte[] symb_bytes = null;
@@ -2559,6 +2564,7 @@ public class CompiledModule
         constant_bytes = r.ReadBytes(constants_len);
 
       total_gvars_num = r.ReadInt32();
+      local_gvars_num = r.ReadInt32();
 
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
@@ -2574,6 +2580,7 @@ public class CompiledModule
     //      this way we make sure namespace members are properly linked
     //      and there are no duplicates
     module.ns.Link(types.ns);
+    module.local_gvars_mark = local_gvars_num;
 
     module.ns.ForAllLocalSymbols(delegate(Symbol s) 
       {
@@ -2590,8 +2597,6 @@ public class CompiledModule
     return new 
       CompiledModule(
         module,
-        //we use a separate variable since at this moment 
-        //we don't have all variables module.gvars  
         total_gvars_num,
         imports,
         constants, 
@@ -2675,6 +2680,7 @@ public class CompiledModule
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
       w.Write(cm.module.gvars.Count);
+      w.Write(cm.module.local_gvars_num);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);

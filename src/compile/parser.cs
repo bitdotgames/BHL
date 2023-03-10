@@ -496,10 +496,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       CompiledModule cm;
       //let's try to fetch from the cache first
       if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
-      {
         imported_module = cm.module;
-        //Console.WriteLine(cm.ns.DumpMembers());
-      }
       else
         imported_module = file2proc[file_path].module;
 
@@ -508,7 +505,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         module.local_gvars_mark = module.gvars.Count;
 
       //NOTE: adding directly without indexing
-      for(int i=0;i<imported_module.gvars.Count;++i)
+      for(int i=0;i<imported_module.local_gvars_num;++i)
         module.gvars.index.Add(imported_module.gvars[i]);
 
       try
