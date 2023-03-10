@@ -280,10 +280,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     this.errors = errors;
 
     ns = module.ns;
-    //NOTE: we need to properly index symbols only in compilation phase,
-    //      so we assign indexers here 
-    ns.nfunc_index = types.nfunc_index;
-    ns.module_vars = module_vars;
     ns.Link(types.ns);
 
     PushScope(ns);
@@ -3198,13 +3194,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var ns = curr_scope.Resolve(name) as Namespace;
       if(ns == null)
       {
-        ns = new Namespace(name, module.name);
-        ns.nfunc_index = types.nfunc_index;
-        ns.module_vars = module_vars;
+        ns = new Namespace(module, name);
         curr_scope.Define(ns);
       }
-      else if(ns.module_name != module.name)
-        throw new Exception("Unexpected namespace's module name: " + ns.module_name);
+      else if(ns.module != module)
+        throw new Exception("Unexpected namespace's module: '" + ns.module.name + "' expecting '" + module.name + "'");
 
       PushScope(ns);
 

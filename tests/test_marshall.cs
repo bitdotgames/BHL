@@ -13,9 +13,9 @@ public class TestMarshall : BHL_TestBase
     var s = new MemoryStream();
     {
       var ts = new Types();
+      var m = new Module(ts);
 
-      var ns = new Namespace();
-      ns.module_vars = new VarIndexer();
+      var ns = m.ns;
       ns.Link(ts.ns);
 
       ns.Define(new VariableSymbol("foo", Types.Int));
@@ -62,6 +62,7 @@ public class TestMarshall : BHL_TestBase
       s.Position = 0;
       Marshall.Stream2Obj(s, ns, factory);
 
+      //NOTE: right after un-marshalling some symbols are not setup yet
       ns.SetupSymbols();
 
       AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIterator().Count);

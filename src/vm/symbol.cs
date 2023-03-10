@@ -451,7 +451,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
       CheckBinaryOpOverload(fs);
 
     if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
-      this.GetNamespace().nfunc_index.Index(fsn);
+      this.GetNamespace().module.nfuncs.Index(fsn);
 
     if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -466,7 +466,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
           stack.Push(res);
           return null;
         });
-        this.GetNamespace().nfunc_index.Index(static_get);
+        this.GetNamespace().module.nfuncs.Index(static_get);
 
         var static_set = new FuncSymbolNative(GetNativeStaticFieldSetFuncName(fld), fld.type,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -477,10 +477,10 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
           val.Release();
           return null;
         });
-        this.GetNamespace().nfunc_index.Index(static_set);
+        this.GetNamespace().module.nfuncs.Index(static_set);
       }
       else
-        this.GetNamespace().module_vars.Index(fld);
+        this.GetNamespace().module.gvars.Index(fld);
     }
 
     //NOTE: we don't check if there are any parent symbols with the same name, 

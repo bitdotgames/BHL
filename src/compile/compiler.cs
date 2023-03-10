@@ -9,7 +9,6 @@ public class ModuleCompiler : AST_Visitor
   CompiledModule compiled;
 
   Module module;
-  VarIndexer module_vars;
 
   List<Const> constants = new List<Const>();
   List<string> imports = new List<string>();
@@ -162,7 +161,6 @@ public class ModuleCompiler : AST_Visitor
   public ModuleCompiler(ANTLR_Processor.Result fres)
   {
     module = fres.module;
-    module_vars = fres.module_vars;
     ast = fres.ast;
     curr_scope = module.ns;
 
@@ -172,8 +170,7 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    module = new Module(new Types(), "");
-    module_vars = new VarIndexer();
+    module = new Module(new Types());
     curr_scope = module.ns;
 
     UseInit();
@@ -211,7 +208,7 @@ public class ModuleCompiler : AST_Visitor
         module,
         imports,
         constants, 
-        module_vars.Count,
+        module.gvars.Count,
         init_bytes,
         code_bytes,
         ip2src_line
@@ -1149,20 +1146,20 @@ public class ModuleCompiler : AST_Visitor
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {module.nfuncs.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.GetGVar, new int[] {module_vars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {module.ns.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {module.nfuncs.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.SetGVar, new int[] {module_vars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:
@@ -1176,7 +1173,7 @@ public class ModuleCompiler : AST_Visitor
           var fsymb = (FuncSymbolScript)ast.symb; 
           //let's check if we can optimize the local func call to a very
           //fast opcode version
-          if(fsymb.GetNamespace().module_name == module.name)
+          if(fsymb.GetNamespace().module == module)
           {
             //NOTE: let's remove the last added constant if it points
             //      to our function - we don't need to serialize it 

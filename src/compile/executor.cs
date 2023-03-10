@@ -398,7 +398,7 @@ public class CompilationExecutor
 
       var conflict = ns.TryLink(file_ns);
       if(!conflict.Ok)
-        return new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullPath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module_name + "'");
+        return new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullPath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module.name + "'");
     }
     return null;
   }

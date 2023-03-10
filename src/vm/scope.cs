@@ -132,41 +132,31 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 {
   public const uint CLASS_ID = 20;
 
-  //TODO: probably these don't belong to this place
-  //used for assigning incremental indexes to global vars
-  public VarIndexer module_vars;
-  //used for assigning incremental indexes to native funcs
-  public NativeFuncIndexer nfunc_index;
-
-  public string module_name = "";
-
-  public SymbolsStorage members;
+  public Module module;
 
   internal List<Namespace> links = new List<Namespace>();
+
+  public SymbolsStorage members;
 
   public override uint ClassId()
   {
     return CLASS_ID;
   }
 
-  public Namespace(
-    string name, 
-    string module_name
-  )
+  public Namespace(Module module, string name)
     : base(name)
   {
-    this.module_name = module_name;
+    this.module = module;
     this.members = new SymbolsStorage(this);
   }
 
-  //for tests
-  public Namespace(string name)
-    : this(name, "")
+  public Namespace(Module module)
+    : this(module, "")
   {}
 
   //marshall version 
   public Namespace()
-    : this("", "")
+    : this(null, "")
   {}
 
   public INamed ResolveNamedByPath(string path)
@@ -195,10 +185,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
     if(sym == null)
     {
-      var ns = new Namespace(name, module_name);
-      ns.nfunc_index = nfunc_index;
-      ns.module_vars = module_vars;
-      sym = ns;
+      sym = new Namespace(module, name);
       Define(sym);
     }
 
@@ -207,9 +194,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
   public Namespace Clone()
   {
-    var copy = new Namespace(name, module_name);
-    copy.nfunc_index = nfunc_index;
-    copy.module_vars = module_vars;
+    var copy = new Namespace(module, name);
 
     for(int i=0;i<members.Count;++i)
       copy.members.Add(members[i]);
@@ -270,9 +255,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
         {
           //NOTE: let's create a local version of the linked namespace
           //      which is linked to the original one
-          var ns = new Namespace(other_ns.name, module_name);
-          ns.nfunc_index = nfunc_index;
-          ns.module_vars = module_vars;
+          var ns = new Namespace(other_ns.module, other_ns.name);
           ns.links.Add(other_ns);
           members.Add(ns);
         }
@@ -394,20 +377,20 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
-    if(nfunc_index != null && sym is FuncSymbolNative fsn)
-      nfunc_index.Index(fsn);
-    else if(module_vars != null && sym is VariableSymbol vs)
-      module_vars.Index(vs);
+    if(sym is FuncSymbolNative fsn)
+      module.nfuncs.Index(fsn);
+    else if(sym is VariableSymbol vs)
+      module.gvars.Index(vs);
 
     members.Add(sym);
   }
 
   public override void Sync(marshall.SyncContext ctx) 
   {
-    //NOTE: links are not persisted since it's assumed 
-    //      they are restored by explicit imports
+    //NOTE: module and links are not persisted since it's assumed 
+    //      they are restored by the more high level code
+    
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref module_name);
     marshall.Marshall.Sync(ctx, ref members);
   }
 

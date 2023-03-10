@@ -352,12 +352,12 @@ public class AST_Call  : AST_Tree
       return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
     }
   }
-  public string module_name {
+  public Module module {
     get {
       if(symb == null)
-        return "";
+        return null;
       var ns = symb.scope.GetNamespace();
-      return ns == null ? "" : ns.module_name;
+      return ns == null ? null : ns.module;
     }
   }
   public uint cargs_bits;

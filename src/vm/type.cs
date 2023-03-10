@@ -519,8 +519,8 @@ public class Types : INamedResolver
 
   public Types()
   {
-    ns = new Namespace("", "");
-    ns.nfunc_index = nfunc_index;
+    var m = new Module(this, "");
+    ns = m.ns;
 
     InitBuiltins();
 

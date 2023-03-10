@@ -220,37 +220,38 @@ public class Module
   }
   public ModulePath path;
 
+  //used for assigning incremental indexes to module global vars
+  public VarIndexer gvars = new VarIndexer();
+  //used for assigning incremental indexes to native funcs
+  public NativeFuncIndexer nfuncs;
+
   public int local_gvars_mark = -1;
   public int local_gvars_num {
     get {
-      return local_gvars_mark == -1 ? 0 : local_gvars_mark;
+      return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
     }
   }
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)
-    : this(ts, path, new Namespace("", path.name), 0)
+    : this(ts, path, new Namespace())
   {}
 
-  public Module(Types ts, string name, string file_path = "")
-    : this(
-        ts, 
-        new ModulePath(name, file_path), 
-        new Namespace("", name), 
-        0)
+  public Module(Types ts, string name = "", string file_path = "")
+    : this(ts, new ModulePath(name, file_path), new Namespace())
   {}
 
   public Module(
     Types ts,
     ModulePath path,
-    Namespace ns,
-    int local_gvars_mark
+    Namespace ns
   )
   {
-    ns.nfunc_index = ts.nfunc_index;
+    nfuncs = ts.nfunc_index;
+    //let's setup the link
+    ns.module = this;
     this.path = path;
     this.ns = ns;
-    this.local_gvars_mark = local_gvars_mark;
   }
 }
 
@@ -810,7 +811,9 @@ public class VM : INamedResolver
     }
   }
 
+  //TODO: can we make Module a key instead of a string?
   Dictionary<string, CompiledModule> compiled_mods = new Dictionary<string, CompiledModule>();
+
   internal class LoadingModule
   {
     internal string name;
@@ -1074,7 +1077,7 @@ public class VM : INamedResolver
   void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
   {
     if(fss._module == null)
-      fss._module = compiled_mods[fss.GetNamespace().module_name];
+      fss._module = compiled_mods[fss.GetNamespace().module.name];
 
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
@@ -1243,7 +1246,7 @@ public class VM : INamedResolver
     if(fs == null)
       return false;
 
-    var cm = compiled_mods[((Namespace)fs.scope).module_name];
+    var cm = compiled_mods[((Namespace)fs.scope).module.name];
 
     addr = new FuncAddr() {
       module = cm,
@@ -2502,12 +2505,12 @@ public class CompiledModule
     System.Action<string, string> on_import = null
   )
   {
-    var ns = new Namespace();
+    var module = new Module(types);
 
     //NOTE: if resolver (used for type proxies resolving) is not
     //      passed we use the namespace itself
     if(resolver == null)
-      resolver = ns.R();
+      resolver = module.ns.R();
 
     var symb_factory = new SymbolFactory(types, resolver);
 
@@ -2516,7 +2519,6 @@ public class CompiledModule
     var imports = new List<string>();
     int constants_len = 0;
     int init_gvars_num = 0;
-    int local_gvars_num = 0;
     byte[] constant_bytes = null;
     var constants = new List<Const>();
     byte[] symb_bytes = null;
@@ -2533,6 +2535,7 @@ public class CompiledModule
 
       name = r.ReadString();
       file_path = r.ReadString();
+      module.path = new ModulePath(name, file_path);
 
       int imports_len = r.ReadInt32();
       for(int i=0;i<imports_len;++i)
@@ -2554,7 +2557,6 @@ public class CompiledModule
         constant_bytes = r.ReadBytes(constants_len);
 
       init_gvars_num = r.ReadInt32();
-      local_gvars_num = r.ReadInt32();
 
       int ip2src_line_len = r.ReadInt32();
       for(int i=0;i<ip2src_line_len;++i)
@@ -2564,26 +2566,28 @@ public class CompiledModule
     foreach(var import in imports)
       on_import?.Invoke(name, import);
 
-    marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), ns, symb_factory);
+    marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), module.ns, symb_factory);
 
     //NOTE: we link native namespace after our own namespace was loaded,
     //      this way we make sure namespace members are properly linked
     //      and there are no duplicates
-    ns.Link(types.ns);
+    module.ns.Link(types.ns);
+
+    module.ns.ForAllLocalSymbols(delegate(Symbol s) 
+      {
+        if(s is Namespace ns)
+          ns.module = module;
+        else if(s is VariableSymbol vs && vs.scope is Namespace)
+          module.gvars.Index(vs);
+      }
+    );
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
 
-    var m = new Module(
-      types,
-      new ModulePath(name, file_path), 
-      ns, 
-      local_gvars_num
-    );
-
     return new 
       CompiledModule(
-        m,
+        module,
         imports,
         constants, 
         init_gvars_num,
@@ -2667,7 +2671,6 @@ public class CompiledModule
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
       w.Write(cm.gvars.Count);
-      w.Write(cm.module.local_gvars_num);
 
       //TODO: add this info only for development builds
       w.Write(cm.ip2src_line.ips.Count);
