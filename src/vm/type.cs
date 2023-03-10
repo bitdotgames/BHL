@@ -488,7 +488,7 @@ public class Types : INamedResolver
 
   public Namespace ns;
 
-  public NativeFuncIndex nfunc_index = new NativeFuncIndex();
+  public NativeFuncIndexer nfunc_index = new NativeFuncIndexer();
 
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
@@ -540,7 +540,7 @@ public class Types : INamedResolver
     return m;
   }
 
-  Types(NativeFuncIndex nfunc_index, Namespace ns)
+  Types(NativeFuncIndexer nfunc_index, Namespace ns)
   {
     this.nfunc_index = nfunc_index;
     this.ns = ns;
@@ -553,7 +553,7 @@ public class Types : INamedResolver
 
   public Types Clone()
   {
-    var clone = new Types(new NativeFuncIndex(nfunc_index), ns.Clone());
+    var clone = new Types(new NativeFuncIndexer(nfunc_index), ns.Clone());
     return clone;
   }
 

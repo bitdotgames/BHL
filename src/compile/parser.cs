@@ -79,11 +79,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public class Result
   {
     public Module module { get; private set; }
-    public VarIndex module_vars { get; private set; }
+    public VarIndexer module_vars { get; private set; }
     public AST_Module ast { get; private set; }
     public CompileErrors errors { get; private set; }
 
-    public Result(Module module, VarIndex module_vars, AST_Module ast, CompileErrors errors)
+    public Result(Module module, VarIndexer module_vars, AST_Module ast, CompileErrors errors)
     {
       this.module = module;
       this.module_vars = module_vars;
@@ -100,7 +100,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public ANTLR_Parsed parsed { get; private set; }
 
   public Module module { get; private set; }
-  public VarIndex module_vars = new VarIndex();
+  public VarIndexer module_vars = new VarIndexer();
 
   public FileImports imports { get; private set; } 
 
@@ -499,7 +499,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       }
 
       Module imported_module = null;
-      VarIndex imported_module_vars = null;
+      VarIndexer imported_module_vars = null;
       
       CompiledModule cm;
       //let's try to fetch from the cache first

@@ -9,7 +9,7 @@ public class ModuleCompiler : AST_Visitor
   CompiledModule compiled;
 
   Module module;
-  VarIndex module_vars;
+  VarIndexer module_vars;
 
   List<Const> constants = new List<Const>();
   List<string> imports = new List<string>();
@@ -173,7 +173,7 @@ public class ModuleCompiler : AST_Visitor
   public ModuleCompiler()
   {
     module = new Module(new Types(), "");
-    module_vars = new VarIndex();
+    module_vars = new VarIndexer();
     curr_scope = module.ns;
 
     UseInit();

@@ -2495,14 +2495,14 @@ public class Indexer<T> where T : INamed, IScopeIndexed
   }
 }
 
-public class VarIndex : Indexer<VariableSymbol> {}
+public class VarIndexer : Indexer<VariableSymbol> {}
 
-public class NativeFuncIndex : Indexer<FuncSymbolNative> 
+public class NativeFuncIndexer : Indexer<FuncSymbolNative> 
 {
-  public NativeFuncIndex()
+  public NativeFuncIndexer()
   {}
 
-  public NativeFuncIndex(NativeFuncIndex other)
+  public NativeFuncIndexer(NativeFuncIndexer other)
   {
     index.AddRange(other.index);
   }

@@ -133,9 +133,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
   public const uint CLASS_ID = 20;
 
   //TODO: probably these don't belong to this place
+  //used for assigning incremental indexes to global vars
+  public VarIndexer module_vars;
+  //used for assigning incremental indexes to native funcs
+  public NativeFuncIndexer nfunc_index;
+
   public string module_name = "";
-  public VarIndex module_vars;
-  public NativeFuncIndex nfunc_index;
 
   public SymbolsStorage members;
 
