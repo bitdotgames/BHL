@@ -2582,6 +2582,7 @@ public class CompiledModule
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 
+    //let's restore required object connections after unmarshalling
     module.ns.ForAllLocalSymbols(delegate(Symbol s) 
       {
         if(s is Namespace ns)

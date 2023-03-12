@@ -117,6 +117,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public IAST ast;
     public IScope scope;
 
+    public Namespace ns;
+    public int ns_level;
+
     public bhlParser.VarDeclareContext gvar_decl_ctx;
     public bhlParser.AssignExpContext gvar_assign_ctx;
     public VariableSymbol gvar_symb;
@@ -133,6 +136,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     public InterfaceSymbolScript iface_symb;
 
     public bhlParser.EnumDeclContext enum_ctx;
+
+    public ParserPass(IScope scope, Namespace ns, int ns_level)
+    {
+      this.scope = scope;
+      this.ns = ns;
+      this.ns_level = ns_level;
+    }
 
     public ParserPass(IAST ast, IScope scope, ParserRuleContext ctx)
     {
@@ -440,6 +450,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var pass = passes[p];
 
       PushScope(pass.scope);
+
+      Pass_OutlineNamespace(pass);
 
       Pass_OutlineGlobalVar(pass);
 
@@ -3065,6 +3077,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       AddSemanticError(ctx, "coro functions without yield calls not allowed");
   }
 
+  void Pass_OutlineNamespace(ParserPass pass)
+  {
+    if(pass.ns == null)
+      return;
+
+    //let's define a namespace only if it's not defined yet in some scope
+    if(pass.ns.scope != null)
+      return;
+
+    curr_scope.Define(pass.ns);
+  }
+
   void Pass_OutlineGlobalVar(ParserPass pass)
   {
     if(pass.gvar_decl_ctx == null)
@@ -3176,32 +3200,49 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     string name = ctx.dotName().NAME().GetText();
 
-    int n = 0;
+    //NOTE: taking into account nested namespaces named like 'foo.bar'
+    int nested_level = 0;
     do 
     {
-      var ns = curr_scope.Resolve(name) as Namespace;
+      var ns = FindExistingOrPlannedNamespace(name);
       if(ns == null)
-      {
         ns = new Namespace(module, name);
-        curr_scope.Define(ns);
-      }
+      //NOTE: special case for namespace parser pass, we don't
+      //      define it mmediately in the current scope but rather
+      //      do it later, this way we preserve natural symbols order
+      //      as they are declared in the source
+      passes.Add(new ParserPass(curr_scope, ns, scopes.Count));
 
+      //let's push it so that subsequent passes will have the proper curr_scope
       PushScope(ns);
 
-      if(n >= ctx.dotName().memberAccess().Length)
+      if(nested_level >= ctx.dotName().memberAccess().Length)
         break;
 
-      name = ctx.dotName().memberAccess()[n].NAME().GetText();
+      name = ctx.dotName().memberAccess()[nested_level].NAME().GetText();
 
-      ++n;
+      ++nested_level;
 
     } while(true);
 
     foreach(var decl in ctx.decl())
       ProcessDecl(decl);
 
-    for(int i = 0; i <= n; ++i) 
+    for(int i = 0; i <= nested_level; ++i) 
       PopScope();
+
+    return null;
+  }
+
+  Namespace FindExistingOrPlannedNamespace(string name)
+  {
+    var ns = curr_scope.Resolve(name) as Namespace;
+    if(ns != null)
+      return ns;
+
+    foreach(var p in passes)
+      if(p.ns != null && p.ns_level == scopes.Count && p.ns.name == name)
+        return p.ns;
 
     return null;
   }
