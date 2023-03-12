@@ -42,11 +42,9 @@ public class CompilationExecutor
     public CompiledModule compiled;
   }
 
-  public int parse_cache_hits { get; private set; }
-  public int parse_cache_miss { get; private set; }
-
-  public int compile_cache_hits { get; private set; }
-  public int compile_cache_miss { get; private set; }
+  public int cache_hits { get; private set; }
+  public int cache_miss { get; private set; }
+  public int cache_errs { get; private set; }
 
   public CompileErrors Exec(CompileConf conf)
   {
@@ -145,8 +143,9 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
     {
-      parse_cache_hits += pw.cache_hit;
-      parse_cache_miss += pw.cache_miss;
+      cache_hits += pw.cache_hits;
+      cache_miss += pw.cache_miss;
+      cache_errs += pw.cache_errs;
 
       foreach(var kv in pw.file2interim)
       {
@@ -208,12 +207,6 @@ public class CompilationExecutor
       errors.AddRange(cw.errors);
     if(errors.Count > 0)
       return;
-
-    foreach(var cw in compiler_workers)
-    {
-      compile_cache_hits += cw.cache_hit;
-      compile_cache_miss += cw.cache_miss;
-    }
 
     var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
 
@@ -413,7 +406,7 @@ public class CompilationExecutor
     public int count;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public CompileErrors errors = new CompileErrors();
-    public int cache_hit;
+    public int cache_hits;
     public int cache_miss;
     public int cache_errs;
 
@@ -469,7 +462,7 @@ public class CompilationExecutor
               try
               {
                 interim.compiled = CompiledModule.FromFile(compiled_file, w.conf.ts);
-                ++w.cache_hit;
+                ++w.cache_hits;
               }
               catch(Exception)
               {
@@ -508,7 +501,7 @@ public class CompilationExecutor
 
       sw.Stop();
       if(w.conf.verbose)
-        Console.WriteLine("BHL parser {0} done(hit/miss/err:{2}/{3}/{4}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss, w.cache_errs);
+        Console.WriteLine("BHL parser {0} done(hit/miss/err:{2}/{3}/{4}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hits, w.cache_miss, w.cache_errs);
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -597,8 +590,6 @@ public class CompilationExecutor
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
-    public int cache_hit;
-    public int cache_miss;
 
     public void Start()
     {
@@ -632,14 +623,10 @@ public class CompilationExecutor
 
           if(interim.compiled != null)
           {
-            ++w.cache_hit;
-
             w.file2ns.Add(current_file, interim.compiled.module.ns);
           }
           else
           {
-            ++w.cache_miss;
-
             var proc = w.file2proc[current_file];
 
             var proc_result = w.postproc.Patch(proc.result, current_file);
@@ -667,7 +654,7 @@ public class CompilationExecutor
 
       sw.Stop();
       if(w.conf.verbose)
-        Console.WriteLine("BHL compiler {0} done(hit/miss:{2}/{3}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hit, w.cache_miss);
+        Console.WriteLine("BHL compiler {0} done({1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     }
   }
 

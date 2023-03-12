@@ -140,10 +140,9 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-      AssertEqual(exec.parse_cache_hits, 0);
-      AssertEqual(exec.parse_cache_miss, 3);
-      AssertEqual(exec.compile_cache_hits, 0);
-      AssertEqual(exec.compile_cache_miss, 3);
+      AssertEqual(exec.cache_hits, 0);
+      AssertEqual(exec.cache_miss, 3);
+      AssertEqual(exec.cache_errs, 0);
     }
 
     string new_file_unit = @"
@@ -164,10 +163,9 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
-      AssertEqual(exec.parse_cache_hits, 1);
-      AssertEqual(exec.parse_cache_miss, 1+1);
-      AssertEqual(exec.compile_cache_hits, 1);
-      AssertEqual(exec.compile_cache_miss, 1+1);
+      AssertEqual(exec.cache_hits, 1);
+      AssertEqual(exec.cache_miss, 1+1);
+      AssertEqual(exec.cache_errs, 0);
     }
   }
 
@@ -212,10 +210,9 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-      AssertEqual(exec.parse_cache_hits, 0);
-      AssertEqual(exec.parse_cache_miss, 3);
-      AssertEqual(exec.compile_cache_hits, 0);
-      AssertEqual(exec.compile_cache_miss, 3);
+      AssertEqual(exec.cache_hits, 0);
+      AssertEqual(exec.cache_miss, 3);
+      AssertEqual(exec.cache_errs, 0);
     }
 
     string new_file_get = @"
@@ -237,10 +234,9 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
-      AssertEqual(exec.parse_cache_hits, 1);
-      AssertEqual(exec.parse_cache_miss, 1+1);
-      AssertEqual(exec.compile_cache_hits, 1);
-      AssertEqual(exec.compile_cache_miss, 1+1);
+      AssertEqual(exec.cache_hits, 1);
+      AssertEqual(exec.cache_miss, 1+1);
+      AssertEqual(exec.cache_errs, 0);
     }
   }
 
@@ -322,10 +318,79 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 24 + 2);
-      AssertEqual(exec.parse_cache_hits, 3);
-      AssertEqual(exec.parse_cache_miss, 1);
-      AssertEqual(exec.compile_cache_hits, 3);
-      AssertEqual(exec.compile_cache_miss, 1);
+      AssertEqual(exec.cache_hits, 3);
+      AssertEqual(exec.cache_miss, 1);
+      AssertEqual(exec.cache_errs, 0);
+    }
+  }
+
+  [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithGlobalVars()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+
+      Unit gunit = {test: 42}
+    ";
+
+    string file_get =  @"
+    import ""/unit""
+
+    func int get(int i) { 
+      return gunit.test + i
+    }
+    ";                 
+
+    string file_test = @"
+    import ""/get""
+
+    func int test() {
+      return get(1)
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 42 + 1);
+    }
+
+    string new_file_get = @"
+    import ""/unit""
+
+    Unit gunit2 = {test: 10}
+
+    func int get(int i) { 
+      return gunit.test + i + gunit2.test
+    }
+    ";
+    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
+    System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var ts = new Types();
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 42 + 1 + 10);
+      AssertEqual(exec.cache_hits, 1);
+      AssertEqual(exec.cache_miss, 2);
+      AssertEqual(exec.cache_errs, 0);
     }
   }
 
