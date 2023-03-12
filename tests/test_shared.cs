@@ -532,18 +532,14 @@ public class BHL_TestBase
     }
   }
 
-  public VM MakeVM(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false)
+  public VM MakeVM(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false)
   {
-    return MakeVM(Compile(bhl, ts, show_ast: show_ast, show_bytes: show_bytes), ts);
+    return MakeVM(Compile(bhl, ts_fn, show_ast: show_ast, show_bytes: show_bytes), ts_fn);
   }
 
-  public static VM MakeVM(CompiledModule orig_cm, Types ts = null)
+  public static VM MakeVM(CompiledModule orig_cm, Func<Types> ts_fn = null)
   {
-    if(ts == null)
-      ts = new Types();
-    else
-      //NOTE: we don't want to affect the original ts
-      ts = ts.Clone();
+    Types ts = ts_fn == null ? new Types() : ts_fn();
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
@@ -557,19 +553,18 @@ public class BHL_TestBase
     return vm;
   }
 
-  public VM MakeVM(Dictionary<string, string> file2src, Types ts = null, bool clean_dir = true, bool use_cache = false)
+  public VM MakeVM(Dictionary<string, string> file2src, Func<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
   {
     if(clean_dir)
       CleanTestDir();
-
-    if(ts == null)
-      ts = new Types();
 
     var files = new List<string>();
     foreach(var kv in file2src)
       NewTestFile(kv.Key, kv.Value, ref files);
 
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache));
+    Types ts = ts_fn == null ? new Types() : ts_fn();
+
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache));
     var vm = new VM(ts, loader);
     return vm;
   }
@@ -876,13 +871,9 @@ public class BHL_TestBase
     }
   }
 
-  static public CompileConf MakeCompileConf(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
+  static public CompileConf MakeCompileConf(List<string> files, Func<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
   {
-    if(ts == null)
-      ts = new Types();
-    else
-      //NOTE: we don't want to affect the original ts
-      ts = ts.Clone();
+    Types ts = ts_fn == null ? new Types() : ts_fn();
 
     var conf = new CompileConf();
     conf.max_threads = max_threads;
@@ -922,9 +913,9 @@ public class BHL_TestBase
     return ms;
   }
 
-  static public Stream CompileFiles(List<string> files, Types ts = null, bool use_cache = false, int max_threads = 1)
+  static public Stream CompileFiles(List<string> files, Func<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
   {
-    return CompileFiles(MakeCompileConf(files, ts, use_cache, max_threads));
+    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache, max_threads));
   }
 
   static public Stream CompileFiles(CompileConf conf)
@@ -932,13 +923,9 @@ public class BHL_TestBase
     return CompileFiles(new CompilationExecutor(), conf);
   }
 
-  public CompiledModule Compile(string bhl, Types ts = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
+  public CompiledModule Compile(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
-    if(ts == null)
-      ts = new Types();
-    else
-      //NOTE: we don't want to affect the original ts
-      ts = ts.Clone();
+    Types ts = ts_fn == null ? new Types() : ts_fn();
 
     var proc = Parse(bhl, ts, show_ast: show_ast, show_parse_tree: show_parse_tree, throw_errors: true);
 

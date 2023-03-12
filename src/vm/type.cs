@@ -551,14 +551,6 @@ public class Types : INamedResolver
     return ns.ResolveSymbolByPath(name);
   }
 
-  //NOTE: used for tests only
-  //TODO: get rid of it?
-  public Types Clone()
-  {
-    var clone = new Types(new NativeFuncIndexer(nfunc_index), ns.Clone());
-    return clone;
-  }
-
   void InitBuiltins() 
   {
     ns.Define(Int);

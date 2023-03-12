@@ -14,8 +14,9 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
+    var c = Compile(bhl);
+
     var ts = new Types();
-    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -30,7 +31,7 @@ public class TestTypeCasts : BHL_TestBase
 
     AssertEqual(c.constants.Count, 2);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 1);
@@ -47,8 +48,9 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
+    var c = Compile(bhl);
+
     var ts = new Types();
-    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -63,7 +65,7 @@ public class TestTypeCasts : BHL_TestBase
 
     AssertEqual(c.constants.Count, 2);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().str, "7");
@@ -187,9 +189,9 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
+    var ts = new Types();
     var expected = 
       new ModuleCompiler()
       .UseCode()
@@ -203,7 +205,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -303,8 +305,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    var c = Compile(bhl, ts);
+    var c = Compile(bhl);
 
     var expected = 
       new ModuleCompiler()
@@ -322,7 +323,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl);
     AssertEqual(14, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -499,11 +500,13 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -523,11 +526,13 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -550,11 +555,13 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 1101);
     CommonChecks(vm);
@@ -572,23 +579,26 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      
+      BindColor(ts);
 
-    {
-      var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(null, type);
-        }
-      );
-      ts.ns.Define(cl);
-    }
+      {
+        var cl = new ClassSymbolNative("Foo", null,
+          delegate(VM.Frame frm, ref Val v, IType type) 
+          { 
+            v.SetObj(null, type);
+          }
+        );
+        ts.ns.Define(cl);
+      }
+      return ts;
+    });
 
     AssertError<Exception>(
        delegate() {
-         Compile(bhl, ts);
+         Compile(bhl, ts_fn);
        },
       "incompatible types: 'Foo' and 'Color'",
       new PlaceAssert(bhl, @"
@@ -609,23 +619,26 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      
+      BindColor(ts);
 
-    {
-      var cl = new ClassSymbolNative("Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(null, type);
-        }
-      );
-      ts.ns.Define(cl);
-    }
+      {
+        var cl = new ClassSymbolNative("Foo", null,
+          delegate(VM.Frame frm, ref Val v, IType type) 
+          { 
+            v.SetObj(null, type);
+          }
+        );
+        ts.ns.Define(cl);
+      }
+      return ts;
+    });
 
     AssertError<Exception>(
        delegate() {
-         Compile(bhl, ts);
+         Compile(bhl, ts_fn);
        },
       "incompatible types for casting",
       new PlaceAssert(bhl, @"
@@ -887,11 +900,14 @@ public class TestTypeCasts : BHL_TestBase
       }
       ";
 
-      var ts = new Types();
       var log = new StringBuilder();
-      BindTrace(ts, log);
+      var ts_fn = new Func<Types>(() => {
+        var ts = new Types();
+        BindTrace(ts, log);
+        return ts;
+      });
 
-      var vm = MakeVM(bhl, ts);
+      var vm = MakeVM(bhl, ts_fn);
       Execute(vm, "test");
       AssertEqual("hey", log.ToString());
       CommonChecks(vm);

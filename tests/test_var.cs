@@ -156,11 +156,15 @@ public class TestVar : BHL_TestBase
       }
       ";
 
-      var ts = new Types();
       var log = new StringBuilder();
-      BindTrace(ts, log);
 
-      var vm = MakeVM(bhl, ts);
+      var ts_fn = new Func<Types>(() => {
+        var ts = new Types();
+        BindTrace(ts, log);
+        return ts;
+      });
+
+      var vm = MakeVM(bhl, ts_fn);
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
@@ -179,11 +183,15 @@ public class TestVar : BHL_TestBase
       }
       ";
 
-      var ts = new Types();
       var log = new StringBuilder();
-      BindTrace(ts, log);
+      
+      var ts_fn = new Func<Types>(() => {
+        var ts = new Types();
+        BindTrace(ts, log);
+        return ts;
+      });
 
-      var vm = MakeVM(bhl, ts);
+      var vm = MakeVM(bhl, ts_fn);
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
@@ -202,11 +210,15 @@ public class TestVar : BHL_TestBase
       }
       ";
 
-      var ts = new Types();
       var log = new StringBuilder();
-      BindTrace(ts, log);
 
-      var vm = MakeVM(bhl, ts);
+      var ts_fn = new Func<Types>(() => {
+        var ts = new Types();
+        BindTrace(ts, log);
+        return ts;
+      });
+
+      var vm = MakeVM(bhl, ts_fn);
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);

@@ -360,8 +360,9 @@ public class TestYield : BHL_TestBase
     }
     ";
 
+    var c = Compile(bhl);
+
     var ts = new Types();
-    var c = Compile(bhl, ts);
 
     var expected = 
       new ModuleCompiler()
@@ -513,9 +514,7 @@ public class TestYield : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());

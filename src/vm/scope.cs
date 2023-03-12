@@ -192,19 +192,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     return sym as Namespace;
   }
 
-  public Namespace Clone()
-  {
-    var copy = new Namespace(module, name);
-
-    for(int i=0;i<members.Count;++i)
-      copy.members.Add(members[i]);
-
-    foreach(var imp in links)
-      copy.links.Add(imp.Clone());
-
-    return copy;
-  }
-
   public void Link(Namespace other)
   {
     var conflict = TryLink(other);

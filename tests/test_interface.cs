@@ -713,20 +713,22 @@ public class TestInterfaces : BHL_TestBase
       }
     }
     ";
-    var ts = new Types();
-
-    var ifs = new InterfaceSymbolNative(
-        "IFoo", 
-        null, 
-        new FuncSymbolNative("bar", ts.T("int"), null, 
-          new FuncArgSymbol("int", ts.T("int")) 
-        )
-    );
-    ts.ns.Define(ifs);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      var ifs = new InterfaceSymbolNative(
+          "IFoo", 
+          null, 
+          new FuncSymbolNative("bar", ts.T("int"), null, 
+            new FuncArgSymbol("int", ts.T("int")) 
+          )
+      );
+      ts.ns.Define(ifs);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "implementing native interfaces is not supported",
       new PlaceAssert(bhl, @"
@@ -755,20 +757,22 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
-    var ifs = new InterfaceSymbolNative(
-        "IBar", 
-        null, 
-        new FuncSymbolNative("bar", ts.T("int"), null, 
-          new FuncArgSymbol("int", ts.T("int")) 
-        )
-    );
-    ts.ns.Define(ifs);
+    var ts_fn = new Func<Types>(() => { 
+      var ts = new Types();
+      var ifs = new InterfaceSymbolNative(
+          "IBar", 
+          null, 
+          new FuncSymbolNative("bar", ts.T("int"), null, 
+            new FuncArgSymbol("int", ts.T("int")) 
+          )
+      );
+      ts.ns.Define(ifs);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "implementing native interfaces is not supported",
       new PlaceAssert(bhl, @"
@@ -873,9 +877,10 @@ public class TestInterfaces : BHL_TestBase
       return ifoo.foo(42)
     }
     ";
-    var ts = new Types();
 
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var ifs = new InterfaceSymbolNative(
           "INativeFoo", 
           null, 
@@ -913,9 +918,10 @@ public class TestInterfaces : BHL_TestBase
       );
       cl.Define(m);
       cl.Setup();
-    }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }

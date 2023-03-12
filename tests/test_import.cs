@@ -133,9 +133,9 @@ public class TestImport : BHL_TestBase
     NewTestFile("garbage.bhl", file_garbage, ref files);
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -156,9 +156,9 @@ public class TestImport : BHL_TestBase
     System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -203,9 +203,9 @@ public class TestImport : BHL_TestBase
     NewTestFile("test.bhl", file_test, ref files);
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -227,9 +227,9 @@ public class TestImport : BHL_TestBase
     System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -285,9 +285,9 @@ public class TestImport : BHL_TestBase
     NewTestFile("use/use.bhl", file_use, ref files);
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -311,9 +311,9 @@ public class TestImport : BHL_TestBase
     System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -359,9 +359,9 @@ public class TestImport : BHL_TestBase
     NewTestFile("test.bhl", file_test, ref files);
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -381,9 +381,9 @@ public class TestImport : BHL_TestBase
     System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -859,7 +859,7 @@ public class TestImport : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
@@ -877,7 +877,7 @@ public class TestImport : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
@@ -910,13 +910,13 @@ public class TestImport : BHL_TestBase
     NewTestFile("test/test.bhl", file_test, ref files);
 
     {
-      var ts = new Types();
       var exec = new CompilationExecutor();
-      var conf = MakeCompileConf(files, ts, use_cache: true, max_threads: 3);
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       conf.inc_path.Clear();
       conf.inc_path.Add(TestDirPath() + "/test");
       conf.inc_path.Add(TestDirPath() + "/unit");
 
+      var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
@@ -951,7 +951,7 @@ public class TestImport : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);

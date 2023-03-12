@@ -76,12 +76,15 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindFoo(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindFoo(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
@@ -154,10 +157,16 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    var fn = BindTrace(ts, log);
-    var c = Compile(bhl, ts);
+    FuncSymbolNative fn = null;
+    var ts_fn = new Func<Types>(() => {
+      var _ts = new Types();
+      fn = BindTrace(_ts, log);
+      return _ts;
+    });
+    var c = Compile(bhl, ts_fn);
+
+    var ts = ts_fn();
 
     var expected = 
       new ModuleCompiler()
@@ -193,7 +202,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
@@ -265,11 +274,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 1202);
     CommonChecks(vm);
@@ -289,11 +300,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 60);
     CommonChecks(vm);
@@ -314,11 +327,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColorAlpha(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColorAlpha(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 90);
     CommonChecks(vm);
@@ -338,11 +353,12 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
-    BindColor(ts);
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
+
+      BindColor(ts);
+
       var cl = new ClassSymbolNative("ColorNested", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -366,9 +382,10 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-    }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -385,19 +402,20 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("Foo", null, null);
 
       ts.ns.Define(cl);
 
       cl.Setup();
-    }
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "constructor is not defined",
       new PlaceAssert(bhl, @"
@@ -418,19 +436,20 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("Foo", null, null);
 
       ts.ns.Define(cl);
 
       cl.Setup();
-    }
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "constructor is not defined",
       new PlaceAssert(bhl, @"
@@ -452,9 +471,9 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("Foo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -472,11 +491,12 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-    }
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "get operation is not defined",
       new PlaceAssert(bhl, @"
@@ -499,9 +519,9 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("Foo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -519,11 +539,12 @@ public class TestClasses : BHL_TestBase
         null //no setter
       ));
       cl.Setup();
-    }
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "set operation is not defined",
       new PlaceAssert(bhl, @"
@@ -551,10 +572,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -584,15 +608,18 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
     var vm = MakeVM(new Dictionary<string, string>() {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       },
-      ts
+      ts_fn
     );
 
     vm.LoadModule("bhl2");
@@ -928,10 +955,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindFail(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindFail(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(0, Execute(vm, "test").result.Count);
     CommonChecks(vm);
   }
@@ -2213,12 +2243,15 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "extending native classes is not supported",
       new PlaceAssert(bhl, @"
@@ -2290,9 +2323,14 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindBar(ts);
-    var c = Compile(bhl, ts);
+    var ts_fn = new Func<Types>(() => {
+      var _ts = new Types();
+      BindBar(_ts);
+      return _ts;
+    });
+
+    var c = Compile(bhl, ts_fn);
+    var ts = ts_fn();
 
     var expected = 
       new ModuleCompiler()
@@ -2308,7 +2346,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c, ts_fn);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertTrue(fb.result.PopRelease().bval);
@@ -2330,11 +2368,18 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    var fn = BindTrace(ts, log);
-    BindBar(ts);
-    var c = Compile(bhl, ts);
+
+    FuncSymbolNative fn = null;
+    var ts_fn = new Func<Types>(() => {
+      var _ts = new Types();
+      fn = BindTrace(_ts, log);
+      BindBar(_ts);
+      return _ts;
+    });
+    var c = Compile(bhl, ts_fn);
+
+    var ts = ts_fn();
 
     var expected = 
       new ModuleCompiler()
@@ -2370,7 +2415,7 @@ public class TestClasses : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
@@ -2391,11 +2436,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -2412,11 +2459,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 10)).result.PopRelease().num;
     AssertEqual(res, 10);
     res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
@@ -2441,13 +2490,15 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       "symbol is not a function",
       new PlaceAssert(bhl, @"
@@ -2491,12 +2542,16 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
 
-    var vm = MakeVM(bhl, ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", log.ToString());
     CommonChecks(vm);
@@ -3364,10 +3419,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindVirtualFooBar(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindVirtualFooBar(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
@@ -3717,9 +3775,10 @@ public class TestClasses : BHL_TestBase
       return NativeFoo.static_foo(42)
     }
     ";
-    var ts = new Types();
 
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("NativeFoo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -3739,9 +3798,10 @@ public class TestClasses : BHL_TestBase
       );
       cl.Define(m);
       cl.Setup();
-    }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -3881,9 +3941,9 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
+    var ts_fn = new Func<Types>(() =>
     {
+      var ts = new Types();
       var cl = new ClassSymbolNative("NativeFoo", null, null);
       ts.ns.Define(cl);
 
@@ -3898,9 +3958,10 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-    }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     NativeFoo.static_bar = 14;
     AssertEqual(43, Execute(vm, "test").result.PopRelease().num);
     AssertEqual(43, NativeFoo.static_bar);
@@ -3930,62 +3991,65 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
 
-    {
-      var cl = new ClassSymbolNative("B", ts.T("A"),
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new B(), type);
-        }
-      );
+      {
+        var cl = new ClassSymbolNative("B", ts.T("A"),
+          delegate(VM.Frame frm, ref Val v, IType type) 
+          { 
+            v.SetObj(new B(), type);
+          }
+        );
 
-      ts.ns.Define(cl);
+        ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("b", ts.T("int"), 
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var b = (B)ctx.obj;
-          v.SetInt(b.b);
-        },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var b = (B)ctx.obj;
-          b.b = (int)v.num; 
-        }
-      ));
-    }
+        cl.Define(new FieldSymbol("b", ts.T("int"), 
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+          {
+            var b = (B)ctx.obj;
+            v.SetInt(b.b);
+          },
+          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+          {
+            var b = (B)ctx.obj;
+            b.b = (int)v.num; 
+          }
+        ));
+      }
 
-    {
-      var cl = new ClassSymbolNative("A",
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new A(), type);
-        }
-      );
+      {
+        var cl = new ClassSymbolNative("A",
+          delegate(VM.Frame frm, ref Val v, IType type) 
+          { 
+            v.SetObj(new A(), type);
+          }
+        );
 
-      ts.ns.Define(cl);
+        ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol("a", ts.T("int"), 
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var a = (A)ctx.obj;
-          v.SetInt(a.a);
-        },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var a = (A)ctx.obj;
-          a.a = (int)v.num; 
-        }
-      ));
-    }
+        cl.Define(new FieldSymbol("a", ts.T("int"), 
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+          {
+            var a = (A)ctx.obj;
+            v.SetInt(a.a);
+          },
+          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+          {
+            var a = (A)ctx.obj;
+            a.a = (int)v.num; 
+          }
+        ));
+      }
 
-    {
-      (ts.T("A").Get() as ClassSymbolNative).Setup();
-      (ts.T("B").Get() as ClassSymbolNative).Setup();
-    }
+      {
+        (ts.T("A").Get() as ClassSymbolNative).Setup();
+        (ts.T("B").Get() as ClassSymbolNative).Setup();
+      }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(1110, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
