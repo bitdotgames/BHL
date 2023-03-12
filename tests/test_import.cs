@@ -152,8 +152,8 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+    int fidx = NewTestFile("unit.bhl", new_file_unit, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
@@ -223,8 +223,8 @@ public class TestImport : BHL_TestBase
       return u
     }
     ";
-    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+    int fidx = NewTestFile("get.bhl", new_file_get, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
@@ -307,8 +307,8 @@ public class TestImport : BHL_TestBase
       return foo.get_add()
     }
     ";
-    NewTestFile("test.bhl", new_file_test, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+    int fidx = NewTestFile("test.bhl", new_file_test, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
@@ -377,8 +377,8 @@ public class TestImport : BHL_TestBase
       return gunit.test + i + gunit2.test
     }
     ";
-    NewTestFile("get.bhl", new_file_get, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+    int fidx = NewTestFile("get.bhl", new_file_get, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();
@@ -872,8 +872,8 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    NewTestFile("unit.bhl", new_file_unit, ref files, replace: true);
-    System.IO.File.SetLastWriteTimeUtc(files[files.Count-1], DateTime.UtcNow.AddSeconds(1));
+    int fidx = NewTestFile("unit.bhl", new_file_unit, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
 
     {
       var ts = new Types();

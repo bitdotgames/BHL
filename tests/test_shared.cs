@@ -624,14 +624,15 @@ public class BHL_TestBase
       Directory.Delete(dir, true/*recursive*/);
   }
 
-  public static void NewTestFile(string path, string text, ref List<string> files, bool replace = false)
+  public static int NewTestFile(string path, string text, ref List<string> files, bool unique = false)
   {
     string full_path = TestDirPath() + "/" + path;
-    if(replace)
+    if(unique)
       files.Remove(full_path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     files.Add(full_path);
+    return files.Count-1;
   }
 
   public static int ConstIdx(CompiledModule cm, string str)
