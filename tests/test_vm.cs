@@ -1633,7 +1633,6 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl);
 
-
     var expected =
       new ModuleCompiler()
       .UseCode()
@@ -15203,14 +15202,16 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
-    BindFoo(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      BindFoo(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewNum(vm, 42));
     AssertEqual("3", log.ToString());
     CommonChecks(vm);
@@ -15228,10 +15229,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindIntStruct(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindIntStruct(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
@@ -15264,12 +15268,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindIntStruct(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindIntStruct(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOTNULL;EQ;", log.ToString());
     CommonChecks(vm);
@@ -15291,12 +15298,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindStringClass(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindStringClass(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewObj(vm, null, Types.Any));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -15318,12 +15328,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindStringClass(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindStringClass(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewObj(vm, null, Types.Any));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -15343,12 +15356,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -15405,12 +15421,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;EQ;", log.ToString());
     CommonChecks(vm);
@@ -15430,12 +15449,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
@@ -15465,11 +15487,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
@@ -15495,11 +15520,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
@@ -15522,11 +15550,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -15549,11 +15580,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15581,11 +15615,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("1,1;1,2;2,1;2,2;", log.ToString());
     CommonChecks(vm);
@@ -15606,11 +15643,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("123", log.ToString());
     CommonChecks(vm);
@@ -15631,11 +15671,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -15657,12 +15700,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15685,12 +15731,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15714,11 +15763,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15749,11 +15801,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15784,11 +15839,14 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
     AssertEqual("OK;", log.ToString());
@@ -15813,10 +15871,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 8);
     CommonChecks(vm);
@@ -15840,10 +15901,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -15867,10 +15931,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 3);
     CommonChecks(vm);
@@ -15894,10 +15961,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 2);
     CommonChecks(vm);
@@ -15934,10 +16004,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 1);
     CommonChecks(vm);
@@ -15956,11 +16029,19 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    var fn = BindTrace(ts, log);
-    BindBar(ts);
-    var c = Compile(bhl, ts);
+
+    FuncSymbolNative fn = null;
+    var ts_fn = new Func<Types>(() => {
+      var _ts = new Types();
+      fn = BindTrace(_ts, log);
+      BindBar(_ts);
+      return _ts;
+    });
+
+    var c = Compile(bhl, ts_fn);
+
+    var ts = ts_fn();
 
     var expected = 
       new ModuleCompiler()
@@ -15999,7 +16080,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    var vm = MakeVM(c, ts);
+    var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
@@ -16020,11 +16101,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 60);
     CommonChecks(vm);
@@ -16046,11 +16129,13 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
-    BindColor(ts);
-
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
     CommonChecks(vm);
@@ -16105,13 +16190,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16134,13 +16221,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16163,13 +16252,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16192,13 +16283,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16221,13 +16314,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16250,13 +16345,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16279,13 +16376,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16308,13 +16407,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
@@ -16336,13 +16437,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"must be numeric type",
       new PlaceAssert(bhl, @"
@@ -16365,13 +16468,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"must be int type",
       new PlaceAssert(bhl, @"
@@ -16394,13 +16499,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"must be int type",
       new PlaceAssert(bhl, @"
@@ -16423,13 +16530,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"must be bool type",
       new PlaceAssert(bhl, @"
@@ -16452,13 +16561,15 @@ public class TestVM : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    BindColor(ts);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
 
     AssertError<Exception>(
       delegate() { 
-        Compile(bhl, ts);
+        Compile(bhl, ts_fn);
       },
       @"must be bool type",
       new PlaceAssert(bhl, @"
