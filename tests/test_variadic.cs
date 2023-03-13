@@ -362,11 +362,14 @@ public class TestVariadic : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var log = new StringBuilder();
-    BindTrace(ts, log);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("1 2;10 20;", log.ToString());
     CommonChecks(vm);
@@ -385,24 +388,27 @@ public class TestVariadic : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
-    
-    var fn = new FuncSymbolNative("sum", FuncAttrib.VariadicArgs, Types.Int, 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-          var ns = stack.Pop();
-          var vs = (ValList)ns._obj;
-          int sum = 0;
-          for(int i=0;i<vs.Count;++i)
-            sum += (int)vs[i].num;
-          ns.Release();
-          stack.Push(Val.NewInt(frm.vm, sum));
-          return null;
-        }, 
-        new FuncArgSymbol("ns", ts.TArr("int"))
-    );
-    ts.ns.Define(fn);
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      
+      var fn = new FuncSymbolNative("sum", FuncAttrib.VariadicArgs, Types.Int, 0,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            var ns = stack.Pop();
+            var vs = (ValList)ns._obj;
+            int sum = 0;
+            for(int i=0;i<vs.Count;++i)
+              sum += (int)vs[i].num;
+            ns.Release();
+            stack.Push(Val.NewInt(frm.vm, sum));
+            return null;
+          }, 
+          new FuncArgSymbol("ns", ts.TArr("int"))
+      );
+      ts.ns.Define(fn);
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(6, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(0, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);

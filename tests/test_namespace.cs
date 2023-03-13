@@ -856,20 +856,24 @@ public class TestNamespace : BHL_TestBase
     namespace bar {
     }
     ";
-    var ts = new Types();
-    {
-      var fn = new FuncSymbolNative("wow", ts.T("void"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            return null;
-          }
-      );
-      ts.ns.Nest("bar").Define(fn);
-    }
+    var ts_fn = new Func<Types>(() => {
+      var _ts = new Types();
+      {
+        var fn = new FuncSymbolNative("wow", _ts.T("void"),
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              return null;
+            }
+        );
+        _ts.ns.Nest("bar").Define(fn);
+      }
+      return _ts;
+    });
 
     var files = new List<string>();
     NewTestFile("test.bhl", test_bhl, ref files);
 
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts, use_cache: true));
+    var ts = ts_fn();
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache: true));
     var vm = new VM(ts, loader);
     vm.LoadModule("test");
     var cm = vm.FindModule("test");
@@ -891,28 +895,31 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-    var ts = new Types();
-    {
-      var fn = new FuncSymbolNative("wow", ts.T("int"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            stack.Push(Val.NewInt(frm.vm, 1)); 
-            return null;
-          }
-      );
-      ts.ns.Nest("foo").Define(fn);
-    }
-    {
-      var fn = new FuncSymbolNative("wow", ts.T("int"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            stack.Push(Val.NewInt(frm.vm, 10)); 
-            return null;
-          }
-      );
-      //NOTE: let's mix namespace defined natively and the one in bhl code
-      ts.ns.Nest("bar").Define(fn);
-    }
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      {
+        var fn = new FuncSymbolNative("wow", ts.T("int"),
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              stack.Push(Val.NewInt(frm.vm, 1)); 
+              return null;
+            }
+        );
+        ts.ns.Nest("foo").Define(fn);
+      }
+      {
+        var fn = new FuncSymbolNative("wow", ts.T("int"),
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              stack.Push(Val.NewInt(frm.vm, 10)); 
+              return null;
+            }
+        );
+        //NOTE: let's mix namespace defined natively and the one in bhl code
+        ts.ns.Nest("bar").Define(fn);
+      }
+      return ts;
+    });
 
-    var vm = MakeVM(bhl, ts);
+    var vm = MakeVM(bhl, ts_fn);
     AssertEqual(11, Execute(vm, "bar.test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -1667,18 +1674,15 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var ts = new Types();
     var vm = MakeVM(new Dictionary<string, string>() {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3}
-      },
-      ts
+      }
     );
 
     vm.LoadModule("bhl3");
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
-    AssertTrue(ts.ResolveNamedByPath("foo.sub.Sub") == null);
     AssertTrue(vm.ResolveNamedByPath("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
