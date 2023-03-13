@@ -237,6 +237,7 @@ public class Module
       return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
     }
   }
+  public Types ts;
   public Namespace ns;
 
   public Module(Types ts, ModulePath path)
@@ -253,6 +254,7 @@ public class Module
     Namespace ns
   )
   {
+    this.ts = ts;
     nfuncs = ts.nfunc_index;
     //let's setup the link
     ns.module = this;

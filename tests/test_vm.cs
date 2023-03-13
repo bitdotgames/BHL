@@ -3390,14 +3390,12 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
     ;
     AssertEqual(c, expected);
@@ -10659,14 +10657,12 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
     ;
     AssertEqual(c, expected);
@@ -12423,17 +12419,15 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-        .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
 
@@ -14749,8 +14743,6 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
@@ -14777,7 +14769,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -15091,8 +15083,6 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
@@ -15125,7 +15115,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -16527,7 +16517,6 @@ public class TestVM : BHL_TestBase
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
-
     func test() 
     {
       []Bar bs = [{Int: 10, Flt: 14.5, Str: ""Hey""}]
@@ -16547,14 +16536,12 @@ public class TestVM : BHL_TestBase
 
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.TArr("Bar")) }) 
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.TArr("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Bar")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
@@ -16569,19 +16556,19 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);

@@ -166,8 +166,6 @@ public class TestClasses : BHL_TestBase
     });
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
@@ -197,7 +195,7 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -2330,13 +2328,12 @@ public class TestClasses : BHL_TestBase
     });
 
     var c = Compile(bhl, ts_fn);
-    var ts = ts_fn();
 
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Bar")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstNullIdx(c) })
@@ -2379,13 +2376,11 @@ public class TestClasses : BHL_TestBase
     });
     var c = Compile(bhl, ts_fn);
 
-    var ts = ts_fn();
-
     var expected = 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, ts.T("Bar")) }) 
+      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.T("Bar")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -2398,19 +2393,19 @@ public class TestClasses : BHL_TestBase
       .EmitThen(Opcodes.SetAttr, new int[] { 2 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, ts.T("string")), 0 })
+      .EmitThen(Opcodes.TypeCast, new int[] { ConstIdx(c, c.ns.T("string")), 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.module.nfuncs.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
