@@ -18268,6 +18268,64 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSelfStopFiberFromNativeFunc()
+  {
+    string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+    }
+
+    coro func test()
+    {
+      int fid
+      fid = start(coro func() {
+        defer {
+          trace(""0"")
+        }
+        yield()
+        foo()
+        STOP(fid)
+        yield()
+        trace(""2"")
+      })
+
+      yield()
+      trace(""3"")
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+
+      var fn = new FuncSymbolNative("STOP", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            int fid = (int)stack.PopRelease().num;
+            frm.vm.Stop(fid);
+            return null;
+          }, 
+          new FuncArgSymbol("fid", ts.T("int"))
+      );
+      ts.ns.Define(fn);
+
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("3140", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFrameCache()
   {
     string bhl = @"
