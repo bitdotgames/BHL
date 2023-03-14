@@ -2780,6 +2780,9 @@ public class CoroutinePool
   {
     //Console.WriteLine("DEL " + coro.GetType().Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
+    if(coro == null)
+      return;
+
     coro.Cleanup(frm, exec);
 
     var t = coro.GetType();

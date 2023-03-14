@@ -10641,9 +10641,9 @@ public class TestVM : BHL_TestBase
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
-    func test() 
+    coro func test() 
     {
-      WaitTicks(2)
+      yield WaitTicks(2)
     }
     ";
 
@@ -18325,6 +18325,87 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  class YIELD_STOP : ICoroutine
+  {
+    bool done;
+    int fib;
+
+    public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    {
+      //first time
+      if(!done)
+      {
+        fib = (int)exec.stack.PopRelease().num;
+        status = BHS.RUNNING;
+        done = true;
+      }
+      else
+        frm.vm.Stop(fib);
+    }
+
+    public void Cleanup(VM.Frame frm, VM.ExecState exec)
+    {
+      done = false;
+    }
+  }
+
+  [IsTested()]
+  public void TestSelfStopFiberFromNativeCoro()
+  {
+    string bhl = @"
+    func foo()
+    {
+      defer {
+        trace(""4"")
+      }
+      trace(""1"")
+    }
+
+    coro func test()
+    {
+      int fid
+      fid = start(coro func() {
+        defer {
+          trace(""0"")
+        }
+        yield()
+        foo()
+        yield YIELD_STOP(fid)
+        yield()
+        trace(""2"")
+      })
+
+      yield()
+      trace(""3"")
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+
+      var fn = new FuncSymbolNative("YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            return CoroutinePool.New<YIELD_STOP>(frm.vm);
+          }, 
+          new FuncArgSymbol("fid", ts.T("int"))
+      );
+      ts.ns.Define(fn);
+
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+
+    vm.Start("test");
+    AssertTrue(vm.Tick());
+    AssertTrue(vm.Tick());
+    AssertFalse(vm.Tick());
+    AssertEqual("3140", log.ToString());
+    CommonChecks(vm);
+  }
+
   [IsTested()]
   public void TestFrameCache()
   {
@@ -20850,7 +20931,7 @@ public class TestVM : BHL_TestBase
 
   FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("WaitTicks", Types.Void,
+    var fn = new FuncSymbolNative("WaitTicks", FuncAttrib.Coro, Types.Void, 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         }, 

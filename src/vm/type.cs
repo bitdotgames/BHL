@@ -563,7 +563,7 @@ public class Types : INamedResolver
     ns.Define(ClassType);
 
     {
-      //it's a builtin non-directly available function
+      //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative("$yield", this.T("void"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
