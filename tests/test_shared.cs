@@ -936,7 +936,13 @@ public class BHL_TestBase
     return cm;
   }
 
-  public ANTLR_Processor Parse(string bhl, Types ts, bool show_ast = false, bool show_parse_tree = false, bool throw_errors = false) 
+  public ANTLR_Processor Parse(
+    string bhl, 
+    Types ts, 
+    bool show_ast = false, 
+    bool show_parse_tree = false, 
+    bool throw_errors = false
+  ) 
   {
     var mdl = new bhl.Module(ts, "");
     var errors = new CompileErrors();

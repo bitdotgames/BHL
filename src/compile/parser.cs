@@ -614,6 +614,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     foreach(var kv in file2proc)
       kv.Value.Phase_Outline();
 
+    if(file2compiled != null)
+      LinkImports(file2compiled, file2proc);
     foreach(var kv in file2proc)
       kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
 
@@ -628,6 +630,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     foreach(var kv in file2proc)
       kv.Value.Phase_SetResult();
+  }
+
+  static void LinkImports(
+    Dictionary<string, CompiledModule> file2compiled,
+    Dictionary<string, ANTLR_Processor> file2proc
+  )
+  {
+    var mod_name2ns = new Dictionary<string, Namespace>(); 
+    //we need to try both compiled modules and modules yet to be parsed
+    foreach(var kv in file2compiled)
+      mod_name2ns.Add(kv.Value.module.name, kv.Value.module.ns);
+    foreach(var kv in file2proc)
+      mod_name2ns.Add(kv.Value.module.name, kv.Value.module.ns);
+
+    foreach(var kv in file2compiled)
+    {
+      foreach(string import in kv.Value.imports)
+        kv.Value.module.ns.Link(mod_name2ns[import]);
+    }
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

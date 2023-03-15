@@ -176,9 +176,6 @@ public class CompilationExecutor
     sw.Stop();
     //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
-    //3.1 let's link cached compiled modules where neccessary
-    LinkCompiledModules(file2compiled);
-
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
@@ -260,25 +257,6 @@ public class CompilationExecutor
     }
 
     return parse_workers;
-  }
-
-  static void LinkCompiledModules(Dictionary<string, CompiledModule> file2compiled)
-  {
-    //let's create a lookup cache where module name will be a key and 
-    //a module itself will be a value
-    var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
-    foreach(var kv in file2compiled)
-      mod_name2compiled.Add(kv.Value.module.name, kv.Value);
-
-    foreach(var kv in file2compiled)
-    {
-      foreach(string import in kv.Value.imports)
-      {
-        CompiledModule imported;
-        if(mod_name2compiled.TryGetValue(import, out imported))
-          kv.Value.module.ns.Link(imported.module.ns);
-      }
-    }
   }
 
   static List<CompilerWorker> StartAndWaitCompilerWorkers(
