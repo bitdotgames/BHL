@@ -266,8 +266,8 @@ public class Module
 public class VM : INamedResolver
 {
   //NOTE: why -2? we reserve some space before int.MaxValue so that 
-  //      increasing some ip after it was assigned a 'STOP_IP' value 
-  //      won't overflow int.MaxValue
+  //      increasing some ip couple of times after it was assigned 
+  //      a 'STOP_IP' value won't overflow int.MaxValue
   public const int STOP_IP = int.MaxValue - 2;
 
   public struct Region
@@ -1758,7 +1758,9 @@ public class VM : INamedResolver
       break;
       case Opcodes.Return:
       {
-        //let's jump to exit frame
+        //NOTE: we jump to ExitFrame opcode of the last function in the module
+        //TODO: probably we should jump to our 'local' frame ExitCode so that 
+        //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
@@ -1771,7 +1773,9 @@ public class VM : INamedResolver
           curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
-        //let's jump to exit frame
+        //NOTE: we jump to ExitFrame opcode of the last function in the module
+        //TODO: probably we should jump to our 'local' frame ExitCode so that 
+        //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
@@ -2165,7 +2169,9 @@ public class VM : INamedResolver
       CoroutinePool.Del(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
-      //proceed to exit
+      //NOTE: we jump to ExitFrame opcode of the last function in the module
+      //TODO: probably we should jump to our 'local' frame ExitCode so that 
+      //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
       exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       exec.regions.Pop();
 
