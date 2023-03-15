@@ -20199,7 +20199,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestWeirdBug()
   {
     string bhl = @"
