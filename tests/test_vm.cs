@@ -918,29 +918,34 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
     func int,int doer() {
-      trace(""!"")
       return 1, 0
     }
 
-    func test() 
-    {
+    func test() {
       int a, int b = doer()
-      trace(""?"")
     }
     ";
 
-    var log = new StringBuilder();
+    var c = Compile(bhl);
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindTrace(ts, log);
-      return ts;
-    });
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 2 })
+      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
+      .EmitThen(Opcodes.Call, new int[] { 0, 0 })
+      .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      .EmitThen(Opcodes.SetVar, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+      ;
+    AssertEqual(c, expected);
 
-    var vm = MakeVM(bhl, ts_fn);
+    var vm = MakeVM(c);
     Execute(vm, "test");
-
-    AssertEqual("!?", log.ToString());
     CommonChecks(vm);
   }
 
