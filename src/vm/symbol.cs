@@ -2285,6 +2285,8 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
 {
   IScope scope;
   List<Symbol> list = new List<Symbol>();
+  //NOTE: used for lookup by name
+  Dictionary<string, int> name2idx = new Dictionary<string, int>();
 
   public int Count
   {
@@ -2314,10 +2316,10 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
 
   public Symbol Find(string name)
   {
-    foreach(var s in list)
-      if(s.name == name)
-        return s;
-    return null;
+    int idx;
+    if(!name2idx.TryGetValue(name, out idx))
+      return null;
+    return list[idx];
   }
 
   public void Add(Symbol s)
@@ -2333,6 +2335,7 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
       si.scope_idx = list.Count;
 
     list.Add(s);
+    name2idx.Add(s.name, list.Count-1);
   }
 
   public void RemoveAt(int index)
@@ -2341,6 +2344,7 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
     if(s.scope == scope)
       s.scope = null;
     list.RemoveAt(index);
+    name2idx.Remove(s.name);
   }
 
   public Symbol TryAt(int index)
@@ -2352,17 +2356,16 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
 
   public int IndexOf(Symbol s)
   {
+    //TODO: use lookup by name instead?
     return list.IndexOf(s);
   }
 
   public int IndexOf(string name)
   {
-    for(int i=0;i<list.Count;++i)
-    {
-      if(list[i].name == name)
-        return i;
-    }
-    return -1;
+    int idx;
+    if(!name2idx.TryGetValue(name, out idx))
+      return -1;
+    return idx;
   }
 
   public bool Replace(Symbol what, Symbol subst)
@@ -2372,6 +2375,9 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
       return false;
     
     list[idx] = subst;
+
+    name2idx.Remove(what.name);
+    name2idx[subst.name] = idx;
 
     return true;
   }
@@ -2384,6 +2390,7 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
         s.scope = null;
     }
     list.Clear();
+    name2idx.Clear();
   }
 
   public void Sync(marshall.SyncContext ctx) 
@@ -2391,8 +2398,14 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
     marshall.Marshall.SyncGeneric(ctx, list);
 
     if(ctx.is_read)
-      foreach(var tmp in list)
+    {
+      for(int idx=0;idx<list.Count;++idx)
+      {
+        var tmp = list[idx];
         tmp.scope = scope;
+        name2idx.Add(tmp.name, idx);
+      }
+    }
   }
 
   public void UnionWith(SymbolsStorage o)
