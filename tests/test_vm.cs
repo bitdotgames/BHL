@@ -20200,6 +20200,37 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestWeirdBug()
+  {
+    string bhl = @"
+    func int,int doer() {
+      trace(""!"")
+      return 1, 0
+    }
+
+    func test() 
+    {
+      int a, int b = doer()
+      trace(""?"")
+    }
+    ";
+
+    var log = new StringBuilder();
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn, show_bytes: true, show_ast: true);
+    Execute(vm, "test");
+
+    AssertEqual("!?", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestFixedStack()
   {
     //Push/PopFast

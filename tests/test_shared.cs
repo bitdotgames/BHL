@@ -532,9 +532,17 @@ public class BHL_TestBase
     }
   }
 
-  public VM MakeVM(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false)
+  public VM MakeVM(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
-    return MakeVM(Compile(bhl, ts_fn, show_ast: show_ast, show_bytes: show_bytes), ts_fn);
+    return MakeVM(
+        Compile(
+          bhl, 
+          ts_fn, 
+          show_ast: show_ast, 
+          show_bytes: show_bytes, 
+          show_parse_tree: show_parse_tree
+        ), 
+      ts_fn);
   }
 
   public static VM MakeVM(CompiledModule orig_cm, Func<Types> ts_fn = null)
