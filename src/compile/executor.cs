@@ -264,13 +264,20 @@ public class CompilationExecutor
 
   static void LinkCompiledModules(Dictionary<string, CompiledModule> file2compiled)
   {
+    //let's create a lookup cache where module name will be a key and 
+    //a module itself will be a value
     var mod_name2compiled = new Dictionary<string, CompiledModule>(); 
     foreach(var kv in file2compiled)
       mod_name2compiled.Add(kv.Value.module.name, kv.Value);
+
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.module.ns.Link(mod_name2compiled[import].module.ns);
+      {
+        CompiledModule imported;
+        if(mod_name2compiled.TryGetValue(import, out imported))
+          kv.Value.module.ns.Link(imported.module.ns);
+      }
     }
   }
 
