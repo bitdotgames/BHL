@@ -4107,15 +4107,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       subst_symb = DisableVar(symbols, var_symb);
     }
 
-    var assign_ast = new AST_Interim();
-    PushAST(assign_ast);
-    VisitValid(assign_exp);
-    PopAST();
+    //NOTE: let's evaluate expression only once in case there are multiple variables
+    if(var_idx == 0)
+    {
+      var assign_ast = new AST_Interim();
+      PushAST(assign_ast);
+      VisitValid(assign_exp);
+      PopAST();
+
+      for(int s=assign_ast.children.Count;s-- > 0;)
+        ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
+    }
 
     var assign_type = new TypeAsArr(Annotate(assign_exp).eval_type); 
-
-    for(int s=assign_ast.children.Count;s-- > 0;)
-      ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
 
     //NOTE: declaring disabled symbol again
     if(subst_symb != null)

@@ -914,6 +914,37 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestMultiReturnBug()
+  {
+    string bhl = @"
+    func int,int doer() {
+      trace(""!"")
+      return 1, 0
+    }
+
+    func test() 
+    {
+      int a, int b = doer()
+      trace(""?"")
+    }
+    ";
+
+    var log = new StringBuilder();
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindTrace(ts, log);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+
+    AssertEqual("!?", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestReturnMultipleVarAssignNoSuchSymbol()
   {
     string bhl = @"
@@ -20196,37 +20227,6 @@ public class TestVM : BHL_TestBase
     vm.Stop(fb);
 
     AssertEqual("A1A1", log.ToString());
-    CommonChecks(vm);
-  }
-
-  //[IsTested()]
-  public void TestWeirdBug()
-  {
-    string bhl = @"
-    func int,int doer() {
-      trace(""!"")
-      return 1, 0
-    }
-
-    func test() 
-    {
-      int a, int b = doer()
-      trace(""?"")
-    }
-    ";
-
-    var log = new StringBuilder();
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindTrace(ts, log);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn, show_bytes: true, show_ast: true);
-    Execute(vm, "test");
-
-    AssertEqual("!?", log.ToString());
     CommonChecks(vm);
   }
 
