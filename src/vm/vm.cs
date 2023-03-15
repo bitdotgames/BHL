@@ -265,8 +265,10 @@ public class Module
 
 public class VM : INamedResolver
 {
-  public const int MAX_IP = int.MaxValue;
-  public const int STOP_IP = MAX_IP - 1;
+  //NOTE: why -2? we reserve some space before int.MaxValue so that 
+  //      increasing some ip after it was assigned a 'STOP_IP' value 
+  //      won't overflow int.MaxValue
+  public const int STOP_IP = int.MaxValue - 2;
 
   public struct Region
   {
@@ -277,7 +279,7 @@ public class VM : INamedResolver
     public int min_ip;
     public int max_ip;
 
-    public Region(Frame frame, IDeferSupport defer_support, int min_ip = -1, int max_ip = MAX_IP)
+    public Region(Frame frame, IDeferSupport defer_support, int min_ip = -1, int max_ip = STOP_IP)
     {
       this.frame = frame;
       this.defer_support = defer_support;
@@ -298,6 +300,10 @@ public class VM : INamedResolver
   public class Fiber
   {
     public VM vm;
+
+    //NOTE: -1 means it's in released state,
+    //      public only for inspection
+    public int refs;
 
     internal int id;
     public int Id {
@@ -331,7 +337,12 @@ public class VM : INamedResolver
       {
         ++vm.fibers_pool.hit;
         fb = vm.fibers_pool.stack.Pop();
+
+        if(fb.refs != -1)
+          throw new Exception("Expected to be released, refs " + fb.refs);
       }
+
+      fb.refs = 1;
 
       //0 index frame used for return values consistency
       fb.exec.frames.Push(Frame.New(vm));
@@ -339,8 +350,13 @@ public class VM : INamedResolver
       return fb;
     }
 
-    static public void Del(Fiber fb)
+    static void Del(Fiber fb)
     {
+      if(fb.refs != 0)
+        throw new Exception("Freeing invalid object, refs " + fb.refs);
+
+      fb.refs = -1;
+
       fb.Clear();
       fb.vm.fibers_pool.stack.Push(fb);
     }
@@ -380,6 +396,25 @@ public class VM : INamedResolver
       exec.frames.Clear();
 
       tick = 0;
+    }
+
+    public void Retain()
+    {
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      ++refs;
+    }
+
+    public void Release()
+    {
+      if(refs == -1)
+        throw new Exception("Invalid state(-1)");
+      if(refs == 0)
+        throw new Exception("Double free(0)");
+
+      --refs;
+      if(refs == 0)
+        Del(this);
     }
 
     public bool IsStopped()
@@ -1391,10 +1426,10 @@ public class VM : INamedResolver
     if(fb.IsStopped())
       return;
 
-    Fiber.Del(fb);
-    //NOTE: we assing Fiber ip to a special value which is just one value before MAX_IP,
+    fb.Release();
+    //NOTE: we assing Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.
-    fb.exec.ip = STOP_IP;
+    fb.exec.ip = STOP_IP + 1;
   }
 
   public void Stop(int fid)
@@ -2322,8 +2357,12 @@ public class VM : INamedResolver
     {
       last_fiber = fb;
 
+      fb.Retain();
+
       ++fb.tick;
       fb.status = Execute(fb.exec);
+
+      fb.Release();
 
       if(fb.status != BHS.RUNNING)
         Stop(fb);
