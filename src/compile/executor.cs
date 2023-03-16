@@ -130,8 +130,6 @@ public class CompilationExecutor
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
-    if(errors.Count > 0)
-      return;
 
     //2.1 let's collect all interim results collected in parse workers
     var file2interim = new Dictionary<string, InterimResult>();
@@ -461,7 +459,7 @@ public class CompilationExecutor
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
                 sfs, 
-                ErrorHandlers.MakeStandard(file, new CompileErrors())
+                ErrorHandlers.MakeStandard(file, w.errors)
               );
               interim.parsed = new ANTLR_Parsed(parser);
 
