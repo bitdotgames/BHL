@@ -19968,7 +19968,6 @@ public class TestVM : BHL_TestBase
   public void TestGlobalVariableAssignAndReadArray()
   {
     string bhl = @"
-
     class Foo { 
       float b
     }
@@ -19990,7 +19989,6 @@ public class TestVM : BHL_TestBase
   public void TestGlobalVariableWrite()
   {
     string bhl = @"
-
     class Foo { 
       float b
     }
@@ -20383,6 +20381,60 @@ public class TestVM : BHL_TestBase
 
     lst.Release();
 
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestReturnValListFromNativeFunc()
+  {
+    string bhl = @"
+    func []Color colors() {
+      []Color cs = get_colors()
+      return cs
+    }
+
+    func float test() 
+    {
+      var cs = colors()
+      return cs[1].r
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+
+      var ts = new Types();
+      
+      BindColor(ts);
+
+      {
+        var fn = new FuncSymbolNative("get_colors", ts.TArr("Color"),
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            {
+              var dv0 = Val.New(frm.vm);
+              var dvl = ValList.New(frm.vm);
+              for(int i=0;i<10;++i)
+              {
+                var c = new Color();
+                c.r = i;
+                var tdv = Val.New(frm.vm);
+                tdv.SetObj(c, ts.T("Color").Get());
+                dvl.lst.Add(tdv);
+              }
+              dv0.SetObj(dvl, Types.Array);
+              stack.Push(dv0);
+            }
+            return null;
+          }
+        );
+        ts.ns.Define(fn);
+      }
+
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

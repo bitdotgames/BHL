@@ -418,6 +418,9 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
+  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Proxy<IType>());  
+  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Proxy<IType>(), new Proxy<IType>());  
+
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
   static public ClassSymbolNative ClassType = null;
