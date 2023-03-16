@@ -784,8 +784,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //NOTE: if it's not 'terminal' let's visit it deeper
       if(chain.paren_exp_ctx != null)
       {
-        VisitValid(chain.paren_exp_ctx);
-        curr_type = Annotate(chain.paren_exp_ctx).eval_type;
+        if(TryVisit(chain.paren_exp_ctx))
+          curr_type = Annotate(chain.paren_exp_ctx).eval_type;
       }
 
       IScope scope = root_scope;
@@ -1311,7 +1311,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(type is ArrayTypeSymbol arr_type)
     {
       var arr_exp = arracc.exp();
-      VisitValid(arr_exp);
+      if(!TryVisit(arr_exp))
+        return;
 
       if(Annotate(arr_exp).eval_type != Types.Int)
       {
@@ -1327,7 +1328,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     else if(type is MapTypeSymbol map_type)
     {
       var arr_exp = arracc.exp();
-      VisitValid(arr_exp);
+      if(!TryVisit(arr_exp))
+        return;
 
       if(!Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
       {
@@ -1490,7 +1492,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           PushJsonType(func_arg_type);
           PushAST(new AST_Interim());
           
-          VisitValid(na.ca);
+          if(!TryVisit(na.ca))
+          {
+            PopAST();
+            PopAST();
+            return;
+          }
 
           //let's check if there were any expressions compatible to be passed by ref
           if(is_ref)
@@ -1540,10 +1547,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(variadic_args.Count == 1 && variadic_args[0].VARIADIC() != null)
         {
           PushJsonType(varg_arr_type);
-          VisitValid(variadic_args[0]);
+          bool ok = TryVisit(variadic_args[0]);
           PopJsonType();
 
-          if(!types.CheckAssign(varg_arr_type, Annotate(variadic_args[0]), errors))
+          if(!ok || !types.CheckAssign(varg_arr_type, Annotate(variadic_args[0]), errors))
           {
             PopAST();
             return;
@@ -1565,7 +1572,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           for(int vidx = 0; vidx < variadic_args.Count; ++vidx)
           {
             var vca = variadic_args[vidx];
-            VisitValid(vca);
+            if(!TryVisit(vca))
+              break;
             //the last item is added implicitely
             if(vidx+1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
@@ -1615,11 +1623,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var arg_type = arg_type_ref.Get();
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
-      VisitValid(ca);
+      bool ok = TryVisit(ca);
       PopAddOptimizeAST();
       PopJsonType();
 
-      if(!types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
+      if(!ok || !types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
       {
         PopAST();
         return;
@@ -1868,7 +1876,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(fparams != null)
     {
       PushAST(ast.fparams());
-      VisitValid(fparams);
+      TryVisit(fparams);
       PopAST();
     }
 
@@ -1945,24 +1953,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitCallArg(bhlParser.CallArgContext ctx)
   {
     var exp = ctx.exp();
-    VisitValid(exp);
-    Annotate(ctx).eval_type = Annotate(exp).eval_type;
+    if(TryVisit(exp))
+      Annotate(ctx).eval_type = Annotate(exp).eval_type;
     return null;
   }
 
   public override object VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
   {
     var json = ctx.jsonObject();
-    VisitValid(json);
-    Annotate(ctx).eval_type = Annotate(json).eval_type;
+    if(TryVisit(json))
+      Annotate(ctx).eval_type = Annotate(json).eval_type;
     return null;
   }
 
   public override object VisitExpJsonArr(bhlParser.ExpJsonArrContext ctx)
   {
     var json = ctx.jsonArray();
-    VisitValid(json);
-    Annotate(ctx).eval_type = Annotate(json).eval_type;
+    if(TryVisit(json))
+      Annotate(ctx).eval_type = Annotate(json).eval_type;
     return null;
   }
 
@@ -2008,7 +2016,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<pairs.Length;++i)
     {
       var pair = pairs[i]; 
-      VisitValid(pair);
+      TryVisit(pair);
     }
     PopAST();
 
@@ -2050,7 +2058,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var vals = ctx.jsonValue();
       for(int i=0;i<vals.Length;++i)
       {
-        VisitValid(vals[i]);
+        TryVisit(vals[i]);
         //the last item is added implicitely
         if(i+1 < vals.Length)
           ast.AddChild(new AST_JsonArrAddItem());
@@ -2091,11 +2099,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
 
         PushJsonType(key_type);
-        VisitValid(val.jsonArray().jsonValue()[0]);
+        TryVisit(val.jsonArray().jsonValue()[0]);
         PopJsonType();
 
         PushJsonType(val_type);
-        VisitValid(val.jsonArray().jsonValue()[1]);
+        TryVisit(val.jsonArray().jsonValue()[1]);
         PopJsonType();
 
         //the last item is added implicitely
@@ -2139,7 +2147,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var jval = ctx.jsonValue(); 
     PushAST(ast);
-    VisitValid(jval);
+    TryVisit(jval);
     PopAST();
 
     PopJsonType();
@@ -2155,10 +2163,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var exp = ctx.exp();
 
     var curr_type = PeekJsonType();
-    VisitValid(exp);
-    Annotate(ctx).eval_type = Annotate(exp).eval_type;
-
-    types.CheckAssign(curr_type, Annotate(exp), errors);
+    if(TryVisit(exp))
+    {
+      Annotate(ctx).eval_type = Annotate(exp).eval_type;
+      types.CheckAssign(curr_type, Annotate(exp), errors);
+    }
 
     return null;
   }
@@ -2261,8 +2270,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var exp = ctx.exp();
 
-    VisitValid(exp);
-    Annotate(ctx).eval_type = Annotate(exp).eval_type;
+    if(TryVisit(exp))
+      Annotate(ctx).eval_type = Annotate(exp).eval_type;
 
     return null;
   }
@@ -2274,12 +2283,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ast = new AST_TypeCast(tp.Get(), false/*don't force type*/, ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
-    VisitValid(exp);
+    bool ok = TryVisit(exp);
     PopAST();
 
     Annotate(ctx).eval_type = tp.Get();
 
-    Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
+    if(ok)
+      Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
 
     PeekAST().AddChild(ast);
 
@@ -2293,7 +2303,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
-    VisitValid(exp);
+    TryVisit(exp);
     PopAST();
 
     Annotate(ctx).eval_type = tp.Get();
@@ -2313,7 +2323,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
-    VisitValid(exp);
+    TryVisit(exp);
     PopAST();
 
     Annotate(ctx).eval_type = Types.Bool;
@@ -2340,12 +2350,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ast = new AST_UnaryOpExp(type);
     var exp = ctx.exp(); 
     PushAST(ast);
-    VisitValid(exp);
+    bool ok = TryVisit(exp);
     PopAST();
 
-    Annotate(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-      types.CheckUnaryMinus(Annotate(exp), errors) : 
-      types.CheckLogicalNot(Annotate(exp), errors);
+    if(ok)
+    {
+      Annotate(ctx).eval_type = type == EnumUnaryOp.NEG ? 
+        types.CheckUnaryMinus(Annotate(exp), errors) : 
+        types.CheckLogicalNot(Annotate(exp), errors);
+    }
 
     PeekAST().AddChild(ast);
 
@@ -2519,9 +2532,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     EnumBinaryOp op_type = GetBinaryOpType(op);
     AST_Tree ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
-    VisitValid(lhs);
-    VisitValid(rhs);
+    bool ok1 = TryVisit(lhs);
+    bool ok2 = TryVisit(rhs);
     PopAST();
+
+    if(!ok1 || !ok2)
+      return;
 
     var ann_lhs = Annotate(lhs);
     var ann_rhs = Annotate(rhs);
@@ -2567,9 +2583,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var exp_1 = ctx.exp(1);
 
     PushAST(ast);
-    VisitValid(exp_0);
-    VisitValid(exp_1);
+    bool ok1 = TryVisit(exp_0);
+    bool ok2 = TryVisit(exp_1);
     PopAST();
+
+    if(!ok1 || !ok2)
+      return null;
 
     Annotate(ctx).eval_type = types.CheckBitOp(Annotate(exp_0), Annotate(exp_1), errors);
 
@@ -2587,15 +2606,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //AND node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
-    VisitValid(exp_0);
+    bool ok1 = TryVisit(exp_0);
     PopAST();
     ast.AddChild(tmp0);
 
     var tmp1 = new AST_Interim();
     PushAST(tmp1);
-    VisitValid(exp_1);
+    bool ok2 = TryVisit(exp_1);
     PopAST();
     ast.AddChild(tmp1);
+
+    if(!ok1 || !ok2)
+      return null;
 
     Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
 
@@ -2613,15 +2635,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //OR node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
-    VisitValid(exp_0);
+    bool ok1 = TryVisit(exp_0);
     PopAST();
     ast.AddChild(tmp0);
 
     var tmp1 = new AST_Interim();
     PushAST(tmp1);
-    VisitValid(exp_1);
+    bool ok2 = TryVisit(exp_1);
     PopAST();
     ast.AddChild(tmp1);
+
+    if(!ok1 || !ok2)
+      return null;
 
     Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
 
@@ -2865,8 +2890,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var exp_item = ret_val.expList().exp()[0];
         PushJsonType(fret_type);
-        VisitValid(exp_item);
+        bool ok = TryVisit(exp_item);
         PopJsonType();
+
+        if(!ok)
+          return null;
 
         if(Annotate(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
@@ -2896,7 +2924,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         for(int i=explen;i-- > 0;)
         {
           var exp = ret_val.expList().exp()[i];
-          VisitValid(exp);
+          if(!TryVisit(exp))
+            return null;
           var exp_eval_type = Annotate(exp).eval_type;
           if(exp_eval_type == null)
             return null;
@@ -2983,7 +3012,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var nsdecl = ctx.nsDecl();
     if(nsdecl != null)
     {
-      VisitValid(nsdecl);
+      TryVisit(nsdecl);
       return;
     }
     var vdecl = ctx.varDeclareOptAssign();
@@ -3088,7 +3117,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   void ParseFuncBlock(ParserRuleContext ctx, bhlParser.FuncBlockContext block_ctx, bhlParser.RetTypeContext ret_ctx, AST_FuncDecl func_ast)
   {
     PushAST(func_ast.block());
-    VisitValid(block_ctx);
+    TryVisit(block_ctx);
     PopAST();
 
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
@@ -3174,7 +3203,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           //      simply discard it since we don't care about
           //      func args related AST for interfaces
           PushAST(new AST_Interim());
-          VisitValid(func_params);
+          TryVisit(func_params);
           PopAST();
           PopScope();
         }
@@ -3603,9 +3632,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       exp_ast = new AST_Interim();
       PushAST(exp_ast);
       PushJsonType(tp.Get());
-      VisitValid(assign_exp);
+      bool ok = TryVisit(assign_exp);
       PopJsonType();
       PopAST();
+
+      if(!ok)
+        return;
     }
 
     AST_Tree ast = assign_exp != null ? 
@@ -3653,7 +3685,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         pop_json_type = true;
       }
 
-      VisitValid(fp);
+      TryVisit(fp);
 
       if(pop_json_type)
         PopJsonType();
@@ -3985,8 +4017,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       exp_ast = new AST_Interim();
       PushAST(exp_ast);
-      VisitValid(assign_exp);
+      bool ok = TryVisit(assign_exp);
       PopAST();
+
+      if(!ok)
+        return null;
     }
 
     VariableSymbol vd_symb;
@@ -4117,8 +4152,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var assign_ast = new AST_Interim();
       PushAST(assign_ast);
-      VisitValid(assign_exp);
+      bool ok = TryVisit(assign_exp);
       PopAST();
+
+      if(!ok)
+        return false;
 
       for(int s=assign_ast.children.Count;s-- > 0;)
         ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
@@ -4203,10 +4241,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
-    VisitValid(ctx.exp());
+    bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     var func_symb = PeekFuncDecl();
@@ -4257,10 +4295,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var item = else_if[i];
       var item_cond = new AST_Block(BlockType.SEQ);
       PushAST(item_cond);
-      VisitValid(item.exp());
+      bool item_ok = TryVisit(item.exp());
       PopAST();
 
-      if(!types.CheckAssign(Types.Bool, Annotate(item.exp()), errors))
+      if(!item_ok || !types.CheckAssign(Types.Bool, Annotate(item.exp()), errors))
         return null;
 
       seen_return = return_found.Contains(func_symb);
@@ -4304,24 +4342,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var condition = new AST_Interim();
     PushAST(condition);
-    VisitValid(exp_0);
+    bool ok1 = TryVisit(exp_0);
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(exp_0), errors))
+    if(!ok1 || !types.CheckAssign(Types.Bool, Annotate(exp_0), errors))
       return null;
 
     ast.AddChild(condition);
 
     var consequent = new AST_Interim();
     PushAST(consequent);
-    VisitValid(exp_1);
+    TryVisit(exp_1);
     PopAST();
 
     ast.AddChild(consequent);
 
     var alternative = new AST_Interim();
     PushAST(alternative);
-    VisitValid(exp_2);
+    bool ok2 = TryVisit(exp_2);
     PopAST();
 
     ast.AddChild(alternative);
@@ -4329,7 +4367,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ann_exp_1 = Annotate(exp_1);
     Annotate(ctx).eval_type = ann_exp_1.eval_type;
 
-    if(!types.CheckAssign(ann_exp_1, Annotate(exp_2), errors))
+    if(!ok2 || !types.CheckAssign(ann_exp_1, Annotate(exp_2), errors))
       return null;
     PeekAST().AddChild(ast);
     return null;
@@ -4343,10 +4381,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
-    VisitValid(ctx.exp());
+    bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4378,10 +4416,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
-    VisitValid(ctx.exp());
+    bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4423,10 +4461,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
-    VisitValid(for_cond);
+    bool ok = TryVisit(for_cond);
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(for_cond), errors))
+    if(!ok || !types.CheckAssign(Types.Bool, Annotate(for_cond), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4502,10 +4540,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
-    VisitValid(ctx.exp());
+    bool ok = TryVisit(ctx.exp());
     PopAST();
 
-    if(!types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
+    if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
       return null;
 
     ast.AddChild(cond);
@@ -4588,9 +4626,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PushJsonType(arr_type);
       var exp = ctx.foreachExp().exp();
       //evaluating array expression
-      VisitValid(exp);
+      bool ok = TryVisit(exp);
       PopJsonType();
-      if(!types.CheckAssign(arr_type, Annotate(exp), errors))
+      if(!ok || !types.CheckAssign(arr_type, Annotate(exp), errors))
         goto Bail;
 
       var arr_tmp_name = "$foreach_tmp" + exp.Start.Line + "_" + exp.Start.Column;
@@ -4749,9 +4787,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PushJsonType(map_type);
       var exp = ctx.foreachExp().exp();
       //evaluating array expression
-      VisitValid(exp);
+      bool ok = TryVisit(exp);
       PopJsonType();
-      if(!types.CheckAssign(map_type, Annotate(exp), errors))
+      if(!ok || !types.CheckAssign(map_type, Annotate(exp), errors))
         goto Bail;
 
       var map_tmp_en_name = "$foreach_en" + exp.Start.Line + "_" + exp.Start.Column;
@@ -4811,9 +4849,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   IType PredictType(IParseTree tree)
   {
     PushAST(new AST_Interim());
-    VisitValid(tree);
+    bool ok = TryVisit(tree);
     PopAST();
-    return Annotate(tree).eval_type;
+    return !ok ? null : Annotate(tree).eval_type;
   }
 
   AST_Block ProcBlock(BlockType type, IParseTree[] sts)
@@ -4838,7 +4876,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(is_paral)
       {
         PushAST(tmp);
-        VisitValid(st);
+        TryVisit(st);
         PopAST();
 
         //NOTE: wrapping in group only in case there are more than one child
@@ -4854,7 +4892,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         tmp.children.Clear();
       }
       else
-        VisitValid(st);
+        TryVisit(st);
     }
     PopAST();
 
@@ -5011,10 +5049,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
   }
 
-  void VisitValid(IParseTree tree)
+  bool TryVisit(IParseTree tree)
   {
-    if(tree.ChildCount > 0)
+    if(tree?.ChildCount > 0)
+    {
       Visit(tree);
+      return true;
+    }
+    return false;
   }
 }
 
