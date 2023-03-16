@@ -307,7 +307,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid usage context",
+        "unexpected expression",
         new PlaceAssert(bhl, @"
       var bar = null
 ------^"
@@ -328,7 +328,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid usage context",
+        "unexpected expression",
         new PlaceAssert(bhl, @"
       var a
 ------^"
@@ -393,7 +393,7 @@ public class TestVar : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "invalid usage context",
+      "unexpected expression",
       new PlaceAssert(bhl, @"
     var a = 10
 ----^"
@@ -415,7 +415,7 @@ public class TestVar : BHL_TestBase
           delegate() { 
             Compile(bhl);
           },
-          "invalid usage context",
+          "unexpected expression",
           new PlaceAssert(bhl, @"
         func var test() {
 -------------^"
@@ -434,7 +434,7 @@ public class TestVar : BHL_TestBase
           delegate() { 
             Compile(bhl);
           },
-          "invalid usage context",
+          "unexpected expression",
           new PlaceAssert(bhl, @"
         func int test(int a, var b) {
 -----------------------------^"
@@ -456,7 +456,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid usage context",
+        "unexpected expression",
         new PlaceAssert(bhl, @"
         []var ns = []
 ----------^"
@@ -477,7 +477,7 @@ public class TestVar : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "invalid usage context",
+        "unexpected expression",
         new PlaceAssert(bhl, @"
         var foo
 --------^"

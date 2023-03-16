@@ -692,7 +692,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!chain.IsFuncCall)
     {
-      AddSemanticError(exp, "invalid usage context");
+      AddSemanticError(exp, "unexpected expression");
       return null;
     }
 
@@ -1798,7 +1798,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(ctx.nsName().GetText() == "var")
       {
-        AddSemanticError(ctx.nsName(), "invalid usage context");
+        AddSemanticError(ctx.nsName(), "unexpected expression");
         return tp;
       }
 
@@ -2379,7 +2379,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var chain = new ExpChain(ctx, chain_ctx);
       if(!chain.IsVarAccess)
       {
-        AddSemanticError(chain_ctx, "invalid usage context");
+        AddSemanticError(chain_ctx, "unexpected expression");
         return false;
       }
 
@@ -3862,12 +3862,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(is_auto_var && assign_exp == null)
         {
-          AddSemanticError(vd_type, "invalid usage context");
+          AddSemanticError(vd_type, "unexpected expression");
           return false;
         }
         else if(is_auto_var && assign_exp?.GetText() == "=null")
         {
-          AddSemanticError(vd_type, "invalid usage context");
+          AddSemanticError(vd_type, "unexpected expression");
           return false;
         }
 

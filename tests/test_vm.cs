@@ -1332,7 +1332,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"invalid usage context",
+      @"unexpected expression",
       new PlaceAssert(bhl, @"
       foo
 ------^"
@@ -1376,7 +1376,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"invalid usage context",
+      @"unexpected expression",
       new PlaceAssert(bhl, @"
       suspend
 ------^"
@@ -1400,7 +1400,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      @"invalid usage context",
+      @"unexpected expression",
       new PlaceAssert(bhl, @"
       func() {}
 ------^"
@@ -1451,7 +1451,7 @@ public class TestVM : BHL_TestBase
       delegate() { 
         Compile(bhl, ts_fn);
       },
-      @"invalid usage context",
+      @"unexpected expression",
       new PlaceAssert(bhl, @"
       c.r
 ------^"
