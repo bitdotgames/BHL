@@ -3117,9 +3117,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var vd = pass.gvar_decl_ctx;
 
-    pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    if(vd.NAME() != null)
+    {
+      pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
-    curr_scope.Define(pass.gvar_symb);
+      curr_scope.Define(pass.gvar_symb);
+    }
+    else
+      AddSemanticError(vd, "invalid var declaration");
   }
 
   void Pass_OutlineInterfaceDecl(ParserPass pass)
