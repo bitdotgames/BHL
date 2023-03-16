@@ -7,6 +7,28 @@ using Antlr4.Runtime.Tree;
 
 public class TestErrors : BHL_TestBase
 {
+  [IsTested()]
+  public void TestMissingFuncKeyword()
+  {
+    string bhl = @"
+    []Color color() {
+      []Color cs = get_colors()
+      return cs
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "extraneous input '('",
+      new PlaceAssert(bhl, @"
+    []Color color() {
+-----------------^"
+      )
+    );
+  }
+
   //TODO:
   //[IsTested()]
   public void TestIncompleteFuncCall()
