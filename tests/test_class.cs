@@ -2198,6 +2198,31 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestTmpNativeClassCallMethod()
+  {
+    string bhl = @"
+    func Color get() {
+      return mkcolor(1)
+    }
+      
+    func test() 
+    {
+      get().mult_summ(10)
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestChildUserClassAlreadyDefinedMember()
   {
     string bhl = @"
