@@ -325,6 +325,75 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIncrementalBuildOfChangedFilesWithChangedImportedDependency()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+    ";
+
+    string file_get = @"
+    import ""unit""
+
+    func Unit get() { 
+      Unit u = {test: 23}
+      return u
+    }
+    ";
+
+    string file_test = @"
+    import ""get""
+
+    func int test() {
+      return get().test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile("unit.bhl", file_unit, ref files);
+    NewTestFile("get.bhl", file_get, ref files);
+    NewTestFile("test.bhl", file_test, ref files);
+
+    {
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.cache_hits, 0);
+      AssertEqual(exec.cache_miss, 3);
+      AssertEqual(exec.cache_errs, 0);
+    }
+
+    string new_file_unit = @"
+      class Unit {
+        int test
+        int test2
+      }
+    ";
+    int fidx = NewTestFile("unit.bhl", new_file_unit, ref files, unique: true);
+    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
+
+    {
+      var exec = new CompilationExecutor();
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+      AssertEqual(exec.cache_hits, 1);
+      AssertEqual(exec.cache_miss, 1+1);
+      AssertEqual(exec.cache_errs, 0);
+    }
+  }
+
+  [IsTested()]
   public void TestIncrementalBuildOfChangedFilesWithGlobalVars()
   {
     string file_unit = @"
