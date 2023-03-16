@@ -29,6 +29,28 @@ public class TestErrors : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestInvalidIncOperator()
+  {
+    string bhl = @"
+    func test() {
+      int a
+      a +++++++++== 1
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "extraneous input '++'",
+      new PlaceAssert(bhl, @"
+      a +++++++++== 1
+----------^"
+      )
+    );
+  }
+
   //TODO:
   //[IsTested()]
   public void TestIncompleteFuncCall()
