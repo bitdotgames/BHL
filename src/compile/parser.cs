@@ -152,16 +152,40 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         this.gvar_decl_ctx = vda.varDeclare();
         this.gvar_assign_ctx = vda.assignExp();
+        if(!IsValid(this.gvar_decl_ctx))
+          this.gvar_decl_ctx = null;
       }
       else if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
       {
         this.gvar_decl_ctx = vdoa.varDeclare();
         this.gvar_assign_ctx = vdoa.assignExp();
+        if(!IsValid(this.gvar_decl_ctx))
+          this.gvar_decl_ctx = null;
       }
-      this.func_ctx = ctx as bhlParser.FuncDeclContext;
-      this.class_ctx = ctx as bhlParser.ClassDeclContext;
-      this.iface_ctx = ctx as bhlParser.InterfaceDeclContext;
-      this.enum_ctx = ctx as bhlParser.EnumDeclContext;
+      else if(ctx is bhlParser.FuncDeclContext fdc)
+      {
+        this.func_ctx = fdc;
+        if(!IsValid(fdc))
+          this.func_ctx = null;
+      }
+      else if(ctx is bhlParser.ClassDeclContext cdc)
+      {
+        this.class_ctx = cdc;
+        if(!IsValid(cdc))
+          this.class_ctx = null;
+      }
+      else if(ctx is bhlParser.InterfaceDeclContext idc)
+      {
+        this.iface_ctx = idc;
+        if(!IsValid(idc))
+          this.iface_ctx = null;
+      }
+      else if(ctx is bhlParser.EnumDeclContext edc)
+      {
+        this.enum_ctx = edc;
+        if(!IsValid(edc))
+          this.enum_ctx = null;
+      }
     }
   }
 
@@ -2786,6 +2810,21 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return call_by_ref_stack.Peek();
   }
 
+  static bool HasErrors(IParseTree tree)
+  {
+    for(int i=0;i<tree.ChildCount;++i)
+      if(tree.GetChild(i) is ErrorNodeImpl)
+        return true;
+    return false;
+  }
+
+  static bool IsValid(IParseTree tree)
+  {
+    if(tree == null)
+      return false;
+    return !HasErrors(tree);
+  }
+
   public override object VisitStmReturn(bhlParser.StmReturnContext ctx)
   {
     var ret_val = ctx.returnVal();
@@ -3146,14 +3185,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var vd = pass.gvar_decl_ctx;
 
-    if(vd.NAME() != null)
-    {
-      pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
-      curr_scope.Define(pass.gvar_symb);
-    }
-    else
-      AddSemanticError(vd, "invalid var declaration");
+    curr_scope.Define(pass.gvar_symb);
   }
 
   void Pass_OutlineInterfaceDecl(ParserPass pass)
