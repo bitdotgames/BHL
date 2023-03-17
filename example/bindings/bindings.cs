@@ -46,7 +46,7 @@ public class MyBindings : IUserBindings
     {
       var fn = new FuncSymbolNative("Wait", FuncAttrib.Coro, Types.Void, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          { return new WaitNode(); },
+          { return CoroutinePool.New<WaitNode>(frm.vm); },
           new FuncArgSymbol("t", Types.Float)
         );
 
@@ -61,12 +61,12 @@ public static class Time
   public static float dt;
 }
 
-public class WaitNode : ICoroutine
+public class WaitNode : Coroutine
 {
   bool first_time = true;
   float time_left;
 
-  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     if(first_time)
     {
@@ -82,7 +82,7 @@ public class WaitNode : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     first_time = true;
   }
