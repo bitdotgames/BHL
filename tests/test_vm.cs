@@ -8004,12 +8004,12 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  class TraceAfterYield : ICoroutine
+  class TraceAfterYield : Coroutine
   {
     bool first_time = true;
     public StringBuilder log;
 
-    public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
     {
       if(first_time)
       {
@@ -8020,7 +8020,7 @@ public class TestVM : BHL_TestBase
         log.Append("HERE");
     }
 
-    public void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
     {
       first_time = true;
     }
@@ -12328,14 +12328,14 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public class Bar_ret_int : ICoroutine
+  public class Bar_ret_int : Coroutine
   {
     bool first_time = true;
 
     int ticks;
     int ret;
 
-    public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
     {
       if(first_time)
       {
@@ -12356,7 +12356,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
     {
       first_time = true;
     }
@@ -18361,12 +18361,12 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  class YIELD_STOP : ICoroutine
+  class YIELD_STOP : Coroutine
   {
     bool done;
     int fib;
 
-    public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
     {
       //first time
       if(!done)
@@ -18379,7 +18379,7 @@ public class TestVM : BHL_TestBase
         frm.vm.Stop(fib);
     }
 
-    public void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
     {
       done = false;
     }
@@ -20993,12 +20993,12 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  class CoroutineWaitTicks : ICoroutine
+  class CoroutineWaitTicks : Coroutine
   {
     int c;
     int ticks_ttl;
 
-    public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
     {
       //first time
       if(c++ == 0)
@@ -21010,7 +21010,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
     {
       c = 0;
       ticks_ttl = 0;

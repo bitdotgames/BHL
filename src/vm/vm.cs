@@ -291,7 +291,7 @@ public class VM : INamedResolver
   public class ExecState
   {
     internal int ip;
-    internal ICoroutine coroutine;
+    internal Coroutine coroutine;
     internal FixedStack<Region> regions = new FixedStack<Region>(32);
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
     public ValStack stack;
@@ -1337,7 +1337,7 @@ public class VM : INamedResolver
       var frame = Frame.New(this);
       frame.Init(fb, curr_frame, curr_stack, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      fb.exec.coroutine = (Coroutine)ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1376,7 +1376,7 @@ public class VM : INamedResolver
       frame._stack.Push(Val.NewInt(this, args.Length));
 
       Attach(fb, frame);
-      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      fb.exec.coroutine = (Coroutine)ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1836,7 +1836,8 @@ public class VM : INamedResolver
         var native = (FuncSymbolNative)types.nfunc_index[func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref exec.coroutine))
+        ICoroutine icoro = exec.coroutine;
+        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref icoro))
           return status;
       }
       break;
@@ -1888,7 +1889,8 @@ public class VM : INamedResolver
         var class_type = (ClassSymbol)self.type;
 
         BHS status;
-        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref exec.coroutine))
+        ICoroutine icoro = exec.coroutine;
+        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref icoro))
           return status;
       }
       break;
@@ -1950,7 +1952,8 @@ public class VM : INamedResolver
         var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
+        ICoroutine icoro = exec.coroutine;
+        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref icoro))
           return status;
       }
       break;
@@ -1965,7 +1968,8 @@ public class VM : INamedResolver
         if(ptr.native != null)
         {
           BHS status;
-          bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
+          ICoroutine icoro = exec.coroutine;
+          bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref icoro);
           val_ptr.Release();
           if(return_status)
             return status;
@@ -2257,7 +2261,7 @@ public class VM : INamedResolver
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
-  ICoroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, ExecState exec, out int size, IDeferSupport defer_support)
+  Coroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, ExecState exec, out int size, IDeferSupport defer_support)
   {
     BlockType type;
     ReadBlockHeader(ref ip, curr_frame, out type, out size);
@@ -2302,7 +2306,7 @@ public class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
 
-  ICoroutine VisitBlock(ExecState exec, Frame curr_frame, IDeferSupport defer_support)
+  Coroutine VisitBlock(ExecState exec, Frame curr_frame, IDeferSupport defer_support)
   {
     int block_size;
     var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, exec, out block_size, defer_support);
@@ -2790,60 +2794,67 @@ public interface ICoroutine
   void Cleanup(VM.Frame frm, VM.ExecState exec);
 }
 
+public abstract class Coroutine : ICoroutine
+{
+  internal VM.Pool<Coroutine> pool;
+
+  public abstract void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status);
+  public virtual void Cleanup(VM.Frame frm, VM.ExecState exec) {}
+}
+
 public class CoroutinePool
 {
-  Dictionary<System.Type, VM.Pool<ICoroutine>> all = new Dictionary<System.Type, VM.Pool<ICoroutine>>(); 
-
-  static public T New<T>(VM vm) where T : ICoroutine, new()
+  //TODO: add debug inspection for concrete types
+  static class PoolHolder<T> where T : Coroutine
   {
-    var t = typeof(T); 
-    VM.Pool<ICoroutine> pool;
-    if(!vm.coro_pool.all.TryGetValue(t, out pool))
-    {
-      pool = new VM.Pool<ICoroutine>();
-      vm.coro_pool.all.Add(t, pool);
-    }
+    //TODO: store it in thread local storage
+    //[ThreadStatic]
+    static public VM.Pool<Coroutine> pool = new VM.Pool<Coroutine>();
+  }
 
-    ICoroutine coro = null;
+  public int hit;
+  public int miss;
+  public int free;
+
+  static public T New<T>(VM vm) where T : Coroutine, new()
+  {
+    var pool = PoolHolder<T>.pool;
+
+    Coroutine coro = null;
     if(pool.stack.Count == 0)
     {
       ++pool.miss;
+      ++vm.coro_pool.miss;
       coro = new T();
+      coro.pool = pool;
     }
     else
     {
       ++pool.hit;
+      ++vm.coro_pool.hit;
       coro = pool.stack.Pop();
     }
-
-    //Console.WriteLine("NEW " + typeof(T).Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
 
     return (T)coro;
   }
 
-  static public void Del(VM.Frame frm, VM.ExecState exec, ICoroutine coro)
+  static public void Del(VM.Frame frm, VM.ExecState exec, Coroutine coro)
   {
-    //Console.WriteLine("DEL " + coro.GetType().Name + " " + coro.GetHashCode()/* + " " + Environment.StackTrace*/);
-
     if(coro == null)
       return;
 
+    var pool = coro.pool;
+
     coro.Cleanup(frm, exec);
 
-    var t = coro.GetType();
-
-    VM.Pool<ICoroutine> pool;
-    //ignoring coroutine whch were not allocated via pool 
-    if(!frm.vm.coro_pool.all.TryGetValue(t, out pool))
-      return;
-
+    ++frm.vm.coro_pool.free;
     pool.stack.Push(coro);
 
     if(pool.stack.Count > pool.miss)
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
-  static internal void Del(VM.Frame frm, VM.ExecState exec, List<ICoroutine> coros)
+  static internal void Del(VM.Frame frm, VM.ExecState exec, List<Coroutine> coros)
   {
     for(int i=0;i<coros.Count;++i)
       Del(frm, exec, coros[i]);
@@ -2867,26 +2878,6 @@ public class CoroutinePool
     if(level == 0)
       Console.WriteLine(">>>>>>>>>>>>>>>");
   }
-
-  public int Allocs
-  {
-    get {
-      int total = 0;
-      foreach(var kv in all) 
-        total += kv.Value.Allocs;
-      return total;
-    }
-  }
-
-  public int Free
-  {
-    get {
-      int total = 0;
-      foreach(var kv in all) 
-        total += kv.Value.Free;
-      return total;
-    }
-  }
 }
 
 public interface IDeferSupport
@@ -2905,24 +2896,19 @@ public interface IInspectableCoroutine
   ICoroutine At(int i);
 }
 
-class CoroutineSuspend : ICoroutine
+class CoroutineSuspend : Coroutine
 {
-  public static readonly ICoroutine Instance = new CoroutineSuspend();
-
-  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     status = BHS.RUNNING;
   }
-
-  public void Cleanup(VM.Frame frm, VM.ExecState exec)
-  {}
 }
 
-class CoroutineYield : ICoroutine
+class CoroutineYield : Coroutine
 {
   bool first_time = true;
 
-  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     if(first_time)
     {
@@ -2931,7 +2917,7 @@ class CoroutineYield : ICoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     first_time = true;
   }
@@ -2998,7 +2984,7 @@ public struct DeferBlock
   }
 }
 
-public class SeqBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
+public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers;
@@ -3021,13 +3007,13 @@ public class SeqBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
     exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     status = frm.vm.Execute(exec);
     ext_exec.ip = exec.ip;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState _)
+  public override void Cleanup(VM.Frame frm, VM.ExecState _)
   {
     if(exec.coroutine != null)
     {
@@ -3055,7 +3041,7 @@ public class SeqBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
   }
 }
 
-public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
+public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -3083,7 +3069,7 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
     exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
   {
     status = frm.vm.Execute(exec);
 
@@ -3099,7 +3085,7 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState _)
+  public override void Cleanup(VM.Frame frm, VM.ExecState _)
   {
     if(exec.coroutine != null)
     {
@@ -3135,12 +3121,12 @@ public class ParalBranchBlock : ICoroutine, IDeferSupport, IInspectableCoroutine
   }
 }
 
-public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
+public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
   public int i;
-  public List<ICoroutine> branches = new List<ICoroutine>();
+  public List<Coroutine> branches = new List<Coroutine>();
   public List<DeferBlock> defers;
 
   public int Count {
@@ -3164,7 +3150,7 @@ public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutin
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     exec.ip = min_ip;
 
@@ -3186,7 +3172,7 @@ public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutin
     }
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     CoroutinePool.Del(frm, exec, branches);
     DeferBlock.ExitScope(defers, exec);
@@ -3194,7 +3180,7 @@ public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutin
 
   public void Attach(ICoroutine coro)
   {
-    branches.Add(coro);
+    branches.Add((Coroutine)coro);
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -3205,12 +3191,12 @@ public class ParalBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutin
   }
 }
 
-public class ParalAllBlock : IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
+public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
   public int i;
-  public List<ICoroutine> branches = new List<ICoroutine>();
+  public List<Coroutine> branches = new List<Coroutine>();
   public List<DeferBlock> defers;
 
   public int Count {
@@ -3234,7 +3220,7 @@ public class ParalAllBlock : IBranchyCoroutine, IDeferSupport, IInspectableCorou
       defers.Clear();
   }
 
-  public void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     exec.ip = min_ip;
     
@@ -3272,7 +3258,7 @@ public class ParalAllBlock : IBranchyCoroutine, IDeferSupport, IInspectableCorou
       exec.ip = max_ip + 1;
   }
 
-  public void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
     CoroutinePool.Del(frm, exec, branches);
     DeferBlock.ExitScope(defers, exec);
@@ -3280,7 +3266,7 @@ public class ParalAllBlock : IBranchyCoroutine, IDeferSupport, IInspectableCorou
 
   public void Attach(ICoroutine coro)
   {
-    branches.Add(coro);
+    branches.Add((Coroutine)coro);
   }
 
   public void RegisterDefer(DeferBlock dfb)

@@ -581,7 +581,8 @@ public class Types : INamedResolver
       var fn = new FuncSymbolNative("suspend", FuncAttrib.Coro, this.T("void"), 0, 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
-          return CoroutineSuspend.Instance;
+          //TODO: this of static instance usage for this case
+          return CoroutinePool.New<CoroutineSuspend>(frm.vm);
         } 
       );
       ns.Define(fn);

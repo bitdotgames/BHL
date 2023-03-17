@@ -715,7 +715,7 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_instructions = true)
+  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
   {
     //cleaning globals
     vm.UnloadModules();
@@ -731,8 +731,8 @@ public class BHL_TestBase
     AssertEqual(vm.fptrs_pool.Allocs, vm.fptrs_pool.Free);
     if(check_fibers)
       AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
-    if(check_instructions)
-      AssertEqual(vm.coro_pool.Allocs, vm.coro_pool.Free);
+    if(check_coros)
+      AssertEqual(vm.coro_pool.miss, vm.coro_pool.free);
   }
 
   public void SubTest(System.Action fn)
