@@ -2822,7 +2822,6 @@ public class CoroutinePool
       ++pool.miss;
       ++vm.coro_pool.miss;
       coro = new T();
-      coro.pool = pool;
     }
     else
     {
@@ -2830,6 +2829,7 @@ public class CoroutinePool
       ++vm.coro_pool.hit;
       coro = pool.stack.Pop();
     }
+    coro.pool = pool;
 
     return (T)coro;
   }
