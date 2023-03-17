@@ -1337,7 +1337,7 @@ public class VM : INamedResolver
       var frame = Frame.New(this);
       frame.Init(fb, curr_frame, curr_stack, null, null, RETURN_BYTES, 0);
       Attach(fb, frame);
-      fb.exec.coroutine = (Coroutine)ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1376,7 +1376,7 @@ public class VM : INamedResolver
       frame._stack.Push(Val.NewInt(this, args.Length));
 
       Attach(fb, frame);
-      fb.exec.coroutine = (Coroutine)ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -1836,8 +1836,7 @@ public class VM : INamedResolver
         var native = (FuncSymbolNative)types.nfunc_index[func_idx];
 
         BHS status;
-        ICoroutine icoro = exec.coroutine;
-        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref icoro))
+        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1889,8 +1888,7 @@ public class VM : INamedResolver
         var class_type = (ClassSymbol)self.type;
 
         BHS status;
-        ICoroutine icoro = exec.coroutine;
-        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref icoro))
+        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1952,8 +1950,7 @@ public class VM : INamedResolver
         var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
         BHS status;
-        ICoroutine icoro = exec.coroutine;
-        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref icoro))
+        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1968,8 +1965,7 @@ public class VM : INamedResolver
         if(ptr.native != null)
         {
           BHS status;
-          ICoroutine icoro = exec.coroutine;
-          bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref icoro);
+          bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
           val_ptr.Release();
           if(return_status)
             return status;
@@ -2136,7 +2132,7 @@ public class VM : INamedResolver
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
-  static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status, ref ICoroutine coroutine)
+  static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status, ref Coroutine coroutine)
   {
     status = BHS.SUCCESS;
     var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);
