@@ -36,7 +36,9 @@ public static class Tasks
   [Task()]
   public static void build_front_dll(Taskman tm, string[] args)
   {
-    bool debugger = Environment.GetEnvironmentVariable("BHL_DEBUGGER") == "1";
+    bool debug = Environment.GetEnvironmentVariable("BHL_DEBUG") == "1";
+    bool test_debug = Environment.GetEnvironmentVariable("BHL_TDEBUG") == "1";
+    bool tests = Environment.GetEnvironmentVariable("BHL_TEST") == "1";
 
     var front_src = new List<string>() {
       $"{BHL_ROOT}/src/compile/*.cs",
@@ -44,11 +46,15 @@ public static class Tasks
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
       $"{BHL_ROOT}/deps/lz4.dll", 
     };
+    //let's add runtime VM sources as well
     front_src.AddRange(VM_SRC);
 
     MCSBuild(tm, front_src.ToArray(),
      $"{BHL_ROOT}/bhl_front.dll",
-     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + (debugger ? " -define:BHL_DEBUGGER" : "")
+     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
+     (debug ? " -define:BHL_DEBUG" : "") + 
+     (test_debug ? " -define:BHL_TDEBUG" : "") + 
+     (tests ? " -define:BHL_TEST" : "")
     );
   }
 
@@ -149,7 +155,13 @@ public static class Tasks
     );
   }
 
-  [Task("build_front_dll", "build_lsp_dll")]
+  [Task()]
+  public static void set_env_BHL_TEST(Taskman tm, string[] args)
+  {
+    Environment.SetEnvironmentVariable("BHL_TEST", "1");
+  }
+
+  [Task("set_env_BHL_TEST", "build_front_dll", "build_lsp_dll")]
   public static void test(Taskman tm, string[] args)
   {
     MCSBuild(tm, 
@@ -165,7 +177,7 @@ public static class Tasks
     );
 
     string mono_opts = "--debug"; 
-    if(Environment.GetEnvironmentVariable("BHL_DEBUGGER") == "1")
+    if(Environment.GetEnvironmentVariable("BHL_TDEBUG") == "1")
       mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556";
 
     MonoRun(tm, $"{BHL_ROOT}/test.exe", args, mono_opts);

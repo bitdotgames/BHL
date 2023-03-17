@@ -1,4 +1,3 @@
-//#define BHL_DEBUGGER
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -335,7 +334,7 @@ public class VM : INamedResolver
       }
       else
       {
-        ++vm.fibers_pool.hit;
+        ++vm.fibers_pool.hits;
         fb = vm.fibers_pool.stack.Pop();
 
         if(fb.refs != -1)
@@ -543,7 +542,7 @@ public class VM : INamedResolver
       }
       else
       {
-        ++vm.frames_pool.hit;
+        ++vm.frames_pool.hits;
         frm = vm.frames_pool.stack.Pop();
 
         if(frm.refs != -1)
@@ -695,7 +694,7 @@ public class VM : INamedResolver
       }
       else
       {
-        ++vm.fptrs_pool.hit;
+        ++vm.fptrs_pool.hits;
         ptr = vm.fptrs_pool.stack.Pop();
 
         if(ptr.refs != -1)
@@ -834,23 +833,24 @@ public class VM : INamedResolver
 
   public class Pool<T> where T : class
   {
-    public Stack<T> stack = new Stack<T>();
-    public int hit;
-    public int miss;
+    internal Stack<T> stack = new Stack<T>();
+    internal int hits;
+    internal int miss;
 
-    public int Allocs
-    {
+    public int HitCount {
+      get { return hits; }
+    }
+
+    public int MissCount {
       get { return miss; }
     }
 
-    public int Free
-    {
+    public int IdleCount {
       get { return stack.Count; }
     }
 
-    public int Busy
-    {
-      get { return Allocs - Free; }
+    public int BusyCount {
+      get { return miss - IdleCount; }
     }
   }
 
@@ -904,7 +904,7 @@ public class VM : INamedResolver
     public string Dump()
     {
       string res = "=== Val POOL ===\n";
-      res += "total:" + Allocs + " free:" + Free + "\n";
+      res += "busy:" + BusyCount + " idle:" + IdleCount + "\n";
 
       var dvs = new Val[stack.Count];
       stack.CopyTo(dvs, 0);
@@ -1485,7 +1485,7 @@ public class VM : INamedResolver
 
     var curr_frame = item.frame;
 
-#if BHL_DEBUGGER
+#if BHL_TDEBUG
     Util.Debug("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
 #endif
 
@@ -2808,9 +2808,30 @@ public class CoroutinePool
     static public VM.Pool<Coroutine> pool = new VM.Pool<Coroutine>();
   }
 
-  public int hit;
-  public int miss;
-  public int free;
+  internal int hits;
+  internal int miss;
+  internal int news;
+  internal int dels;
+
+  public int HitCount {
+    get { return hits; }
+  }
+
+  public int MissCount {
+    get { return miss; }
+  }
+
+  public int DelCount {
+    get { return dels; }
+  }
+
+  public int NewCount {
+    get { return news; }
+  }
+
+#if BHL_TEST
+  public HashSet<VM.Pool<Coroutine>> pools_tracker = new HashSet<VM.Pool<Coroutine>>(); 
+#endif
 
   static public T New<T>(VM vm) where T : Coroutine, new()
   {
@@ -2825,11 +2846,18 @@ public class CoroutinePool
     }
     else
     {
-      ++pool.hit;
-      ++vm.coro_pool.hit;
+      ++pool.hits;
+      ++vm.coro_pool.hits;
       coro = pool.stack.Pop();
     }
+
+    ++vm.coro_pool.news;
+
     coro.pool = pool;
+
+#if BHL_TEST
+    vm.coro_pool.pools_tracker.Add(pool);
+#endif
 
     return (T)coro;
   }
@@ -2843,7 +2871,7 @@ public class CoroutinePool
 
     coro.Cleanup(frm, exec);
 
-    ++frm.vm.coro_pool.free;
+    ++frm.vm.coro_pool.dels;
     pool.stack.Push(coro);
 
     if(pool.stack.Count > pool.miss)

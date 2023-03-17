@@ -102,7 +102,7 @@ public class Val
     }
     else
     {
-      ++vm.vals_pool.hit;
+      ++vm.vals_pool.hits;
       dv = vm.vals_pool.stack.Pop();
 #if DEBUG_REFS
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
@@ -499,7 +499,7 @@ public class ValList : IList<Val>, IValRefcounted
     }
     else
     {
-      ++vm.vlsts_pool.hit;
+      ++vm.vlsts_pool.hits;
       lst = vm.vlsts_pool.stack.Pop();
 
       if(lst.refs != -1)
@@ -735,7 +735,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
     }
     else
     {
-      ++vm.vmaps_pool.hit;
+      ++vm.vmaps_pool.hits;
       map = vm.vmaps_pool.stack.Pop();
 
       if(map.refs != -1)

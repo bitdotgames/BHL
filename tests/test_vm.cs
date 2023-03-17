@@ -4683,8 +4683,8 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     for(int i=0;i<5;++i)
       vm.Tick();
-    AssertEqual(vm.vals_pool.Allocs, 5);
-    AssertEqual(vm.vals_pool.Free, 3);
+    AssertEqual(vm.vals_pool.MissCount, 5);
+    AssertEqual(vm.vals_pool.IdleCount, 3);
 
     var str = log.ToString();
 
@@ -4692,8 +4692,8 @@ public class TestVM : BHL_TestBase
 
     for(int i=0;i<5;++i)
       vm.Tick();
-    AssertEqual(vm.vals_pool.Allocs, 5);
-    AssertEqual(vm.vals_pool.Free, 3);
+    AssertEqual(vm.vals_pool.MissCount, 5);
+    AssertEqual(vm.vals_pool.IdleCount, 3);
 
     str = log.ToString();
 
@@ -4769,8 +4769,8 @@ public class TestVM : BHL_TestBase
     for(int i=0;i<5;++i)
       vm.Tick();
     AssertEqual(fb.result.Count, 0);
-    AssertEqual(vm.vals_pool.Allocs, 4);
-    AssertEqual(vm.vals_pool.Free, 3);
+    AssertEqual(vm.vals_pool.MissCount, 4);
+    AssertEqual(vm.vals_pool.IdleCount, 3);
 
     vm.Stop(fb);
     CommonChecks(vm);
@@ -7523,7 +7523,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewNum(vm, 3));
     AssertEqual("01234", log.ToString());
-    AssertEqual(1/*0 frame*/+2, vm.frames_pool.Allocs);
+    AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
     CommonChecks(vm);
   }
 
@@ -10445,8 +10445,8 @@ public class TestVM : BHL_TestBase
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
 
-    AssertEqual(vm.vlsts_pool.Allocs, 1);
-    AssertEqual(vm.vlsts_pool.Free, 0);
+    AssertEqual(vm.vlsts_pool.MissCount, 1);
+    AssertEqual(vm.vlsts_pool.IdleCount, 0);
     
     res.Release();
 
@@ -10481,7 +10481,7 @@ public class TestVM : BHL_TestBase
 
     vm.Stop(fb);
 
-    AssertEqual(vm.vlsts_pool.Allocs, 2);
+    AssertEqual(vm.vlsts_pool.MissCount, 2);
     CommonChecks(vm);
   }
 
@@ -18462,14 +18462,14 @@ public class TestVM : BHL_TestBase
 
     {
       vm.Start("test");
-      AssertEqual(1/*0 frame*/+1, vm.frames_pool.Allocs);
-      AssertEqual(0, vm.frames_pool.Free);
+      AssertEqual(1/*0 frame*/+1, vm.frames_pool.MissCount);
+      AssertEqual(0, vm.frames_pool.IdleCount);
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.Allocs);
-      AssertEqual(0, vm.frames_pool.Free);
+      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
+      AssertEqual(0, vm.frames_pool.IdleCount);
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.Allocs);
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.Free);
+      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
+      AssertEqual(1/*0 frame*/+2, vm.frames_pool.IdleCount);
     }
 
     //no new allocs
@@ -18477,8 +18477,8 @@ public class TestVM : BHL_TestBase
       vm.Start("test");
       vm.Tick();
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.Allocs);
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.Free);
+      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
+      AssertEqual(1/*0 frame*/+2, vm.frames_pool.IdleCount);
     }
     CommonChecks(vm);
   }
@@ -18502,26 +18502,26 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       vm.Start("test");
-      AssertEqual(1, vm.fibers_pool.Allocs);
-      AssertEqual(0, vm.fibers_pool.Free);
+      AssertEqual(1, vm.fibers_pool.MissCount);
+      AssertEqual(0, vm.fibers_pool.IdleCount);
       vm.Tick();
       vm.Start("test");
-      AssertEqual(2, vm.fibers_pool.Allocs);
-      AssertEqual(0, vm.fibers_pool.Free);
+      AssertEqual(2, vm.fibers_pool.MissCount);
+      AssertEqual(0, vm.fibers_pool.IdleCount);
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.Allocs);
-      AssertEqual(1, vm.fibers_pool.Free);
+      AssertEqual(2, vm.fibers_pool.MissCount);
+      AssertEqual(1, vm.fibers_pool.IdleCount);
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.Allocs);
-      AssertEqual(2, vm.fibers_pool.Free);
+      AssertEqual(2, vm.fibers_pool.MissCount);
+      AssertEqual(2, vm.fibers_pool.IdleCount);
     }
     //no new allocs
     {
       vm.Start("test");
       vm.Tick();
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.Allocs);
-      AssertEqual(2, vm.fibers_pool.Free);
+      AssertEqual(2, vm.fibers_pool.MissCount);
+      AssertEqual(2, vm.fibers_pool.IdleCount);
     }
     CommonChecks(vm);
   }

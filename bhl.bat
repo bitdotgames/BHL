@@ -12,5 +12,11 @@ mcs %SRC% -debug -r:%DIR%\deps\mono_opts.dll -out:%EXE% && mono --debug %EXE% %*
 EXIT /b %errorlevel%
 
 :RUN
+
+IF DEFINED BHL_DEBUG (
+mono --debug --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556 %EXE% %*
+) ELSE (
 mono --debug %EXE% %*
+)
+
 EXIT /b %errorlevel%

@@ -717,22 +717,22 @@ public class BHL_TestBase
 
   public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
   {
-    //cleaning globals
+    //forced cleanup of module globals
     vm.UnloadModules();
 
     if(check_frames)
-      AssertEqual(vm.frames_pool.Allocs, vm.frames_pool.Free);
+      AssertEqual(0, vm.frames_pool.BusyCount);
     //for extra debug
-    if(vm.vals_pool.Allocs != vm.vals_pool.Free)
+    if(vm.vals_pool.BusyCount != 0)
       Console.WriteLine(vm.vals_pool.Dump());
 
-    AssertEqual(vm.vals_pool.Allocs, vm.vals_pool.Free);
-    AssertEqual(vm.vlsts_pool.Allocs, vm.vlsts_pool.Free);
-    AssertEqual(vm.fptrs_pool.Allocs, vm.fptrs_pool.Free);
+    AssertEqual(0, vm.vals_pool.BusyCount);
+    AssertEqual(0, vm.vlsts_pool.BusyCount);
+    AssertEqual(0, vm.fptrs_pool.BusyCount);
     if(check_fibers)
-      AssertEqual(vm.fibers_pool.Allocs, vm.fibers_pool.Free);
+      AssertEqual(0, vm.fibers_pool.BusyCount);
     if(check_coros)
-      AssertEqual(vm.coro_pool.miss, vm.coro_pool.free);
+      AssertEqual(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }
 
   public void SubTest(System.Action fn)
