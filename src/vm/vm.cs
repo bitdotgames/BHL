@@ -2803,9 +2803,22 @@ public class CoroutinePool
   //TODO: add debug inspection for concrete types
   static class PoolHolder<T> where T : Coroutine
   {
-    //TODO: store it in thread local storage
+    //alternative implemenation
     //[ThreadStatic]
-    static public VM.Pool<Coroutine> pool = new VM.Pool<Coroutine>();
+    //static public VM.Pool<Coroutine> _pool;
+    //static public VM.Pool<Coroutine> pool {
+    //  get {
+    //    if(_pool == null) 
+    //      _pool = new VM.Pool<Coroutine>(); 
+    //    return _pool;
+    //  }
+    //}
+
+    public static System.Threading.ThreadLocal<VM.Pool<Coroutine>> pool =
+      new System.Threading.ThreadLocal<VM.Pool<Coroutine>>(() =>
+      {
+        return new VM.Pool<Coroutine>();
+      });
   }
 
   internal int hits;
@@ -2835,7 +2848,7 @@ public class CoroutinePool
 
   static public T New<T>(VM vm) where T : Coroutine, new()
   {
-    var pool = PoolHolder<T>.pool;
+    var pool = PoolHolder<T>.pool.Value;
 
     Coroutine coro = null;
     if(pool.stack.Count == 0)
