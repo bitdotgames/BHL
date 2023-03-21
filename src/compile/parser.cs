@@ -4229,7 +4229,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     if(is_auto_var)
-      var_symb.type = new Proxy<IType>(assign_type.At(var_idx)); 
+    {
+      var auto_type = assign_type.At(var_idx);
+      if(auto_type == null)
+      {
+        AddSemanticError(assign_exp, "can't determine type");
+        return false;
+      }
+      var_symb.type = new Proxy<IType>(auto_type); 
+    }
 
     return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
   }

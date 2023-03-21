@@ -303,16 +303,16 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "unexpected expression",
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "unexpected expression",
         new PlaceAssert(bhl, @"
       var bar = null
 ------^"
-       )
-      );
+     )
+    );
   }
 
   [IsTested()]
@@ -324,16 +324,16 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "unexpected expression",
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "unexpected expression",
         new PlaceAssert(bhl, @"
       var a
 ------^"
-       )
-      );
+     )
+    );
   }
 
   [IsTested()]
@@ -344,16 +344,16 @@ public class TestVar : BHL_TestBase
     }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "already defined symbol 'var'",
-        new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'var'",
+      new PlaceAssert(bhl, @"
     class var {
 ----^"
-       )
-      );
+     )
+    );
   }
 
   [IsTested()]
@@ -367,16 +367,16 @@ public class TestVar : BHL_TestBase
       }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "incompatible types: 'int' and 'string'",
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'int' and 'string'",
         new PlaceAssert(bhl, @"
         return a == s
 --------------------^"
-       )
-      );
+     )
+    );
   }
 
   [IsTested()]
@@ -411,16 +411,16 @@ public class TestVar : BHL_TestBase
         }
       ";
 
-        AssertError<Exception>(
-          delegate() { 
-            Compile(bhl);
-          },
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
           "unexpected expression",
           new PlaceAssert(bhl, @"
         func var test() {
 -------------^"
-         )
-        );
+       )
+      );
     }
 
     {
@@ -430,16 +430,16 @@ public class TestVar : BHL_TestBase
         }
       ";
 
-        AssertError<Exception>(
-          delegate() { 
-            Compile(bhl);
-          },
-          "unexpected expression",
-          new PlaceAssert(bhl, @"
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "unexpected expression",
+        new PlaceAssert(bhl, @"
         func int test(int a, var b) {
 -----------------------------^"
-         )
-        );
+       )
+      );
      }
   }
 
@@ -452,16 +452,16 @@ public class TestVar : BHL_TestBase
       }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "unexpected expression",
-        new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "unexpected expression",
+      new PlaceAssert(bhl, @"
         []var ns = []
 ----------^"
-       )
-      );
+     )
+    );
   }
 
   [IsTested()]
@@ -473,15 +473,38 @@ public class TestVar : BHL_TestBase
       }
     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "unexpected expression",
-        new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "unexpected expression",
+      new PlaceAssert(bhl, @"
         var foo
 --------^"
        )
-      );
+    );
   }
+
+  [IsTested()]
+  public void TestCallNonExistingFunc()
+  {
+    string bhl = @"
+    func test() 
+    {
+      var a = FOO()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol 'FOO' not resolved",
+      new PlaceAssert(bhl, @"
+      var a = FOO()
+--------------^"
+       )
+    );
+  }
+
 }
