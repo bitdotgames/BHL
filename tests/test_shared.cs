@@ -39,30 +39,33 @@ public class BHL_TestRunner
 
     var names = p.Parse(args);
 
-    Run(names, new TestNodes());
-    Run(names, new TestVM());
-    Run(names, new TestYield());
-    Run(names, new TestImport());
-    Run(names, new TestVariadic());
-    Run(names, new TestClasses());
-    Run(names, new TestInterfaces());
-    Run(names, new TestTypeCasts());
-    Run(names, new TestNamespace());
-    Run(names, new TestVar());
-    Run(names, new TestMaps());
-    Run(names, new TestStd());
-    Run(names, new TestErrors());
-    Run(names, new TestMarshall());
-    //TODO:
-    //Run(names, new TestLSP());
-    Run(names, new TestPerf());
+    int counter = 0;
+
+    counter += Run(names, new TestNodes());
+    counter += Run(names, new TestVM());
+    counter += Run(names, new TestYield());
+    counter += Run(names, new TestImport());
+    counter += Run(names, new TestVariadic());
+    counter += Run(names, new TestClasses());
+    counter += Run(names, new TestInterfaces());
+    counter += Run(names, new TestTypeCasts());
+    counter += Run(names, new TestNamespace());
+    counter += Run(names, new TestVar());
+    counter += Run(names, new TestMaps());
+    counter += Run(names, new TestStd());
+    counter += Run(names, new TestErrors());
+    counter += Run(names, new TestMarshall());
+    //counter += Run(names, new TestLSP());
+    counter += Run(names, new TestPerf());
+
+    Console.WriteLine("Total tests: " + counter);
   }
 
-  static void Run(IList<string> names, BHL_TestBase test)
+  static int Run(IList<string> names, BHL_TestBase test)
   {
     try
     {
-      _Run(names, test);
+      return _Run(names, test);
     }
     catch(Exception e)
     {
@@ -71,6 +74,7 @@ public class BHL_TestRunner
       Console.Error.WriteLine("=========================");
       Console.Error.WriteLine(e.GetFullMessage());
       System.Environment.Exit(1);
+      return 0;
     }
   }
 
@@ -80,7 +84,7 @@ public class BHL_TestRunner
     internal int sub_test_idx_filter; 
   }
 
-  static void _Run(IList<string> names, BHL_TestBase test)
+  static int _Run(IList<string> names, BHL_TestBase test)
   {
     var tested_methods = new List<MethodToTest>();
 
@@ -90,6 +94,8 @@ public class BHL_TestRunner
       if(HasTestedAttribute(method) && CheckForTesting(names, test, method, out to_test))
         tested_methods.Add(to_test);
     }
+
+    int counter = 0;
 
     if(tested_methods.Count > 0)
     {
@@ -103,11 +109,18 @@ public class BHL_TestRunner
         test.sub_test_idx_filter = to_test.sub_test_idx_filter;
         test.sub_test_idx = -1;
         to_test.method.Invoke(test, new object[] {});
+        ++counter;
       }
     }
+    return counter;
   }
 
-  static bool CheckForTesting(IList<string> names, BHL_TestBase test, MethodInfo member, out MethodToTest to_test)
+  static bool CheckForTesting(
+    IList<string> names, 
+    BHL_TestBase test, 
+    MethodInfo member, 
+    out MethodToTest to_test
+  )
   {
     to_test = new MethodToTest();
     to_test.sub_test_idx_filter = -1;
@@ -118,28 +131,36 @@ public class BHL_TestRunner
 
     for(int i=0;i<names.Count;++i)
     {
-      var parts = names[i].Split('.');
+      var name = names[i];
+
+      var parts = name.Split('.');
 
       string test_filter = parts.Length >= 1 ? parts[0] : null;
       string method_filter = parts.Length > 1 ? parts[1] : null;
       string sub_filter = parts.Length > 2 ? parts[2] : null; 
 
       bool exact = true;
-      if(test_filter != null && test_filter.EndsWith("~"))
+      if(!string.IsNullOrEmpty(test_filter) && test_filter.EndsWith("~"))
       {
         exact = false;
         test_filter = test_filter.Substring(0, test_filter.Length-1);
       }
 
-      if(method_filter != null && method_filter.EndsWith("~"))
+      if(!string.IsNullOrEmpty(method_filter) && method_filter.EndsWith("~"))
       {
         exact = false;
         method_filter = method_filter.Substring(0, method_filter.Length-1);
       }
 
-      if(test_filter == null || (test_filter != null && (exact ? test.GetType().Name == test_filter : test.GetType().Name.IndexOf(test_filter) != -1)))
+      if(string.IsNullOrEmpty(test_filter) || 
+        (!string.IsNullOrEmpty(test_filter) && 
+         (exact ? test.GetType().Name == test_filter : test.GetType().Name.IndexOf(test_filter) != -1))
+        )
       {
-        if(method_filter == null || (method_filter != null && (exact ? member.Name == method_filter : member.Name.IndexOf(method_filter) != -1)))
+        if(string.IsNullOrEmpty(method_filter) || 
+          (!string.IsNullOrEmpty(method_filter) && 
+          (exact ? member.Name == method_filter : member.Name.IndexOf(method_filter) != -1))
+          )
         {
           if(sub_filter != null)
             to_test.sub_test_idx_filter = int.Parse(sub_filter);
