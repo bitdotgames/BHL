@@ -4929,7 +4929,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             seq.AddChild(tmp.children[c]);
           ast.AddChild(seq);
         }
-        else
+        else if(tmp.children.Count > 0)
           ast.AddChild(tmp.children[0]);
         tmp.children.Clear();
       }

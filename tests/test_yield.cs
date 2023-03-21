@@ -840,4 +840,50 @@ public class TestYield : BHL_TestBase
       );
     }
   }
+
+  [IsTested()]
+  public void TestCallNonExistingFunc()
+  {
+    string bhl = @"
+    coro func test() 
+    {
+      yield FOO()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol 'FOO' not resolved",
+      new PlaceAssert(bhl, @"
+      yield FOO()
+------------^"
+       )
+    );
+  }
+
+  [IsTested()]
+  public void TestCallNonExistingFuncInParal()
+  {
+    string bhl = @"
+    coro func test() 
+    {
+      paral {
+        yield FOO()
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol 'FOO' not resolved",
+      new PlaceAssert(bhl, @"
+        yield FOO()
+--------------^"
+       )
+    );
+  }
 }
