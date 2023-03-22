@@ -865,6 +865,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         );
       }
 
+      if(chain.IsVarAccess && curr_type is FuncSignature && scope is ClassSymbol cl)
+      {
+        //TODO: FuncSymbol must be a type as well? The code below looks a bit like ugly
+        if(cl.Resolve(curr_name.GetText()) is FuncSymbol)
+        {
+          if(write)
+            AddSemanticError(chain.items.At(chain.items.Count-1), "replacing methods is not allowed");
+          else
+            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers are not supported");
+          PopAST();
+          return false;
+        }
+      }
+
       var chain_ast = PeekAST();
       PopAST();
 

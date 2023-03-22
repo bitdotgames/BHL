@@ -965,6 +965,64 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGettingMethodPtrsNotAllowedYet()
+  {
+    string bhl = @"
+
+    class Foo { 
+      func void foo() {
+      }
+    }
+      
+    func test() 
+    {
+      Foo f = {}
+      func() ptr = f.foo
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "method pointers are not supported",
+      new PlaceAssert(bhl, @"
+      func() ptr = f.foo
+--------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestAssigningMethodsNotAllowed()
+  {
+    string bhl = @"
+
+    class Foo { 
+      func void foo() {
+      }
+    }
+      
+    func test() 
+    {
+      Foo f = {}
+      f.foo = null
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "replacing methods is not allowed",
+      new PlaceAssert(bhl, @"
+      f.foo = null
+-------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitEnum()
   {
     string bhl = @"
