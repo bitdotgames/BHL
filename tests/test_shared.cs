@@ -43,6 +43,7 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestAny());
     counter += Run(names, new TestYield());
     counter += Run(names, new TestImport());
     counter += Run(names, new TestVariadic());
@@ -188,6 +189,21 @@ public class BHL_TestBase
   internal int sub_test_idx;
   //TODO: make it a set?
   internal int sub_test_idx_filter;
+
+  public void BindMin(Types ts)
+  {
+    var fn = new FuncSymbolNative("min", ts.T("float"),
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          var b = (float)stack.PopRelease().num;
+          var a = (float)stack.PopRelease().num;
+          stack.Push(Val.NewFlt(frm.vm, a > b ? b : a)); 
+          return null;
+        },
+        new FuncArgSymbol("a", ts.T("float")),
+        new FuncArgSymbol("b", ts.T("float"))
+    );
+    ts.ns.Define(fn);
+  }
 
   public void BindFail(Types ts)
   {
@@ -552,6 +568,16 @@ public class BHL_TestBase
       ts.ns.Define(fn);
     }
   }
+
+  public void BindEnum(Types ts)
+  {
+    var en = new EnumSymbol("EnumState");
+    ts.ns.Define(en);
+
+    en.Define(new EnumItemSymbol("SPAWNED",  10));
+    en.Define(new EnumItemSymbol("SPAWNED2", 20));
+  }
+
 
   public VM MakeVM(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {

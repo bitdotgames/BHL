@@ -331,150 +331,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestStrDecIsForbidden()
-  {
-    string bhl = @"
-    func test(int k) 
-    {
-      return ""foo"" - k
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
-      "incompatible types: 'string' and 'int'",
-      new PlaceAssert(bhl, @"
-      return ""foo"" - k
----------------------^"
-      )
-    );
-  }
-
-
-  [IsTested()]
-  public void TestStrConcatImplicitTypes()
-  {
-    SubTest(() => {
-      string bhl = @"
-      func string test() 
-      {
-        int a = 11
-        return ""what"" + a + ""now""
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      var res = Execute(vm, "test").result.PopRelease().str;
-      AssertEqual(res, "what11now");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      func string test() 
-      {
-        int a = 11
-        float b = 12.1
-        return ""what"" + a + ""now"" + b
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      var res = Execute(vm, "test").result.PopRelease().str;
-      AssertEqual(res, "what11now12.1");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      func string test() 
-      {
-        string s = ""???""
-        s += 100
-        return s
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      var res = Execute(vm, "test").result.PopRelease().str;
-      AssertEqual(res, "???100");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      func string foo(string s) 
-      {
-        return s
-      }
-
-      func string test() 
-      {
-        string s
-        return foo(s + ""hey"" + 1)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      var res = Execute(vm, "test").result.PopRelease().str;
-      AssertEqual(res, "hey1");
-      CommonChecks(vm);
-    });
-  }
-
-  [IsTested()]
-  public void TestImplicitIntArgsCast()
-  {
-    string bhl = @"
-
-    func float foo(float a, float b)
-    {
-      return a + b
-    }
-      
-    func float test() 
-    {
-      return foo(1, 2.0)
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 3);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestImplicitIntArgsCastNativeFunc()
-  {
-    string bhl = @"
-
-    func float bar(float a)
-    {
-      return a
-    }
-      
-    func float test() 
-    {
-      return bar(a : min(1, 0.3))
-    }
-    ";
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindMin(ts);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 0.3f);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestBindFunctionWithDefaultArgs()
   {
     string bhl = @"
@@ -2199,42 +2055,6 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     AssertEqual(fb.result.PopRelease().num, 42);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestAnyAndNullConstant()
-  {
-    string bhl = @"
-    func bool test()
-    {
-      any fn = null
-      return fn == null
-    }
-    ";
-
-    var c = Compile(bhl);
-
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.Equal)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      ;
-    AssertEqual(c, expected);
-
-    AssertEqual(c.constants.Count, 1);
-
-    var vm = MakeVM(c);
-    var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
-    AssertTrue(fb.result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -16711,70 +16531,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCastClassToAny()
-  {
-    string bhl = @"
-      
-    func float test(float k) 
-    {
-      Color c = new Color
-      c.r = k
-      c.g = k*100
-      any a = (any)c
-      Color b = (Color)a
-      return b.g + b.r 
-    }
-    ";
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindColor(ts);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 202);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestAnyNullEquality()
-  {
-    string bhl = @"
-      
-    func bool test() 
-    {
-      any foo
-      return foo == null
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().bval;
-    AssertTrue(res);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestAnyNullAssign()
-  {
-    string bhl = @"
-      
-    func bool test() 
-    {
-      any foo = null
-      return foo == null
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().bval;
-    AssertTrue(res);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -17564,15 +17320,6 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  void BindEnum(Types ts)
-  {
-    var en = new EnumSymbol("EnumState");
-    ts.ns.Define(en);
-
-    en.Define(new EnumItemSymbol("SPAWNED",  10));
-    en.Define(new EnumItemSymbol("SPAWNED2", 20));
-  }
-
   [IsTested()]
   public void TestBindEnum()
   {
@@ -17593,75 +17340,6 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 30);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestCastEnumToInt()
-  {
-    string bhl = @"
-      
-    func int test() 
-    {
-      return (int)EnumState.SPAWNED2
-    }
-    ";
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindEnum(ts);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 20);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestCastEnumToFloat()
-  {
-    string bhl = @"
-      
-    func float test() 
-    {
-      return (float)EnumState.SPAWNED
-    }
-    ";
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindEnum(ts);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 10);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestCastEnumToStr()
-  {
-    string bhl = @"
-      
-    func string test() 
-    {
-      return (string)EnumState.SPAWNED2
-    }
-    ";
-
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindEnum(ts);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().str;
-    AssertEqual(res, "20");
     CommonChecks(vm);
   }
 
@@ -17820,53 +17498,6 @@ public class TestVM : BHL_TestBase
       B = 2
     }
       
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 2);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestUserEnumIntCast()
-  {
-    string bhl = @"
-
-    enum Foo
-    {
-      A = 1
-      B = 2
-    }
-      
-    func int test() 
-    {
-      return (int)Foo.B + (int)Foo.A
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 3);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
-  public void TestIntCastToUserEnum()
-  {
-    string bhl = @"
-
-    enum Foo
-    {
-      A = 1
-      B = 2
-    }
-      
-    func int test() 
-    {
-      Foo f = (Foo)2
-      return (int)f
-    }
     ";
 
     var vm = MakeVM(bhl);
@@ -20872,21 +20503,6 @@ public class TestVM : BHL_TestBase
       var arr = (ClassSymbol)ts.TArr("int").Get();
       return ((IScopeIndexed)arr.Resolve("Count")).scope_idx;
     }
-  }
-
-  void BindMin(Types ts)
-  {
-    var fn = new FuncSymbolNative("min", ts.T("float"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-          var b = (float)stack.PopRelease().num;
-          var a = (float)stack.PopRelease().num;
-          stack.Push(Val.NewFlt(frm.vm, a > b ? b : a)); 
-          return null;
-        },
-        new FuncArgSymbol("a", ts.T("float")),
-        new FuncArgSymbol("b", ts.T("float"))
-    );
-    ts.ns.Define(fn);
   }
 
   public struct IntStruct

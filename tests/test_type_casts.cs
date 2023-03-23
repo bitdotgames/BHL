@@ -162,6 +162,149 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrDecIsForbidden()
+  {
+    string bhl = @"
+    func test(int k) 
+    {
+      return ""foo"" - k
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      return ""foo"" - k
+---------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestStrConcatImplicitTypes()
+  {
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        int a = 11
+        return ""what"" + a + ""now""
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "what11now");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        int a = 11
+        float b = 12.1
+        return ""what"" + a + ""now"" + b
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "what11now12.1");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        string s = ""???""
+        s += 100
+        return s
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "???100");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string foo(string s) 
+      {
+        return s
+      }
+
+      func string test() 
+      {
+        string s
+        return foo(s + ""hey"" + 1)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "hey1");
+      CommonChecks(vm);
+    });
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCast()
+  {
+    string bhl = @"
+
+    func float foo(float a, float b)
+    {
+      return a + b
+    }
+      
+    func float test() 
+    {
+      return foo(1, 2.0)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestImplicitIntArgsCastNativeFunc()
+  {
+    string bhl = @"
+
+    func float bar(float a)
+    {
+      return a
+    }
+      
+    func float test() 
+    {
+      return bar(a : min(1, 0.3))
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindMin(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 0.3f);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCastFloatToInt()
   {
     string bhl = @"
@@ -1359,4 +1502,121 @@ public class TestTypeCasts : BHL_TestBase
       )
     );
   }
+
+  [IsTested()]
+  public void TestCastEnumToInt()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      return (int)EnumState.SPAWNED2
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindEnum(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 20);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastEnumToFloat()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      return (float)EnumState.SPAWNED
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindEnum(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 10);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCastEnumToStr()
+  {
+    string bhl = @"
+      
+    func string test() 
+    {
+      return (string)EnumState.SPAWNED2
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindEnum(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().str;
+    AssertEqual(res, "20");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestUserEnumIntCast()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      return (int)Foo.B + (int)Foo.A
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIntCastToUserEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = 2
+    }
+      
+    func int test() 
+    {
+      Foo f = (Foo)2
+      return (int)f
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 2);
+    CommonChecks(vm);
+  }
+
 }
