@@ -235,21 +235,32 @@ public class TestTypeCasts : BHL_TestBase
 
     SubTest(() => {
       string bhl = @"
-      func string foo(string s) 
-      {
-        return s
-      }
-
       func string test() 
       {
         string s
-        return foo(s + ""hey"" + 1)
+        return s + ""hey"" + 1
       }
       ";
 
       var vm = MakeVM(bhl);
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "hey1");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        bool t = true
+        bool f = false
+        return f + ""hey"" + t
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "0hey1");
       CommonChecks(vm);
     });
   }

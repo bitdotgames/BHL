@@ -2655,15 +2655,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PeekAST().AddChild(ast);
   }
 
+  static bool SupportsImplictCastToString(IType type)
+  {
+    return Types.IsNumeric(type) || type == Types.Bool;
+  }
+
   bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
   {
     //NOTE: only if it's NOT a 'left-side' modifying operation (e.g i += "foo")
-    if(!lhs_self_op && Types.IsNumeric(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
+    if(!lhs_self_op && SupportsImplictCastToString(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
     {
       ast.children.Insert(1, new AST_TypeCast(Types.String, false, ctx.Start.Line)); 
       return true;
     }
-    else if(ann_lhs.eval_type == Types.String && Types.IsNumeric(ann_rhs.eval_type))
+    else if(ann_lhs.eval_type == Types.String && SupportsImplictCastToString(ann_rhs.eval_type))
     {
       ast.children.Insert(2, new AST_TypeCast(Types.String, false, ctx.Start.Line)); 
       return true;
