@@ -44,6 +44,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
     counter += Run(names, new TestAny());
+    counter += Run(names, new TestEnum());
     counter += Run(names, new TestYield());
     counter += Run(names, new TestImport());
     counter += Run(names, new TestVariadic());
