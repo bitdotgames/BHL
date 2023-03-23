@@ -331,29 +331,74 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestStrConcatIncompatibleTypes()
+  public void TestStrConcatImplicitTypes()
   {
-    string bhl = @"
-    func foo(string s) 
-    {}
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        int a = 11
+        return ""what"" + a + ""now""
+      }
+      ";
 
-    func test() 
-    {
-      string s
-      foo(s + ""hey"" + 1)
-    }
-    ";
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "what11now");
+      CommonChecks(vm);
+    });
 
-    AssertError<Exception>(
-       delegate() {
-         Compile(bhl);
-       },
-      "incompatible types: 'string' and 'int'",
-      new PlaceAssert(bhl, @"
-      foo(s + ""hey"" + 1)
-----------------------^"
-      )
-    );
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        int a = 11
+        float b = 12.1
+        return ""what"" + a + ""now"" + b
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "what11now12.1");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string test() 
+      {
+        string s = ""???""
+        s += 100
+        return s
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "???100");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func string foo(string s) 
+      {
+        return s
+      }
+
+      func string test() 
+      {
+        string s
+        return foo(s + ""hey"" + 1)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "hey1");
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]
@@ -13472,7 +13517,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl2);
       },
-      "incompatible types: 'string' and 'int'",
+      "only numeric types supported",
       new PlaceAssert(bhl2, @"
       str++
 ------^"
@@ -13667,7 +13712,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl2);
       },
-      "incompatible types: 'string' and 'int'"
+      "only numeric types supported"
     );
 
     string bhl3 = @"

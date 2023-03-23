@@ -985,7 +985,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "method pointers are not supported",
+      "method pointers not supported",
       new PlaceAssert(bhl, @"
       func() ptr = f.foo
 --------------------^"
@@ -1014,7 +1014,7 @@ public class TestClasses : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "replacing methods is not allowed",
+      "invalid assignment",
       new PlaceAssert(bhl, @"
       f.foo = null
 -------^"

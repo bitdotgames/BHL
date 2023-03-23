@@ -871,9 +871,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(cl.Resolve(curr_name.GetText()) is FuncSymbol)
         {
           if(write)
-            AddSemanticError(chain.items.At(chain.items.Count-1), "replacing methods is not allowed");
+            AddSemanticError(chain.items.At(chain.items.Count-1), "invalid assignment");
           else
-            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers are not supported");
+            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers not supported");
           PopAST();
           return false;
         }
@@ -2412,7 +2412,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(op_ctx.operatorSelfOp() != null)
     {
       string post_op = op_ctx.operatorSelfOp().GetText();
-      ProcBinOp(ctx, post_op.Substring(0, 1), chain_ctx, op_ctx.exp());
+      ProcBinOp(ctx, post_op.Substring(0, 1), chain_ctx, op_ctx.exp(), lhs_self_op: true);
 
       var chain = new ExpChain(ctx, chain_ctx);
       if(!chain.IsVarAccess)
@@ -2565,7 +2565,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return op_type;
   }
 
-  void ProcBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs)
+  void ProcBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs, bool lhs_self_op = false)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
     AST_Tree ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
@@ -2609,9 +2609,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     )
       Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
-      Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
+    {
+      if(CheckImplicitCastToString(ctx, ast, ann_lhs, ann_rhs, lhs_self_op))
+        Annotate(ctx).eval_type = Types.String;
+      else
+        Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
+    }
 
     PeekAST().AddChild(ast);
+  }
+
+  bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
+  {
+    if(!lhs_self_op && Types.IsNumeric(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
+    {
+      ast.children.Insert(1, new AST_TypeCast(Types.String, false, ctx.Start.Line)); 
+      return true;
+    }
+    else if(ann_lhs.eval_type == Types.String && Types.IsNumeric(ann_rhs.eval_type))
+    {
+      ast.children.Insert(2, new AST_TypeCast(Types.String, false, ctx.Start.Line)); 
+      return true;
+    }
+    return false;
   }
 
   public override object VisitExpBitwise(bhlParser.ExpBitwiseContext ctx)
