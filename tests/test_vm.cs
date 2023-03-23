@@ -331,6 +331,29 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStrDecIsForbidden()
+  {
+    string bhl = @"
+    func test(int k) 
+    {
+      return ""foo"" - k
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      return ""foo"" - k
+---------------------^"
+      )
+    );
+  }
+
+
+  [IsTested()]
   public void TestStrConcatImplicitTypes()
   {
     SubTest(() => {

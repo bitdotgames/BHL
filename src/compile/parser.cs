@@ -865,18 +865,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         );
       }
 
-      if(chain.IsVarAccess && curr_type is FuncSignature && scope is ClassSymbol cl)
+      if(!CheckExpClassFunctionReadWrite(chain, curr_name, scope, curr_type, write))
       {
-        //TODO: FuncSymbol must be a type as well? The code below looks a bit like ugly
-        if(cl.Resolve(curr_name.GetText()) is FuncSymbol)
-        {
-          if(write)
-            AddSemanticError(chain.items.At(chain.items.Count-1), "invalid assignment");
-          else
-            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers not supported");
-          PopAST();
-          return false;
-        }
+        PopAST();
+        return false;
       }
 
       var chain_ast = PeekAST();
@@ -893,6 +885,38 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PeekAST().AddChildren(chain_ast);
     }
 
+    return true;
+  }
+  
+  bool CheckExpClassFunctionReadWrite(
+    ExpChain chain, 
+    ITerminalNode curr_name, 
+    IScope scope, 
+    IType curr_type, 
+    bool write
+  )
+  {
+    if(chain.IsVarAccess && curr_type is FuncSignature && scope is ClassSymbol cl)
+    {
+      //TODO: FuncSymbol must be a type as well? The code below looks a bit like ugly
+      if(cl.Resolve(curr_name.GetText()) is FuncSymbol m)
+      {
+        if(!write)
+        {
+          //NOTE: allowing static method pointers
+          if(!m.attribs.HasFlag(FuncAttrib.Static))
+          {
+            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers not supported");
+            return false;
+          }
+        }
+        else
+        {
+          AddSemanticError(chain.items.At(chain.items.Count-1), "invalid assignment");
+          return false;
+        }
+      }
+    }
     return true;
   }
 
@@ -2500,6 +2524,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return false;
     }
 
+    //NOTE: let's process the assignment the operation result first 
+    //      so that we have nice type check errors, however we need to 
+    //      put the resulting AST after binary operation processing below 
+    var chain_ast = new AST_Interim();
+    PushAST(chain_ast);
+    IType curr_type = null;
+    if(!ProcExpChain(chain, ref curr_type, write: true))
+    {
+      PopAST();
+      return false;
+    }
+    PopAST();
+
+    if(!Types.IsNumeric(curr_type))
+    {
+      AddSemanticError(ctx, "only numeric types supported");
+      return false;
+    }
+
     //let's tweak the fake "1" expression placement
     //by assinging it the call expression placement
     var ann_one = Annotate(one_literal_exp);
@@ -2511,16 +2554,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //1. let's add/sub expression and '1' 
     ProcBinOp(ctx, inc_dec.GetText() == "++" ? "+" : "-", chain_exp, one_literal_exp);
 
-    //2. now let's write the operation result 
-    IType curr_type = null;
-    if(!ProcExpChain(chain, ref curr_type, write: true))
-      return false;
+    //2. let's attach the assignment
+    PeekAST().AddChildren(chain_ast);
 
-    if(!Types.IsNumeric(curr_type))
-    {
-      AddSemanticError(ctx, "only numeric types supported");
-      return false;
-    }
     return true;
   }
   
@@ -2610,7 +2646,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
     {
-      if(CheckImplicitCastToString(ctx, ast, ann_lhs, ann_rhs, lhs_self_op))
+      if(op == "+" && CheckImplicitCastToString(ctx, ast, ann_lhs, ann_rhs, lhs_self_op))
         Annotate(ctx).eval_type = Types.String;
       else
         Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
@@ -2621,6 +2657,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
   {
+    //NOTE: only if it's NOT a 'left-side' modifying operation (e.g i += "foo")
     if(!lhs_self_op && Types.IsNumeric(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
     {
       ast.children.Insert(1, new AST_TypeCast(Types.String, false, ctx.Start.Line)); 

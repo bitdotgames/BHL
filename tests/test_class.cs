@@ -994,6 +994,29 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStaticMethodPtrs()
+  {
+    string bhl = @"
+
+    class Foo { 
+      static func int foo() {
+        return 10
+      }
+    }
+      
+    func int test() 
+    {
+      func int() ptr = Foo.foo
+      return ptr()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestAssigningMethodsNotAllowed()
   {
     string bhl = @"
