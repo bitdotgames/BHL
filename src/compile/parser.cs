@@ -2616,9 +2616,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var ann_lhs = Annotate(lhs);
     var ann_rhs = Annotate(rhs);
 
-    var class_symb = ann_lhs.eval_type as ClassSymbol;
     //NOTE: checking if there's binary operator overload
-    if(class_symb != null && class_symb.Resolve(op) is FuncSymbol)
+    if(ann_lhs.eval_type is ClassSymbol class_symb  && class_symb.Resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
@@ -2657,7 +2656,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   static bool SupportsImplictCastToString(IType type)
   {
-    return Types.IsNumeric(type) || type == Types.Bool;
+    return Types.IsNumeric(type) || type == Types.Bool || type is EnumSymbol;
   }
 
   bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)

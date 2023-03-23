@@ -186,7 +186,7 @@ public class TestTypeCasts : BHL_TestBase
   [IsTested()]
   public void TestStrConcatImplicitTypes()
   {
-    SubTest(() => {
+    SubTest("int", () => {
       string bhl = @"
       func string test() 
       {
@@ -201,7 +201,7 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
 
-    SubTest(() => {
+    SubTest("int and float", () => {
       string bhl = @"
       func string test() 
       {
@@ -217,7 +217,7 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
 
-    SubTest(() => {
+    SubTest("+=", () => {
       string bhl = @"
       func string test() 
       {
@@ -233,7 +233,7 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
 
-    SubTest(() => {
+    SubTest("empty string var", () => {
       string bhl = @"
       func string test() 
       {
@@ -248,7 +248,7 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
 
-    SubTest(() => {
+    SubTest("bools", () => {
       string bhl = @"
       func string test() 
       {
@@ -261,6 +261,24 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "0hey1");
+      CommonChecks(vm);
+    });
+
+    SubTest("enums", () => {
+      string bhl = @"
+      enum Foo {
+        A = 10
+        B = 20
+      }
+      func string test() 
+      {
+        return Foo.A + ""hey"" + Foo.B
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "10hey20");
       CommonChecks(vm);
     });
   }
