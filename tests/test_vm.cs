@@ -10130,6 +10130,66 @@ public class TestVM : BHL_TestBase
       CommonChecks(vm);
     }
   }
+  
+  [IsTested()]
+  public void TestArrayContains()
+  {
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.Contains(2)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(true == Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.Contains(1)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(true == Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.Contains(10)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(true == Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    {
+      string bhl = @"
+      func bool test() 
+      {
+        []int arr = [1, 2, 10]
+        return arr.Contains(100)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(false == Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+  }
 
   [IsTested()]
   public void TestStringArrayAssign()
