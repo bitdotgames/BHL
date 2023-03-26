@@ -677,7 +677,7 @@ public class BHL_TestBase
 
   public static int NewTestFile(string path, string text, ref List<string> files, bool unique = false)
   {
-    string full_path = TestDirPath() + "/" + path;
+    string full_path = TestDirPath() + Path.DirectorySeparatorChar + path;
     if(unique)
       files.Remove(full_path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
@@ -802,7 +802,7 @@ public class BHL_TestBase
   public static string TestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
-    return Path.GetDirectoryName(self_bin) + "/tmp/tests";
+    return Path.GetDirectoryName(self_bin) + Path.DirectorySeparatorChar + "tmp"+ Path.DirectorySeparatorChar + "tests";
   }
 
   public static void Assert(bool condition, string msg = null)
@@ -906,9 +906,9 @@ public class BHL_TestBase
       if(err is ICompileError cerr)
       {
         string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.range);
-        if(place_err.Trim('\n') != place_assert.expect.Trim('\n'))
+        if(place_err.Trim('\r','\n') != place_assert.expect.Trim('\r','\n'))
           Console.WriteLine(err.StackTrace);
-        AssertEqual(place_err.Trim('\n'), place_assert.expect.Trim('\n'));
+        AssertEqual(place_err.Trim('\r','\n'), place_assert.expect.Trim('\r','\n'));
       }
       else
         AssertTrue(false, "No ICompileError occured, got " + err?.GetType().Name); 
