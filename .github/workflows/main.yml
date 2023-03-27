@@ -32,4 +32,4 @@ jobs:
    - name: Install mono
      run: choco install mono
    - name: Run all tests
-     run: bhl test
+     run: ./bhl test
