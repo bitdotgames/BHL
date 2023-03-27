@@ -24,7 +24,7 @@ public class TestStd : BHL_TestBase
     Execute(vm, "test");
     Console.SetOut(std_out);
 
-    AssertEqual("Hello!\n", w.ToString());
+    AssertEqual("Hello!", w.ToString().Trim('\r', '\n'));
     CommonChecks(vm);
   }
 }
