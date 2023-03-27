@@ -30,6 +30,6 @@ jobs:
    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
    - uses: actions/checkout@v2
    - name: Install mono
-     run: choco install mono
+     run: choco install mono && dir /B /A-D /S C:\ProgramData\chocolatey\lib\mono\
    - name: Run all tests
      run: $env:Path += ";C:\ProgramData\chocolatey\lib\mono\bin" && ./bhl test
