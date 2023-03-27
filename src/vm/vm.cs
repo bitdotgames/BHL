@@ -2197,7 +2197,7 @@ public class VM : INamedResolver
     if(cast_type == Types.Int)
       new_val.SetNum((long)val.num);
     else if(cast_type == Types.String && val.type != Types.String)
-      new_val.SetStr(val.num.ToString());
+      new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
     else
     {
       //TODO: think better about run-time invalid casting error
