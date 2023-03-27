@@ -32,4 +32,4 @@ jobs:
    - name: Install mono
      run: choco install mono
    - name: Run all tests
-     run: $env:Path += ';"C:\Program Files\Mono\bin\";' && ./bhl test
+     run: $env:Path += ';"C:\Program Files\Mono\bin\";' && echo $env:Path && ./bhl test
