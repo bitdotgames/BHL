@@ -873,7 +873,7 @@ public class TestNamespace : BHL_TestBase
     NewTestFile("test.bhl", test_bhl, ref files);
 
     var ts = ts_fn();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache: true));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn));
     var vm = new VM(ts, loader);
     vm.LoadModule("test");
     var cm = vm.FindModule("test");
