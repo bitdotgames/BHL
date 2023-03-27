@@ -31,7 +31,5 @@ jobs:
    - uses: actions/checkout@v2
    - name: Install mono
      run: choco install mono
-   - name: Set env
-     run: SET "PATH=%PATH%;C:\Program Files\Mono\bin\;"
    - name: Run all tests
-     run: ./bhl test
+     run: SET "PATH=%PATH%;C:\Program Files\Mono\bin\;" && ./bhl test
