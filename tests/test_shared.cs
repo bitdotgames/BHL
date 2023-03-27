@@ -677,7 +677,7 @@ public class BHL_TestBase
 
   public static int NewTestFile(string path, string text, ref List<string> files, bool unique = false)
   {
-    string full_path = TestDirPath() + Path.DirectorySeparatorChar + path;
+    string full_path = Path.Combine(TestDirPath(), path);
     if(unique)
       files.Remove(full_path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
@@ -802,7 +802,7 @@ public class BHL_TestBase
   public static string TestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
-    return Path.GetDirectoryName(self_bin) + Path.DirectorySeparatorChar + "tmp"+ Path.DirectorySeparatorChar + "tests";
+    return Path.Combine(Path.GetDirectoryName(self_bin), "tmp", "tests");
   }
 
   public static void Assert(bool condition, string msg = null)

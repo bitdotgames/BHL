@@ -280,10 +280,10 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile("collections" + Path.DirectorySeparatorChar + "unit.bhl", file_unit, ref files);
-    NewTestFile("try" + Path.DirectorySeparatorChar + "get.bhl", file_get, ref files);
+    NewTestFile(Path.Combine("collections", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("try", "get.bhl"), file_get, ref files);
     NewTestFile("test.bhl", file_test, ref files);
-    NewTestFile("use" + Path.DirectorySeparatorChar + "use.bhl", file_use, ref files);
+    NewTestFile(Path.Combine("use", "use.bhl"), file_use, ref files);
 
     {
       var exec = new CompilationExecutor();
@@ -976,8 +976,8 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile("unit" + Path.DirectorySeparatorChar + "unit.bhl", file_unit, ref files);
-    NewTestFile("test" + Path.DirectorySeparatorChar + "test.bhl", file_test, ref files);
+    NewTestFile(Path.Combine("unit", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("test", "test.bhl"), file_test, ref files);
 
     {
       var exec = new CompilationExecutor();
@@ -1016,8 +1016,8 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile("units" + Path.DirectorySeparatorChar + "unit.bhl", file_unit, ref files);
-    NewTestFile("tests" + Path.DirectorySeparatorChar + "test.bhl", file_test, ref files);
+    NewTestFile(Path.Combine("units", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("tests", "test.bhl"), file_test, ref files);
 
     {
       var ts = new Types();
