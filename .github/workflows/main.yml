@@ -32,4 +32,4 @@ jobs:
    - name: Install mono
      run: choco install mono
    - name: Run all tests
-     run: SET "PATH=%PATH%;C:\Program Files\Mono\bin\;" && ./bhl test
+     run: SET "PATH=%PATH%;C:\Program Files\Mono\bin\;" && ./bhl.bat test
