@@ -4105,6 +4105,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
   {
     var name = ctx.NAME();
+    if(name == null)
+    {
+      AddSemanticError(ctx, "missing name");
+      return null;
+    }
+
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.isRef() != null;
     bool is_null_ref = false;
@@ -4325,19 +4331,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
   {
-    ProcBlock(BlockType.FUNC, ctx.block().statement());
+    ProcBlock(BlockType.FUNC, ctx.block()?.statement());
     return null;
   }
 
   public override object VisitStmParal(bhlParser.StmParalContext ctx)
   {
-    ProcBlock(BlockType.PARAL, ctx.block().statement());
+    ProcBlock(BlockType.PARAL, ctx.block()?.statement());
     return null;
   }
 
   public override object VisitStmParalAll(bhlParser.StmParalAllContext ctx)
   {
-    ProcBlock(BlockType.PARAL_ALL, ctx.block().statement());
+    ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
     return null;
   }
 
@@ -4348,7 +4354,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       AddSemanticError(ctx, "nested defers are not allowed");
       return null;
     }
-    ProcBlock(BlockType.DEFER, ctx.block().statement());
+    ProcBlock(BlockType.DEFER, ctx.block()?.statement());
     return null;
   }
 
@@ -4370,8 +4376,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ast.AddChild(main_cond);
     PushAST(ast);
-    ProcBlock(BlockType.SEQ, ctx.block().statement());
+    ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
     PopAST();
+    if(!ok)
+      return null;
 
     //NOTE: if in the block before there were no 'return' statements and in the current block
     //      *there's one* we need to reset the 'return found' flag since otherewise
@@ -4423,8 +4431,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ast.AddChild(item_cond);
       PushAST(ast);
-      ProcBlock(BlockType.SEQ, item.block().statement());
+      item_ok = ProcBlock(BlockType.SEQ, item.block()?.statement()) != null;
       PopAST();
+      if(!item_ok)
+        return null;
 
       if(!seen_return && return_found.Contains(func_symb))
         return_found.Remove(func_symb);
@@ -4437,8 +4447,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return_found.Remove(func_symb);
 
       PushAST(ast);
-      ProcBlock(BlockType.SEQ, @else.block().statement());
+      bool block_ok = ProcBlock(BlockType.SEQ, @else.block()?.statement()) != null;
       PopAST();
+      if(!block_ok)
+        return null;
 
       if(!seen_return && return_found.Contains(func_symb))
         return_found.Remove(func_symb);
@@ -4507,8 +4519,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    ProcBlock(BlockType.SEQ, ctx.block().statement());
+    ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
     PopAST();
+    if(!ok)
+      return null;
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
     PeekAST().AddChild(ast);
@@ -4527,13 +4541,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushBlock(ast);
 
     PushAST(ast);
-    ProcBlock(BlockType.SEQ, ctx.block().statement());
+    bool ok = ProcBlock(BlockType.SEQ, ctx.block()?.statement()) != null;
     PopAST();
+    if(!ok)
+      return null;
     ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
-    bool ok = TryVisit(ctx.exp());
+    ok = TryVisit(ctx.exp());
     PopAST();
 
     if(!ok || !types.CheckAssign(Types.Bool, Annotate(ctx.exp()), errors))
@@ -4587,7 +4603,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     ast.AddChild(cond);
 
     PushAST(ast);
-    var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
+    var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+    if(block == null)
+      return null;
     //appending post iteration code
     if(for_post_iter != null)
     {
@@ -4786,7 +4804,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //while body
       PushAST(ast);
-      var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
+      var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+      if(block == null)
+        goto Bail;
       //prepending filling of the iterator var
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, iter_symb));
       var arr_at = new AST_Call(EnumCall.ARR_IDX, ctx.Start.Line, null);
@@ -4939,7 +4959,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       //while body
       PushAST(ast);
-      var block = ProcBlock(BlockType.SEQ, ctx.block().statement());
+      var block = ProcBlock(BlockType.SEQ, ctx.block()?.statement());
+      if(block == null)
+        goto Bail;
       //prepending filling of k/v
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, val_iter_symb));
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, key_iter_symb));
@@ -4973,6 +4995,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   AST_Block ProcBlock(BlockType type, IParseTree[] sts)
   {
+    if(sts == null)
+      return null;
+
     bool is_paral = 
       type == BlockType.PARAL || 
       type == BlockType.PARAL_ALL;
