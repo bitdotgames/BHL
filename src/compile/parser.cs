@@ -1429,7 +1429,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<total_args_num;++i)
     {
       var arg = new NormCallArg();
-      arg.orig = func_symb.GetArg(i);
+      arg.orig = func_symb.TryGetArg(i);
+      if(arg.orig == null)
+      {
+        AddSemanticError(func_symb.parsed.tree, "bad signature");
+        return;
+      }
       norm_cargs.Add(arg); 
     }
 

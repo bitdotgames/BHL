@@ -1648,6 +1648,14 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     return i >= (GetDefaultArgsNum() - GetDefaultArgsNum());
   }
 
+  public FuncArgSymbol TryGetArg(int idx)
+  {
+    idx = idx + ((scope is ClassSymbolScript) ? 1 : 0);
+    if(idx < 0 || idx >= members.Count) 
+      return null;
+    return (FuncArgSymbol)members[idx];
+  }
+
   public FuncArgSymbol GetArg(int idx)
   {
     int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
