@@ -3779,6 +3779,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<fparams.Length;++i)
     {
       var fp = fparams[i]; 
+
+      if(fp.NAME() == null)
+      {
+        AddSemanticError(fp, "invalid argument");
+        continue;
+      }
+
       if(fp.assignExp() != null)
       {
         if(curr_scope is LambdaSymbol)
