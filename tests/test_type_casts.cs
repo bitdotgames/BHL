@@ -1431,12 +1431,15 @@ public class TestTypeCasts : BHL_TestBase
   [IsTested()]
   public void TestBasicType()
   {
+    SubTest(() =>
     {
       string bhl = @"
+      import ""std""
+
       func string test()
       {
         int a
-        Type t = type(a)
+        Type t = std.GetType(a)
         return t.Name
       }
       ";
@@ -1444,14 +1447,17 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    }
+    });
 
+    SubTest(() =>
     {
       string bhl = @"
+      import ""std""
+
       func string test()
       {
         string a
-        Type t = type(a)
+        Type t = std.GetType(a)
         return t.Name
       }
       ";
@@ -1459,14 +1465,17 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("string", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    }
+    });
 
+    SubTest(() =>
     {
       string bhl = @"
+      import ""std""
+
       func string test()
       {
         func() a 
-        Type t = type(a)
+        Type t = std.GetType(a)
         return t.Name
       }
       ";
@@ -1474,7 +1483,7 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("func void()", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    }
+    });
   }
 
   [IsTested()]

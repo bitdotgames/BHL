@@ -615,20 +615,6 @@ public class Types : INamedResolver
       );
       ns.Define(fn);
     }
-
-    {
-      var fn = new FuncSymbolNative("type", this.T("Type"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var o = stack.Pop();
-          stack.Push(Val.NewObj(frm.vm, o.type, ClassType));
-          o.Release();
-          return null;
-        }, 
-        new FuncArgSymbol("o", this.T("any"))
-      );
-      ns.Define(fn);
-    }
   }
 
   static public bool IsCompoundType(string name)

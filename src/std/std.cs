@@ -7,6 +7,23 @@ public static class std
   static public Module MakeModule(Types ts)
   {
     var m = new Module(ts, "std");
+
+    var std = m.ns.Nest("std");
+
+    {
+      var fn = new FuncSymbolNative("GetType", ts.T(Types.ClassType),
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          var o = stack.Pop();
+          stack.Push(Val.NewObj(frm.vm, o.type, Types.ClassType));
+          o.Release();
+          return null;
+        }, 
+        new FuncArgSymbol("o", ts.T("any"))
+      );
+      std.Define(fn);
+    }
+
     return m;
   }
 
