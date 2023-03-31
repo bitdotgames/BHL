@@ -516,12 +516,14 @@ public class AST_JsonPair : AST_Tree
   public IType scope_type;
   public string name;
   public int symb_idx;
+  public int line_num;
 
-  public AST_JsonPair(IType scope_type, string name, int symb_idx)
+  public AST_JsonPair(IType scope_type, string name, int symb_idx, int line_num)
   {
     this.scope_type = scope_type;
     this.name = name;
     this.symb_idx = symb_idx;
+    this.line_num = line_num;
   }
 }
 

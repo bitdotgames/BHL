@@ -2208,7 +2208,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     Annotate(ctx).lsp_symbol = member;
 
-    var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx);
+    var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx, ctx.NAME().Symbol.Line);
 
     PushJsonType(member.type.Get());
 
