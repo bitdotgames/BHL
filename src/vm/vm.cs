@@ -826,7 +826,7 @@ public class VM : INamedResolver
     {
       string s = "\n";
       foreach(var t in trace)
-        s += "at " + t.func + "(..) in " + t.file + ":" + t.line + " (ip: " + t.ip + ")\n";
+        s += "at " + t.func + "(..) +" + t.ip + " in " + t.file + ":" + t.line + "\n";
       return s;
     }
   }
