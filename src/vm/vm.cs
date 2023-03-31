@@ -1195,6 +1195,31 @@ public class VM : INamedResolver
           init_frame._stack.Push(cv);
         }
         break;
+        case Opcodes.Add:
+        case Opcodes.Sub:
+        case Opcodes.Div:
+        case Opcodes.Mod:
+        case Opcodes.Mul:
+        case Opcodes.And:
+        case Opcodes.Or:
+        case Opcodes.BitAnd:
+        case Opcodes.BitOr:
+        case Opcodes.Equal:
+        case Opcodes.NotEqual:
+        case Opcodes.LT:
+        case Opcodes.LTE:
+        case Opcodes.GT:
+        case Opcodes.GTE:
+        {
+          ExecuteBinaryOp(opcode, init_frame._stack);
+        }
+        break;
+        case Opcodes.UnaryNot:
+        case Opcodes.UnaryNeg:
+        {
+          ExecuteUnaryOp(opcode, init_frame._stack);
+        }
+        break;
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
@@ -1625,13 +1650,13 @@ public class VM : INamedResolver
       case Opcodes.GT:
       case Opcodes.GTE:
       {
-        ExecuteBinaryOp(opcode, exec);
+        ExecuteBinaryOp(opcode, exec.stack);
       }
       break;
       case Opcodes.UnaryNot:
       case Opcodes.UnaryNeg:
       {
-        ExecuteUnaryOp(opcode, exec);
+        ExecuteUnaryOp(opcode, exec.stack);
       }
       break;
       case Opcodes.GetVar:
@@ -2387,24 +2412,24 @@ public class VM : INamedResolver
     return !fb.IsStopped();
   }
 
-  void ExecuteUnaryOp(Opcodes op, ExecState exec)
+  void ExecuteUnaryOp(Opcodes op, ValStack stack)
   {
-    var operand = exec.stack.PopRelease().num;
+    var operand = stack.PopRelease().num;
     switch(op)
     {
       case Opcodes.UnaryNot:
-        exec.stack.Push(Val.NewBool(this, operand != 1));
+        stack.Push(Val.NewBool(this, operand != 1));
       break;
       case Opcodes.UnaryNeg:
-        exec.stack.Push(Val.NewFlt(this, operand * -1));
+        stack.Push(Val.NewFlt(this, operand * -1));
       break;
     }
   }
 
-  void ExecuteBinaryOp(Opcodes op, ExecState exec)
+  void ExecuteBinaryOp(Opcodes op, ValStack stack)
   {
-    var r_operand = exec.stack.Pop();
-    var l_operand = exec.stack.Pop();
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
 
     switch(op)
     {
@@ -2412,52 +2437,52 @@ public class VM : INamedResolver
       {
         //TODO: add Opcodes.Concat?
         if((r_operand.type == Types.String) && (l_operand.type == Types.String))
-          exec.stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
+          stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
         else
-          exec.stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
+          stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
       }
       break;
       case Opcodes.Sub:
-        exec.stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
+        stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
       break;
       case Opcodes.Div:
-        exec.stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
+        stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
       break;
       case Opcodes.Mul:
-        exec.stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
+        stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
       break;
       case Opcodes.Equal:
-        exec.stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
+        stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
       break;
       case Opcodes.NotEqual:
-        exec.stack.Push(Val.NewBool(this, !l_operand.IsValueEqual(r_operand)));
+        stack.Push(Val.NewBool(this, !l_operand.IsValueEqual(r_operand)));
       break;
       case Opcodes.LT:
-        exec.stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
+        stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
       break;
       case Opcodes.LTE:
-        exec.stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
+        stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
       break;
       case Opcodes.GT:
-        exec.stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
+        stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
       break;
       case Opcodes.GTE:
-        exec.stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
+        stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
       break;
       case Opcodes.And:
-        exec.stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
+        stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
       break;
       case Opcodes.Or:
-        exec.stack.Push(Val.NewBool(this, l_operand._num == 1 || r_operand._num == 1));
+        stack.Push(Val.NewBool(this, l_operand._num == 1 || r_operand._num == 1));
       break;
       case Opcodes.BitAnd:
-        exec.stack.Push(Val.NewNum(this, (int)l_operand._num & (int)r_operand._num));
+        stack.Push(Val.NewNum(this, (int)l_operand._num & (int)r_operand._num));
       break;
       case Opcodes.BitOr:
-        exec.stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
+        stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
       break;
       case Opcodes.Mod:
-        exec.stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
+        stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
       break;
     }
 

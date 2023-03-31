@@ -19350,6 +19350,24 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGlobalVariableAssignNegativeNumber()
+  {
+    string bhl = @"
+
+    float foo = -10
+      
+    func float test() 
+    {
+      return foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(-10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestGlobalVariableAssignAndReadObject()
   {
     string bhl = @"
