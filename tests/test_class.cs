@@ -3534,7 +3534,7 @@ public class TestClasses : BHL_TestBase
       b.a = 1
       b.b = 10
       b.new_a = 100
-      //NOTE: Bar.getA() will be called anyway!
+      //NOTE: there's not static cast in C#
       return ((Foo)b).getA() + b.getB()
     }
     ";
