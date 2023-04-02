@@ -1539,11 +1539,9 @@ public class VM : INamedResolver
       case Opcodes.TypeCast:
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        bool force_type = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip) == 1;
-
         var cast_type = curr_frame.constants[cast_type_idx].itype.Get();
 
-        HandleTypeCast(exec, cast_type, force_type);
+        HandleTypeCast(exec, cast_type, true);
       }
       break;
       case Opcodes.TypeAs:
