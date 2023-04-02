@@ -582,7 +582,6 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestImportUserClass()
   {
@@ -701,7 +700,6 @@ public class TestClasses : BHL_TestBase
       )
     );
   }
-
 
   [IsTested()]
   public void TestUserClassDefaultInit()
@@ -2844,11 +2842,32 @@ public class TestClasses : BHL_TestBase
       //NOTE: static cast to Foo
       return ((Foo)b).getA() + b.getB()
     }
+
+    func int foo_caller(Foo f)
+    {
+      return f.getA();
+    }
+
+    func int bar_caller(Bar b)
+    {
+      return b.getA();
+    }
+
+    func int test3()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return foo_caller(b) + bar_caller(b)
+    }
+
     ";
 
     var vm = MakeVM(bhl);
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(11, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(200, Execute(vm, "test3").result.PopRelease().num);
     CommonChecks(vm);
   }
 
