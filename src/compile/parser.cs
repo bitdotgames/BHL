@@ -2348,6 +2348,39 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tp = ParseType(ctx.type());
 
     var cast_type = tp.Get();
+    //NOTE: For native types we need to enforce the cast type since we don't have
+    //      vtables for them like for userland classes. If we don't do that later 
+    //      method/properties calls will use wrong type info.
+    //
+    //      For example, here's the native interface and class:
+    //
+    //      interface IFoo {
+    //      }
+    //
+    //      class Foo : IFoo {
+    //        public int X() { .. }
+    //
+    //        //NOTE: we return IFoo not Foo
+    //        static IFoo create() {
+    //          return new Foo();
+    //        }
+    //      }
+    //
+    //      Now if we make bindings for these entities the returned type of 'Foo.create()' 
+    //      method will be IFoo and the following bhl code won't simply work without 
+    //      enforcing of the type:
+    //
+    //      IFoo ifoo = create()
+    //      Foo foo = (Foo)foo // without 'type enforcing' Value's type will be 'IFoo'    
+    //      foo.X()            // error: X's index can't be found in 'IFoo'
+    //
+    //      In case of userland classes if we enforce the cast type we wipe information about 
+    //      the original type and later virtual/interface method invocations will be wrong.
+    //      For userland classes we build vtables/itables which contain all the neccessary 
+    //      information for proper methods dispatching. Basically enforcing the cast type for 
+    //      userland classes roughly equals 'static casting' in C++. We do that only in some
+    //      edge cases, e.g. when calling 'base' virtual class method implementation from the 
+    //      one overriden one 
     bool force_type = cast_type is ClassSymbolNative || cast_type is InterfaceSymbolNative;
 
     var ast = new AST_TypeCast(cast_type, force_type: force_type, line_num: ctx.Start.Line);
