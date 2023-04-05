@@ -4264,7 +4264,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       (VariableSymbol) new FuncArgSymbol(var_ann, name.GetText(), tp, is_ref) :
       new VariableSymbol(var_ann, name.GetText(), tp);
 
-    curr_scope.Define(symb);
+    try
+    {
+      curr_scope.Define(symb);
+    }
+    catch(SymbolError err)
+    {
+      AddSemanticError(name, err.Message);
+      return null;
+    }
 
     if(write)
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb);
