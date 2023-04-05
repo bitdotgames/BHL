@@ -1149,7 +1149,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         ++chain_offset;
 
         PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
-        PeekAST().AddChild(new AST_TypeCast(cs.super_class, line));
+        PeekAST().AddChild(new AST_TypeCast(cs.super_class, force_type: true, line_num: line));
       }
     }
   }
@@ -2347,7 +2347,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeCast(tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeCast(tp.Get(), force_type: false, line_num: ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     bool ok = TryVisit(exp);
@@ -2669,12 +2669,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: only if it's NOT a 'left-side' modifying operation (e.g i += "foo")
     if(!lhs_self_op && SupportsImplictCastToString(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
     {
-      ast.children.Insert(1, new AST_TypeCast(Types.String, ctx.Start.Line)); 
+      ast.children.Insert(1, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
       return true;
     }
     else if(ann_lhs.eval_type == Types.String && SupportsImplictCastToString(ann_rhs.eval_type))
     {
-      ast.children.Insert(2, new AST_TypeCast(Types.String, ctx.Start.Line)); 
+      ast.children.Insert(2, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
       return true;
     }
     return false;
