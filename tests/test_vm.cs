@@ -14640,6 +14640,31 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaVariableShadowing()
+  {
+    string bhl = @"
+    func test(int a) 
+    {
+      func() {
+        int b = 10
+        int a = 20
+      }()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'a'",
+      new PlaceAssert(bhl, @"
+        int a = 20
+------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestJsonInitForUserClass()
   {
     string bhl = @"
