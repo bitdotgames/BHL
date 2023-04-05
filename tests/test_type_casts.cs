@@ -892,6 +892,27 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestImplicitCastEnumToInt()
+  {
+    SubTest("int", () => {
+      string bhl = @"
+      enum Foo {
+        A = 1
+        B = 2
+      }
+
+      func bool test() 
+      {
+        return Foo.B == 2
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    });
+  }
 
   [IsTested()]
   public void TestAsForChildClassObjReturnedFromMethod()

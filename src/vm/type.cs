@@ -819,6 +819,10 @@ public class Types : INamedResolver
         ((rhs.eval_type is ClassSymbol || rhs.eval_type is InterfaceSymbol || rhs.eval_type is FuncSignature) && lhs.eval_type == Null))
       return Bool;
 
+    if((lhs.eval_type == Types.Int && rhs.eval_type is EnumSymbol) ||
+       (lhs.eval_type is EnumSymbol && rhs.eval_type == Types.Int))
+      return Bool;
+
     MatchTypes(eq_op_res_type, lhs, rhs, errors);
 
     return Bool;
