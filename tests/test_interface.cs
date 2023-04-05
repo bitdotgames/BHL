@@ -816,7 +816,7 @@ public class TestInterfaces : BHL_TestBase
         var fn = new FuncSymbolNative("create", ts.T("IFoo"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               var foo = new LocalFoo();
-              var v = Val.NewObj(frm.vm, foo, ts.T("Foo").Get());
+              var v = Val.NewObj(frm.vm, foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
               stack.Push(v);
               return null;
             }

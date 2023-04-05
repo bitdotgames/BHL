@@ -2347,13 +2347,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var tp = ParseType(ctx.type());
 
-    var ast = new AST_TypeCast(tp.Get(), force_type: false, line_num: ctx.Start.Line);
+    var cast_type = tp.Get();
+    bool force_type = cast_type is ClassSymbolNative || cast_type is InterfaceSymbolNative;
+
+    var ast = new AST_TypeCast(cast_type, force_type: force_type, line_num: ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     bool ok = TryVisit(exp);
     PopAST();
 
-    Annotate(ctx).eval_type = tp.Get();
+    Annotate(ctx).eval_type = cast_type;
 
     if(ok)
       Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
