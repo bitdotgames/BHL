@@ -782,15 +782,26 @@ public class TestInterfaces : BHL_TestBase
     );
   }
 
+  public interface IFooLocal
+  {}
+
+  public class LocalFoo : IFooLocal
+  {
+    public int X() 
+    {
+      return 10;
+    }
+
+    public int Y() 
+    {
+      return 20;
+    }
+  }
+
   [IsTested()]
   public void TestNativeInterfaceCastToConcreteType()
   {
     string bhl = @"
-    func IFoo create() {
-      Foo foo = {}
-      return foo
-    }
-
     func int test() {
       IFoo ifoo = create()
       Foo foo = (Foo)ifoo
@@ -800,6 +811,19 @@ public class TestInterfaces : BHL_TestBase
 
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
+
+      {
+        var fn = new FuncSymbolNative("create", ts.T("IFoo"),
+            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              var foo = new LocalFoo();
+              var v = Val.NewObj(frm.vm, foo, ts.T("Foo").Get());
+              stack.Push(v);
+              return null;
+            }
+        );
+
+        ts.ns.Define(fn);
+      }
 
       {
         var ifs = new InterfaceSymbolNative(
@@ -814,7 +838,7 @@ public class TestInterfaces : BHL_TestBase
         var cl = new ClassSymbolNative("Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
-            v.SetObj(new NativeFoo(), type);
+            v.SetObj(new LocalFoo(), type);
           }
         );
         ts.ns.Define(cl);
@@ -823,8 +847,8 @@ public class TestInterfaces : BHL_TestBase
           var m = new FuncSymbolNative("X", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
-              stack.PopRelease();
-              stack.Push(Val.NewInt(frm.vm, 10));
+              var foo = (LocalFoo)stack.PopRelease().obj;
+              stack.Push(Val.NewInt(frm.vm, foo.X()));
               return null;
             }
           );
@@ -835,8 +859,8 @@ public class TestInterfaces : BHL_TestBase
           var m = new FuncSymbolNative("Y", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
-              stack.PopRelease();
-              stack.Push(Val.NewInt(frm.vm, 20));
+              var foo = (LocalFoo)stack.PopRelease().obj;
+              stack.Push(Val.NewInt(frm.vm, foo.Y()));
               return null;
             }
           );
