@@ -903,6 +903,9 @@ public class BHL_TestBase
 
     if(place_assert != null)
     {
+      if(place_assert.err_type != null && err.GetType() != place_assert.err_type)
+        AssertTrue(false, "Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
+
       if(err is ICompileError cerr)
       {
         string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.range);
@@ -919,9 +922,17 @@ public class BHL_TestBase
   {
     public string source;
     public string expect;
+    public System.Type err_type;
 
     public PlaceAssert(string source, string expect)
     {
+      this.source = source;
+      this.expect = expect;
+    }
+
+    public PlaceAssert(System.Type err_type, string source, string expect)
+    {
+      this.err_type = err_type;
       this.source = source;
       this.expect = expect;
     }

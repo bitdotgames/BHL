@@ -14657,7 +14657,7 @@ public class TestVM : BHL_TestBase
         Compile(bhl);
       },
       "already defined symbol 'a'",
-      new PlaceAssert(bhl, @"
+      new PlaceAssert(typeof(SemanticError), bhl, @"
         int a = 20
 ------------^"
       )

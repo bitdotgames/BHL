@@ -2954,17 +2954,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var vd = ret_val.varDeclare();
       VariableSymbol vd_symb;
-      PeekAST().AddChild(
-        ProcDeclVar(
-          curr_scope, 
-          vd.NAME(), 
-          vd.type(), 
-          is_ref: false, 
-          func_arg: false, 
-          write: false,
-          symb: out vd_symb
-        )
+      var vd_decl_ast = ProcDeclVar(
+        curr_scope, 
+        vd.NAME(), 
+        vd.type(), 
+        is_ref: false, 
+        func_arg: false, 
+        write: false,
+        symb: out vd_symb
       );
+      if(vd_decl_ast == null)
+        return null;
+      PeekAST().AddChild(vd_decl_ast);
       return null;
     }
 
@@ -2979,17 +2980,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       VariableSymbol vd_symb;
       var vd_ast = PeekAST();
       int vd_assign_idx = vd_ast.children.Count;
-      vd_ast.AddChild(
-        ProcDeclVar(
-          curr_scope, 
-          vd.NAME(), 
-          vd.type(), 
-          is_ref: false, 
-          func_arg: false, 
-          write: false,
-          symb: out vd_symb
-        )
+      var vd_decl_ast = ProcDeclVar(
+        curr_scope, 
+        vd.NAME(), 
+        vd.type(), 
+        is_ref: false, 
+        func_arg: false, 
+        write: false,
+        symb: out vd_symb
       );
+      if(vd_decl_ast == null)
+        return null;
+      vd_ast.AddChild(vd_decl_ast);
+      
       ProcAssignToVar(
         vd_ast, 
         vd_assign_idx,
@@ -4028,7 +4031,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return false;
         }
 
-        var ast = ProcDeclVar(
+        var var_decl_ast = ProcDeclVar(
           curr_scope, 
           vproxy.LocalNameAt(i), 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
@@ -4040,10 +4043,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           write: assign_exp != null,
           symb: out var_symb
         );
-        //checking if it's valid
-        if(ast == null)
+        if(var_decl_ast == null)
           return false;
-        var_ast.AddChild(ast);
+        var_ast.AddChild(var_decl_ast);
 
         is_decl = true;
 
@@ -4197,8 +4199,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       write: false,
       symb: out vd_symb
     );
+    if(decl_ast == null)
+      return null;
+
     if(exp_ast != null)
       decl_ast.AddChild(exp_ast);
+
     PeekAST().AddChild(decl_ast);
 
     if(assign_exp != null && !is_null_ref)
@@ -4810,6 +4816,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           write: false,
           symb: out iter_symb
         );
+        if(iter_ast_decl == null)
+          goto Bail;
         iter_type = iter_symb.type;
       }
       var arr_type = (ArrayTypeSymbol)curr_scope.R().TArr(iter_type).Get();
