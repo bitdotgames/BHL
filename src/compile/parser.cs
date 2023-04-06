@@ -2648,6 +2648,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     AST_Tree ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
     PushAST(ast);
     bool ok1 = TryVisit(lhs);
+    int ops_edge_idx = ast.children.Count;
     bool ok2 = TryVisit(rhs);
     PopAST();
 
@@ -2686,7 +2687,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
     {
-      if(op == "+" && CheckImplicitCastToString(ctx, ast, ann_lhs, ann_rhs, lhs_self_op))
+      if(op == "+" && CheckImplicitCastToString(ctx, ast, ops_edge_idx, ann_lhs, ann_rhs, lhs_self_op))
         Annotate(ctx).eval_type = Types.String;
       else
         Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);
@@ -2700,17 +2701,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return Types.IsNumeric(type) || type == Types.Bool || type is EnumSymbol;
   }
 
-  bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
+  bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, int ops_edge_idx, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
   {
     //NOTE: only if it's NOT a 'left-side' modifying operation (e.g i += "foo")
     if(!lhs_self_op && SupportsImplictCastToString(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
     {
-      ast.children.Insert(1, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
+      ast.children.Insert(ops_edge_idx, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
       return true;
     }
     else if(ann_lhs.eval_type == Types.String && SupportsImplictCastToString(ann_rhs.eval_type))
     {
-      ast.children.Insert(2, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
+      ast.children.Insert(ast.children.Count, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
       return true;
     }
     return false;

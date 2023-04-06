@@ -217,6 +217,36 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
 
+    SubTest("arr count 1", () => {
+      string bhl = @"
+      func string test() 
+      {
+        []int arr = [1, 2, 3]
+        return ""what"" + arr.Count
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "what3");
+      CommonChecks(vm);
+    });
+
+    SubTest("arr count 2", () => {
+      string bhl = @"
+      func string test() 
+      {
+        []int arr = [1, 2, 3]
+        return arr.Count + ""now""
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      var res = Execute(vm, "test").result.PopRelease().str;
+      AssertEqual(res, "3now");
+      CommonChecks(vm);
+    });
+
     SubTest("+=", () => {
       string bhl = @"
       func string test() 
