@@ -8,6 +8,12 @@ public interface ILogger
   void Log(int level, string msg);
 }
 
+public class NoLogger : ILogger
+{
+  public void Log(int level, string msg)
+  {}
+}
+
 public class ConsoleLogger : ILogger
 {
   public void Log(int level, string msg)

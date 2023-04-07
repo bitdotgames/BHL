@@ -25,7 +25,9 @@ public class LSP : ICmd
     p.Parse(args);
 
     ILogger logger = 
-      string.IsNullOrEmpty(log_file_path) ? (ILogger)new ConsoleLogger() : (ILogger)new FileLogger(log_file_path);
+      string.IsNullOrEmpty(log_file_path) ? 
+        (ILogger)new ConsoleLogger() : 
+        (ILogger)new FileLogger(log_file_path);
 
     Console.OutputEncoding = new UTF8Encoding();
 
