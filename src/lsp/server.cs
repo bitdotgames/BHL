@@ -6,15 +6,19 @@ public class Server
 {
   IConnection connection;
   IJsonRpc rpc;
+  ILogger logger;
 
-  public Server(IConnection connection, IJsonRpc rpc)
+  public Server(ILogger logger, IConnection connection, IJsonRpc rpc)
   {
+    this.logger = logger;
     this.connection = connection;
     this.rpc = rpc;
   }
   
   public void Start()
   {
+    logger.Log(0, "Starting BHL LSP server...");
+
     while(true)
     {
       try
@@ -25,7 +29,7 @@ public class Server
       }
       catch(Exception e)
       {
-        Logger.WriteLine(e);
+        logger.Log(0, e.Message);
         // ignored
       }
     }
@@ -43,7 +47,7 @@ public class Server
     string response = rpc.Handle(json);
     
     sw.Stop();
-    Logger.WriteLine($"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    logger.Log(1, $"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     try
     {
@@ -52,7 +56,7 @@ public class Server
     }
     catch(Exception e)
     {
-      Logger.WriteLine(e);
+      logger.Log(0, e.Message);
       return false;
     }
     

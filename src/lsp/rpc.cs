@@ -16,6 +16,12 @@ public interface IService {}
 public class JsonRpc : IJsonRpc
 {
   List<IService> services = new List<IService>();
+  ILogger logger;
+
+  public JsonRpc(ILogger logger)
+  {
+    this.logger = logger;
+  }
 
   public JsonRpc AttachService(IService service)
   {
@@ -34,8 +40,8 @@ public class JsonRpc : IJsonRpc
     }
     catch(Exception e)
     {
-      Logger.WriteLine(e);
-      Logger.WriteLine($"{req_json}");
+      logger.Log(0, e.Message);
+      logger.Log(0, $"{req_json}");
 
       resp = new ResponseMessage
       {
@@ -48,8 +54,7 @@ public class JsonRpc : IJsonRpc
     }
 
     if(req != null)
-      Logger.WriteLine($":: bhlsp <-- {req.method}({req.id.Value})");
-    //Logger.WriteLine($":: bhlsp <-- {json}");
+      logger.Log(1, $":: bhlsp <-- {req.method}({req.id.Value})");
     
     if(resp == null && req != null)
     {
@@ -79,9 +84,7 @@ public class JsonRpc : IJsonRpc
         resp_json = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
         
         if(req != null)
-          Logger.WriteLine($":: bhlsp --> {req.method}({req.id.Value})");
-        
-        //Logger.WriteLine($":: bhlsp --> {JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.Indented, jSettings)}");
+          logger.Log(1, $":: bhlsp --> {req.method}({req.id.Value})");
       }
     }
     
@@ -119,7 +122,7 @@ public class JsonRpc : IJsonRpc
     }
     catch(Exception e)
     {
-      Logger.WriteLine(e);
+      logger.Log(0, e.Message);
 
       response = new ResponseMessage
       {
@@ -162,7 +165,7 @@ public class JsonRpc : IJsonRpc
             }
             catch(Exception e)
             {
-              Logger.WriteLine(e);
+              logger.Log(0, e.Message);
 
               return RpcResult.Error(new ResponseError
               {

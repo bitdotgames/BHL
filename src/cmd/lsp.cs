@@ -10,24 +10,22 @@ public class LSP : ICmd
 {
   public void Run(string[] args)
   {
-    Logger.CleanUpLogFile();
-    
     var workspace = new Workspace();
+
+    string log_file_path = "";
 
     var p = new OptionSet
     {
       { "root=", "bhl root dir",
-        v => workspace.AddRoot(v) }
+        v => workspace.AddRoot(v) },
+      { "log-file=", "log file path",
+        v => log_file_path = v }
     };
     
-    try
-    {
-      p.Parse(args);
-    }
-    catch(OptionException e)
-    {
-      Logger.WriteLine(e);
-    }
+    p.Parse(args);
+
+    ILogger logger = 
+      string.IsNullOrEmpty(log_file_path) ? (ILogger)new ConsoleLogger() : (ILogger)new FileLogger(log_file_path);
 
     Console.OutputEncoding = new UTF8Encoding();
 
@@ -36,7 +34,7 @@ public class LSP : ICmd
     
     var connection = new ConnectionStdIO(stdout, stdin);
     
-    var rpc = new JsonRpc();
+    var rpc = new JsonRpc(logger);
     rpc.AttachService(new LifecycleService(workspace));
     rpc.AttachService(new TextDocumentSynchronizationService(workspace));
     rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
@@ -44,7 +42,7 @@ public class LSP : ICmd
     rpc.AttachService(new TextDocumentHoverService(workspace));
     rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
     
-    var server = new Server(connection, rpc);
+    var server = new Server(logger, connection, rpc);
     
     try
     {
@@ -52,7 +50,7 @@ public class LSP : ICmd
     }
     catch (Exception e)
     {
-      Logger.WriteLine(e);
+      logger.Log(0, e.Message);
       Environment.Exit(-1);
     }
   }
