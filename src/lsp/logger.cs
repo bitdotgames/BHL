@@ -3,26 +3,26 @@ using System.IO;
 
 namespace bhl.lsp {
 
-public interface ILogger
+public interface ILogWriter
 {
-  void Log(int level, string msg);
+  void Write(string msg);
 }
 
-public class NoLogger : ILogger
+public class NoLogger : ILogWriter
 {
-  public void Log(int level, string msg)
+  public void Write(string msg)
   {}
 }
 
-public class ConsoleLogger : ILogger
+public class ConsoleLogger : ILogWriter
 {
-  public void Log(int level, string msg)
+  public void Write(string msg)
   {
-    Console.WriteLine($"{DateTime.Now} {msg}");
+    Console.WriteLine(msg);
   }
 }
 
-public class FileLogger : ILogger
+public class FileLogger : ILogWriter
 {
   string file_path;
 
@@ -31,12 +31,32 @@ public class FileLogger : ILogger
     this.file_path = file_path;
   }
 
-  public void Log(int level, string msg)
+  public void Write(string msg)
   {
     using(StreamWriter w = File.AppendText(file_path))
     {
-      w.WriteLine($"{DateTime.Now} {msg}");
+      w.WriteLine(msg);
     }
+  }
+}
+
+public class Logger
+{
+  ILogWriter driver;
+  int max_level;
+
+  public Logger(int max_level, ILogWriter driver)
+  {
+    this.max_level = max_level;
+    this.driver = driver;
+  }
+  
+  public void Log(int level, string msg)
+  {
+    if(level > max_level)
+      return;
+
+    driver.Write($"[{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.f")}] {msg}");
   }
 }
 

@@ -16,9 +16,9 @@ public interface IService {}
 public class JsonRpc : IJsonRpc
 {
   List<IService> services = new List<IService>();
-  ILogger logger;
+  Logger logger;
 
-  public JsonRpc(ILogger logger)
+  public JsonRpc(Logger logger)
   {
     this.logger = logger;
   }

@@ -93,7 +93,7 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("parse error", () =>
     {
-      var rpc = new JsonRpc(new NoLogger());
+      var rpc = new JsonRpc(NoLogger());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       AssertEqual(
         rpc.Handle(json),
@@ -103,7 +103,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid request", () =>
     {
-      var rpc = new JsonRpc(new NoLogger());
+      var rpc = new JsonRpc(NoLogger());
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -113,7 +113,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid request", () =>
     {
-      var rpc = new JsonRpc(new NoLogger());
+      var rpc = new JsonRpc(NoLogger());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -123,7 +123,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("method not found", () =>
     {
-      var rpc = new JsonRpc(new NoLogger());
+      var rpc = new JsonRpc(NoLogger());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -133,7 +133,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid params", () =>
     {
-      var rpc = new JsonRpc(new NoLogger());
+      var rpc = new JsonRpc(NoLogger());
       rpc.AttachService(new bhl.lsp.spec.LifecycleService(new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
@@ -146,7 +146,7 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestInitShutdownExit()
   {
-    var rpc = new JsonRpc(new NoLogger());
+    var rpc = new JsonRpc(NoLogger());
     rpc.AttachService(new bhl.lsp.spec.LifecycleService(new Workspace()));
 
     SubTest(() => {
@@ -235,7 +235,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace();
 
-    var rpc = new JsonRpc(new NoLogger());
+    var rpc = new JsonRpc(NoLogger());
     rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(ws));
     
     CleanTestFiles();
@@ -351,7 +351,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace();
 
-    var rpc = new JsonRpc(new NoLogger());
+    var rpc = new JsonRpc(NoLogger());
     rpc.AttachService(new bhl.lsp.spec.TextDocumentGoToService(ws));
     
     CleanTestFiles();
@@ -478,7 +478,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace();
 
-    var rpc = new JsonRpc(new NoLogger());
+    var rpc = new JsonRpc(NoLogger());
     rpc.AttachService(new bhl.lsp.spec.TextDocumentSignatureHelpService(ws));
     
     CleanTestFiles();
@@ -533,7 +533,7 @@ public class TestLSP : BHL_TestBase
   //  
   //  var ws = new Workspace();
 
-  //  var rpc = new JsonRpc(new NoLogger());
+  //  var rpc = new JsonRpc(NoLogger());
   //  rpc.AttachService(new bhl.lsp.spec.TextDocumentSemanticTokensService(ws));
   //  
   //  CleanTestFiles();
@@ -624,5 +624,10 @@ public class TestLSP : BHL_TestBase
   static string AsJson(bhl.SourcePos pos)
   {
     return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
+  }
+
+  static Logger NoLogger()
+  {
+    return new Logger(0, new NoLogger());
   }
 }

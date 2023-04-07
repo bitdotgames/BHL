@@ -6,9 +6,9 @@ public class Server
 {
   IConnection connection;
   IJsonRpc rpc;
-  ILogger logger;
+  Logger logger;
 
-  public Server(ILogger logger, IConnection connection, IJsonRpc rpc)
+  public Server(Logger logger, IConnection connection, IJsonRpc rpc)
   {
     this.logger = logger;
     this.connection = connection;
@@ -17,7 +17,7 @@ public class Server
   
   public void Start()
   {
-    logger.Log(0, "Starting BHL LSP server...");
+    logger.Log(1, "Starting BHL LSP server...");
 
     while(true)
     {

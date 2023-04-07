@@ -24,10 +24,12 @@ public class LSP : ICmd
     
     p.Parse(args);
 
-    ILogger logger = 
+    ILogWriter log_writer = 
       string.IsNullOrEmpty(log_file_path) ? 
-        (ILogger)new ConsoleLogger() : 
-        (ILogger)new FileLogger(log_file_path);
+        (ILogWriter)new ConsoleLogger() : 
+        (ILogWriter)new FileLogger(log_file_path);
+
+    var logger = new Logger(2, log_writer);
 
     Console.OutputEncoding = new UTF8Encoding();
 
