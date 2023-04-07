@@ -264,7 +264,7 @@ public class TestEnum : BHL_TestBase
       @"already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     enum Foo
-----^"
+---------^"
       )
     );
   }
@@ -292,7 +292,7 @@ public class TestEnum : BHL_TestBase
       @"already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     class Foo
-----^"
+----------^"
       )
     );
   }

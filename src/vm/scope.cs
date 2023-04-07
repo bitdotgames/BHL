@@ -409,6 +409,23 @@ public static class ScopeExtensions
     }
   }
 
+  public static bool TryDefine(this IScope scope, Symbol symb, out SymbolError error)
+  {
+    error = null;
+
+    try
+    {
+      scope.Define(symb);
+    }
+    catch(SymbolError err)
+    {
+      error = err;
+      return false;
+    }
+
+    return true;
+  }
+
   public static Scope2Resolver R(this IScope scope)
   {
     return new Scope2Resolver(scope);

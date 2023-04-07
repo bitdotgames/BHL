@@ -351,7 +351,7 @@ public class TestImplicitVar : BHL_TestBase
       "already defined symbol 'var'",
       new PlaceAssert(bhl, @"
     class var {
-----^"
+----------^"
      )
     );
   }

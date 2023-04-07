@@ -187,6 +187,31 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           this.enum_ctx = null;
       }
     }
+
+    public void Clear()
+    {
+      ast = null;
+      scope = null;
+
+      ns = null;
+
+      gvar_decl_ctx = null;
+      gvar_assign_ctx = null;
+      gvar_symb = null;
+
+      func_ctx = null;
+      func_ast = null;
+      func_symb = null;
+
+      class_ctx = null;
+      class_symb = null;
+      class_ast = null;
+
+      iface_ctx = null;
+      iface_symb = null;
+
+      enum_ctx = null;
+    }
   }
 
   List<ParserPass> passes = new List<ParserPass>();
@@ -3223,7 +3248,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       name
     ); 
 
-    pass.scope.Define(pass.func_symb);
+    if(!pass.scope.TryDefine(pass.func_symb, out SymbolError err))
+    {
+      AddSemanticError(pass.func_ctx.NAME(), err.Message);
+      pass.Clear();
+      return;
+    }
 
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
@@ -3307,7 +3337,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
 
-    curr_scope.Define(pass.gvar_symb);
+    if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
+    {
+      AddSemanticError(vd.NAME(), err.Message);
+      pass.Clear();
+    }
   }
 
   void Pass_OutlineInterfaceDecl(ParserPass pass)
@@ -3319,7 +3353,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
 
-    pass.scope.Define(pass.iface_symb);
+    if(!pass.scope.TryDefine(pass.iface_symb, out SymbolError err))
+    {
+      AddSemanticError(pass.iface_ctx.NAME(), err.Message);
+      pass.Clear();
+    }
   }
 
   void Pass_ParseInterfaceMethods(ParserPass pass)
@@ -3347,7 +3385,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           sig, 
           fd.NAME().GetText()
         );
-        pass.iface_symb.Define(func_symb);
+        if(!pass.iface_symb.TryDefine(func_symb, out SymbolError err))
+        {
+          AddSemanticError(fd.NAME(), err.Message);
+          return;
+        }
 
         var func_params = fd.funcParams();
         if(func_params != null)
@@ -3464,7 +3506,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var name = pass.class_ctx.NAME().GetText();
 
     pass.class_symb = new ClassSymbolScript(Annotate(pass.class_ctx), name);
-    pass.scope.Define(pass.class_symb);
+    if(!pass.scope.TryDefine(pass.class_symb, out SymbolError err))
+    {
+      AddSemanticError(pass.class_ctx.NAME(), err.Message);
+      return;
+    }
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
@@ -3499,7 +3545,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           fld_symb.attribs |= attr_type;
         }
 
-        pass.class_symb.Define(fld_symb);
+        if(!pass.class_symb.TryDefine(fld_symb, out SymbolError symb_err))
+        {
+          AddSemanticError(vd.NAME(), symb_err.Message);
+          return;
+        }
       }
 
       var fd = cm.funcDecl();
@@ -3540,7 +3590,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(!func_symb.attribs.HasFlag(FuncAttrib.Static))
           func_symb.ReserveThisArgument(pass.class_symb);
 
-        pass.class_symb.Define(func_symb);
+        if(!pass.class_symb.TryDefine(func_symb, out SymbolError symb_err))
+          AddSemanticError(fd.NAME(), symb_err.Message);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.AddChild(func_ast);
@@ -3733,7 +3784,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //      But we do it just for consistency. Later once we have runtime 
     //      type info this will be justified.
     var symb = new EnumSymbolScript(Annotate(ctx), enum_name);
-    curr_scope.Define(symb);
+    if(!curr_scope.TryDefine(symb, out SymbolError err))
+    {
+      AddSemanticError(ctx.NAME(), err.Message);
+      return null;
+    }
 
     for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
     {
@@ -4271,11 +4326,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       (VariableSymbol) new FuncArgSymbol(var_ann, name.GetText(), tp, is_ref) :
       new VariableSymbol(var_ann, name.GetText(), tp);
 
-    try
-    {
-      curr_scope.Define(symb);
-    }
-    catch(SymbolError err)
+    if(!curr_scope.TryDefine(symb, out SymbolError err))
     {
       AddSemanticError(name, err.Message);
       return null;

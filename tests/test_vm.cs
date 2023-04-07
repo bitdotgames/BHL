@@ -3418,7 +3418,7 @@ public class TestVM : BHL_TestBase
       "already defined symbol 'trace'",
       new PlaceAssert(bhl, @"
     func trace(string hey)
-----^"
+---------^"
      )
     );
   }

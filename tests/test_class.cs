@@ -89,7 +89,7 @@ public class TestClasses : BHL_TestBase
       "already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     class Foo {}
-----^"
+----------^"
       )
     );
   }
