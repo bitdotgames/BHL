@@ -28,6 +28,8 @@ public class FileLogger : ILogWriter
 
   public FileLogger(string file_path)
   {
+    Directory.CreateDirectory(Path.GetDirectoryName(file_path));
+
     this.file_path = file_path;
   }
 
