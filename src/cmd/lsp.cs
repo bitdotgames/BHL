@@ -39,7 +39,7 @@ public class LSP : ICmd
     var connection = new ConnectionStdIO(stdout, stdin);
     
     var rpc = new JsonRpc(logger);
-    rpc.AttachService(new LifecycleService(workspace));
+    rpc.AttachService(new LifecycleService(logger, workspace));
     rpc.AttachService(new TextDocumentSynchronizationService(workspace));
     rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
     rpc.AttachService(new TextDocumentGoToService(workspace));

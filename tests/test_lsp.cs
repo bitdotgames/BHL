@@ -134,7 +134,7 @@ public class TestLSP : BHL_TestBase
     SubTest("invalid params", () =>
     {
       var rpc = new JsonRpc(NoLogger());
-      rpc.AttachService(new bhl.lsp.spec.LifecycleService(new Workspace()));
+      rpc.AttachService(new bhl.lsp.spec.LifecycleService(NoLogger(), new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -147,7 +147,7 @@ public class TestLSP : BHL_TestBase
   public void TestInitShutdownExit()
   {
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.LifecycleService(new Workspace()));
+    rpc.AttachService(new bhl.lsp.spec.LifecycleService(NoLogger(), new Workspace()));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";

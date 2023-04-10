@@ -6,12 +6,14 @@ namespace bhl.lsp.spec {
 
 public class LifecycleService : IService
 {
+  Logger logger;
   Workspace workspace;
 
   int? process_id;
   
-  public LifecycleService(Workspace workspace)
+  public LifecycleService(Logger logger, Workspace workspace)
   {
+    this.logger = logger;
     this.workspace = workspace;
   }
 
@@ -142,6 +144,8 @@ public class LifecycleService : IService
   [RpcMethod("exit")]
   public RpcResult Exit()
   {
+    logger.Log(1, "Stopping BHL LSP server...");
+
     if(process_id != null)
     {
       //TODO: in this case success response won't be sent
