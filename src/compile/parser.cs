@@ -1280,7 +1280,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? EnumCall.MFUNC : EnumCall.FUNC, line, func_symb);
+          ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? 
+            EnumCall.MFUNC : EnumCall.FUNC, 
+            line, 
+            func_symb
+          );
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }

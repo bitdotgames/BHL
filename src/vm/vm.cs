@@ -1448,6 +1448,25 @@ public class VM : INamedResolver
 
   public void Stop(Fiber fb)
   {
+    try
+    {
+      _Stop(fb);
+    }
+    catch(Exception e)
+    {
+      var trace = new List<VM.TraceItem>();
+      try
+      {
+        fb.GetStackTrace(trace);
+      }
+      catch(Exception) 
+      {}
+      throw new Error(trace, e); 
+    }
+  }
+
+  internal void _Stop(Fiber fb)
+  {
     if(fb.IsStopped())
       return;
 
@@ -2396,7 +2415,7 @@ public class VM : INamedResolver
       fb.Release();
 
       if(fb.status != BHS.RUNNING)
-        Stop(fb);
+        _Stop(fb);
     }
     catch(Exception e)
     {
