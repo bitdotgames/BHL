@@ -31,8 +31,11 @@ public class JsonRpc : IJsonRpc
 
   public string Handle(string req_json)
   {
+    var sw = new System.Diagnostics.Stopwatch();
+    sw.Start();
+    
     RequestMessage req = null;
-    ResponseMessage resp = null;
+    ResponseMessage rsp = null;
     
     try
     {
@@ -43,7 +46,7 @@ public class JsonRpc : IJsonRpc
       logger.Log(0, e.Message);
       logger.Log(0, $"{req_json}");
 
-      resp = new ResponseMessage
+      rsp = new ResponseMessage
       {
         error = new ResponseError
         {
@@ -53,15 +56,23 @@ public class JsonRpc : IJsonRpc
       };
     }
 
-    if(req != null)
-      logger.Log(1, $":: bhlsp <-- {req.method}({req.id.Value})");
+    string resp_json = string.Empty;
+
+    if(req == null)
+    {
+      logger.Log(1, $"Could not deserialize request: {req_json}");
+      return resp_json;
+    }
+
+    logger.Log(1, $"REQ({req.id.Value}) <-- {req.method}");
     
-    if(resp == null && req != null)
+    //if there's no response error let's handle the request
+    if(rsp == null)
     {
       if(req.IsMessage())
-        resp = HandleMessage(req);
+        rsp = HandleMessage(req);
       else
-        resp = new ResponseMessage
+        rsp = new ResponseMessage
         {
           error = new ResponseError
           {
@@ -71,22 +82,24 @@ public class JsonRpc : IJsonRpc
         };
     }
     
-    string resp_json = string.Empty;
 
-    if(resp != null)
+    if(rsp != null)
     {
       // A processed notification message must not send a response back.
       // They work like events.
-      bool isNotification = req != null && req.id.Value == null;
-      if(!isNotification)
+      bool is_notification = req.id.Value == null;
+      if(!is_notification)
       {
         var jSettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-        resp_json = JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.None, jSettings);
+        resp_json = JsonConvert.SerializeObject(rsp, Newtonsoft.Json.Formatting.None, jSettings);
         
         if(req != null)
-          logger.Log(1, $":: bhlsp --> {req.method}({req.id.Value})");
+          logger.Log(1, $"RSP({req.id.Value}) --> {req.method}");
       }
     }
+
+    sw.Stop();
+    logger.Log(1, $"REQ({req.id.Value}) Done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     return resp_json;
   }

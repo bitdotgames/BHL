@@ -41,13 +41,7 @@ public class Server
     if(string.IsNullOrEmpty(json))
       return false;
     
-      var sw = new System.Diagnostics.Stopwatch();
-      sw.Start();
-    
     string response = rpc.Handle(json);
-    
-    sw.Stop();
-    logger.Log(1, $"HandleMessage done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     try
     {
