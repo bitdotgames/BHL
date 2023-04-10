@@ -19274,6 +19274,42 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetStackTraceInDeferFromNullPtrWhenStopped()
+  {
+    string bhl = @"
+    coro func wow()
+    {
+      defer {
+        Color c = null
+        c.mult_summ(1)
+      }
+      yield suspend()
+    }
+
+    coro func test() {
+      yield wow()
+    }
+    ";
+
+    var ts_fn = new Func<Types>(() => {
+      var ts = new Types();
+      BindColor(ts);
+      return ts;
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+    vm.Tick();
+
+    AssertError<Exception>(
+      delegate() {
+        vm.Stop();
+      },
+      "at wow(..) +24 in .bhl:6"
+    );
+  }
+
+  [IsTested()]
   public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"
