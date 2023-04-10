@@ -30,7 +30,6 @@ public class Server
       catch(Exception e)
       {
         logger.Log(0, e.Message);
-        // ignored
       }
     }
   }

@@ -64,7 +64,7 @@ public class JsonRpc : IJsonRpc
       return resp_json;
     }
 
-    logger.Log(1, $"REQ({req.id.Value}) <-- {req.method}");
+    logger.Log(1, $"REQ({req.id.Value} {req.method}): {req_json}");
     
     //if there's no response error let's handle the request
     if(rsp == null)
@@ -94,12 +94,12 @@ public class JsonRpc : IJsonRpc
         resp_json = JsonConvert.SerializeObject(rsp, Newtonsoft.Json.Formatting.None, jSettings);
         
         if(req != null)
-          logger.Log(1, $"RSP({req.id.Value}) --> {req.method}");
+          logger.Log(1, $"RSP({req.id.Value} {req.method}): {resp_json}");
       }
     }
 
     sw.Stop();
-    logger.Log(1, $"REQ({req.id.Value}) Done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    logger.Log(1, $"REQ({req.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     return resp_json;
   }
