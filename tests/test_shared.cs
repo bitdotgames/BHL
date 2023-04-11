@@ -47,7 +47,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestStd());
     counter += Run(names, new TestErrors());
     counter += Run(names, new TestMarshall());
-    //counter += Run(names, new TestLSP());
+    counter += Run(names, new TestLSP());
     counter += Run(names, new TestPerf());
 
     Console.WriteLine("Total tests: " + counter);

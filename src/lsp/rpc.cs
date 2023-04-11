@@ -58,16 +58,10 @@ public class JsonRpc : IJsonRpc
 
     string resp_json = string.Empty;
 
-    if(req == null)
-    {
-      logger.Log(1, $"Could not deserialize request: {req_json}");
-      return resp_json;
-    }
-
-    logger.Log(1, $"REQ({req.method}, id: {req.id.Value}) {req_json}");
+    logger.Log(1, $"REQ({req?.method}, id: {req?.id.Value}) {req_json}");
     
     //if there's no response error let's handle the request
-    if(rsp == null)
+    if(rsp == null && req != null)
     {
       if(req.IsMessage())
         rsp = HandleMessage(req);
@@ -81,14 +75,12 @@ public class JsonRpc : IJsonRpc
           }
         };
     }
-    
 
     if(rsp != null)
     {
-      // A processed notification message must not send a response back.
-      // They work like events.
-      bool is_notification = req.id.Value == null;
-      if(!is_notification)
+      //NOTE: we send responses only if there were an error or if the request 
+      //      contains an id
+      if(req == null || req.id.Value != null)
       {
         var jsettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
         resp_json = JsonConvert.SerializeObject(rsp, Newtonsoft.Json.Formatting.None, jsettings);
@@ -96,7 +88,7 @@ public class JsonRpc : IJsonRpc
     }
 
     sw.Stop();
-    logger.Log(1, $"RSP({req.method}, id: {req.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {resp_json}");
+    logger.Log(1, $"RSP({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {resp_json}");
     
     return resp_json;
   }

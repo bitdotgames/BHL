@@ -37,6 +37,7 @@ public class Workspace
   //NOTE: naive initial implementation
   public void IndexFiles()
   {
+    file2proc.Clear();
     documents.Clear();
 
     for(int i=0;i<inc_path.Count;++i)
@@ -154,30 +155,6 @@ public class Workspace
     document.Update(text, proc);
     return true;
   }
-  
-  //public IEnumerable<BHLDocument> ForEachBhlImports(BHLDocument root)
-  //{
-  //  var toVisit = new Queue<BHLDocument>();
-  //  
-  //  toVisit.Enqueue(root);
-  //  while(toVisit.Count > 0)
-  //  {
-  //    var document = toVisit.Dequeue();
-  //    
-  //    string ext = Path.GetExtension(document.uri.AbsolutePath);
-  //    foreach(var import in document.Imports)
-  //    {
-  //      string path = ResolveImportPath(document.uri.LocalPath, import, ext);
-  //      if(!string.IsNullOrEmpty(path))
-  //      {
-  //        var doc = GetOrLoadDocument(new Uri($"file://{path}"));
-  //        toVisit.Enqueue(doc);
-  //      }
-  //    }
-  //    
-  //    yield return document;
-  //  }
-  //}
 
   public string ResolveImportPath(string docpath, string import, string ext)
   {
