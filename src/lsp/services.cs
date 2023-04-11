@@ -333,7 +333,7 @@ public class TextDocumentGoToService : IService
       }
     }
 
-    return RpcResult.Success();
+    return RpcResult.Success(new Location());
   }
   
   /**
