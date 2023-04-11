@@ -15,16 +15,6 @@ public class IsTestedAttribute : Attribute
   }
 }
 
-public static class BHL_TestExt 
-{
-  public static string GetFullMessage(this Exception ex)
-  {
-    return ex.InnerException == null 
-      ? ex.Message 
-      : ex.Message + " --> " + ex.InnerException.GetFullMessage();
-  }
-}
-
 public class BHL_TestRunner
 {
   static public bool verbose { get; private set; }

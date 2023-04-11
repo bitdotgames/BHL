@@ -283,6 +283,13 @@ public static class Hash
 
 public static class Extensions
 {
+  public static string GetFullMessage(this Exception ex)
+  {
+    return ex.InnerException == null 
+      ? ex.Message 
+      : ex.Message + " --> " + ex.InnerException.GetFullMessage();
+  }
+
   public static Stream ToStream(this string str)
   {
     MemoryStream stream = new MemoryStream();

@@ -723,7 +723,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //removing quotes
     name = name.Substring(1, name.Length-2);
 
-    parsed_imports.Add(ctx, name);
+    parsed_imports[ctx] = name;
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)

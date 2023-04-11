@@ -132,7 +132,7 @@ public class JsonRpc : IJsonRpc
     }
     catch(Exception e)
     {
-      logger.Log(0, e.Message);
+      logger.Log(0, e.ToString());
 
       response = new ResponseMessage
       {
