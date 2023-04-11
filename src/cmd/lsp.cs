@@ -10,19 +10,23 @@ public class LSP : ICmd
 {
   public void Run(string[] args)
   {
-    var workspace = new Workspace();
+    var inc_path = new IncludePath();
 
     string log_file_path = "";
 
     var p = new OptionSet
     {
       { "root=", "bhl root dir",
-        v => workspace.AddRoot(v) },
+        v => inc_path.Add(v) },
       { "log-file=", "log file path",
         v => log_file_path = v }
     };
     
     p.Parse(args);
+
+    var ts = new Types();
+    var workspace = new Workspace();
+    workspace.Init(ts, inc_path);
 
     ILogWriter log_writer = 
       string.IsNullOrEmpty(log_file_path) ? 

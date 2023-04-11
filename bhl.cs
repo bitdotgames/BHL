@@ -207,6 +207,7 @@ public static class Tasks
       new string[] {
         $"{BHL_ROOT}/src/cmd/lsp.cs",
         $"{BHL_ROOT}/src/cmd/cmd.cs",
+        $"{BHL_ROOT}/bhl_front.dll",
         $"{BHL_ROOT}/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },

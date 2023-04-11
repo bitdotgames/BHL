@@ -36,14 +36,14 @@ public class Server
   
   bool ReadAndHandle()
   {
-    string json = connection.Read();
-    if(string.IsNullOrEmpty(json))
-      return false;
-    
-    string response = rpc.Handle(json);
-    
     try
     {
+      string json = connection.Read();
+      if(string.IsNullOrEmpty(json))
+        return false;
+    
+      string response = rpc.Handle(json);
+
       if(!string.IsNullOrEmpty(response))
         connection.Write(response);
     }
