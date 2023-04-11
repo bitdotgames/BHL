@@ -236,16 +236,16 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(ws));
+    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(NoLogger(), ws));
     
     CleanTestFiles();
 
     var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
 
-    ws.AddRoot(GetTestDirPath());
+    ws.Init(new bhl.Types(), GetTestIncPath());
     
     {
-      ws.IndexFiles(new bhl.Types());
+      ws.IndexFiles();
 
       string json =
         "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
@@ -270,7 +270,7 @@ public class TestLSP : BHL_TestBase
     {
       MakeTestDocument("bhl1.bhl", bhl_v2);
 
-      ws.IndexFiles(new bhl.Types());
+      ws.IndexFiles();
 
       string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
              "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
@@ -359,9 +359,9 @@ public class TestLSP : BHL_TestBase
     Uri uri1 = MakeTestDocument("bhl1.bhl", bhl1);
     Uri uri2 = MakeTestDocument("bhl2.bhl", bhl2);
     
-    ws.AddRoot(GetTestDirPath());
+    ws.Init(new bhl.Types(), GetTestIncPath());
 
-    ws.IndexFiles(new bhl.Types());
+    ws.IndexFiles();
     
     SubTest(() => {
       AssertEqual(
@@ -485,9 +485,9 @@ public class TestLSP : BHL_TestBase
     
     Uri uri = MakeTestDocument("bhl1.bhl", bhl1);
 
-    ws.AddRoot(GetTestDirPath());
+    ws.Init(new bhl.Types(), GetTestIncPath());
 
-    ws.IndexFiles(new bhl.Types());
+    ws.IndexFiles();
 
     SubTest(() => {
       AssertEqual(
@@ -590,6 +590,13 @@ public class TestLSP : BHL_TestBase
     string dir = GetTestDirPath();
     if(Directory.Exists(dir))
       Directory.Delete(dir, true/*recursive*/);
+  }
+
+  static bhl.IncludePath GetTestIncPath()
+  {
+    var inc_path = new bhl.IncludePath();
+    inc_path.Add(GetTestDirPath());
+    return inc_path;
   }
   
   static string GetTestDirPath()

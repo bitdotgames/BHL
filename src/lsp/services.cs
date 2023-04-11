@@ -22,23 +22,27 @@ public class LifecycleService : IService
   {
     process_id = args.processId;
     
+    var ts = new Types();
+    var inc_path = new IncludePath();
+
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        workspace.AddRoot(args.workspaceFolders[i].uri.LocalPath);
+        inc_path.Add(args.workspaceFolders[i].uri.LocalPath);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      workspace.AddRoot(args.rootUri.LocalPath);
+      inc_path.Add(args.rootUri.LocalPath);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      workspace.AddRoot(args.rootPath);
+      inc_path.Add(args.rootPath);
     }
     
-    var ts = new Types();
+    workspace.Init(ts, inc_path);
+
     //TODO: run it in background
-    workspace.IndexFiles(ts);
+    workspace.IndexFiles();
     
     var capabilities = new ServerCapabilities();
 
@@ -158,10 +162,12 @@ public class LifecycleService : IService
 
 public class TextDocumentSynchronizationService : IService
 {
+  Logger logger;
   Workspace workspace;
 
-  public TextDocumentSynchronizationService(Workspace workspace)
+  public TextDocumentSynchronizationService(Logger logger, Workspace workspace)
   {
+    this.logger = logger;
     this.workspace = workspace;
   }
 
@@ -176,22 +182,23 @@ public class TextDocumentSynchronizationService : IService
   [RpcMethod("textDocument/didChange")]
   public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
-    var document = workspace.FindDocument(args.textDocument.uri);
-    if(document != null)
+    if(workspace.syncKind != TextDocumentSyncKind.Full)
     {
-      if(workspace.syncKind == TextDocumentSyncKind.Full)
+      return RpcResult.Error(new ResponseError
       {
-        //foreach(var changes in args.contentChanges)
-        //  document.Update(changes.text);
-      }
-      else if(workspace.syncKind == TextDocumentSyncKind.Incremental)
-      {
+        code = (int)ErrorCodes.RequestFailed,
+        message = "Not supported"
+      });
+    }
+
+    foreach(var changes in args.contentChanges)
+    {
+      if(!workspace.UpdateDocument(args.textDocument.uri, changes.text))
         return RpcResult.Error(new ResponseError
         {
           code = (int)ErrorCodes.RequestFailed,
-          message = "Not supported"
+          message = "Update failed"
         });
-      }
     }
     
     return RpcResult.Success();

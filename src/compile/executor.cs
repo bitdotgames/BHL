@@ -522,11 +522,11 @@ public class CompilationExecutor
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
-    public static FileImports ParseImports(IncludePath inc_path, string file, FileStream fs)
+    public static FileImports ParseImports(IncludePath inc_path, string file, Stream stream)
     {
       var imps = new FileImports();
 
-      var r = new StreamReader(fs);
+      var r = new StreamReader(stream);
 
       while(true)
       {
@@ -554,7 +554,7 @@ public class CompilationExecutor
         }
       }
 
-      fs.Position = 0;
+      stream.Position = 0;
 
       return imps;
     }

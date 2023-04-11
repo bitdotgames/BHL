@@ -48,14 +48,14 @@ public class BHLDocument
     this.uri = uri;
   }
   
-  public void Update(string text, ANTLR_Parsed parsed, ANTLR_Processor proc)
+  public void Update(string text, ANTLR_Processor proc)
   {
     this.proc = proc;
 
     code.Update(text);
 
     nodes.Clear();
-    GetTerminalNodes(parsed.parse_tree, nodes);
+    GetTerminalNodes(proc.parsed.parse_tree, nodes);
   }
 
   public TerminalNodeImpl FindTerminalNode(SourcePos pos)
