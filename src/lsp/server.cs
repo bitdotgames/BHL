@@ -29,7 +29,7 @@ public class Server
       }
       catch(Exception e)
       {
-        logger.Log(0, e.Message);
+        logger.Log(0, e.ToString());
       }
     }
   }
@@ -49,7 +49,7 @@ public class Server
     }
     catch(Exception e)
     {
-      logger.Log(0, e.Message);
+      logger.Log(0, e.ToString());
       return false;
     }
     

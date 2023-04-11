@@ -43,7 +43,7 @@ public class JsonRpc : IJsonRpc
     }
     catch(Exception e)
     {
-      logger.Log(0, e.Message);
+      logger.Log(0, e.ToString());
       logger.Log(0, $"{req_json}");
 
       rsp = new ResponseMessage
@@ -175,7 +175,7 @@ public class JsonRpc : IJsonRpc
             }
             catch(Exception e)
             {
-              logger.Log(0, e.Message);
+              logger.Log(0, e.ToString());
 
               return RpcResult.Error(new ResponseError
               {
