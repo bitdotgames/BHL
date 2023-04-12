@@ -61,7 +61,7 @@ public class RunCmd : ICmd
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.use_cache = false;
     conf.self_file = GetSelfFile();
-    conf.files = files;
+    conf.files = Util.NormalizeFilePaths(files);
     conf.inc_path.Add(src_dir);
     conf.max_threads = 1;
     conf.res_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
