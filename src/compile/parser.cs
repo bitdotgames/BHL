@@ -517,9 +517,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   internal void Phase_LinkImports(
-    Dictionary<string, ANTLR_Processor> file2proc, 
+    Dictionary<Uri, ANTLR_Processor> file2proc, 
     //can be null
-    Dictionary<string, CompiledModule> file2compiled, 
+    Dictionary<Uri, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
     if(parsed_imports.Count == 0)
@@ -552,14 +552,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         continue;
       }
 
+      var file_uri = new Uri("file://" + file_path);
+
       Module imported_module = null;
       
       CompiledModule cm;
       //let's try to fetch from the cache first
-      if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
+      if(file2compiled != null && file2compiled.TryGetValue(file_uri, out cm))
         imported_module = cm.module;
       else
-        imported_module = file2proc[file_path].module;
+        imported_module = file2proc[file_uri].module;
 
       //NOTE: let's add imported global vars to module's global vars index
       if(module.local_gvars_mark == -1)
@@ -579,7 +581,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         continue;
       }
 
-      ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
+      ast_import.module_names.Add(inc_path.FileUri2ModuleName(file_uri));
     }
 
     root_ast.AddChild(ast_import);
@@ -654,9 +656,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   static public void ProcessAll(
-    Dictionary<string, ANTLR_Processor> file2proc, 
+    Dictionary<Uri, ANTLR_Processor> file2proc, 
     //can be null
-    Dictionary<string, CompiledModule> file2compiled, 
+    Dictionary<Uri, CompiledModule> file2compiled, 
     IncludePath inc_path
   )
   {
@@ -682,8 +684,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   }
 
   static void LinkImports(
-    Dictionary<string, CompiledModule> file2compiled,
-    Dictionary<string, ANTLR_Processor> file2proc
+    Dictionary<Uri, CompiledModule> file2compiled,
+    Dictionary<Uri, ANTLR_Processor> file2proc
   )
   {
     var mod_name2ns = new Dictionary<string, Namespace>(); 
