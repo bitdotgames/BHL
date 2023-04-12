@@ -594,7 +594,7 @@ public class TestLSP : BHL_TestBase
   
   static Uri MakeTestDocument(string path, string text, List<string> files = null)
   {
-    string full_path = GetTestDirPath() + "/" + path;
+    string full_path = bhl.Util.NormalizeFilePath(GetTestDirPath() + "/" + path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     if(files != null)
