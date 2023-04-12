@@ -572,11 +572,6 @@ public class TestLSP : BHL_TestBase
     return "{\"id\":1,\"result\":{},\"jsonrpc\":\"2.0\"}";
   }
   
-  static Uri MakeUri(string path)
-  {
-    return new Uri("file://" + bhl.Util.NormalizeFilePath(path));
-  }
-
   static void CleanTestFiles()
   {
     string dir = GetTestDirPath();
@@ -604,7 +599,7 @@ public class TestLSP : BHL_TestBase
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    return MakeUri(full_path);
+    return bhl.Util.MakeUri(full_path);
   }
 
   static bhl.SourcePos Pos(string code, string needle)
