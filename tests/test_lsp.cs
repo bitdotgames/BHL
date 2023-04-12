@@ -542,7 +542,7 @@ public class TestLSP : BHL_TestBase
   {
     var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
+      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
@@ -550,7 +550,7 @@ public class TestLSP : BHL_TestBase
   {
     var start = Pos(File.ReadAllText(uri.LocalPath), needle);
     var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
-    return "{\"id\":1,\"result\":{\"uri\":\"" + uri.ToString() +
+    return "{\"id\":1,\"result\":{\"uri\":\"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\",\"range\":{\"start\":" + AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
 
@@ -558,7 +558,7 @@ public class TestLSP : BHL_TestBase
   {
     var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"" + uri.ToString() +
+      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
@@ -599,7 +599,8 @@ public class TestLSP : BHL_TestBase
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    return bhl.Util.MakeUri(full_path);
+    var uri = bhl.Util.MakeUri(full_path);
+    return uri;
   }
 
   static bhl.SourcePos Pos(string code, string needle)
