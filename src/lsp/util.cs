@@ -4,19 +4,18 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp {
 
-public class Code
+public class CodeIndex
 {
-  public string Text { get; private set; }
-
+  int length;
   List<int> line2byte_offset = new List<int>();
 
   public void Update(string text)
   {
-    this.Text = text;
+    length = text.Length;
 
     line2byte_offset.Clear();
     
-    if(text.Length > 0)
+    if(length > 0)
       line2byte_offset.Add(0);
 
     for(int i = 0; i < text.Length; i++)
@@ -50,7 +49,7 @@ public class Code
   
   public SourcePos GetIndexPosition(int index)
   {
-    if(index >= Text.Length)
+    if(index >= length)
       return new SourcePos(-1, -1); 
 
     // Binary search.

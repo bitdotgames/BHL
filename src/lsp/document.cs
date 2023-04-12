@@ -37,7 +37,7 @@ public class BHLDocument
 {
   public Uri uri { get; private set; }
   
-  public Code code { get; private set; } = new Code();
+  public CodeIndex index { get; private set; } = new CodeIndex();
 
   public ANTLR_Processor proc { get; private set; }
 
@@ -52,7 +52,7 @@ public class BHLDocument
   {
     this.proc = proc;
 
-    code.Update(text);
+    index.Update(text);
 
     nodes.Clear();
     GetTerminalNodes(proc.parsed.parse_tree, nodes);
@@ -65,7 +65,7 @@ public class BHLDocument
 
   public TerminalNodeImpl FindTerminalNode(int line, int character)
   {
-    return FindTerminalNodeByByteIndex(code.CalcByteIndex(line, character));
+    return FindTerminalNodeByByteIndex(index.CalcByteIndex(line, character));
   }
 
   public TerminalNodeImpl FindTerminalNodeByByteIndex(int idx)

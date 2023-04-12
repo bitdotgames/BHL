@@ -10,7 +10,7 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("Unix line endings", () => {
       string bhl = "func int test()\n{\nwhat()\n}";
-      var code = new Code();
+      var code = new CodeIndex();
       code.Update(bhl);
 
       AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
@@ -25,7 +25,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest("Windows line endings", () => {
       string bhl = "func int test()\r\n{\r\nwhat()\r\n}";
-      var code = new Code();
+      var code = new CodeIndex();
       code.Update(bhl);
 
       AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
@@ -40,7 +40,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest("Mixed line endings", () => {
       string bhl = "func int test()\n{\r\nwhat()\r}";
-      var code = new Code();
+      var code = new CodeIndex();
       code.Update(bhl);
 
       AssertEqual("f", bhl[code.CalcByteIndex(0, 0)].ToString());
@@ -58,7 +58,7 @@ public class TestLSP : BHL_TestBase
   public void TestDocumentGetLineColumn()
   {
     string bhl = "func int test()\n{\nwhat()\n}";
-    var code = new Code();
+    var code = new CodeIndex();
     code.Update(bhl);
 
     {
@@ -256,13 +256,6 @@ public class TestLSP : BHL_TestBase
         rpc.Handle(json),
         string.Empty
       );
-
-      var document = ws.FindDocument(uri);
-      
-      AssertEqual(
-        bhl_v1,
-        document.code.Text
-      );
     }
 
     CleanTestFiles();
@@ -279,13 +272,6 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(json),
         string.Empty
-      );
-
-      var document = ws.FindDocument(uri);
-
-      AssertEqual(
-        bhl_v2,
-        document.code.Text
       );
     }
     
@@ -626,7 +612,7 @@ public class TestLSP : BHL_TestBase
     int idx = code.IndexOf(needle);
     if(idx == -1)
       throw new Exception("Needle not found: " + needle);
-    var indexer = new Code();
+    var indexer = new CodeIndex();
     indexer.Update(code);
     var pos = indexer.GetIndexPosition(idx);
     if(pos.line == -1 && pos.column == -1)
