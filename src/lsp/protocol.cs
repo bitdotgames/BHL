@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace bhl.lsp.spec {
+namespace bhl.lsp.proto {
 
 public class SelectorTypeJsonConverter : JsonConverter
 {

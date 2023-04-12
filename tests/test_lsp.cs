@@ -134,11 +134,11 @@ public class TestLSP : BHL_TestBase
     SubTest("invalid params", () =>
     {
       var rpc = new JsonRpc(NoLogger());
-      rpc.AttachService(new bhl.lsp.spec.LifecycleService(NoLogger(), new Workspace()));
+      rpc.AttachService(new bhl.lsp.proto.LifecycleService(NoLogger(), new Workspace()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
-        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.spec.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
+        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.proto.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
       );
     });
   }
@@ -147,7 +147,7 @@ public class TestLSP : BHL_TestBase
   public void TestInitShutdownExit()
   {
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.LifecycleService(NoLogger(), new Workspace()));
+    rpc.AttachService(new bhl.lsp.proto.LifecycleService(NoLogger(), new Workspace()));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -236,7 +236,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.TextDocumentSynchronizationService(NoLogger(), ws));
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentSynchronizationService(NoLogger(), ws));
     
     CleanTestFiles();
 
@@ -338,7 +338,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.TextDocumentGoToService(ws));
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentGoToService(ws));
     
     CleanTestFiles();
     
@@ -466,7 +466,7 @@ public class TestLSP : BHL_TestBase
     var ws = new Workspace();
 
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.spec.TextDocumentSignatureHelpService(ws));
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentSignatureHelpService(ws));
     
     CleanTestFiles();
     
@@ -521,7 +521,7 @@ public class TestLSP : BHL_TestBase
   //  var ws = new Workspace();
 
   //  var rpc = new JsonRpc(NoLogger());
-  //  rpc.AttachService(new bhl.lsp.spec.TextDocumentSemanticTokensService(ws));
+  //  rpc.AttachService(new bhl.lsp.proto.TextDocumentSemanticTokensService(ws));
   //  
   //  CleanTestFiles();
   //  
@@ -538,14 +538,14 @@ public class TestLSP : BHL_TestBase
   //  );
   //}
 
-  static string GoToDefinitionReq(bhl.lsp.spec.Uri uri, string needle)
+  static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)
   {
     var pos = Pos(File.ReadAllText(uri.path), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
       "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  static string GoToDefinitionRsp(bhl.lsp.spec.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
+  static string GoToDefinitionRsp(bhl.lsp.proto.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
   {
     var start = Pos(File.ReadAllText(uri.path), needle);
     var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
@@ -553,7 +553,7 @@ public class TestLSP : BHL_TestBase
       AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
 
-  static string SignatureHelpReq(bhl.lsp.spec.Uri uri, string needle)
+  static string SignatureHelpReq(bhl.lsp.proto.Uri uri, string needle)
   {
     var pos = Pos(File.ReadAllText(uri.path), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
@@ -590,14 +590,14 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static bhl.lsp.spec.Uri MakeTestDocument(string path, string text, List<string> files = null)
+  static bhl.lsp.proto.Uri MakeTestDocument(string path, string text, List<string> files = null)
   {
     string full_path = bhl.Util.NormalizeFilePath(GetTestDirPath() + "/" + path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    var uri = new bhl.lsp.spec.Uri(full_path);
+    var uri = new bhl.lsp.proto.Uri(full_path);
     return uri;
   }
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace bhl.lsp.spec {
+namespace bhl.lsp.proto {
 
 public class LifecycleService : IService
 {
@@ -332,7 +332,7 @@ public class TextDocumentGoToService : IService
         range.DecrementLine();
         return RpcResult.Success(new Location
         {
-          uri = new spec.Uri(symb.parsed.file),
+          uri = new proto.Uri(symb.parsed.file),
           range = range
         });
       }

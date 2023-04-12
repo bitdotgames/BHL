@@ -9,33 +9,33 @@ public static class BHLSemanticTokens
 {
   public static string[] token_types = 
   {
-    spec.SemanticTokenTypes.@class,
-    spec.SemanticTokenTypes.function,
-    spec.SemanticTokenTypes.variable,
-    spec.SemanticTokenTypes.number,
-    spec.SemanticTokenTypes.@string,
-    spec.SemanticTokenTypes.type,
-    spec.SemanticTokenTypes.keyword
+    proto.SemanticTokenTypes.@class,
+    proto.SemanticTokenTypes.function,
+    proto.SemanticTokenTypes.variable,
+    proto.SemanticTokenTypes.number,
+    proto.SemanticTokenTypes.@string,
+    proto.SemanticTokenTypes.type,
+    proto.SemanticTokenTypes.keyword
   };
   
   public static string[] modifiers = 
   {
-    spec.SemanticTokenModifiers.declaration,   // 1
-    spec.SemanticTokenModifiers.definition,    // 2
-    spec.SemanticTokenModifiers.@readonly,     // 4
-    spec.SemanticTokenModifiers.@static,       // 8
-    spec.SemanticTokenModifiers.deprecated,    // 16
-    spec.SemanticTokenModifiers.@abstract,     // 32
-    spec.SemanticTokenModifiers.async,         // 64
-    spec.SemanticTokenModifiers.modification,  // 128
-    spec.SemanticTokenModifiers.documentation, // 256
-    spec.SemanticTokenModifiers.defaultLibrary // 512
+    proto.SemanticTokenModifiers.declaration,   // 1
+    proto.SemanticTokenModifiers.definition,    // 2
+    proto.SemanticTokenModifiers.@readonly,     // 4
+    proto.SemanticTokenModifiers.@static,       // 8
+    proto.SemanticTokenModifiers.deprecated,    // 16
+    proto.SemanticTokenModifiers.@abstract,     // 32
+    proto.SemanticTokenModifiers.async,         // 64
+    proto.SemanticTokenModifiers.modification,  // 128
+    proto.SemanticTokenModifiers.documentation, // 256
+    proto.SemanticTokenModifiers.defaultLibrary // 512
   };
 }
 
 public class BHLDocument
 {
-  public spec.Uri uri { get; private set; }
+  public proto.Uri uri { get; private set; }
   
   public CodeIndex index { get; private set; } = new CodeIndex();
 
@@ -43,7 +43,7 @@ public class BHLDocument
 
   List<TerminalNodeImpl> nodes = new List<TerminalNodeImpl>();
 
-  public BHLDocument(spec.Uri uri)
+  public BHLDocument(proto.Uri uri)
   {
     this.uri = uri;
   }

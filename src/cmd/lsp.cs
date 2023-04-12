@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using Mono.Options;
 using bhl.lsp;
-using bhl.lsp.spec;
+using bhl.lsp.proto;
 
 namespace bhl {
 

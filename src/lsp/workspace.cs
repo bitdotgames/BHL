@@ -15,7 +15,7 @@ public class Workspace
 
   Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
-  public spec.TextDocumentSyncKind syncKind = spec.TextDocumentSyncKind.Full;
+  public proto.TextDocumentSyncKind syncKind = proto.TextDocumentSyncKind.Full;
 
   public bool declarationLinkSupport;
   public bool definitionLinkSupport;
@@ -62,7 +62,7 @@ public class Workspace
 
     foreach(var kv in file2proc)
     {
-      var document = new BHLDocument(new spec.Uri(kv.Key)); 
+      var document = new BHLDocument(new proto.Uri(kv.Key)); 
       document.Update(File.ReadAllText(kv.Key), kv.Value);
       documents.Add(kv.Key, document);
     }
@@ -91,7 +91,7 @@ public class Workspace
     return proc;
   }
 
-  public BHLDocument GetOrLoadDocument(spec.Uri uri)
+  public BHLDocument GetOrLoadDocument(proto.Uri uri)
   {
     BHLDocument document;
     if(documents.TryGetValue(uri.path, out document))
@@ -100,14 +100,14 @@ public class Workspace
       return LoadDocument(uri);
   }
 
-  public BHLDocument LoadDocument(spec.Uri uri)
+  public BHLDocument LoadDocument(proto.Uri uri)
   {
     byte[] buffer = File.ReadAllBytes(uri.path);
     string text = Encoding.UTF8.GetString(buffer);
     return OpenDocument(uri, text);
   }
 
-  public BHLDocument OpenDocument(spec.Uri uri, string text)
+  public BHLDocument OpenDocument(proto.Uri uri, string text)
   {
     BHLDocument document;
     //TODO: use Uri as a key
@@ -123,7 +123,7 @@ public class Workspace
     return document;
   }
   
-  public BHLDocument FindDocument(spec.Uri uri)
+  public BHLDocument FindDocument(proto.Uri uri)
   {
     return FindDocument(uri.path);
   }
@@ -136,7 +136,7 @@ public class Workspace
     return document;
   }
 
-  public bool UpdateDocument(spec.Uri uri, string text)
+  public bool UpdateDocument(proto.Uri uri, string text)
   {
     var document = FindDocument(uri);
     if(document == null)

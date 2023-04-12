@@ -250,7 +250,7 @@ public abstract class MessageBase
 
 public class RequestMessage : MessageBase
 {
-  public spec.SelectorType<Int32, Int64, string> id { get; set; }
+  public proto.SelectorType<Int32, Int64, string> id { get; set; }
   public string method { get; set; }
   public JToken @params { get; set; }
 }
@@ -264,7 +264,7 @@ public class ResponseError
 
 public class ResponseMessage : MessageBase
 {
-  public spec.SelectorType<Int32, Int64, string> id { get; set; }
+  public proto.SelectorType<Int32, Int64, string> id { get; set; }
   public object result { get; set; }
   public ResponseError error { get; set; }
 }
