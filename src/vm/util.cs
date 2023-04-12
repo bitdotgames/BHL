@@ -48,6 +48,14 @@ static public class Util
   {
     return Path.GetFullPath(file_path).Replace("\\", "/");
   }
+
+  static public List<string> NormalizeFilePaths(List<string> file_paths)
+  {
+    var res = new List<string>();
+    foreach(var path in file_paths)
+      res.Add(NormalizeFilePath(path));
+    return res;
+  }
 }
 
 public struct SourcePos
@@ -151,7 +159,7 @@ public class IncludePath
     if(!Path.IsPathRooted(path))
     {
       var dir = Path.GetDirectoryName(self_path);
-      return Path.GetFullPath(Path.Combine(dir, path) + ".bhl");
+      return Util.NormalizeFilePath(Path.Combine(dir, path) + ".bhl");
     }
     //absolute import
     else
@@ -160,8 +168,11 @@ public class IncludePath
 
   public string FilePath2ModuleName(string full_path)
   {
-    full_path = Util.NormalizeFilePath(full_path);
+    return _FilePath2ModuleName(Util.NormalizeFilePath(full_path));
+  }
 
+  string _FilePath2ModuleName(string full_path)
+  {
     string norm_path = "";
     for(int i=0;i<this.Count;++i)
     {
@@ -192,14 +203,14 @@ public class IncludePath
       throw new Exception("Bad path");
 
     file_path = ResolveImportPath(self_path, path);
-    norm_path = FilePath2ModuleName(file_path);
+    norm_path = _FilePath2ModuleName(file_path);
   }
 
   public string TryIncludePaths(string path)
   {
     for(int i=0;i<this.Count;++i)
     {
-      var file_path = Path.GetFullPath(this[i] + "/" + path  + ".bhl");
+      var file_path = Util.NormalizeFilePath(this[i] + "/" + path  + ".bhl");
       if(File.Exists(file_path))
         return file_path;
     }

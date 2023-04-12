@@ -47,10 +47,12 @@ public class Workspace
       var files = Directory.GetFiles(path, "*.bhl", SearchOption.AllDirectories);
       foreach(var file in files)
       {
-        using(var sfs = File.OpenRead(file))
+        string norm_file = Util.NormalizeFilePath(file);
+
+        using(var sfs = File.OpenRead(norm_file))
         {
-          var proc = ParseFile(ts, file, sfs);
-          file2proc.Add(file, proc);
+          var proc = ParseFile(ts, norm_file, sfs);
+          file2proc.Add(norm_file, proc);
         }
       }
     }
