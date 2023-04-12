@@ -197,12 +197,6 @@ public class ModulePath
   public string name;
   public string file_path;
 
-  public ModulePath(string name, Uri file_uri)
-  {
-    this.name = name;
-    this.file_path = file_uri.LocalPath;
-  }
-
   public ModulePath(string name, string file_path)
   {
     this.name = name;
@@ -251,10 +245,6 @@ public class Module
 
   public Module(Types ts, string name = "", string file_path = "")
     : this(ts, new ModulePath(name, file_path), new Namespace())
-  {}
-
-  public Module(Types ts, string name, Uri file_uri)
-    : this(ts, new ModulePath(name, file_uri), new Namespace())
   {}
 
   public Module(

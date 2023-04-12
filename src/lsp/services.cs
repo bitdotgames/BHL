@@ -334,7 +334,7 @@ public class TextDocumentGoToService : IService
         range.DecrementLine();
         return RpcResult.Success(new Location
         {
-          uri = new Uri("file://" + symb.parsed.file),
+          uri = Util.MakeUri(symb.parsed.file),
           range = range
         });
       }

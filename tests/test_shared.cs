@@ -936,7 +936,7 @@ public class BHL_TestBase
     conf.max_threads = max_threads;
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.ts = ts;
-    conf.files = Util.MakeUris(files);
+    conf.files = Util.NormalizeFilePaths(files);
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_path.Add(TestDirPath());
     conf.tmp_dir = TestDirPath() + "/cache";
@@ -1016,7 +1016,7 @@ public class BHL_TestBase
       Console.WriteLine(proc.parsed);
 
     ANTLR_Processor.ProcessAll(
-      new Dictionary<Uri, ANTLR_Processor>() {{new Uri("file://"), proc}}, 
+      new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
       null,
       new IncludePath()
     );

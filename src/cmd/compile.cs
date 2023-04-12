@@ -119,7 +119,7 @@ public class CompileCmd : ICmd
     conf.module_fmt = module_fmt;
     conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
-    conf.files = Util.MakeUris(files);
+    conf.files = Util.NormalizeFilePaths(files);
     conf.inc_path.Add(src_dir);
     conf.max_threads = max_threads;
     conf.res_file = res_file;

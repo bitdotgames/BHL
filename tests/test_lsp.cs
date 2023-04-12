@@ -542,7 +542,7 @@ public class TestLSP : BHL_TestBase
   {
     var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"" + uri +
+      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
@@ -550,7 +550,7 @@ public class TestLSP : BHL_TestBase
   {
     var start = Pos(File.ReadAllText(uri.LocalPath), needle);
     var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
-    return "{\"id\":1,\"result\":{\"uri\":\"" + uri +
+    return "{\"id\":1,\"result\":{\"uri\":\"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\",\"range\":{\"start\":" + AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
 
@@ -558,7 +558,7 @@ public class TestLSP : BHL_TestBase
   {
     var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"" + uri +
+      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
       "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
@@ -592,12 +592,15 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static Uri MakeTestDocument(string path, string text)
+  static Uri MakeTestDocument(string path, string text, List<string> files = null)
   {
-    string full_path = GetTestDirPath() + "/" + path;
+    string full_path = bhl.Util.NormalizeFilePath(GetTestDirPath() + "/" + path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
-    return new Uri("file://" + full_path);
+    if(files != null)
+      files.Add(full_path);
+    var uri = bhl.Util.MakeUri(full_path);
+    return uri;
   }
 
   static bhl.SourcePos Pos(string code, string needle)

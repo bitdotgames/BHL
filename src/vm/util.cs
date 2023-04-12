@@ -49,12 +49,17 @@ static public class Util
     return Path.GetFullPath(file_path).Replace("\\", "/");
   }
 
-  static public List<Uri> MakeUris(List<string> files)
+  static public List<string> NormalizeFilePaths(List<string> file_paths)
   {
-    var uris = new List<Uri>();
-    foreach(var file in files)
-      uris.Add(new Uri("file://" + file));
-    return uris;
+    var res = new List<string>();
+    foreach(var path in file_paths)
+      res.Add(NormalizeFilePath(path));
+    return res;
+  }
+
+  static public Uri MakeUri(string path)
+  {
+    return new Uri("file://" + NormalizeFilePath(path));
   }
 }
 
@@ -166,9 +171,9 @@ public class IncludePath
       return TryIncludePaths(path);
   }
 
-  public string FileUri2ModuleName(Uri file_uri)
+  public string FilePath2ModuleName(string full_path)
   {
-    return _FilePath2ModuleName(file_uri.LocalPath);
+    return _FilePath2ModuleName(Util.NormalizeFilePath(full_path));
   }
 
   string _FilePath2ModuleName(string full_path)

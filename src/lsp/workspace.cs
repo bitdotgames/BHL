@@ -11,8 +11,9 @@ public class Workspace
 {
   Types ts;
   IncludePath inc_path;
-  Dictionary<Uri, ANTLR_Processor> file2proc = new Dictionary<Uri, ANTLR_Processor>(); 
-  Dictionary<Uri, BHLDocument> file2doc = new Dictionary<Uri, BHLDocument>();
+  Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>(); 
+
+  Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
   public spec.TextDocumentSyncKind syncKind = spec.TextDocumentSyncKind.Full;
 
@@ -37,7 +38,7 @@ public class Workspace
   public void IndexFiles()
   {
     file2proc.Clear();
-    file2doc.Clear();
+    documents.Clear();
 
     for(int i=0;i<inc_path.Count;++i)
     {
@@ -46,12 +47,12 @@ public class Workspace
       var files = Directory.GetFiles(path, "*.bhl", SearchOption.AllDirectories);
       foreach(var file in files)
       {
-        var uri = new Uri("file://" + file);
+        string norm_file = Util.NormalizeFilePath(file);
 
-        using(var sfs = File.OpenRead(file))
+        using(var sfs = File.OpenRead(norm_file))
         {
-          var proc = ParseFile(ts, uri, sfs);
-          file2proc.Add(uri, proc);
+          var proc = ParseFile(ts, norm_file, sfs);
+          file2proc.Add(norm_file, proc);
         }
       }
     }
@@ -61,20 +62,20 @@ public class Workspace
 
     foreach(var kv in file2proc)
     {
-      var document = new BHLDocument(kv.Key); 
-      document.Update(File.ReadAllText(kv.Key.LocalPath), kv.Value);
-      file2doc.Add(kv.Key, document);
+      var document = new BHLDocument(new Uri("file://" + kv.Key)); 
+      document.Update(File.ReadAllText(kv.Key), kv.Value);
+      documents.Add(kv.Key, document);
     }
   }
 
-  ANTLR_Processor ParseFile(Types ts, Uri uri, Stream stream)
+  ANTLR_Processor ParseFile(Types ts, string file, Stream stream)
   {
-    var imports = CompilationExecutor.ParseWorker.ParseImports(inc_path, uri.LocalPath, stream);
-    var module = new bhl.Module(ts, inc_path.FileUri2ModuleName(uri), uri.LocalPath);
+    var imports = CompilationExecutor.ParseWorker.ParseImports(inc_path, file, stream);
+    var module = new bhl.Module(ts, inc_path.FilePath2ModuleName(file), file);
 
     var errors = new CompileErrors();
 
-    var parser = ANTLR_Processor.Stream2Parser(uri.LocalPath, stream, null/*TODO*/);
+    var parser = ANTLR_Processor.Stream2Parser(file, stream, null/*TODO*/);
 
     var parsed = new ANTLR_Parsed(parser);
 
@@ -92,8 +93,9 @@ public class Workspace
 
   public BHLDocument GetOrLoadDocument(Uri uri)
   {
+    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
     BHLDocument document;
-    if(file2doc.TryGetValue(uri, out document))
+    if(documents.TryGetValue(path, out document))
       return document;
     else
       return LoadDocument(uri);
@@ -108,25 +110,37 @@ public class Workspace
 
   public BHLDocument OpenDocument(Uri uri, string text)
   {
+    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
+
     BHLDocument document;
-    if(!file2doc.TryGetValue(uri, out document))
+    //TODO: use Uri as a key
+    if(!documents.TryGetValue(path, out document))
     {
       document = new BHLDocument(uri);  
-      file2doc.Add(uri, document);
+      documents.Add(path, document);
     }
     
-    //TODO: parse document?
+    //TODO: parse document
+    //document.Update(text);
 
     return document;
   }
   
   public BHLDocument FindDocument(Uri uri)
   {
-    BHLDocument document;
-    file2doc.TryGetValue(uri, out document);
-    return document;
+    return FindDocument(uri.LocalPath);
   }
   
+  public BHLDocument FindDocument(string path)
+  {
+    path = bhl.Util.NormalizeFilePath(path);
+    
+    BHLDocument document;
+    documents.TryGetValue(path, out document);
+
+    return document;
+  }
+
   public bool UpdateDocument(Uri uri, string text)
   {
     var document = FindDocument(uri);
@@ -134,9 +148,9 @@ public class Workspace
       return false;
 
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(ts, document.uri, ms);
+    var proc = ParseFile(ts, document.uri.LocalPath, ms);
 
-    file2proc[uri] = proc;
+    file2proc[document.uri.LocalPath] = proc;
 
     ANTLR_Processor.ProcessAll(file2proc, null, inc_path);
 
@@ -156,7 +170,7 @@ public class Workspace
       if(!Path.IsPathRooted(import))
       {
         var dir = Path.GetDirectoryName(docpath);
-        path = Util.NormalizeFilePath(Path.Combine(dir, import) + ext);
+        path = Path.GetFullPath(Path.Combine(dir, import) + ext);
         if(File.Exists(path))
         {
           resolved_path = path;
@@ -165,7 +179,7 @@ public class Workspace
       }
       else
       {
-        path = Util.NormalizeFilePath(root + "/" + import + ext);
+        path = Path.GetFullPath(root + "/" + import + ext);
         if(File.Exists(path))
         {
           resolved_path = path;
@@ -173,6 +187,9 @@ public class Workspace
         }
       }
     }
+    
+    if(!string.IsNullOrEmpty(resolved_path))
+      resolved_path = bhl.Util.NormalizeFilePath(resolved_path);
     
     return resolved_path;
   }

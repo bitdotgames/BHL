@@ -11,7 +11,7 @@ using marshall;
 public class CompileConf
 {
   public string args = ""; 
-  public List<Uri> files = new List<Uri>();
+  public List<string> files = new List<string>();
   public Types ts;
   public string self_file = "";
   public IncludePath inc_path = new IncludePath();
@@ -132,11 +132,11 @@ public class CompilationExecutor
       errors.AddRange(pw.errors);
 
     //2.1 let's collect all interim results collected in parse workers
-    var file2interim = new Dictionary<Uri, InterimResult>();
+    var file2interim = new Dictionary<string, InterimResult>();
 
     //3. create ANTLR processors for non-compiled files
-    var file2proc = new Dictionary<Uri, ANTLR_Processor>(); 
-    var file2compiled = new Dictionary<Uri, CompiledModule>(); 
+    var file2proc = new Dictionary<string, ANTLR_Processor>(); 
+    var file2compiled = new Dictionary<string, CompiledModule>(); 
 
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
@@ -151,7 +151,7 @@ public class CompilationExecutor
         {
           var file_module = new Module(
             conf.ts,
-            conf.inc_path.FileUri2ModuleName(kv.Key), 
+            conf.inc_path.FilePath2ModuleName(kv.Key), 
             kv.Key
           );
           var proc_errs = new CompileErrors();
@@ -161,7 +161,7 @@ public class CompilationExecutor
             kv.Value.parsed, 
             conf.ts, 
             proc_errs,
-            ErrorHandlers.MakeStandard(kv.Key.LocalPath, proc_errs)
+            ErrorHandlers.MakeStandard(kv.Key, proc_errs)
           );
           file2proc.Add(kv.Key, proc);
         }
@@ -261,8 +261,8 @@ public class CompilationExecutor
     CompileConf conf, 
     Types ts, 
     List<ParseWorker> parse_workers, 
-    Dictionary<Uri, InterimResult> file2interim,
-    Dictionary<Uri, ANTLR_Processor> file2proc
+    Dictionary<string, InterimResult> file2interim,
+    Dictionary<string, ANTLR_Processor> file2proc
     )
   {
     var compiler_workers = new List<CompilerWorker>();
@@ -387,7 +387,7 @@ public class CompilationExecutor
     public string self_file;
     public int start;
     public int count;
-    public Dictionary<Uri, InterimResult> file2interim = new Dictionary<Uri, InterimResult>();
+    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public CompileErrors errors = new CompileErrors();
     public int cache_hits;
     public int cache_miss;
@@ -421,20 +421,20 @@ public class CompilationExecutor
         for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
         {
           var file = w.conf.files[i]; 
-          using(var sfs = File.OpenRead(file.LocalPath))
+          using(var sfs = File.OpenRead(file))
           {
-            var imports = w.GetImports(file.LocalPath, sfs);
+            var imports = w.GetImports(file, sfs);
             var deps = new List<string>(imports.file_paths);
-            deps.Add(file.LocalPath);
+            deps.Add(file);
 
             //NOTE: adding self binary as a dep
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var compiled_file = GetCompiledCacheFile(w.conf.tmp_dir, file.LocalPath);
+            var compiled_file = GetCompiledCacheFile(w.conf.tmp_dir, file);
 
             var interim = new InterimResult();
-            interim.module_path = new ModulePath(w.conf.inc_path.FileUri2ModuleName(file), file);
+            interim.module_path = new ModulePath(w.conf.inc_path.FilePath2ModuleName(file), file);
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
@@ -457,9 +457,9 @@ public class CompilationExecutor
             if(!use_cache)
             {
               var parser = ANTLR_Processor.Stream2Parser(
-                file.LocalPath, 
+                file, 
                 sfs, 
-                ErrorHandlers.MakeStandard(file.LocalPath, w.errors)
+                ErrorHandlers.MakeStandard(file, w.errors)
               );
               interim.parsed = new ANTLR_Parsed(parser);
 
@@ -478,7 +478,7 @@ public class CompilationExecutor
         {
           if(w.conf.verbose)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.errors.Add(new BuildError(w.conf.files[i].LocalPath, e));
+          w.errors.Add(new BuildError(w.conf.files[i], e));
         }
       }
 
@@ -570,9 +570,9 @@ public class CompilationExecutor
     public int count;
     public IFrontPostProcessor postproc;
     public CompileErrors errors = new CompileErrors();
-    public Dictionary<Uri, InterimResult> file2interim = new Dictionary<Uri, InterimResult>();
-    public Dictionary<Uri, ANTLR_Processor> file2proc = new Dictionary<Uri, ANTLR_Processor>();
-    public Dictionary<Uri, Namespace> file2ns = new Dictionary<Uri, Namespace>();
+    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+    public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
+    public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
 
     public void Start()
     {
@@ -593,7 +593,7 @@ public class CompilationExecutor
 
       var w = (CompilerWorker)data;
 
-      Uri current_file = null;
+      string current_file = "";
 
       try
       {
@@ -612,7 +612,7 @@ public class CompilationExecutor
           {
             var proc = w.file2proc[current_file];
 
-            var proc_result = w.postproc.Patch(proc.result, current_file.LocalPath);
+            var proc_result = w.postproc.Patch(proc.result, current_file);
 
             var c  = new ModuleCompiler(proc_result);
             var cm = c.Compile();
@@ -631,7 +631,7 @@ public class CompilationExecutor
         {
           if(w.conf.verbose)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
-          w.errors.Add(new BuildError(current_file.LocalPath, e));
+          w.errors.Add(new BuildError(current_file, e));
         }
       }
 
@@ -706,28 +706,6 @@ public static class BuildUtil
     foreach(var dep in deps)
     {
       if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
-      {
-        //Console.WriteLine("Stale " + dep + " " + file + " : " + GetLastWriteTime(dep) + " VS " + fmtime);
-        return true;
-      }
-    }
-
-    //Console.WriteLine("Hit "+ file);
-    return false;
-  }
-
-  static public bool NeedToRegen(string file, List<Uri> deps)
-  {
-    if(!File.Exists(file))
-    {
-      //Console.WriteLine("Missing " + file);
-      return true;
-    }
-
-    var fmtime = GetLastWriteTime(file);
-    foreach(var dep in deps)
-    {
-      if(File.Exists(dep.LocalPath) && GetLastWriteTime(dep.LocalPath) > fmtime)
       {
         //Console.WriteLine("Stale " + dep + " " + file + " : " + GetLastWriteTime(dep) + " VS " + fmtime);
         return true;
