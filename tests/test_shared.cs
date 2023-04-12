@@ -936,7 +936,7 @@ public class BHL_TestBase
     conf.max_threads = max_threads;
     conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.ts = ts;
-    conf.files = Util.NormalizeFilePaths(files);
+    conf.files = files;
     conf.res_file = TestDirPath() + "/result.bin";
     conf.inc_path.Add(TestDirPath());
     conf.tmp_dir = TestDirPath() + "/cache";

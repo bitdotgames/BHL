@@ -48,14 +48,6 @@ static public class Util
   {
     return Path.GetFullPath(file_path).Replace("\\", "/");
   }
-
-  static public List<string> NormalizeFilePaths(List<string> file_paths)
-  {
-    var res = new List<string>();
-    foreach(var path in file_paths)
-      res.Add(NormalizeFilePath(path));
-    return res;
-  }
 }
 
 public struct SourcePos
