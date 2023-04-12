@@ -184,7 +184,7 @@ public class Workspace
     }
     
     if(!string.IsNullOrEmpty(resolved_path))
-      resolved_path = bhl.Util.NormalizeFilePath(resolved_path);
+      resolved_path = Util.NormalizeFilePath(resolved_path);
     
     return resolved_path;
   }
