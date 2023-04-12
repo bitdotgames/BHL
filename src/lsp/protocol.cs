@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -192,6 +193,46 @@ public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, I
       return obj;
 
     throw new InvalidCastException();
+  }
+}
+
+public class UriJsonConverter : JsonConverter
+{
+  public override bool CanConvert(Type objectType)
+  {
+    return true;
+  }
+
+  public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+  {
+    string path = (string)reader.Value;
+    var uri = new Uri();
+    uri.path = path.Substring(7); //let's skip the 'file://' part 
+    return uri;
+  }
+
+  public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+  {
+    writer.WriteValue(value.ToString());
+  }
+}
+
+[JsonConverter(typeof(UriJsonConverter))]
+public class Uri
+{
+  public string path;
+
+  public Uri()
+  {}
+
+  public Uri(string path)
+  {
+    this.path = Util.NormalizeFilePath(path);
+  }
+
+  public override string ToString()
+  {
+    return "file://" + path;
   }
 }
 

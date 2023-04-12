@@ -131,7 +131,7 @@ public class JsonRpc : IJsonRpc
         id = request.id, error = new ResponseError
         {
           code = (int)ErrorCodes.InternalError,
-          message = ""
+          message = e.Message
         }
       };
     }
@@ -172,7 +172,7 @@ public class JsonRpc : IJsonRpc
               return RpcResult.Error(new ResponseError
               {
                 code = (int)ErrorCodes.InvalidParams,
-                message = ""
+                message = e.Message
               });
             }
           }

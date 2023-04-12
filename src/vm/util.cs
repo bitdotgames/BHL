@@ -56,11 +56,6 @@ static public class Util
       res.Add(NormalizeFilePath(path));
     return res;
   }
-
-  static public Uri MakeUri(string path)
-  {
-    return new Uri("file://" + NormalizeFilePath(path));
-  }
 }
 
 public struct SourcePos

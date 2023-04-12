@@ -1,6 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
-using Antlr4.Runtime;
 
 namespace bhl.lsp.spec {
 
@@ -28,11 +26,11 @@ public class LifecycleService : IService
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        inc_path.Add(args.workspaceFolders[i].uri.LocalPath);
+        inc_path.Add(args.workspaceFolders[i].uri.path);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      inc_path.Add(args.rootUri.LocalPath);
+      inc_path.Add(args.rootUri.path);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
@@ -334,7 +332,7 @@ public class TextDocumentGoToService : IService
         range.DecrementLine();
         return RpcResult.Success(new Location
         {
-          uri = Util.MakeUri(symb.parsed.file),
+          uri = new spec.Uri(symb.parsed.file),
           range = range
         });
       }

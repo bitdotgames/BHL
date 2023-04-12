@@ -35,7 +35,7 @@ public static class BHLSemanticTokens
 
 public class BHLDocument
 {
-  public Uri uri { get; private set; }
+  public spec.Uri uri { get; private set; }
   
   public CodeIndex index { get; private set; } = new CodeIndex();
 
@@ -43,7 +43,7 @@ public class BHLDocument
 
   List<TerminalNodeImpl> nodes = new List<TerminalNodeImpl>();
 
-  public BHLDocument(Uri uri)
+  public BHLDocument(spec.Uri uri)
   {
     this.uri = uri;
   }

@@ -62,7 +62,7 @@ public class Workspace
 
     foreach(var kv in file2proc)
     {
-      var document = new BHLDocument(new Uri("file://" + kv.Key)); 
+      var document = new BHLDocument(new spec.Uri(kv.Key)); 
       document.Update(File.ReadAllText(kv.Key), kv.Value);
       documents.Add(kv.Key, document);
     }
@@ -91,33 +91,30 @@ public class Workspace
     return proc;
   }
 
-  public BHLDocument GetOrLoadDocument(Uri uri)
+  public BHLDocument GetOrLoadDocument(spec.Uri uri)
   {
-    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
     BHLDocument document;
-    if(documents.TryGetValue(path, out document))
+    if(documents.TryGetValue(uri.path, out document))
       return document;
     else
       return LoadDocument(uri);
   }
 
-  public BHLDocument LoadDocument(Uri uri)
+  public BHLDocument LoadDocument(spec.Uri uri)
   {
-    byte[] buffer = File.ReadAllBytes(uri.LocalPath);
+    byte[] buffer = File.ReadAllBytes(uri.path);
     string text = Encoding.UTF8.GetString(buffer);
     return OpenDocument(uri, text);
   }
 
-  public BHLDocument OpenDocument(Uri uri, string text)
+  public BHLDocument OpenDocument(spec.Uri uri, string text)
   {
-    string path = bhl.Util.NormalizeFilePath(uri.LocalPath);
-
     BHLDocument document;
     //TODO: use Uri as a key
-    if(!documents.TryGetValue(path, out document))
+    if(!documents.TryGetValue(uri.path, out document))
     {
       document = new BHLDocument(uri);  
-      documents.Add(path, document);
+      documents.Add(uri.path, document);
     }
     
     //TODO: parse document
@@ -126,31 +123,29 @@ public class Workspace
     return document;
   }
   
-  public BHLDocument FindDocument(Uri uri)
+  public BHLDocument FindDocument(spec.Uri uri)
   {
-    return FindDocument(uri.LocalPath);
+    return FindDocument(uri.path);
   }
   
   public BHLDocument FindDocument(string path)
   {
-    path = bhl.Util.NormalizeFilePath(path);
-    
     BHLDocument document;
     documents.TryGetValue(path, out document);
 
     return document;
   }
 
-  public bool UpdateDocument(Uri uri, string text)
+  public bool UpdateDocument(spec.Uri uri, string text)
   {
     var document = FindDocument(uri);
     if(document == null)
       return false;
 
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(ts, document.uri.LocalPath, ms);
+    var proc = ParseFile(ts, document.uri.path, ms);
 
-    file2proc[document.uri.LocalPath] = proc;
+    file2proc[document.uri.path] = proc;
 
     ANTLR_Processor.ProcessAll(file2proc, null, inc_path);
 

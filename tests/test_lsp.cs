@@ -138,7 +138,7 @@ public class TestLSP : BHL_TestBase
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
-        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
+        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.spec.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
       );
     });
   }
@@ -342,8 +342,8 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri1 = MakeTestDocument("bhl1.bhl", bhl1);
-    Uri uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
     
     ws.Init(new bhl.Types(), GetTestIncPath());
 
@@ -470,7 +470,7 @@ public class TestLSP : BHL_TestBase
     
     CleanTestFiles();
     
-    Uri uri = MakeTestDocument("bhl1.bhl", bhl1);
+    var uri = MakeTestDocument("bhl1.bhl", bhl1);
 
     ws.Init(new bhl.Types(), GetTestIncPath());
 
@@ -538,28 +538,26 @@ public class TestLSP : BHL_TestBase
   //  );
   //}
 
-  static string GoToDefinitionReq(Uri uri, string needle)
+  static string GoToDefinitionReq(bhl.lsp.spec.Uri uri, string needle)
   {
-    var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
+    var pos = Pos(File.ReadAllText(uri.path), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
-      "\"}, \"position\": " + AsJson(pos) + "}}";
+      "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  static string GoToDefinitionRsp(Uri uri, string needle, int line_offset = 0, int column_offset = 0)
+  static string GoToDefinitionRsp(bhl.lsp.spec.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
   {
-    var start = Pos(File.ReadAllText(uri.LocalPath), needle);
+    var start = Pos(File.ReadAllText(uri.path), needle);
     var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
-    return "{\"id\":1,\"result\":{\"uri\":\"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
-      "\",\"range\":{\"start\":" + AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
+    return "{\"id\":1,\"result\":{\"uri\":\"" + uri + "\",\"range\":{\"start\":" + 
+      AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
 
-  static string SignatureHelpReq(Uri uri, string needle)
+  static string SignatureHelpReq(bhl.lsp.spec.Uri uri, string needle)
   {
-    var pos = Pos(File.ReadAllText(uri.LocalPath), needle);
+    var pos = Pos(File.ReadAllText(uri.path), needle);
     return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/signatureHelp\", \"params\":" +
-      "{\"textDocument\": {\"uri\": \"file://" + bhl.Util.NormalizeFilePath(uri.LocalPath) +
-      "\"}, \"position\": " + AsJson(pos) + "}}";
+      "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
   static string NullResultJson()
@@ -592,14 +590,14 @@ public class TestLSP : BHL_TestBase
     return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
   }
   
-  static Uri MakeTestDocument(string path, string text, List<string> files = null)
+  static bhl.lsp.spec.Uri MakeTestDocument(string path, string text, List<string> files = null)
   {
     string full_path = bhl.Util.NormalizeFilePath(GetTestDirPath() + "/" + path);
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    var uri = bhl.Util.MakeUri(full_path);
+    var uri = new bhl.lsp.spec.Uri(full_path);
     return uri;
   }
 
