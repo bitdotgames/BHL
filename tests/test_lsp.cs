@@ -574,7 +574,7 @@ public class TestLSP : BHL_TestBase
   
   static Uri MakeUri(string path)
   {
-    return new Uri("file://" + path);
+    return new Uri("file://" + bhl.Util.NormalizeFilePath(path));
   }
 
   static void CleanTestFiles()
