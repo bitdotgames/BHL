@@ -88,7 +88,7 @@ public class JsonRpc : IJsonRpc
     }
 
     sw.Stop();
-    logger.Log(1, $"RSP({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {resp_json}");
+    logger.Log(1, $"/REQ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {resp_json}");
     
     return resp_json;
   }

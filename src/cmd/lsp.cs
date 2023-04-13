@@ -16,8 +16,8 @@ public class LSP : ICmd
 
     var p = new OptionSet
     {
-      { "root=", "bhl root dir",
-        v => inc_path.Add(v) },
+      { "inc-path=", "source include directories separated by ;",
+        v => inc_path = new IncludePath(v.Split(';')) },
       { "log-file=", "log file path",
         v => log_file_path = v }
     };

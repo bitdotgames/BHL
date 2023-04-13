@@ -13,7 +13,7 @@
 			"command" : [
 				"path/to/bhl/bhl",
 				"lsp",
-				"--root=/path/to/root/configs"
+				"--inc-path=/path/to/root/configs"
 			],
 			"selector": "source.bhl"
 		}
