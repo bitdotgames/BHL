@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -31,8 +32,7 @@ public class JsonRpc : IJsonRpc
 
   public string Handle(string req_json)
   {
-    var sw = new System.Diagnostics.Stopwatch();
-    sw.Start();
+    var sw = Stopwatch.StartNew();
     
     RequestMessage req = null;
     ResponseMessage rsp = null;
