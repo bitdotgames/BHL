@@ -44,6 +44,7 @@ public static class Tasks
       $"{BHL_ROOT}/src/compile/*.cs",
       $"{BHL_ROOT}/src/g/*.cs",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
+      $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
       $"{BHL_ROOT}/deps/lz4.dll", 
     };
     //let's add runtime VM sources as well
@@ -61,7 +62,7 @@ public static class Tasks
   [Task()]
   public static void build_back_dll(Taskman tm, string[] args)
   {
-    var mcs_bin = args.Length > 0 ? args[0] : "/Applications/Unity/Unity.app/Contents/Frameworks/Mono/bin/gmcs"; 
+    var mcs_bin = args.Length > 0 ? args[0] : "mcs"; 
     var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/bhl_back.dll";
     var extra_args = "";
     
@@ -170,6 +171,7 @@ public static class Tasks
         $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/bhl_front.dll",
         $"{BHL_ROOT}/bhl_lsp.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"
      },
       $"{BHL_ROOT}/test.exe",
@@ -250,6 +252,7 @@ public static class Tasks
       $"{BHL_ROOT}/src/cmd/cmd.cs",
       $"{BHL_ROOT}/bhl_front.dll", 
       $"{BHL_ROOT}/deps/mono_opts.dll",
+      $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
     };
 

@@ -39,10 +39,6 @@ public class RunCmd : ICmd
     }
     files.AddRange(extra);
 
-    IUserBindings userbindings = new EmptyUserBindings();
-
-    IFrontPostProcessor postproc = new EmptyPostProcessor();
-
     for(int i=files.Count;i-- > 0;)
     {
       if(string.IsNullOrEmpty(files[i]))
@@ -56,19 +52,22 @@ public class RunCmd : ICmd
     if(string.IsNullOrEmpty(src_dir))
       src_dir = "./";
 
+    var proj = new ProjectConf();
+    proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
+    proj.use_cache = false;
+    proj.max_threads = 1;
+    proj.result_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
+    proj.tmp_dir = Path.GetTempPath();
+    proj.verbosity = 0;
+
     var conf = new CompileConf();
+    conf.proj = proj;
     conf.ts = new Types();
-    conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    conf.use_cache = false;
     conf.self_file = GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
     conf.inc_path.Add(src_dir);
-    conf.max_threads = 1;
-    conf.res_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
-    conf.tmp_dir = Path.GetTempPath();
-    conf.userbindings = userbindings;
-    conf.postproc = postproc;
-    conf.verbose = false;
+    conf.userbindings = new EmptyUserBindings();
+    conf.postproc = new EmptyPostProcessor();
 
     var cmp = new CompilationExecutor();
     var errors = cmp.Exec(conf);
@@ -80,7 +79,7 @@ public class RunCmd : ICmd
       Environment.Exit(ERROR_EXIT_CODE);
     }
 
-    var bytes = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    var bytes = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
     var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
 
     vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
