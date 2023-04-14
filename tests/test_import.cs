@@ -982,9 +982,9 @@ public class TestImport : BHL_TestBase
     {
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
-      conf.inc_path.Clear();
-      conf.inc_path.Add(TestDirPath() + "/test");
-      conf.inc_path.Add(TestDirPath() + "/unit");
+      conf.proj.inc_path.Clear();
+      conf.proj.inc_path.Add(TestDirPath() + "/test");
+      conf.proj.inc_path.Add(TestDirPath() + "/unit");
 
       var ts = new Types();
       var loader = new ModuleLoader(ts, CompileFiles(exec, conf));

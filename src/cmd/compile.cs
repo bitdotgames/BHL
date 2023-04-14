@@ -23,14 +23,13 @@ public class CompileCmd : ICmd
   {
     var files = new List<string>();
 
-    string proj_file = "";
     var proj = new ProjectConf();
 
     var p = new OptionSet() {
       { "c", "project config file",
         v => { 
-          proj_file = v; 
           proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(v));
+          proj.proj_file = v;
         } },
       { "dir=", "source directories separated by ;",
         v => proj.src_dirs = v },
@@ -68,6 +67,8 @@ public class CompileCmd : ICmd
       Usage(e.Message);
     }
 
+    proj.Setup();
+
     files.AddRange(extra);
 
     var inc_path = new IncludePath(proj.src_dirs.Split(';'));
@@ -75,14 +76,14 @@ public class CompileCmd : ICmd
       if(!Directory.Exists(inc_path[i]))
         Usage("Source directory not found: " + inc_path[i]);
 
-    if(proj.result_file == "")
+    if(string.IsNullOrEmpty(proj.result_file))
       Usage("Result file path not set");
 
-    if(proj.tmp_dir == "")
+    if(string.IsNullOrEmpty(proj.tmp_dir))
       Usage("Tmp dir not set");
 
     IUserBindings userbindings = new EmptyUserBindings();
-    if(proj.userbindings_dll_file != "")
+    if(!string.IsNullOrEmpty(proj.userbindings_dll_file))
     {
       var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.userbindings_dll_file);
       var userbindings_class = userbindings_assembly.GetTypes()[0];
@@ -92,7 +93,7 @@ public class CompileCmd : ICmd
     }
 
     IFrontPostProcessor postproc = new EmptyPostProcessor();
-    if(proj.postproc_dll_file != "")
+    if(!string.IsNullOrEmpty(proj.postproc_dll_file))
     {
       var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll_file);
       var postproc_class = postproc_assembly.GetTypes()[0];
@@ -122,7 +123,6 @@ public class CompileCmd : ICmd
     conf.args = string.Join(";", args);
     conf.self_file = GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
-    conf.inc_path = inc_path;
     conf.userbindings = userbindings;
     conf.postproc = postproc;
 

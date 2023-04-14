@@ -941,12 +941,12 @@ public class BHL_TestBase
     proj.error_file = TestDirPath() + "/error.log";
     proj.use_cache = use_cache;
     proj.verbosity = BHL_TestRunner.verbose ? 1 : 0;
+    proj.Setup();
 
     var conf = new CompileConf();
     conf.ts = ts;
     conf.proj = proj;
     conf.files = Util.NormalizeFilePaths(files);
-    conf.inc_path = new IncludePath(proj.src_dirs.Split(';'));
 
     return conf;
   }

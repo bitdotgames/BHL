@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 namespace bhl {
 
@@ -10,17 +11,54 @@ using marshall;
 
 public class ProjectConf
 {
+  [JsonIgnore]
+  public string proj_file = "";
+
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
-  public string src_dirs;
+
+  public string src_dirs = "";
+
+  [JsonIgnore]
+  IncludePath _inc_path;
+  public IncludePath inc_path {
+    get {
+      if(_inc_path == null)
+      {
+        _inc_path = new IncludePath();
+        foreach(var path in src_dirs.Split(';'))
+          _inc_path.Add(NormalizePath(path));
+      }
+      return _inc_path;
+    }
+  }
+
   public string result_file = "";
   public string tmp_dir = "";
-  public bool use_cache = true;
   public string error_file = "";
   public string postproc_dll_file = "";
   public string userbindings_dll_file = "";
+  public bool use_cache = true;
   public int verbosity = 1;
   public int max_threads = 1;
   public bool deterministic = false;
+
+  string NormalizePath(string file_path)
+  {
+    if(Path.IsPathRooted(file_path))
+      return Util.NormalizeFilePath(file_path);
+    else if(!string.IsNullOrEmpty(proj_file))
+      return Util.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
+    return file_path;
+  }
+
+  public void Setup()
+  {
+    result_file = NormalizePath(result_file);
+    tmp_dir = NormalizePath(tmp_dir);
+    error_file = NormalizePath(error_file);
+    postproc_dll_file = NormalizePath(postproc_dll_file);
+    userbindings_dll_file = NormalizePath(userbindings_dll_file);
+  }
 }
 
 public class CompileConf
@@ -30,7 +68,6 @@ public class CompileConf
   public string args = ""; 
   public List<string> files = new List<string>();
   public string self_file = "";
-  public IncludePath inc_path = new IncludePath();
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings userbindings = new EmptyUserBindings();
 }
@@ -159,7 +196,7 @@ public class CompilationExecutor
         {
           var file_module = new Module(
             conf.ts,
-            conf.inc_path.FilePath2ModuleName(kv.Key), 
+            conf.proj.inc_path.FilePath2ModuleName(kv.Key), 
             kv.Key
           );
           var proc_errs = new CompileErrors();
@@ -185,7 +222,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
-    ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.inc_path);
+    ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.proj.inc_path);
     sw.Stop();
     //Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
@@ -442,7 +479,7 @@ public class CompilationExecutor
             var compiled_file = GetCompiledCacheFile(w.conf.proj.tmp_dir, file);
 
             var interim = new InterimResult();
-            interim.module_path = new ModulePath(w.conf.inc_path.FilePath2ModuleName(file), file);
+            interim.module_path = new ModulePath(w.conf.proj.inc_path.FilePath2ModuleName(file), file);
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
@@ -500,7 +537,7 @@ public class CompilationExecutor
       var imports = TryReadImportsCache(file);
       if(imports == null)
       {
-        imports = ParseImports(conf.inc_path, file, fsf);
+        imports = ParseImports(conf.proj.inc_path, file, fsf);
         WriteImportsCache(file, imports);
       }
       return imports;
@@ -702,6 +739,16 @@ public class EmptyPostProcessor : IFrontPostProcessor
 
 public static class BuildUtil
 {
+  public static string GetSelfFile()
+  {
+    return System.Reflection.Assembly.GetExecutingAssembly().Location;
+  }
+
+  public static string GetSelfDir()
+  {
+    return Path.GetDirectoryName(GetSelfFile());
+  }
+
   static public bool NeedToRegen(string file, List<string> deps)
   {
     if(!File.Exists(file))

@@ -56,16 +56,17 @@ public class RunCmd : ICmd
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.use_cache = false;
     proj.max_threads = 1;
+    proj.src_dirs = src_dir;
     proj.result_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
     proj.tmp_dir = Path.GetTempPath();
     proj.verbosity = 0;
+    proj.Setup();
 
     var conf = new CompileConf();
     conf.proj = proj;
     conf.ts = new Types();
-    conf.self_file = GetSelfFile();
+    conf.self_file = BuildUtil.GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
-    conf.inc_path.Add(src_dir);
     conf.userbindings = new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
 
@@ -95,11 +96,6 @@ public class RunCmd : ICmd
     const float dt = 0.016f;
     while(vm.Tick())
       System.Threading.Thread.Sleep((int)(dt * 1000));
-  }
-
-  public static string GetSelfFile()
-  {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
   }
 }
 
