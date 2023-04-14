@@ -71,10 +71,9 @@ public class CompileCmd : ICmd
 
     files.AddRange(extra);
 
-    var inc_path = new IncludePath(proj.src_dirs.Split(';'));
-    for(int i=0;i<inc_path.Count;++i)
-      if(!Directory.Exists(inc_path[i]))
-        Usage("Source directory not found: " + inc_path[i]);
+    for(int i=0;i<proj.inc_path.Count;++i)
+      if(!Directory.Exists(proj.inc_path[i]))
+        Usage("Source directory not found: " + proj.inc_path[i]);
 
     if(string.IsNullOrEmpty(proj.result_file))
       Usage("Result file path not set");
@@ -104,8 +103,8 @@ public class CompileCmd : ICmd
 
     if(files.Count == 0)
     {
-      for(int i=0;i<inc_path.Count;++i)
-        CompilationExecutor.AddFilesFromDir(inc_path[i], files);
+      for(int i=0;i<proj.inc_path.Count;++i)
+        CompilationExecutor.AddFilesFromDir(proj.inc_path[i], files);
     }
 
     for(int i=files.Count;i-- > 0;)
