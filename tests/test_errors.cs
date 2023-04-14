@@ -219,7 +219,7 @@ public class TestErrors : BHL_TestBase
     catch(Exception) 
     {}
 
-    var lines = File.ReadAllText(conf.err_file).Split('\n');
+    var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     AssertEqual(2, lines.Length);
 
     AssertTrue(lines[0].Contains("{\"error\": \"matching 'return' statement not found\","));
@@ -262,7 +262,7 @@ public class TestErrors : BHL_TestBase
     catch(Exception) 
     {}
 
-    var lines = File.ReadAllText(conf.err_file).Split('\n');
+    var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     AssertEqual(6, lines.Length);
 
     AssertTrue(lines[0].Contains("{\"error\": \"extraneous input '&' expecting {"));

@@ -8,23 +8,31 @@ namespace bhl {
 
 using marshall;
 
-public class CompileConf
+public class ProjectConf
 {
-  public string args = ""; 
-  public List<string> files = new List<string>();
-  public Types ts;
-  public string self_file = "";
-  public IncludePath inc_path = new IncludePath();
-  public string res_file = "";
+  public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
+  public string src_dirs;
+  public string result_file = "";
   public string tmp_dir = "";
   public bool use_cache = true;
-  public string err_file = "";
+  public string error_file = "";
+  public string postproc_dll_file = "";
+  public string userbindings_dll_file = "";
+  public int verbosity = 1;
+  public int max_threads = 1;
+  public bool deterministic = false;
+}
+
+public class CompileConf
+{
+  public ProjectConf proj;
+  public Types ts;
+  public string args = ""; 
+  public List<string> files = new List<string>();
+  public string self_file = "";
+  public IncludePath inc_path = new IncludePath();
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings userbindings = new EmptyUserBindings();
-  public int max_threads = 1;
-  public bool debug = false;
-  public bool verbose = false;
-  public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4; 
 }
  
 public class CompilationExecutor
@@ -58,29 +66,29 @@ public class CompilationExecutor
     }
     catch(Exception e)
     {
-      if(conf.verbose)
+      if(conf.proj.verbosity > 0)
         Console.Error.WriteLine(e.Message + " " + e.StackTrace);
       errors.Add(new BuildError("?", e));
     }
 
     sw.Stop();
 
-    if(conf.verbose)
+    if(conf.proj.verbosity > 0)
       Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
 
     if(errors.Count > 0)
     {
-      if(!string.IsNullOrEmpty(conf.err_file))
+      if(!string.IsNullOrEmpty(conf.proj.error_file))
       {
         string err_str = "";
         foreach(var err in errors)
           err_str += ErrorUtils.ToJson(err) + "\n";
         err_str = err_str.Trim();
         
-        if(conf.err_file == "-")
+        if(conf.proj.error_file == "-")
           Console.Error.WriteLine(err_str);
         else
-          File.WriteAllText(conf.err_file, err_str);
+          File.WriteAllText(conf.proj.error_file, err_str);
       }
     }
 
@@ -91,23 +99,23 @@ public class CompilationExecutor
   {
     Stopwatch sw;
 
-    if(!string.IsNullOrEmpty(conf.err_file))
-      File.Delete(conf.err_file);
+    if(!string.IsNullOrEmpty(conf.proj.error_file))
+      File.Delete(conf.proj.error_file);
 
-    var res_dir = Path.GetDirectoryName(conf.res_file); 
+    var res_dir = Path.GetDirectoryName(conf.proj.result_file); 
     if(res_dir.Length > 0)
       Directory.CreateDirectory(res_dir);
 
-    Directory.CreateDirectory(conf.tmp_dir);
+    Directory.CreateDirectory(conf.proj.tmp_dir);
 
     var args_changed = CheckArgsSignatureFile(conf);
 
-    if(conf.use_cache && 
+    if(conf.proj.use_cache && 
        !args_changed && 
-       !BuildUtil.NeedToRegen(conf.res_file, conf.files)
+       !BuildUtil.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
-      if(conf.verbose)
+      if(conf.proj.verbosity > 0)
         Console.WriteLine("No stale files detected");
       return;
     }
@@ -203,7 +211,7 @@ public class CompilationExecutor
     if(errors.Count > 0)
       return;
 
-    var tmp_res_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".tmp";
+    var tmp_res_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".tmp";
 
     sw = Stopwatch.StartNew();
     var check_err = CheckUniqueSymbols(compiler_workers);
@@ -217,9 +225,9 @@ public class CompilationExecutor
 
     WriteCompilationResultToFile(conf, compiler_workers, tmp_res_file);
 
-    if(File.Exists(conf.res_file))
-      File.Delete(conf.res_file);
-    File.Move(tmp_res_file, conf.res_file);
+    if(File.Exists(conf.proj.result_file))
+      File.Delete(conf.proj.result_file);
+    File.Move(tmp_res_file, conf.proj.result_file);
 
     sw = Stopwatch.StartNew();
     conf.postproc.Tally();
@@ -231,7 +239,7 @@ public class CompilationExecutor
   {
     var parse_workers = new List<ParseWorker>();
 
-    int files_per_worker = conf.files.Count < conf.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.max_threads);
+    int files_per_worker = conf.files.Count < conf.proj.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.proj.max_threads);
 
     int idx = 0;
     int wid = 0;
@@ -328,17 +336,17 @@ public class CompilationExecutor
             var path = cw.file2interim[file].module_path;
             var compiled_file = cw.file2interim[file].compiled_file;
 
-            mwriter.Write((byte)conf.module_fmt);
+            mwriter.Write((byte)conf.proj.module_fmt);
             mwriter.Write(path.name);
 
-            if(conf.module_fmt == ModuleBinaryFormat.FMT_BIN)
+            if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_BIN)
               mwriter.Write(File.ReadAllBytes(compiled_file));
-            else if(conf.module_fmt == ModuleBinaryFormat.FMT_LZ4)
+            else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_LZ4)
               mwriter.Write(EncodeToLZ4(File.ReadAllBytes(compiled_file)));
-            else if(conf.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
+            else if(conf.proj.module_fmt == ModuleBinaryFormat.FMT_FILE_REF)
               mwriter.Write(compiled_file);
             else
-              throw new Exception("Unsupported format: " + conf.module_fmt);
+              throw new Exception("Unsupported format: " + conf.proj.module_fmt);
 
             break;
           }
@@ -349,7 +357,7 @@ public class CompilationExecutor
 
   static bool CheckArgsSignatureFile(CompileConf conf)
   {
-    var tmp_args_file = conf.tmp_dir + "/" + Path.GetFileName(conf.res_file) + ".args";
+    var tmp_args_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".args";
     bool changed = !File.Exists(tmp_args_file) || (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
     if(changed)
       File.WriteAllText(tmp_args_file, conf.args);
@@ -431,14 +439,14 @@ public class CompilationExecutor
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var compiled_file = GetCompiledCacheFile(w.conf.tmp_dir, file);
+            var compiled_file = GetCompiledCacheFile(w.conf.proj.tmp_dir, file);
 
             var interim = new InterimResult();
             interim.module_path = new ModulePath(w.conf.inc_path.FilePath2ModuleName(file), file);
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            bool use_cache = w.conf.use_cache && !BuildUtil.NeedToRegen(compiled_file, deps);
+            bool use_cache = w.conf.proj.use_cache && !BuildUtil.NeedToRegen(compiled_file, deps);
 
             if(use_cache)
             {
@@ -476,14 +484,14 @@ public class CompilationExecutor
           w.errors.Add(ie);
         else
         {
-          if(w.conf.verbose)
+          if(w.conf.proj.verbosity > 0)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.errors.Add(new BuildError(w.conf.files[i], e));
         }
       }
 
       sw.Stop();
-      if(w.conf.verbose)
+      if(w.conf.proj.verbosity > 0)
         Console.WriteLine("BHL parser {0} done(hit/miss/err:{2}/{3}/{4}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hits, w.cache_miss, w.cache_errs);
     }
 
@@ -500,7 +508,7 @@ public class CompilationExecutor
 
     FileImports TryReadImportsCache(string file)
     {
-      var cache_imports_file = GetImportsCacheFile(conf.tmp_dir, file);
+      var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
 
       if(BuildUtil.NeedToRegen(cache_imports_file, file))
         return null;
@@ -518,7 +526,7 @@ public class CompilationExecutor
     void WriteImportsCache(string file, FileImports imports)
     {
       //Console.WriteLine("IMPORTS MISS " + file);
-      var cache_imports_file = GetImportsCacheFile(conf.tmp_dir, file);
+      var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
@@ -629,14 +637,14 @@ public class CompilationExecutor
           w.errors.Add(ie);
         else
         {
-          if(w.conf.verbose)
+          if(w.conf.proj.verbosity > 0)
             Console.Error.WriteLine(e.Message + " " + e.StackTrace);
           w.errors.Add(new BuildError(current_file, e));
         }
       }
 
       sw.Stop();
-      if(w.conf.verbose)
+      if(w.conf.proj.verbosity > 0)
         Console.WriteLine("BHL compiler {0} done({1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
     }
   }

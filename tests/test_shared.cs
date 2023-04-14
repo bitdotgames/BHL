@@ -932,17 +932,21 @@ public class BHL_TestBase
   {
     Types ts = ts_fn == null ? new Types() : ts_fn();
 
+    var proj = new ProjectConf();
+    proj.max_threads = max_threads;
+    proj.src_dirs = TestDirPath();
+    proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
+    proj.result_file = TestDirPath() + "/result.bin";
+    proj.tmp_dir = TestDirPath() + "/cache";
+    proj.error_file = TestDirPath() + "/error.log";
+    proj.use_cache = use_cache;
+    proj.verbosity = BHL_TestRunner.verbose ? 1 : 0;
+
     var conf = new CompileConf();
-    conf.max_threads = max_threads;
-    conf.module_fmt = ModuleBinaryFormat.FMT_BIN;
     conf.ts = ts;
+    conf.proj = proj;
     conf.files = Util.NormalizeFilePaths(files);
-    conf.res_file = TestDirPath() + "/result.bin";
-    conf.inc_path.Add(TestDirPath());
-    conf.tmp_dir = TestDirPath() + "/cache";
-    conf.err_file = TestDirPath() + "/error.log";
-    conf.use_cache = use_cache;
-    conf.verbose = BHL_TestRunner.verbose;
+    conf.inc_path = new IncludePath(proj.src_dirs.Split(';'));
 
     return conf;
   }
@@ -953,7 +957,7 @@ public class BHL_TestBase
     var errors = exec.Exec(conf);
     if(errors.Count > 0)
     {
-      if(conf.verbose)
+      if(conf.proj.verbosity > 0)
       {
         foreach(var err in errors)
         {
@@ -966,7 +970,7 @@ public class BHL_TestBase
       throw new CompileErrorsException(errors);
     }
 
-    var ms = new MemoryStream(File.ReadAllBytes(conf.res_file));
+    var ms = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
     return ms;
   }
 

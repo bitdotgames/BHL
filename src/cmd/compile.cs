@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using Mono.Options;
 
 namespace bhl {
@@ -12,7 +13,8 @@ public class CompileCmd : ICmd
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl compile --dir=<root src dir> [--files=<file>] --result=<result file> --tmp-dir=<tmp dir> --error=<err file> [--postproc_dll=<postproc dll path>] [-d] [--deterministic] [--module_fmt=<1,2>]");
+    Console.WriteLine("bhl compile [-c <bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " + 
+                     "[--tmp-dir=<tmp dir>] [--error=<err file>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -21,43 +23,39 @@ public class CompileCmd : ICmd
   {
     var files = new List<string>();
 
-    string src_dir = "";
-    string res_file = "";
-    string tmp_dir = "";
-    bool use_cache = true;
-    string err_file = "";
-    string postproc_dll_path = "";
-    string userbindings_dll_path = "";
-    int max_threads = 1;
-    bool deterministic = false;
-    bool verbose = false;
-    ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
+    string proj_file = "";
+    var proj = new ProjectConf();
 
     var p = new OptionSet() {
-      { "dir=", "source dir",
-        v => src_dir = v },
-      { "files=", "source files list",
+      { "c", "project config file",
+        v => { 
+          proj_file = v; 
+          proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(v));
+        } },
+      { "dir=", "source directories separated by ;",
+        v => proj.src_dirs = v },
+      { "files=", "file containing all source files list",
         v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
-      { "result=", "result file",
-        v => res_file = v },
+      { "result=", "resulting file",
+        v => proj.result_file = v },
       { "tmp-dir=", "tmp dir",
-        v => tmp_dir = v },
+        v => proj.tmp_dir = v },
       { "C", "don't use cache",
-        v => use_cache = v == null },
-      { "postproc-dll=", "posprocess dll path",
-        v => postproc_dll_path = v },
-      { "bindings-dll=", "bindings dll path",
-        v => userbindings_dll_path = v },
+        v => proj.use_cache = v == null },
+      { "postproc-dll=", "posprocess dll file path",
+        v => proj.postproc_dll_file = v },
+      { "bindings-dll=", "bindings dll file path",
+        v => proj.userbindings_dll_file = v },
       { "error=", "error file",
-        v => err_file = v },
+        v => proj.error_file = v },
       { "deterministic", "deterministic build (sorts files by name)",
-        v => deterministic = v != null },
+        v => proj.deterministic = v != null },
       { "threads=", "number of threads",
-          v => max_threads = int.Parse(v) },
-      { "d", "debug version",
-        v => verbose = v != null },
+          v => proj.max_threads = int.Parse(v) },
+      { "d", "debug verbosity level",
+        v => proj.verbosity = v != null ? 1 : 0 },
       { "module-fmt=", "binary module format",
-        v => module_fmt = (ModuleBinaryFormat)int.Parse(v) }
+        v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v) }
      };
 
     var extra = new List<string>();
@@ -69,22 +67,24 @@ public class CompileCmd : ICmd
     {
       Usage(e.Message);
     }
+
     files.AddRange(extra);
 
-    if(!Directory.Exists(src_dir))
-      Usage("Root source directory is not valid");
-    src_dir = Path.GetFullPath(src_dir);
+    var inc_path = new IncludePath(proj.src_dirs.Split(';'));
+    for(int i=0;i<inc_path.Count;++i)
+      if(!Directory.Exists(inc_path[i]))
+        Usage("Source directory not found: " + inc_path[i]);
 
-    if(res_file == "")
+    if(proj.result_file == "")
       Usage("Result file path not set");
 
-    if(tmp_dir == "")
+    if(proj.tmp_dir == "")
       Usage("Tmp dir not set");
 
     IUserBindings userbindings = new EmptyUserBindings();
-    if(userbindings_dll_path != "")
+    if(proj.userbindings_dll_file != "")
     {
-      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(userbindings_dll_path);
+      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.userbindings_dll_file);
       var userbindings_class = userbindings_assembly.GetTypes()[0];
       userbindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
       if(userbindings == null)
@@ -92,9 +92,9 @@ public class CompileCmd : ICmd
     }
 
     IFrontPostProcessor postproc = new EmptyPostProcessor();
-    if(postproc_dll_path != "")
+    if(proj.postproc_dll_file != "")
     {
-      var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll_path);
+      var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll_file);
       var postproc_class = postproc_assembly.GetTypes()[0];
       postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
       if(postproc == null)
@@ -102,7 +102,10 @@ public class CompileCmd : ICmd
     }
 
     if(files.Count == 0)
-      CompilationExecutor.AddFilesFromDir(src_dir, files);
+    {
+      for(int i=0;i<inc_path.Count;++i)
+        CompilationExecutor.AddFilesFromDir(inc_path[i], files);
+    }
 
     for(int i=files.Count;i-- > 0;)
     {
@@ -110,30 +113,24 @@ public class CompileCmd : ICmd
         files.RemoveAt(i);
     }
 
-    if(deterministic)
+    if(proj.deterministic)
       files.Sort();
 
-    Console.WriteLine("BHL({2}) files: {0}, cache: {1}", files.Count, use_cache, Version.Name);
+    Console.WriteLine("BHL({2}) files: {0}, cache: {1}", files.Count, proj.use_cache, Version.Name);
     var conf = new CompileConf();
+    conf.proj = proj;
     conf.args = string.Join(";", args);
-    conf.module_fmt = module_fmt;
-    conf.use_cache = use_cache;
     conf.self_file = GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
-    conf.inc_path.Add(src_dir);
-    conf.max_threads = max_threads;
-    conf.res_file = res_file;
-    conf.tmp_dir = tmp_dir;
-    conf.err_file = err_file;
+    conf.inc_path = inc_path;
     conf.userbindings = userbindings;
     conf.postproc = postproc;
-    conf.verbose = verbose;
 
     var cmp = new CompilationExecutor();
     var errors = cmp.Exec(conf);
     if(errors.Count > 0)
     {
-      if(string.IsNullOrEmpty(err_file))
+      if(string.IsNullOrEmpty(proj.error_file))
       {
         foreach(var err in errors)
           ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
