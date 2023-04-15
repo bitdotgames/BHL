@@ -945,6 +945,7 @@ public class BHL_TestBase
 
     var conf = new CompileConf();
     conf.ts = ts;
+    conf.logger = new Logger(proj.verbosity, new ConsoleLogger()); 
     conf.proj = proj;
     conf.files = Util.NormalizeFilePaths(files);
 

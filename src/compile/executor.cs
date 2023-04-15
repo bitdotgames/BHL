@@ -64,6 +64,7 @@ public class ProjectConf
 public class CompileConf
 {
   public ProjectConf proj;
+  public Logger logger;
   public Types ts;
   public string args = ""; 
   public List<string> files = new List<string>();
@@ -103,15 +104,13 @@ public class CompilationExecutor
     }
     catch(Exception e)
     {
-      if(conf.proj.verbosity > 0)
-        Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+      conf.logger.Error(e.Message + " " + e.StackTrace);
       errors.Add(new BuildError("?", e));
     }
 
     sw.Stop();
 
-    if(conf.proj.verbosity > 0)
-      Console.WriteLine("BHL build done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(1, $"BHL build done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     if(errors.Count > 0)
     {
@@ -152,8 +151,7 @@ public class CompilationExecutor
        !Util.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
-      if(conf.proj.verbosity > 0)
-        Console.WriteLine("No stale files detected");
+      conf.logger.Log(1, "No stale files detected");
       return;
     }
 
@@ -171,7 +169,7 @@ public class CompilationExecutor
       pw.Join();
 
     sw.Stop();
-    //Console.WriteLine("Parse done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Parse done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -217,14 +215,14 @@ public class CompilationExecutor
       }
     }
     sw.Stop();
-    //Console.WriteLine("Proc make done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Proc make done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.proj.inc_path);
     sw.Stop();
-    //Console.WriteLine("Proc all done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var kv in file2proc)
       errors.AddRange(kv.Value.result.errors);
@@ -241,7 +239,7 @@ public class CompilationExecutor
       file2proc
     );
     sw.Stop();
-    //Console.WriteLine("Compile done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Compile done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -253,7 +251,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     var check_err = CheckUniqueSymbols(compiler_workers);
     sw.Stop();
-    //Console.WriteLine("Check done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Check done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     if(check_err != null)
     {
       errors.Add(check_err);
@@ -269,7 +267,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     conf.postproc.Tally();
     sw.Stop();
-    //Console.WriteLine("Postproc done({0} sec)", Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+    conf.logger.Log(2, $"Postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)
@@ -521,15 +519,13 @@ public class CompilationExecutor
           w.errors.Add(ie);
         else
         {
-          if(w.conf.proj.verbosity > 0)
-            Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          w.conf.logger.Error(e.Message + " " + e.StackTrace);
           w.errors.Add(new BuildError(w.conf.files[i], e));
         }
       }
 
       sw.Stop();
-      if(w.conf.proj.verbosity > 0)
-        Console.WriteLine("BHL parser {0} done(hit/miss/err:{2}/{3}/{4}, {1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2), w.cache_hits, w.cache_miss, w.cache_errs);
+      w.conf.logger.Log(1, $"BHL parser {w.id} done(hit/miss/err:{w.cache_hits}/{w.cache_miss}/{w.cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -562,7 +558,6 @@ public class CompilationExecutor
 
     void WriteImportsCache(string file, FileImports imports)
     {
-      //Console.WriteLine("IMPORTS MISS " + file);
       var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
       Marshall.Obj2File(imports, cache_imports_file);
     }
@@ -674,15 +669,13 @@ public class CompilationExecutor
           w.errors.Add(ie);
         else
         {
-          if(w.conf.proj.verbosity > 0)
-            Console.Error.WriteLine(e.Message + " " + e.StackTrace);
+          w.conf.logger.Error(e.Message + " " + e.StackTrace);
           w.errors.Add(new BuildError(current_file, e));
         }
       }
 
       sw.Stop();
-      if(w.conf.proj.verbosity > 0)
-        Console.WriteLine("BHL compiler {0} done({1} sec)", w.id, Math.Round(sw.ElapsedMilliseconds/1000.0f,2));
+      w.conf.logger.Log(1, $"BHL compiler {w.id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
   }
 

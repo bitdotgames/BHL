@@ -33,7 +33,7 @@ public class LSP : ICmd
         (ILogWriter)new ConsoleLogger() : 
         (ILogWriter)new FileLogger(log_file_path);
 
-    var logger = new Logger(2, log_writer);
+    var logger = new Logger(1, log_writer);
 
     Console.OutputEncoding = new UTF8Encoding();
 

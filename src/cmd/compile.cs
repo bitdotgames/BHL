@@ -69,6 +69,8 @@ public class CompileCmd : ICmd
 
     proj.Setup();
 
+    var logger = new Logger(proj.verbosity, new ConsoleLogger()); 
+
     files.AddRange(extra);
 
     for(int i=0;i<proj.inc_path.Count;++i)
@@ -116,9 +118,10 @@ public class CompileCmd : ICmd
     if(proj.deterministic)
       files.Sort();
 
-    Console.WriteLine("BHL({2}) files: {0}, cache: {1}", files.Count, proj.use_cache, Version.Name);
+    logger.Log(1, $"BHL({Version.Name}) files: {files.Count}, cache: {proj.use_cache}");
     var conf = new CompileConf();
     conf.proj = proj;
+    conf.logger = logger;
     conf.args = string.Join(";", args);
     conf.self_file = GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);

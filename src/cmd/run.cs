@@ -63,6 +63,7 @@ public class RunCmd : ICmd
     proj.Setup();
 
     var conf = new CompileConf();
+    conf.logger = new Logger(1, new ConsoleLogger());
     conf.proj = proj;
     conf.ts = new Types();
     conf.self_file = Util.GetSelfFile();

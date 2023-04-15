@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using bhl;
 using bhl.lsp;
 
 public class TestLSP : BHL_TestBase
