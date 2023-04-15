@@ -56,6 +56,56 @@ static public class Util
       res.Add(NormalizeFilePath(path));
     return res;
   }
+
+  public static string GetSelfFile()
+  {
+    return System.Reflection.Assembly.GetExecutingAssembly().Location;
+  }
+
+  public static string GetSelfDir()
+  {
+    return Path.GetDirectoryName(GetSelfFile());
+  }
+
+  static public bool NeedToRegen(string file, List<string> deps)
+  {
+    if(!File.Exists(file))
+    {
+      //Console.WriteLine("Missing " + file);
+      return true;
+    }
+
+    var fmtime = GetLastWriteTime(file);
+    foreach(var dep in deps)
+    {
+      if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
+      {
+        //Console.WriteLine("Stale " + dep + " " + file + " : " + GetLastWriteTime(dep) + " VS " + fmtime);
+        return true;
+      }
+    }
+
+    //Console.WriteLine("Hit "+ file);
+    return false;
+  }
+
+  //optimized version for just one dependency
+  static public bool NeedToRegen(string file, string dep)
+  {
+    if(!File.Exists(file))
+      return true;
+
+    var fmtime = GetLastWriteTime(file);
+    if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
+      return true;
+
+    return false;
+  }
+
+  static DateTime GetLastWriteTime(string file)
+  {
+    return new FileInfo(file).LastWriteTime;
+  }
 }
 
 public struct SourcePos

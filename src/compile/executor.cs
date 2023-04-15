@@ -149,7 +149,7 @@ public class CompilationExecutor
 
     if(conf.proj.use_cache && 
        !args_changed && 
-       !BuildUtil.NeedToRegen(conf.proj.result_file, conf.files)
+       !Util.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
       if(conf.proj.verbosity > 0)
@@ -483,7 +483,7 @@ public class CompilationExecutor
             interim.imports = imports;
             interim.compiled_file = compiled_file;
 
-            bool use_cache = w.conf.proj.use_cache && !BuildUtil.NeedToRegen(compiled_file, deps);
+            bool use_cache = w.conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
 
             if(use_cache)
             {
@@ -547,7 +547,7 @@ public class CompilationExecutor
     {
       var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
 
-      if(BuildUtil.NeedToRegen(cache_imports_file, file))
+      if(Util.NeedToRegen(cache_imports_file, file))
         return null;
 
       try
@@ -735,59 +735,6 @@ public class EmptyPostProcessor : IFrontPostProcessor
 {
   public ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file) { return fres; }
   public void Tally() {}
-}
-
-public static class BuildUtil
-{
-  public static string GetSelfFile()
-  {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
-  }
-
-  public static string GetSelfDir()
-  {
-    return Path.GetDirectoryName(GetSelfFile());
-  }
-
-  static public bool NeedToRegen(string file, List<string> deps)
-  {
-    if(!File.Exists(file))
-    {
-      //Console.WriteLine("Missing " + file);
-      return true;
-    }
-
-    var fmtime = GetLastWriteTime(file);
-    foreach(var dep in deps)
-    {
-      if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
-      {
-        //Console.WriteLine("Stale " + dep + " " + file + " : " + GetLastWriteTime(dep) + " VS " + fmtime);
-        return true;
-      }
-    }
-
-    //Console.WriteLine("Hit "+ file);
-    return false;
-  }
-
-  //optimized version for just one dependency
-  static public bool NeedToRegen(string file, string dep)
-  {
-    if(!File.Exists(file))
-      return true;
-
-    var fmtime = GetLastWriteTime(file);
-    if(File.Exists(dep) && GetLastWriteTime(dep) > fmtime)
-      return true;
-
-    return false;
-  }
-
-  static DateTime GetLastWriteTime(string file)
-  {
-    return new FileInfo(file).LastWriteTime;
-  }
 }
 
 } //namespace bhl

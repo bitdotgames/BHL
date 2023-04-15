@@ -65,7 +65,7 @@ public class RunCmd : ICmd
     var conf = new CompileConf();
     conf.proj = proj;
     conf.ts = new Types();
-    conf.self_file = BuildUtil.GetSelfFile();
+    conf.self_file = Util.GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
     conf.userbindings = new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
