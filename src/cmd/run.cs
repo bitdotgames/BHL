@@ -56,7 +56,7 @@ public class RunCmd : ICmd
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.use_cache = false;
     proj.max_threads = 1;
-    proj.src_dirs = src_dir;
+    proj.src_dirs.Add(src_dir);
     proj.result_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
     proj.tmp_dir = Path.GetTempPath();
     proj.verbosity = 0;

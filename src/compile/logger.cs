@@ -43,7 +43,7 @@ public class FileLogger : ILogWriter
   {
     using(StreamWriter w = File.AppendText(file_path))
     {
-      w.WriteLine("[LOG] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
+      w.WriteLine("[LOG "+level+"] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
     }
   }
 
@@ -51,7 +51,7 @@ public class FileLogger : ILogWriter
   {
     using(StreamWriter w = File.AppendText(file_path))
     {
-      w.WriteLine("[ERR] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
+      w.WriteLine("[ERROR] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
     }
   }
 }

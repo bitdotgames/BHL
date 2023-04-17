@@ -10,23 +10,17 @@ public class LSP : ICmd
 {
   public void Run(string[] args)
   {
-    var inc_path = new IncludePath();
-
     string log_file_path = "";
 
     var p = new OptionSet
     {
-      { "inc-path=", "source include directories separated by ;",
-        v => inc_path = new IncludePath(v.Split(';')) },
       { "log-file=", "log file path",
         v => log_file_path = v }
     };
     
     p.Parse(args);
 
-    var ts = new Types();
     var workspace = new Workspace();
-    workspace.Init(ts, inc_path);
 
     ILogWriter log_writer = 
       string.IsNullOrEmpty(log_file_path) ? 

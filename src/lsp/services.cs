@@ -21,23 +21,25 @@ public class LifecycleService : IService
     process_id = args.processId;
     
     var ts = new Types();
-    var inc_path = new IncludePath();
+    var proj = new ProjectConf();
 
     if(args.workspaceFolders != null)
     {
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        inc_path.Add(args.workspaceFolders[i].uri.path);
+        proj = ProjectConf.ReadFromDir(args.workspaceFolders[i].uri.path);
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      inc_path.Add(args.rootUri.path);
+      proj = ProjectConf.ReadFromDir(args.rootUri.path);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      inc_path.Add(args.rootPath);
-    }
+      proj = ProjectConf.ReadFromDir(args.rootPath);
+    }                                                                         
+    proj.Setup();
     
-    workspace.Init(ts, inc_path);
+    logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
+    workspace.Init(ts, proj.inc_path);
 
     //TODO: run it in background
     workspace.IndexFiles();
@@ -51,7 +53,7 @@ public class LifecycleService : IService
         capabilities.textDocumentSync = new TextDocumentSyncOptions
         {
           openClose = true, //didOpen, didClose
-          change = workspace.syncKind, //didChange
+          change = workspace.sync_kind, //didChange
           save = false //didSave
         };
       }
@@ -180,7 +182,7 @@ public class TextDocumentSynchronizationService : IService
   [RpcMethod("textDocument/didChange")]
   public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
-    if(workspace.syncKind != TextDocumentSyncKind.Full)
+    if(workspace.sync_kind != TextDocumentSyncKind.Full)
     {
       return RpcResult.Error(new ResponseError
       {

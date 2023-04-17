@@ -934,7 +934,7 @@ public class BHL_TestBase
 
     var proj = new ProjectConf();
     proj.max_threads = max_threads;
-    proj.src_dirs = TestDirPath();
+    proj.src_dirs.Add(TestDirPath());
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.result_file = TestDirPath() + "/result.bin";
     proj.tmp_dir = TestDirPath() + "/cache";

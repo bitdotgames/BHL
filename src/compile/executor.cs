@@ -11,12 +11,26 @@ using marshall;
 
 public class ProjectConf
 {
+  const string FILE_NAME = "bhl.proj";
+
+  public static ProjectConf ReadFromFile(string file_path)
+  {
+    var proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(file_path));
+    proj.proj_file = file_path;
+    return proj;
+  }
+
+  public static ProjectConf ReadFromDir(string dir_path)
+  {
+    return ReadFromFile(dir_path + "/" + FILE_NAME);
+  }
+
   [JsonIgnore]
   public string proj_file = "";
 
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
-  public string src_dirs = "";
+  public List<string> src_dirs = new List<string>();
 
   [JsonIgnore]
   IncludePath _inc_path;
@@ -25,7 +39,7 @@ public class ProjectConf
       if(_inc_path == null)
       {
         _inc_path = new IncludePath();
-        foreach(var path in src_dirs.Split(';'))
+        foreach(var path in src_dirs)
           _inc_path.Add(NormalizePath(path));
       }
       return _inc_path;

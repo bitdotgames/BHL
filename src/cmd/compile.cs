@@ -28,11 +28,10 @@ public class CompileCmd : ICmd
     var p = new OptionSet() {
       { "c", "project config file",
         v => { 
-          proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(v));
-          proj.proj_file = v;
+          proj = ProjectConf.ReadFromFile(v);
         } },
       { "dir=", "source directories separated by ;",
-        v => proj.src_dirs = v },
+        v => proj.src_dirs.AddRange(v.Split(';')) },
       { "files=", "file containing all source files list",
         v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
       { "result=", "resulting file",

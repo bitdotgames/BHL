@@ -15,7 +15,7 @@ public class Workspace
 
   Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
 
-  public proto.TextDocumentSyncKind syncKind = proto.TextDocumentSyncKind.Full;
+  public proto.TextDocumentSyncKind sync_kind = proto.TextDocumentSyncKind.Full;
 
   public bool declarationLinkSupport;
   public bool definitionLinkSupport;

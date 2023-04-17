@@ -131,7 +131,7 @@ public class JsonRpc : IJsonRpc
         id = request.id, error = new ResponseError
         {
           code = (int)ErrorCodes.InternalError,
-          message = e.Message
+          message = e.ToString()
         }
       };
     }
