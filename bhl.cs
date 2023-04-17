@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Mono.Options;
+using Newtonsoft.Json;
 
 public static class Tasks
 {
@@ -130,11 +131,10 @@ public static class Tasks
   [Task(deps: "build_front_dll")]
   public static void compile(Taskman tm, string[] args)
   {
-    List<string> postproc_sources;
-    List<string> user_sources;
-    var runtime_args = ExtractBinArgs(args, out user_sources, out postproc_sources);
+    string proj_file;
+    var runtime_args = GetProjectArg(args, out proj_file);
 
-    BuildAndRunCompiler(tm, user_sources, postproc_sources, ref runtime_args);
+    BuildAndRunCompiler(tm, proj_file, ref runtime_args);
   }
 
   [Task(deps: "build_front_dll", verbose: false)]
@@ -226,26 +226,25 @@ public static class Tasks
     }
   }
 
-  public static List<string> ExtractBinArgs(string[] args, out List<string> user_sources, out List<string> postproc_sources)
+  public static List<string> GetProjectArg(string[] args, out string proj_file)
   {
-    var _postproc_sources = new List<string>();
-    var _user_sources = new List<string>(); 
+    string _proj_file = "";
 
     var p = new OptionSet() {
-      { "postproc-sources=", "Postprocessing sources",
-        v => _postproc_sources.AddRange(v.Split(',')) },
-      { "user-sources=", "User sources",
-        v => _user_sources.AddRange(v.Split(',')) },
+      { "p|proj=", "project config file",
+        v => _proj_file = v }
      };
 
-    postproc_sources = _postproc_sources;
-    user_sources = _user_sources;
-
     var left = p.Parse(args);
+
+    proj_file = _proj_file;
+
+    if(!string.IsNullOrEmpty(proj_file))
+      left.Insert(0, "--proj=" + proj_file);
     return left;
   }
   
-  public static void BuildAndRunCompiler(Taskman tm, List<string> user_sources, List<string> postproc_sources, ref List<string> runtime_args)
+  public static void BuildAndRunCompiler(Taskman tm, string proj_file, ref List<string> runtime_args)
   {
     var sources = new string[] {
       $"{BHL_ROOT}/src/cmd/compile.cs",
@@ -256,18 +255,24 @@ public static class Tasks
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
     };
 
-    if(user_sources.Count > 0)
+    var proj = new ProjectConf();
+    if(!string.IsNullOrEmpty(proj_file))
+      proj = ProjectConf.ReadFromFile(proj_file);
+
+    var bindings_sources = proj.bindings_sources;
+    if(bindings_sources.Count > 0)
     {
-      user_sources.Add($"{BHL_ROOT}/bhl_front.dll");
-      user_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
+      bindings_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      bindings_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
-        user_sources.ToArray(),
+        bindings_sources.ToArray(),
         $"{BHL_ROOT}/bhl_user.dll",
         "-define:BHL_FRONT -debug -target:library"
       );
       runtime_args.Add($"--bindings-dll={BHL_ROOT}/bhl_user.dll");
     }
 
+    var postproc_sources = proj.postproc_sources;
     if(postproc_sources.Count > 0)
     {
       postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
@@ -334,6 +339,9 @@ public static class Tasks
 
     files.Add(cmd_hash_file);
 
+    //for debug
+    //Console.WriteLine(cmd);
+
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
       tm.Shell(binary, args);
   }
@@ -357,6 +365,42 @@ public static class Tasks
     if(cmd_method == null)
       throw new Exception("No Run method in class: " + cmd_class.Name);
     cmd_method.Invoke(cmd, new object[] { args.ToArray() });
+  }
+}
+
+//NOTE: representing only part of the original ProjectConf
+public class ProjectConf
+{
+  public static ProjectConf ReadFromFile(string file_path)
+  {
+    var proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(file_path));
+    proj.proj_file = file_path;
+    proj.Setup();
+    return proj;
+  }
+
+  [JsonIgnore]
+  public string proj_file = "";
+
+  public List<string> bindings_sources = new List<string>();
+  public List<string> postproc_sources = new List<string>();
+
+  string NormalizePath(string file_path)
+  {
+    if(Path.IsPathRooted(file_path))
+      return Path.GetFullPath(file_path);
+    else if(!string.IsNullOrEmpty(proj_file))
+      return Path.GetFullPath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
+    return file_path;
+  }
+
+  public void Setup()
+  {
+    for(int i=0;i<bindings_sources.Count;++i)
+      bindings_sources[i] = NormalizePath(bindings_sources[i]);
+
+    for(int i=0;i<postproc_sources.Count;++i)
+      postproc_sources[i] = NormalizePath(postproc_sources[i]);
   }
 }
 

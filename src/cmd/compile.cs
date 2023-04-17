@@ -13,8 +13,8 @@ public class CompileCmd : ICmd
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl compile [-c <bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " + 
-                     "[--tmp-dir=<tmp dir>] [--error=<err file>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
+    Console.WriteLine("bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " + 
+                     "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -26,7 +26,7 @@ public class CompileCmd : ICmd
     var proj = new ProjectConf();
 
     var p = new OptionSet() {
-      { "c", "project config file",
+      { "p|proj=", "project config file",
         v => { 
           proj = ProjectConf.ReadFromFile(v);
         } },
@@ -40,10 +40,10 @@ public class CompileCmd : ICmd
         v => proj.tmp_dir = v },
       { "C", "don't use cache",
         v => proj.use_cache = v == null },
+      { "bindings-dll=", "bindings dll file path",
+        v => proj.bindings_dll_file = v },
       { "postproc-dll=", "posprocess dll file path",
         v => proj.postproc_dll_file = v },
-      { "bindings-dll=", "bindings dll file path",
-        v => proj.userbindings_dll_file = v },
       { "error=", "error file",
         v => proj.error_file = v },
       { "deterministic", "deterministic build (sorts files by name)",
@@ -51,7 +51,7 @@ public class CompileCmd : ICmd
       { "threads=", "number of threads",
           v => proj.max_threads = int.Parse(v) },
       { "d", "debug verbosity level",
-        v => proj.verbosity = v != null ? 1 : 0 },
+        v => proj.verbosity = v != null ? 2 : 1 },
       { "module-fmt=", "binary module format",
         v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v) }
      };
@@ -65,8 +65,6 @@ public class CompileCmd : ICmd
     {
       Usage(e.Message);
     }
-
-    proj.Setup();
 
     var logger = new Logger(proj.verbosity, new ConsoleLogger()); 
 
@@ -82,13 +80,13 @@ public class CompileCmd : ICmd
     if(string.IsNullOrEmpty(proj.tmp_dir))
       Usage("Tmp dir not set");
 
-    IUserBindings userbindings = new EmptyUserBindings();
-    if(!string.IsNullOrEmpty(proj.userbindings_dll_file))
+    IUserBindings bindings = new EmptyUserBindings();
+    if(!string.IsNullOrEmpty(proj.bindings_dll_file))
     {
-      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.userbindings_dll_file);
+      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll_file);
       var userbindings_class = userbindings_assembly.GetTypes()[0];
-      userbindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-      if(userbindings == null)
+      bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
+      if(bindings == null)
         Usage("User bindings are invalid");
     }
 
@@ -107,11 +105,13 @@ public class CompileCmd : ICmd
       for(int i=0;i<proj.inc_path.Count;++i)
         CompilationExecutor.AddFilesFromDir(proj.inc_path[i], files);
     }
-
-    for(int i=files.Count;i-- > 0;)
+    else
     {
-      if(string.IsNullOrEmpty(files[i]))
-        files.RemoveAt(i);
+      for(int i=files.Count;i-- > 0;)
+      {
+        if(string.IsNullOrEmpty(files[i]))
+          files.RemoveAt(i);
+      }
     }
 
     if(proj.deterministic)
@@ -124,7 +124,7 @@ public class CompileCmd : ICmd
     conf.args = string.Join(";", args);
     conf.self_file = GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
-    conf.userbindings = userbindings;
+    conf.bindings = bindings;
     conf.postproc = postproc;
 
     var cmp = new CompilationExecutor();

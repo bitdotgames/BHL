@@ -14,7 +14,7 @@ mcs -r:../../bhl_back.dll -out:example.exe $DIR/bindings.cs $DIR/example.cs
 #3. Compiling bhl sources to byte code
 rm -rf tmp/bhl.bytes
 pushd ../..
-./bhl compile --user-sources=$DIR/bindings.cs -C --dir=$DIR --result=$DIR/tmp/bhl.bytes --tmp-dir=$DIR/tmp
+./bhl compile -p $DIR/bhl.proj -C --result=$DIR/tmp/bhl.bytes
 popd
 #4. Running example
 MONO_PATH=$MONO_PATH:../../ mono --debug example.exe tmp/bhl.bytes

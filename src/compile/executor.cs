@@ -17,6 +17,7 @@ public class ProjectConf
   {
     var proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(file_path));
     proj.proj_file = file_path;
+    proj.Setup();
     return proj;
   }
 
@@ -40,7 +41,7 @@ public class ProjectConf
       {
         _inc_path = new IncludePath();
         foreach(var path in src_dirs)
-          _inc_path.Add(NormalizePath(path));
+          _inc_path.Add(path);
       }
       return _inc_path;
     }
@@ -49,12 +50,16 @@ public class ProjectConf
   public string result_file = "";
   public string tmp_dir = "";
   public string error_file = "";
-  public string postproc_dll_file = "";
-  public string userbindings_dll_file = "";
   public bool use_cache = true;
   public int verbosity = 1;
   public int max_threads = 1;
   public bool deterministic = false;
+
+  public List<string> bindings_sources = new List<string>();
+  public string bindings_dll_file = "";
+
+  public List<string> postproc_sources = new List<string>();
+  public string postproc_dll_file = "";
 
   string NormalizePath(string file_path)
   {
@@ -67,11 +72,20 @@ public class ProjectConf
 
   public void Setup()
   {
+    for(int i=0;i<src_dirs.Count;++i)
+      src_dirs[i] = NormalizePath(src_dirs[i]);
+
+    for(int i=0;i<bindings_sources.Count;++i)
+      bindings_sources[i] = NormalizePath(bindings_sources[i]);
+
+    for(int i=0;i<postproc_sources.Count;++i)
+      postproc_sources[i] = NormalizePath(postproc_sources[i]);
+
     result_file = NormalizePath(result_file);
     tmp_dir = NormalizePath(tmp_dir);
     error_file = NormalizePath(error_file);
     postproc_dll_file = NormalizePath(postproc_dll_file);
-    userbindings_dll_file = NormalizePath(userbindings_dll_file);
+    bindings_dll_file = NormalizePath(bindings_dll_file);
   }
 }
 
@@ -84,7 +98,7 @@ public class CompileConf
   public List<string> files = new List<string>();
   public string self_file = "";
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
-  public IUserBindings userbindings = new EmptyUserBindings();
+  public IUserBindings bindings = new EmptyUserBindings();
 }
  
 public class CompilationExecutor
@@ -172,7 +186,7 @@ public class CompilationExecutor
     if(conf.ts == null)
       conf.ts = new Types();
 
-    conf.userbindings.Register(conf.ts);
+    conf.bindings.Register(conf.ts);
 
     sw = Stopwatch.StartNew();
     //1. start parse workers

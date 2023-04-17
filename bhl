@@ -9,7 +9,7 @@ EXE=$DIR/bhlb.exe
 export MONO_PATH="$DIR/deps/:$MONO_PATH" 
 
 if [ $EXE -ot $SRC ]; then 
-  mcs $SRC -debug -r:$DIR/deps/mono_opts.dll -out:$EXE
+  mcs $SRC -debug -r:$DIR/deps/Newtonsoft.Json.dll -r:$DIR/deps/mono_opts.dll -out:$EXE
 fi
 
 if [[ -z "${BHL_DEBUG}" ]]; then

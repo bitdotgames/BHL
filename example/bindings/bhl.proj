@@ -1,0 +1,5 @@
+{
+  "bindings_sources" : ["./bindings.cs"],
+  "src_dirs" : ["./"],
+  "tmp_dir" : "./tmp"
+}

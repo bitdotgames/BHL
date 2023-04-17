@@ -68,7 +68,7 @@ public class RunCmd : ICmd
     conf.ts = new Types();
     conf.self_file = Util.GetSelfFile();
     conf.files = Util.NormalizeFilePaths(files);
-    conf.userbindings = new EmptyUserBindings();
+    conf.bindings = new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
 
     var cmp = new CompilationExecutor();
