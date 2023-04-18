@@ -56,10 +56,10 @@ public class ProjectConf
   public bool deterministic = false;
 
   public List<string> bindings_sources = new List<string>();
-  public string bindings_dll_file = "";
+  public string bindings_dll = "";
 
   public List<string> postproc_sources = new List<string>();
-  public string postproc_dll_file = "";
+  public string postproc_dll = "";
 
   string NormalizePath(string file_path)
   {
@@ -77,15 +77,15 @@ public class ProjectConf
 
     for(int i=0;i<bindings_sources.Count;++i)
       bindings_sources[i] = NormalizePath(bindings_sources[i]);
+    bindings_dll = NormalizePath(bindings_dll);
 
     for(int i=0;i<postproc_sources.Count;++i)
       postproc_sources[i] = NormalizePath(postproc_sources[i]);
+    postproc_dll = NormalizePath(postproc_dll);
 
     result_file = NormalizePath(result_file);
     tmp_dir = NormalizePath(tmp_dir);
     error_file = NormalizePath(error_file);
-    postproc_dll_file = NormalizePath(postproc_dll_file);
-    bindings_dll_file = NormalizePath(bindings_dll_file);
   }
 }
 

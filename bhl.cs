@@ -262,27 +262,33 @@ public static class Tasks
     var bindings_sources = proj.bindings_sources;
     if(bindings_sources.Count > 0)
     {
+      if(string.IsNullOrEmpty(proj.bindings_dll))
+        throw new Exception("Resulting 'bindings_dll' is not set");
+
       bindings_sources.Add($"{BHL_ROOT}/bhl_front.dll");
       bindings_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         bindings_sources.ToArray(),
-        $"{BHL_ROOT}/bhl_user.dll",
+        proj.bindings_dll, 
         "-define:BHL_FRONT -debug -target:library"
       );
-      runtime_args.Add($"--bindings-dll={BHL_ROOT}/bhl_user.dll");
+      runtime_args.Add($"--bindings-dll={proj.bindings_dll}");
     }
 
     var postproc_sources = proj.postproc_sources;
     if(postproc_sources.Count > 0)
     {
+      if(string.IsNullOrEmpty(proj.postproc_dll))
+        throw new Exception("Resulting 'postproc_dll' is not set");
+
       postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
       postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         postproc_sources.ToArray(),
-        $"{BHL_ROOT}/bhl_postproc.dll",
+        proj.postproc_dll,
         "-define:BHL_FRONT -debug -target:library"
       );
-      runtime_args.Add($"--postproc-dll={BHL_ROOT}/bhl_postproc.dll");
+      runtime_args.Add($"--postproc-dll={proj.postproc_dll}");
     }
 
     BuildAndRunDllCmd(
@@ -383,7 +389,10 @@ public class ProjectConf
   public string proj_file = "";
 
   public List<string> bindings_sources = new List<string>();
+  public string bindings_dll = "";
+
   public List<string> postproc_sources = new List<string>();
+  public string postproc_dll = "";
 
   string NormalizePath(string file_path)
   {
@@ -398,9 +407,11 @@ public class ProjectConf
   {
     for(int i=0;i<bindings_sources.Count;++i)
       bindings_sources[i] = NormalizePath(bindings_sources[i]);
+    bindings_dll = NormalizePath(bindings_dll);
 
     for(int i=0;i<postproc_sources.Count;++i)
       postproc_sources[i] = NormalizePath(postproc_sources[i]);
+    postproc_dll = NormalizePath(postproc_dll);
   }
 }
 

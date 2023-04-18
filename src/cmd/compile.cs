@@ -41,9 +41,9 @@ public class CompileCmd : ICmd
       { "C", "don't use cache",
         v => proj.use_cache = v == null },
       { "bindings-dll=", "bindings dll file path",
-        v => proj.bindings_dll_file = v },
+        v => proj.bindings_dll = v },
       { "postproc-dll=", "postprocess dll file path",
-        v => proj.postproc_dll_file = v },
+        v => proj.postproc_dll = v },
       { "error=", "error file",
         v => proj.error_file = v },
       { "deterministic", "deterministic build (sorts files by name)",
@@ -81,11 +81,11 @@ public class CompileCmd : ICmd
       Usage("Tmp dir not set");
 
     IUserBindings bindings = new EmptyUserBindings();
-    if(!string.IsNullOrEmpty(proj.bindings_dll_file))
+    if(!string.IsNullOrEmpty(proj.bindings_dll))
     {
       try
       {
-        var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll_file);
+        var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll);
         var userbindings_class = userbindings_assembly.GetTypes()[0];
         bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
         if(bindings == null)
@@ -93,16 +93,16 @@ public class CompileCmd : ICmd
       }
       catch(Exception e)
       {
-        Usage($"Could not load bindings({proj.bindings_dll_file}): " + e);
+        Usage($"Could not load bindings({proj.bindings_dll}): " + e);
       }
     }
 
     IFrontPostProcessor postproc = new EmptyPostProcessor();
-    if(!string.IsNullOrEmpty(proj.postproc_dll_file))
+    if(!string.IsNullOrEmpty(proj.postproc_dll))
     {
       try
       {
-        var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll_file);
+        var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll);
         var postproc_class = postproc_assembly.GetTypes()[0];
         postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
         if(postproc == null)
@@ -110,7 +110,7 @@ public class CompileCmd : ICmd
       }
       catch(Exception e)
       {
-        Usage($"Could not load postproc({proj.postproc_dll_file}): " + e);
+        Usage($"Could not load postproc({proj.postproc_dll}): " + e);
       }
     }
 
