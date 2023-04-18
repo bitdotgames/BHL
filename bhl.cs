@@ -340,7 +340,7 @@ public static class Tasks
     files.Add(cmd_hash_file);
 
     //for debug
-    //Console.WriteLine(cmd);
+    Console.WriteLine(cmd);
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
       tm.Shell(binary, args);
@@ -534,19 +534,9 @@ public class Taskman
     Echo($"***** BHL '{task.Name}' start *****");
     var sw = new Stopwatch();
     sw.Start();
-    try
-    {
-      task.func.Invoke(null, new object[] { this, task_args });
-    }
-    catch(Exception)
-    {
-      throw;
-    }
-    finally
-    {
-      var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
-      Echo($"***** BHL '{task.Name}' done({elapsed} sec.) *****");
-    }
+    task.func.Invoke(null, new object[] { this, task_args });
+    var elapsed = Math.Round(sw.ElapsedMilliseconds/1000.0f,2);
+    Echo($"***** BHL '{task.Name}' done({elapsed} sec.) *****");
   }
 
   public Task FindTask(string name)
