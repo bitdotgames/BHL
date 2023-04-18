@@ -8,7 +8,7 @@ set MONO_PATH=%DIR%\deps;%MONO_PATH%
 FOR /F %%i IN ('DIR /B /O:D %SRC% %EXE%') DO SET NEWEST=%%i
 IF NOT x%NEWEST:.exe=% == x%NEWEST% GOTO RUN
 
-mcs %SRC% -debug -r:%DIR%\deps\mono_opts.dll -out:%EXE% && mono --debug %EXE% %*
+mcs %SRC% -debug -r:%DIR%\deps\Newtonsoft.Json.dll -r:%DIR%\deps\mono_opts.dll -out:%EXE% && mono --debug %EXE% %*
 EXIT /b %errorlevel%
 
 :RUN
