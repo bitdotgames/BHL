@@ -338,6 +338,7 @@ public static class Tasks
     string args = (refs.Count > 0 ? " -r:" + String.Join(" -r:", refs.Select(r => tm.CLIPath(r))) : "") + $" {opts} -out:{tm.CLIPath(result)} " + String.Join(" ", files.Select(f => tm.CLIPath(f)));
     string cmd = binary + " " + args;
 	
+    //TODO: use system temporary directory for that?
     uint cmd_hash = Hash.CRC32(cmd);
     string cmd_hash_file = $"{BHL_ROOT}/build/" + Hash.CRC32(result) + ".mhash";
     if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString()) 
@@ -349,7 +350,10 @@ public static class Tasks
     //Console.WriteLine(cmd);
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
+    {
+      tm.Mkdir(Path.GetDirectoryName(result));
       tm.Shell(binary, args);
+    }
   }
 
   public static void BuildAndRunDllCmd(Taskman tm, string name, string[] sources, string extra_mcs_args, IList<string> args)
