@@ -340,7 +340,7 @@ public static class Tasks
     files.Add(cmd_hash_file);
 
     //for debug
-    Console.WriteLine(cmd);
+    //Console.WriteLine(cmd);
 
     if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, refs))
       tm.Shell(binary, args);
@@ -389,7 +389,7 @@ public class ProjectConf
   {
     if(Path.IsPathRooted(file_path))
       return Path.GetFullPath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file))
+    else if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
       return Path.GetFullPath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
     return file_path;
   }

@@ -42,7 +42,7 @@ public class CompileCmd : ICmd
         v => proj.use_cache = v == null },
       { "bindings-dll=", "bindings dll file path",
         v => proj.bindings_dll_file = v },
-      { "postproc-dll=", "posprocess dll file path",
+      { "postproc-dll=", "postprocess dll file path",
         v => proj.postproc_dll_file = v },
       { "error=", "error file",
         v => proj.error_file = v },
@@ -83,21 +83,35 @@ public class CompileCmd : ICmd
     IUserBindings bindings = new EmptyUserBindings();
     if(!string.IsNullOrEmpty(proj.bindings_dll_file))
     {
-      var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll_file);
-      var userbindings_class = userbindings_assembly.GetTypes()[0];
-      bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-      if(bindings == null)
-        Usage("User bindings are invalid");
+      try
+      {
+        var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll_file);
+        var userbindings_class = userbindings_assembly.GetTypes()[0];
+        bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
+        if(bindings == null)
+          Usage("User bindings are invalid");
+      }
+      catch(Exception e)
+      {
+        Usage($"Could not load bindings({proj.bindings_dll_file}): " + e);
+      }
     }
 
     IFrontPostProcessor postproc = new EmptyPostProcessor();
     if(!string.IsNullOrEmpty(proj.postproc_dll_file))
     {
-      var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll_file);
-      var postproc_class = postproc_assembly.GetTypes()[0];
-      postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
-      if(postproc == null)
-        Usage("User postprocessor is invalid");
+      try
+      {
+        var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll_file);
+        var postproc_class = postproc_assembly.GetTypes()[0];
+        postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
+        if(postproc == null)
+          Usage("User postprocessor is invalid");
+      }
+      catch(Exception e)
+      {
+        Usage($"Could not load postproc({proj.postproc_dll_file}): " + e);
+      }
     }
 
     if(files.Count == 0)

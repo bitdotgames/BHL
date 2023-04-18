@@ -65,7 +65,7 @@ public class ProjectConf
   {
     if(Path.IsPathRooted(file_path))
       return Util.NormalizeFilePath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file))
+    else if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
       return Util.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
     return file_path;
   }
