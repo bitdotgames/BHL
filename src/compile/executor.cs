@@ -87,6 +87,28 @@ public class ProjectConf
     tmp_dir = NormalizePath(tmp_dir);
     error_file = NormalizePath(error_file);
   }
+
+  public IUserBindings LoadBindings()
+  {
+    if(string.IsNullOrEmpty(bindings_dll))
+      return new EmptyUserBindings();
+
+    var userbindings_assembly = System.Reflection.Assembly.LoadFrom(bindings_dll);
+    var userbindings_class = userbindings_assembly.GetTypes()[0];
+    var bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
+    return bindings;
+  }
+
+  public IFrontPostProcessor LoadPostprocessor()
+  {
+    if(string.IsNullOrEmpty(postproc_dll))
+      return new EmptyPostProcessor();
+
+    var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll);
+    var postproc_class = postproc_assembly.GetTypes()[0];
+    var postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
+    return postproc;
+  }
 }
 
 public class CompileConf

@@ -80,38 +80,24 @@ public class CompileCmd : ICmd
     if(string.IsNullOrEmpty(proj.tmp_dir))
       Usage("Tmp dir not set");
 
-    IUserBindings bindings = new EmptyUserBindings();
-    if(!string.IsNullOrEmpty(proj.bindings_dll))
+    IUserBindings bindings = null;
+    try
     {
-      try
-      {
-        var userbindings_assembly = System.Reflection.Assembly.LoadFrom(proj.bindings_dll);
-        var userbindings_class = userbindings_assembly.GetTypes()[0];
-        bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-        if(bindings == null)
-          Usage("User bindings are invalid");
-      }
-      catch(Exception e)
-      {
-        Usage($"Could not load bindings({proj.bindings_dll}): " + e);
-      }
+      bindings = proj.LoadBindings();
+    }
+    catch(Exception e)
+    {
+      Usage($"Could not load bindings({proj.bindings_dll}): " + e);
     }
 
-    IFrontPostProcessor postproc = new EmptyPostProcessor();
-    if(!string.IsNullOrEmpty(proj.postproc_dll))
+    IFrontPostProcessor postproc = null;
+    try
     {
-      try
-      {
-        var postproc_assembly = System.Reflection.Assembly.LoadFrom(proj.postproc_dll);
-        var postproc_class = postproc_assembly.GetTypes()[0];
-        postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
-        if(postproc == null)
-          Usage("User postprocessor is invalid");
-      }
-      catch(Exception e)
-      {
-        Usage($"Could not load postproc({proj.postproc_dll}): " + e);
-      }
+      postproc = proj.LoadPostprocessor();
+    }
+    catch(Exception e)
+    {
+      Usage($"Could not load postproc({proj.postproc_dll}): " + e);
     }
 
     if(files.Count == 0)
