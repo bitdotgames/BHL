@@ -36,9 +36,10 @@ public class LifecycleService : IService
     {
       proj = ProjectConf.ReadFromDir(args.rootPath);
     }                                                                         
+    logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
+
     proj.LoadBindings().Register(ts);
     
-    logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
     workspace.Init(ts, proj.inc_path);
 
     //TODO: run it in background
