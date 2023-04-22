@@ -12,6 +12,30 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
 #if BHL_FRONT
   // Location in parse tree, can be null if it's a native symbol
   public AnnotatedParseTree parsed;
+  // Frame location of native symbol definition
+  public System.Diagnostics.StackFrame frame; 
+
+  public string file { 
+    get {
+      if(parsed != null)
+        return parsed.file;
+      else if(frame != null)
+        return frame.GetFileName();
+      else
+        return "";
+    }
+  }
+
+  public int line {
+    get {
+      if(parsed != null)
+        return parsed.range.start.line;
+      else if(frame != null)
+        return frame.GetFileLineNumber();
+      else
+        return 0;
+    }
+  }
 #endif
 
   public Symbol(string name) 
