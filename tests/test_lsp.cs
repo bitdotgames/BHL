@@ -90,6 +90,18 @@ public class TestLSP : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeSymbolReflection()
+  {
+    var fn = new FuncSymbolNative("test", Types.Void,
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+        return null;
+      }
+    );
+    AssertTrue(fn.file.EndsWith("test_lsp.cs"));
+    AssertTrue(fn.line > 0);
+  }
+
+  [IsTested()]
   public void TestRpcResponseErrors()
   {
     SubTest("parse error", () =>

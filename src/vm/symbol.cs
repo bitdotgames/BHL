@@ -1994,6 +1994,18 @@ public class FuncSymbolNative : FuncSymbol
       base.Define(arg);
       signature.AddArg(arg.type);
     }
+#if BHL_FRONT
+    var st = new System.Diagnostics.StackTrace(true);
+    for(int i=0;i<st.FrameCount;++i)
+    {
+      var frm = st.GetFrame(i);
+      if(!frm.GetFileName().EndsWith("symbol.cs"))
+      {
+        this.frame = frm;
+        break;
+      }
+    }
+#endif
   }
 
   public override int GetDefaultArgsNum() { return default_args_num; }
