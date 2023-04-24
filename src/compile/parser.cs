@@ -341,6 +341,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushScope(ns);
   }
 
+  void AddSemanticError(Origin origin, string msg) 
+  {
+    AddSemanticError(origin.parsed.tree, msg);
+  }
+
   void AddSemanticError(IParseTree place, string msg) 
   {
     errors.Add(new SemanticError(module, place, tokens, msg));
@@ -1461,7 +1466,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       arg.orig = func_symb.TryGetArg(i);
       if(arg.orig == null)
       {
-        AddSemanticError(func_symb.parsed.tree, "bad signature");
+        AddSemanticError(func_symb.origin, "bad signature");
         return;
       }
       norm_cargs.Add(arg); 
@@ -1568,7 +1573,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           }
 
           var func_arg_symb = func_symb.GetArg(i);
-          var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
+          var func_arg_type = func_arg_symb.GuessType();
 
           bool is_ref = na.ca.isRef() != null;
           if(!is_ref && func_arg_symb.is_ref)
@@ -1636,7 +1641,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
 
         var func_arg_symb = func_symb.GetArg(i);
-        var func_arg_type = func_arg_symb.parsed == null ? func_arg_symb.type.Get() : func_arg_symb.parsed.eval_type;  
+        var func_arg_type = func_arg_symb.GuessType();
 
         var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
 
@@ -2329,7 +2334,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_func = PeekFuncDecl();
     if(!curr_func.attribs.HasFlag(FuncAttrib.Coro))
     {
-      AddSemanticError(curr_func.parsed.tree, "function with yield calls must be coro");
+      AddSemanticError(curr_func.origin, "function with yield calls must be coro");
       return;
     }
 
@@ -3087,7 +3092,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(Annotate(exp_item).eval_type != Types.Void)
           ret_ast.num = fmret_type != null ? fmret_type.Count : 1;
 
-        if(!types.CheckAssign(func_symb.parsed, Annotate(exp_item), errors))
+        if(!types.CheckAssign(func_symb.origin.parsed, Annotate(exp_item), errors))
           return null;
         Annotate(ctx).eval_type = Annotate(exp_item).eval_type;
       }
@@ -3828,7 +3833,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var subst_symbol = DisableVar(((Namespace)curr_scope).members, pass.gvar_symb);
 
     pass.gvar_symb.type = ParseType(vd.type());
-    pass.gvar_symb.parsed.eval_type = pass.gvar_symb.type.Get();
+    pass.gvar_symb.origin.parsed.eval_type = pass.gvar_symb.type.Get();
 
     if(vd.type().nsName() != null)
       Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.type.Get() as Symbol;
@@ -4109,7 +4114,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         is_decl = true;
 
-        var_ann = var_symb.parsed;
+        var_ann = var_symb.origin.parsed;
         var_ann.eval_type = var_symb.type.Get();
       }
       else if(vproxy.LocalNameAt(i) != null)
@@ -4184,7 +4189,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   static VariableSymbol DisableVar(SymbolsStorage members, VariableSymbol disabled_symbol)
   {
-    var subst_symbol = new VariableSymbol(disabled_symbol.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
+    var subst_symbol = new VariableSymbol(disabled_symbol.origin.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
     members.Replace(disabled_symbol, subst_symbol);
     return subst_symbol;
   }

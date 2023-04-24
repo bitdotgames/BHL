@@ -859,7 +859,7 @@ public class TestTypeCasts : BHL_TestBase
       BindColor(ts);
 
       {
-        var cl = new ClassSymbolNative("Foo", null,
+        var cl = new ClassSymbolNative(new Origin(), "Foo", null,
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
             v.SetObj(null, type);
@@ -899,7 +899,7 @@ public class TestTypeCasts : BHL_TestBase
       BindColor(ts);
 
       {
-        var cl = new ClassSymbolNative("Foo", null,
+        var cl = new ClassSymbolNative(new Origin(), "Foo", null,
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
             v.SetObj(null, type);

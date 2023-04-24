@@ -418,8 +418,8 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
-  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Proxy<IType>());  
-  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Proxy<IType>(), new Proxy<IType>());  
+  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), new Proxy<IType>());  
+  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), new Proxy<IType>(), new Proxy<IType>());  
 
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
@@ -498,7 +498,7 @@ public class Types : INamedResolver
   static Types()
   {
     {
-      ClassType = new ClassSymbolNative("Type", 
+      ClassType = new ClassSymbolNative(new Origin(), "Type", 
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null, type);
@@ -506,7 +506,7 @@ public class Types : INamedResolver
       );
 
       {
-        var fld = new FieldSymbol("Name", String, 
+        var fld = new FieldSymbol(new Origin(), "Name", String, 
           delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
           {
             var t = (IType)ctx.obj;
@@ -567,7 +567,7 @@ public class Types : INamedResolver
 
     {
       //NOTE: it's a builtin non-directly available function
-      var fn = new FuncSymbolNative(new CallerInfo(), "$yield", this.T("void"),
+      var fn = new FuncSymbolNative(new Origin(), "$yield", this.T("void"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
@@ -578,7 +578,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "suspend", FuncAttrib.Coro, this.T("void"), 0, 
+      var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, this.T("void"), 0, 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           //TODO: this of static instance usage for this case
@@ -589,7 +589,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "start", this.T("int"),
+      var fn = new FuncSymbolNative(new Origin(), "start", this.T("int"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = stack.Pop();
@@ -604,7 +604,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "stop", this.T("void"),
+      var fn = new FuncSymbolNative(new Origin(), "stop", this.T("void"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)stack.PopRelease().num;

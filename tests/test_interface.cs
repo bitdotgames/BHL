@@ -716,9 +716,10 @@ public class TestInterfaces : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       var ifs = new InterfaceSymbolNative(
+          new Origin(),
           "IFoo", 
           null, 
-          new FuncSymbolNative(new CallerInfo(), "bar", ts.T("int"), null, 
+          new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null, 
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );
@@ -760,9 +761,10 @@ public class TestInterfaces : BHL_TestBase
     var ts_fn = new Func<Types>(() => { 
       var ts = new Types();
       var ifs = new InterfaceSymbolNative(
+          new Origin(),
           "IBar", 
           null, 
-          new FuncSymbolNative(new CallerInfo(), "bar", ts.T("int"), null, 
+          new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null, 
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );
@@ -813,7 +815,7 @@ public class TestInterfaces : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative(new CallerInfo(), "create", ts.T("IFoo"),
+        var fn = new FuncSymbolNative(new Origin(), "create", ts.T("IFoo"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               var foo = new LocalFoo();
               var v = Val.NewObj(frm.vm, foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
@@ -827,6 +829,7 @@ public class TestInterfaces : BHL_TestBase
 
       {
         var ifs = new InterfaceSymbolNative(
+            new Origin(),
             "IFoo", 
             null
         );
@@ -835,7 +838,7 @@ public class TestInterfaces : BHL_TestBase
       }
 
       {
-        var cl = new ClassSymbolNative("Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
+        var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
             v.SetObj(new LocalFoo(), type);
@@ -844,7 +847,7 @@ public class TestInterfaces : BHL_TestBase
         ts.ns.Define(cl);
 
         {
-          var m = new FuncSymbolNative(new CallerInfo(), "X", ts.T("int"),
+          var m = new FuncSymbolNative(new Origin(), "X", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var foo = (LocalFoo)stack.PopRelease().obj;
@@ -856,7 +859,7 @@ public class TestInterfaces : BHL_TestBase
         }
 
         {
-          var m = new FuncSymbolNative(new CallerInfo(), "Y", ts.T("int"),
+          var m = new FuncSymbolNative(new Origin(), "Y", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var foo = (LocalFoo)stack.PopRelease().obj;
@@ -978,9 +981,10 @@ public class TestInterfaces : BHL_TestBase
     {
       var ts = new Types();
       var ifs = new InterfaceSymbolNative(
+        new Origin(),
         "INativeFoo", 
         null, 
-        new FuncSymbolNative(new CallerInfo(), "foo", ts.T("int"),
+        new FuncSymbolNative(new Origin(), "foo", ts.T("int"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var n = (int)stack.PopRelease().num;
@@ -994,7 +998,7 @@ public class TestInterfaces : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative("NativeFoo", new List<Proxy<IType>>(){ ts.T("INativeFoo") },
+      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", new List<Proxy<IType>>(){ ts.T("INativeFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeFoo(), type);
@@ -1002,7 +1006,7 @@ public class TestInterfaces : BHL_TestBase
       );
       ts.ns.Define(cl);
 
-      var m = new FuncSymbolNative(new CallerInfo(), "foo", ts.T("int"),
+      var m = new FuncSymbolNative(new Origin(), "foo", ts.T("int"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = (int)stack.PopRelease().num;

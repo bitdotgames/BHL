@@ -43,8 +43,8 @@ public static class ErrorUtils
   public static string MakeMessage(Symbol symb, string msg)
   {
 #if BHL_FRONT
-    if(symb.parsed != null)
-      return MakeMessage(symb.parsed.module, symb.parsed.tree, symb.parsed.tokens, msg);
+    if(symb.origin.parsed != null)
+      return MakeMessage(symb.origin.parsed.module, symb.origin.parsed.tree, symb.origin.parsed.tokens, msg);
     else
 #endif
     return MakeMessage("", new SourceRange(), msg);
@@ -103,20 +103,13 @@ public class SymbolError : Exception
 
   public SourceRange range { 
     get { 
-#if BHL_FRONT
-      if(symbol.parsed != null)
-        return symbol.parsed.range;
-#endif
-      return new SourceRange(); 
+      return symbol.origin.source_range;
     } 
   }
+
   public string file { 
     get { 
-#if BHL_FRONT
-      if(symbol.parsed != null)
-        return symbol.parsed.file;
-#endif
-      return ""; 
+      return symbol.origin.source_file;
     } 
   }
 

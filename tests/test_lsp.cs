@@ -92,13 +92,13 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestNativeSymbolReflection()
   {
-    var fn = new FuncSymbolNative(new CallerInfo(), "test", Types.Void,
+    var fn = new FuncSymbolNative(new Origin(), "test", Types.Void,
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
         return null;
       }
     );
-    AssertTrue(fn.source_file.EndsWith("test_lsp.cs"));
-    AssertTrue(fn.source_range.start.line > 0);
+    AssertTrue(fn.origin.source_file.EndsWith("test_lsp.cs"));
+    AssertTrue(fn.origin.source_range.start.line > 0);
   }
 
   [IsTested()]
@@ -364,7 +364,7 @@ public class TestLSP : BHL_TestBase
     var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
 
     var ts = new bhl.Types();
-    var fn_TEST = new FuncSymbolNative(new CallerInfo(), "TEST", Types.Void, null);
+    var fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
     ts.ns.Define(fn_TEST);
     
     ws.Init(ts, GetTestIncPath());
@@ -465,7 +465,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       var rsp = rpc.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
       AssertContains(rsp, "test_lsp.cs");
-      AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.source_range.start.line-1)+",\"character\":1}}");
+      AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
     });
   }
 

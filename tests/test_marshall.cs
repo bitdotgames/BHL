@@ -18,32 +18,32 @@ public class TestMarshall : BHL_TestBase
       var ns = m.ns;
       ns.Link(ts.ns);
 
-      ns.Define(new VariableSymbol("foo", Types.Int));
+      ns.Define(new VariableSymbol(new Origin(), "foo", Types.Int));
 
-      ns.Define(new VariableSymbol("bar", Types.String));
+      ns.Define(new VariableSymbol(new Origin(), "bar", Types.String));
 
-      ns.Define(new VariableSymbol("wow", ns.TArr(Types.Bool)));
+      ns.Define(new VariableSymbol(new Origin(), "wow", ns.TArr(Types.Bool)));
 
-      var Test = new FuncSymbolScript(null, new FuncSignature(false, ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
+      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(false, ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       Test.Define(new FuncArgSymbol("s", Types.String));
       ns.Define(Test);
 
-      var Make = new FuncSymbolScript(null, new FuncSignature(true, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
+      var Make = new FuncSymbolScript(new Origin(), new FuncSignature(true, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
       Make.Define(new FuncArgSymbol("bar", ns.T("Bar")));
       ns.Define(Make);
 
-      var Foo = new ClassSymbolScript("Foo");
-      Foo.Define(new FieldSymbolScript("Int", Types.Int));
-      Foo.Define(new FuncSymbolScript(null, new FuncSignature(false, Types.Void), "Hey", 0, 3));
+      var Foo = new ClassSymbolScript(new Origin(), "Foo");
+      Foo.Define(new FieldSymbolScript(new Origin(), "Int", Types.Int));
+      Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(false, Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
-      var Bar = new ClassSymbolScript("Bar");
+      var Bar = new ClassSymbolScript(new Origin(), "Bar");
       Bar.SetSuperAndInterfaces(Foo);
-      Bar.Define(new FieldSymbolScript("Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(null, new FuncSignature(false, ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FieldSymbolScript(new Origin(), "Float", Types.Float));
+      Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(false, ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
-      var Enum = new EnumSymbolScript("Enum");
+      var Enum = new EnumSymbolScript(new Origin(), "Enum");
       Enum.TryAddItem(null, "Type1", 1);
       Enum.TryAddItem(null, "Type2", 2);
       ns.Define(Enum);

@@ -144,7 +144,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
   }
 
   public Namespace(Module module, string name)
-    : base(name)
+    : base(null, name)
   {
     this.module = module;
     this.members = new SymbolsStorage(this);
@@ -700,12 +700,12 @@ public static class ScopeExtensions
 
   public static Proxy<IType> TArr(this INamedResolver self, TypeArg tn)
   {           
-    return self.T(new GenericArrayTypeSymbol(self.T(tn)));
+    return self.T(new GenericArrayTypeSymbol(new Origin(), self.T(tn)));
   }
 
   public static Proxy<IType> TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
   {           
-    return self.T(new GenericMapTypeSymbol(self.T(kt), self.T(vt)));
+    return self.T(new GenericMapTypeSymbol(new Origin(), self.T(kt), self.T(vt)));
   }
 
   public static Proxy<IType> TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)

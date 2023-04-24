@@ -9,37 +9,13 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
 
   // All symbols know what scope contains them
   public IScope scope;
-#if BHL_FRONT
-  // Location in parse tree, can be null if it's a native symbol
-  public AnnotatedParseTree parsed;
-  // Frame location of native symbol definition
-  public CallerInfo cinfo;
 
-  public string source_file { 
-    get {
-      if(parsed != null)
-        return parsed.file;
-      else if(cinfo != null)
-        return cinfo.file_path;
-      else
-        return "";
-    }
-  }
+  // Information about origin where symbol is defined: file and line, parse tree
+  public Origin origin;
 
-  public SourceRange source_range {
-    get {
-      if(parsed != null)
-        return parsed.range;
-      else if(cinfo != null)
-        return new SourceRange(new SourcePos(cinfo.line, 1));
-      else
-        return default(SourceRange);
-    }
-  }
-#endif
-
-  public Symbol(string name) 
+  public Symbol(Origin origin, string name) 
   { 
+    this.origin = origin;
     this.name = name; 
   }
 
@@ -60,8 +36,8 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
 
 public abstract class BuiltInSymbolType : Symbol, IType 
 {
-  public BuiltInSymbolType(string name) 
-    : base(name) 
+  public BuiltInSymbolType(Origin origin, string name) 
+    : base(origin, name) 
   {}
 
   //contains no data
@@ -80,7 +56,7 @@ public class IntSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 1;
 
   public IntSymbol()
-    : base("int")
+    : base(new Origin(), "int")
   {}
 
   public override uint ClassId()
@@ -94,7 +70,7 @@ public class BoolSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 2;
 
   public BoolSymbol()
-    : base("bool")
+    : base(new Origin(), "bool")
   {}
 
   public override uint ClassId()
@@ -108,7 +84,7 @@ public class StringSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 3;
 
   public StringSymbol()
-    : base("string")
+    : base(new Origin(), "string")
   {}
 
   public override uint ClassId()
@@ -122,7 +98,7 @@ public class FloatSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 4;
 
   public FloatSymbol()
-    : base("float")
+    : base(new Origin(), "float")
   {}
 
   public override uint ClassId()
@@ -136,7 +112,7 @@ public class VoidSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 5;
 
   public VoidSymbol()
-    : base("void")
+    : base(new Origin(), "void")
   {}
 
   public override uint ClassId()
@@ -150,7 +126,7 @@ public class AnySymbol : BuiltInSymbolType
   public const uint CLASS_ID = 6;
 
   public AnySymbol()
-    : base("any")
+    : base(new Origin(), "any")
   {}
 
   public override uint ClassId()
@@ -164,7 +140,7 @@ public class NullSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 7;
 
   public NullSymbol()
-    : base("null")
+    : base(new Origin(), "null")
   {}
 
   public override uint ClassId()
@@ -178,7 +154,7 @@ public class VarSymbol : BuiltInSymbolType
   public const uint CLASS_ID = 8;
 
   public VarSymbol()
-    : base("var")
+    : base(new Origin(), "var")
   {}
 
   public override uint ClassId()
@@ -195,26 +171,15 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsI
 
   HashSet<IInstanceType> related_types;
 
-#if BHL_FRONT
-  public InterfaceSymbol(
-    AnnotatedParseTree parsed, 
-    string name
-  )
-    : this(name)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public InterfaceSymbol(string name)
-    : base(name)
+  public InterfaceSymbol(Origin origin, string name)
+    : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
   }
 
   //marshall factory version
   public InterfaceSymbol()
-    : this(null)
+    : this(null, null)
   {}
 
   public void Define(Symbol sym)
@@ -280,24 +245,13 @@ public class InterfaceSymbolScript : InterfaceSymbol
 {
   public const uint CLASS_ID = 18;
   
-  public InterfaceSymbolScript(string name)
-    : base(name)
+  public InterfaceSymbolScript(Origin origin, string name)
+    : base(origin, name)
   {}
-
-#if BHL_FRONT
-  public InterfaceSymbolScript(
-    AnnotatedParseTree parsed, 
-    string name
-  )
-    : this(name)
-  {
-    this.parsed = parsed;
-  }
-#endif
 
   //marshall factory version
   public InterfaceSymbolScript() 
-    : this(null)
+    : this(null, null)
   {}
 
   public override uint ClassId()
@@ -319,11 +273,12 @@ public class InterfaceSymbolNative : InterfaceSymbol
   FuncSymbol[] funcs;
 
   public InterfaceSymbolNative(
+    Origin origin,
     string name, 
     IList<Proxy<IType>> proxy_inherits,
     params FuncSymbol[] funcs
   )
-    : base(name)
+    : base(origin, name)
   {
     this.proxy_inherits = proxy_inherits;
     this.funcs = funcs;
@@ -391,24 +346,12 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
 
   public VM.ClassCreator creator;
 
-#if BHL_FRONT
   public ClassSymbol(
-    AnnotatedParseTree parsed, 
+    Origin origin,
     string name, 
     VM.ClassCreator creator = null
   )
-    : this(name, creator)
-  {
-    this.parsed = parsed;
-  }
-
-#endif
-
-  public ClassSymbol(
-    string name, 
-    VM.ClassCreator creator = null
-  )
-    : base(name)
+    : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
 
@@ -483,7 +426,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
       {
         //let's create fake static get/set native functions
         var static_get = new FuncSymbolNative(
-        new CallerInfo(),
+        new Origin(),
         GetNativeStaticFieldGetFuncName(fld), fld.type,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
@@ -495,7 +438,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
         this.GetNamespace().module.nfuncs.Index(static_get);
 
         var static_set = new FuncSymbolNative(
-        new CallerInfo(),
+        new Origin(),
         GetNativeStaticFieldSetFuncName(fld), fld.type,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
@@ -710,8 +653,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
   public Proxy<IType> item_type;
 
-  public ArrayTypeSymbol(string name, Proxy<IType> item_type)     
-    : base(name)
+  public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type)     
+    : base(origin, name)
   {
     this.item_type = item_type;
 
@@ -719,31 +662,31 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     //NOTE: must be first member of the class
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, Add,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "RemoveAt", Types.Void, RemoveAt,
+      var fn = new FuncSymbolNative(new Origin(), "RemoveAt", Types.Void, RemoveAt,
         new FuncArgSymbol("idx", Types.Int)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
+      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, GetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "IndexOf", Types.Int, IndexOf,
+      var fn = new FuncSymbolNative(new Origin(), "IndexOf", Types.Int, IndexOf,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
@@ -751,19 +694,19 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      FuncArrIdx = new FuncSymbolNative(new CallerInfo(), "$ArrIdx", item_type, ArrIdx);
+      FuncArrIdx = new FuncSymbolNative(new Origin(), "$ArrIdx", item_type, ArrIdx);
     }
 
     {
       //hidden system method not available directly
-      FuncArrIdxW = new FuncSymbolNative(new CallerInfo(), "$ArrIdxW", Types.Void, ArrIdxW);
+      FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, ArrIdxW);
     }
 
     Setup();
   }
 
-  public ArrayTypeSymbol(Proxy<IType> item_type) 
-    : this("[]" + item_type.path, item_type)
+  public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
+    : this(origin, "[]" + item_type.path, item_type)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -780,13 +723,13 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 {
   public const uint CLASS_ID = 10; 
 
-  public GenericArrayTypeSymbol(Proxy<IType> item_type) 
-    : base(item_type)
+  public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
+    : base(origin, item_type)
   {}
 
   //marshall factory version
   public GenericArrayTypeSymbol()
-    : this(new Proxy<IType>())
+    : this(null, new Proxy<IType>())
   {}
 
   static IList<Val> AsList(Val arr)
@@ -925,14 +868,14 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(string name, Proxy<IType> item_type, CreatorCb creator) 
-    : base(name, item_type)
+  public ArrayTypeSymbolT(Origin origin, string name, Proxy<IType> item_type, CreatorCb creator) 
+    : base(origin, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(Proxy<IType> item_type, CreatorCb creator) 
-    : base("[]" + item_type.path, item_type)
+  public ArrayTypeSymbolT(Origin origin, Proxy<IType> item_type, CreatorCb creator) 
+    : base(origin, "[]" + item_type.path, item_type)
   {}
 
   public override void CreateArr(VM.Frame frm, ref Val v, IType type)
@@ -1032,10 +975,10 @@ public abstract class MapTypeSymbol : ClassSymbol
   public Proxy<IType> key_type;
   public Proxy<IType> val_type;
 
-  public ClassSymbol enumerator_type = new ClassSymbolNative("Enumerator");
+  public ClassSymbol enumerator_type = new ClassSymbolNative(new Origin(), "Enumerator");
 
-  public MapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base("[" + key_type.path + "]" + val_type.path)
+  public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+    : base(origin, "[" + key_type.path + "]" + val_type.path)
   {
     this.key_type = key_type;
     this.val_type = val_type;
@@ -1044,7 +987,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     //NOTE: must be first member of the class
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, Add,
         new FuncArgSymbol("key", key_type),
         new FuncArgSymbol("val", val_type)
       );
@@ -1052,31 +995,31 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Remove", Types.Void, Remove,
+      var fn = new FuncSymbolNative(new Origin(), "Remove", Types.Void, Remove,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, Clear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol("Count", Types.Int, GetCount, null);
+      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, GetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Contains", Types.Bool, Contains,
+      var fn = new FuncSymbolNative(new Origin(), "Contains", Types.Bool, Contains,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative(new Origin(), "TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -1084,27 +1027,27 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var vs = new FieldSymbol("$Enumerator", new Proxy<IType>(enumerator_type), GetEnumerator, null);
+      var vs = new FieldSymbol(new Origin(), "$Enumerator", new Proxy<IType>(enumerator_type), GetEnumerator, null);
       this.Define(vs);
     }
 
     {
       //hidden system method not available directly
-      FuncMapIdx = new FuncSymbolNative(new CallerInfo(), "$MapIdx", val_type, MapIdx);
+      FuncMapIdx = new FuncSymbolNative(new Origin(), "$MapIdx", val_type, MapIdx);
     }
 
     {
       //hidden system method not available directly
-      FuncMapIdxW = new FuncSymbolNative(new CallerInfo(), "$MapIdxW", Types.Void, MapIdxW);
+      FuncMapIdxW = new FuncSymbolNative(new Origin(), "$MapIdxW", Types.Void, MapIdxW);
     }
 
     {
-      var vs = new FieldSymbol("Next", Types.Bool, EnumeratorNext, null);
+      var vs = new FieldSymbol(new Origin(), "Next", Types.Bool, EnumeratorNext, null);
       enumerator_type.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
+      var fn = new FuncSymbolNative(new Origin(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
       );
       enumerator_type.Define(fn);
     }
@@ -1132,13 +1075,13 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 {
   public const uint CLASS_ID = 21; 
 
-  public GenericMapTypeSymbol(Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base(key_type, val_type)
+  public GenericMapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+    : base(origin, key_type, val_type)
   {}
   
   //marshall factory version
   public GenericMapTypeSymbol()
-    : this(new Proxy<IType>(), new Proxy<IType>())
+    : this(null, new Proxy<IType>(), new Proxy<IType>())
   {}
 
   static ValMap AsMap(Val arr)
@@ -1339,24 +1282,21 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     }
   }
 
-#if BHL_FRONT
-  public VariableSymbol(AnnotatedParseTree parsed, string name, Proxy<IType> type) 
-    : this(name, type) 
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public VariableSymbol(string name, Proxy<IType> type) 
-    : base(name) 
+  public VariableSymbol(Origin origin, string name, Proxy<IType> type) 
+    : base(origin, name) 
   {
     this.type = type;
   }
 
   //marshall factory version
   public VariableSymbol()
-    : base("")
+    : base(null, "")
   {}
+
+  public IType GuessType() 
+  {
+    return origin?.parsed == null ? type.Get() : origin.parsed.eval_type;  
+  }
   
   public IType GetIType()
   {
@@ -1382,23 +1322,21 @@ public class FuncArgSymbol : VariableSymbol
 
   public bool is_ref;
 
-#if BHL_FRONT
-  public FuncArgSymbol(AnnotatedParseTree parsed, string name, Proxy<IType> type, bool is_ref = false)
-    : this(name, type, is_ref)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public FuncArgSymbol(string name, Proxy<IType> type, bool is_ref = false)
-    : base(name, type)
+  public FuncArgSymbol(Origin origin, string name, Proxy<IType> type, bool is_ref = false)
+    : base(origin, name, type)
   {
     this.is_ref = is_ref;
   }
 
+  //convenience version where we don't care about exact origin (e.g native
+  //func bindings)
+  public FuncArgSymbol(string name, Proxy<IType> type, bool is_ref = false)
+    : this(new Origin(), name, type, is_ref)
+  {}
+
   //marshall factory version
   public FuncArgSymbol()
-    : this("", new Proxy<IType>())
+    : this(null, "", new Proxy<IType>())
   {}
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1441,13 +1379,13 @@ public class FieldSymbol : VariableSymbol
     }
   }
 
-  public FieldSymbol(string name, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
-    : this(name, 0, type, getter, setter, getref)
+  public FieldSymbol(Origin origin, string name, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+    : this(origin, name, 0, type, getter, setter, getref)
   {
   }
 
-  public FieldSymbol(string name, FieldAttrib attribs, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
-    : base(name, type)
+  public FieldSymbol(Origin origin, string name, FieldAttrib attribs, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+    : base(origin, name, type)
   {
     this.attribs = attribs;
 
@@ -1468,16 +1406,8 @@ public class FieldSymbolScript : FieldSymbol
 {
   new public const uint CLASS_ID = 9;
 
-#if BHL_FRONT
-  public FieldSymbolScript(AnnotatedParseTree parsed, string name, Proxy<IType> type) 
-    : this(name, type)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public FieldSymbolScript(string name, Proxy<IType> type) 
-    : base(name, type, null, null, null)
+  public FieldSymbolScript(Origin origin, string name, Proxy<IType> type) 
+    : base(origin, name, type, null, null, null)
   {
     this.getter = Getter;
     this.setter = Setter;
@@ -1485,7 +1415,7 @@ public class FieldSymbolScript : FieldSymbol
   }
   //marshall factory version
   public FieldSymbolScript()
-    : this("", new Proxy<IType>())
+    : this(null, "", new Proxy<IType>())
   {}
 
   void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -1577,23 +1507,12 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
   }
 
-#if BHL_FRONT
   public FuncSymbol(
-    AnnotatedParseTree parsed, 
+    Origin origin,
     string name, 
     FuncSignature sig
   ) 
-    : this(name, sig)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public FuncSymbol(
-    string name, 
-    FuncSignature sig
-  ) 
-    : base(name)
+    : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
     this.signature = sig;
@@ -1737,26 +1656,23 @@ public class FuncSymbolScript : FuncSymbol
   public int default_args_num;
   public int ip_addr;
 
-#if BHL_FRONT
   public FuncSymbolScript(
-    AnnotatedParseTree parsed, 
+    Origin origin,
     FuncSignature sig,
     string name,
     int default_args_num = 0,
     int ip_addr = -1
   ) 
-    : base(name, sig)
+    : base(origin, name, sig)
   {
     this.name = name;
     this.default_args_num = default_args_num;
     this.ip_addr = ip_addr;
-    this.parsed = parsed;
   }
-#endif
 
   //symbol factory version
   public FuncSymbolScript()
-    : base(null, new FuncSignature())
+    : base(null, null, new FuncSignature())
   {}
 
   public void ReserveThisArgument(ClassSymbolScript class_scope)
@@ -1799,21 +1715,19 @@ public class FuncSymbolVirtual : FuncSymbol
   public List<FuncSymbol> overrides = new List<FuncSymbol>();
   public List<Proxy<ClassSymbol>> owners = new List<Proxy<ClassSymbol>>(); 
 
-  public FuncSymbolVirtual(string name, FuncSignature signature, int default_args_num = 0)
-    : base(name, signature)
+  public FuncSymbolVirtual(Origin origin, string name, FuncSignature signature, int default_args_num = 0)
+    : base(origin, name, signature)
   {
     this.default_args_num = default_args_num;
   }
 
   public FuncSymbolVirtual(FuncSymbolScript proto) 
-    : this(proto.name, proto.signature, proto.default_args_num)
+    : this(proto.origin, proto.name, proto.signature, proto.default_args_num)
   {
     //NOTE: directly adding arguments avoiding Define
     for(int m=0;m<proto.members.Count;++m)
       members.Add(proto.members[m]);
-#if BHL_FRONT
-    this.parsed = proto.parsed;
-#endif
+    this.origin = proto.origin;
   }
 
   public override int GetDefaultArgsNum() { return default_args_num; }
@@ -1874,7 +1788,7 @@ public class LambdaSymbol : FuncSymbolScript
 
   public VariableSymbol AddUpValue(VariableSymbol src)
   {
-    var local = new VariableSymbol(src.parsed, src.name, src.type);
+    var local = new VariableSymbol(src.origin, src.name, src.type);
 
     //NOTE: we want to avoid possible recursion during resolve
     //      checks that's why we use a 'raw' version
@@ -1886,7 +1800,7 @@ public class LambdaSymbol : FuncSymbolScript
       src.scope_idx,
       //TODO: should be the line of its usage
       //in case of 'this' there's no associated parse tree
-      src.parsed != null ? src.parsed.range.start.line : 0
+      src.origin.source_line
     ); 
     upvals.Add(up);
 
@@ -1952,18 +1866,59 @@ public class LambdaSymbol : FuncSymbolScript
 }
 #endif
 
-public class CallerInfo
+public class Origin
 {
-  public string file_path;
-  public int line;
+#if BHL_FRONT
+  public AnnotatedParseTree parsed;
+#endif
+  public string native_file_path;
+  public int native_line;
 
-  public CallerInfo(
+  public string source_file { 
+    get {
+#if BHL_FRONT
+      if(parsed != null)
+        return parsed.file;
+#endif
+      return native_file_path;
+    }
+  }
+
+  public int source_line {
+    get {
+      return source_range.start.line; 
+    }
+  }
+
+  public SourceRange source_range {
+    get {
+#if BHL_FRONT
+      if(parsed != null)
+        return parsed.range;
+#endif
+      return new SourceRange(new SourcePos(native_line, 1));
+    }
+  }
+
+#if BHL_FRONT
+  public Origin(AnnotatedParseTree ptree)
+  {
+    this.parsed = ptree;
+  }
+
+  public static implicit operator Origin(AnnotatedParseTree ptree)
+  {
+    return new Origin(ptree);
+  }
+#endif
+
+  public Origin(
     [System.Runtime.CompilerServices.CallerFilePath] string file_path = "",
     [System.Runtime.CompilerServices.CallerLineNumber] int line = 0
   )
   {
-    this.file_path = file_path;
-    this.line = line;
+    this.native_file_path = file_path;
+    this.native_line = line;
   }
 }
 
@@ -1975,7 +1930,7 @@ public class FuncSymbolNative : FuncSymbol
   int default_args_num;
 
   public FuncSymbolNative(
-    CallerInfo cinfo,
+    Origin cinfo,
     string name, 
     Proxy<IType> ret_type, 
     Cb cb,
@@ -1985,7 +1940,7 @@ public class FuncSymbolNative : FuncSymbol
   {}
 
   public FuncSymbolNative(
-    CallerInfo cinfo,
+    Origin cinfo,
     string name, 
     Proxy<IType> ret_type, 
     int def_args_num,
@@ -1996,7 +1951,7 @@ public class FuncSymbolNative : FuncSymbol
   {}
 
   public FuncSymbolNative(
-    CallerInfo cinfo,
+    Origin origin,
     string name, 
     FuncAttrib attribs,
     Proxy<IType> ret_type, 
@@ -2004,7 +1959,7 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : base(name, new FuncSignature(attribs.HasFlag(FuncAttrib.Coro), ret_type))
+    : base(origin, name, new FuncSignature(attribs.HasFlag(FuncAttrib.Coro), ret_type))
   {
     this.attribs = attribs;
 
@@ -2016,10 +1971,6 @@ public class FuncSymbolNative : FuncSymbol
       base.Define(arg);
       signature.AddArg(arg.type);
     }
-
-#if BHL_FRONT
-    this.cinfo = cinfo;
-#endif
   }
 
   public override int GetDefaultArgsNum() { return default_args_num; }
@@ -2046,35 +1997,39 @@ public class ClassSymbolNative : ClassSymbol
   IList<Proxy<IType>> proxy_implements;
 
   public ClassSymbolNative(
+    Origin origin,
     string name, 
     VM.ClassCreator creator = null
   )
-    : this(name, new Proxy<IType>(), null, creator)
+    : this(origin, name, new Proxy<IType>(), null, creator)
   {}
 
   public ClassSymbolNative(
+    Origin origin,
     string name, 
     IList<Proxy<IType>> proxy_implements,
     VM.ClassCreator creator = null
   )
-    : this(name, new Proxy<IType>(), proxy_implements, creator)
+    : this(origin, name, new Proxy<IType>(), proxy_implements, creator)
   {}
 
   public ClassSymbolNative(
+    Origin origin,
     string name, 
     Proxy<IType> proxy_super_class,
     VM.ClassCreator creator = null
   )
-    : this(name, proxy_super_class, null, creator)
+    : this(origin, name, proxy_super_class, null, creator)
   {}
 
   public ClassSymbolNative(
+    Origin origin,
     string name, 
     Proxy<IType> proxy_super_class,
     IList<Proxy<IType>> proxy_implements,
     VM.ClassCreator creator = null
   )
-    : base(name, creator)
+    : base(origin, name, creator)
   {
     this.proxy_super_class = proxy_super_class;
     this.proxy_implements = proxy_implements;
@@ -2123,26 +2078,15 @@ public class ClassSymbolScript : ClassSymbol
 {
   public const uint CLASS_ID = 11;
 
-  public ClassSymbolScript(string name)
-    : base(name)
+  public ClassSymbolScript(Origin origin, string name)
+    : base(origin, name)
   {
     this.creator = ClassCreator;
   }
 
-#if BHL_FRONT
-  public ClassSymbolScript(
-    AnnotatedParseTree parsed, 
-    string name
-  )
-    : this(name)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
   //marshall factory version
   public ClassSymbolScript() 
-    : this(null)
+    : this(null, null)
   {}
 
   void ClassCreator(VM.Frame frm, ref Val data, IType type)
@@ -2193,16 +2137,8 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
 {
   public SymbolsStorage members;
 
-#if BHL_FRONT
-  public EnumSymbol(AnnotatedParseTree parsed, string name)
-    : this(name)
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public EnumSymbol(string name)
-     : base(name)
+  public EnumSymbol(Origin origin, string name)
+     : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
   }
@@ -2241,24 +2177,17 @@ public class EnumSymbolScript : EnumSymbol
 {
   public const uint CLASS_ID = 12;
 
-#if BHL_FRONT
-  public EnumSymbolScript(AnnotatedParseTree parsed, string name)
-    : base(parsed, name)
-  {}
-#endif
-
-  public EnumSymbolScript(string name)
-    : base(name)
+  public EnumSymbolScript(Origin origin, string name)
+    : base(origin, name)
   {}
 
   //marshall factory version
   public EnumSymbolScript()
-    : base(null)
+    : base(null, null)
   {}
 
-#if BHL_FRONT
   //0 - OK, 1 - duplicate key, 2 - duplicate value
-  public int TryAddItem(AnnotatedParseTree parsed, string name, int val)
+  public int TryAddItem(Origin origin, string name, int val)
   {
     for(int i=0;i<members.Count;++i)
     {
@@ -2269,13 +2198,12 @@ public class EnumSymbolScript : EnumSymbol
         return 1;
     }
 
-    var item = new EnumItemSymbol(parsed, name, val);
+    var item = new EnumItemSymbol(origin, name, val);
     //TODO: should be set by SymbolsDictionary
     item.scope = this;
     members.Add(item);
     return 0;
   }
-#endif
 
   public override uint ClassId()
   {
@@ -2308,23 +2236,15 @@ public class EnumItemSymbol : Symbol, IType
   }
   public int val;
 
-#if BHL_FRONT
-  public EnumItemSymbol(AnnotatedParseTree parsed, string name, int val = 0) 
-    : this(name, val) 
-  {
-    this.parsed = parsed;
-  }
-#endif
-
-  public EnumItemSymbol(string name, int val = 0) 
-    : base(name) 
+  public EnumItemSymbol(Origin origin, string name, int val = 0) 
+    : base(origin, name) 
   {
     this.val = val;
   }
 
   //marshall factory version
   public EnumItemSymbol() 
-    : base(null)
+    : base(null, null)
   {}
 
   public override uint ClassId()
