@@ -859,7 +859,7 @@ public class TestNamespace : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var _ts = new Types();
       {
-        var fn = new FuncSymbolNative("wow", _ts.T("void"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "wow", _ts.T("void"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               return null;
             }
@@ -898,7 +898,7 @@ public class TestNamespace : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("wow", ts.T("int"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "wow", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
@@ -907,7 +907,7 @@ public class TestNamespace : BHL_TestBase
         ts.ns.Nest("foo").Define(fn);
       }
       {
-        var fn = new FuncSymbolNative("wow", ts.T("int"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "wow", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               stack.Push(Val.NewInt(frm.vm, 10)); 
               return null;

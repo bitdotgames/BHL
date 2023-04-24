@@ -345,7 +345,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_with_def", ts.T("float"), 1,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
@@ -390,7 +390,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_with_def", ts.T("float"), 1,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
@@ -430,7 +430,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 1,
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_with_def", ts.T("float"), 1,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var a = args_info.IsDefaultArgUsed(0) ? 14 : stack.PopRelease().num;
@@ -468,7 +468,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("func_with_def", ts.T("float"), 2,
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_with_def", ts.T("float"), 2,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var b = args_info.IsDefaultArgUsed(1) ? 2 : stack.PopRelease().num;
@@ -540,7 +540,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("foo", ts.T("float"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "foo", ts.T("float"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               status = BHS.FAILURE; 
               return null;
@@ -1161,7 +1161,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("func_mult", ts.T("float", "string"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_mult", ts.T("float", "string"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo arg_info, ref BHS status)
             {
               stack.Push(Val.NewStr(frm.vm, "foo"));
@@ -1215,7 +1215,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("func_mult", ts.T("float","string","int","float"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_mult", ts.T("float","string","int","float"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo arg_info, ref BHS status)
             {
               stack.Push(Val.NewFlt(frm.vm, 42.5));
@@ -3344,7 +3344,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       
-      var fn = new FuncSymbolNative("answer42", Types.Int,
+      var fn = new FuncSymbolNative(new CallerInfo(), "answer42", Types.Int,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             stack.Push(Val.NewNum(frm.vm, 42));
             return null;
@@ -3373,7 +3373,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       
-      var fn = new FuncSymbolNative("answer", Types.Int,
+      var fn = new FuncSymbolNative(new CallerInfo(), "answer", Types.Int,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             
             var b = stack.PopRelease().num;
@@ -7746,7 +7746,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("foo", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "foo", Types.Void,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS _)
             {
               log.Append("FOO");
@@ -7876,7 +7876,7 @@ public class TestVM : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
-      var fn = new FuncSymbolNative("native", Types.Void,
+      var fn = new FuncSymbolNative(new CallerInfo(), "native", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             log.Append("HERE");
             return null;
@@ -7928,7 +7928,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("yield_and_trace", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "yield_and_trace", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
             var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
@@ -8888,7 +8888,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("func_with_ref", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "func_with_ref", Types.Void,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var b = stack.Pop();
@@ -11318,7 +11318,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("foo", Types.Int,
+        var fn = new FuncSymbolNative(new CallerInfo(), "foo", Types.Int,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
               stack.PopRelease();
               stack.Push(Val.NewNum(frm.vm, 42));
@@ -11330,7 +11330,7 @@ public class TestVM : BHL_TestBase
       }
 
       {
-        var fn = new FuncSymbolNative("bar_fail", Types.Int,
+        var fn = new FuncSymbolNative(new CallerInfo(), "bar_fail", Types.Int,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
               stack.PopRelease();
               status = BHS.FAILURE;
@@ -11443,7 +11443,7 @@ public class TestVM : BHL_TestBase
       BindFail(ts);
 
       {
-        var fn = new FuncSymbolNative("hey", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "hey", Types.Void,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             { return null; },
             new FuncArgSymbol("s", ts.T("string")),
@@ -11655,7 +11655,7 @@ public class TestVM : BHL_TestBase
       BindFail(ts);
 
       {
-        var fn = new FuncSymbolNative("foo", ts.T("Foo"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "foo", ts.T("Foo"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
             var fn_ptr = stack.Pop();
             frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm, stack);
@@ -12287,7 +12287,7 @@ public class TestVM : BHL_TestBase
         ts.ns.Define(cl);
 
         {
-          var m = new FuncSymbolNative("self", ts.T("Bar"),
+          var m = new FuncSymbolNative(new CallerInfo(), "self", ts.T("Bar"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
               var obj = stack.PopRelease().obj;
               stack.Push(Val.NewObj(frm.vm, obj, ts.T("Bar").Get()));
@@ -12298,7 +12298,7 @@ public class TestVM : BHL_TestBase
         }
 
         {
-          var m = new FuncSymbolNative("ret_int", FuncAttrib.Coro, Types.Int, 0,
+          var m = new FuncSymbolNative(new CallerInfo(), "ret_int", FuncAttrib.Coro, Types.Int, 0,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               return CoroutinePool.New<Bar_ret_int>(frm.vm);
@@ -17005,7 +17005,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       
       var cl = BindColor(ts, call_setup: false);
-      var op = new FuncSymbolNative("+", FuncAttrib.Static, ts.T("Color"), 0,
+      var op = new FuncSymbolNative(new CallerInfo(), "+", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = (Color)stack.PopRelease().obj;
@@ -17052,7 +17052,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       
       var cl = BindColor(ts, call_setup: false);
-      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
+      var op = new FuncSymbolNative(new CallerInfo(), "*", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)stack.PopRelease().num;
@@ -17101,7 +17101,7 @@ public class TestVM : BHL_TestBase
       
       var cl = BindColor(ts, call_setup: false);
       {
-        var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0,
+        var op = new FuncSymbolNative(new CallerInfo(), "*", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)stack.PopRelease().num;
@@ -17123,7 +17123,7 @@ public class TestVM : BHL_TestBase
       }
       
       {
-        var op = new FuncSymbolNative("+", FuncAttrib.Static, ts.T("Color"), 0,
+        var op = new FuncSymbolNative(new CallerInfo(), "+", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = (Color)stack.PopRelease().obj;
@@ -17179,7 +17179,7 @@ public class TestVM : BHL_TestBase
       BindTrace(ts, log);
       
       var cl = BindColor(ts, call_setup: false);
-      var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
+      var op = new FuncSymbolNative(new CallerInfo(), "==", FuncAttrib.Static, ts.T("bool"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = (Color)stack.PopRelease().obj;
@@ -17225,7 +17225,7 @@ public class TestVM : BHL_TestBase
       BindTrace(ts, log);
       
       var cl = BindColor(ts, call_setup: false);
-      var op = new FuncSymbolNative("==", FuncAttrib.Static, ts.T("bool"), 0,
+      var op = new FuncSymbolNative(new CallerInfo(), "==", FuncAttrib.Static, ts.T("bool"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var ov = stack.PopRelease().obj;
@@ -17266,7 +17266,7 @@ public class TestVM : BHL_TestBase
     {
       var ts = new Types();
       var cl = BindColor(ts);
-      var op = new FuncSymbolNative("*", ts.T("Color"), null,
+      var op = new FuncSymbolNative(new CallerInfo(), "*", ts.T("Color"), null,
         new FuncArgSymbol("k", ts.T("float"))
       );
 
@@ -17281,7 +17281,7 @@ public class TestVM : BHL_TestBase
     {
       var ts = new Types();
       var cl = BindColor(ts);
-      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0, null,
+      var op = new FuncSymbolNative(new CallerInfo(), "*", FuncAttrib.Static, ts.T("Color"), 0, null,
         new FuncArgSymbol("k", ts.T("float"))
       );
 
@@ -17296,7 +17296,7 @@ public class TestVM : BHL_TestBase
     {
       var ts = new Types();
       var cl = BindColor(ts);
-      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("void"), 0, null,
+      var op = new FuncSymbolNative(new CallerInfo(), "*", FuncAttrib.Static, ts.T("void"), 0, null,
         new FuncArgSymbol("c", ts.T("Color")),
         new FuncArgSymbol("k", ts.T("float"))
       );
@@ -17325,7 +17325,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       var cl = BindColor(ts);
-      var op = new FuncSymbolNative("*", FuncAttrib.Static, ts.T("Color"), 0, null,
+      var op = new FuncSymbolNative(new CallerInfo(), "*", FuncAttrib.Static, ts.T("Color"), 0, null,
         new FuncArgSymbol("c", ts.T("Color")),
         new FuncArgSymbol("k", ts.T("float"))
       );
@@ -17771,7 +17771,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       BindTrace(ts, log);
 
-      var fn = new FuncSymbolNative("STOP", Types.Void,
+      var fn = new FuncSymbolNative(new CallerInfo(), "STOP", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             int fid = (int)stack.PopRelease().num;
             frm.vm.Stop(fid);
@@ -17853,7 +17853,7 @@ public class TestVM : BHL_TestBase
       var ts = new Types();
       BindTrace(ts, log);
 
-      var fn = new FuncSymbolNative("YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
+      var fn = new FuncSymbolNative(new CallerInfo(), "YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             return CoroutinePool.New<YIELD_STOP>(frm.vm);
           }, 
@@ -18276,7 +18276,7 @@ public class TestVM : BHL_TestBase
       BindStartScriptInMgr(ts);
 
       {
-        var fn = new FuncSymbolNative("say_here", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "say_here", Types.Void,
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               log.Append("HERE;");
@@ -18492,7 +18492,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -18571,7 +18571,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -18699,7 +18699,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("throw", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "throw", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             //emulating null reference
             frm = null;
@@ -18794,7 +18794,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -18878,7 +18878,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -18957,7 +18957,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -19042,7 +19042,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -19131,7 +19131,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -19225,7 +19225,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       {
-        var fn = new FuncSymbolNative("record_callstack", Types.Void,
+        var fn = new FuncSymbolNative(new CallerInfo(), "record_callstack", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             frm.fb.GetStackTrace(trace); 
             return null;
@@ -19893,7 +19893,7 @@ public class TestVM : BHL_TestBase
       BindColor(ts);
 
       {
-        var fn = new FuncSymbolNative("get_colors", ts.TArr("Color"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "get_colors", ts.TArr("Color"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             {
@@ -20490,7 +20490,7 @@ public class TestVM : BHL_TestBase
 
   FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("WaitTicks", FuncAttrib.Coro, Types.Void, 0,
+    var fn = new FuncSymbolNative(new CallerInfo(), "WaitTicks", FuncAttrib.Coro, Types.Void, 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
           return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
         }, 
@@ -20553,7 +20553,7 @@ public class TestVM : BHL_TestBase
   void BindStartScriptInMgr(Types ts)
   {
     {
-      var fn = new FuncSymbolNative("StartScriptInMgr", Types.Void,
+      var fn = new FuncSymbolNative(new CallerInfo(), "StartScriptInMgr", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
             int spawns = (int)stack.PopRelease().num;
             var ptr = stack.Pop();

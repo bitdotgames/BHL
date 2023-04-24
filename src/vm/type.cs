@@ -567,7 +567,7 @@ public class Types : INamedResolver
 
     {
       //NOTE: it's a builtin non-directly available function
-      var fn = new FuncSymbolNative("$yield", this.T("void"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "$yield", this.T("void"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           return CoroutinePool.New<CoroutineYield>(frm.vm);
@@ -578,7 +578,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative("suspend", FuncAttrib.Coro, this.T("void"), 0, 
+      var fn = new FuncSymbolNative(new CallerInfo(), "suspend", FuncAttrib.Coro, this.T("void"), 0, 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           //TODO: this of static instance usage for this case
@@ -589,7 +589,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative("start", this.T("int"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "start", this.T("int"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = stack.Pop();
@@ -604,7 +604,7 @@ public class Types : INamedResolver
     }
 
     {
-      var fn = new FuncSymbolNative("stop", this.T("void"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "stop", this.T("void"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var fid = (int)stack.PopRelease().num;

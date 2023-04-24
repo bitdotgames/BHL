@@ -331,11 +331,11 @@ public class TextDocumentGoToService : IService
 
       if(symb != null)
       {
-        var range = (Range)symb.parsed.range;
+        var range = (Range)symb.source_range;
         range.DecrementLine();
         return RpcResult.Success(new Location
         {
-          uri = new proto.Uri(symb.parsed.file),
+          uri = new proto.Uri(symb.source_file),
           range = range
         });
       }

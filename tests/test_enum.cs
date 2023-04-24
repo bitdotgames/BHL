@@ -120,7 +120,7 @@ public class TestEnum : BHL_TestBase
       BindEnum(ts);
 
       {
-        var fn = new FuncSymbolNative("StateIs", ts.T("bool"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "StateIs", ts.T("bool"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             var n = stack.PopRelease().num;
             stack.Push(Val.NewBool(frm.vm, n == 20));

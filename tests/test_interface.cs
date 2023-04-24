@@ -718,7 +718,7 @@ public class TestInterfaces : BHL_TestBase
       var ifs = new InterfaceSymbolNative(
           "IFoo", 
           null, 
-          new FuncSymbolNative("bar", ts.T("int"), null, 
+          new FuncSymbolNative(new CallerInfo(), "bar", ts.T("int"), null, 
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );
@@ -762,7 +762,7 @@ public class TestInterfaces : BHL_TestBase
       var ifs = new InterfaceSymbolNative(
           "IBar", 
           null, 
-          new FuncSymbolNative("bar", ts.T("int"), null, 
+          new FuncSymbolNative(new CallerInfo(), "bar", ts.T("int"), null, 
             new FuncArgSymbol("int", ts.T("int")) 
           )
       );
@@ -813,7 +813,7 @@ public class TestInterfaces : BHL_TestBase
       var ts = new Types();
 
       {
-        var fn = new FuncSymbolNative("create", ts.T("IFoo"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "create", ts.T("IFoo"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               var foo = new LocalFoo();
               var v = Val.NewObj(frm.vm, foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
@@ -844,7 +844,7 @@ public class TestInterfaces : BHL_TestBase
         ts.ns.Define(cl);
 
         {
-          var m = new FuncSymbolNative("X", ts.T("int"),
+          var m = new FuncSymbolNative(new CallerInfo(), "X", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var foo = (LocalFoo)stack.PopRelease().obj;
@@ -856,7 +856,7 @@ public class TestInterfaces : BHL_TestBase
         }
 
         {
-          var m = new FuncSymbolNative("Y", ts.T("int"),
+          var m = new FuncSymbolNative(new CallerInfo(), "Y", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
             {
               var foo = (LocalFoo)stack.PopRelease().obj;
@@ -980,7 +980,7 @@ public class TestInterfaces : BHL_TestBase
       var ifs = new InterfaceSymbolNative(
         "INativeFoo", 
         null, 
-        new FuncSymbolNative("foo", ts.T("int"),
+        new FuncSymbolNative(new CallerInfo(), "foo", ts.T("int"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var n = (int)stack.PopRelease().num;
@@ -1002,7 +1002,7 @@ public class TestInterfaces : BHL_TestBase
       );
       ts.ns.Define(cl);
 
-      var m = new FuncSymbolNative("foo", ts.T("int"),
+      var m = new FuncSymbolNative(new CallerInfo(), "foo", ts.T("int"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = (int)stack.PopRelease().num;

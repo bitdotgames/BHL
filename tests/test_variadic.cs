@@ -391,7 +391,7 @@ public class TestVariadic : BHL_TestBase
     var ts_fn = new Func<Types>(() => {
       var ts = new Types();
       
-      var fn = new FuncSymbolNative("sum", FuncAttrib.VariadicArgs, Types.Int, 0,
+      var fn = new FuncSymbolNative(new CallerInfo(), "sum", FuncAttrib.VariadicArgs, Types.Int, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             var ns = stack.Pop();
             var vs = (ValList)ns._obj;

@@ -11,7 +11,7 @@ public static class std
     var std = m.ns.Nest("std");
 
     {
-      var fn = new FuncSymbolNative("GetType", ts.T(Types.ClassType),
+      var fn = new FuncSymbolNative(new CallerInfo(), "GetType", ts.T(Types.ClassType),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = stack.Pop();
@@ -36,7 +36,7 @@ public static class std
       var io = m.ns.Nest("std").Nest("io");
 
       {
-        var fn = new FuncSymbolNative("Write", ts.T("void"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "Write", ts.T("void"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
             var s = stack.PopRelease().str;
@@ -49,7 +49,7 @@ public static class std
       }
 
       {
-        var fn = new FuncSymbolNative("WriteLine", ts.T("void"),
+        var fn = new FuncSymbolNative(new CallerInfo(), "WriteLine", ts.T("void"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
             var s = stack.PopRelease().str;

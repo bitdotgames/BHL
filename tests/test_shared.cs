@@ -183,7 +183,7 @@ public class BHL_TestBase
 
   public void BindMin(Types ts)
   {
-    var fn = new FuncSymbolNative("min", ts.T("float"),
+    var fn = new FuncSymbolNative(new CallerInfo(), "min", ts.T("float"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
           var b = (float)stack.PopRelease().num;
           var a = (float)stack.PopRelease().num;
@@ -198,7 +198,7 @@ public class BHL_TestBase
 
   public void BindFail(Types ts)
   {
-    var fn = new FuncSymbolNative("fail", ts.T("void"),
+    var fn = new FuncSymbolNative(new CallerInfo(), "fail", ts.T("void"),
       delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
       { 
         status = BHS.FAILURE;
@@ -272,7 +272,7 @@ public class BHL_TestBase
     ));
 
     {
-      var m = new FuncSymbolNative("Add", ts.T("Color"),
+      var m = new FuncSymbolNative(new CallerInfo(), "Add", ts.T("Color"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)stack.PopRelease().num;
@@ -294,7 +294,7 @@ public class BHL_TestBase
     }
     
     {
-      var m = new FuncSymbolNative("mult_summ", ts.T("float"),
+      var m = new FuncSymbolNative(new CallerInfo(), "mult_summ", ts.T("float"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = stack.PopRelease().num;
@@ -309,7 +309,7 @@ public class BHL_TestBase
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor", ts.T("Color"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "mkcolor", ts.T("Color"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             var r = stack.PopRelease().num;
             var c = new Color();
@@ -325,7 +325,7 @@ public class BHL_TestBase
     }
     
     {
-      var fn = new FuncSymbolNative("mkcolor_null", ts.T("Color"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "mkcolor_null", ts.T("Color"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             stack.Push(frm.vm.Null);
             return null;
@@ -371,7 +371,7 @@ public class BHL_TestBase
       ));
 
       {
-        var m = new FuncSymbolNative("mult_summ_alpha", ts.T("float"),
+        var m = new FuncSymbolNative(new CallerInfo(), "mult_summ_alpha", ts.T("float"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var c = (ColorAlpha)stack.PopRelease().obj;
@@ -455,7 +455,7 @@ public class BHL_TestBase
     }
 
     {
-      var fn = new FuncSymbolNative("PassthruFoo", ts.T("Foo"),
+      var fn = new FuncSymbolNative(new CallerInfo(), "PassthruFoo", ts.T("Foo"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             stack.Push(stack.Pop());
             return null;
@@ -530,7 +530,7 @@ public class BHL_TestBase
 
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
-    var fn = new FuncSymbolNative("trace", Types.Void,
+    var fn = new FuncSymbolNative(new CallerInfo(), "trace", Types.Void,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
           string str = stack.PopRelease().str;
           //for extra debug
@@ -548,7 +548,7 @@ public class BHL_TestBase
   public void BindLog(Types ts)
   {
     {
-      var fn = new FuncSymbolNative("log", Types.Void,
+      var fn = new FuncSymbolNative(new CallerInfo(), "log", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             string str = stack.PopRelease().str;
             Console.WriteLine(str); 
@@ -835,6 +835,12 @@ public class BHL_TestBase
   {
     if(!(a == b))
       throw new Exception("Assertion failed: " + a + " != " + b);
+  }
+
+  public static void AssertContains(string haystack, string needle)
+  {
+    if(haystack.IndexOf(needle) == -1)
+      throw new Exception("String:\n" + haystack + "\n== doesn't contain ==\n" + needle);
   }
 
   public static void AssertEqual(string a, string b)

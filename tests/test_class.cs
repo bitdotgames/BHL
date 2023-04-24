@@ -3462,7 +3462,7 @@ public class TestClasses : BHL_TestBase
       ));
 
       {
-        var m = new FuncSymbolNative("getA", ts.T("int"),
+        var m = new FuncSymbolNative(new CallerInfo(), "getA", ts.T("int"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var f = (VirtFoo)stack.PopRelease().obj;
@@ -3475,7 +3475,7 @@ public class TestClasses : BHL_TestBase
       }
 
       {
-        var m = new FuncSymbolNative("getB", ts.T("int"),
+        var m = new FuncSymbolNative(new CallerInfo(), "getB", ts.T("int"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var f = (VirtFoo)stack.PopRelease().obj;
@@ -3907,7 +3907,7 @@ public class TestClasses : BHL_TestBase
       );
       ts.ns.Define(cl);
 
-      var m = new FuncSymbolNative("static_foo", FuncAttrib.Static, ts.T("int"), 0,
+      var m = new FuncSymbolNative(new CallerInfo(), "static_foo", FuncAttrib.Static, ts.T("int"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = (int)stack.PopRelease().num;

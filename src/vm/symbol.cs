@@ -13,27 +13,27 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
   // Location in parse tree, can be null if it's a native symbol
   public AnnotatedParseTree parsed;
   // Frame location of native symbol definition
-  public System.Diagnostics.StackFrame frame; 
+  public CallerInfo cinfo;
 
-  public string file { 
+  public string source_file { 
     get {
       if(parsed != null)
         return parsed.file;
-      else if(frame != null)
-        return frame.GetFileName();
+      else if(cinfo != null)
+        return cinfo.file_path;
       else
         return "";
     }
   }
 
-  public int line {
+  public SourceRange source_range {
     get {
       if(parsed != null)
-        return parsed.range.start.line;
-      else if(frame != null)
-        return frame.GetFileLineNumber();
+        return parsed.range;
+      else if(cinfo != null)
+        return new SourceRange(new SourcePos(cinfo.line, 1));
       else
-        return 0;
+        return default(SourceRange);
     }
   }
 #endif
@@ -482,7 +482,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
       if(this is ClassSymbolNative)
       {
         //let's create fake static get/set native functions
-        var static_get = new FuncSymbolNative(GetNativeStaticFieldGetFuncName(fld), fld.type,
+        var static_get = new FuncSymbolNative(
+        new CallerInfo(),
+        GetNativeStaticFieldGetFuncName(fld), fld.type,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var res = Val.New(frm.vm);
@@ -492,7 +494,9 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
         });
         this.GetNamespace().module.nfuncs.Index(static_get);
 
-        var static_set = new FuncSymbolNative(GetNativeStaticFieldSetFuncName(fld), fld.type,
+        var static_set = new FuncSymbolNative(
+        new CallerInfo(),
+        GetNativeStaticFieldSetFuncName(fld), fld.type,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           Val ctx = null;
@@ -715,21 +719,21 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     //NOTE: must be first member of the class
     {
-      var fn = new FuncSymbolNative("Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new CallerInfo(), "Add", Types.Void, Add,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("RemoveAt", Types.Void, RemoveAt,
+      var fn = new FuncSymbolNative(new CallerInfo(), "RemoveAt", Types.Void, RemoveAt,
         new FuncArgSymbol("idx", Types.Int)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new CallerInfo(), "Clear", Types.Void, Clear);
       this.Define(fn);
     }
 
@@ -739,7 +743,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative("IndexOf", Types.Int, IndexOf,
+      var fn = new FuncSymbolNative(new CallerInfo(), "IndexOf", Types.Int, IndexOf,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
@@ -747,12 +751,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      FuncArrIdx = new FuncSymbolNative("$ArrIdx", item_type, ArrIdx);
+      FuncArrIdx = new FuncSymbolNative(new CallerInfo(), "$ArrIdx", item_type, ArrIdx);
     }
 
     {
       //hidden system method not available directly
-      FuncArrIdxW = new FuncSymbolNative("$ArrIdxW", Types.Void, ArrIdxW);
+      FuncArrIdxW = new FuncSymbolNative(new CallerInfo(), "$ArrIdxW", Types.Void, ArrIdxW);
     }
 
     Setup();
@@ -1040,7 +1044,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     //NOTE: must be first member of the class
     {
-      var fn = new FuncSymbolNative("Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new CallerInfo(), "Add", Types.Void, Add,
         new FuncArgSymbol("key", key_type),
         new FuncArgSymbol("val", val_type)
       );
@@ -1048,14 +1052,14 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative("Remove", Types.Void, Remove,
+      var fn = new FuncSymbolNative(new CallerInfo(), "Remove", Types.Void, Remove,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new CallerInfo(), "Clear", Types.Void, Clear);
       this.Define(fn);
     }
 
@@ -1065,14 +1069,14 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative("Contains", Types.Bool, Contains,
+      var fn = new FuncSymbolNative(new CallerInfo(), "Contains", Types.Bool, Contains,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative("TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative(new CallerInfo(), "TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -1086,12 +1090,12 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      FuncMapIdx = new FuncSymbolNative("$MapIdx", val_type, MapIdx);
+      FuncMapIdx = new FuncSymbolNative(new CallerInfo(), "$MapIdx", val_type, MapIdx);
     }
 
     {
       //hidden system method not available directly
-      FuncMapIdxW = new FuncSymbolNative("$MapIdxW", Types.Void, MapIdxW);
+      FuncMapIdxW = new FuncSymbolNative(new CallerInfo(), "$MapIdxW", Types.Void, MapIdxW);
     }
 
     {
@@ -1100,7 +1104,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative("Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
+      var fn = new FuncSymbolNative(new CallerInfo(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
       );
       enumerator_type.Define(fn);
     }
@@ -1948,6 +1952,21 @@ public class LambdaSymbol : FuncSymbolScript
 }
 #endif
 
+public class CallerInfo
+{
+  public string file_path;
+  public int line;
+
+  public CallerInfo(
+    [System.Runtime.CompilerServices.CallerFilePath] string file_path = "",
+    [System.Runtime.CompilerServices.CallerLineNumber] int line = 0
+  )
+  {
+    this.file_path = file_path;
+    this.line = line;
+  }
+}
+
 public class FuncSymbolNative : FuncSymbol
 {
   public delegate Coroutine Cb(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status); 
@@ -1956,25 +1975,28 @@ public class FuncSymbolNative : FuncSymbol
   int default_args_num;
 
   public FuncSymbolNative(
+    CallerInfo cinfo,
     string name, 
     Proxy<IType> ret_type, 
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : this(name, ret_type, 0, cb, args)
+    : this(cinfo, name, ret_type, 0, cb, args)
   {}
 
   public FuncSymbolNative(
+    CallerInfo cinfo,
     string name, 
     Proxy<IType> ret_type, 
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : this(name, FuncAttrib.None, ret_type, def_args_num, cb, args)
+    : this(cinfo, name, FuncAttrib.None, ret_type, def_args_num, cb, args)
   {}
 
   public FuncSymbolNative(
+    CallerInfo cinfo,
     string name, 
     FuncAttrib attribs,
     Proxy<IType> ret_type, 
@@ -1994,17 +2016,9 @@ public class FuncSymbolNative : FuncSymbol
       base.Define(arg);
       signature.AddArg(arg.type);
     }
+
 #if BHL_FRONT
-    var st = new System.Diagnostics.StackTrace(true);
-    for(int i=0;i<st.FrameCount;++i)
-    {
-      var frm = st.GetFrame(i);
-      if(!frm.GetFileName().EndsWith("symbol.cs"))
-      {
-        this.frame = frm;
-        break;
-      }
-    }
+    this.cinfo = cinfo;
 #endif
   }
 
