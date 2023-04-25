@@ -10,7 +10,9 @@ namespace bhl.lsp {
 public class Workspace
 {
   Types ts;
+
   IncludePath inc_path;
+
   Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>(); 
 
   Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
@@ -22,8 +24,12 @@ public class Workspace
   public bool typeDefinitionLinkSupport;
   public bool implementationLinkSupport;
 
-  public Workspace()
-  {}
+  public Logger logger;
+
+  public Workspace(Logger logger)
+  {
+    this.logger = logger;
+  }
 
   public void Init(Types ts, IncludePath inc_path)
   {

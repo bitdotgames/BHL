@@ -20,14 +20,14 @@ public class LSP : ICmd
     
     p.Parse(args);
 
-    var workspace = new Workspace();
-
     ILogWriter log_writer = 
       string.IsNullOrEmpty(log_file_path) ? 
         (ILogWriter)new ConsoleLogger() : 
         (ILogWriter)new FileLogger(log_file_path);
 
     var logger = new Logger(1, log_writer);
+
+    var workspace = new Workspace(logger);
 
     Console.OutputEncoding = new UTF8Encoding();
 
@@ -37,10 +37,11 @@ public class LSP : ICmd
     var connection = new ConnectionStdIO(stdout, stdin);
     
     var rpc = new JsonRpc(logger);
-    rpc.AttachService(new LifecycleService(logger, workspace));
-    rpc.AttachService(new TextDocumentSynchronizationService(logger, workspace));
+    rpc.AttachService(new LifecycleService(workspace));
+    rpc.AttachService(new TextDocumentSynchronizationService(workspace));
     rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
     rpc.AttachService(new TextDocumentGoToService(workspace));
+    rpc.AttachService(new TextDocumentFindReferencesService(workspace));
     rpc.AttachService(new TextDocumentHoverService(workspace));
     rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
     

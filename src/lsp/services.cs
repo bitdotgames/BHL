@@ -4,14 +4,12 @@ namespace bhl.lsp.proto {
 
 public class LifecycleService : IService
 {
-  Logger logger;
   Workspace workspace;
 
   int? process_id;
   
-  public LifecycleService(Logger logger, Workspace workspace)
+  public LifecycleService(Workspace workspace)
   {
-    this.logger = logger;
     this.workspace = workspace;
   }
 
@@ -36,7 +34,7 @@ public class LifecycleService : IService
     {
       proj = ProjectConf.ReadFromDir(args.rootPath);
     }                                                                         
-    logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
+    workspace.logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
 
     proj.LoadBindings().Register(ts);
     
@@ -149,7 +147,7 @@ public class LifecycleService : IService
   [RpcMethod("exit")]
   public RpcResult Exit()
   {
-    logger.Log(1, "Stopping BHL LSP server...");
+    workspace.logger.Log(1, "Stopping BHL LSP server...");
 
     if(process_id != null)
     {
@@ -163,12 +161,10 @@ public class LifecycleService : IService
 
 public class TextDocumentSynchronizationService : IService
 {
-  Logger logger;
   Workspace workspace;
 
-  public TextDocumentSynchronizationService(Logger logger, Workspace workspace)
+  public TextDocumentSynchronizationService(Workspace workspace)
   {
-    this.logger = logger;
     this.workspace = workspace;
   }
 
@@ -514,13 +510,26 @@ public class TextDocumentSemanticTokensService : IService
 //  [RpcMethod("workspace/executeCommand")]
 //  public RpcResult ExecuteCommand(ExecuteCommandParams args);
 //}
-//  
-//public class TextDocumentFindReferencesServiceProto : IService
-//{
-//  [RpcMethod("textDocument/references")]
-//  public RpcResult FindReferences(ReferenceParams args);
-//}
-//
+
+public class TextDocumentFindReferencesService : IService
+{
+  Workspace workspace;
+
+  public TextDocumentFindReferencesService(Workspace workspace)
+  {
+    this.workspace = workspace;
+  }
+
+  /**
+   * The result type Location[] | null
+   */
+  [RpcMethod("textDocument/references")]
+  public RpcResult FindReferences(ReferenceParams args)
+  {
+    return RpcResult.Success();
+  }
+}
+
 //public class TextDocumentServiceProto : IService
 //{
 //  [RpcMethod("textDocument/completion")]
