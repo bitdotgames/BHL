@@ -13,7 +13,7 @@ public class MyBindings : IUserBindings
   public void Register(Types types)
   {
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Trace", Types.Void,
+      var fn = new FuncSymbolNative(new Origin(), "Trace", Types.Void,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -29,7 +29,7 @@ public class MyBindings : IUserBindings
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Rand", Types.Float,
+      var fn = new FuncSymbolNative(new Origin(), "Rand", Types.Float,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
 #if !BHL_FRONT
@@ -44,7 +44,7 @@ public class MyBindings : IUserBindings
     }
 
     {
-      var fn = new FuncSymbolNative(new CallerInfo(), "Wait", FuncAttrib.Coro, Types.Void, 0,
+      var fn = new FuncSymbolNative(new Origin(), "Wait", FuncAttrib.Coro, Types.Void, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           { return CoroutinePool.New<WaitNode>(frm.vm); },
           new FuncArgSymbol("t", Types.Float)

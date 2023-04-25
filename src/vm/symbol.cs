@@ -1293,10 +1293,12 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     : base(null, "")
   {}
 
+#if BHL_FRONT
   public IType GuessType() 
   {
     return origin?.parsed == null ? type.Get() : origin.parsed.eval_type;  
   }
+#endif
   
   public IType GetIType()
   {

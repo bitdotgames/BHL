@@ -90,7 +90,7 @@ public class RunCmd : ICmd
     //TODO:
     //foreach(var arg in args)
     //  argv_lst.Add(Val.NewStr(vm, arg));
-    var argv = Val.NewObj(vm, argv_lst, new GenericArrayTypeSymbol(new Proxy<IType>()));
+    var argv = Val.NewObj(vm, argv_lst, Types.Array);
     if(vm.Start("main", argv) == null)
       throw new Exception("No 'main' function found");
 
