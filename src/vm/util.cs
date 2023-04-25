@@ -224,12 +224,12 @@ public class IncludePath
   string _FilePath2ModuleName(string full_path)
   {
     string norm_path = "";
-    for(int i=0;i<this.Count;++i)
+    for(int i=0;i<items.Count;++i)
     {
-      var inc_path = this[i];
+      var inc_path = items[i];
       if(full_path.IndexOf(inc_path) == 0)
       {
-        norm_path = full_path.Replace(inc_path, "");
+        norm_path = full_path.Substring(inc_path.Length);
         norm_path = norm_path.Replace('\\', '/');
         //stripping .bhl extension
         norm_path = norm_path.Substring(0, norm_path.Length-4);
@@ -240,7 +240,9 @@ public class IncludePath
     }
 
     if(norm_path.Length == 0)
+    {
       throw new Exception("File path '" + full_path + "' was not normalized");
+    }
     return norm_path;
   }
 
