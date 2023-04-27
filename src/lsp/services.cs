@@ -23,6 +23,7 @@ public class LifecycleService : IService
 
     if(args.workspaceFolders != null)
     {
+      //NOTE: only the last one will be used for now
       for(int i = 0; i < args.workspaceFolders.Length; i++)
         proj = ProjectConf.ReadFromDir(args.workspaceFolders[i].uri.path);
     }

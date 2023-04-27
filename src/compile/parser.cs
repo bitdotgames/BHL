@@ -110,7 +110,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   Namespace ns;
 
   ITokenStream tokens;
-  Dictionary<IParseTree, AnnotatedParseTree> annotated_nodes = new Dictionary<IParseTree, AnnotatedParseTree>();
+  public Dictionary<IParseTree, AnnotatedParseTree> annotated_nodes { get; private set; } = new Dictionary<IParseTree, AnnotatedParseTree>();
 
   class ParserPass
   {

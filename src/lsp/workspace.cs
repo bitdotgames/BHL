@@ -9,6 +9,8 @@ namespace bhl.lsp {
 
 public class Workspace
 {
+  public Logger logger;
+
   Types ts;
 
   IncludePath inc_path;
@@ -23,8 +25,6 @@ public class Workspace
   public bool definitionLinkSupport;
   public bool typeDefinitionLinkSupport;
   public bool implementationLinkSupport;
-
-  public Logger logger;
 
   public Workspace(Logger logger)
   {
@@ -151,6 +151,18 @@ public class Workspace
 
     document.Update(text, proc);
     return true;
+  }
+
+  public List<AnnotatedParseTree> FindReferences(Symbol symb)
+  {
+    var refs = new List<AnnotatedParseTree>(); 
+    foreach(var doc_kv in documents)
+    {
+      foreach(var node_kv in doc_kv.Value.proc.annotated_nodes)
+        if(node_kv.Value.lsp_symbol == symb)
+          refs.Add(node_kv.Value);
+    }
+    return refs;
   }
 }
 
