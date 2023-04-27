@@ -6840,23 +6840,45 @@ public class TestVM : BHL_TestBase
   [IsTested()]
   public void TestDefaultFuncOtherFunc()
   {
-    string bhl = @"
-    func int bar(int i) {
-      return i
-    }
+    SubTest(() => {
+      string bhl = @"
+      func int bar(int i) {
+        return i
+      }
 
-    func int foo(int a, func int(int) cb = bar) {
-      return a + cb(1)
-    }
+      func int foo(int a, func int(int) cb = bar) {
+        return a + cb(1)
+      }
 
-    func int test()
-    {
-      return foo(10)
-    }
-    ";
+      func int test()
+      {
+        return foo(10)
+      }
+      ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+      var vm = MakeVM(bhl);
+      AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    });
+
+    SubTest("order independent", () => {
+      string bhl = @"
+      func int foo(int a, func int(int) cb = bar) {
+        return a + cb(1)
+      }
+
+      func int bar(int i) {
+        return i
+      }
+
+      func int test()
+      {
+        return foo(10)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    });
   }
 
   [IsTested()]

@@ -604,7 +604,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       Pass_ParseClassMembersTypes(pass);
 
-      Pass_ParseFuncSignature(pass);
+      Pass_ParseFuncSignature_1(pass);
 
       PopScope();
     }
@@ -617,6 +617,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var pass = passes[p];
 
       PushScope(pass.scope);
+
+      Pass_ParseFuncSignature_2(pass);
 
       Pass_AddInterfaceExtensions(pass);
 
@@ -3268,7 +3270,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.ast.AddChild(pass.func_ast);
   }
 
-  void Pass_ParseFuncSignature(ParserPass pass)
+  void Pass_ParseFuncSignature_1(ParserPass pass)
   {
     if(pass.func_ctx == null)
       return;
@@ -3278,6 +3280,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       ParseType(pass.func_ctx.retType()), 
       pass.func_ctx.funcParams()
     );
+  }
+
+  void Pass_ParseFuncSignature_2(ParserPass pass)
+  {
+    if(pass.func_ctx == null)
+      return;
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
