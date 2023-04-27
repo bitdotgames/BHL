@@ -91,7 +91,7 @@ public class Workspace
       parsed, 
       ts, 
       errors, 
-      null/*TODO*/
+      err_handlers: null/*TODO*/
     );
 
     return proc;
@@ -116,16 +116,11 @@ public class Workspace
   public BHLDocument OpenDocument(proto.Uri uri, string text)
   {
     BHLDocument document;
-    //TODO: use Uri as a key
     if(!documents.TryGetValue(uri.path, out document))
     {
       document = new BHLDocument(uri);  
       documents.Add(uri.path, document);
     }
-    
-    //TODO: parse document
-    //document.Update(text);
-
     return document;
   }
   
@@ -138,7 +133,6 @@ public class Workspace
   {
     BHLDocument document;
     documents.TryGetValue(path, out document);
-
     return document;
   }
 
@@ -157,42 +151,6 @@ public class Workspace
 
     document.Update(text, proc);
     return true;
-  }
-
-  public string ResolveImportPath(string docpath, string import, string ext)
-  {
-    var resolved_path = string.Empty;
-
-    for(int i=0;i<inc_path.Count;++i)
-    {
-      string root = inc_path[i];
-
-      string path = string.Empty;
-      if(!Path.IsPathRooted(import))
-      {
-        var dir = Path.GetDirectoryName(docpath);
-        path = Path.GetFullPath(Path.Combine(dir, import) + ext);
-        if(File.Exists(path))
-        {
-          resolved_path = path;
-          break;
-        }
-      }
-      else
-      {
-        path = Path.GetFullPath(root + "/" + import + ext);
-        if(File.Exists(path))
-        {
-          resolved_path = path;
-          break;
-        }
-      }
-    }
-    
-    if(!string.IsNullOrEmpty(resolved_path))
-      resolved_path = Util.NormalizeFilePath(resolved_path);
-    
-    return resolved_path;
   }
 }
 
