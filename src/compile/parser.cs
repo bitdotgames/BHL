@@ -3003,7 +3003,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(vd_decl_ast == null)
         return null;
       PeekAST().AddChild(vd_decl_ast);
-      return null;
+      ret_val = null;
     }
 
     //NOTE: special handling of the following case:
@@ -3041,7 +3041,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         vars_num: 1, 
         assign_exp: ret_val.varDeclareAssign().assignExp()
       );
-      return null;
+      ret_val = null;
     }
 
     if(CountBlocks(BlockType.DEFER) > 0)
@@ -3059,7 +3059,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var ret_ast = new AST_Return(ctx.Start.Line);
     
-    if(ret_val != null)
+    if(ret_val?.expList() != null)
     {
       int explen = ret_val.expList().exp().Length;
 

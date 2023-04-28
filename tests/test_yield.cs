@@ -887,30 +887,4 @@ public class TestYield : BHL_TestBase
        )
     );
   }
-
-  //[IsTested()]
-  public void TestBugReturnIsIgnored()
-  {
-    string bhl = @"
-    coro func test()
-    {
-      yield()
-      return
-      float b = 3
-      trace(""NOPE"")
-    }
-    ";
-
-    var log = new StringBuilder();
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      BindTrace(ts, log);
-      return ts;
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test");
-    AssertEqual("", log.ToString());
-    CommonChecks(vm);
-  }
 }
