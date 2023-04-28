@@ -713,8 +713,7 @@ public class TestInterfaces : BHL_TestBase
       }
     }
     ";
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       var ifs = new InterfaceSymbolNative(
           new Origin(),
           "IFoo", 
@@ -724,7 +723,6 @@ public class TestInterfaces : BHL_TestBase
           )
       );
       ts.ns.Define(ifs);
-      return ts;
     });
 
     AssertError<Exception>(
@@ -758,8 +756,7 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => { 
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => { 
       var ifs = new InterfaceSymbolNative(
           new Origin(),
           "IBar", 
@@ -769,7 +766,6 @@ public class TestInterfaces : BHL_TestBase
           )
       );
       ts.ns.Define(ifs);
-      return ts;
     });
 
     AssertError<Exception>(
@@ -811,9 +807,7 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-
+    var ts_fn = new Action<Types>((ts) => {
       {
         var fn = new FuncSymbolNative(new Origin(), "create", ts.T("IFoo"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
@@ -872,8 +866,6 @@ public class TestInterfaces : BHL_TestBase
 
         cl.Setup();
       }
-
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -977,9 +969,8 @@ public class TestInterfaces : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var ifs = new InterfaceSymbolNative(
         new Origin(),
         "INativeFoo", 
@@ -1018,7 +1009,6 @@ public class TestInterfaces : BHL_TestBase
       );
       cl.Define(m);
       cl.Setup();
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

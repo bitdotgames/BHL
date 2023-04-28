@@ -363,10 +363,8 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindTrace(ts, log);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -388,8 +386,7 @@ public class TestVariadic : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       
       var fn = new FuncSymbolNative(new Origin(), "sum", FuncAttrib.VariadicArgs, Types.Int, 0,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
@@ -405,7 +402,6 @@ public class TestVariadic : BHL_TestBase
           new FuncArgSymbol("ns", ts.TArr("int"))
       );
       ts.ns.Define(fn);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

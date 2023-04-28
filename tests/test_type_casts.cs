@@ -351,10 +351,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindMin(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -774,10 +772,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -800,10 +796,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -829,10 +823,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -853,9 +845,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
 
       {
@@ -867,7 +857,6 @@ public class TestTypeCasts : BHL_TestBase
         );
         ts.ns.Define(cl);
       }
-      return ts;
     });
 
     AssertError<Exception>(
@@ -893,9 +882,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-      
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
 
       {
@@ -907,7 +894,6 @@ public class TestTypeCasts : BHL_TestBase
         );
         ts.ns.Define(cl);
       }
-      return ts;
     });
 
     AssertError<Exception>(
@@ -1196,10 +1182,8 @@ public class TestTypeCasts : BHL_TestBase
       ";
 
       var log = new StringBuilder();
-      var ts_fn = new Func<Types>(() => {
-        var ts = new Types();
+      var ts_fn = new Action<Types>((ts) => {
         BindTrace(ts, log);
-        return ts;
       });
 
       var vm = MakeVM(bhl, ts_fn);
@@ -1603,10 +1587,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -1626,10 +1608,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -1649,10 +1629,8 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

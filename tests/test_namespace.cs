@@ -856,25 +856,24 @@ public class TestNamespace : BHL_TestBase
     namespace bar {
     }
     ";
-    var ts_fn = new Func<Types>(() => {
-      var _ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       {
-        var fn = new FuncSymbolNative(new Origin(), "wow", _ts.T("void"),
+        var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("void"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
               return null;
             }
         );
-        _ts.ns.Nest("bar").Define(fn);
+        ts.ns.Nest("bar").Define(fn);
       }
-      return _ts;
     });
 
     var files = new List<string>();
     NewTestFile("test.bhl", test_bhl, ref files);
 
-    var ts = ts_fn();
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn));
-    var vm = new VM(ts, loader);
+    var _ts = new Types();
+    ts_fn(_ts);
+    var loader = new ModuleLoader(_ts, CompileFiles(files, ts_fn));
+    var vm = new VM(_ts, loader);
     vm.LoadModule("test");
     var cm = vm.FindModule("test");
     //NOTE: there should only one namespace 
@@ -895,8 +894,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
@@ -916,7 +914,6 @@ public class TestNamespace : BHL_TestBase
         //NOTE: let's mix namespace defined natively and the one in bhl code
         ts.ns.Nest("bar").Define(fn);
       }
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

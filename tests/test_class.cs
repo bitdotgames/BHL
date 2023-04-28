@@ -76,10 +76,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindFoo(ts);
-      return ts;
     });
 
     AssertError<Exception>(
@@ -159,10 +157,8 @@ public class TestClasses : BHL_TestBase
 
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
-    var ts_fn = new Func<Types>(() => {
-      var _ts = new Types();
-      fn = BindTrace(_ts, log);
-      return _ts;
+    var ts_fn = new Action<Types>((ts) => {
+      fn = BindTrace(ts, log);
     });
     var c = Compile(bhl, ts_fn);
 
@@ -272,10 +268,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -298,10 +292,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -325,10 +317,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColorAlpha(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -351,10 +341,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
-
       BindColor(ts);
 
       var cl = new ClassSymbolNative(new Origin(), "ColorNested", null,
@@ -380,7 +368,6 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -400,15 +387,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
 
       ts.ns.Define(cl);
 
       cl.Setup();
-      return ts;
     });
 
     AssertError<Exception>(
@@ -434,15 +419,13 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
 
       ts.ns.Define(cl);
 
       cl.Setup();
-      return ts;
     });
 
     AssertError<Exception>(
@@ -469,9 +452,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -489,7 +471,6 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-      return ts;
     });
 
     AssertError<Exception>(
@@ -517,9 +498,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -537,7 +517,6 @@ public class TestClasses : BHL_TestBase
         null //no setter
       ));
       cl.Setup();
-      return ts;
     });
 
     AssertError<Exception>(
@@ -570,10 +549,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -606,10 +583,8 @@ public class TestClasses : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindTrace(ts, log);
-      return ts;
     });
 
     var vm = MakeVM(new Dictionary<string, string>() {
@@ -951,10 +926,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindFail(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -2290,10 +2263,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -2345,10 +2316,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     AssertError<Exception>(
@@ -2425,10 +2394,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var _ts = new Types();
-      BindBar(_ts);
-      return _ts;
+    var ts_fn = new Action<Types>((ts) => {
+      BindBar(ts);
     });
 
     var c = Compile(bhl, ts_fn);
@@ -2472,11 +2439,9 @@ public class TestClasses : BHL_TestBase
     var log = new StringBuilder();
 
     FuncSymbolNative fn = null;
-    var ts_fn = new Func<Types>(() => {
-      var _ts = new Types();
-      fn = BindTrace(_ts, log);
-      BindBar(_ts);
-      return _ts;
+    var ts_fn = new Action<Types>((ts) => {
+      fn = BindTrace(ts, log);
+      BindBar(ts);
     });
     var c = Compile(bhl, ts_fn);
 
@@ -2535,10 +2500,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -2558,10 +2521,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -2589,10 +2550,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     AssertError<Exception>(
@@ -2643,11 +2602,9 @@ public class TestClasses : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindTrace(ts, log);
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -3539,10 +3496,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindVirtualFooBar(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -3896,9 +3851,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
@@ -3918,7 +3872,6 @@ public class TestClasses : BHL_TestBase
       );
       cl.Define(m);
       cl.Setup();
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -4061,9 +4014,8 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() =>
+    var ts_fn = new Action<Types>((ts) =>
     {
-      var ts = new Types();
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null, null);
       ts.ns.Define(cl);
 
@@ -4078,7 +4030,6 @@ public class TestClasses : BHL_TestBase
         }
       ));
       cl.Setup();
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -4111,9 +4062,7 @@ public class TestClasses : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-
+    var ts_fn = new Action<Types>((ts) => {
       {
         var cl = new ClassSymbolNative(new Origin(), "B", ts.T("A"),
           delegate(VM.Frame frm, ref Val v, IType type) 
@@ -4166,7 +4115,6 @@ public class TestClasses : BHL_TestBase
         (ts.T("A").Get() as ClassSymbolNative).Setup();
         (ts.T("B").Get() as ClassSymbolNative).Setup();
       }
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

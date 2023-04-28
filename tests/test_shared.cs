@@ -570,7 +570,7 @@ public class BHL_TestBase
   }
 
 
-  public VM MakeVM(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
+  public VM MakeVM(string bhl, Action<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
     return MakeVM(
         Compile(
@@ -583,9 +583,10 @@ public class BHL_TestBase
       ts_fn);
   }
 
-  public static VM MakeVM(CompiledModule orig_cm, Func<Types> ts_fn = null)
+  public static VM MakeVM(CompiledModule orig_cm, Action<Types> ts_fn = null)
   {
-    Types ts = ts_fn == null ? new Types() : ts_fn();
+    Types ts = new Types();
+    ts_fn?.Invoke(ts);
 
     //let's serialize/unserialize the compiled module so that
     //it's going to go through the full compilation cycle
@@ -599,7 +600,7 @@ public class BHL_TestBase
     return vm;
   }
 
-  public VM MakeVM(Dictionary<string, string> file2src, Func<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
+  public VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
   {
     if(clean_dir)
       CleanTestDir();
@@ -608,7 +609,8 @@ public class BHL_TestBase
     foreach(var kv in file2src)
       NewTestFile(kv.Key, kv.Value, ref files);
 
-    Types ts = ts_fn == null ? new Types() : ts_fn();
+    Types ts = new Types();
+    ts_fn?.Invoke(ts);
 
     var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache));
     var vm = new VM(ts, loader);
@@ -934,9 +936,10 @@ public class BHL_TestBase
     }
   }
 
-  static public CompileConf MakeCompileConf(List<string> files, Func<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
+  static public CompileConf MakeCompileConf(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
   {
-    Types ts = ts_fn == null ? new Types() : ts_fn();
+    Types ts = new Types();
+    ts_fn?.Invoke(ts);
 
     var proj = new ProjectConf();
     proj.max_threads = max_threads;
@@ -981,7 +984,7 @@ public class BHL_TestBase
     return ms;
   }
 
-  static public Stream CompileFiles(List<string> files, Func<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
+  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
   {
     return CompileFiles(MakeCompileConf(files, ts_fn, use_cache, max_threads));
   }
@@ -991,9 +994,10 @@ public class BHL_TestBase
     return CompileFiles(new CompilationExecutor(), conf);
   }
 
-  public CompiledModule Compile(string bhl, Func<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
+  public CompiledModule Compile(string bhl, Action<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
-    Types ts = ts_fn == null ? new Types() : ts_fn();
+    Types ts = new Types();
+    ts_fn?.Invoke(ts);
 
     var proc = Parse(bhl, ts, show_ast: show_ast, show_parse_tree: show_parse_tree, throw_errors: true);
 

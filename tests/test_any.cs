@@ -93,10 +93,8 @@ public class TestAny : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindColor(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

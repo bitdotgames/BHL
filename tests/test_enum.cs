@@ -15,10 +15,8 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -38,10 +36,8 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -61,10 +57,8 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -87,10 +81,8 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -114,9 +106,7 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Func<Types>(() => {
-      var ts = new Types();
-
+    var ts_fn = new Action<Types>((ts) => {
       BindEnum(ts);
 
       {
@@ -131,7 +121,6 @@ public class TestEnum : BHL_TestBase
 
         ts.ns.Define(fn);
       }
-      return ts;
     });
 
     var vm = MakeVM(bhl, ts_fn);

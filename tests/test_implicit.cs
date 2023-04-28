@@ -158,10 +158,8 @@ public class TestImplicitVar : BHL_TestBase
 
       var log = new StringBuilder();
 
-      var ts_fn = new Func<Types>(() => {
-        var ts = new Types();
+      var ts_fn = new Action<Types>((ts) => {
         BindTrace(ts, log);
-        return ts;
       });
 
       var vm = MakeVM(bhl, ts_fn);
@@ -185,10 +183,8 @@ public class TestImplicitVar : BHL_TestBase
 
       var log = new StringBuilder();
       
-      var ts_fn = new Func<Types>(() => {
-        var ts = new Types();
+      var ts_fn = new Action<Types>((ts) => {
         BindTrace(ts, log);
-        return ts;
       });
 
       var vm = MakeVM(bhl, ts_fn);
@@ -212,10 +208,8 @@ public class TestImplicitVar : BHL_TestBase
 
       var log = new StringBuilder();
 
-      var ts_fn = new Func<Types>(() => {
-        var ts = new Types();
+      var ts_fn = new Action<Types>((ts) => {
         BindTrace(ts, log);
-        return ts;
       });
 
       var vm = MakeVM(bhl, ts_fn);
