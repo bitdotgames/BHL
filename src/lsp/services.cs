@@ -537,12 +537,12 @@ public class TextDocumentFindReferencesService : IService
       if(symb != null)
       {
         //1. adding definition
-        var range0 = (Range)symb.origin.source_range;
-        var loc0 = new Location {
+        var range_def = (Range)symb.origin.source_range;
+        var loc_def = new Location {
           uri = new proto.Uri(symb.origin.source_file),
-          range = range0
+          range = range_def
         };
-        refs.Add(loc0);
+        refs.Add(loc_def);
 
         //2. adding all found references
         foreach(var kv in workspace.uri2doc)
