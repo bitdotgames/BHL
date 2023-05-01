@@ -9,7 +9,7 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  public Logger logger;
+  public Logger logger { get; private set; }
 
   Types ts;
 
@@ -18,8 +18,6 @@ public class Workspace
   Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>(); 
 
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
-
-  public proto.TextDocumentSyncKind sync_kind = proto.TextDocumentSyncKind.Full;
 
   public bool declarationLinkSupport;
   public bool definitionLinkSupport;

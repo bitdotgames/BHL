@@ -54,7 +54,7 @@ public class LifecycleService : IService
         capabilities.textDocumentSync = new TextDocumentSyncOptions
         {
           openClose = true, //didOpen, didClose
-          change = workspace.sync_kind, //didChange
+          change = proto.TextDocumentSyncKind.Full, //didChange
           save = false //didSave
         };
       }
@@ -181,15 +181,6 @@ public class TextDocumentSynchronizationService : IService
   [RpcMethod("textDocument/didChange")]
   public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
-    if(workspace.sync_kind != TextDocumentSyncKind.Full)
-    {
-      return RpcResult.Error(new ResponseError
-      {
-        code = (int)ErrorCodes.RequestFailed,
-        message = "Not supported"
-      });
-    }
-
     foreach(var changes in args.contentChanges)
     {
       if(!workspace.UpdateDocument(args.textDocument.uri, changes.text))
