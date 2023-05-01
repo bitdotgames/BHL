@@ -15,8 +15,8 @@ public class Workspace
 
   IncludePath inc_path;
 
-  Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>(); 
-
+  //NOTE: keeping both collections for convenience of re-indexing
+  Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
 
   public bool declarationLinkSupport;
@@ -41,7 +41,7 @@ public class Workspace
   //NOTE: naive initial implementation
   public void IndexFiles()
   {
-    file2proc.Clear();
+    uri2proc.Clear();
     uri2doc.Clear();
 
     for(int i=0;i<inc_path.Count;++i)
@@ -56,15 +56,15 @@ public class Workspace
         using(var sfs = File.OpenRead(norm_file))
         {
           var proc = ParseFile(ts, norm_file, sfs);
-          file2proc.Add(norm_file, proc);
+          uri2proc.Add(norm_file, proc);
         }
       }
     }
 
     //TODO: use compiled cache if needed
-    ANTLR_Processor.ProcessAll(file2proc, null, inc_path);
+    ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
 
-    foreach(var kv in file2proc)
+    foreach(var kv in uri2proc)
     {
       var document = new BHLDocument(new proto.Uri(kv.Key)); 
       document.Update(File.ReadAllText(kv.Key), kv.Value);
@@ -143,9 +143,9 @@ public class Workspace
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
     var proc = ParseFile(ts, document.uri.path, ms);
 
-    file2proc[document.uri.path] = proc;
+    uri2proc[document.uri.path] = proc;
 
-    ANTLR_Processor.ProcessAll(file2proc, null, inc_path);
+    ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
 
     document.Update(text, proc);
     return true;
