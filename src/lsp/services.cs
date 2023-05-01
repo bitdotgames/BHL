@@ -537,6 +537,16 @@ public class TextDocumentFindReferencesService : IService
       var symb = document.FindSymbol(args.position);
       if(symb != null)
       {
+        //1. adding definition
+        var range0 = (Range)symb.origin.source_range;
+        range0.DecrementLine();
+        var loc0 = new Location {
+          uri = new proto.Uri(symb.origin.source_file),
+          range = range0
+        };
+        refs.Add(loc0);
+
+        //2. adding all found references
         foreach(var kv in workspace.uri2doc)
         {
           foreach(var an_kv in kv.Value.proc.annotated_nodes)

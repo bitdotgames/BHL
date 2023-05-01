@@ -469,8 +469,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestFindReferences()
   {
     string bhl1 = @"
@@ -515,9 +514,9 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
-          new UN(uri1, "func float test1(float k)"),
-          new UN(uri1, "test1(42)"),
-          new UN(uri2, "test1(24)")
+          new UN(uri1, "func float test1(float k)", line_offset: 3),
+          new UN(uri1, "test1(42)", column_offset: 4),
+          new UN(uri2, "test1(24)", column_offset: 4)
         )
       );
     });
