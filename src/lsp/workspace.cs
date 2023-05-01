@@ -19,20 +19,18 @@ public class Workspace
   Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
 
-  public bool declarationLinkSupport;
-  public bool definitionLinkSupport;
-  public bool typeDefinitionLinkSupport;
-  public bool implementationLinkSupport;
+  public lsp.proto.ClientCapabilities capabilities { get; private set; }
 
   public Workspace(Logger logger)
   {
     this.logger = logger;
   }
 
-  public void Init(Types ts, IncludePath inc_path)
+  public void Init(Types ts, IncludePath inc_path, lsp.proto.ClientCapabilities capabilities = null)
   {
     this.ts = ts;
     this.inc_path = inc_path;
+    this.capabilities = capabilities;
   }
   
   public void Shutdown()

@@ -40,7 +40,7 @@ public class LifecycleService : IService
 
     proj.LoadBindings().Register(ts);
     
-    workspace.Init(ts, proj.inc_path);
+    workspace.Init(ts, proj.inc_path, args.capabilities);
 
     //TODO: run it in background
     workspace.IndexFiles();
@@ -66,33 +66,21 @@ public class LifecycleService : IService
 
       if(args.capabilities.textDocument.declaration != null)
       {
-        if(args.capabilities.textDocument.declaration.linkSupport != null)
-          workspace.declarationLinkSupport = (bool)args.capabilities.textDocument.declaration.linkSupport;
-
         capabilities.declarationProvider = false; //textDocument/declaration
       }
 
       if(args.capabilities.textDocument.definition != null)
       {
-        if(args.capabilities.textDocument.definition.linkSupport != null)
-          workspace.definitionLinkSupport = (bool)args.capabilities.textDocument.definition.linkSupport;
-
         capabilities.definitionProvider = true; //textDocument/definition
       }
 
       if(args.capabilities.textDocument.typeDefinition != null)
       {
-        if(args.capabilities.textDocument.typeDefinition.linkSupport != null)
-          workspace.typeDefinitionLinkSupport = (bool)args.capabilities.textDocument.typeDefinition.linkSupport;
-
         capabilities.typeDefinitionProvider = false; //textDocument/typeDefinition
       }
       
       if(args.capabilities.textDocument.implementation != null)
       {
-        if(args.capabilities.textDocument.implementation.linkSupport != null)
-          workspace.implementationLinkSupport = (bool)args.capabilities.textDocument.implementation.linkSupport;
-
         capabilities.implementationProvider = false; //textDocument/implementation
       }
 
