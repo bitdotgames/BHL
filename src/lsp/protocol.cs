@@ -1306,17 +1306,11 @@ public class Position
 
   public static implicit operator Position(SourcePos pos)
   {
-    return new Position() { line = (uint)pos.line, character = (uint)pos.column }; 
-  }
-
-  public static implicit operator SourcePos(Position pos)
-  {
-    return new SourcePos((int)pos.line, (int)pos.character); 
-  }
-
-  public void DecLine()
-  {
-    line = line - 1;
+    //NOTE: in LSP line is 0 based
+    return new Position() { 
+      line = (uint)(pos.line-1), 
+      character = (uint)pos.column 
+    }; 
   }
 }
 
@@ -1335,12 +1329,6 @@ public class Range
   public static implicit operator Range(SourceRange range)
   {
     return new Range() { start = range.start, end = range.end }; 
-  }
-
-  public void DecrementLine()
-  {
-    start.DecLine();
-    end.DecLine();
   }
 }
 

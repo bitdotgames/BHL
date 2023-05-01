@@ -79,9 +79,9 @@ public class BHLDocument
     return null;
   }
 
-  public Symbol FindSymbol(SourcePos pos)
+  public Symbol FindSymbol(int line, int character)
   {
-    var node = FindTerminalNode(pos);
+    var node = FindTerminalNode(line, character);
     if(node == null)
       return null;
 

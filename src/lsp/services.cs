@@ -256,7 +256,7 @@ public class TextDocumentSignatureHelpService : IService
 
     if(document != null)
     {
-      var node = document.FindTerminalNode(args.position);
+      var node = document.FindTerminalNode((int)args.position.line, (int)args.position.character);
       if(node != null)
       {
         //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + 
@@ -325,12 +325,11 @@ public class TextDocumentGoToService : IService
         
     if(document != null)
     {
-      var symb = document.FindSymbol(args.position);
+      var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
 
       if(symb != null)
       {
         var range = (Range)symb.origin.source_range;
-        range.DecrementLine();
         return RpcResult.Success(new Location
         {
           uri = new proto.Uri(symb.origin.source_file),
@@ -534,12 +533,11 @@ public class TextDocumentFindReferencesService : IService
 
     if(document != null)
     {
-      var symb = document.FindSymbol(args.position);
+      var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
       if(symb != null)
       {
         //1. adding definition
         var range0 = (Range)symb.origin.source_range;
-        range0.DecrementLine();
         var loc0 = new Location {
           uri = new proto.Uri(symb.origin.source_file),
           range = range0
@@ -554,8 +552,6 @@ public class TextDocumentFindReferencesService : IService
             if(an_kv.Value.lsp_symbol == symb)
             {
               var range = (Range)an_kv.Value.range;
-              range.DecrementLine();
-
               var loc = new Location {
                 uri = new proto.Uri(kv.Key),
                 range = range
