@@ -471,6 +471,60 @@ public class TestLSP : BHL_TestBase
 
   //TODO:
   //[IsTested()]
+  public void TestFindReferences()
+  {
+    string bhl1 = @"
+    func float test1(float k) 
+    {
+      return 0
+    }
+
+    func test2() 
+    {
+      test1(42)
+    }
+    ";
+    
+    string bhl2 = @"
+    import ""bhl1""
+
+    func float test3(float k, int j)
+    {
+      test1(24)
+      return 0
+    }
+    ";
+    
+    var ws = new Workspace(NoLogger());
+
+    var rpc = new JsonRpc(NoLogger());
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentFindReferencesService(ws));
+    
+    CleanTestFiles();
+    
+    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+    var ts = new bhl.Types();
+    
+    ws.Init(ts, GetTestIncPath());
+
+    ws.IndexFiles();
+    
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(FindReferencesReq(uri1, "st1(42)")),
+        FindReferencesRsp(
+          new UN(uri1, "func float test1(float k)"),
+          new UN(uri1, "test1(42)"),
+          new UN(uri2, "test1(24)")
+        )
+      );
+    });
+  }
+
+  //TODO:
+  //[IsTested()]
   public void TestSignatureHelp()
   {
     string bhl1 = @"
@@ -578,6 +632,47 @@ public class TestLSP : BHL_TestBase
     var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
     return "{\"id\":1,\"result\":{\"uri\":\"" + uri + "\",\"range\":{\"start\":" + 
       AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
+  }
+
+  static string FindReferencesReq(bhl.lsp.proto.Uri uri, string needle)
+  {
+    var pos = Pos(File.ReadAllText(uri.path), needle);
+    return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/references\", \"params\":" +
+      "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
+  }
+
+  public struct UN
+  {
+    public bhl.lsp.proto.Uri uri;
+    public string needle;
+    public int line_offset;
+    public int column_offset;
+
+    public UN(bhl.lsp.proto.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
+    {
+      this.uri = uri;
+      this.needle = needle;
+      this.line_offset = line_offset;
+      this.column_offset = column_offset;
+    }
+  }
+
+  static string FindReferencesRsp(params UN[] uns)
+  {
+    string rsp = "{\"id\":1,\"result\":[";
+
+    foreach(var un in uns)
+    {
+      var start = Pos(File.ReadAllText(un.uri.path), un.needle);
+      var end = new bhl.SourcePos(start.line + un.line_offset, start.column + un.column_offset);
+      rsp += "{\"uri\":\"" + un.uri + "\",\"range\":{\"start\":" + 
+        AsJson(start) + ",\"end\":" + AsJson(end) + "}},";
+    }
+    rsp = rsp.TrimEnd(',');
+
+    rsp += "],\"jsonrpc\":\"2.0\"}";
+
+    return rsp;
   }
 
   static string SignatureHelpReq(bhl.lsp.proto.Uri uri, string needle)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace bhl.lsp.proto {
 
@@ -102,7 +103,7 @@ public class LifecycleService : IService
       
       if(args.capabilities.textDocument.references != null)
       {
-        capabilities.referencesProvider = false; //textDocument/references
+        capabilities.referencesProvider = true; //textDocument/references
       }
 
       if(args.capabilities.textDocument.semanticTokens != null)
@@ -527,7 +528,36 @@ public class TextDocumentFindReferencesService : IService
   [RpcMethod("textDocument/references")]
   public RpcResult FindReferences(ReferenceParams args)
   {
-    return RpcResult.Success();
+    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+
+    var refs = new List<Location>();
+
+    if(document != null)
+    {
+      var symb = document.FindSymbol(args.position);
+      if(symb != null)
+      {
+        foreach(var kv in workspace.uri2doc)
+        {
+          foreach(var an_kv in kv.Value.proc.annotated_nodes)
+          {
+            if(an_kv.Value.lsp_symbol == symb)
+            {
+              var range = (Range)an_kv.Value.range;
+              range.DecrementLine();
+
+              var loc = new Location {
+                uri = new proto.Uri(kv.Key),
+                range = range
+              };
+              refs.Add(loc);
+            }
+          }
+        }
+      }
+    }
+
+    return RpcResult.Success(refs);
   }
 }
 

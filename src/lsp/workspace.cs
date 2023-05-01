@@ -17,7 +17,7 @@ public class Workspace
 
   Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>(); 
 
-  Dictionary<string, BHLDocument> documents = new Dictionary<string, BHLDocument>();
+  public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
 
   public proto.TextDocumentSyncKind sync_kind = proto.TextDocumentSyncKind.Full;
 
@@ -44,7 +44,7 @@ public class Workspace
   public void IndexFiles()
   {
     file2proc.Clear();
-    documents.Clear();
+    uri2doc.Clear();
 
     for(int i=0;i<inc_path.Count;++i)
     {
@@ -70,7 +70,7 @@ public class Workspace
     {
       var document = new BHLDocument(new proto.Uri(kv.Key)); 
       document.Update(File.ReadAllText(kv.Key), kv.Value);
-      documents.Add(kv.Key, document);
+      uri2doc.Add(kv.Key, document);
     }
   }
 
@@ -100,7 +100,7 @@ public class Workspace
   public BHLDocument GetOrLoadDocument(proto.Uri uri)
   {
     BHLDocument document;
-    if(documents.TryGetValue(uri.path, out document))
+    if(uri2doc.TryGetValue(uri.path, out document))
       return document;
     else
       return LoadDocument(uri);
@@ -116,10 +116,10 @@ public class Workspace
   public BHLDocument OpenDocument(proto.Uri uri, string text)
   {
     BHLDocument document;
-    if(!documents.TryGetValue(uri.path, out document))
+    if(!uri2doc.TryGetValue(uri.path, out document))
     {
       document = new BHLDocument(uri);  
-      documents.Add(uri.path, document);
+      uri2doc.Add(uri.path, document);
     }
     return document;
   }
@@ -132,7 +132,7 @@ public class Workspace
   public BHLDocument FindDocument(string path)
   {
     BHLDocument document;
-    documents.TryGetValue(path, out document);
+    uri2doc.TryGetValue(path, out document);
     return document;
   }
 
@@ -156,7 +156,7 @@ public class Workspace
   public List<AnnotatedParseTree> FindReferences(Symbol symb)
   {
     var refs = new List<AnnotatedParseTree>(); 
-    foreach(var doc_kv in documents)
+    foreach(var doc_kv in uri2doc)
     {
       foreach(var node_kv in doc_kv.Value.proc.annotated_nodes)
         if(node_kv.Value.lsp_symbol == symb)
