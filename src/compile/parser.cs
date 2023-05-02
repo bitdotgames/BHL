@@ -4104,9 +4104,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return false;
         }
 
+        var vd_name = vproxy.LocalNameAt(i);
         var var_decl_ast = ProcDeclVar(
           curr_scope, 
-          vproxy.LocalNameAt(i), 
+          vd_name, 
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
           is_auto_var ? Types.Any : ParseType(vd_type), 
@@ -4124,6 +4125,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var_ann = var_symb.origin.parsed;
         var_ann.eval_type = var_symb.type.Get();
+        Annotate(vd_name.Parent).lsp_symbol = var_symb;
       }
       else if(vproxy.LocalNameAt(i) != null)
       {

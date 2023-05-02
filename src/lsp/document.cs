@@ -85,13 +85,13 @@ public class BHLDocument
     if(node == null)
       return null;
 
-    //Console.WriteLine("NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " + node.Parent.GetType().Name + " " + node.Parent.GetText());
+    //Logger.current.Log(0, "NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " + node.Parent.GetType().Name + " " + node.Parent.GetText());
 
     var annotated = proc.FindAnnotated(node.Parent);
     if(annotated == null)
       return null;
 
-    //Console.WriteLine("SYMB " + annotated.lsp_symbol + " " + annotated.lsp_symbol.GetType().Name);
+    //Logger.current.Log(0, "SYMB " + annotated.lsp_symbol + " " + annotated.lsp_symbol?.GetType().Name);
 
     return annotated.lsp_symbol;
   }

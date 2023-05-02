@@ -61,10 +61,16 @@ public class Logger
   ILogWriter writer;
   int max_level;
 
+  //NOTE: for quick debugging, only in places where 
+  //      logger is not passed (and not supposed to)
+  public static Logger current { get; private set; }
+
   public Logger(int max_level, ILogWriter writer)
   {
     this.max_level = max_level;
     this.writer = writer;
+
+    current = this;
   }
   
   public void Log(int level, string msg)
