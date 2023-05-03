@@ -58,6 +58,29 @@ public class TestImplicitVar : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVoidError()
+  {
+    string bhl = @"
+    func foo() {}
+
+    func test() {
+      var what = foo()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "void expression type",
+      new PlaceAssert(bhl, @"
+      var what = foo()
+---------------^"
+       )
+     );
+  }
+
+  [IsTested()]
   public void TestFuncResult()
   {
     string bhl = @"

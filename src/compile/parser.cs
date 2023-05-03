@@ -4450,6 +4450,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         AddSemanticError(assign_exp, "can't determine type");
         return false;
       }
+      else if(auto_type == Types.Void)
+      {
+        AddSemanticError(assign_exp, "void expression type");
+        return false;
+      }
       var_symb.type = new Proxy<IType>(auto_type); 
     }
 
