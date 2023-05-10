@@ -1,5 +1,10 @@
 # SublimeText
 
+* Install Package Control
+* Install LSP package
+* Restart Sublime
+* Go To Settings > Package Settings > LSP > Settings
+
 ## LSP settings
 
 ```
