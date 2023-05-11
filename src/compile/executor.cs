@@ -21,9 +21,12 @@ public class ProjectConf
     return proj;
   }
 
-  public static ProjectConf ReadFromDir(string dir_path)
+  public static ProjectConf TryReadFromDir(string dir_path)
   {
-    return ReadFromFile(dir_path + "/" + FILE_NAME);
+    string proj_file = dir_path + "/" + FILE_NAME; 
+    if(!File.Exists(proj_file))
+      return null;
+    return ReadFromFile(proj_file);
   }
 
   [JsonIgnore]

@@ -20,22 +20,29 @@ public class LifecycleService : IService
     process_id = args.processId;
     
     var ts = new Types();
-    var proj = new ProjectConf();
+    ProjectConf proj = null;
 
     if(args.workspaceFolders != null)
     {
-      //NOTE: only the last one will be used for now
       for(int i = 0; i < args.workspaceFolders.Length; i++)
-        proj = ProjectConf.ReadFromDir(args.workspaceFolders[i].uri.path);
+      {
+        proj = ProjectConf.TryReadFromDir(args.workspaceFolders[i].uri.path);
+        if(proj != null)
+          break;
+      }
     }
     else if(args.rootUri != null) // @deprecated in favour of `workspaceFolders`
     {
-      proj = ProjectConf.ReadFromDir(args.rootUri.path);
+      proj = ProjectConf.TryReadFromDir(args.rootUri.path);
     }
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
-      proj = ProjectConf.ReadFromDir(args.rootPath);
+      proj = ProjectConf.TryReadFromDir(args.rootPath);
     }                                                                         
+
+    if(proj == null)
+      proj = new ProjectConf();
+
     workspace.logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
 
     proj.LoadBindings().Register(ts);
