@@ -51,6 +51,6 @@ Now you can proceed to LSP setup.
 
 ## Project setup
 
-For simplicity you have to make the directory which contains **bhl.proj** file the root directory of the project. 
+For simplicity you have to make the directory which contains **bhl.proj** file the root directory of the Sublime project. 
 This way once the LSP server starts via Sublime it will be properly initialized.
 
