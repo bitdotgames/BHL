@@ -21,7 +21,7 @@ contexts:
   main: []
 ```
 
-Now you can proceed to LSP setup.
+Make sure you can select bhl syntax in View > Syntax menu. Now you can proceed to LSP setup.
 
 ## LSP setup
 
@@ -51,6 +51,7 @@ Now you can proceed to LSP setup.
 
 ## Project setup
 
-For simplicity you have to make the directory which contains **bhl.proj** file the root directory of the Sublime project. 
-This way once the LSP server starts via Sublime it will be properly initialized.
+You have to add the directory which contains **bhl.proj** file the to the Sublime project. So that it's
+displayed as a separate entry in project's 'FOLDERS' side bar.
+Once the bhl LSP server starts via Sublime it will detect this directory and will be properly initialized.
 
