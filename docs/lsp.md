@@ -52,6 +52,6 @@ Make sure you can select bhl syntax in View > Syntax menu. Now you can proceed t
 ## Project setup
 
 You have to add the directory which contains **bhl.proj** file the to the Sublime project. So that it's
-displayed as a separate entry in project's 'FOLDERS' side bar.
+displayed as a separate entry in project's **FOLDERS** side bar.
 Once the bhl LSP server starts via Sublime it will detect this directory and will be properly initialized.
 
