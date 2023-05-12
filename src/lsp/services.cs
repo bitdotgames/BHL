@@ -122,7 +122,7 @@ public class LifecycleService : IService
       serverInfo = new InitializeResult.InitializeResultsServerInfo
       {
         name = "bhlsp",
-        version = "0.1"
+        version = Version.Name
       }
     });
   }
@@ -522,15 +522,7 @@ public class TextDocumentFindReferencesService : IService
       var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
       if(symb != null)
       {
-        //1. adding definition
-        var range_def = (Range)symb.origin.source_range;
-        var loc_def = new Location {
-          uri = new proto.Uri(symb.origin.source_file),
-          range = range_def
-        };
-        refs.Add(loc_def);
-
-        //2. adding all found references
+        //1. adding all found references
         foreach(var kv in workspace.uri2doc)
         {
           foreach(var an_kv in kv.Value.proc.annotated_nodes)
@@ -546,6 +538,15 @@ public class TextDocumentFindReferencesService : IService
             }
           }
         }
+
+        //2. sorting by file name
+        refs.Sort((a, b) => a.uri.path.CompareTo(b.uri.path));
+
+        //3. adding definition
+        refs.Add(new Location {
+          uri = new proto.Uri(symb.origin.source_file),
+          range = (Range)symb.origin.source_range
+        });
       }
     }
 
