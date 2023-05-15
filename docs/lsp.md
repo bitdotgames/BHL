@@ -55,3 +55,40 @@ You have to add the directory which contains **bhl.proj** file the to the Sublim
 displayed as a separate entry in project's **FOLDERS** side bar.
 Once the bhl LSP server starts via Sublime it will detect this directory and will be properly initialized.
 
+# NeoVim
+
+* Install 'neovim/nvim-lspconfig' extension which simplifies configuration of LSP servers. For example 
+using Plug:
+
+```
+Plug 'neovim/nvim-lspconfig'
+```
+
+* Install telescope extension and configure it for basic LSP actions:
+
+```
+Plug 'nvim-lua/plenary.nvim' 
+Plug 'nvim-telescope/telescope.nvim' 
+nnoremap <leader>r :Telescope lsp_references<CR>
+nnoremap <leader>d :Telescope lsp_definitions<CR>
+```
+
+* Configure LSP for bhl files using Lua:
+
+```
+local configs = require('lspconfig.configs')
+-- Check if it's already defined for when reloading this file.
+if not configs.bhl then
+  configs.bhl = {
+    default_config = {
+      cmd = {'/path/to//bhl/bhl', 'lsp', '--log-file=' .. '/tmp/bhl.lsp'},
+      filetypes = {'bhl'},
+      root_dir = lspconfig.util.root_pattern('bhl.proj'),
+      settings = {},
+    };
+  }
+end
+lspconfig.bhl.setup{}
+vim.cmd [[ au BufNewFile,BufRead /*.bhl setf bhl ]]
+```
+
