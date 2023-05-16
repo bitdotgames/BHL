@@ -444,7 +444,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "test4()")),
-        EmptyResultJson()
+        GoToDefinitionRsp(uri2, "func ErrorCodes test4()", line_offset: 7)
       );
     });
 
@@ -514,9 +514,9 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
+          new UN(uri1, "func float test1(float k)", line_offset: 3),
           new UN(uri1, "test1(42)", column_offset: 4),
-          new UN(uri2, "test1(24)", column_offset: 4),
-          new UN(uri1, "func float test1(float k)", line_offset: 3)
+          new UN(uri2, "test1(24)", column_offset: 4)
         )
       );
     });

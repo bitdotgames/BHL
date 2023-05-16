@@ -3253,8 +3253,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //we can proceed
       AddSemanticError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
+    var func_ann = Annotate(pass.func_ctx);
     pass.func_symb = new FuncSymbolScript(
-      Annotate(pass.func_ctx), 
+      func_ann, 
       new FuncSignature(),
       name
     ); 
@@ -3266,6 +3267,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
     }
 
+    func_ann.lsp_symbol = pass.func_symb;
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
   }

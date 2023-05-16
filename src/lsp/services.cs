@@ -542,11 +542,14 @@ public class TextDocumentFindReferencesService : IService
         //2. sorting by file name
         refs.Sort((a, b) => a.uri.path.CompareTo(b.uri.path));
 
-        //3. adding definition
-        refs.Add(new Location {
-          uri = new proto.Uri(symb.origin.source_file),
-          range = (Range)symb.origin.source_range
-        });
+        //3. adding definition for native symbol
+        if(symb is FuncSymbolNative)
+        {
+          refs.Add(new Location {
+            uri = new proto.Uri(symb.origin.source_file),
+            range = (Range)symb.origin.source_range
+          });
+        }
       }
     }
 
