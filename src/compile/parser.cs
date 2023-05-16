@@ -3355,6 +3355,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var vd = pass.gvar_decl_ctx;
 
     pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    Annotate(vd).lsp_symbol = pass.gvar_symb;
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
     {
@@ -3371,6 +3372,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var name = pass.iface_ctx.NAME().GetText();
 
     pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
+    Annotate(pass.iface_ctx).lsp_symbol = pass.iface_symb;
 
     if(!pass.scope.TryDefine(pass.iface_symb, out SymbolError err))
     {
