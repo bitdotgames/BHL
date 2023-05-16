@@ -1796,7 +1796,7 @@ public class LambdaSymbol : FuncSymbolScript
     //      checks that's why we use a 'raw' version
     this._current_scope.DefineWithoutEnclosingChecks(local);
 
-    var up = new AST_UpVal(
+    var upval = new AST_UpVal(
       local.name, 
       local.scope_idx, 
       src.scope_idx,
@@ -1804,7 +1804,7 @@ public class LambdaSymbol : FuncSymbolScript
       //in case of 'this' there's no associated parse tree
       src.origin.source_line
     ); 
-    upvals.Add(up);
+    upvals.Add(upval);
 
     return local;
   }

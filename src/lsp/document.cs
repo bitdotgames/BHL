@@ -5,34 +5,6 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl.lsp {
 
-public static class BHLSemanticTokens
-{
-  public static string[] token_types = 
-  {
-    proto.SemanticTokenTypes.@class,
-    proto.SemanticTokenTypes.function,
-    proto.SemanticTokenTypes.variable,
-    proto.SemanticTokenTypes.number,
-    proto.SemanticTokenTypes.@string,
-    proto.SemanticTokenTypes.type,
-    proto.SemanticTokenTypes.keyword
-  };
-  
-  public static string[] modifiers = 
-  {
-    proto.SemanticTokenModifiers.declaration,   // 1
-    proto.SemanticTokenModifiers.definition,    // 2
-    proto.SemanticTokenModifiers.@readonly,     // 4
-    proto.SemanticTokenModifiers.@static,       // 8
-    proto.SemanticTokenModifiers.deprecated,    // 16
-    proto.SemanticTokenModifiers.@abstract,     // 32
-    proto.SemanticTokenModifiers.async,         // 64
-    proto.SemanticTokenModifiers.modification,  // 128
-    proto.SemanticTokenModifiers.documentation, // 256
-    proto.SemanticTokenModifiers.defaultLibrary // 512
-  };
-}
-
 public class BHLDocument
 {
   public proto.Uri uri { get; private set; }

@@ -238,6 +238,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
+  internal int next_semantic_token_idx = 0;
+  public readonly List<uint> encoded_semantic_tokens = new List<uint>();
+
   public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
   {
     var ais = new AntlrInputStream(s);
@@ -5345,6 +5348,98 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return true;
     }
     return false;
+  }
+
+  void AddSemanticTokenTypeName(ITerminalNode node)
+  {
+    if(node == null)
+      return;
+    
+    if(SupportedSemanticTokens.IsTypeKeyword(node.GetText()))
+      AddSemanticToken(node, "keyword");
+    else
+      AddSemanticToken(node, "type");
+  }
+  
+  void AddSemanticToken(ITerminalNode node, string token_type, params string[] token_mods)
+  {
+    if(node == null)
+      return;
+    
+    AddSemanticToken(node.Symbol.StartIndex, node.Symbol.StopIndex, token_type, token_mods);
+  }
+  
+  void AddSemanticToken(int start_idx, int stop_idx, string token_type, params string[] token_mods)
+  {
+    if(start_idx < 0 || stop_idx < 0)
+      return;
+    
+    if(string.IsNullOrEmpty(token_type))
+      return;
+  
+    var tidx = Array.IndexOf(SupportedSemanticTokens.token_types, token_type);
+    if(tidx < 0)
+      return;
+    
+    //TODO: get this information from the token source
+    var next_start_pos = new SourcePos();//document.code.GetIndexPosition(next_semantic_token_idx);
+    var line_column_symb_pos = new SourcePos();//document.code.GetIndexPosition(start_idx);
+
+    var diff_line = line_column_symb_pos.line - next_start_pos.line;
+    var diff_column = diff_line != 0 ? line_column_symb_pos.column : line_column_symb_pos.column - next_start_pos.column;
+
+    int bit_token_mods = 0;
+    for(int i = 0; i < token_mods.Length; i++)
+    {
+      var idx = Array.IndexOf(SupportedSemanticTokens.modifiers, token_mods[i]);
+      bit_token_mods |= (int)Math.Pow(2, idx);
+    }
+    
+    // line
+    encoded_semantic_tokens.Add((uint)diff_line);
+    // startChar
+    encoded_semantic_tokens.Add((uint)diff_column);
+    // length
+    encoded_semantic_tokens.Add((uint)(stop_idx - start_idx + 1));
+    // tokenType
+    encoded_semantic_tokens.Add((uint)tidx);
+    // tokenModifiers
+    encoded_semantic_tokens.Add((uint)bit_token_mods);
+
+    next_semantic_token_idx = start_idx;
+  }
+}
+
+public static class SupportedSemanticTokens
+{
+  public static string[] token_types = 
+  {
+    "class",
+    "function",
+    "variable",
+    "number",
+    "string",
+    "type",
+    "keyword"
+  };
+  
+  public static string[] modifiers = 
+  {
+    "declaration",   // 1
+    "definition",    // 2
+    "readonly",      // 4
+    "static",        // 8
+  };
+
+  public static bool IsTypeKeyword(string type_name)
+  {
+    return Types.Int.name    == type_name ||
+           Types.Float.name  == type_name ||
+           Types.String.name == type_name ||
+           Types.Bool.name   == type_name ||
+           Types.Any.name    == type_name ||
+           Types.Null.name   == type_name ||
+           Types.Void.name   == type_name;
   }
 }
 

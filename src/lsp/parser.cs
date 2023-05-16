@@ -7,13 +7,6 @@ namespace bhl.lsp {
 
 //public class ParserAnalyzer : bhlBaseVisitor<object>
 //{
-//  public readonly List<string> imports = new List<string>();
-//  public readonly Dictionary<string, bhlParser.FuncDeclContext> func_decls = new Dictionary<string, bhlParser.FuncDeclContext>();
-//  public readonly Dictionary<string, bhlParser.ClassDeclContext> class_decls = new Dictionary<string, bhlParser.ClassDeclContext>();
-//  public readonly List<uint> encoded_semantic_tokens = new List<uint>();
-//  
-//  int next_idx;
-//
 //  BHLDocument document;
 //
 //  public void Parse(BHLDocument document)
@@ -874,75 +867,5 @@ namespace bhl.lsp {
 //    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
 //    return null;
 //  }
-//  
-//  bool IsTypeKeyword(string typeName)
-//  {
-//    return Types.Int.name    == typeName ||
-//           Types.Float.name  == typeName ||
-//           Types.String.name == typeName ||
-//           Types.Bool.name   == typeName ||
-//           Types.Any.name    == typeName ||
-//           Types.Null.name   == typeName ||
-//           Types.Void.name   == typeName;
-//  }
-//
-//  private void AddSemanticTokenTypeName(ITerminalNode node)
-//  {
-//    if(node == null)
-//      return;
-//    
-//    if(IsTypeKeyword(node.GetText()))
-//      AddSemanticToken(node, spec.SemanticTokenTypes.keyword);
-//    else
-//      AddSemanticToken(node, spec.SemanticTokenTypes.type);
-//  }
-//  
-//  void AddSemanticToken(ITerminalNode node, string tokenType, params string[] tokenModifiers)
-//  {
-//    if(node == null)
-//      return;
-//    
-//    AddSemanticToken(node.Symbol.StartIndex, node.Symbol.StopIndex, tokenType, tokenModifiers);
-//  }
-//
-//  void AddSemanticToken(int start_idx, int stop_idx, string token_type, params string[] token_modifiers)
-//  {
-//    if(start_idx < 0 || stop_idx < 0)
-//      return;
-//    
-//    if(string.IsNullOrEmpty(token_type))
-//      return;
-//  
-//    var tidx = Array.IndexOf(BHLSemanticTokens.token_types, token_type);
-//    if(tidx < 0)
-//      return;
-//    
-//    var next_start_pos = document.code.GetIndexPosition(next_idx);
-//    var line_column_symb_pos = document.code.GetIndexPosition(start_idx);
-//
-//    var diff_line = line_column_symb_pos.line - next_start_pos.line;
-//    var diff_column = diff_line != 0 ? line_column_symb_pos.column : line_column_symb_pos.column - next_start_pos.column;
-//
-//    int bitTokenModifiers = 0;
-//    for(int i = 0; i < token_modifiers.Length; i++)
-//    {
-//      var idx = Array.IndexOf(BHLSemanticTokens.modifiers, token_modifiers[i]);
-//      bitTokenModifiers |= (int)Math.Pow(2, idx);
-//    }
-//    
-//    // line
-//    encoded_semantic_tokens.Add((uint)diff_line);
-//    // startChar
-//    encoded_semantic_tokens.Add((uint)diff_column);
-//    // length
-//    encoded_semantic_tokens.Add((uint)(stop_idx - start_idx + 1));
-//    // tokenType
-//    encoded_semantic_tokens.Add((uint)tidx);
-//    // tokenModifiers
-//    encoded_semantic_tokens.Add((uint)bitTokenModifiers);
-//
-//    next_idx = start_idx;
-//  }
 //}
-
 }
