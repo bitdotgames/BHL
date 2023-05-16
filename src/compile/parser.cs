@@ -4353,6 +4353,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
+    Annotate(name.Parent).lsp_symbol = symb;
+
     if(write)
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb);
     else
