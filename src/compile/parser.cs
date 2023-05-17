@@ -5362,11 +5362,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(node == null)
       return;
-    
-    if(SupportedSemanticTokens.IsTypeKeyword(node.GetText()))
-      AddSemanticToken(node, "keyword");
-    else
-      AddSemanticToken(node, "type");
+    AddSemanticToken(node, "keyword");
   }
   
   void AddSemanticToken(ITerminalNode node, string token_type, params string[] token_mods)
@@ -5433,17 +5429,6 @@ public static class SupportedSemanticTokens
     "readonly",      // 4
     "static",        // 8
   };
-
-  public static bool IsTypeKeyword(string type_name)
-  {
-    return Types.Int.name    == type_name ||
-           Types.Float.name  == type_name ||
-           Types.String.name == type_name ||
-           Types.Bool.name   == type_name ||
-           Types.Any.name    == type_name ||
-           Types.Null.name   == type_name ||
-           Types.Void.name   == type_name;
-  }
 }
 
 } //namespace bhl
