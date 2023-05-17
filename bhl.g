@@ -54,20 +54,20 @@ chainExp
   ;
 
 exp
-  : 'null'                                    #ExpLiteralNull
-  | 'false'                                   #ExpLiteralFalse
-  | 'true'                                    #ExpLiteralTrue
+  : NULL                                      #ExpLiteralNull
+  | FALSE                                     #ExpLiteralFalse
+  | TRUE                                      #ExpLiteralTrue
   | number                                    #ExpLiteralNum
   | string                                    #ExpLiteralStr
   | '(' type ')' exp                          #ExpTypeCast
   | chainExp                                  #ExpChain
   | funcLambda                                #ExpLambda
-  | 'typeof' '(' type ')'                     #ExpTypeof
+  | TYPEOF '(' type ')'                       #ExpTypeof
   | jsonObject                                #ExpJsonObj
   | jsonArray                                 #ExpJsonArr
-  | 'yield' chainExp                          #ExpYieldCall
-  | exp 'as' type                             #ExpAs
-  | exp 'is' type                             #ExpIs
+  | YIELD chainExp                            #ExpYieldCall
+  | exp AS type                               #ExpAs
+  | exp IS type                               #ExpIs
   | operatorUnary exp                         #ExpUnary
   | exp operatorBitwise exp                   #ExpBitwise
   | exp operatorMulDivMod exp                 #ExpMulDivMod
@@ -87,7 +87,7 @@ ternaryIfExp
   ;
 
 newExp
-  : 'new' type
+  : NEW type
   ;
 
 foreachExp
@@ -115,19 +115,19 @@ statement
   //func call or variable/member read/write access
   | chainExp modifyOp?                         #StmChainExp
   | IF '(' exp ')' block elseIf* else?         #StmIf
-  | 'while' '(' exp ')' block                  #StmWhile
-  | 'do' block 'while' '(' exp ')'             #StmDoWhile
-  | 'for' forExp block                         #StmFor
-  | 'foreach' foreachExp block                 #StmForeach
-  | 'yield' '(' ')'                            #StmYield                                                                   
-  | 'yield' chainExp                           #StmYieldCall
-  | 'yield' 'while' '(' exp ')'                #StmYieldWhile
-  | 'break'                                    #StmBreak
-  | 'continue'                                 #StmContinue
-  | 'return' returnVal?                        #StmReturn
-  | 'paral' block                              #StmParal
-  | 'paral_all' block                          #StmParalAll
-  | 'defer' block                              #StmDefer
+  | WHILE '(' exp ')' block                    #StmWhile
+  | DO block WHILE '(' exp ')'                 #StmDoWhile
+  | FOR forExp block                           #StmFor
+  | FOREACH foreachExp block                   #StmForeach
+  | YIELD '(' ')'                              #StmYield                                                                   
+  | YIELD chainExp                             #StmYieldCall
+  | YIELD WHILE '(' exp ')'                    #StmYieldWhile
+  | BREAK                                      #StmBreak
+  | CONTINUE                                   #StmContinue
+  | RETURN returnVal?                          #StmReturn
+  | PARAL block                                #StmParal
+  | PARAL_ALL block                            #StmParalAll
+  | DEFER block                                #StmDefer
   | block                                      #StmBlockNested
   ;
 
@@ -173,11 +173,11 @@ extensions
   ;
 
 nsDecl
-  : 'namespace' dotName '{' decl* '}'
+  : NAMESPACE dotName '{' decl* '}'
   ;
 
 classDecl
-  : 'class' NAME extensions? classBlock
+  : CLASS NAME extensions? classBlock
   ;
 
 classBlock
@@ -202,7 +202,7 @@ classMember
   ;
 
 interfaceDecl
-  : 'interface' NAME extensions? interfaceBlock
+  : INTERFACE NAME extensions? interfaceBlock
   ;
 
 interfaceBlock
@@ -219,7 +219,7 @@ interfaceMember
   ;
 
 enumDecl
-  : 'enum' NAME enumBlock
+  : ENUM NAME enumBlock
   ;
 
 enumBlock
@@ -231,19 +231,19 @@ enumMember
   ;
 
 virtualFlag
-  : 'virtual'
+  : VIRTUAL
   ;
 
 overrideFlag
-  : 'override'
+  : OVERRIDE
   ;
 
 staticFlag
-  : 'static'
+  : STATIC
   ;
 
 coroFlag
-  : 'coro'
+  : CORO
   ;
 
 funcAttribs
@@ -251,11 +251,11 @@ funcAttribs
   ;
 
 funcDecl
-  : funcAttribs* 'func' retType? NAME '(' funcParams? ')' funcBlock
+  : funcAttribs* FUNC retType? NAME '(' funcParams? ')' funcBlock
   ;
 
 funcType
-  : coroFlag? 'func' retType? '(' types? ')'
+  : coroFlag? FUNC retType? '(' types? ')'
   ;
 
 funcBlock
@@ -263,11 +263,11 @@ funcBlock
   ;
 
 interfaceFuncDecl
-  : coroFlag? 'func' retType? NAME '(' funcParams? ')'
+  : coroFlag? FUNC retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda
-  : coroFlag? 'func' retType? '(' funcParams? ')' funcBlock
+  : coroFlag? FUNC retType? '(' funcParams? ')' funcBlock
   ;
 
 refType
@@ -372,7 +372,7 @@ operatorUnary
   ;
 
 isRef
-  : 'ref'
+  : REF
   ;
 
 number
@@ -412,8 +412,36 @@ jsonValue
 
 ////////////////////////////// lexer /////////////////////////////
 
+NULL : 'null' ;
+FALSE : 'false' ;
+TRUE : 'true' ;
 IF : 'if' ;
 ELSE : 'else' ;
+WHILE : 'while' ;
+DO : 'do' ;
+FOR : 'for' ;
+FOREACH : 'foreach' ;
+BREAK : 'break' ;
+CONTINUE : 'continue' ;
+RETURN : 'return' ;
+YIELD : 'yield' ;
+AS : 'as' ;
+IS : 'is' ;
+TYPEOF : 'typeof' ;
+NEW : 'new' ;
+PARAL : 'paral' ;
+PARAL_ALL : 'paral_all' ;
+DEFER : 'defer' ;
+NAMESPACE : 'namespace' ;  
+CLASS : 'class' ;
+INTERFACE : 'interface' ;
+ENUM : 'enum' ;
+VIRTUAL : 'virtual' ;
+OVERRIDE : 'override' ;
+STATIC : 'static' ;
+CORO : 'coro' ;
+FUNC : 'func' ;
+REF : 'ref' ;
 
 NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
