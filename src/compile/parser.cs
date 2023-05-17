@@ -4509,6 +4509,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.IF);
 
+    AddSemanticToken(ctx.IF());
+
     var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
     bool ok = TryVisit(ctx.exp());
@@ -4565,6 +4567,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     for(int i=0;i<else_if.Length;++i)
     {
       var item = else_if[i];
+
+      AddSemanticToken(item.ELSE());
+      AddSemanticToken(item.IF());
+
       var item_cond = new AST_Block(BlockType.SEQ);
       PushAST(item_cond);
       bool item_ok = TryVisit(item.exp());
@@ -4590,6 +4596,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var @else = ctx.@else();
     if(@else != null)
     {
+      AddSemanticToken(@else.ELSE());
+
       seen_return = return_found.Contains(func_symb);
       return_found.Remove(func_symb);
 

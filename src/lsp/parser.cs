@@ -552,12 +552,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitVarDecl(bhlParser.VarDeclContext ctx)
-//  {
-//    VisitVarDeclare(ctx.varDeclare());
-//    return null;
-//  }
-//
 //  public override object VisitVarDeclare(bhlParser.VarDeclareContext ctx)
 //  {
 //    var var_decl_type = ctx.type();
@@ -720,16 +714,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //
-//  public override object VisitArrAccess(bhlParser.ArrAccessContext ctx)
-//  {
-//    return null;
-//  }
-//  
-//  public override object VisitMemberAccess(bhlParser.MemberAccessContext ctx)
-//  {
-//    return null;
-//  }
-//  
 //  public override object VisitCallArgs(bhlParser.CallArgsContext ctx)
 //  {
 //    foreach(var item in ctx.callArg())
@@ -746,20 +730,6 @@ namespace bhl.lsp {
 //      if(arg_exp != null)
 //        Visit(item.exp());
 //    }
-//    return null;
-//  }
-//  
-//  public override object VisitVarDeclareAssign(bhlParser.VarDeclareAssignContext ctx)
-//  {
-//    var var_decl = ctx.varDeclare();
-//    var assign_exp = ctx.assignExp();
-//    
-//    if(var_decl != null)
-//      Visit(var_decl);
-//
-//    if(assign_exp != null)
-//      Visit(assign_exp.exp());
-//    
 //    return null;
 //  }
 //  

@@ -114,7 +114,7 @@ statement
   | varDeclaresOrChainExps assignExp           #StmDeclOrExpAssign
   //func call or variable/member read/write access
   | chainExp modifyOp?                         #StmChainExp
-  | 'if' '(' exp ')' block elseIf* else?       #StmIf
+  | IF '(' exp ')' block elseIf* else?         #StmIf
   | 'while' '(' exp ')' block                  #StmWhile
   | 'do' block 'while' '(' exp ')'             #StmDoWhile
   | 'for' forExp block                         #StmFor
@@ -132,11 +132,11 @@ statement
   ;
 
 elseIf
-  : 'else' 'if' '(' exp ')' block
+  : ELSE IF '(' exp ')' block
   ;
 
 else
-  : 'else' block
+  : ELSE block
   ;
   
 chainExpItem
@@ -411,6 +411,9 @@ jsonValue
   ;
 
 ////////////////////////////// lexer /////////////////////////////
+
+IF : 'if' ;
+ELSE : 'else' ;
 
 NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
