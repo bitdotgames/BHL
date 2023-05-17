@@ -238,7 +238,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
-  internal int next_semantic_token_idx = 0;
+  IToken prev_semantic_token = null;
   public readonly List<uint> encoded_semantic_tokens = new List<uint>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
@@ -5350,7 +5350,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return false;
   }
 
-  void AddSemanticTokenTypeName(ITerminalNode node)
+  void AddSemanticToken(ITerminalNode node)
   {
     if(node == null)
       return;
@@ -5365,34 +5365,29 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(node == null)
       return;
-    
-    AddSemanticToken(node.Symbol.StartIndex, node.Symbol.StopIndex, token_type, token_mods);
-  }
-  
-  void AddSemanticToken(int start_idx, int stop_idx, string token_type, params string[] token_mods)
-  {
-    if(start_idx < 0 || stop_idx < 0)
-      return;
-    
+
     if(string.IsNullOrEmpty(token_type))
       return;
-  
-    var tidx = Array.IndexOf(SupportedSemanticTokens.token_types, token_type);
+    
+    int tidx = Array.IndexOf(SupportedSemanticTokens.token_types, token_type);
     if(tidx < 0)
       return;
-    
-    //TODO: get this information from the token source
-    var next_start_pos = new SourcePos();//document.code.GetIndexPosition(next_semantic_token_idx);
-    var line_column_symb_pos = new SourcePos();//document.code.GetIndexPosition(start_idx);
 
-    var diff_line = line_column_symb_pos.line - next_start_pos.line;
-    var diff_column = diff_line != 0 ? line_column_symb_pos.column : line_column_symb_pos.column - next_start_pos.column;
+    int start_idx = node.Symbol.StartIndex;
+    int stop_idx = node.Symbol.StopIndex;
+    var token = tokens.Get(node.SourceInterval.a);
 
-    int bit_token_mods = 0;
+    if(prev_semantic_token == null)
+      prev_semantic_token = token;
+
+    int diff_line = token.Line - prev_semantic_token.Line;
+    int diff_column = diff_line != 0 ? token.Column : token.Column - prev_semantic_token.Column;
+
+    uint token_mod_bits = 0;
     for(int i = 0; i < token_mods.Length; i++)
     {
-      var idx = Array.IndexOf(SupportedSemanticTokens.modifiers, token_mods[i]);
-      bit_token_mods |= (int)Math.Pow(2, idx);
+      int idx = Array.IndexOf(SupportedSemanticTokens.modifiers, token_mods[i]);
+      token_mod_bits |= (1u << idx);
     }
     
     // line
@@ -5404,9 +5399,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // tokenType
     encoded_semantic_tokens.Add((uint)tidx);
     // tokenModifiers
-    encoded_semantic_tokens.Add((uint)bit_token_mods);
+    encoded_semantic_tokens.Add(token_mod_bits);
 
-    next_semantic_token_idx = start_idx;
+    prev_semantic_token = token;
   }
 }
 
