@@ -195,7 +195,7 @@ public class CompilationExecutor
        !Util.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
-      conf.logger.Log(1, "No stale files detected");
+      conf.logger.Log(1, "BHL no stale files detected");
       return;
     }
 
@@ -213,7 +213,7 @@ public class CompilationExecutor
       pw.Join();
 
     sw.Stop();
-    conf.logger.Log(2, $"Parse done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL parse done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -259,14 +259,14 @@ public class CompilationExecutor
       }
     }
     sw.Stop();
-    conf.logger.Log(2, $"Proc make done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL proc make done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.proj.inc_path);
     sw.Stop();
-    conf.logger.Log(2, $"Proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var kv in file2proc)
       errors.AddRange(kv.Value.result.errors);
@@ -283,7 +283,7 @@ public class CompilationExecutor
       file2proc
     );
     sw.Stop();
-    conf.logger.Log(2, $"Compile done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL compile done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -295,7 +295,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     var check_err = CheckUniqueSymbols(compiler_workers);
     sw.Stop();
-    conf.logger.Log(2, $"Check done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL check done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     if(check_err != null)
     {
       errors.Add(check_err);
@@ -311,7 +311,7 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     conf.postproc.Tally();
     sw.Stop();
-    conf.logger.Log(2, $"Postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)
