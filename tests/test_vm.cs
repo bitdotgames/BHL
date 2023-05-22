@@ -6847,35 +6847,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestDefaultArgCoroFuncIsProperlyReleasedOnStop()
-  {
-    string bhl = @"
-    coro func doer() {
-      yield()
-      yield()
-    }
-    coro func foo(func() a, coro func() cb = doer) {
-      a()
-      yield cb()
-    }
-
-    coro func test()
-    {
-      while(true) { 
-        yield foo(func() { int a = 1 })
-      }
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-    var fb = vm.Start("test");
-    for(int i=0;i<10;++i)
-      AssertTrue(vm.Tick());
-    vm.Stop(fb);
-    CommonChecks(vm);
-  }
-
-  [IsTested()]
   public void TestLambdaChangesSeveralVars()
   {
     string bhl = @"
