@@ -1954,6 +1954,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      bool yielded = false
    )
   {
+    AddSemanticToken(lmb_ctx.FUNC());
+
     if(yielded)
       CheckCoroCallValidity(ctx);
 
@@ -2280,6 +2282,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
+    AddSemanticToken(ctx.TYPEOF());
+
     var tp = ParseType(ctx.type());
 
     Annotate(ctx).eval_type = Types.ClassType;

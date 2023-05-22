@@ -7,28 +7,6 @@ namespace bhl.lsp {
 
 //public class ParserAnalyzer : bhlBaseVisitor<object>
 //{
-//  BHLDocument document;
-//
-//  public void Parse(BHLDocument document)
-//  {
-//    this.document = document;
-//    next_idx = 0;
-//    
-//    imports.Clear();
-//    func_decls.Clear();
-//    class_decls.Clear();
-//    encoded_semantic_tokens.Clear();
-//    
-//    VisitProgram(document.GetParser().program());
-//  }
-//  
-//  public override object VisitProgram(bhlParser.ProgramContext ctx)
-//  {
-//    for(var i=0;i<ctx.progblock().Length;++i)
-//      Visit(ctx.progblock()[i]);
-//    
-//    return null;
-//  }
 //
 //  public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
 //  {
@@ -125,23 +103,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitFuncBlock(bhlParser.FuncBlockContext ctx)
-//  {
-//    var fn_block = ctx.block();
-//    if(fn_block != null)
-//      Visit(fn_block);
-//    
-//    return null;
-//  }
-//  
-//  public override object VisitBlock(bhlParser.BlockContext ctx)
-//  {
-//    foreach(var item in ctx.statement())
-//      Visit(item);
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitExpTypeCast(bhlParser.ExpTypeCastContext ctx)
 //  {
 //    var cast_type = ctx.type();
@@ -155,60 +116,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitLambdaCall(bhlParser.LambdaCallContext ctx)
-//  {
-//    var fn_lmb = ctx.funcLambda();
-//    if(fn_lmb != null)
-//      Visit(fn_lmb);
-//    return null;
-//  }
-//  
-//  public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
-//  {
-//    var fn_lmb = ctx.funcLambda();
-//    if(fn_lmb != null)
-//      Visit(fn_lmb);
-//    return null;
-//  }
-//
-//  public override object VisitFuncLambda(bhlParser.FuncLambdaContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Start.StartIndex+3, spec.SemanticTokenTypes.keyword);
-//      
-//    var ret_type = ctx.retType();
-//    var fn_params = ctx.funcParams();
-//    var fn_block = ctx.funcBlock();
-//    var chain_exp = ctx.chainExp();
-//
-//    if(ret_type != null)
-//    {
-//      foreach(var t in ret_type.type())
-//      {
-//        if(t.exception != null)
-//          continue;
-//        
-//        Visit(t);
-//      }
-//    }
-//      
-//    if(fn_params != null)
-//    {
-//      foreach(var funcParamDeclare in fn_params.funcParamDeclare())
-//        VisitFuncParamDeclare(funcParamDeclare);
-//    }
-//      
-//    if(fn_block != null)
-//      Visit(fn_block);
-//      
-//    if(chain_exp != null)
-//    {
-//      foreach(var chainExpItem in chain_exp)
-//        Visit(chainExpItem);
-//    }
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitChainExp(bhlParser.ChainExpContext ctx)
 //  {
 //    if(ctx.callArgs() is bhlParser.CallArgsContext callArgs)
@@ -217,36 +124,6 @@ namespace bhl.lsp {
 //      Visit(memberAccess);
 //    else if(ctx.arrAccess() is bhlParser.ArrAccessContext arrAccess)
 //      Visit(arrAccess);
-//    
-//    return null;
-//  }
-//  
-//  public override object VisitForeach(bhlParser.ForeachContext ctx)
-//  {
-//    var foreach_exp = ctx.foreachExp();
-//    var foreach_block = ctx.block();
-//    
-//    if(foreach_exp != null)
-//    {
-//      AddSemanticToken(ctx.Start.StartIndex, foreach_exp.Start.StartIndex-1, spec.SemanticTokenTypes.keyword);
-//      
-//      var exp = foreach_exp.exp();
-//      if(exp != null)
-//        Visit(exp);
-//      
-//      //TODO: support multi-declares
-//      var var_or_decl = foreach_exp.varOrDeclares().varOrDeclare()[0];
-//      var var_decl = var_or_decl?.varDeclare();
-//      var var_or_decl_name = var_or_decl?.NAME();
-//      
-//      if(var_or_decl_name != null)
-//        AddSemanticToken(var_or_decl_name, spec.SemanticTokenTypes.variable);
-//      else if(var_decl != null)
-//        VisitVarDeclare(var_decl);
-//    }
-//    
-//    if(foreach_block != null)
-//      Visit(foreach_block);
 //    
 //    return null;
 //  }
@@ -502,18 +379,6 @@ namespace bhl.lsp {
 //    
 //    return null;
 //  }
-//
-//  public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
-//  {
-//    /*var typeIdType = ctx.typeid()?.type();
-//    if(typeIdType != null)
-//    {
-//      AddSemanticToken(ctx.Start.StartIndex, typeIdType.Start.StartIndex-2, spec.SemanticTokenTypes.keyword);
-//      Visit(typeIdType);
-//    }*/
-//    
-//    return null;
-//  }
 //  
 //  public override object VisitType(bhlParser.TypeContext ctx)
 //  {
@@ -540,28 +405,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
-//  {
-//    var ternary_if = ctx.ternaryIfExp();
-//    if(ternary_if != null)
-//    {
-//      var if_exp = ctx.exp();
-//      var if_exp_left = ternary_if.exp(0);
-//      var if_exp_right = ternary_if.exp(1);
-//
-//      if(if_exp != null)
-//        Visit(if_exp);
-//      
-//      if(if_exp_left != null)
-//        Visit(if_exp_left);
-//      
-//      if(if_exp_right != null)
-//        Visit(if_exp_right);
-//    }
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitVarPostIncDec(bhlParser.VarPostIncDecContext ctx)
 //  {
 //    CommonPostIncDec(ctx.callPostIncDec());
@@ -583,12 +426,6 @@ namespace bhl.lsp {
 //    //
 //    //if(incrementOperator != null)
 //    //  AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//  }
-//
-//  public override object VisitContinue(bhlParser.ContinueContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
-//    return null;
 //  }
 //}
 }
