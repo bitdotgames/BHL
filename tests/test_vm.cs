@@ -6802,6 +6802,7 @@ public class TestVM : BHL_TestBase
 
       var vm = MakeVM(bhl);
       AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
     });
 
     SubTest("order independent", () => {
@@ -6822,6 +6823,7 @@ public class TestVM : BHL_TestBase
 
       var vm = MakeVM(bhl);
       AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
     });
   }
 
@@ -6841,6 +6843,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [IsTested()]
