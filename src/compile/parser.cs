@@ -238,7 +238,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
-  IToken prev_semantic_token = null;
+  ITerminalNode prev_semantic_token = null;
   public readonly List<uint> encoded_semantic_tokens = new List<uint>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
@@ -4701,6 +4701,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDoWhile(bhlParser.StmDoWhileContext ctx)
   {
+    AddSemanticToken(ctx.DO());
+    AddSemanticToken(ctx.WHILE());
+
     var ast = new AST_Block(BlockType.DOWHILE);
 
     PushBlock(ast);
@@ -5385,9 +5388,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     AddSemanticToken(node, "keyword");
   }
   
-  void AddSemanticToken(ITerminalNode node, string token_type, params string[] token_mods)
+  void AddSemanticToken(ITerminalNode token, string token_type, params string[] token_mods)
   {
-    if(node == null)
+    if(token == null)
       return;
 
     if(string.IsNullOrEmpty(token_type))
@@ -5397,18 +5400,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(tidx < 0)
       return;
 
-    int start_idx = node.Symbol.StartIndex;
-    int stop_idx = node.Symbol.StopIndex;
-    //TODO: find out why this might happen
-    if(node.SourceInterval.a == -1)
-      return;
-    var token = tokens.Get(node.SourceInterval.a);
-
     if(prev_semantic_token == null)
       prev_semantic_token = token;
 
-    int diff_line = token.Line - prev_semantic_token.Line;
-    int diff_column = diff_line != 0 ? token.Column : token.Column - prev_semantic_token.Column;
+    int diff_line = token.Symbol.Line - prev_semantic_token.Symbol.Line;
+    int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev_semantic_token.Symbol.Column;
 
     uint token_mod_bits = 0;
     for(int i = 0; i < token_mods.Length; i++)
@@ -5422,7 +5418,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // startChar
     encoded_semantic_tokens.Add((uint)diff_column);
     // length
-    encoded_semantic_tokens.Add((uint)(stop_idx - start_idx + 1));
+    encoded_semantic_tokens.Add((uint)(token.Symbol.StopIndex - token.Symbol.StartIndex + 1));
     // tokenType
     encoded_semantic_tokens.Add((uint)tidx);
     // tokenModifiers
