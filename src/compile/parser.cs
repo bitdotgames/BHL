@@ -2983,6 +2983,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmReturn(bhlParser.StmReturnContext ctx)
   {
+    AddSemanticToken(ctx.RETURN());
+
     var ret_val = ctx.returnVal();
 
     //NOTE: special handling of the following case:
@@ -3165,6 +3167,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmBreak(bhlParser.StmBreakContext ctx)
   {
+    AddSemanticToken(ctx.BREAK());
+
     int loop_level = GetLoopBlockLevel();
 
     if(loop_level == -1)
@@ -3186,6 +3190,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmContinue(bhlParser.StmContinueContext ctx)
   {
+    AddSemanticToken(ctx.CONTINUE());
+
     int loop_level = GetLoopBlockLevel();
 
     if(loop_level == -1)
@@ -4496,6 +4502,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDefer(bhlParser.StmDeferContext ctx)
   {
+    AddSemanticToken(ctx.DEFER());
+
     if(CountBlocks(BlockType.DEFER) > 0)
     {
       AddSemanticError(ctx, "nested defers are not allowed");
@@ -4734,6 +4742,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // <post iter code>
     //}
 
+    AddSemanticToken(ctx.FOR());
+
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
@@ -4803,6 +4813,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYield(bhlParser.StmYieldContext ctx)
   {
+    AddSemanticToken(ctx.YIELD());
+
     CheckCoroCallValidity(ctx);
 
     int line = ctx.Start.Line;
@@ -4823,6 +4835,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
+
+    AddSemanticToken(ctx.YIELD());
+    AddSemanticToken(ctx.WHILE());
 
     CheckCoroCallValidity(ctx);
 
@@ -4853,6 +4868,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmForeach(bhlParser.StmForeachContext ctx)
   {
+    AddSemanticToken(ctx.FOREACH());
+    AddSemanticToken(ctx.foreachExp().IN());
+    
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
@@ -5381,6 +5399,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     int start_idx = node.Symbol.StartIndex;
     int stop_idx = node.Symbol.StopIndex;
+    //TODO: find out why this might happen
+    if(node.SourceInterval.a == -1)
+      return;
     var token = tokens.Get(node.SourceInterval.a);
 
     if(prev_semantic_token == null)

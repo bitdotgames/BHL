@@ -91,7 +91,7 @@ newExp
   ;
 
 foreachExp
-  : '(' varOrDeclare (',' varOrDeclare)* 'in' exp ')' 
+  : '(' varOrDeclare (',' varOrDeclare)* IN exp ')' 
   ;
 
 forPreIter
@@ -421,6 +421,7 @@ WHILE : 'while' ;
 DO : 'do' ;
 FOR : 'for' ;
 FOREACH : 'foreach' ;
+IN : 'in' ;
 BREAK : 'break' ;
 CONTINUE : 'continue' ;
 RETURN : 'return' ;
