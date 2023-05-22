@@ -4659,6 +4659,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmWhile(bhlParser.StmWhileContext ctx)
   {
+    AddSemanticToken(ctx.WHILE());
+
     var ast = new AST_Block(BlockType.WHILE);
 
     PushBlock(ast);
