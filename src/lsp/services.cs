@@ -459,22 +459,25 @@ public class TextDocumentHoverService : IService
 
 public class TextDocumentSemanticTokensService : IService
 {
-  //Workspace workspace;
+  Workspace workspace;
 
   public TextDocumentSemanticTokensService(Workspace workspace)
   {
-    //this.workspace = workspace;
+    this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/semanticTokens/full")]
   public RpcResult SemanticTokensFull(SemanticTokensParams args)
   {
-    //var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    //return RpcResult.Success(new SemanticTokens
-    //{
-    //  data = document.DataSemanticTokens.ToArray()
-    //});
+    if(document != null)
+    {
+      return RpcResult.Success(new SemanticTokens
+      {
+        data = document.proc.encoded_semantic_tokens.ToArray()
+      });
+    }
 
     return RpcResult.Success();
   }

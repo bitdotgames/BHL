@@ -3537,6 +3537,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
+    AddSemanticToken(pass.class_ctx.CLASS());
+    AddSemanticToken(pass.class_ctx.NAME(), "class");
+
     var name = pass.class_ctx.NAME().GetText();
 
     pass.class_symb = new ClassSymbolScript(Annotate(pass.class_ctx), name);
@@ -3706,6 +3709,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       for(int i=0;i<pass.class_ctx.extensions().nsName().Length;++i)
       {
         var ext_name = pass.class_ctx.extensions().nsName()[i]; 
+
+        AddSemanticToken(ext_name.dotName().NAME(), "class");
+
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
         var ext = curr_scope.ResolveSymbolByPath(ext_full_path);
         if(ext is ClassSymbol cs)

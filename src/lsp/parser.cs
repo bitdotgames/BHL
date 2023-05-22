@@ -7,31 +7,8 @@ namespace bhl.lsp {
 
 //public class ParserAnalyzer : bhlBaseVisitor<object>
 //{
-//
 //  public override object VisitClassDecl(bhlParser.ClassDeclContext ctx)
 //  {
-//    var class_name = ctx.NAME();
-//
-//    if(class_name != null)
-//    {
-//      var classDeclNameText = class_name.GetText();
-//      if(!class_decls.ContainsKey(classDeclNameText))
-//        class_decls.Add(classDeclNameText, ctx);
-//    }
-//    
-//    AddSemanticToken(ctx.Start.StartIndex, class_name.Symbol.StartIndex - 1, spec.SemanticTokenTypes.keyword);
-//    
-//    AddSemanticToken(class_name, spec.SemanticTokenTypes.@class);
-//    
-//    if(ctx.extensions() != null)
-//    {
-//      for(int i=0;i<ctx.extensions().nsName().Length;++i)
-//      {
-//        var ext_name = ctx.extensions().nsName()[i];
-//        AddSemanticToken(ext_name.dotName().NAME(), spec.SemanticTokenTypes.@class);
-//      }
-//    }
-//    
 //    foreach(var classMember in ctx.classBlock().classMembers().classMember())
 //    {
 //      var cl_mem_var_decl = classMember.fldDeclare()?.varDeclare();
