@@ -1902,6 +1902,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tp = new Proxy<IType>();
     if(ctx.nsName() != null)
     {
+      AddSemanticToken(ctx.nsName().dotName().NAME(), "type");
+
       if(ctx.nsName().GetText() == "var")
       {
         AddSemanticError(ctx.nsName(), "unexpected expression");
@@ -2358,6 +2360,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
+    AddSemanticToken(ctx.newExp().NEW());
+
     var cl = ParseType(ctx.newExp().type()).Get();
     Annotate(ctx).eval_type = cl;
 
@@ -2850,18 +2854,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
+      AddSemanticToken(int_num, "number");
+
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
+      AddSemanticToken(flt_num, "number");
+
       ast = new AST_Literal(ConstType.FLT);
       Annotate(ctx).eval_type = Types.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
+      AddSemanticToken(hex_num, "number");
+
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
@@ -2879,6 +2889,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
+    AddSemanticToken(ctx.FALSE(), "keyword");
+      
     Annotate(ctx).eval_type = Types.Bool;
 
     var ast = new AST_Literal(ConstType.BOOL);
@@ -2890,6 +2902,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
+    AddSemanticToken(ctx.NULL(), "keyword");
+
     Annotate(ctx).eval_type = Types.Null;
 
     var ast = new AST_Literal(ConstType.NIL);
@@ -2900,6 +2914,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
+    AddSemanticToken(ctx.TRUE(), "keyword");
+
     Annotate(ctx).eval_type = Types.Bool;
 
     var ast = new AST_Literal(ConstType.BOOL);
@@ -2911,6 +2927,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
+    AddSemanticToken(ctx.@string().NORMALSTRING(), "string");
+
     Annotate(ctx).eval_type = Types.String;
 
     var ast = new AST_Literal(ConstType.STR);
@@ -4344,6 +4362,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     out VariableSymbol symb 
   )
   {
+    AddSemanticToken(name, "variable");
+
     symb = null;
 
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
@@ -5410,11 +5430,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(tidx < 0)
       return;
 
-    if(prev_semantic_token == null)
-      prev_semantic_token = token;
-
-    int diff_line = token.Symbol.Line - prev_semantic_token.Symbol.Line;
-    int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev_semantic_token.Symbol.Column;
+    int diff_line = token.Symbol.Line - (prev_semantic_token?.Symbol?.Line??1);
+    int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev_semantic_token?.Symbol?.Column??0;
 
     uint token_mod_bits = 0;
     for(int i = 0; i < token_mods.Length; i++)

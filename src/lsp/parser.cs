@@ -159,20 +159,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitVarDeclare(bhlParser.VarDeclareContext ctx)
-//  {
-//    var var_decl_type = ctx.type();
-//    var var_decl_name = ctx.NAME();
-//      
-//    if(var_decl_type != null)
-//      Visit(var_decl_type);
-//      
-//    if(var_decl_name != null)
-//      AddSemanticToken(var_decl_name, spec.SemanticTokenTypes.variable);
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
 //  {
 //    var isRef = ctx.isRef();
@@ -197,41 +183,11 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
-//    return null;
-//  }
-//  
-//  public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
-//    return null;
-//  }
-//  
-//  public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
-//    return null;
-//  }
-//  
-//  public override object VisitExpLiteralNum(bhlParser.ExpLiteralNumContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.number);
-//    return null;
-//  }
-//  
 //  public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
 //  {
 //    var op = ctx.operatorUnary();
 //    AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
 //    Visit(ctx.exp());
-//    return null;
-//  }
-//  
-//  public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
-//  {
-//    AddSemanticToken(ctx.Start.StartIndex, ctx.Stop.StopIndex, spec.SemanticTokenTypes.@string);
 //    return null;
 //  }
 //  
@@ -262,16 +218,6 @@ namespace bhl.lsp {
 //          Visit(item_value.exp());
 //      }
 //    }
-//    
-//    return null;
-//  }
-//  
-//  public override object VisitNewExp(bhlParser.NewExpContext ctx)
-//  {
-//    var exp_type = ctx.type();
-//      
-//    AddSemanticToken(ctx.Start.StartIndex, exp_type.Start.StartIndex - 1, spec.SemanticTokenTypes.keyword);
-//    Visit(exp_type);
 //    
 //    return null;
 //  }
@@ -359,9 +305,6 @@ namespace bhl.lsp {
 //  
 //  public override object VisitType(bhlParser.TypeContext ctx)
 //  {
-//    //TODO: parse the whole nsName()
-//    AddSemanticTokenTypeName(ctx.nsName()?.dotName().NAME());
-//
 //    var fn_type = ctx.funcType();
 //    if(fn_type != null && fn_type.types() is bhlParser.TypesContext types)
 //    {
