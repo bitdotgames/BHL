@@ -2055,7 +2055,7 @@ public class ClassSymbolNative : ClassSymbol
       {
         var iface = pi.Get() as InterfaceSymbol;
         if(iface == null) 
-          throw new Exception("Implemented interface not found" + pi.path);
+          throw new Exception("Implemented interface not found: " + pi.path);
         implements.Add(iface);
       }
     }
