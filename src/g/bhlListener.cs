@@ -955,36 +955,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEnumMember([NotNull] bhlParser.EnumMemberContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterVirtualFlag([NotNull] bhlParser.VirtualFlagContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.virtualFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitVirtualFlag([NotNull] bhlParser.VirtualFlagContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterOverrideFlag([NotNull] bhlParser.OverrideFlagContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.overrideFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitOverrideFlag([NotNull] bhlParser.OverrideFlagContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.staticFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStaticFlag([NotNull] bhlParser.StaticFlagContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.staticFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

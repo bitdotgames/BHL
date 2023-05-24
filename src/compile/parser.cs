@@ -3637,7 +3637,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var attr = fldd.fldAttribs()[f];
           var attr_type = FieldAttrib.None;
 
-          if(attr.staticFlag() != null)
+          if(attr.STATIC() != null)
             attr_type = FieldAttrib.Static;
 
           if(fld_symb.attribs.HasFlag(attr_type))
@@ -3674,13 +3674,25 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var attr_type = FuncAttrib.None;
 
           if(attr.CORO() != null)
+          {
             attr_type = FuncAttrib.Coro;
-          else if(attr.virtualFlag() != null)
+            AddSemanticToken(attr.CORO(), SemanticToken.Keyword);
+          }
+          else if(attr.VIRTUAL() != null)
+          {
             attr_type = FuncAttrib.Virtual;
-          else if(attr.overrideFlag() != null)
+            AddSemanticToken(attr.VIRTUAL(), SemanticToken.Keyword);
+          }
+          else if(attr.OVERRIDE() != null)
+          {
             attr_type = FuncAttrib.Override;
-          else if(attr.staticFlag() != null)
+            AddSemanticToken(attr.OVERRIDE(), SemanticToken.Keyword);
+          }
+          else if(attr.STATIC() != null)
+          {
             attr_type = FuncAttrib.Static;
+            AddSemanticToken(attr.STATIC(), SemanticToken.Keyword);
+          }
 
           if(func_symb.attribs.HasFlag(attr_type))
             AddError(attr, "this attribute is set already");
@@ -5459,6 +5471,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void AddSemanticToken(ITerminalNode token, SemanticToken idx, SemanticModifier mods = 0)
   {
+    if(token == null)
+      return;
     semantic_tokens.Add(new SemanticTokenNode() { token = token, idx = idx, mods = mods});
     encoded_semantic_tokens.Clear();
   }

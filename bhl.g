@@ -190,7 +190,7 @@ classMembers
   ;
 
 fldAttribs
-  : staticFlag
+  : STATIC
   ;
 
 fldDeclare
@@ -230,20 +230,8 @@ enumMember
   : NAME '=' INT
   ;
 
-virtualFlag
-  : VIRTUAL
-  ;
-
-overrideFlag
-  : OVERRIDE
-  ;
-
-staticFlag
-  : STATIC
-  ;
-
 funcAttribs
-  : (CORO | virtualFlag | overrideFlag | staticFlag)
+  : (CORO | VIRTUAL | OVERRIDE | STATIC)
   ;
 
 funcDecl
