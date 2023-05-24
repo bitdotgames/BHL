@@ -320,39 +320,39 @@ assignExp
   ;
   
 operatorOr 
-  : '||'
+  : LOR
   ;
 
 operatorAnd 
-  : '&&'
+  : LAND
   ;
 
 operatorBitwise
-  : '|' | '&'
+  : BOR | BAND
   ;
 
 operatorIncDec
-  : '++' | '--'
+  : INC | DEC
   ;
 
 operatorSelfOp
-  : '+=' | '-=' | '*=' | '/='
+  : SINC | SDEC | SMUL | SDIV
   ;
 
 operatorComparison 
-  : '<' | '>' | '<=' | '>=' | '!=' | '=='
+  : LT | GT | LTE | GTE | NEQ | EQ
   ;
 
 operatorAddSub
-  : '+' | '-'
+  : PLUS | MINUS
   ;
 
 operatorMulDivMod
-  : '*' | '/' | '%'
+  : MUL | DIV | MOD
   ;
 
 operatorUnary
-  : '!' | '-'
+  : NOT | MINUS
   ;
 
 number
@@ -370,6 +370,7 @@ jsonObject
 
 jsonEmptyObj
   : '{' '}'
+  //TODO: why this special case?
   | '{}'
   ;
 
@@ -423,6 +424,28 @@ STATIC : 'static' ;
 CORO : 'coro' ;
 FUNC : 'func' ;
 REF : 'ref' ;
+LOR : '||' ;
+LAND : '&&' ;
+BOR : '|' ;
+BAND : '&' ;
+INC : '++' ;
+DEC : '--' ;
+SINC : '+=' ;
+SDEC : '-=' ;
+SMUL : '*=' ;
+SDIV : '/=' ;
+LT : '<' ;
+LTE : '<=' ;
+GT : '>' ;
+GTE : '>=' ;
+NEQ : '!=' ;
+EQ : '==' ;
+PLUS : '+' ;
+MINUS : '-' ;
+MUL : '*' ;
+DIV : '/' ;
+MOD : '%' ;
+NOT : '!' ;
 
 NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
