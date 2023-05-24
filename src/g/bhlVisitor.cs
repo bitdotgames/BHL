@@ -788,12 +788,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitOperatorUnary([NotNull] bhlParser.OperatorUnaryContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.isRef"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIsRef([NotNull] bhlParser.IsRefContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.number"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

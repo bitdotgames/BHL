@@ -1305,16 +1305,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitOperatorUnary([NotNull] bhlParser.OperatorUnaryContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.isRef"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterIsRef([NotNull] bhlParser.IsRefContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.isRef"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitIsRef([NotNull] bhlParser.IsRefContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.number"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

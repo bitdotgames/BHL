@@ -1622,7 +1622,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var func_arg_symb = func_symb.GetArg(i);
           var func_arg_type = func_arg_symb.GuessType();
 
-          bool is_ref = na.ca.isRef() != null;
+          bool is_ref = na.ca.REF() != null;
           if(!is_ref && func_arg_symb.is_ref)
           {
             AddError(na.ca, "'ref' is missing");
@@ -1781,13 +1781,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return;
       }
 
-      if(arg_type_ref.Get() is RefType && ca.isRef() == null)
+      if(arg_type_ref.Get() is RefType && ca.REF() == null)
       {
         AddError(ca, "'ref' is missing");
         PopAST();
         return;
       }
-      else if(!(arg_type_ref.Get() is RefType) && ca.isRef() != null)
+      else if(!(arg_type_ref.Get() is RefType) && ca.REF() != null)
       {
         AddError(ca, "argument is not a 'ref'");
         PopAST();
@@ -1857,9 +1857,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       for(int i=0;i<types_ctx.refType().Length;++i)
       {
-        var refType = types_ctx.refType()[i];
-        var arg_type = ParseType(refType.type());
-        if(refType.isRef() != null)
+        var ref_type = types_ctx.refType()[i];
+        var arg_type = ParseType(ref_type.type());
+        if(ref_type.REF() != null)
           arg_type = curr_scope.R().TRef(arg_type);
         arg_types.Add(arg_type);
       }
@@ -1884,13 +1884,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var vd = fparams.funcParamDeclare()[i];
 
         var tp = ParseType(vd.type());
-        if(vd.isRef() != null)
+        if(vd.REF() != null)
           tp = curr_scope.R().T(new RefType(tp));
 
         if(vd.VARIADIC() != null)
         {
-          if(vd.isRef() != null)
-            AddError(vd.isRef(), "pass by ref not allowed");
+          if(vd.REF() != null)
+            AddError(vd.REF(), "pass by ref not allowed");
 
           if(i != fparams.funcParamDeclare().Length-1)
             AddError(vd, "variadic argument must be last");
@@ -4324,7 +4324,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     var assign_exp = ctx.assignExp();
-    bool is_ref = ctx.isRef() != null;
+    bool is_ref = ctx.REF() != null;
     bool is_null_ref = false;
 
     if(is_ref && assign_exp != null)

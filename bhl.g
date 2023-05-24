@@ -160,7 +160,7 @@ callArgsList
   ;
 
 callArg
-  : VARIADIC? (NAME ':')? isRef? exp
+  : VARIADIC? (NAME ':')? REF? exp
   ;
 
 block 
@@ -271,7 +271,7 @@ funcLambda
   ;
 
 refType
-  : isRef? type
+  : REF? type
   ;
 
 retType
@@ -287,7 +287,7 @@ funcParams
   ;
 
 funcParamDeclare
-  : isRef? VARIADIC? type NAME assignExp?
+  : REF? VARIADIC? type NAME assignExp?
   ;
 
 varDeclare
@@ -369,10 +369,6 @@ operatorMulDivMod
 
 operatorUnary
   : '!' | '-'
-  ;
-
-isRef
-  : REF
   ;
 
 number

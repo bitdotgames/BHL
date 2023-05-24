@@ -1547,18 +1547,6 @@ public partial class bhlBaseListener : IbhlListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitOperatorUnary([NotNull] bhlParser.OperatorUnaryContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.isRef"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterIsRef([NotNull] bhlParser.IsRefContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.isRef"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitIsRef([NotNull] bhlParser.IsRefContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.number"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
