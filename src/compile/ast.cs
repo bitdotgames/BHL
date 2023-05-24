@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Antlr4.Runtime.Tree;
 
 namespace bhl {
 
@@ -347,6 +348,7 @@ public class AST_Call  : AST_Tree
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symb;
+  public ITerminalNode node;
   public int symb_idx {
     get {
       return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
@@ -366,13 +368,15 @@ public class AST_Call  : AST_Tree
     EnumCall type, 
     int line_num, 
     Symbol symb, 
-    uint cargs_bits = 0
+    uint cargs_bits = 0,
+    ITerminalNode node = null
   )
   {
     this.type = type;
     this.line_num = line_num;
     this.symb = symb;
     this.cargs_bits = cargs_bits;
+    this.node = node;
   }
 }
 

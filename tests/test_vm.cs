@@ -19126,7 +19126,7 @@ public class TestVM : BHL_TestBase
         @"function calls not allowed in global context",
         new PlaceAssert(bhl, @"
       int foo = make()
---------------------^"
+----------------^"
         )
       );
     }
@@ -19151,7 +19151,7 @@ public class TestVM : BHL_TestBase
         @"function calls not allowed in global context",
         new PlaceAssert(bhl, @"
       int foo = (new Foo).make()
--------------------------^"
+--------------------------^"
         )
       );
     }

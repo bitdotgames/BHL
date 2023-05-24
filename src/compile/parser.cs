@@ -911,7 +911,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       ValidateChainCall(
         chain.ctx, 
-        chain.items, 
         0,
         chain_ast.children, 
         yielded
@@ -1089,7 +1088,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   
   void ValidateChainCall(
     ParserRuleContext ctx, 
-    ExpChainItems chain_items, 
     int offset,
     List<IAST> chain_ast, 
     bool yielded
@@ -1099,22 +1097,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(chain_ast[i] is AST_Call call)
       {
-        if((call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC) &&
-            call.symb is FuncSymbol fs)
+        if(call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC)
         {
-          ValidateFuncCall(chain_items, i, chain_ast.Count-1 == i, fs.signature, yielded);
+          if(call.symb is FuncSymbol fs)
+            ValidateFuncCall(call, chain_ast.Count-1 == i, fs.signature, yielded);
         }
-        else if((call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR) && call.symb is VariableSymbol vs)
+        else if(call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR)
         {
-          ValidateFuncCall(chain_items, i, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+          if(call.symb is VariableSymbol vs)
+            ValidateFuncCall(call, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
   }
 
   void ValidateFuncCall(
-    ExpChainItems chain_items, 
-    int idx, 
+    AST_Call call,
     bool is_last, 
     FuncSignature fsig, 
     bool yielded
@@ -1122,7 +1120,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(chain_items.At(idx), "function calls not allowed in global context");
+      AddSemanticError(call.node, "function calls not allowed in global context");
       return;
     }
 
@@ -1130,12 +1128,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(chain_items.At(idx), "coro function must be called via yield");
+        AddSemanticError(call.node, "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(chain_items.At(idx), "not a coro function");
+        AddSemanticError(call.node, "not a coro function");
         return;
       }
     }
@@ -1143,7 +1141,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(chain_items.At(idx), "coro function must be called via yield");
+        AddSemanticError(call.node, "coro function must be called via yield");
         return;
       }
     }
@@ -1276,14 +1274,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(!(scope is IInstanceType))
           {
-            ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb);
+            ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
             type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb));
-            ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb);
+            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb, 0, name));
+            ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
             type = ftype.ret_type.Get();
           }
@@ -1293,7 +1291,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? 
             EnumCall.MFUNC : EnumCall.FUNC, 
             line, 
-            func_symb
+            func_symb,
+            0,
+            name
           );
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
@@ -1325,7 +1325,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
             (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
             line, 
-            var_symb
+            var_symb,
+            0,
+            name
           );
           //handling passing by ref for class fields
           if(fld_symb != null && PeekCallByRef())
@@ -1355,7 +1357,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb);
+          ast = new AST_Call(EnumCall.GET_ADDR, line, func_symb, 0, name);
           type = func_symb.signature;
         }
         else if(enum_symb != null)
@@ -2047,7 +2049,6 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     ValidateChainCall(
       ctx, 
-      chain_items, 
       1,
       interim.children, 
       yielded
@@ -3909,7 +3910,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     AST_Tree ast = assign_exp != null ? 
       //NOTE: we're in the global 'init' code, we use VARW instead of GVARW
-      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb) : 
+      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME()) : 
       (AST_Tree)new AST_VarDecl(pass.gvar_symb);
 
     if(exp_ast != null)
@@ -4397,7 +4398,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Annotate(name.Parent).lsp_symbol = symb;
 
     if(write)
-      return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb);
+      return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb, 0, name);
     else
       return new AST_VarDecl(symb, is_ref);
   }

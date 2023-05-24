@@ -3928,6 +3928,31 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNonCoroMemberCalledInYield()
+  {
+    string bhl = @"
+    class Bar {
+      func () cb
+
+      coro func test() {
+        yield this.cb()
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "not a coro function",
+      new PlaceAssert(bhl, @"
+        yield this.cb()
+-------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestStaticFieldImported()
   {
     string bhl1 = @"
