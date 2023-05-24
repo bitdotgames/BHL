@@ -43,24 +43,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
-//  {
-//    var op = ctx.operatorAddSub();
-//    var op_exp_left = ctx.exp(0);
-//    var op_exp_right = ctx.exp(1);
-//    
-//    if(op != null)
-//      AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//
-//    if(op_exp_left != null)
-//      Visit(op_exp_left);
-//    
-//    if(op_exp_right != null)
-//      Visit(op_exp_right);
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
 //  {
 //    var isRef = ctx.isRef();
@@ -90,12 +72,6 @@ namespace bhl.lsp {
 //    var op = ctx.operatorUnary();
 //    AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
 //    Visit(ctx.exp());
-//    return null;
-//  }
-//  
-//  public override object VisitExpJsonObj(bhlParser.ExpJsonObjContext ctx)
-//  {
-//    Visit(ctx.jsonObject());
 //    return null;
 //  }
 //  

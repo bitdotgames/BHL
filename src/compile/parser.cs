@@ -2609,6 +2609,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
+    AddSemanticToken(ctx.operatorAddSub().PLUS(), SemanticToken.Operator);
+    AddSemanticToken(ctx.operatorAddSub().MINUS(), SemanticToken.Operator);
+
     var op = ctx.operatorAddSub().GetText(); 
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
@@ -2618,6 +2621,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpMulDivMod(bhlParser.ExpMulDivModContext ctx)
   {
+    AddSemanticToken(ctx.operatorMulDivMod().MUL(), SemanticToken.Operator);
+    AddSemanticToken(ctx.operatorMulDivMod().DIV(), SemanticToken.Operator);
+    AddSemanticToken(ctx.operatorMulDivMod().MOD(), SemanticToken.Operator);
+
     var op = ctx.operatorMulDivMod().GetText(); 
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
@@ -5488,6 +5495,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Type     = 5,
     Keyword  = 6,
     Property = 7,
+    Operator = 8,
   }
 
   [Flags]
@@ -5510,7 +5518,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       "string",
       "type",
       "keyword",
-      "property"
+      "property",
+      "operator"
     };
     
     public static string[] modifiers = 
