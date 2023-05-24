@@ -58,7 +58,7 @@ public class JsonRpc : IJsonRpc
 
     string resp_json = string.Empty;
 
-    logger.Log(1, $"REQ({req?.method}, id: {req?.id.Value}) {req_json}");
+    logger.Log(1, $"REQ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 300 ? req_json.Substring(0,300) + ".." : req_json)}");
     
     //if there's no response error let's handle the request
     if(rsp == null && req != null)
@@ -88,7 +88,7 @@ public class JsonRpc : IJsonRpc
     }
 
     sw.Stop();
-    logger.Log(1, $"/REQ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {resp_json}");
+    logger.Log(1, $"/REQ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json.Length > 300 ? resp_json.Substring(0,300) + ".." : resp_json)}");
     
     return resp_json;
   }
