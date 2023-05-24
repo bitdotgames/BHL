@@ -109,8 +109,8 @@ public class LifecycleService : IService
           range = false,
           legend = new SemanticTokensLegend
           {
-            tokenTypes = SupportedSemanticTokens.token_types,
-            tokenModifiers = SupportedSemanticTokens.modifiers
+            tokenTypes = bhl.ANTLR_Processor.SemanticTokens.token_types,
+            tokenModifiers = bhl.ANTLR_Processor.SemanticTokens.modifiers
           }
         };
       }

@@ -88,7 +88,7 @@ public class BuildError : Exception, ICompileError
   }
 }
 
-public class SemanticError : Exception, ICompileError
+public class ParseError : Exception, ICompileError
 {
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
@@ -105,7 +105,7 @@ public class SemanticError : Exception, ICompileError
   public IParseTree place { get; }
   public ITokenStream tokens { get; }
 
-  public SemanticError(Module module, IParseTree place, ITokenStream tokens, string msg)
+  public ParseError(Module module, IParseTree place, ITokenStream tokens, string msg)
     : base(ErrorUtils.MakeMessage(module, place, tokens, msg))
   {
     this.text = msg;
@@ -114,7 +114,7 @@ public class SemanticError : Exception, ICompileError
     this.tokens = tokens;
   }
 
-  public SemanticError(AnnotatedParseTree w, string msg)
+  public ParseError(AnnotatedParseTree w, string msg)
     : this(w.module, w.tree, w.tokens, msg)
   {}
 }

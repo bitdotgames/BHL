@@ -344,14 +344,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PushScope(ns);
   }
 
-  void AddSemanticError(Origin origin, string msg) 
+  void AddError(Origin origin, string msg) 
   {
-    AddSemanticError(origin.parsed.tree, msg);
+    AddError(origin.parsed.tree, msg);
   }
 
-  void AddSemanticError(IParseTree place, string msg) 
+  void AddError(IParseTree place, string msg) 
   {
-    errors.Add(new SemanticError(module, place, tokens, msg));
+    errors.Add(new ParseError(module, place, tokens, msg));
   }
 
   void PushBlock(AST_Block block)
@@ -556,7 +556,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var file_path = imports.MapToFilePath(kv.Value);
       if(file_path == null || !File.Exists(file_path))
       {
-        AddSemanticError(kv.Key, "invalid import");
+        AddError(kv.Key, "invalid import");
         continue;
       }
 
@@ -751,13 +751,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!chain.IsFuncCall)
     {
-      AddSemanticError(exp, "unexpected expression");
+      AddError(exp, "unexpected expression");
       return null;
     }
 
     if(chain.Incomplete)
     {
-      AddSemanticError(exp, "incomplete statement");
+      AddError(exp, "incomplete statement");
       return null;
     }
 
@@ -940,13 +940,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           //NOTE: allowing static method pointers
           if(!m.attribs.HasFlag(FuncAttrib.Static))
           {
-            AddSemanticError(chain.items.At(chain.items.Count-1), "method pointers not supported");
+            AddError(chain.items.At(chain.items.Count-1), "method pointers not supported");
             return false;
           }
         }
         else
         {
-          AddSemanticError(chain.items.At(chain.items.Count-1), "invalid assignment");
+          AddError(chain.items.At(chain.items.Count-1), "invalid assignment");
           return false;
         }
       }
@@ -976,7 +976,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(name_symb == null)
     {
-      AddSemanticError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
+      AddError(root_name, "symbol '" + curr_name.GetText() + "' not resolved");
       return false;
     }
 
@@ -997,7 +997,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(curr_type == null)
     {
-      AddSemanticError(root_name, "bad chain call");
+      AddError(root_name, "bad chain call");
       return false;
     }
 
@@ -1067,7 +1067,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         scope = curr_type as IScope;
         if(!(scope is IInstanceType) && !(scope is EnumSymbol))
         {
-          AddSemanticError(macc, "type doesn't support member access via '.'");
+          AddError(macc, "type doesn't support member access via '.'");
           return false;
         }
 
@@ -1075,7 +1075,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
             macc_fs.attribs.HasFlag(FuncAttrib.Static))
         {
-          AddSemanticError(macc, "calling static method on instance is forbidden");
+          AddError(macc, "calling static method on instance is forbidden");
           return false;
         }
 
@@ -1120,7 +1120,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(PeekFuncDecl() == null)
     {
-      AddSemanticError(call.node, "function calls not allowed in global context");
+      AddError(call.node, "function calls not allowed in global context");
       return;
     }
 
@@ -1128,12 +1128,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(!yielded && fsig.is_coro)
       {
-        AddSemanticError(call.node, "coro function must be called via yield");
+        AddError(call.node, "coro function must be called via yield");
         return;
       }
       else if(yielded && !fsig.is_coro)
       {
-        AddSemanticError(call.node, "not a coro function");
+        AddError(call.node, "not a coro function");
         return;
       }
     }
@@ -1141,7 +1141,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(fsig.is_coro)
       {
-        AddSemanticError(call.node, "coro function must be called via yield");
+        AddError(call.node, "coro function must be called via yield");
         return;
       }
     }
@@ -1160,7 +1160,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(cs.super_class == null)
       {
-        AddSemanticError(curr_name, "no base class found");
+        AddError(curr_name, "no base class found");
         return;
       }
       else
@@ -1169,13 +1169,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         scope = cs.super_class;
         if(chain_items.Count <= chain_offset)
         {
-          AddSemanticError(curr_name, "bad base call");
+          AddError(curr_name, "bad base call");
           return;
         }
         var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
         if(macc == null)
         {
-          AddSemanticError(chain_items.At(chain_offset), "bad base call");
+          AddError(chain_items.At(chain_offset), "bad base call");
           return;
         }
         curr_name = macc.NAME(); 
@@ -1203,13 +1203,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
         if(macc == null)
         {
-          AddSemanticError(chain_items.At(chain_offset), "bad chain call");
+          AddError(chain_items.At(chain_offset), "bad chain call");
           return;
         }
         name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
         if(name_symb == null)
         {
-          AddSemanticError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
+          AddError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
           return;
         }
         curr_name = macc.NAME(); 
@@ -1246,7 +1246,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(name_symb == null)
       {
-        AddSemanticError(name, "symbol '" + name.GetText() + "' not resolved");
+        AddError(name, "symbol '" + name.GetText() + "' not resolved");
         return name_symb;
       }
 
@@ -1263,7 +1263,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(var_symb is FieldSymbol && !(var_symb.type.Get() is FuncSignature))
         {
-          AddSemanticError(name, "symbol is not a function");
+          AddError(name, "symbol is not a function");
           return name_symb;
         }
 
@@ -1300,7 +1300,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else
         {
-          AddSemanticError(name, "symbol is not a function");
+          AddError(name, "symbol is not a function");
           return name_symb;
         }
       }
@@ -1317,7 +1317,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(scope is InterfaceSymbol)
           {
-            AddSemanticError(name, "attributes not supported by interfaces");
+            AddError(name, "attributes not supported by interfaces");
             return name_symb;
           }
 
@@ -1334,7 +1334,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           {
             if(scope is ClassSymbolNative)
             {
-              AddSemanticError(name, "getting native class field by 'ref' not supported");
+              AddError(name, "getting native class field by 'ref' not supported");
               return name_symb;
             }
             ast.type = EnumCall.MVARREF; 
@@ -1343,12 +1343,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           {
             if(ast.type == EnumCall.MVAR && fld_symb.getter == null)
             {
-              AddSemanticError(name, "get operation is not defined");
+              AddError(name, "get operation is not defined");
               return name_symb;
             }
             else if(ast.type == EnumCall.MVARW && fld_symb.setter == null)
             {
-              AddSemanticError(name, "set operation is not defined");
+              AddError(name, "set operation is not defined");
               return name_symb;
             }
           }
@@ -1364,7 +1364,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           if(is_leftover)
           {
-            AddSemanticError(name, "symbol usage is not valid");
+            AddError(name, "symbol usage is not valid");
             return name_symb;
           }
           type = enum_symb;
@@ -1381,7 +1381,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else
         {
-          AddSemanticError(name, "symbol usage is not valid");
+          AddError(name, "symbol usage is not valid");
           return name_symb;
         }
       }
@@ -1391,7 +1391,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var ftype = type as FuncSignature;
       if(ftype == null)
       {
-        AddSemanticError(cargs, "no func to call");
+        AddError(cargs, "no func to call");
         return name_symb;
       }
       
@@ -1419,7 +1419,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(Annotate(arr_exp).eval_type != Types.Int)
       {
-        AddSemanticError(arr_exp, "array index expression is not of type int");
+        AddError(arr_exp, "array index expression is not of type int");
         return;
       }
 
@@ -1436,7 +1436,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(!Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
       {
-        AddSemanticError(arr_exp, "not compatible map key types");
+        AddError(arr_exp, "not compatible map key types");
         return;
       }
 
@@ -1447,7 +1447,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
     {
-      AddSemanticError(arracc, "accessing not an array/map type '" + type?.GetName() + "'");
+      AddError(arracc, "accessing not an array/map type '" + type?.GetName() + "'");
       return;
     }
   }
@@ -1473,7 +1473,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       arg.orig = func_symb.TryGetArg(i);
       if(arg.orig == null)
       {
-        AddSemanticError(func_symb.origin, "bad signature");
+        AddError(func_symb.origin, "bad signature");
         return;
       }
       norm_cargs.Add(arg); 
@@ -1496,13 +1496,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         idx = func_symb.FindArgIdx(ca_name.GetText());
         if(idx == -1)
         {
-          AddSemanticError(ca_name, "no such named argument");
+          AddError(ca_name, "no such named argument");
           return;
         }
 
         if(norm_cargs[idx].ca != null)
         {
-          AddSemanticError(ca_name, "argument already passed before");
+          AddError(ca_name, "argument already passed before");
           return;
         }
       }
@@ -1511,7 +1511,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         variadic_args.Add(ca);
       else if(idx >= func_symb.GetTotalArgsNum())
       {
-        AddSemanticError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_symb.GetTotalArgsNum());
+        AddError(ca, "there is no argument " + (idx + 1) + ", total arguments " + func_symb.GetTotalArgsNum());
         return;
       }
       else
@@ -1535,7 +1535,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(i < required_args_num)
           {
-            AddSemanticError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
+            AddError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
             PopAST();
             return;
           }
@@ -1549,14 +1549,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
               int default_arg_idx = i - required_args_num;
               if(!args_info.UseDefaultArg(default_arg_idx, true))
               {
-                AddSemanticError(next_arg, "max default arguments reached");
+                AddError(next_arg, "max default arguments reached");
                 PopAST();
                 return;
               }
             }
             else
             {
-              AddSemanticError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
+              AddError(next_arg, "missing argument '" + norm_cargs[i].orig.name + "'");
               PopAST();
               return;
             }
@@ -1566,7 +1566,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           if(na.ca.VARIADIC() != null)
           {
-            AddSemanticError(na.ca, "not variadic argument");
+            AddError(na.ca, "not variadic argument");
             PopAST();
             return;
           }
@@ -1574,7 +1574,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           prev_ca = na.ca;
           if(!args_info.IncArgsNum())
           {
-            AddSemanticError(na.ca, "max arguments reached");
+            AddError(na.ca, "max arguments reached");
             PopAST();
             return;
           }
@@ -1585,13 +1585,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           bool is_ref = na.ca.isRef() != null;
           if(!is_ref && func_arg_symb.is_ref)
           {
-            AddSemanticError(na.ca, "'ref' is missing");
+            AddError(na.ca, "'ref' is missing");
             PopAST();
             return;
           }
           else if(is_ref && !func_arg_symb.is_ref)
           {
-            AddSemanticError(na.ca, "argument is not a 'ref'");
+            AddError(na.ca, "argument is not a 'ref'");
             PopAST();
             return;
           }
@@ -1613,7 +1613,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             if(!(na.ca.exp() is bhlParser.ExpChainContext ca_chain_exp) ||
                 !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsVarAccess)) 
             {
-              AddSemanticError(na.ca, "expression is not passable by 'ref'");
+              AddError(na.ca, "expression is not passable by 'ref'");
               PopAST();
               PopAST();
               return;
@@ -1626,7 +1626,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
           if(func_arg_type == null)
           {
-            AddSemanticError(na.ca, "unresolved type " + func_arg_symb.type);
+            AddError(na.ca, "unresolved type " + func_arg_symb.type);
             PopAST();
             return;
           }
@@ -1642,7 +1642,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(!args_info.IncArgsNum())
         {
-          AddSemanticError(na.ca, "max arguments reached");
+          AddError(na.ca, "max arguments reached");
           PopAST();
           return;
         }
@@ -1669,7 +1669,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var varg_type = varg_arr_type.item_type.Get();
           if(variadic_args.Count > 0 && varg_type == null)
           {
-            AddSemanticError(na.ca, "unresolved type " + varg_arr_type.item_type);
+            AddError(na.ca, "unresolved type " + varg_arr_type.item_type);
             PopAST();
             return;
           }
@@ -1713,7 +1713,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        AddSemanticError(next_arg, "missing argument of type '" + arg_type_ref.path + "'");
+        AddError(next_arg, "missing argument of type '" + arg_type_ref.path + "'");
         PopAST();
         return;
       }
@@ -1723,7 +1723,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(ca_name != null)
       {
-        AddSemanticError(ca_name, "named arguments not supported for function pointers");
+        AddError(ca_name, "named arguments not supported for function pointers");
         PopAST();
         return;
       }
@@ -1743,13 +1743,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(arg_type_ref.Get() is RefType && ca.isRef() == null)
       {
-        AddSemanticError(ca, "'ref' is missing");
+        AddError(ca, "'ref' is missing");
         PopAST();
         return;
       }
       else if(!(arg_type_ref.Get() is RefType) && ca.isRef() != null)
       {
-        AddSemanticError(ca, "argument is not a 'ref'");
+        AddError(ca, "argument is not a 'ref'");
         PopAST();
         return;
       }
@@ -1760,14 +1760,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(ca_len != func_args.Count)
     {
-      AddSemanticError(cargs, "too many arguments");
+      AddError(cargs, "too many arguments");
       return;
     }
 
     var args_info = new FuncArgsInfo();
     if(!args_info.SetArgsNum(func_args.Count))
     {
-      AddSemanticError(cargs, "max arguments reached");
+      AddError(cargs, "max arguments reached");
       return;
     }
     call.cargs_bits = args_info.bits;
@@ -1850,13 +1850,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         if(vd.VARIADIC() != null)
         {
           if(vd.isRef() != null)
-            AddSemanticError(vd.isRef(), "pass by ref not allowed");
+            AddError(vd.isRef(), "pass by ref not allowed");
 
           if(i != fparams.funcParamDeclare().Length-1)
-            AddSemanticError(vd, "variadic argument must be last");
+            AddError(vd, "variadic argument must be last");
 
           if(vd.assignExp() != null)
-            AddSemanticError(vd.assignExp(), "default argument is not allowed");
+            AddError(vd.assignExp(), "default argument is not allowed");
 
           sig.has_variadic = true;
           ++default_args_num;
@@ -1894,7 +1894,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       tp = ParseType(parsed.type()[0]);
 
     if(tp.Get() == null)
-      AddSemanticError(parsed, "type '" + tp.path + "' not found");
+      AddError(parsed, "type '" + tp.path + "' not found");
 
     return tp;
   }
@@ -1904,11 +1904,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tp = new Proxy<IType>();
     if(ctx.nsName() != null)
     {
-      AddSemanticToken(ctx.nsName().dotName().NAME(), "type");
+      AddSemanticToken(ctx.nsName().dotName().NAME(), SemanticToken.Type);
 
       if(ctx.nsName().GetText() == "var")
       {
-        AddSemanticError(ctx.nsName(), "unexpected expression");
+        AddError(ctx.nsName(), "unexpected expression");
         return tp;
       }
 
@@ -1921,7 +1921,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(tp.Get() == null)
       {
-        AddSemanticError(ctx, "type '" + tp.path + "' not found");
+        AddError(ctx, "type '" + tp.path + "' not found");
         return tp;
       }
       tp = curr_scope.R().TArr(tp);
@@ -1930,13 +1930,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(tp.Get() == null)
       {
-        AddSemanticError(ctx, "type '" + tp.path + "' not found");
+        AddError(ctx, "type '" + tp.path + "' not found");
         return tp;
       }
       var ktp = curr_scope.R().T(ctx.mapType().nsName().GetText());
       if(ktp.Get() == null)
       {
-        AddSemanticError(ctx, "type '" + ktp.path + "' not found");
+        AddError(ctx, "type '" + ktp.path + "' not found");
         return tp;
       }
       tp = curr_scope.R().TMap(ktp, tp);
@@ -1944,7 +1944,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(tp.Get() == null)
     {
-      AddSemanticError(ctx, "type '" + tp.path + "' not found");
+      AddError(ctx, "type '" + tp.path + "' not found");
       return tp;
     }
 
@@ -1958,7 +1958,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      bool yielded = false
    )
   {
-    AddSemanticToken(lmb_ctx.FUNC());
+    AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
 
     if(yielded)
       CheckCoroCallValidity(ctx);
@@ -2099,7 +2099,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(curr_type == null)
     {
-      AddSemanticError(ctx, "can't determine type of {..} expression");
+      AddError(ctx, "can't determine type of {..} expression");
       return null;
     }
 
@@ -2108,13 +2108,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         (curr_type is MapTypeSymbol)
         )
     {
-      AddSemanticError(ctx, "type '" + curr_type + "' can't be specified with {..}");
+      AddError(ctx, "type '" + curr_type + "' can't be specified with {..}");
       return null;
     }
 
     if(curr_type is ClassSymbolNative csn && csn.creator == null)
     {
-      AddSemanticError(ctx, "constructor is not defined");
+      AddError(ctx, "constructor is not defined");
       return null;
     }
 
@@ -2143,13 +2143,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_type = PeekJsonType();
     if(curr_type == null)
     {
-      AddSemanticError(ctx, "can't determine type of [..] expression");
+      AddError(ctx, "can't determine type of [..] expression");
       return null;
     }
 
     if(!(curr_type is ArrayTypeSymbol) && !(curr_type is MapTypeSymbol))
     {
-      AddSemanticError(ctx, "type '" + curr_type + "' can't be specified with [..]");
+      AddError(ctx, "type '" + curr_type + "' can't be specified with [..]");
       return null;
     }
 
@@ -2158,7 +2158,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var orig_type = arr_type.item_type.Get();
       if(orig_type == null)
       {
-        AddSemanticError(ctx,  "type '" + arr_type.item_type.path + "' not found");
+        AddError(ctx,  "type '" + arr_type.item_type.path + "' not found");
         return null;
       }
       PushJsonType(orig_type);
@@ -2187,13 +2187,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var key_type = map_type.key_type.Get();
       if(key_type == null)
       {
-        AddSemanticError(ctx,  "type '" + map_type.key_type.path + "' not found");
+        AddError(ctx,  "type '" + map_type.key_type.path + "' not found");
         return null;
       }
       var val_type = map_type.val_type.Get();
       if(val_type == null)
       {
-        AddSemanticError(ctx,  "type '" + map_type.val_type.path + "' not found");
+        AddError(ctx,  "type '" + map_type.val_type.path + "' not found");
         return null;
       }
       var ast = new AST_JsonMap(curr_type, ctx.Start.Line);
@@ -2205,7 +2205,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var val = vals[i].exp() as bhlParser.ExpJsonArrContext;
         if(val?.jsonArray()?.jsonValue()?.Length != 2)
         {
-          AddSemanticError(val == null ? (IParseTree)ctx : (IParseTree)val,  "[k, v] expected");
+          AddError(val == null ? (IParseTree)ctx : (IParseTree)val,  "[k, v] expected");
           continue;
         }
 
@@ -2237,7 +2237,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var scoped_symb = curr_type as ClassSymbol;
     if(scoped_symb == null)
     {
-      AddSemanticError(ctx, "expecting class type, got '" + curr_type + "' instead");
+      AddError(ctx, "expecting class type, got '" + curr_type + "' instead");
       return null;
     }
 
@@ -2246,7 +2246,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var member = scoped_symb.ResolveWithFallback(name_str) as VariableSymbol;
     if(member == null)
     {
-      AddSemanticError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
+      AddError(ctx, "no such attribute '" + name_str + "' in class '" + scoped_symb.name + "'");
       return null;
     }
 
@@ -2285,7 +2285,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
-    AddSemanticToken(ctx.TYPEOF());
+    AddSemanticToken(ctx.TYPEOF(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
 
@@ -2346,13 +2346,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var curr_func = PeekFuncDecl();
     if(!curr_func.attribs.HasFlag(FuncAttrib.Coro))
     {
-      AddSemanticError(curr_func.origin, "function with yield calls must be coro");
+      AddError(curr_func.origin, "function with yield calls must be coro");
       return;
     }
 
     if(GetBlockLevel(BlockType.DEFER) != -1)
     {
-      AddSemanticError(ctx, "yield is not allowed in defer block");
+      AddError(ctx, "yield is not allowed in defer block");
       return;
     }
 
@@ -2361,14 +2361,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    AddSemanticToken(ctx.newExp().NEW());
+    AddSemanticToken(ctx.newExp().NEW(), SemanticToken.Keyword);
 
     var cl = ParseType(ctx.newExp().type()).Get();
     Annotate(ctx).eval_type = cl;
 
     if(cl is ClassSymbolNative csn && csn.creator == null)
     {
-      AddSemanticError(ctx, "constructor is not defined");
+      AddError(ctx, "constructor is not defined");
       return null;
     }
 
@@ -2530,7 +2530,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var chain = new ExpChain(ctx, chain_ctx);
       if(!chain.IsVarAccess)
       {
-        AddSemanticError(chain_ctx, "unexpected expression");
+        AddError(chain_ctx, "unexpected expression");
         return false;
       }
 
@@ -2540,7 +2540,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(chain.Incomplete)
       {
-        AddSemanticError(ctx, "incomplete statement");
+        AddError(ctx, "incomplete statement");
         return false;
       }
 
@@ -2550,7 +2550,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(!Types.IsNumeric(curr_type))
       {
-        AddSemanticError(ctx, "is not numeric type");
+        AddError(ctx, "is not numeric type");
         return false;
       }
 
@@ -2609,7 +2609,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var chain = new ExpChain(ctx, chain_exp);
     if(chain.Incomplete)
     {
-      AddSemanticError(ctx, "incomplete statement");
+      AddError(ctx, "incomplete statement");
       return false;
     }
 
@@ -2628,7 +2628,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!Types.IsNumeric(curr_type))
     {
-      AddSemanticError(ctx, "only numeric types supported");
+      AddError(ctx, "only numeric types supported");
       return false;
     }
 
@@ -2855,7 +2855,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
-      AddSemanticToken(int_num, "number");
+      AddSemanticToken(int_num, SemanticToken.Number);
 
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
@@ -2863,7 +2863,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else if(flt_num != null)
     {
-      AddSemanticToken(flt_num, "number");
+      AddSemanticToken(flt_num, SemanticToken.Number);
 
       ast = new AST_Literal(ConstType.FLT);
       Annotate(ctx).eval_type = Types.Float;
@@ -2871,7 +2871,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else if(hex_num != null)
     {
-      AddSemanticToken(hex_num, "number");
+      AddSemanticToken(hex_num, SemanticToken.Number);
 
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
@@ -2879,7 +2879,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
     else
     {
-      AddSemanticError(ctx, "unknown numeric literal type");
+      AddError(ctx, "unknown numeric literal type");
       return null;
     }
 
@@ -2890,7 +2890,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    AddSemanticToken(ctx.FALSE(), "keyword");
+    AddSemanticToken(ctx.FALSE(), SemanticToken.Keyword);
       
     Annotate(ctx).eval_type = Types.Bool;
 
@@ -2903,7 +2903,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    AddSemanticToken(ctx.NULL(), "keyword");
+    AddSemanticToken(ctx.NULL(), SemanticToken.Keyword);
 
     Annotate(ctx).eval_type = Types.Null;
 
@@ -2915,7 +2915,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    AddSemanticToken(ctx.TRUE(), "keyword");
+    AddSemanticToken(ctx.TRUE(), SemanticToken.Keyword);
 
     Annotate(ctx).eval_type = Types.Bool;
 
@@ -2928,7 +2928,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    AddSemanticToken(ctx.@string().NORMALSTRING(), "string");
+    AddSemanticToken(ctx.@string().NORMALSTRING(), SemanticToken.String);
 
     Annotate(ctx).eval_type = Types.String;
 
@@ -3006,7 +3006,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmReturn(bhlParser.StmReturnContext ctx)
   {
-    AddSemanticToken(ctx.RETURN());
+    AddSemanticToken(ctx.RETURN(), SemanticToken.Keyword);
 
     var ret_val = ctx.returnVal();
 
@@ -3074,12 +3074,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(CountBlocks(BlockType.DEFER) > 0)
       //we can proceed
-      AddSemanticError(ctx, "return is not allowed in defer block");
+      AddError(ctx, "return is not allowed in defer block");
 
     var func_symb = PeekFuncDecl();
     if(func_symb == null)
     {
-      AddSemanticError(ctx, "return statement is not in function");
+      AddError(ctx, "return statement is not in function");
       return null;
     }
     
@@ -3130,13 +3130,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(fmret_type == null)
         {
-          AddSemanticError(ctx, "function doesn't support multi return");
+          AddError(ctx, "function doesn't support multi return");
           return null;
         }
 
         if(fmret_type.Count != explen)
         {
-          AddSemanticError(ctx, "multi return size doesn't match destination");
+          AddError(ctx, "multi return size doesn't match destination");
           return null;
         }
 
@@ -3178,7 +3178,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(func_symb.GetReturnType() != Types.Void)
       {
-        AddSemanticError(ctx, "return value is missing");
+        AddError(ctx, "return value is missing");
         return null;
       }
       Annotate(ctx).eval_type = Types.Void;
@@ -3190,19 +3190,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmBreak(bhlParser.StmBreakContext ctx)
   {
-    AddSemanticToken(ctx.BREAK());
+    AddSemanticToken(ctx.BREAK(), SemanticToken.Keyword);
 
     int loop_level = GetLoopBlockLevel();
 
     if(loop_level == -1)
     {
-      AddSemanticError(ctx, "not within loop construct");
+      AddError(ctx, "not within loop construct");
       return null;
     }
 
     if(GetBlockLevel(BlockType.DEFER) > loop_level)
     {
-      AddSemanticError(ctx, "not within loop construct");
+      AddError(ctx, "not within loop construct");
       return null;
     }
 
@@ -3213,19 +3213,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmContinue(bhlParser.StmContinueContext ctx)
   {
-    AddSemanticToken(ctx.CONTINUE());
+    AddSemanticToken(ctx.CONTINUE(), SemanticToken.Keyword);
 
     int loop_level = GetLoopBlockLevel();
 
     if(loop_level == -1)
     {
-      AddSemanticError(ctx, "not within loop construct");
+      AddError(ctx, "not within loop construct");
       return null;
     }
 
     if(GetBlockLevel(BlockType.DEFER) > loop_level)
     {
-      AddSemanticError(ctx, "not within loop construct");
+      AddError(ctx, "not within loop construct");
       return null;
     }
 
@@ -3283,7 +3283,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() == null)
       //we can proceed
-      AddSemanticError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
+      AddError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
     var func_ann = Annotate(pass.func_ctx);
     pass.func_symb = new FuncSymbolScript(
@@ -3294,7 +3294,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!pass.scope.TryDefine(pass.func_symb, out SymbolError err))
     {
-      AddSemanticError(pass.func_ctx.NAME(), err.Message);
+      AddError(pass.func_ctx.NAME(), err.Message);
       pass.Clear();
       return;
     }
@@ -3361,10 +3361,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     PopAST();
 
     if(func_ast.symbol.GetReturnType() != Types.Void && !return_found.Contains(func_ast.symbol))
-      AddSemanticError(ret_ctx, "matching 'return' statement not found");
+      AddError(ret_ctx, "matching 'return' statement not found");
 
     if(func_ast.symbol.attribs.HasFlag(FuncAttrib.Coro) && !has_yield_calls.Contains(func_ast.symbol))
-      AddSemanticError(ctx, "coro functions without yield calls not allowed");
+      AddError(ctx, "coro functions without yield calls not allowed");
   }
 
   void Pass_OutlineNamespace(ParserPass pass)
@@ -3391,7 +3391,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
     {
-      AddSemanticError(vd.NAME(), err.Message);
+      AddError(vd.NAME(), err.Message);
       pass.Clear();
     }
   }
@@ -3408,7 +3408,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!pass.scope.TryDefine(pass.iface_symb, out SymbolError err))
     {
-      AddSemanticError(pass.iface_ctx.NAME(), err.Message);
+      AddError(pass.iface_ctx.NAME(), err.Message);
       pass.Clear();
     }
   }
@@ -3429,7 +3429,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var sig = ParseFuncSignature(fd.coroFlag() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
         {
-          AddSemanticError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
+          AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
           return;
         }
 
@@ -3440,7 +3440,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         );
         if(!pass.iface_symb.TryDefine(func_symb, out SymbolError err))
         {
-          AddSemanticError(fd.NAME(), err.Message);
+          AddError(fd.NAME(), err.Message);
           return;
         }
 
@@ -3477,13 +3477,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           if(ext == pass.iface_symb)
           {
-            AddSemanticError(ext_name, "self inheritance is not allowed");
+            AddError(ext_name, "self inheritance is not allowed");
             return;
           }
 
           if(inherits.IndexOf(ifs) != -1)
           {
-            AddSemanticError(ext_name, "interface is inherited already");
+            AddError(ext_name, "interface is inherited already");
             return;
           }
 
@@ -3491,7 +3491,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else
         {
-          AddSemanticError(ext_name, "not a valid interface");
+          AddError(ext_name, "not a valid interface");
           return;
         }
       }
@@ -3556,15 +3556,15 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    AddSemanticToken(pass.class_ctx.CLASS());
-    AddSemanticToken(pass.class_ctx.NAME(), "class");
+    AddSemanticToken(pass.class_ctx.CLASS(), SemanticToken.Keyword);
+    AddSemanticToken(pass.class_ctx.NAME(), SemanticToken.Class);
 
     var name = pass.class_ctx.NAME().GetText();
 
     pass.class_symb = new ClassSymbolScript(Annotate(pass.class_ctx), name);
     if(!pass.scope.TryDefine(pass.class_symb, out SymbolError err))
     {
-      AddSemanticError(pass.class_ctx.NAME(), err.Message);
+      AddError(pass.class_ctx.NAME(), err.Message);
       return;
     }
 
@@ -3581,7 +3581,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(vd.NAME().GetText() == "this")
         {
-          AddSemanticError(vd.NAME(), "the keyword 'this' is reserved");
+          AddError(vd.NAME(), "the keyword 'this' is reserved");
           return;
         }
 
@@ -3596,14 +3596,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             attr_type = FieldAttrib.Static;
 
           if(fld_symb.attribs.HasFlag(attr_type))
-            AddSemanticError(attr, "this attribute is set already");
+            AddError(attr, "this attribute is set already");
 
           fld_symb.attribs |= attr_type;
         }
 
         if(!pass.class_symb.TryDefine(fld_symb, out SymbolError symb_err))
         {
-          AddSemanticError(vd.NAME(), symb_err.Message);
+          AddError(vd.NAME(), symb_err.Message);
           return;
         }
       }
@@ -3613,7 +3613,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         if(fd.NAME().GetText() == "this")
         {
-          AddSemanticError(fd.NAME(), "the keyword 'this' is reserved");
+          AddError(fd.NAME(), "the keyword 'this' is reserved");
           return;
         }
 
@@ -3638,7 +3638,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             attr_type = FuncAttrib.Static;
 
           if(func_symb.attribs.HasFlag(attr_type))
-            AddSemanticError(attr, "this attribute is set already");
+            AddError(attr, "this attribute is set already");
 
           func_symb.attribs |= attr_type;
         }
@@ -3647,7 +3647,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           func_symb.ReserveThisArgument(pass.class_symb);
 
         if(!pass.class_symb.TryDefine(func_symb, out SymbolError symb_err))
-          AddSemanticError(fd.NAME(), symb_err.Message);
+          AddError(fd.NAME(), symb_err.Message);
 
         var func_ast = new AST_FuncDecl(func_symb, fd.Stop.Line);
         pass.class_ast.AddChild(func_ast);
@@ -3729,7 +3729,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var ext_name = pass.class_ctx.extensions().nsName()[i]; 
 
-        AddSemanticToken(ext_name.dotName().NAME(), "class");
+        AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
 
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
         var ext = curr_scope.ResolveSymbolByPath(ext_full_path);
@@ -3737,19 +3737,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           if(ext == pass.class_symb)
           {
-            AddSemanticError(ext_name, "self inheritance is not allowed");
+            AddError(ext_name, "self inheritance is not allowed");
             return;
           }
 
           if(super_class != null)
           {
-            AddSemanticError(ext_name, "only one parent class is allowed");
+            AddError(ext_name, "only one parent class is allowed");
             return;
           }
 
           if(cs is ClassSymbolNative)
           {
-            AddSemanticError(ext_name, "extending native classes is not supported");
+            AddError(ext_name, "extending native classes is not supported");
             return;
           }
 
@@ -3759,13 +3759,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         {
           if(implements.IndexOf(ifs) != -1)
           {
-            AddSemanticError(ext_name, "interface is implemented already");
+            AddError(ext_name, "interface is implemented already");
             return;
           }
 
           if(ifs is InterfaceSymbolNative)
           {
-            AddSemanticError(ext_name, "implementing native interfaces is not supported");
+            AddError(ext_name, "implementing native interfaces is not supported");
             return;
           }
 
@@ -3773,7 +3773,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         }
         else
         {
-          AddSemanticError(ext_name, "not a class or an interface");
+          AddError(ext_name, "not a class or an interface");
           return;
         }
       }
@@ -3845,7 +3845,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var symb = new EnumSymbolScript(Annotate(ctx), enum_name);
     if(!curr_scope.TryDefine(symb, out SymbolError err))
     {
-      AddSemanticError(ctx.NAME(), err.Message);
+      AddError(ctx.NAME(), err.Message);
       return null;
     }
 
@@ -3858,12 +3858,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       int res = symb.TryAddItem(Annotate(em), em_name, em_val);
       if(res == 1)
       {
-        AddSemanticError(em.NAME(), "duplicate key '" + em_name + "'");
+        AddError(em.NAME(), "duplicate key '" + em_name + "'");
         return null;
       }
       else if(res == 2)
       {
-        AddSemanticError(em.INT(), "duplicate value '" + em_val + "'");
+        AddError(em.INT(), "duplicate value '" + em_val + "'");
         return null;
       }
     }
@@ -3936,20 +3936,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
       if(fp.NAME() == null)
       {
-        AddSemanticError(fp, "invalid argument");
+        AddError(fp, "invalid argument");
         continue;
       }
 
       if(fp.assignExp() != null)
       {
         if(curr_scope is LambdaSymbol)
-          AddSemanticError(fp.NAME(), "default argument values not allowed for lambdas");
+          AddError(fp.NAME(), "default argument values not allowed for lambdas");
 
         found_default_arg = true;
       }
       else if(found_default_arg && fp.VARIADIC() == null)
       {
-        AddSemanticError(fp.NAME(), "missing default argument expression");
+        AddError(fp.NAME(), "missing default argument expression");
       }
 
       bool pop_json_type = false;
@@ -4137,12 +4137,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(is_auto_var && assign_exp == null)
         {
-          AddSemanticError(vd_type, "unexpected expression");
+          AddError(vd_type, "unexpected expression");
           return false;
         }
         else if(is_auto_var && assign_exp?.GetText() == "=null")
         {
-          AddSemanticError(vd_type, "unexpected expression");
+          AddError(vd_type, "unexpected expression");
           return false;
         }
 
@@ -4175,7 +4175,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var_symb = curr_scope.ResolveWithFallback(vd_name.GetText()) as VariableSymbol;
         if(var_symb == null)
         {
-          AddSemanticError(vd_name, "symbol '" + vd_name.GetText() + "' not resolved");
+          AddError(vd_name, "symbol '" + vd_name.GetText() + "' not resolved");
           return false;
         }
 
@@ -4192,7 +4192,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var var_exp = vproxy.VarAccessAt(i);
         if(assign_exp == null)
         {
-          AddSemanticError(var_exp, "assign expression expected");
+          AddError(var_exp, "assign expression expected");
           return false;
         }
 
@@ -4200,7 +4200,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         if(chain.Incomplete)
         {
-          AddSemanticError(var_exp, "incomplete statement");
+          AddError(var_exp, "incomplete statement");
           return false;
         }
 
@@ -4214,9 +4214,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       else
       {
         if(assign_exp != null)
-          AddSemanticError(assign_exp, "invalid assignment");
+          AddError(assign_exp, "invalid assignment");
         else
-          AddSemanticError(vproxy.At(i), "invalid expression");
+          AddError(vproxy.At(i), "invalid expression");
         return false;
       }
 
@@ -4274,7 +4274,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var name = ctx.NAME();
     if(name == null)
     {
-      AddSemanticError(ctx, "missing name");
+      AddError(ctx, "missing name");
       return null;
     }
 
@@ -4289,7 +4289,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         is_null_ref = true;
       else
       {
-        AddSemanticError(name, "'ref' is not allowed to have a default value");
+        AddError(name, "'ref' is not allowed to have a default value");
         return null;
       }
     }
@@ -4363,13 +4363,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     out VariableSymbol symb 
   )
   {
-    AddSemanticToken(name, "variable");
+    AddSemanticToken(name, SemanticToken.Variable);
 
     symb = null;
 
     if(name.GetText() == "base" && PeekFuncDecl()?.scope is ClassSymbol)
     {
-      AddSemanticError(name, "keyword 'base' is reserved");
+      AddError(name, "keyword 'base' is reserved");
       return null;
     }
 
@@ -4381,7 +4381,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(is_ref && !func_arg)
     {
-      AddSemanticError(name, "'ref' is only allowed in function declaration");
+      AddError(name, "'ref' is only allowed in function declaration");
       return null;
     }
 
@@ -4391,7 +4391,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(!curr_scope.TryDefine(symb, out SymbolError err))
     {
-      AddSemanticError(name, err.Message);
+      AddError(name, err.Message);
       return null;
     }
 
@@ -4423,7 +4423,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(vars_num != 1)
       {
-        AddSemanticError(assign_exp, "multi assign not supported for JSON expression");
+        AddError(assign_exp, "multi assign not supported for JSON expression");
         return false;
       }
 
@@ -4472,19 +4472,19 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       if(assign_type.Count == 1)
       {
-        AddSemanticError(assign_exp, "multi return expected");
+        AddError(assign_exp, "multi return expected");
         return false;
       }
 
       if(assign_type.Count != vars_num)
       {
-        AddSemanticError(assign_exp, "multi return size doesn't match destination");
+        AddError(assign_exp, "multi return size doesn't match destination");
         return false;
       }
     }
     else if(assign_type.Count > 1)
     {
-      AddSemanticError(assign_exp, "multi return size doesn't match destination");
+      AddError(assign_exp, "multi return size doesn't match destination");
       return false;
     }
 
@@ -4493,12 +4493,12 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       var auto_type = assign_type.At(var_idx);
       if(auto_type == null)
       {
-        AddSemanticError(assign_exp, "can't determine type");
+        AddError(assign_exp, "can't determine type");
         return false;
       }
       else if(auto_type == Types.Void)
       {
-        AddSemanticError(assign_exp, "void expression type");
+        AddError(assign_exp, "void expression type");
         return false;
       }
       var_symb.type = new Proxy<IType>(auto_type); 
@@ -4533,11 +4533,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDefer(bhlParser.StmDeferContext ctx)
   {
-    AddSemanticToken(ctx.DEFER());
+    AddSemanticToken(ctx.DEFER(), SemanticToken.Keyword);
 
     if(CountBlocks(BlockType.DEFER) > 0)
     {
-      AddSemanticError(ctx, "nested defers are not allowed");
+      AddError(ctx, "nested defers are not allowed");
       return null;
     }
     ProcBlock(BlockType.DEFER, ctx.block()?.statement());
@@ -4548,7 +4548,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.IF);
 
-    AddSemanticToken(ctx.IF());
+    AddSemanticToken(ctx.IF(), SemanticToken.Keyword);
 
     var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
@@ -4607,8 +4607,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var item = else_if[i];
 
-      AddSemanticToken(item.ELSE());
-      AddSemanticToken(item.IF());
+      AddSemanticToken(item.ELSE(), SemanticToken.Keyword);
+      AddSemanticToken(item.IF(), SemanticToken.Keyword);
 
       var item_cond = new AST_Block(BlockType.SEQ);
       PushAST(item_cond);
@@ -4635,7 +4635,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var @else = ctx.@else();
     if(@else != null)
     {
-      AddSemanticToken(@else.ELSE());
+      AddSemanticToken(@else.ELSE(), SemanticToken.Keyword);
 
       seen_return = return_found.Contains(func_symb);
       return_found.Remove(func_symb);
@@ -4698,7 +4698,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmWhile(bhlParser.StmWhileContext ctx)
   {
-    AddSemanticToken(ctx.WHILE());
+    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     var ast = new AST_Block(BlockType.WHILE);
 
@@ -4732,8 +4732,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDoWhile(bhlParser.StmDoWhileContext ctx)
   {
-    AddSemanticToken(ctx.DO());
-    AddSemanticToken(ctx.WHILE());
+    AddSemanticToken(ctx.DO(), SemanticToken.Keyword);
+    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     var ast = new AST_Block(BlockType.DOWHILE);
 
@@ -4776,7 +4776,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // <post iter code>
     //}
 
-    AddSemanticToken(ctx.FOR());
+    AddSemanticToken(ctx.FOR(), SemanticToken.Keyword);
 
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
@@ -4847,7 +4847,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYield(bhlParser.StmYieldContext ctx)
   {
-    AddSemanticToken(ctx.YIELD());
+    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
 
     CheckCoroCallValidity(ctx);
 
@@ -4870,8 +4870,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    AddSemanticToken(ctx.YIELD());
-    AddSemanticToken(ctx.WHILE());
+    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     CheckCoroCallValidity(ctx);
 
@@ -4902,8 +4902,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmForeach(bhlParser.StmForeachContext ctx)
   {
-    AddSemanticToken(ctx.FOREACH());
-    AddSemanticToken(ctx.foreachExp().IN());
+    AddSemanticToken(ctx.FOREACH(), SemanticToken.Keyword);
+    AddSemanticToken(ctx.foreachExp().IN(), SemanticToken.Keyword);
     
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
@@ -4932,7 +4932,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         iter_symb = curr_scope.ResolveWithFallback(vod.NAME().GetText()) as VariableSymbol;
         if(iter_symb == null)
         {
-          AddSemanticError(vod.NAME(), "symbol is not a valid variable");
+          AddError(vod.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
         iter_type = iter_symb.type;
@@ -4945,7 +4945,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var predicted_arr_type = PredictType(ctx.foreachExp().exp()) as GenericArrayTypeSymbol;
           if(predicted_arr_type == null)
           {
-            AddSemanticError(ctx.foreachExp().exp(), "expression is not of array type");
+            AddError(ctx.foreachExp().exp(), "expression is not of array type");
             goto Bail;
           }
           vd_type = predicted_arr_type.item_type;
@@ -5058,7 +5058,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var predicted_map_type = PredictType(ctx.foreachExp().exp()) as GenericMapTypeSymbol;
         if(predicted_map_type == null)
         {
-          AddSemanticError(ctx.foreachExp().exp(), "expression is not of map type");
+          AddError(ctx.foreachExp().exp(), "expression is not of map type");
           goto Bail;
         }
         vd_key_type = predicted_map_type.key_type;
@@ -5079,7 +5079,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         key_iter_symb = curr_scope.ResolveWithFallback(vod_key.NAME().GetText()) as VariableSymbol;
         if(key_iter_symb == null)
         {
-          AddSemanticError(vod_key.NAME(), "symbol is not a valid variable");
+          AddError(vod_key.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
         key_iter_type = key_iter_symb.type;
@@ -5109,7 +5109,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         val_iter_symb = curr_scope.ResolveWithFallback(vod_val.NAME().GetText()) as VariableSymbol;
         if(val_iter_symb == null)
         {
-          AddSemanticError(vod_val.NAME(), "symbol is not a valid variable");
+          AddError(vod_val.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
         val_iter_type = val_iter_symb.type;
@@ -5187,7 +5187,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       PopBlock(ast);
     }
     else
-      AddSemanticError(ctx.foreachExp(), "invalid 'foreach' syntax");
+      AddError(ctx.foreachExp(), "invalid 'foreach' syntax");
 
   Bail:
     local_scope.Exit();
@@ -5412,35 +5412,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return false;
   }
 
-  void AddSemanticToken(ITerminalNode node)
-  {
-    if(node == null)
-      return;
-    AddSemanticToken(node, "keyword");
-  }
-  
-  void AddSemanticToken(ITerminalNode token, string token_type, params string[] token_mods)
+  void AddSemanticToken(ITerminalNode token, SemanticToken token_idx, SemanticModifier mods = 0)
   {
     if(token == null)
-      return;
-
-    if(string.IsNullOrEmpty(token_type))
-      return;
-    
-    int tidx = Array.IndexOf(SupportedSemanticTokens.token_types, token_type);
-    if(tidx < 0)
       return;
 
     int diff_line = token.Symbol.Line - (prev_semantic_token?.Symbol?.Line??1);
     int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev_semantic_token?.Symbol?.Column??0;
 
-    uint token_mod_bits = 0;
-    for(int i = 0; i < token_mods.Length; i++)
-    {
-      int idx = Array.IndexOf(SupportedSemanticTokens.modifiers, token_mods[i]);
-      token_mod_bits |= (1u << idx);
-    }
-    
     // line
     encoded_semantic_tokens.Add((uint)diff_line);
     // startChar
@@ -5448,34 +5427,56 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // length
     encoded_semantic_tokens.Add((uint)(token.Symbol.StopIndex - token.Symbol.StartIndex + 1));
     // tokenType
-    encoded_semantic_tokens.Add((uint)tidx);
+    encoded_semantic_tokens.Add((uint)token_idx);
     // tokenModifiers
-    encoded_semantic_tokens.Add(token_mod_bits);
+    encoded_semantic_tokens.Add((uint)mods);
 
     prev_semantic_token = token;
   }
+
+  //NOTE: synchronized with class below
+  public enum SemanticToken
+  {
+    Class    = 0,
+    Function = 1,
+    Variable = 2,
+    Number   = 3,
+    String   = 4,
+    Type     = 5,
+    Keyword  = 6,
+  }
+
+  [Flags]
+  public enum SemanticModifier
+  {
+    Declaration = 1,
+    Definition  = 2,
+    Readonly    = 4,
+    Static      = 8,
+  }
+
+  public static class SemanticTokens
+  {
+    public static string[] token_types = 
+    {
+      "class",
+      "function",
+      "variable",
+      "number",
+      "string",
+      "type",
+      "keyword"
+    };
+    
+    public static string[] modifiers = 
+    {
+      "declaration",   // 1
+      "definition",    // 2
+      "readonly",      // 4
+      "static",        // 8
+    };
+  }
 }
 
-public static class SupportedSemanticTokens
-{
-  public static string[] token_types = 
-  {
-    "class",
-    "function",
-    "variable",
-    "number",
-    "string",
-    "type",
-    "keyword"
-  };
-  
-  public static string[] modifiers = 
-  {
-    "declaration",   // 1
-    "definition",    // 2
-    "readonly",      // 4
-    "static",        // 8
-  };
-}
 
 } //namespace bhl

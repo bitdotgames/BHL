@@ -572,6 +572,39 @@ public class TestLSP : BHL_TestBase
     });
   }
 
+  [IsTested()]
+  public void TestSemanticTokensSimple()
+  {
+    string bhl = @"
+    class BHL_M3Globals
+    {
+      []string match_chips_sfx
+    }
+    ";
+
+    var ws = new Workspace(NoLogger());
+
+    var rpc = new JsonRpc(NoLogger());
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentSemanticTokensService(ws));
+    
+    CleanTestFiles();
+    
+    var uri1 = MakeTestDocument("bhl1.bhl", bhl);
+
+    var ts = new bhl.Types();
+    ws.Init(ts, GetTestIncPath());
+    ws.IndexFiles();
+    
+    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
+    json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
+    
+    AssertEqual(
+      rpc.Handle(json),
+      "{\"id\":1,\"result\":{\"data\":" +
+      "["+"1,4,5,6,0,"+"0,6,13,0,0,"+"2,8,6,5,0]},\"jsonrpc\":\"2.0\"}"
+    );
+  }
+
   //TODO:
   //[IsTested()]
   public void TestSemanticTokens()

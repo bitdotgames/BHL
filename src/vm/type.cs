@@ -697,7 +697,7 @@ public class Types : INamedResolver
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(lhs.eval_type, rhs.eval_type), out result))
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
     return result;
   }
 
@@ -719,7 +719,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs.eval_type)) 
     {
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -734,7 +734,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs, rhs.eval_type)) 
     {
-      errors.Add(new SemanticError(rhs, "incompatible types: '" + lhs.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -744,7 +744,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs)) 
     {
-      errors.Add(new SemanticError(lhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.GetFullPath() + "'"));
+      errors.Add(new ParseError(lhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -757,7 +757,7 @@ public class Types : INamedResolver
 
     if(!CheckCast(dest_type, from_type))
     {
-      errors.Add(new SemanticError(dest, "incompatible types for casting: '" + dest_type.GetFullPath() + "' and '" + from_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(dest, "incompatible types for casting: '" + dest_type.GetFullPath() + "' and '" + from_type.GetFullPath() + "'"));
       return false;
     }
     return true;
@@ -767,13 +767,13 @@ public class Types : INamedResolver
   {
     if(!IsBinOpCompatible(lhs.eval_type))
     {
-      errors.Add(new SemanticError(lhs, "operator is not overloaded"));
+      errors.Add(new ParseError(lhs, "operator is not overloaded"));
       return null;
     }
 
     if(!IsBinOpCompatible(rhs.eval_type))
     {
-      errors.Add(new SemanticError(rhs, "operator is not overloaded"));
+      errors.Add(new ParseError(rhs, "operator is not overloaded"));
       return null;
     }
 
@@ -791,13 +791,13 @@ public class Types : INamedResolver
   {
     if(!IsNumeric(lhs.eval_type))
     {
-      errors.Add(new SemanticError(lhs, "operator is not overloaded"));
+      errors.Add(new ParseError(lhs, "operator is not overloaded"));
       return Bool;
     }
 
     if(!IsNumeric(rhs.eval_type))
     {
-      errors.Add(new SemanticError(rhs, "operator is not overloaded"));
+      errors.Add(new ParseError(rhs, "operator is not overloaded"));
       return Bool;
     }
 
@@ -831,7 +831,7 @@ public class Types : INamedResolver
   public IType CheckUnaryMinus(AnnotatedParseTree a, CompileErrors errors) 
   {
     if(!(a.eval_type == Int || a.eval_type == Float)) 
-      errors.Add(new SemanticError(a, "must be numeric type"));
+      errors.Add(new ParseError(a, "must be numeric type"));
 
     return a.eval_type;
   }
@@ -839,10 +839,10 @@ public class Types : INamedResolver
   public IType CheckBitOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors) 
   {
     if(lhs.eval_type != Int) 
-      errors.Add(new SemanticError(lhs, "must be int type"));
+      errors.Add(new ParseError(lhs, "must be int type"));
 
     if(rhs.eval_type != Int)
-      errors.Add(new SemanticError(rhs, "must be int type"));
+      errors.Add(new ParseError(rhs, "must be int type"));
 
     return Int;
   }
@@ -850,10 +850,10 @@ public class Types : INamedResolver
   public IType CheckLogicalOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors) 
   {
     if(lhs.eval_type != Bool) 
-      errors.Add(new SemanticError(lhs, "must be bool type"));
+      errors.Add(new ParseError(lhs, "must be bool type"));
 
     if(rhs.eval_type != Bool)
-      errors.Add(new SemanticError(rhs, "must be bool type"));
+      errors.Add(new ParseError(rhs, "must be bool type"));
 
     return Bool;
   }
@@ -861,7 +861,7 @@ public class Types : INamedResolver
   public IType CheckLogicalNot(AnnotatedParseTree a, CompileErrors errors) 
   {
     if(a.eval_type != Bool) 
-      errors.Add(new SemanticError(a, "must be bool type"));
+      errors.Add(new ParseError(a, "must be bool type"));
 
     return a.eval_type;
   }
