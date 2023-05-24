@@ -240,8 +240,11 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public class SemanticTokenNode
   {
-    public ITerminalNode token;
-    public SemanticToken idx;
+    public int idx;
+    public int line;
+    public int column;
+    public int len;
+    public SemanticToken type_idx;
     public SemanticModifier mods;
   }
   List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
@@ -498,26 +501,24 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     encoded_semantic_tokens.Clear();
 
-    semantic_tokens.Sort((a, b) => a.token.Symbol.StartIndex - b.token.Symbol.StartIndex);
+    semantic_tokens.Sort((a, b) => a.idx - b.idx);
 
-    ITerminalNode prev = null;
-    foreach(var st in semantic_tokens)
+    SemanticTokenNode prev = null;
+    foreach(var token in semantic_tokens)
     {
-      var token = st.token;
-
-      int diff_line = token.Symbol.Line - (prev?.Symbol?.Line??1);
-      int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev?.Symbol?.Column??0;
+      int diff_line = token.line - (prev?.line??1);
+      int diff_column = diff_line != 0 ? token.column : token.column - prev?.column??0;
 
       // line
       encoded_semantic_tokens.Add((uint)diff_line);
       // startChar
       encoded_semantic_tokens.Add((uint)diff_column);
       // length
-      encoded_semantic_tokens.Add((uint)(token.Symbol.StopIndex - token.Symbol.StartIndex + 1));
+      encoded_semantic_tokens.Add((uint)token.len);
       // tokenType
-      encoded_semantic_tokens.Add((uint)st.idx);
+      encoded_semantic_tokens.Add((uint)token.type_idx);
       // tokenModifiers
-      encoded_semantic_tokens.Add((uint)st.mods);
+      encoded_semantic_tokens.Add((uint)token.mods);
 
       prev = token;
     }
@@ -2609,8 +2610,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
-    AddSemanticToken(ctx.operatorAddSub().PLUS(), SemanticToken.Operator);
-    AddSemanticToken(ctx.operatorAddSub().MINUS(), SemanticToken.Operator);
+    AddSemanticToken(ctx.operatorAddSub(), SemanticToken.Operator);
 
     var op = ctx.operatorAddSub().GetText(); 
 
@@ -2621,9 +2621,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpMulDivMod(bhlParser.ExpMulDivModContext ctx)
   {
-    AddSemanticToken(ctx.operatorMulDivMod().MUL(), SemanticToken.Operator);
-    AddSemanticToken(ctx.operatorMulDivMod().DIV(), SemanticToken.Operator);
-    AddSemanticToken(ctx.operatorMulDivMod().MOD(), SemanticToken.Operator);
+    AddSemanticToken(ctx.operatorMulDivMod(), SemanticToken.Operator);
 
     var op = ctx.operatorMulDivMod().GetText(); 
 
@@ -2895,6 +2893,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     AST_Literal ast = null;
 
+    AddSemanticToken(ctx.number(), SemanticToken.Number);
+
     var number = ctx.number();
     var int_num = number.INT();
     var flt_num = number.FLOAT();
@@ -2902,24 +2902,18 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     if(int_num != null)
     {
-      AddSemanticToken(int_num, SemanticToken.Number);
-
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
       ast.nval = double.Parse(int_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(flt_num != null)
     {
-      AddSemanticToken(flt_num, SemanticToken.Number);
-
       ast = new AST_Literal(ConstType.FLT);
       Annotate(ctx).eval_type = Types.Float;
       ast.nval = double.Parse(flt_num.GetText(), System.Globalization.CultureInfo.InvariantCulture);
     }
     else if(hex_num != null)
     {
-      AddSemanticToken(hex_num, SemanticToken.Number);
-
       ast = new AST_Literal(ConstType.INT);
       Annotate(ctx).eval_type = Types.Int;
       ast.nval = Convert.ToUInt32(hex_num.GetText(), 16);
@@ -5480,8 +5474,38 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(token == null)
       return;
-    semantic_tokens.Add(new SemanticTokenNode() { token = token, idx = idx, mods = mods});
+
+    semantic_tokens.Add(new SemanticTokenNode() { 
+      idx = token.Symbol.StartIndex,
+      line = token.Symbol.Line,
+      column = token.Symbol.Column,
+      len = token.Symbol.StopIndex - token.Symbol.StartIndex + 1,
+      type_idx = idx, 
+      mods = mods
+    });
     encoded_semantic_tokens.Clear();
+  }
+  
+  void AddSemanticToken(IParseTree tree, SemanticToken idx, SemanticModifier mods = 0)
+  {
+    if(tree == null)
+      return;
+
+    var interval = tree.SourceInterval;
+    var a = tokens.Get(interval.a);
+    var b = tokens.Get(interval.b);
+
+    if(a.Line != b.Line)
+      throw new Exception("Multiline semantic tokens not supported");
+
+    semantic_tokens.Add(new SemanticTokenNode() { 
+      idx = a.StartIndex,
+      line = a.Line,
+      column = a.Column,
+      len = b.StopIndex - a.StartIndex +  1,
+      type_idx = idx, 
+      mods = mods
+    });
   }
 
   //NOTE: synchronized with class below
