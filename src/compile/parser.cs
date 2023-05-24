@@ -3319,7 +3319,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Function);
+    AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Keyword);
+    AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
 
     string name = pass.func_ctx.NAME().GetText();
 
@@ -3627,7 +3628,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        AddSemanticToken(vd.NAME(), SemanticToken.Property);
+        AddSemanticToken(vd.NAME(), SemanticToken.Variable, SemanticModifier.Definition);
 
         var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new Proxy<IType>());
 
