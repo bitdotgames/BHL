@@ -3319,6 +3319,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
+    AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Function);
+
     string name = pass.func_ctx.NAME().GetText();
 
     if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() == null)
@@ -3624,6 +3626,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           AddError(vd.NAME(), "the keyword 'this' is reserved");
           return;
         }
+
+        AddSemanticToken(vd.NAME(), SemanticToken.Property);
 
         var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new Proxy<IType>());
 
@@ -5468,6 +5472,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     String   = 4,
     Type     = 5,
     Keyword  = 6,
+    Property = 7,
   }
 
   [Flags]
@@ -5489,7 +5494,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       "number",
       "string",
       "type",
-      "keyword"
+      "keyword",
+      "property"
     };
     
     public static string[] modifiers = 
