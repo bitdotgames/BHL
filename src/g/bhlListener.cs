@@ -985,16 +985,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStaticFlag([NotNull] bhlParser.StaticFlagContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.coroFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterCoroFlag([NotNull] bhlParser.CoroFlagContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.coroFlag"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitCoroFlag([NotNull] bhlParser.CoroFlagContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.funcAttribs"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -1870,7 +1870,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    return ParseFuncSignature(ctx.coroFlag() != null, ctx.retType(), ctx.types());
+    return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
 
   FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
@@ -2010,7 +2010,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var lmb_symb = new LambdaSymbol(
       Annotate(ctx), 
       func_name,
-      ParseFuncSignature(lmb_ctx.coroFlag() != null, tp, lmb_ctx.funcParams()),
+      ParseFuncSignature(lmb_ctx.CORO() != null, tp, lmb_ctx.funcParams()),
       upvals,
       this.func_decl_stack
     );
@@ -3324,7 +3324,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() == null)
+    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].CORO() == null)
       //we can proceed
       AddError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
 
@@ -3353,7 +3353,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
 
     pass.func_symb.signature = ParseFuncSignature(
-      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].coroFlag() != null, 
+      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].CORO() != null, 
       ParseType(pass.func_ctx.retType()), 
       pass.func_ctx.funcParams()
     );
@@ -3469,7 +3469,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       if(fd != null)
       {
         int default_args_num;
-        var sig = ParseFuncSignature(fd.coroFlag() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
+        var sig = ParseFuncSignature(fd.CORO() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
         {
           AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
@@ -3673,7 +3673,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           var attr = fd.funcAttribs()[f];
           var attr_type = FuncAttrib.None;
 
-          if(attr.coroFlag() != null)
+          if(attr.CORO() != null)
             attr_type = FuncAttrib.Coro;
           else if(attr.virtualFlag() != null)
             attr_type = FuncAttrib.Virtual;
@@ -3744,7 +3744,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           break;
 
         func_symb.signature = ParseFuncSignature(
-          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].coroFlag() != null, 
+          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].CORO() != null, 
           ParseType(fd.retType()), 
           fd.funcParams()
         );

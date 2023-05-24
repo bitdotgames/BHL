@@ -242,12 +242,8 @@ staticFlag
   : STATIC
   ;
 
-coroFlag
-  : CORO
-  ;
-
 funcAttribs
-  : (coroFlag | virtualFlag | overrideFlag | staticFlag)
+  : (CORO | virtualFlag | overrideFlag | staticFlag)
   ;
 
 funcDecl
@@ -255,7 +251,7 @@ funcDecl
   ;
 
 funcType
-  : coroFlag? FUNC retType? '(' types? ')'
+  : CORO? FUNC retType? '(' types? ')'
   ;
 
 funcBlock
@@ -263,11 +259,11 @@ funcBlock
   ;
 
 interfaceFuncDecl
-  : coroFlag? FUNC retType? NAME '(' funcParams? ')'
+  : CORO? FUNC retType? NAME '(' funcParams? ')'
   ;
 
 funcLambda
-  : coroFlag? FUNC retType? '(' funcParams? ')' funcBlock
+  : CORO? FUNC retType? '(' funcParams? ')' funcBlock
   ;
 
 refType
