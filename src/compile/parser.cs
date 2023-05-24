@@ -238,8 +238,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   Stack<AST_Tree> ast_stack = new Stack<AST_Tree>();
 
-  ITerminalNode prev_semantic_token = null;
-  public readonly List<uint> encoded_semantic_tokens = new List<uint>();
+  public class SemanticTokenNode
+  {
+    public ITerminalNode token;
+    public SemanticToken idx;
+    public SemanticModifier mods;
+  }
+  List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
+  List<uint> encoded_semantic_tokens = new List<uint>();
 
   public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
   {
@@ -483,6 +489,40 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       annotated_nodes.Add(t, at);
     }
     return at;
+  }
+
+  public List<uint> GetEncodedSemanticTokens()
+  {
+    if(encoded_semantic_tokens.Count != 0)
+      return encoded_semantic_tokens;
+
+    encoded_semantic_tokens.Clear();
+
+    semantic_tokens.Sort((a, b) => a.token.Symbol.StartIndex - b.token.Symbol.StartIndex);
+
+    ITerminalNode prev = null;
+    foreach(var st in semantic_tokens)
+    {
+      var token = st.token;
+
+      int diff_line = token.Symbol.Line - (prev?.Symbol?.Line??1);
+      int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev?.Symbol?.Column??0;
+
+      // line
+      encoded_semantic_tokens.Add((uint)diff_line);
+      // startChar
+      encoded_semantic_tokens.Add((uint)diff_column);
+      // length
+      encoded_semantic_tokens.Add((uint)(token.Symbol.StopIndex - token.Symbol.StartIndex + 1));
+      // tokenType
+      encoded_semantic_tokens.Add((uint)st.idx);
+      // tokenModifiers
+      encoded_semantic_tokens.Add((uint)st.mods);
+
+      prev = token;
+    }
+
+    return encoded_semantic_tokens;
   }
 
   public AnnotatedParseTree FindAnnotated(IParseTree t)
@@ -5412,26 +5452,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return false;
   }
 
-  void AddSemanticToken(ITerminalNode token, SemanticToken token_idx, SemanticModifier mods = 0)
+  void AddSemanticToken(ITerminalNode token, SemanticToken idx, SemanticModifier mods = 0)
   {
-    if(token == null)
-      return;
-
-    int diff_line = token.Symbol.Line - (prev_semantic_token?.Symbol?.Line??1);
-    int diff_column = diff_line != 0 ? token.Symbol.Column : token.Symbol.Column - prev_semantic_token?.Symbol?.Column??0;
-
-    // line
-    encoded_semantic_tokens.Add((uint)diff_line);
-    // startChar
-    encoded_semantic_tokens.Add((uint)diff_column);
-    // length
-    encoded_semantic_tokens.Add((uint)(token.Symbol.StopIndex - token.Symbol.StartIndex + 1));
-    // tokenType
-    encoded_semantic_tokens.Add((uint)token_idx);
-    // tokenModifiers
-    encoded_semantic_tokens.Add((uint)mods);
-
-    prev_semantic_token = token;
+    semantic_tokens.Add(new SemanticTokenNode() { token = token, idx = idx, mods = mods});
+    encoded_semantic_tokens.Clear();
   }
 
   //NOTE: synchronized with class below

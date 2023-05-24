@@ -475,7 +475,7 @@ public class TextDocumentSemanticTokensService : IService
     {
       return RpcResult.Success(new SemanticTokens
       {
-        data = document.proc.encoded_semantic_tokens.ToArray()
+        data = document.proc.GetEncodedSemanticTokens().ToArray()
       });
     }
 
