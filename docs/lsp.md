@@ -81,7 +81,7 @@ local configs = require('lspconfig.configs')
 if not configs.bhl then
   configs.bhl = {
     default_config = {
-      cmd = {'/path/to//bhl/bhl', 'lsp', '--log-file=' .. '/tmp/bhl.lsp'},
+      cmd = {'/path/to//bhl/bhl', 'lsp', '--log-file=/tmp/bhlsp.log'},
       filetypes = {'bhl'},
       root_dir = lspconfig.util.root_pattern('bhl.proj'),
       settings = {},
