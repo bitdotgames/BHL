@@ -601,7 +601,7 @@ public class TestLSP : BHL_TestBase
     AssertEqual(
       rpc.Handle(json),
       "{\"id\":1,\"result\":{\"data\":" +
-      "["+"1,4,5,6,0,"+"0,6,13,0,0,"+"2,8,6,5,0]},\"jsonrpc\":\"2.0\"}"
+      "[1,4,5,6,0,"+"0,6,13,0,0,"+"2,8,6,5,0,"+"0,7,15,7,0]},\"jsonrpc\":\"2.0\"}"
     );
   }
 
