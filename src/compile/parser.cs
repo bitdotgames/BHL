@@ -2530,14 +2530,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
-    EnumUnaryOp type;
-    var op = ctx.operatorUnary().GetText(); 
-    if(op == "-")
-      type = EnumUnaryOp.NEG;
-    else if(op == "!")
-      type = EnumUnaryOp.NOT;
-    else
-      throw new Exception("Unknown type");
+    AddSemanticToken(ctx.operatorUnary(), SemanticToken.Keyword);
+
+    EnumUnaryOp type = ctx.operatorUnary().NOT() != null ? EnumUnaryOp.NOT : EnumUnaryOp.NEG;
 
     var ast = new AST_UnaryOpExp(type);
     var exp = ctx.exp(); 

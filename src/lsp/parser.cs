@@ -7,42 +7,6 @@ namespace bhl.lsp {
 
 //public class ParserAnalyzer : bhlBaseVisitor<object>
 //{
-//  public override object VisitExpMulDivMod(bhlParser.ExpMulDivModContext ctx)
-//  {
-//    var op = ctx.operatorMulDivMod();
-//    var op_exp_left = ctx.exp(0);
-//    var op_exp_right = ctx.exp(1);
-//    
-//    if(op != null)
-//      AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//
-//    if(op_exp_left != null)
-//      Visit(op_exp_left);
-//    
-//    if(op_exp_right != null)
-//      Visit(op_exp_right);
-//    
-//    return null;
-//  }
-//  
-//  public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
-//  {
-//    var op = ctx.operatorComparison();
-//    var op_exp_left = ctx.exp(0);
-//    var op_exp_right = ctx.exp(1);
-//    
-//    if(op != null)
-//      AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//
-//    if(op_exp_left != null)
-//      Visit(op_exp_left);
-//    
-//    if(op_exp_right != null)
-//      Visit(op_exp_right);
-//    
-//    return null;
-//  }
-//  
 //  public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
 //  {
 //    var isRef = ctx.isRef();
