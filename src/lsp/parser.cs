@@ -101,25 +101,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //
-//  public override object VisitCallArgs(bhlParser.CallArgsContext ctx)
-//  {
-//    foreach(var item in ctx.callArg())
-//    {
-//      var arg_name = item.NAME();
-//      if(arg_name != null)
-//        AddSemanticToken(arg_name, spec.SemanticTokenTypes.parameter);
-//            
-//      var arg_is_ref = item.isRef();
-//      if(arg_is_ref != null)
-//        AddSemanticToken(arg_is_ref.Start.StartIndex, arg_is_ref.Stop.StopIndex, spec.SemanticTokenTypes.keyword);
-//
-//      var arg_exp = item.exp();
-//      if(arg_exp != null)
-//        Visit(item.exp());
-//    }
-//    return null;
-//  }
-//  
 //  public override object VisitImports(bhlParser.ImportsContext ctx)
 //  {
 //    foreach(var mimport in ctx.mimport())
