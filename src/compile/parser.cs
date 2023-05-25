@@ -3304,12 +3304,17 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Keyword);
     AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
+    
+    foreach(var attr in pass.func_ctx.funcAttribs())
+      AddSemanticToken(attr, SemanticToken.Keyword);
 
     string name = pass.func_ctx.NAME().GetText();
 
     if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].CORO() == null)
-      //we can proceed
+    {
+      //we can proceed after this error
       AddError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
+    }
 
     var func_ann = Annotate(pass.func_ctx);
     pass.func_symb = new FuncSymbolScript(
