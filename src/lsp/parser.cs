@@ -31,14 +31,6 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
-//  {
-//    var op = ctx.operatorUnary();
-//    AddSemanticToken(op.Start.StartIndex, op.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//    Visit(ctx.exp());
-//    return null;
-//  }
-//  
 //  public override object VisitJsonObject(bhlParser.JsonObjectContext ctx)
 //  {
 //    var newExp = ctx.newExp();
@@ -145,49 +137,5 @@ namespace bhl.lsp {
 //    return null;
 //  }
 //  
-//  public override object VisitType(bhlParser.TypeContext ctx)
-//  {
-//    var fn_type = ctx.funcType();
-//    if(fn_type != null && fn_type.types() is bhlParser.TypesContext types)
-//    {
-//      foreach(var refType in types.refType())
-//      {
-//        var refNameIsRef = refType.isRef();
-//        //TODO: parse the whole nsName()
-//        var refNameName = refType.type()?.nsName()?.dotName().NAME();
-//        if(refNameName != null)
-//        {
-//          if(refNameIsRef != null)
-//            AddSemanticToken(refNameIsRef.Start.StartIndex, refNameName.Symbol.StartIndex-1, spec.SemanticTokenTypes.keyword);
-//        
-//          AddSemanticTokenTypeName(refNameName);
-//        }
-//      }
-//    }
-//    return null;
-//  }
-//  
-//  public override object VisitVarPostIncDec(bhlParser.VarPostIncDecContext ctx)
-//  {
-//    CommonPostIncDec(ctx.callPostIncDec());
-//    return null;
-//  }
-//
-//  void CommonPostIncDec(bhlParser.CallPostIncDecContext ctx)
-//  {
-//    ////TODO: take into account the whole name
-//    //var callPostOperatorName = ctx.dotName().NAME();
-//    //if(callPostOperatorName != null)
-//    //  AddSemanticToken(callPostOperatorName, spec.SemanticTokenTypes.variable);
-//    //
-//    //var decrementOperator = ctx.decrementOperator();
-//    //var incrementOperator = ctx.incrementOperator();
-//    //
-//    //if(decrementOperator != null)
-//    //  AddSemanticToken(decrementOperator.Start.StartIndex, decrementOperator.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//    //
-//    //if(incrementOperator != null)
-//    //  AddSemanticToken(incrementOperator.Start.StartIndex, incrementOperator.Stop.StopIndex, spec.SemanticTokenTypes.@operator);
-//  }
 //}
 }

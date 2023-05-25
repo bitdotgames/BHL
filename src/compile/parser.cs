@@ -1861,7 +1861,10 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var ref_type = types_ctx.refType()[i];
         var arg_type = ParseType(ref_type.type());
         if(ref_type.REF() != null)
+        {
+          AddSemanticToken(ref_type.REF(), SemanticToken.Keyword);
           arg_type = curr_scope.R().TRef(arg_type);
+        }
         arg_types.Add(arg_type);
       }
     }
@@ -1871,6 +1874,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
+    AddSemanticToken(ctx.CORO(), SemanticToken.Keyword);
+
     return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
 
@@ -2000,6 +2005,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
    )
   {
     AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
+    AddSemanticToken(lmb_ctx.CORO(), SemanticToken.Keyword);
 
     if(yielded)
       CheckCoroCallValidity(ctx);
@@ -4311,6 +4317,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       AddError(ctx, "missing name");
       return null;
     }
+
+    AddSemanticToken(ctx.REF(), SemanticToken.Keyword);
 
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.REF() != null;
