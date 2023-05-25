@@ -73,8 +73,7 @@ exp
   | exp operatorMulDivMod exp                 #ExpMulDivMod
   | exp operatorAddSub exp                    #ExpAddSub
   | exp operatorComparison exp                #ExpCompare
-  | exp operatorAnd exp                       #ExpAnd
-  | exp operatorOr exp                        #ExpOr
+  | exp operatorLogical exp                   #ExpLogical
   | exp ternaryIfExp                          #ExpTernaryIf
   | newExp                                    #ExpNew
   //TODO: move it under ExpChain?
@@ -319,12 +318,8 @@ assignExp
   : '=' exp
   ;
   
-operatorOr 
-  : LOR
-  ;
-
-operatorAnd 
-  : LAND
+operatorLogical
+  : LAND | LOR
   ;
 
 operatorBitwise

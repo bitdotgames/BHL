@@ -125,13 +125,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpIs([NotNull] bhlParser.ExpIsContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpOr([NotNull] bhlParser.ExpOrContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpLiteralFalse</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -209,6 +202,13 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpLogical</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpLogical([NotNull] bhlParser.ExpLogicalContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpYieldCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -250,13 +250,6 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpAnd</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpAnd([NotNull] bhlParser.ExpAndContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpChain</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -710,17 +703,11 @@ public interface IbhlVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAssignExp([NotNull] bhlParser.AssignExpContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.operatorOr"/>.
+	/// Visit a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitOperatorOr([NotNull] bhlParser.OperatorOrContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.operatorAnd"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitOperatorAnd([NotNull] bhlParser.OperatorAndContext context);
+	Result VisitOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>

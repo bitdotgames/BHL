@@ -2831,42 +2831,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return null;
   }
 
-  public override object VisitExpAnd(bhlParser.ExpAndContext ctx)
+  public override object VisitExpLogical(bhlParser.ExpLogicalContext ctx)
   {
-    var ast = new AST_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
+    var ast = new AST_BinaryOpExp(ctx.operatorLogical().LOR() != null ? EnumBinaryOp.OR : EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
-    //AND node has exactly two children
-    var tmp0 = new AST_Interim();
-    PushAST(tmp0);
-    bool ok1 = TryVisit(exp_0);
-    PopAST();
-    ast.AddChild(tmp0);
-
-    var tmp1 = new AST_Interim();
-    PushAST(tmp1);
-    bool ok2 = TryVisit(exp_1);
-    PopAST();
-    ast.AddChild(tmp1);
-
-    if(!ok1 || !ok2)
-      return null;
-
-    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
-
-    PeekAST().AddChild(ast);
-
-    return null;
-  }
-
-  public override object VisitExpOr(bhlParser.ExpOrContext ctx)
-  {
-    var ast = new AST_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
-    var exp_0 = ctx.exp(0);
-    var exp_1 = ctx.exp(1);
-
-    //OR node has exactly two children
+    //logical operand node has exactly two children
     var tmp0 = new AST_Interim();
     PushAST(tmp0);
     bool ok1 = TryVisit(exp_0);

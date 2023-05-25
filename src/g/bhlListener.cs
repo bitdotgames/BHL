@@ -187,18 +187,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpIs([NotNull] bhlParser.ExpIsContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpOr([NotNull] bhlParser.ExpOrContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpOr</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpOr([NotNull] bhlParser.ExpOrContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLiteralFalse</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -331,6 +319,18 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpLogical</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpLogical([NotNull] bhlParser.ExpLogicalContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpLogical</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpLogical([NotNull] bhlParser.ExpLogicalContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpYieldCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -402,18 +402,6 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitExpLambda([NotNull] bhlParser.ExpLambdaContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpAnd</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpAnd([NotNull] bhlParser.ExpAndContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpAnd</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpAnd([NotNull] bhlParser.ExpAndContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpChain</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -1175,25 +1163,15 @@ public interface IbhlListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitAssignExp([NotNull] bhlParser.AssignExpContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorOr"/>.
+	/// Enter a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterOperatorOr([NotNull] bhlParser.OperatorOrContext context);
+	void EnterOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorOr"/>.
+	/// Exit a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitOperatorOr([NotNull] bhlParser.OperatorOrContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorAnd"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterOperatorAnd([NotNull] bhlParser.OperatorAndContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorAnd"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitOperatorAnd([NotNull] bhlParser.OperatorAndContext context);
+	void ExitOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>
