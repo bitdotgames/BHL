@@ -2812,7 +2812,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpBitwise(bhlParser.ExpBitwiseContext ctx)
   {
-    var ast = new AST_BinaryOpExp(ctx.operatorBitwise().GetText() == "|" ? EnumBinaryOp.BIT_OR : EnumBinaryOp.BIT_AND, ctx.Start.Line);
+    AddSemanticToken(ctx.operatorBitwise(), SemanticToken.Operator);
+
+    var ast = new AST_BinaryOpExp(ctx.operatorBitwise().BOR() != null ? EnumBinaryOp.BIT_OR : EnumBinaryOp.BIT_AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
@@ -2833,6 +2835,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLogical(bhlParser.ExpLogicalContext ctx)
   {
+    AddSemanticToken(ctx.operatorLogical(), SemanticToken.Operator);
+
     var ast = new AST_BinaryOpExp(ctx.operatorLogical().LOR() != null ? EnumBinaryOp.OR : EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
