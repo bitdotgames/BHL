@@ -4411,6 +4411,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   )
   {
     AddSemanticToken(name, SemanticToken.Variable);
+    if(tp_ctx != null && tp_ctx.GetText() == "var")
+      AddSemanticToken(tp_ctx, SemanticToken.Keyword);
 
     symb = null;
 
