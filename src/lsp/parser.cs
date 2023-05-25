@@ -9,51 +9,7 @@ namespace bhl.lsp {
 //{
 //  public override object VisitFuncParamDeclare(bhlParser.FuncParamDeclareContext ctx)
 //  {
-//    var isRef = ctx.isRef();
-//    var type = ctx.type();
-//    var name = ctx.NAME();
-//    var assignExp = ctx.assignExp();
-//    
-//    if(isRef != null)
-//    {
-//      var refStopIdx = type?.Start.StartIndex ?? (name?.Symbol.StartIndex ?? 0);
-//      AddSemanticToken(ctx.Start.StartIndex, refStopIdx - 1, spec.SemanticTokenTypes.keyword);
-//    }
-//
-//    if(type != null)
-//      Visit(type);
-//
 //    AddSemanticToken(name, spec.SemanticTokenTypes.parameter);
-//    
-//    if(assignExp != null)
-//      Visit(assignExp.exp());
-//    
-//    return null;
-//  }
-//  
-//  public override object VisitJsonObject(bhlParser.JsonObjectContext ctx)
-//  {
-//    var newExp = ctx.newExp();
-//    if(newExp != null)
-//      VisitNewExp(newExp);
-//
-//    var jsonPair = ctx.jsonPair();
-//    if(jsonPair != null)
-//    {
-//      foreach(var item in jsonPair)
-//      {
-//        var item_name = item.NAME();
-//        var item_value = item.jsonValue();
-//        
-//        if(item_name != null)
-//          AddSemanticToken(item_name, spec.SemanticTokenTypes.variable);
-//        
-//        if(item_value != null)
-//          Visit(item_value.exp());
-//      }
-//    }
-//    
-//    return null;
 //  }
 //  
 //  public override object VisitCallExp(bhlParser.CallExpContext ctx)
@@ -98,23 +54,6 @@ namespace bhl.lsp {
 //      if(name != null)
 //        AddSemanticToken(name, spec.SemanticTokenTypes.variable);
 //    }
-//    return null;
-//  }
-//
-//  public override object VisitImports(bhlParser.ImportsContext ctx)
-//  {
-//    foreach(var mimport in ctx.mimport())
-//    {
-//      var normalstring = mimport.NORMALSTRING();
-//      
-//      var import = normalstring.GetText();
-//      import = import.Substring(1, import.Length-2); // removing quotes
-//      imports.Add(import);
-//      
-//      AddSemanticToken(mimport.Start.StartIndex, normalstring.Symbol.StartIndex - 1, spec.SemanticTokenTypes.keyword);
-//      AddSemanticToken(normalstring, spec.SemanticTokenTypes.@string);
-//    }
-//    
 //    return null;
 //  }
 //  

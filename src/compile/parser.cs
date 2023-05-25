@@ -2283,6 +2283,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitJsonPair(bhlParser.JsonPairContext ctx)
   {
+    AddSemanticToken(ctx.NAME(), SemanticToken.Variable);
+
     var curr_type = PeekJsonType();
     var scoped_symb = curr_type as ClassSymbol;
     if(scoped_symb == null)
@@ -2499,6 +2501,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpAs(bhlParser.ExpAsContext ctx)
   {
+    AddSemanticToken(ctx.AS(), SemanticToken.Keyword);
+
     var tp = ParseType(ctx.type());
 
     var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
@@ -2519,6 +2523,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpIs(bhlParser.ExpIsContext ctx)
   {
+    AddSemanticToken(ctx.IS(), SemanticToken.Keyword);
+
     var tp = ParseType(ctx.type());
 
     var ast = new AST_TypeIs(tp.Get(), ctx.Start.Line);
@@ -3435,6 +3441,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.iface_ctx == null)
       return;
 
+    AddSemanticToken(pass.iface_ctx.INTERFACE(), SemanticToken.Keyword);
+    AddSemanticToken(pass.iface_ctx.NAME(), SemanticToken.Class);
+
     var name = pass.iface_ctx.NAME().GetText();
 
     pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
@@ -3884,6 +3893,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)
   {
+    AddSemanticToken(ctx.ENUM(), SemanticToken.Keyword);
+
     var enum_name = ctx.NAME().GetText();
 
     //NOTE: currently all enum values are replaced with literals,
