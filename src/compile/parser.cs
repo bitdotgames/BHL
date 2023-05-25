@@ -4911,6 +4911,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
+    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+
     var ret_type = ProcFuncCallExp(ctx, ctx.chainExp(), yielded: true);
     ProcPopNonConsumed(ret_type);
     return null;
