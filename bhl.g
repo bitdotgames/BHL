@@ -10,7 +10,7 @@ declOrImport
   ;
 
 mimport
-  : 'import' NORMALSTRING SEPARATOR*
+  : IMPORT NORMALSTRING SEPARATOR*
   ;
 
 decl
@@ -388,6 +388,7 @@ jsonValue
 
 ////////////////////////////// lexer /////////////////////////////
 
+IMPORT : 'import' ;
 NULL : 'null' ;
 FALSE : 'false' ;
 TRUE : 'true' ;

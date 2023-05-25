@@ -770,6 +770,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ParseImport(bhlParser.MimportContext ctx)
   {
+    AddSemanticToken(ctx.IMPORT(), SemanticToken.Keyword);
+    AddSemanticToken(ctx.NORMALSTRING(), SemanticToken.String);
+
     var name = ctx.NORMALSTRING().GetText();
     //removing quotes
     name = name.Substring(1, name.Length-2);
