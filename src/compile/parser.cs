@@ -2565,6 +2565,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(op_ctx.operatorSelfOp() != null)
     {
+      AddSemanticToken(op_ctx.operatorSelfOp(), SemanticToken.Operator);
+
       string post_op = op_ctx.operatorSelfOp().GetText();
       ProcBinOp(ctx, post_op.Substring(0, 1), chain_ctx, op_ctx.exp(), lhs_self_op: true);
 
@@ -2651,6 +2653,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool ProcPostIncDec(ParserRuleContext ctx, bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
   {
+    AddSemanticToken(inc_dec, SemanticToken.Operator);
+
     var chain = new ExpChain(ctx, chain_exp);
     if(chain.Incomplete)
     {
@@ -2696,6 +2700,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
+    AddSemanticToken(ctx.operatorComparison(), SemanticToken.Operator);
+
     var op = ctx.operatorComparison().GetText(); 
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
