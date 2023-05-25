@@ -4560,12 +4560,16 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmParal(bhlParser.StmParalContext ctx)
   {
+    AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
+
     ProcBlock(BlockType.PARAL, ctx.block()?.statement());
     return null;
   }
 
   public override object VisitStmParalAll(bhlParser.StmParalAllContext ctx)
   {
+    AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
+
     ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
     return null;
   }
