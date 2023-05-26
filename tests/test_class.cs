@@ -858,23 +858,24 @@ public class TestClasses : BHL_TestBase
       Foo foo
     }
       
-    coro func int test() 
+    coro func test() 
     {
       Bar b = {}
       start(coro func() {
         b.foo = {}
         b.foo.SetPtr(calc)
-        yield()
+        yield while(true)
       })
-      yield()
-      yield()
-      yield()
-      return b.foo.ptr(2)
+      yield while(true)
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    vm.Start("test");
+    vm.Tick();
+    vm.Tick();
+    vm.Tick();
+    vm.Stop();
     CommonChecks(vm);
   }
 
