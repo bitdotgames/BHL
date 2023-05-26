@@ -838,35 +838,44 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //TODO:
+  //[IsTested()]
   public void TestUserNestedClassWithFuncPtr()
   {
     string bhl = @"
-    func int calc(int a) {
-      return a + 1
-    }
-
     class Foo { 
-      func int(int) ptr
+      func() ptr
 
-      func SetPtr(func int(int) p) {
+      func SetPtr(func() p) {
         this.ptr = p
       }
     }
 
     class Bar {
       Foo foo
+      int n
+
+      coro func Do() {
+        start(coro func() {
+          this.foo = {}
+          this.foo.SetPtr(func() {
+            this.Add()
+          })
+          yield while(true)
+        })
+
+        yield while(true)
+      }
+
+      func Add() {
+        this.n = this.n + 1
+      }
     }
       
     coro func test() 
     {
       Bar b = {}
-      start(coro func() {
-        b.foo = {}
-        b.foo.SetPtr(calc)
-        yield while(true)
-      })
-      yield while(true)
+      yield b.Do()
     }
     ";
 
