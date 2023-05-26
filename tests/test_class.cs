@@ -839,6 +839,46 @@ public class TestClasses : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserNestedClassWithFuncPtr()
+  {
+    string bhl = @"
+    func int calc(int a) {
+      return a + 1
+    }
+
+    class Foo { 
+      func int(int) ptr
+
+      func SetPtr(func int(int) p) {
+        this.ptr = p
+      }
+    }
+
+    class Bar {
+      Foo foo
+    }
+      
+    coro func int test() 
+    {
+      Bar b = {}
+      start(coro func() {
+        b.foo = {}
+        b.foo.SetPtr(calc)
+        yield()
+      })
+      yield()
+      yield()
+      yield()
+      return b.foo.ptr(2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserClassDefaultInitFuncPtr()
   {
     string bhl = @"
