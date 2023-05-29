@@ -845,19 +845,15 @@ public class TestClasses : BHL_TestBase
     string bhl = @"
     class Bar {
       func() ptr
-      int n
-
-      func Do() {
-        this.ptr = func() {
-          this.n = 1
-        }
-      }
+      func Dummy() {}
     }
       
     func test() 
     {
       Bar b = {}
-      b.Do()
+      b.ptr = func() {
+        b.Dummy()
+      }
     }
     ";
 
