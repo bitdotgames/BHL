@@ -840,51 +840,29 @@ public class TestClasses : BHL_TestBase
 
   //TODO:
   //[IsTested()]
-  public void TestUserNestedClassWithFuncPtr()
+  public void TestFuncPtrAccessThisMethodLeak()
   {
     string bhl = @"
-    class Foo { 
-      func() ptr
-
-      func SetPtr(func() p) {
-        this.ptr = p
-      }
-    }
-
     class Bar {
-      Foo foo
+      func() ptr
       int n
 
-      coro func Do() {
-        start(coro func() {
-          this.foo = {}
-          this.foo.SetPtr(func() {
-            this.Add()
-          })
-          yield while(true)
-        })
-
-        yield while(true)
-      }
-
-      func Add() {
-        this.n = this.n + 1
+      func Do() {
+        this.ptr = func() {
+          this.n = 1
+        }
       }
     }
       
-    coro func test() 
+    func test() 
     {
       Bar b = {}
-      yield b.Do()
+      b.Do()
     }
     ";
 
     var vm = MakeVM(bhl);
-    vm.Start("test");
-    vm.Tick();
-    vm.Tick();
-    vm.Tick();
-    vm.Stop();
+    Execute(vm, "test");
     CommonChecks(vm);
   }
 
