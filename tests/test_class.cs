@@ -838,8 +838,7 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestFuncPtrAccessThisMethodLeak()
   {
     string bhl = @"

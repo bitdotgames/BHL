@@ -2093,11 +2093,6 @@ public class ClassSymbolScript : ClassSymbol
 
   void ClassCreator(VM.Frame frm, ref Val data, IType type)
   {
-    //TODO: add handling of native super class
-    //if(super_class is ClassSymbolNative cn)
-    //{
-    //}
-
     //NOTE: object's raw data is a list
     var vl = ValList.New(frm.vm);
     data.SetObj(vl, type);
@@ -2108,6 +2103,7 @@ public class ClassSymbolScript : ClassSymbol
       //NOTE: Members contain all kinds of symbols: methods and attributes,
       //      however we need to properly setup attributes only. 
       //      Other members will be initialized with special case 'nil' value.
+      //TODO:
       //      Maybe we should store attributes and methods separately someday. 
       if(m is VariableSymbol vs)
       {

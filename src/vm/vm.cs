@@ -674,8 +674,10 @@ public class VM : INamedResolver
   public class FuncPtr : IValRefcounted
   {
     //NOTE: -1 means it's in released state,
-    //      public only for inspection
-    public int refs;
+    //      public only for quick inspection
+    public int _refs;
+
+    public int refs => _refs; 
 
     public VM vm;
 
@@ -697,22 +699,22 @@ public class VM : INamedResolver
         ++vm.fptrs_pool.hits;
         ptr = vm.fptrs_pool.stack.Pop();
 
-        if(ptr.refs != -1)
-          throw new Exception("Expected to be released, refs " + ptr.refs);
+        if(ptr._refs != -1)
+          throw new Exception("Expected to be released, refs " + ptr._refs);
       }
 
-      ptr.refs = 1;
+      ptr._refs = 1;
 
       return ptr;
     }
 
     static void Del(FuncPtr ptr)
     {
-      if(ptr.refs != 0)
-        throw new Exception("Freeing invalid object, refs " + ptr.refs);
+      if(ptr._refs != 0)
+        throw new Exception("Freeing invalid object, refs " + ptr._refs);
 
       //Console.WriteLine("DEL " + ptr.GetHashCode() + " " + Environment.StackTrace);
-      ptr.refs = -1;
+      ptr._refs = -1;
 
       ptr.Clear();
       ptr.vm.fptrs_pool.stack.Push(ptr);
@@ -753,8 +755,15 @@ public class VM : INamedResolver
       for(int i=upvals.Count;i-- > 0;)
       {
         var val = upvals[i];
-        if(val != null)
+        //NOTE: let's check if it exists and upval value was not
+        //      released before when it was detected it's not 
+        //      referenced else where
+        if(val != null && val._upval_refs != -1)
+        {
+          //NOTE: let's decrease the upval references counter
+          --val._upval_refs;
           val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+        }
       }
       upvals.Clear();
     }
@@ -763,22 +772,22 @@ public class VM : INamedResolver
     {
       //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
 
-      if(refs == -1)
+      if(_refs == -1)
         throw new Exception("Invalid state(-1)");
-      ++refs;
+      ++_refs;
     }
 
     public void Release()
     {
       //Console.WriteLine("REL " + GetHashCode() + " " + Environment.StackTrace);
 
-      if(refs == -1)
+      if(_refs == -1)
         throw new Exception("Invalid state(-1)");
-      if(refs == 0)
+      if(_refs == 0)
         throw new Exception("Double free(0)");
 
-      --refs;
-      if(refs == 0)
+      --_refs;
+      if(_refs == 0)
         Del(this);
     }
 
@@ -801,6 +810,11 @@ public class VM : INamedResolver
         }
       }
       return frm;
+    }
+
+    public override string ToString()
+    {
+      return "(FPTR refs:" + _refs + ",upvals:" + upvals.Count + " " + this.GetHashCode() + ")"; 
     }
   }
 
@@ -2057,9 +2071,9 @@ public class VM : INamedResolver
         addr.upvals.Resize(local_idx+1);
 
         var upval = curr_frame.locals[up_idx];
-        upval.Retain();
         //NOTE: let's increase the upval references counter
         ++upval._upval_refs;
+        upval.Retain();
         addr.upvals[local_idx] = upval;
       }
       break;

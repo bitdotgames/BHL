@@ -15,6 +15,7 @@ public struct RefOp
 
 public interface IValRefcounted
 {
+  int refs { get ; }
   void Retain();
   void Release();
 }
@@ -111,6 +112,7 @@ public class Val
 #endif
     }
     dv._refs = 1;
+    dv._upval_refs = 0;
     dv.Reset();
     return dv;
   }
@@ -171,6 +173,38 @@ public class Val
       else if((op & RefOp.USR_DEC) != 0)
       {
         _refc.Release();
+
+        //NOTE: let's process a special case when the value is only referenced in lambdas as upvalues and
+        //      nowhere else. This is needed to properly detect self reference cases like the following:
+        //
+        //      Bar b = {}
+        //      b.ptr = func() {
+        //        b.Dummy() //<-- self reference
+        //      }
+        //
+        //      The trick here is to affect user IValRefcounted refcounting *only* (not Val itself). Class 
+        //      containers are represented using ValList which is IValRefcounted. 
+        //
+        //      Let's consider the case above:
+        //
+        //      Bar b = {} // val_refs:1, class_refs:1, upval_refs:0
+        //      b.ptr = func() {
+        //        b.Dummy() //val_refs:2, class_refs:2, upval_refs:1
+        //      }
+        //      ...
+        //      <exiting frame> val_refs:1, class_refs:1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
+        //      <releasing class Bar> release b.ptr (FuncPtr) since it's a member of Bar 
+        //      <releasing FuncPtr> release upvals and contained b, val_refs:0 
+        if(_upval_refs == _refc.refs)
+        {
+#if DEBUG_REFS
+        Console.WriteLine("UPDEL: " + _upval_refs + " VS " + _refc.refs + " " + this + " " + GetHashCode());
+#endif
+          //NOTE: let's nullify IValRefcounted early
+          _obj = null;
+          for(int r=0;r<_refc.refs;++r)
+            _refc.Release();
+        }
       }
     }
 
@@ -181,7 +215,7 @@ public class Val
 
       ++_refs;
 #if DEBUG_REFS
-      Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+      Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
 #endif
     } 
     else if((op & RefOp.DEC) != 0)
@@ -193,13 +227,8 @@ public class Val
 
       --_refs;
 #if DEBUG_REFS
-      Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
+      Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
 #endif
-
-      //TODO: let's Del(..) value which is only referenced 
-      //      by lambdas
-      //if(_upval_refs >= _refs)
-      //  _refs = 0;
 
       if(_refs == 0)
         Del(this);
@@ -358,8 +387,10 @@ public class ValList : IList<Val>, IValRefcounted
   public List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
-  //      public only for inspection
-  public int refs;
+  //      public only for quick inspection
+  public int _refs;
+
+  public int refs => _refs; 
 
   public VM vm;
 
@@ -461,22 +492,22 @@ public class ValList : IList<Val>, IValRefcounted
   public void Retain()
   {
     //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-    if(refs == -1)
+    if(_refs == -1)
       throw new Exception("Invalid state(-1)");
-    ++refs;
+    ++_refs;
   }
 
   public void Release()
   {
     //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
 
-    if(refs == -1)
+    if(_refs == -1)
       throw new Exception("Invalid state(-1)");
-    if(refs == 0)
+    if(_refs == 0)
       throw new Exception("Double free(0)");
 
-    --refs;
-    if(refs == 0)
+    --_refs;
+    if(_refs == 0)
       Del(this);
   }
 
@@ -510,20 +541,20 @@ public class ValList : IList<Val>, IValRefcounted
       ++vm.vlsts_pool.hits;
       lst = vm.vlsts_pool.stack.Pop();
 
-      if(lst.refs != -1)
-        throw new Exception("Expected to be released, refs " + lst.refs);
+      if(lst._refs != -1)
+        throw new Exception("Expected to be released, refs " + lst._refs);
     }
-    lst.refs = 1;
+    lst._refs = 1;
 
     return lst;
   }
 
   static void Del(ValList lst)
   {
-    if(lst.refs != 0)
-      throw new Exception("Freeing invalid object, refs " + lst.refs);
+    if(lst._refs != 0)
+      throw new Exception("Freeing invalid object, refs " + lst._refs);
 
-    lst.refs = -1;
+    lst._refs = -1;
     lst.Clear();
     lst.vm.vlsts_pool.stack.Push(lst);
 
@@ -541,8 +572,10 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
-  //      public only for inspection
-  public int refs;
+  //      public only for quick inspection
+  public int _refs;
+
+  public int refs => _refs; 
 
   public VM vm;
 
@@ -706,22 +739,22 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   public void Retain()
   {
     //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-    if(refs == -1)
+    if(_refs == -1)
       throw new Exception("Invalid state(-1)");
-    ++refs;
+    ++_refs;
   }
 
   public void Release()
   {
     //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
 
-    if(refs == -1)
+    if(_refs == -1)
       throw new Exception("Invalid state(-1)");
-    if(refs == 0)
+    if(_refs == 0)
       throw new Exception("Double free(0)");
 
-    --refs;
-    if(refs == 0)
+    --_refs;
+    if(_refs == 0)
       Del(this);
   }
 
@@ -746,20 +779,20 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       ++vm.vmaps_pool.hits;
       map = vm.vmaps_pool.stack.Pop();
 
-      if(map.refs != -1)
-        throw new Exception("Expected to be released, refs " + map.refs);
+      if(map._refs != -1)
+        throw new Exception("Expected to be released, refs " + map._refs);
     }
-    map.refs = 1;
+    map._refs = 1;
 
     return map;
   }
 
   static void Del(ValMap map)
   {
-    if(map.refs != 0)
-      throw new Exception("Freeing invalid object, refs " + map.refs);
+    if(map._refs != 0)
+      throw new Exception("Freeing invalid object, refs " + map._refs);
 
-    map.refs = -1;
+    map._refs = -1;
     map.Clear();
     map.vm.vmaps_pool.stack.Push(map);
 

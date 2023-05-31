@@ -6847,6 +6847,33 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaChangesVar()
+  {
+    string bhl = @"
+
+    func foo(func void() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() { 
+          a = a + 1 
+        } 
+      )
+      return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(num, 3);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLambdaChangesSeveralVars()
   {
     string bhl = @"
@@ -6933,6 +6960,29 @@ public class TestVM : BHL_TestBase
 
   [IsTested()]
   public void TestLambdaSelfCallAndBindValues()
+  {
+    string bhl = @"
+    func test() 
+    {
+      float a = 2
+
+      func() fn = func func() (float a) { 
+        return func() { 
+          a = 1
+        }
+      }(a) 
+
+      fn()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLambdaSelfCallAndBindValues2()
   {
     string bhl = @"
 
@@ -20034,26 +20084,28 @@ public class TestVM : BHL_TestBase
 
   public class RefC : IValRefcounted
   {
-    public int refs;
+    public int _refs;
     public StringBuilder logs;
+
+    public int refs => _refs; 
 
     public RefC(StringBuilder logs)
     {
-      ++refs;
-      logs.Append("INC" + refs + ";");
+      ++_refs;
+      logs.Append("INC" + _refs + ";");
       this.logs = logs;
     }
 
     public void Retain()
     {
-      ++refs;
-      logs.Append("INC" + refs + ";");
+      ++_refs;
+      logs.Append("INC" + _refs + ";");
     }
 
     public void Release()
     {
-      --refs;
-      logs.Append("DEC" + refs + ";");
+      --_refs;
+      logs.Append("DEC" + _refs + ";");
     }
   }
 
@@ -20070,7 +20122,7 @@ public class TestVM : BHL_TestBase
         var vs = new FieldSymbol(new Origin(), "refs", Types.Int,
           delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
           {
-            v.num = ((RefC)ctx.obj).refs;
+            v.num = ((RefC)ctx.obj)._refs;
           },
           //read only property
           null
