@@ -27,6 +27,8 @@ public class Val
   //      fast access in case you know what you are doing
   //NOTE: -1 means it's in released state
   public int _refs;
+  //NOTE: upval references counter 
+  public int _upval_refs;
   public double _num;
   public object _obj;
   //NOTE: extra values below are for efficient encoding of small structs,
@@ -120,6 +122,7 @@ public class Val
     if(dv._refs != 0)
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
+    dv._upval_refs = 0;
 
     dv.vm.vals_pool.stack.Push(dv);
     if(dv.vm.vals_pool.stack.Count > dv.vm.vals_pool.miss)
@@ -192,6 +195,11 @@ public class Val
 #if DEBUG_REFS
       Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
+
+      //TODO: let's Del(..) value which is only referenced 
+      //      by lambdas
+      //if(_upval_refs >= _refs)
+      //  _refs = 0;
 
       if(_refs == 0)
         Del(this);
@@ -331,7 +339,7 @@ public class Val
     str += " num4:" + _num4;
     str += " obj:" + _obj;
     str += " obj.type:" + _obj?.GetType().Name;
-    str += " (refs:" + _refs + ")";
+    str += " (refs:" + _refs + ", up.refs:" + _upval_refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
   }

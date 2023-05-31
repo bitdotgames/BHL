@@ -2058,8 +2058,9 @@ public class VM : INamedResolver
 
         var upval = curr_frame.locals[up_idx];
         upval.Retain();
+        //NOTE: let's increase the upval references counter
+        ++upval._upval_refs;
         addr.upvals[local_idx] = upval;
-
       }
       break;
       case Opcodes.Pop:
