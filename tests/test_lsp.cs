@@ -504,15 +504,26 @@ public class TestLSP : BHL_TestBase
     {
       int upval = 1 //upval value
       func() {
-        upval = upval + 1 
+        upval = upval + 1 //upval1
       }()
+    }
+
+    func test4(int foo, int bar, int upval) //upval arg
+    {
+      sink(func() {
+        upval = upval + 1 //upval2 
+      })
+    }
+
+    func sink(func() ptr) 
+    {
     }
     ";
     
     string bhl2 = @"
     import ""bhl1""
 
-    func float test4(float k, int j)
+    func float test5(float k, int j)
     {
       test1(24)
       return 0
@@ -550,8 +561,19 @@ public class TestLSP : BHL_TestBase
         rpc.Handle(FindReferencesReq(uri1, "pval + 1")),
         FindReferencesRsp(
           new UriNeedle(uri1, "int upval = 1", end_column_offset: 8),
-          new UriNeedle(uri1, "upval = upval + 1", end_column_offset: 4),
-          new UriNeedle(uri1, "upval + 1", end_column_offset: 4)
+          new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
+          new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
+        )
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
+        FindReferencesRsp(
+          new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
+          new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
+          new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
         )
       );
     });
