@@ -545,7 +545,7 @@ public class TextDocumentFindReferencesService : IService
         //2. sorting by file name
         refs.Sort((a, b) => a.uri.path.CompareTo(b.uri.path));
 
-        //3. adding definition for native symbol
+        //3. adding definition for native symbol (if any)
         if(symb is FuncSymbolNative)
         {
           refs.Add(new Location {

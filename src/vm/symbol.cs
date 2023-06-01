@@ -1793,7 +1793,7 @@ public class LambdaSymbol : FuncSymbolScript
     var local = new VariableSymbol(src.origin, src.name, src.type);
 
     //NOTE: we want to avoid possible recursion during resolve
-    //      checks that's why we use a 'raw' version
+    //      checks that's why we use a non-checking version
     this._current_scope.DefineWithoutEnclosingChecks(local);
 
     var upval = new AST_UpVal(
@@ -1826,14 +1826,22 @@ public class LambdaSymbol : FuncSymbolScript
 
     for(int i=my_idx;i-- > 0;)
     {
-      var decl = fdecl_stack[i];
+      var fdecl = fdecl_stack[i];
 
-      if(decl._current_scope != null)
+      if(fdecl._current_scope != null)
       {
-        var res = decl._current_scope.ResolveWithFallback(name);
+        //let's try to find a variable inside a function
+        var res = fdecl._current_scope.ResolveWithFallback(name);
         //checking if it's a variable and not a global one
         if(res is VariableSymbol vs && !(vs.scope is Namespace))
-          return AssignUpValues(vs, i+1, my_idx);
+        {
+          //let's add upvalue to all nested lambdas and the returned value  
+          //is the most nested upvalue (?)
+          var local = AssignUpValues(vs, i+1, my_idx);
+          //NOTE: returning local instead of an original variable since we need 
+          //      proper index of the local variable in the local frame
+          return local;
+        }
       }
     }
 

@@ -356,7 +356,9 @@ public class TestLSP : BHL_TestBase
     {
       int upval = 1 //upval value
       func() {
-        upval = upval + 1 
+        func () {
+          upval = upval + 1 
+        }()
       }()
     }
     ";
@@ -497,12 +499,20 @@ public class TestLSP : BHL_TestBase
     {
       test1(42)
     }
+
+    func test3()
+    {
+      int upval = 1 //upval value
+      func() {
+        upval = upval + 1 
+      }()
+    }
     ";
     
     string bhl2 = @"
     import ""bhl1""
 
-    func float test3(float k, int j)
+    func float test4(float k, int j)
     {
       test1(24)
       return 0
@@ -534,6 +544,17 @@ public class TestLSP : BHL_TestBase
         )
       );
     });
+
+    //TODO:
+    //SubTest(() => {
+    //  AssertEqual(
+    //    rpc.Handle(FindReferencesReq(uri1, "pval + 1")),
+    //    FindReferencesRsp(
+    //      new UN(uri1, "upval = 1", line_offset: 0),
+    //      new UN(uri1, "upval = upval + 1", column_offset: 0)
+    //    )
+    //  );
+    //});
   }
 
   //TODO:
