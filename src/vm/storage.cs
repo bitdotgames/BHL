@@ -124,7 +124,6 @@ public class Val
     if(dv._refs != 0)
       throw new Exception("Deleting invalid object, refs " + dv._refs);
     dv._refs = -1;
-    dv._upval_refs = 0;
 
     dv.vm.vals_pool.stack.Push(dv);
     if(dv.vm.vals_pool.stack.Count > dv.vm.vals_pool.miss)

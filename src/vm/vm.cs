@@ -755,10 +755,8 @@ public class VM : INamedResolver
       for(int i=upvals.Count;i-- > 0;)
       {
         var val = upvals[i];
-        //NOTE: let's check if it exists and upval value was not
-        //      released before when it was detected it's not 
-        //      referenced else where
-        if(val != null && val._upval_refs != -1)
+        //NOTE: let's check if it exists
+        if(val != null)
         {
           //NOTE: let's decrease the upval references counter
           --val._upval_refs;
