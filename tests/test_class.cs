@@ -883,6 +883,30 @@ public class TestClasses : BHL_TestBase
       Execute(vm, "test");
       CommonChecks(vm);
     });
+
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        []func() ptrs
+        func Dummy() {}
+      }
+        
+      func test() 
+      {
+        Bar b = {}
+        b.ptrs = [
+          func() { b.Dummy() }, 
+          func() { b.Dummy() },
+          func() { b.Dummy() }
+        ]
+        b.ptrs[1]()
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]
