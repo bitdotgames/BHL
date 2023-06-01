@@ -841,24 +841,48 @@ public class TestClasses : BHL_TestBase
   [IsTested()]
   public void TestFuncPtrAccessThisMethodLeak()
   {
-    string bhl = @"
-    class Bar {
-      func() ptr
-      func Dummy() {}
-    }
-      
-    func test() 
-    {
-      Bar b = {}
-      b.ptr = func() {
-        b.Dummy()
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        func() ptr
+        func Dummy() {}
       }
-    }
-    ";
+        
+      func test() 
+      {
+        Bar b = {}
+        b.ptr = func() {
+          b.Dummy()
+        }
+      }
+      ";
 
-    var vm = MakeVM(bhl);
-    Execute(vm, "test");
-    CommonChecks(vm);
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        []func() ptrs
+        func Dummy() {}
+      }
+        
+      func test() 
+      {
+        Bar b = {}
+        b.ptrs = [
+          func() { b.Dummy() }, 
+          func() { b.Dummy() }
+        ]
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]

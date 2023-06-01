@@ -195,14 +195,15 @@ public class Val
         //      <exiting frame> val_refs:1, class_refs:1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
         //      <releasing class Bar> release b.ptr (FuncPtr) since it's a member of Bar 
         //      <releasing FuncPtr> release upvals and contained b, val_refs:0 
-        if(_upval_refs == _refc.refs)
+        int refc_refs = _refc.refs;
+        if(_upval_refs == refc_refs)
         {
 #if DEBUG_REFS
-        Console.WriteLine("UPDEL: " + _upval_refs + " VS " + _refc.refs + " " + this + " " + GetHashCode());
+        Console.WriteLine("UPDEL: " + _upval_refs + " VS " + refc_refs + " " + this + " " + GetHashCode());
 #endif
           //NOTE: let's nullify IValRefcounted early
           _obj = null;
-          for(int r=0;r<_refc.refs;++r)
+          for(int r=0;r<refc_refs;++r)
             _refc.Release();
         }
       }
