@@ -351,6 +351,14 @@ public class TestLSP : BHL_TestBase
     {
       TEST() //native call
     }
+    
+    func test6()
+    {
+      int upval = 1 //upval value
+      func() {
+        upval = upval + 1 
+      }()
+    }
     ";
     
     var ws = new Workspace(NoLogger());
@@ -466,6 +474,14 @@ public class TestLSP : BHL_TestBase
       AssertContains(rsp, "test_lsp.cs");
       AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
     });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(GoToDefinitionReq(uri2, "pval + 1")),
+        GoToDefinitionRsp(uri2, "upval = 1", column_offset: 4)
+      );
+    });
+
   }
 
   [IsTested()]

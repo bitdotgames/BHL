@@ -1788,7 +1788,7 @@ public class LambdaSymbol : FuncSymbolScript
     this.fdecl_stack = fdecl_stack;
   }
 
-  public VariableSymbol AddUpValue(VariableSymbol src)
+  VariableSymbol AddUpValue(VariableSymbol src)
   {
     var local = new VariableSymbol(src.origin, src.name, src.type);
 
