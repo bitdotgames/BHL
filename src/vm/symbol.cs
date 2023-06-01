@@ -1282,6 +1282,10 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     }
   }
 
+#if BHL_FRONT
+  internal VariableSymbol _upvalue;
+#endif
+
   public VariableSymbol(Origin origin, string name, Proxy<IType> type) 
     : base(origin, name) 
   {
@@ -1791,6 +1795,8 @@ public class LambdaSymbol : FuncSymbolScript
   VariableSymbol AddUpValue(VariableSymbol src)
   {
     var local = new VariableSymbol(src.origin, src.name, src.type);
+
+    local._upvalue = src;
 
     //NOTE: we want to avoid possible recursion during resolve
     //      checks that's why we use a non-checking version

@@ -770,8 +770,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void ParseImport(bhlParser.MimportContext ctx)
   {
-    AddSemanticToken(ctx.IMPORT(), SemanticToken.Keyword);
-    AddSemanticToken(ctx.NORMALSTRING(), SemanticToken.String);
+    LSP_AddSemanticToken(ctx.IMPORT(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.NORMALSTRING(), SemanticToken.String);
 
     var name = ctx.NORMALSTRING().GetText();
     //removing quotes
@@ -1294,7 +1294,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         return name_symb;
       }
 
-      Annotate(name.Parent).lsp_symbol = name_symb;
+      LSP_SetSymbol(name.Parent, name_symb);
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
@@ -1865,7 +1865,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         var arg_type = ParseType(ref_type.type());
         if(ref_type.REF() != null)
         {
-          AddSemanticToken(ref_type.REF(), SemanticToken.Keyword);
+          LSP_AddSemanticToken(ref_type.REF(), SemanticToken.Keyword);
           arg_type = curr_scope.R().TRef(arg_type);
         }
         arg_types.Add(arg_type);
@@ -1877,7 +1877,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
   {
-    AddSemanticToken(ctx.CORO(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.CORO(), SemanticToken.Keyword);
 
     return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
@@ -1953,7 +1953,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var tp = new Proxy<IType>();
     if(ctx.nsName() != null)
     {
-      AddSemanticToken(ctx.nsName().dotName().NAME(), SemanticToken.Type);
+      LSP_AddSemanticToken(ctx.nsName().dotName().NAME(), SemanticToken.Type);
 
       if(ctx.nsName().GetText() == "var")
       {
@@ -2007,8 +2007,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
      bool yielded = false
    )
   {
-    AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
-    AddSemanticToken(lmb_ctx.CORO(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(lmb_ctx.CORO(), SemanticToken.Keyword);
 
     if(yielded)
       CheckCoroCallValidity(ctx);
@@ -2283,7 +2283,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitJsonPair(bhlParser.JsonPairContext ctx)
   {
-    AddSemanticToken(ctx.NAME(), SemanticToken.Variable);
+    LSP_AddSemanticToken(ctx.NAME(), SemanticToken.Variable);
 
     var curr_type = PeekJsonType();
     var scoped_symb = curr_type as ClassSymbol;
@@ -2302,7 +2302,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    Annotate(ctx).lsp_symbol = member;
+    LSP_SetSymbol(ctx, member);
 
     var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx, ctx.NAME().Symbol.Line);
 
@@ -2337,7 +2337,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpTypeof(bhlParser.ExpTypeofContext ctx)
   {
-    AddSemanticToken(ctx.TYPEOF(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.TYPEOF(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
 
@@ -2413,7 +2413,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpNew(bhlParser.ExpNewContext ctx)
   {
-    AddSemanticToken(ctx.newExp().NEW(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.newExp().NEW(), SemanticToken.Keyword);
 
     var cl = ParseType(ctx.newExp().type()).Get();
     Annotate(ctx).eval_type = cl;
@@ -2425,7 +2425,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     }
 
     if(ctx.newExp().type().nsName() != null)
-      Annotate(ctx.newExp().type().nsName().dotName()).lsp_symbol = cl as Symbol;
+     LSP_SetSymbol(ctx.newExp().type().nsName().dotName(), cl as Symbol);
 
     var ast = new AST_New(cl, ctx.Start.Line);
     PeekAST().AddChild(ast);
@@ -2501,7 +2501,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpAs(bhlParser.ExpAsContext ctx)
   {
-    AddSemanticToken(ctx.AS(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.AS(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
 
@@ -2523,7 +2523,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpIs(bhlParser.ExpIsContext ctx)
   {
-    AddSemanticToken(ctx.IS(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.IS(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
 
@@ -2922,7 +2922,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
-    AddSemanticToken(ctx.FALSE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.FALSE(), SemanticToken.Keyword);
       
     Annotate(ctx).eval_type = Types.Bool;
 
@@ -2935,7 +2935,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralNull(bhlParser.ExpLiteralNullContext ctx)
   {
-    AddSemanticToken(ctx.NULL(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.NULL(), SemanticToken.Keyword);
 
     Annotate(ctx).eval_type = Types.Null;
 
@@ -2947,7 +2947,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralTrue(bhlParser.ExpLiteralTrueContext ctx)
   {
-    AddSemanticToken(ctx.TRUE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.TRUE(), SemanticToken.Keyword);
 
     Annotate(ctx).eval_type = Types.Bool;
 
@@ -2960,7 +2960,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLiteralStr(bhlParser.ExpLiteralStrContext ctx)
   {
-    AddSemanticToken(ctx.@string().NORMALSTRING(), SemanticToken.String);
+    LSP_AddSemanticToken(ctx.@string().NORMALSTRING(), SemanticToken.String);
 
     Annotate(ctx).eval_type = Types.String;
 
@@ -3038,7 +3038,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmReturn(bhlParser.StmReturnContext ctx)
   {
-    AddSemanticToken(ctx.RETURN(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.RETURN(), SemanticToken.Keyword);
 
     var ret_val = ctx.returnVal();
 
@@ -3222,7 +3222,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmBreak(bhlParser.StmBreakContext ctx)
   {
-    AddSemanticToken(ctx.BREAK(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.BREAK(), SemanticToken.Keyword);
 
     int loop_level = GetLoopBlockLevel();
 
@@ -3245,7 +3245,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmContinue(bhlParser.StmContinueContext ctx)
   {
-    AddSemanticToken(ctx.CONTINUE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.CONTINUE(), SemanticToken.Keyword);
 
     int loop_level = GetLoopBlockLevel();
 
@@ -3311,8 +3311,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.func_ctx == null)
       return;
 
-    AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Keyword);
-    AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
+    LSP_AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
     
     foreach(var attr in pass.func_ctx.funcAttribs())
       AddSemanticToken(attr, SemanticToken.Keyword);
@@ -3339,7 +3339,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return;
     }
 
-    func_ann.lsp_symbol = pass.func_symb;
+    LSP_SetSymbol(func_ann, pass.func_symb);
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
   }
@@ -3427,7 +3427,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var vd = pass.gvar_decl_ctx;
 
     pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
-    Annotate(vd).lsp_symbol = pass.gvar_symb;
+    LSP_SetSymbol(vd, pass.gvar_symb);
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
     {
@@ -3441,13 +3441,13 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.iface_ctx == null)
       return;
 
-    AddSemanticToken(pass.iface_ctx.INTERFACE(), SemanticToken.Keyword);
-    AddSemanticToken(pass.iface_ctx.NAME(), SemanticToken.Class);
+    LSP_AddSemanticToken(pass.iface_ctx.INTERFACE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(pass.iface_ctx.NAME(), SemanticToken.Class);
 
     var name = pass.iface_ctx.NAME().GetText();
 
     pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
-    Annotate(pass.iface_ctx).lsp_symbol = pass.iface_symb;
+    LSP_SetSymbol(pass.iface_ctx, pass.iface_symb);
 
     if(!pass.scope.TryDefine(pass.iface_symb, out SymbolError err))
     {
@@ -3599,8 +3599,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     if(pass.class_ctx == null)
       return;
 
-    AddSemanticToken(pass.class_ctx.CLASS(), SemanticToken.Keyword);
-    AddSemanticToken(pass.class_ctx.NAME(), SemanticToken.Class);
+    LSP_AddSemanticToken(pass.class_ctx.CLASS(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(pass.class_ctx.NAME(), SemanticToken.Class);
 
     var name = pass.class_ctx.NAME().GetText();
 
@@ -3628,7 +3628,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           return;
         }
 
-        AddSemanticToken(vd.NAME(), SemanticToken.Variable, SemanticModifier.Definition);
+        LSP_AddSemanticToken(vd.NAME(), SemanticToken.Variable, SemanticModifier.Definition);
 
         var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new Proxy<IType>());
 
@@ -3676,22 +3676,22 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
           if(attr.CORO() != null)
           {
             attr_type = FuncAttrib.Coro;
-            AddSemanticToken(attr.CORO(), SemanticToken.Keyword);
+            LSP_AddSemanticToken(attr.CORO(), SemanticToken.Keyword);
           }
           else if(attr.VIRTUAL() != null)
           {
             attr_type = FuncAttrib.Virtual;
-            AddSemanticToken(attr.VIRTUAL(), SemanticToken.Keyword);
+            LSP_AddSemanticToken(attr.VIRTUAL(), SemanticToken.Keyword);
           }
           else if(attr.OVERRIDE() != null)
           {
             attr_type = FuncAttrib.Override;
-            AddSemanticToken(attr.OVERRIDE(), SemanticToken.Keyword);
+            LSP_AddSemanticToken(attr.OVERRIDE(), SemanticToken.Keyword);
           }
           else if(attr.STATIC() != null)
           {
             attr_type = FuncAttrib.Static;
-            AddSemanticToken(attr.STATIC(), SemanticToken.Keyword);
+            LSP_AddSemanticToken(attr.STATIC(), SemanticToken.Keyword);
           }
 
           if(func_symb.attribs.HasFlag(attr_type))
@@ -3786,7 +3786,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       {
         var ext_name = pass.class_ctx.extensions().nsName()[i]; 
 
-        AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
+        LSP_AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
 
         string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
         var ext = curr_scope.ResolveSymbolByPath(ext_full_path);
@@ -3893,7 +3893,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)
   {
-    AddSemanticToken(ctx.ENUM(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.ENUM(), SemanticToken.Keyword);
 
     var enum_name = ctx.NAME().GetText();
 
@@ -3945,7 +3945,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     pass.gvar_symb.origin.parsed.eval_type = pass.gvar_symb.type.Get();
 
     if(vd.type().nsName() != null)
-      Annotate(vd.type().nsName().dotName()).lsp_symbol = pass.gvar_symb.type.Get() as Symbol;
+      LSP_SetSymbol(vd.type().nsName().dotName(), pass.gvar_symb.type.Get() as Symbol);
 
     PushAST((AST_Tree)pass.ast);
 
@@ -4226,7 +4226,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var_ann = var_symb.origin.parsed;
         var_ann.eval_type = var_symb.type.Get();
-        Annotate(vd_name.Parent).lsp_symbol = var_symb;
+        LSP_SetSymbol(vd_name.Parent, var_symb);
       }
       else if(vproxy.LocalNameAt(i) != null)
       {
@@ -4240,7 +4240,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
         var_ann = Annotate(vd_name);
         var_ann.eval_type = var_symb.type.Get();
-        Annotate(vd_name.Parent).lsp_symbol = var_symb;
+        LSP_SetSymbol(vd_name.Parent, var_symb);
 
         bool is_global = var_symb.scope is Namespace;
         var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);
@@ -4337,7 +4337,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    AddSemanticToken(ctx.REF(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.REF(), SemanticToken.Keyword);
 
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.REF() != null;
@@ -4424,7 +4424,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     out VariableSymbol symb 
   )
   {
-    AddSemanticToken(name, SemanticToken.Variable);
+    LSP_AddSemanticToken(name, SemanticToken.Variable);
     if(tp_ctx != null && tp_ctx.GetText() == "var")
       AddSemanticToken(tp_ctx, SemanticToken.Keyword);
 
@@ -4440,7 +4440,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var_ann.eval_type = tp.Get();
 
     if(tp_ctx?.nsName() != null)
-      Annotate(tp_ctx.nsName().dotName()).lsp_symbol = var_ann.eval_type as Symbol;
+      LSP_SetSymbol(tp_ctx.nsName().dotName(), var_ann.eval_type as Symbol);
 
     if(is_ref && !func_arg)
     {
@@ -4458,7 +4458,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       return null;
     }
 
-    Annotate(name.Parent).lsp_symbol = symb;
+    LSP_SetSymbol(name.Parent, symb);
 
     if(write)
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb, 0, name);
@@ -4584,7 +4584,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmParal(bhlParser.StmParalContext ctx)
   {
-    AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
 
     ProcBlock(BlockType.PARAL, ctx.block()?.statement());
     return null;
@@ -4592,7 +4592,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmParalAll(bhlParser.StmParalAllContext ctx)
   {
-    AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
 
     ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
     return null;
@@ -4600,7 +4600,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDefer(bhlParser.StmDeferContext ctx)
   {
-    AddSemanticToken(ctx.DEFER(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.DEFER(), SemanticToken.Keyword);
 
     if(CountBlocks(BlockType.DEFER) > 0)
     {
@@ -4615,7 +4615,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     var ast = new AST_Block(BlockType.IF);
 
-    AddSemanticToken(ctx.IF(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.IF(), SemanticToken.Keyword);
 
     var main_cond = new AST_Block(BlockType.SEQ);
     PushAST(main_cond);
@@ -4674,8 +4674,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     {
       var item = else_if[i];
 
-      AddSemanticToken(item.ELSE(), SemanticToken.Keyword);
-      AddSemanticToken(item.IF(), SemanticToken.Keyword);
+      LSP_AddSemanticToken(item.ELSE(), SemanticToken.Keyword);
+      LSP_AddSemanticToken(item.IF(), SemanticToken.Keyword);
 
       var item_cond = new AST_Block(BlockType.SEQ);
       PushAST(item_cond);
@@ -4702,7 +4702,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     var @else = ctx.@else();
     if(@else != null)
     {
-      AddSemanticToken(@else.ELSE(), SemanticToken.Keyword);
+      LSP_AddSemanticToken(@else.ELSE(), SemanticToken.Keyword);
 
       seen_return = return_found.Contains(func_symb);
       return_found.Remove(func_symb);
@@ -4765,7 +4765,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmWhile(bhlParser.StmWhileContext ctx)
   {
-    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     var ast = new AST_Block(BlockType.WHILE);
 
@@ -4799,8 +4799,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmDoWhile(bhlParser.StmDoWhileContext ctx)
   {
-    AddSemanticToken(ctx.DO(), SemanticToken.Keyword);
-    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.DO(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     var ast = new AST_Block(BlockType.DOWHILE);
 
@@ -4843,7 +4843,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     // <post iter code>
     //}
 
-    AddSemanticToken(ctx.FOR(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.FOR(), SemanticToken.Keyword);
 
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
@@ -4914,7 +4914,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYield(bhlParser.StmYieldContext ctx)
   {
-    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
 
     CheckCoroCallValidity(ctx);
 
@@ -4927,7 +4927,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmYieldCall(bhlParser.StmYieldCallContext ctx)
   {
-    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
 
     var ret_type = ProcFuncCallExp(ctx, ctx.chainExp(), yielded: true);
     ProcPopNonConsumed(ret_type);
@@ -4939,8 +4939,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     //NOTE: we're going to generate the following code
     //while(cond) { yield() }
 
-    AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
-    AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.WHILE(), SemanticToken.Keyword);
 
     CheckCoroCallValidity(ctx);
 
@@ -4971,8 +4971,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitStmForeach(bhlParser.StmForeachContext ctx)
   {
-    AddSemanticToken(ctx.FOREACH(), SemanticToken.Keyword);
-    AddSemanticToken(ctx.foreachExp().IN(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.FOREACH(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.foreachExp().IN(), SemanticToken.Keyword);
     
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
@@ -5481,7 +5481,20 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     return false;
   }
 
-  void AddSemanticToken(ITerminalNode token, SemanticToken idx, SemanticModifier mods = 0)
+  void LSP_SetSymbol(AnnotatedParseTree ann, Symbol s)
+  {
+    if(s is VariableSymbol vs)
+      ann.lsp_symbol = vs._upvalue??vs;
+    else
+      ann.lsp_symbol = s;
+  }
+
+  void LSP_SetSymbol(IParseTree t, Symbol s)
+  {
+    LSP_SetSymbol(Annotate(t), s);
+  }
+
+  void LSP_AddSemanticToken(ITerminalNode token, SemanticToken idx, SemanticModifier mods = 0)
   {
     if(token == null)
       return;

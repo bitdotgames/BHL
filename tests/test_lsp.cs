@@ -383,56 +383,56 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "st1(42)")),
-        GoToDefinitionRsp(uri1, "func float test1(float k)", line_offset: 3)
+        GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3)
       );
     });
     
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "est2()")),
-        GoToDefinitionRsp(uri1, "func test2()", line_offset: 4)
+        GoToDefinitionRsp(uri1, "func test2()", end_line_offset: 4)
       );
     });
     
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
-        GoToDefinitionRsp(uri1, "class Foo {", line_offset: 2)
+        GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
-        GoToDefinitionRsp(uri1, "class Foo {", line_offset: 2)
+        GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
-        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
+        GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
-        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
+        GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "AR = 1")),
-        GoToDefinitionRsp(uri1, "int BAR", column_offset: 6)
+        GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
-        GoToDefinitionRsp(uri1, "foo = {", column_offset: 2)
+        GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 2)
       );
     });
 
@@ -453,21 +453,21 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "test4()")),
-        GoToDefinitionRsp(uri2, "func ErrorCodes test4()", line_offset: 7)
+        GoToDefinitionRsp(uri2, "func ErrorCodes test4()", end_line_offset: 7)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
-        GoToDefinitionRsp(uri1, "enum ErrorCodes", line_offset: 3)
+        GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3)
       );
     });
 
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
-        GoToDefinitionRsp(uri1, "Bad = 1", column_offset: 6)
+        GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 6)
       );
     });
 
@@ -480,7 +480,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(GoToDefinitionReq(uri2, "pval + 1")),
-        GoToDefinitionRsp(uri2, "upval = 1", column_offset: 4)
+        GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4)
       );
     });
 
@@ -538,23 +538,23 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
-          new UN(uri1, "func float test1(float k)", line_offset: 3),
-          new UN(uri1, "test1(42)", column_offset: 4),
-          new UN(uri2, "test1(24)", column_offset: 4)
+          new UriNeedle(uri1, "func float test1(float k)", end_line_offset: 3),
+          new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
+          new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
         )
       );
     });
 
-    //TODO:
-    //SubTest(() => {
-    //  AssertEqual(
-    //    rpc.Handle(FindReferencesReq(uri1, "pval + 1")),
-    //    FindReferencesRsp(
-    //      new UN(uri1, "upval = 1", line_offset: 0),
-    //      new UN(uri1, "upval = upval + 1", column_offset: 0)
-    //    )
-    //  );
-    //});
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(FindReferencesReq(uri1, "pval + 1")),
+        FindReferencesRsp(
+          new UriNeedle(uri1, "int upval = 1", end_column_offset: 8),
+          new UriNeedle(uri1, "upval = upval + 1", end_column_offset: 4),
+          new UriNeedle(uri1, "upval + 1", end_column_offset: 4)
+        )
+      );
+    });
   }
 
   //TODO:
@@ -697,10 +697,10 @@ public class TestLSP : BHL_TestBase
       "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  static string GoToDefinitionRsp(bhl.lsp.proto.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
+  static string GoToDefinitionRsp(bhl.lsp.proto.Uri uri, string needle, int end_line_offset = 0, int end_column_offset = 0)
   {
     var start = Pos(File.ReadAllText(uri.path), needle);
-    var end = new bhl.SourcePos(start.line + line_offset, start.column + column_offset);
+    var end = new bhl.SourcePos(start.line + end_line_offset, start.column + end_column_offset);
     return "{\"id\":1,\"result\":{\"uri\":\"" + uri + "\",\"range\":{\"start\":" + 
       AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   }
@@ -712,30 +712,30 @@ public class TestLSP : BHL_TestBase
       "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  public struct UN
+  public struct UriNeedle
   {
     public bhl.lsp.proto.Uri uri;
     public string needle;
-    public int line_offset;
-    public int column_offset;
+    public int end_line_offset;
+    public int end_column_offset;
 
-    public UN(bhl.lsp.proto.Uri uri, string needle, int line_offset = 0, int column_offset = 0)
+    public UriNeedle(bhl.lsp.proto.Uri uri, string needle, int end_line_offset = 0, int end_column_offset = 0)
     {
       this.uri = uri;
       this.needle = needle;
-      this.line_offset = line_offset;
-      this.column_offset = column_offset;
+      this.end_line_offset = end_line_offset;
+      this.end_column_offset = end_column_offset;
     }
   }
 
-  static string FindReferencesRsp(params UN[] uns)
+  static string FindReferencesRsp(params UriNeedle[] uns)
   {
     string rsp = "{\"id\":1,\"result\":[";
 
     foreach(var un in uns)
     {
       var start = Pos(File.ReadAllText(un.uri.path), un.needle);
-      var end = new bhl.SourcePos(start.line + un.line_offset, start.column + un.column_offset);
+      var end = new bhl.SourcePos(start.line + un.end_line_offset, start.column + un.end_column_offset);
       rsp += "{\"uri\":\"" + un.uri + "\",\"range\":{\"start\":" + 
         AsJson(start) + ",\"end\":" + AsJson(end) + "}},";
     }
