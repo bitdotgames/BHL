@@ -25,10 +25,13 @@ Make sure you can select bhl syntax in View > Syntax menu. Now you can proceed t
 
 ## LSP setup
 
-* Install Package Control
-* Install LSP package
+* Press combination Win/Linux: ctrl+shift+p, Mac: cmd+shift+p
+* Write: Install Package Control
+* Select LSP package
 * Restart Sublime
 * Go To Settings > Package Settings > LSP > Settings
+
+Add the following content to the file:
 
 ```
 // Settings in here override those in "LSP/LSP.sublime-settings"
