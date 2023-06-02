@@ -1283,6 +1283,8 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 
 #if BHL_FRONT
+  //referenced upvalue, keep in mind it can be a 'local' variable from the   
+  //outer lambda wrapping the current one
   internal VariableSymbol _upvalue;
 #endif
 
@@ -1841,8 +1843,6 @@ public class LambdaSymbol : FuncSymbolScript
         //checking if it's a variable and not a global one
         if(res is VariableSymbol vs && !(vs.scope is Namespace))
         {
-          //let's add upvalue to all nested lambdas and the returned value  
-          //is the most nested upvalue (?)
           var local = AssignUpValues(vs, i+1, my_idx);
           //NOTE: returning local instead of an original variable since we need 
           //      proper index of the local variable in the local frame
@@ -1866,18 +1866,19 @@ public class LambdaSymbol : FuncSymbolScript
 
   VariableSymbol AssignUpValues(VariableSymbol vs, int from_idx, int to_idx)
   {
-    VariableSymbol res = null;
+    VariableSymbol most_nested = null;
     //now let's put this result into all nested lambda scopes 
     for(int j=from_idx;j<=to_idx;++j)
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)
       {
+        //NOTE: for nested lambdas a 'local' variable may become an 'upvalue'
         vs = lmb.AddUpValue(vs);
-        if(res == null)
-          res = vs;
+        if(most_nested == null)
+          most_nested = vs;
       }
     }
-    return res;
+    return most_nested;
   }
 }
 #endif

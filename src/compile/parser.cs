@@ -5483,8 +5483,14 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   void LSP_SetSymbol(AnnotatedParseTree ann, Symbol s)
   {
-    if(s is VariableSymbol vs)
-      ann.lsp_symbol = vs._upvalue??vs;
+    if(s is VariableSymbol vs && vs._upvalue != null)
+    {
+      //we need to find the 'most top one'
+      var top = vs._upvalue;
+      while(top._upvalue != null)
+        top = top._upvalue; 
+      ann.lsp_symbol = top;
+    }
     else
       ann.lsp_symbol = s;
   }

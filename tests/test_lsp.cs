@@ -569,17 +569,16 @@ public class TestLSP : BHL_TestBase
       );
     });
 
-    //TODO:
-    //SubTest(() => {
-    //  AssertEqual(
-    //    rpc.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
-    //    FindReferencesRsp(
-    //      new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
-    //      new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
-    //      new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
-    //    )
-    //  );
-    //});
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
+        FindReferencesRsp(
+          new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
+          new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
+          new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
+        )
+      );
+    });
   }
 
   //TODO:
