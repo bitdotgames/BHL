@@ -666,54 +666,6 @@ public class TestLSP : BHL_TestBase
     );
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestSemanticTokens()
-  {
-    string bhl1 = @"
-    class Foo {
-      int BAR
-    }
-
-    Foo foo = {
-      BAR : 0
-    }
-
-    func float test1(float k) 
-    {
-      return 0
-    }
-
-    func test2() 
-    {
-      test1()
-    }
-    ";
-    
-    var ws = new Workspace(NoLogger());
-
-    var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentSemanticTokensService(ws));
-    
-    CleanTestFiles();
-    
-    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
-
-    var ts = new bhl.Types();
-    ws.Init(ts, GetTestIncPath());
-    ws.IndexFiles();
-    
-    var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
-    json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
-    
-    AssertEqual(
-      rpc.Handle(json),
-      "{\"id\":1,\"result\":{\"data\":" +
-      "[1,4,5,6,0,0,6,3,0,0,1,6,3,6,0,0,4,3,2,10,3,4,3,5,0,0,4,3,2,0,1,6,3,2,0,0,6,1,3,0,3,4,5,6,0,0,5,5,6," +
-      "0,0,6,5,1,10,0,6,5,6,0,2,6,7,6,0,0,7,1,3,0,3,4,5,6,0,0,5,5,1,10,2,6,5,1,0]},\"jsonrpc\":\"2.0\"}"
-    );
-  }
-
   static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)
   {
     var pos = Pos(File.ReadAllText(uri.path), needle);
