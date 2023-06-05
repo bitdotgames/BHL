@@ -72,11 +72,10 @@ public class LifecycleService : IService
       //  capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
       //}
 
-      //TODO:
-      //if(args.capabilities.textDocument.hover != null)
-      //{
-      //  capabilities.hoverProvider = true; //textDocument/hover
-      //}
+      if(args.capabilities.textDocument.hover != null)
+      {
+        capabilities.hoverProvider = true; //textDocument/hover
+      }
 
       if(args.capabilities.textDocument.declaration != null)
       {
@@ -374,86 +373,33 @@ public class TextDocumentGoToService : IService
 
 public class TextDocumentHoverService : IService
 {
-  //Workspace workspace;
+  Workspace workspace;
 
   public TextDocumentHoverService(Workspace workspace)
   {
-    //this.workspace = workspace;
+    this.workspace = workspace;
   }
 
   [RpcMethod("textDocument/hover")]
   public RpcResult Hover(TextDocumentPositionParams args)
   {
-//    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-//
-//    var node = document.FindParserRule(args.position);
-//
-//    var callExp = node as bhlParser.CallExpContext;
-//    
-//    bhlParser.FuncDeclContext funcDecl = null;
-//    
-//    if(callExp != null)
-//    {
-//      string callExpName = callExp.NAME().GetText();
-//      
-//      foreach(var doc in workspace.ForEachBhlImports(document))
-//      {
-//        if(doc.FuncDecls.ContainsKey(callExpName))
-//        {
-//          funcDecl = doc.FuncDecls[callExpName];
-//          break;
-//        }
-//      }
-//    }
-//    
-//    if(funcDecl != null)
-//    {
-//      //TODO: all this information is available for symbols
-//      string label = funcDecl.NAME().GetText()+"(";
-//  
-//      var funcParameters = ParserAnalyzer.GetInfoParams(funcDecl);
-//  
-//      if(funcParameters.Count > 0)
-//      {
-//        for(int k = 0; k < funcParameters.Count; k++)
-//        {
-//          var funcParameter = funcParameters[k];
-//          label += funcParameter.label.Value;
-//          if(k != funcParameters.Count - 1)
-//            label += ", ";
-//        }
-//      }
-//      else
-//        label += "<no parameters>";
-//
-//      label += ")";
-//
-//      if(funcDecl.retType() is bhlParser.RetTypeContext retType)
-//      {
-//        label += ":";
-//
-//        var types = retType.type();
-//        for (int n = 0; n < types.Length; n++)
-//        {
-//          var t = types[n];
-//          if(t.exception != null)
-//            continue;
-//
-//          label += t.nsName().GetText() + " ";
-//        }
-//      }
-//      else
-//        label += ":void";
-//      
-//      return RpcResult.Success(new Hover
-//      {
-//        contents = new MarkupContent
-//        {
-//          kind = "plaintext",
-//          value = label
-//        }
-//      });
-//    }
+    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
+
+    Symbol symb = null;
+    if(document != null)
+      symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
+
+    if(symb != null)
+    {
+      return RpcResult.Success(new Hover
+      {
+        contents = new MarkupContent
+        {
+          kind = "plaintext",
+          value = symb.ToString()
+        }
+      });
+    }
     
     return RpcResult.Success();
   }
