@@ -26,11 +26,10 @@ public class Workspace
     this.logger = logger;
   }
 
-  public void Init(Types ts, IncludePath inc_path, lsp.proto.ClientCapabilities capabilities = null)
+  public void Init(Types ts, IncludePath inc_path)
   {
     this.ts = ts;
     this.inc_path = inc_path;
-    this.capabilities = capabilities;
   }
   
   public void Shutdown()

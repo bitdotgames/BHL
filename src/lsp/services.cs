@@ -47,7 +47,7 @@ public class LifecycleService : IService
 
     proj.LoadBindings().Register(ts);
     
-    workspace.Init(ts, proj.inc_path, args.capabilities);
+    workspace.Init(ts, proj.inc_path);
 
     //TODO: run it in background
     workspace.IndexFiles();
@@ -66,10 +66,17 @@ public class LifecycleService : IService
         };
       }
       
-      if(args.capabilities.textDocument.signatureHelp != null)
-      {
-        capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
-      }
+      //TODO:
+      //if(args.capabilities.textDocument.signatureHelp != null)
+      //{
+      //  capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
+      //}
+
+      //TODO:
+      //if(args.capabilities.textDocument.hover != null)
+      //{
+      //  capabilities.hoverProvider = true; //textDocument/hover
+      //}
 
       if(args.capabilities.textDocument.declaration != null)
       {
@@ -91,11 +98,6 @@ public class LifecycleService : IService
         capabilities.implementationProvider = false; //textDocument/implementation
       }
 
-      if(args.capabilities.textDocument.hover != null)
-      {
-        capabilities.hoverProvider = true; //textDocument/hover
-      }
-      
       if(args.capabilities.textDocument.references != null)
       {
         capabilities.referencesProvider = true; //textDocument/references
