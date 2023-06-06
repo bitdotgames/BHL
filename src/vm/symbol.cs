@@ -1642,7 +1642,21 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public override string ToString()
   {
-    return signature.MakeString(name);
+    string buf = 
+      "func " + signature.ret_type.path + " " + name +"("; 
+    if(signature.is_coro)
+      buf = "coro " + buf;
+    for(int i=0;i<signature.arg_types.Count;++i)
+    {
+      if(i > 0)
+        buf += ",";
+      if(signature.has_variadic && i == signature.arg_types.Count-1)
+        buf += "...";
+      buf += signature.arg_types[i].path + " " + members[i].name;
+    }
+    buf += ")";
+
+    return buf;
   }
 }
 

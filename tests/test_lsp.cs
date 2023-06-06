@@ -611,7 +611,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(HoverReq(uri, "est1() //hover 1")),
-        "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float,float)\"}},\"jsonrpc\":\"2.0\"}"
+        "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float k,float n)\"}},\"jsonrpc\":\"2.0\"}"
       );
     });
 
