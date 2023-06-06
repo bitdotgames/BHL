@@ -1322,6 +1322,11 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     marshall.Marshall.Sync(ctx, ref type);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
+
+  public override string ToString()
+  {
+    return type.path + " " + name;
+  }
 }
 
 public class FuncArgSymbol : VariableSymbol
@@ -1637,16 +1642,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public override string ToString()
   {
-    string s = "";
-    s += "func ";
-    s += signature.ret_type.Get().GetName() + " ";
-    s += name;
-    s += "(";
-    foreach(var arg in signature.arg_types)
-      s += arg.path + ",";
-    s = s.TrimEnd(',');
-    s += ")";
-    return s;
+    return signature.MakeString(name);
   }
 }
 
@@ -2006,6 +2002,11 @@ public class FuncSymbolNative : FuncSymbol
   {
     throw new NotImplementedException();
   }
+
+  public override string ToString()
+  {
+    return "[native] " + base.ToString();
+  }
 }
 
 public class ClassSymbolNative : ClassSymbol
@@ -2088,6 +2089,11 @@ public class ClassSymbolNative : ClassSymbol
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
+  }
+
+  public override string ToString()
+  {
+    return "[native] " + base.ToString();
   }
 }
 

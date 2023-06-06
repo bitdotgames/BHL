@@ -341,20 +341,25 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   void Update()
   {
-    string tmp = "func " + ret_type.path + "("; 
+    name = MakeString("");
+  }
+
+  public string MakeString(string name)
+  {
+    string buf = 
+      "func " + ret_type.path + (string.IsNullOrEmpty(name)?"":" ") + name +"("; 
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
-        tmp += ",";
+        buf += ",";
       if(has_variadic && i == arg_types.Count-1)
-        tmp += "...";
-      tmp += arg_types[i].path;
+        buf += "...";
+      buf += arg_types[i].path;
     }
-    tmp += ")";
+    buf += ")";
     if(is_coro)
-      tmp = "coro " + tmp;
-
-    name = tmp;
+      buf = "coro " + buf;
+    return buf;
   }
 
   public uint ClassId()
