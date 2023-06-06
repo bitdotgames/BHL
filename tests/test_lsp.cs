@@ -581,6 +581,41 @@ public class TestLSP : BHL_TestBase
     });
   }
 
+  [IsTested()]
+  public void TestHover()
+  {
+    string bhl1 = @"
+    func float test1(float k, float n) 
+    {
+      return k
+    }
+
+    func test2() 
+    {
+      test1() //hover 1
+    }
+    ";
+    
+    var ws = new Workspace(NoLogger());
+
+    var rpc = new JsonRpc(NoLogger());
+    rpc.AttachService(new bhl.lsp.proto.TextDocumentHoverService(ws));
+    
+    CleanTestFiles();
+    
+    var uri = MakeTestDocument("bhl1.bhl", bhl1);
+
+    ws.Init(new bhl.Types(), GetTestIncPath());
+    ws.IndexFiles();
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(HoverReq(uri, "est1() //hover 1")),
+        "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float,float)\"}},\"jsonrpc\":\"2.0\"}"
+      );
+    });
+  }
+
   //TODO:
   //[IsTested()]
   public void TestSignatureHelp()
@@ -634,7 +669,7 @@ public class TestLSP : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSemanticTokensSimple()
+  public void TestSemanticTokensBasic()
   {
     string bhl = @"
     class BHL_M3Globals
@@ -720,6 +755,13 @@ public class TestLSP : BHL_TestBase
     rsp += "],\"jsonrpc\":\"2.0\"}";
 
     return rsp;
+  }
+
+  static string HoverReq(bhl.lsp.proto.Uri uri, string needle)
+  {
+    var pos = Pos(File.ReadAllText(uri.path), needle);
+    return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/hover\", \"params\":" +
+      "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
   static string SignatureHelpReq(bhl.lsp.proto.Uri uri, string needle)
