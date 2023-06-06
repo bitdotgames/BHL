@@ -587,7 +587,7 @@ public class TestLSP : BHL_TestBase
     string bhl1 = @"
     func float test1(float k, float n) 
     {
-      return k
+      return k //return k
     }
 
     func test2() 
@@ -612,6 +612,13 @@ public class TestLSP : BHL_TestBase
       AssertEqual(
         rpc.Handle(HoverReq(uri, "est1() //hover 1")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float,float)\"}},\"jsonrpc\":\"2.0\"}"
+      );
+    });
+
+    SubTest(() => {
+      AssertEqual(
+        rpc.Handle(HoverReq(uri, "k //return k")),
+        "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"float k\"}},\"jsonrpc\":\"2.0\"}"
       );
     });
   }
