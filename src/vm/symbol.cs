@@ -1637,16 +1637,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
 
   public override string ToString()
   {
-    string s = "";
-    s += "func ";
-    s += signature.ret_type.Get().GetName() + " ";
-    s += name;
-    s += "(";
-    foreach(var arg in signature.arg_types)
-      s += arg.path + ",";
-    s = s.TrimEnd(',');
-    s += ")";
-    return s;
+    return signature.MakeString(name);
   }
 }
 
