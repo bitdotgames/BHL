@@ -2545,7 +2545,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpUnary(bhlParser.ExpUnaryContext ctx)
   {
-    AddSemanticToken(ctx.operatorUnary(), SemanticToken.Keyword);
+    LSP_AddSemanticToken(ctx.operatorUnary(), SemanticToken.Keyword);
 
     EnumUnaryOp type = ctx.operatorUnary().NOT() != null ? EnumUnaryOp.NOT : EnumUnaryOp.NEG;
 
@@ -2575,7 +2575,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     if(op_ctx.operatorSelfOp() != null)
     {
-      AddSemanticToken(op_ctx.operatorSelfOp(), SemanticToken.Operator);
+      LSP_AddSemanticToken(op_ctx.operatorSelfOp(), SemanticToken.Operator);
 
       string post_op = op_ctx.operatorSelfOp().GetText();
       ProcBinOp(ctx, post_op.Substring(0, 1), chain_ctx, op_ctx.exp(), lhs_self_op: true);
@@ -2622,7 +2622,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpAddSub(bhlParser.ExpAddSubContext ctx)
   {
-    AddSemanticToken(ctx.operatorAddSub(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.operatorAddSub(), SemanticToken.Operator);
 
     var op = ctx.operatorAddSub().GetText(); 
 
@@ -2633,7 +2633,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpMulDivMod(bhlParser.ExpMulDivModContext ctx)
   {
-    AddSemanticToken(ctx.operatorMulDivMod(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.operatorMulDivMod(), SemanticToken.Operator);
 
     var op = ctx.operatorMulDivMod().GetText(); 
 
@@ -2663,7 +2663,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   bool ProcPostIncDec(ParserRuleContext ctx, bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
   {
-    AddSemanticToken(inc_dec, SemanticToken.Operator);
+    LSP_AddSemanticToken(inc_dec, SemanticToken.Operator);
 
     var chain = new ExpChain(ctx, chain_exp);
     if(chain.Incomplete)
@@ -2710,7 +2710,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
-    AddSemanticToken(ctx.operatorComparison(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.operatorComparison(), SemanticToken.Operator);
 
     var op = ctx.operatorComparison().GetText(); 
 
@@ -2828,7 +2828,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpBitwise(bhlParser.ExpBitwiseContext ctx)
   {
-    AddSemanticToken(ctx.operatorBitwise(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.operatorBitwise(), SemanticToken.Operator);
 
     var ast = new AST_BinaryOpExp(ctx.operatorBitwise().BOR() != null ? EnumBinaryOp.BIT_OR : EnumBinaryOp.BIT_AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
@@ -2851,7 +2851,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
   public override object VisitExpLogical(bhlParser.ExpLogicalContext ctx)
   {
-    AddSemanticToken(ctx.operatorLogical(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.operatorLogical(), SemanticToken.Operator);
 
     var ast = new AST_BinaryOpExp(ctx.operatorLogical().LOR() != null ? EnumBinaryOp.OR : EnumBinaryOp.AND, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
@@ -2884,7 +2884,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     AST_Literal ast = null;
 
-    AddSemanticToken(ctx.number(), SemanticToken.Number);
+    LSP_AddSemanticToken(ctx.number(), SemanticToken.Number);
 
     var number = ctx.number();
     var int_num = number.INT();
@@ -3315,7 +3315,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     LSP_AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
     
     foreach(var attr in pass.func_ctx.funcAttribs())
-      AddSemanticToken(attr, SemanticToken.Keyword);
+      LSP_AddSemanticToken(attr, SemanticToken.Keyword);
 
     string name = pass.func_ctx.NAME().GetText();
 
@@ -4426,7 +4426,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     LSP_AddSemanticToken(name, SemanticToken.Variable);
     if(tp_ctx != null && tp_ctx.GetText() == "var")
-      AddSemanticToken(tp_ctx, SemanticToken.Keyword);
+      LSP_AddSemanticToken(tp_ctx, SemanticToken.Keyword);
 
     symb = null;
 
@@ -5516,7 +5516,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     encoded_semantic_tokens.Clear();
   }
   
-  void AddSemanticToken(IParseTree tree, SemanticToken idx, SemanticModifier mods = 0)
+  void LSP_AddSemanticToken(IParseTree tree, SemanticToken idx, SemanticModifier mods = 0)
   {
     if(tree == null)
       return;
