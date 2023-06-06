@@ -1339,6 +1339,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
             0,
             name
           );
+          //NOTE: let's mark native func call with a special semantic color
+          if(func_symb is FuncSymbolNative)
+            LSP_AddSemanticToken(name, SemanticToken.Parameter);
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }
@@ -5550,6 +5553,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
     Keyword  = 6,
     Property = 7,
     Operator = 8,
+    Parameter = 9,
   }
 
   [Flags]
@@ -5573,7 +5577,8 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       "type",
       "keyword",
       "property",
-      "operator"
+      "operator",
+      "parameter"
     };
     
     public static string[] modifiers = 
