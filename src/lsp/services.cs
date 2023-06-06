@@ -60,8 +60,8 @@ public class LifecycleService : IService
       {
         capabilities.textDocumentSync = new TextDocumentSyncOptions
         {
-          openClose = true, //didOpen, didClose
-          change = proto.TextDocumentSyncKind.Full, //didChange
+          openClose = true, //open and close notifications are sent to server
+          change = proto.TextDocumentSyncKind.Full,
           save = false //didSave
         };
       }
