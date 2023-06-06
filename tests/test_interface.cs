@@ -243,7 +243,7 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'",
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
 ------^"
@@ -264,7 +264,7 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int)'",
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
 ------^"
@@ -287,7 +287,7 @@ public class TestInterfaces : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int)'",
+        "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
 ------^"
