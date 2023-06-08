@@ -1028,4 +1028,54 @@ public class TestImport : BHL_TestBase
     }
   }
 
+  //TODO:
+  //[IsTested()]
+  public void TestMistakenlyImportedBy3dParty()
+  {
+    string file_unit = @"
+    namespace units {
+      class Unit {
+        int foo
+      }
+    }
+    ";                                                                                                              
+    string file_a = @"
+    import ""/unit""
+    namespace foo {
+    }
+    ";
+
+    string file_b = @"
+    import ""/unit""
+    func dummy() {
+    }
+    ";
+
+    string file_test = @"
+    import ""/a""
+    import ""/b""
+
+    func test() 
+    {
+      units.Unit u = {}
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile(Path.Combine("unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("a.bhl"), file_a, ref files);
+    NewTestFile(Path.Combine("b.bhl"), file_b, ref files);
+    NewTestFile(Path.Combine("test.bhl"), file_test, ref files);
+
+    var exec = new CompilationExecutor();
+    var conf = MakeCompileConf(files);
+    conf.proj.use_cache = true;
+    conf.proj.max_threads = 3;
+    conf.proj.deterministic = true;
+
+    CompileFiles(exec, conf);
+  }
+
 }

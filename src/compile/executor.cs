@@ -179,6 +179,9 @@ public class CompilationExecutor
   {
     Stopwatch sw;
 
+    if(conf.proj.deterministic)
+      conf.files.Sort();
+
     if(!string.IsNullOrEmpty(conf.proj.error_file))
       File.Delete(conf.proj.error_file);
 

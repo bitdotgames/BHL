@@ -114,9 +114,6 @@ public class CompileCmd : ICmd
       }
     }
 
-    if(proj.deterministic)
-      files.Sort();
-
     logger.Log(1, $"BHL({Version.Name}) files: {files.Count}, cache: {proj.use_cache}");
     var conf = new CompileConf();
     conf.proj = proj;
