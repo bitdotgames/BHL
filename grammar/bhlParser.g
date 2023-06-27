@@ -1,4 +1,9 @@
-grammar bhl;
+parser grammar bhlParser;
+
+options {
+    tokenVocab=bhlLexer;
+    superClass=bhlParserBase;
+}
 
 program
   : declOrImport* EOF
@@ -10,7 +15,7 @@ declOrImport
   ;
 
 mimport
-  : IMPORT NORMALSTRING SEPARATOR*
+  : IMPORT NORMALSTRING SEMI*
   ;
 
 decl
@@ -30,11 +35,11 @@ type
   ;
 
 mapType
-  : '[' nsName ']' 
+  : OPEN_BRACKET nsName CLOSE_BRACKET
   ;
 
 expList
-  : exp (',' exp)*
+  : exp (COMMA exp)*
   ;
 
 returnVal
@@ -50,7 +55,7 @@ name
   ;
 
 chainExp
-  : (name | '(' exp ')' | funcLambda) chainExpItem*
+  : (name | OPEN_PAREN exp CLOSE_PAREN | funcLambda) chainExpItem*
   ;
 
 exp
@@ -59,10 +64,10 @@ exp
   | TRUE                                      #ExpLiteralTrue
   | number                                    #ExpLiteralNum
   | string                                    #ExpLiteralStr
-  | '(' type ')' exp                          #ExpTypeCast
+  | OPEN_PAREN type CLOSE_PAREN exp           #ExpTypeCast
   | chainExp                                  #ExpChain
   | funcLambda                                #ExpLambda
-  | TYPEOF '(' type ')'                       #ExpTypeof
+  | TYPEOF OPEN_PAREN type CLOSE_PAREN        #ExpTypeof
   | jsonObject                                #ExpJsonObj
   | jsonArray                                 #ExpJsonArr
   | YIELD chainExp                            #ExpYieldCall
@@ -82,7 +87,7 @@ exp
   ;
 
 ternaryIfExp
-  : '?' exp ':' exp 
+  : QUESTION exp COLON exp 
   ;
 
 newExp
@@ -90,24 +95,24 @@ newExp
   ;
 
 foreachExp
-  : '(' varOrDeclare (',' varOrDeclare)* IN exp ')' 
+  : OPEN_PAREN varOrDeclare (COMMA varOrDeclare)* IN exp CLOSE_PAREN
   ;
 
 forPreIter
-  : varOrDeclareAssign (',' varOrDeclareAssign)*
+  : varOrDeclareAssign (COMMA varOrDeclareAssign)*
   ;
 
 forPostIter
-  : expModifyOp (',' expModifyOp)*
+  : expModifyOp (COMMA expModifyOp)*
   ;
 
 forExp
-  : '(' forPreIter? SEPARATOR exp SEPARATOR forPostIter? ')' 
+  : OPEN_PAREN forPreIter? SEMI exp SEMI forPostIter? CLOSE_PAREN
   ;
 
 //NOTE: statements, order is important
 statement
-  : ';'                                        #StmSeparator
+  : SEMI                                       #StmSeparator
   | varDeclareList assignExp?                  #StmDeclOptAssign
   //int a, c.r = foo()
   | varDeclaresOrChainExps assignExp           #StmDeclOrExpAssign
@@ -122,8 +127,8 @@ statement
   | YIELD chainExp                             #StmYieldCall
   | YIELD WHILE '(' exp ')'                    #StmYieldWhile
   | BREAK                                      #StmBreak
-  | CONTINUE                                   #StmContinue
-  | RETURN returnVal?                          #StmReturn
+  | CONTINUE eos                               #StmContinue
+  | RETURN returnVal? eos                      #StmReturn
   | PARAL block                                #StmParal
   | PARAL_ALL block                            #StmParalAll
   | DEFER block                                #StmDefer
@@ -143,36 +148,36 @@ chainExpItem
   ;
 
 arrAccess
-  : ('[' exp ']')
+  : (OPEN_BRACKET exp CLOSE_BRACKET)
   ;
 
 memberAccess
-  : '.' NAME
+  : DOT NAME
   ;
   
 callArgs
-  : '(' callArgsList? ')'
+  : OPEN_PAREN callArgsList? CLOSE_PAREN
   ;
 
 callArgsList
-  :  callArg (',' callArg)*
+  :  callArg (COMMA callArg)*
   ;
 
 callArg
-  : VARIADIC? (NAME ':')? REF? exp
+  : VARIADIC? (NAME COLON)? REF? exp
   ;
 
 block 
-  : '{' statement* '}'
-  | '{}'
+  : OPEN_BRACE statement* CLOSE_BRACE
+  | EMPTY_BRACE
   ;
 
 extensions
-  : ':' nsName (',' nsName)*
+  : COLON nsName (COMMA nsName)*
   ;
 
 nsDecl
-  : NAMESPACE dotName '{' decl* '}'
+  : NAMESPACE dotName OPEN_BRACE decl* CLOSE_BRACE
   ;
 
 classDecl
@@ -180,8 +185,8 @@ classDecl
   ;
 
 classBlock
-  : '{' classMembers '}'
-  | '{}'
+  : OPEN_BRACE classMembers CLOSE_BRACE
+  | EMPTY_BRACE
   ;
 
 classMembers
@@ -205,8 +210,8 @@ interfaceDecl
   ;
 
 interfaceBlock
-  : '{' interfaceMembers '}'
-  | '{}'
+  : OPEN_BRACE interfaceMembers CLOSE_BRACE
+  | EMPTY_BRACE
   ;
 
 interfaceMembers
@@ -222,11 +227,11 @@ enumDecl
   ;
 
 enumBlock
-  : '{' enumMember+ '}'
+  : OPEN_BRACE enumMember+ CLOSE_BRACE
   ;
 
 enumMember
-  : NAME '=' INT
+  : NAME ASSIGN INT
   ;
 
 funcAttribs
@@ -234,11 +239,11 @@ funcAttribs
   ;
 
 funcDecl
-  : funcAttribs* FUNC retType? NAME '(' funcParams? ')' funcBlock
+  : funcAttribs* FUNC retType? NAME OPEN_PAREN funcParams? CLOSE_PAREN funcBlock
   ;
 
 funcType
-  : CORO? FUNC retType? '(' types? ')'
+  : CORO? FUNC retType? OPEN_PAREN types? CLOSE_PAREN
   ;
 
 funcBlock
@@ -246,11 +251,11 @@ funcBlock
   ;
 
 interfaceFuncDecl
-  : CORO? FUNC retType? NAME '(' funcParams? ')'
+  : CORO? FUNC retType? NAME OPEN_PAREN funcParams? CLOSE_PAREN
   ;
 
 funcLambda
-  : CORO? FUNC retType? '(' funcParams? ')' funcBlock
+  : CORO? FUNC retType? OPEN_PAREN funcParams? CLOSE_PAREN funcBlock
   ;
 
 refType
@@ -258,15 +263,15 @@ refType
   ;
 
 retType
-  : type (',' type)*
+  : type (COMMA type)*
   ;
 
 types
-  : refType (',' refType)*
+  : refType (COMMA refType)*
   ;
 
 funcParams
-  : funcParamDeclare ( ',' funcParamDeclare )*
+  : funcParamDeclare (COMMA funcParamDeclare)*
   ;
 
 funcParamDeclare
@@ -278,7 +283,7 @@ varDeclare
   ;
 
 varDeclareList
-  : varDeclare ( ',' varDeclare )*
+  : varDeclare (COMMA varDeclare)*
   ;
 
 varDeclareAssign
@@ -303,7 +308,7 @@ varDeclareOrChainExp
   ;
 
 varDeclaresOrChainExps
-  : varDeclareOrChainExp (',' varDeclareOrChainExp)*
+  : varDeclareOrChainExp (COMMA varDeclareOrChainExp)*
   ;
 
 modifyOp
@@ -359,22 +364,22 @@ string
   ;
 
 jsonObject
-  :   newExp? '{' jsonPair (',' jsonPair)* '}'
+  :   newExp? OPEN_BRACE jsonPair (COMMA jsonPair)* CLOSE_BRACE
   |   newExp? jsonEmptyObj
   ;
 
 jsonEmptyObj
-  : '{' '}'
+  : OPEN_BRACE CLOSE_BRACE
   //TODO: why this special case?
-  | '{}'
+  | EMPTY_BRACE
   ;
 
 jsonPair
-  : NAME ':' jsonValue 
+  : NAME COLON jsonValue 
   ;
 
 jsonArray
-  :  '[' jsonValue (',' jsonValue)* ']'
+  :  OPEN_BRACKET jsonValue (COMMA jsonValue)* CLOSE_BRACKET
   |  jsonEmptyArr
   ;
 
@@ -386,135 +391,9 @@ jsonValue
   :  exp
   ;
 
-////////////////////////////// lexer /////////////////////////////
-
-IMPORT : 'import' ;
-NULL : 'null' ;
-FALSE : 'false' ;
-TRUE : 'true' ;
-IF : 'if' ;
-ELSE : 'else' ;
-WHILE : 'while' ;
-DO : 'do' ;
-FOR : 'for' ;
-FOREACH : 'foreach' ;
-IN : 'in' ;
-BREAK : 'break' ;
-CONTINUE : 'continue' ;
-RETURN : 'return' ;
-YIELD : 'yield' ;
-AS : 'as' ;
-IS : 'is' ;
-TYPEOF : 'typeof' ;
-NEW : 'new' ;
-PARAL : 'paral' ;
-PARAL_ALL : 'paral_all' ;
-DEFER : 'defer' ;
-NAMESPACE : 'namespace' ;  
-CLASS : 'class' ;
-INTERFACE : 'interface' ;
-ENUM : 'enum' ;
-VIRTUAL : 'virtual' ;
-OVERRIDE : 'override' ;
-STATIC : 'static' ;
-CORO : 'coro' ;
-FUNC : 'func' ;
-REF : 'ref' ;
-LOR : '||' ;
-LAND : '&&' ;
-BOR : '|' ;
-BAND : '&' ;
-INC : '++' ;
-DEC : '--' ;
-SINC : '+=' ;
-SDEC : '-=' ;
-SMUL : '*=' ;
-SDIV : '/=' ;
-LT : '<' ;
-LTE : '<=' ;
-GT : '>' ;
-GTE : '>=' ;
-NEQ : '!=' ;
-EQ : '==' ;
-PLUS : '+' ;
-MINUS : '-' ;
-MUL : '*' ;
-DIV : '/' ;
-MOD : '%' ;
-NOT : '!' ;
-
-NAME
-  : [a-zA-Z_][a-zA-Z_0-9]*
+eos
+  : SEMI
+  | EOF
+  | {this.lineTerminatorAhead()}?
+  | {this.closeBrace()}?
   ;
-
-ARR
-  : '[' ']'
-  ;
-
-GLOBAL
-  : '..'
-  ;
-
-VARIADIC
-  : '...'
-  ;
-
-SEPARATOR
-  : ';'
-  ;
-  
-NORMALSTRING
-  : '"' ( EscapeSequence | ~('\\'|'"') )* '"'  //" let's keep text editor happy
-  ;
-
-INT
-  : Digit+
-  ;
-
-HEX
-  : '0' [xX] HexDigit+
-  ;
-
-FLOAT
-  : Digit+ '.' Digit* ExponentPart?
-  | '.' Digit+ ExponentPart?
-  | Digit+ ExponentPart
-  ;
-
-fragment
-ExponentPart
-  : [eE] [+-]? Digit+
-  ;
-
-fragment
-EscapeSequence
-  : '\\' [abfnrtvz"'\\] //" let's keep text editor happy
-  | '\\' '\r'? '\n'
-  ;
-
-fragment
-Digit
-  : [0-9]
-  ;
-
-fragment
-HexDigit
-  : [0-9a-fA-F]
-  ;
-
-//comments
-SINGLE_LINE_COMMENT 
-  : '//' ~[\r\n]* -> channel(HIDDEN)
-  ;
-
-DELIMITED_COMMENT 
-  :   '/*' .*? '*/' -> channel(HIDDEN)
-  ;
-
-//white space
-WS
-  : [ \r\t\u000C\n]+ -> channel(HIDDEN)
-  ;
-
-
-

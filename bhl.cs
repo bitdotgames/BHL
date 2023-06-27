@@ -122,10 +122,11 @@ public static class Tasks
   {
     tm.Mkdir($"{BHL_ROOT}/tmp");
 
-    tm.Copy($"{BHL_ROOT}/bhl.g", $"{BHL_ROOT}/tmp/bhl.g");
+    tm.Copy($"{BHL_ROOT}/grammar/bhlLexer.g", $"{BHL_ROOT}/tmp/bhlLexer.g");
+    tm.Copy($"{BHL_ROOT}/grammar/bhlParser.g", $"{BHL_ROOT}/tmp/bhlParser.g");
     tm.Copy($"{BHL_ROOT}/util/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
 
-    tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp bhl.g && cp bhl*.cs ../src/g/' ");
+    tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp *.g && cp bhl*.cs ../src/g/' ");
   }
 
   [Task(deps: "build_front_dll")]

@@ -1322,4 +1322,14 @@ public interface IbhlListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitJsonValue([NotNull] bhlParser.JsonValueContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.eos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEos([NotNull] bhlParser.EosContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.eos"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEos([NotNull] bhlParser.EosContext context);
 }

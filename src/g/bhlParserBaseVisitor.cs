@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from bhl.g by ANTLR 4.7.1
+// Generated from bhlParser.g by ANTLR 4.7.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -25,14 +25,14 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="IbhlVisitor{Result}"/>,
+/// This class provides an empty implementation of <see cref="IbhlParserVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset
 /// of the available methods.
 /// </summary>
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.7.1")]
 [System.CLSCompliant(false)]
-public partial class bhlBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IbhlVisitor<Result> {
+public partial class bhlParserBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IbhlParserVisitor<Result> {
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.program"/>.
 	/// <para>
