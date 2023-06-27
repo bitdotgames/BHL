@@ -1028,8 +1028,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestMistakenlyImportedBy3dParty()
   {
     string file_unit = @"
@@ -1064,16 +1063,15 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile(Path.Combine("unit.bhl"), file_unit, ref files);
     NewTestFile(Path.Combine("a.bhl"), file_a, ref files);
     NewTestFile(Path.Combine("b.bhl"), file_b, ref files);
+    NewTestFile(Path.Combine("unit.bhl"), file_unit, ref files);
     NewTestFile(Path.Combine("test.bhl"), file_test, ref files);
 
     var exec = new CompilationExecutor();
     var conf = MakeCompileConf(files);
     conf.proj.use_cache = true;
-    conf.proj.max_threads = 3;
-    conf.proj.deterministic = true;
+    conf.proj.max_threads = 1;
 
     CompileFiles(exec, conf);
   }
