@@ -927,6 +927,50 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVariablDeclMissingAssignFromFuncCall()
+  {
+    SubTest(() => {
+      string bhl = @"
+      func test()
+      {
+        int a Foo()
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "no viable alternative at input 'Foo'",
+        new PlaceAssert(bhl, @"
+        int a Foo()
+--------------^"
+          )
+      );
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func test()
+      {
+        int a,string b Foo()
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "no viable alternative at input 'Foo'",
+        new PlaceAssert(bhl, @"
+        int a,string b Foo()
+-----------------------^"
+          )
+      );
+    });
+  }
+
+  [IsTested()]
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
