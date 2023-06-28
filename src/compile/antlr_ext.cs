@@ -63,25 +63,11 @@ public abstract class bhlParserBase : Parser
   {}
 
   /// <summary>
-  /// Short form for prev(String str)
-  /// </summary>
-  protected bool p(string str)
-  {
-    return prev(str);
-  }
-
-  /// <summary>
   /// Whether the previous token value equals to str
   /// </summary>
   protected bool prev(string str)
   {
     return ((ITokenStream)this.InputStream).LT(-1).Text.Equals(str);
-  }
-
-  // Short form for next(String str)
-  protected bool n(string str)
-  {
-    return next(str);
   }
 
   // Whether the next token value equals to @param str
@@ -90,32 +76,9 @@ public abstract class bhlParserBase : Parser
     return ((ITokenStream)this.InputStream).LT(1).Text.Equals(str);
   }
 
-  protected bool notLineTerminator()
-  {
-    return !here(NL);
-  }
-
   protected bool closeBrace()
   {
     return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACE;
-  }
-
-  /// <summary>Returns true if on the current index of the parser's
-  /// token stream a token of the given type exists on the
-  /// Hidden channel.
-  /// </summary>
-  /// <param name="type">
-  /// The type of the token on the Hidden channel to check.
-  /// </param>
-  protected bool here(int type)
-  {
-    // Get the token ahead of the current index.
-    int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-    IToken ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
-
-    // Check if the token resides on the Hidden channel and if it's of the
-    // provided type.
-    return ahead.Channel == Lexer.Hidden && ahead.Type == type;
   }
 
   /// <summary>
@@ -124,37 +87,48 @@ public abstract class bhlParserBase : Parser
   /// either is a line terminator, or is a multi line comment that
   /// contains a line terminator.
   /// </summary>
-  protected bool lineTerminatorAhead()
+  protected bool lineTerminator()
   {
+    //NOTE: CurrentToken contains prefetched new token, we need  
+    //      to 'look back' and get from input stream the previous
+    //      token from the hidden channel
+
     // Get the token ahead of the current index.
     int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-    IToken ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+    IToken token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
 
-    if(ahead.Channel != Lexer.Hidden)
+    if(token.Channel != Lexer.Hidden)
     {
       // We're only interested in tokens on the Hidden channel.
       return false;
     }
 
-    if(ahead.Type == NL)
+
+    if(token.Type == NL)
     {
       // There is definitely a line terminator ahead.
       return true;
     }
 
-    if(ahead.Type == WS)
+    if(token.Type == WS)
     {
       // Get the token ahead of the current whitespaces.
       possibleIndexEosToken = CurrentToken.TokenIndex - 2;
-      ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+      token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
     }
 
     // Get the token's text and type.
-    string text = ahead.Text;
-    int type = ahead.Type;
+    string text = token.Text;
+    int type = token.Type;
 
     // Check if the token is, or contains a line terminator.
-    return (type == DELIMITED_COMMENT && (text.Contains("\r") || text.Contains("\n"))) ||
-      (type == NL);
+    return 
+      type == NL ||
+      (type == DELIMITED_COMMENT && (text.Contains("\r") || text.Contains("\n")));
+  }
+
+  protected bool notLineTerminator()
+  {
+    return !this.lineTerminator();
   }
 }

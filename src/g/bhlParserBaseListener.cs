@@ -589,6 +589,48 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStmDeclOrExpAssign([NotNull] bhlParser.StmDeclOrExpAssignContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStmYield([NotNull] bhlParser.StmYieldContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStmYield([NotNull] bhlParser.StmYieldContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStmYieldCall([NotNull] bhlParser.StmYieldCallContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>StmChainExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -672,48 +714,6 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStmForeach([NotNull] bhlParser.StmForeachContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYield</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStmYield([NotNull] bhlParser.StmYieldContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYield</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStmYield([NotNull] bhlParser.StmYieldContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStmYieldCall([NotNull] bhlParser.StmYieldCallContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYieldWhile</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYieldWhile</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>StmBreak</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

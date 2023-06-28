@@ -309,6 +309,27 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStmDeclOrExpAssign([NotNull] bhlParser.StmDeclOrExpAssignContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>StmYield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmYield([NotNull] bhlParser.StmYieldContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StmYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StmYieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>StmChainExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -350,27 +371,6 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitStmForeach([NotNull] bhlParser.StmForeachContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmYield</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmYield([NotNull] bhlParser.StmYieldContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>StmYieldWhile</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>StmBreak</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

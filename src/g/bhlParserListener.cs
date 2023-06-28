@@ -501,6 +501,42 @@ public interface IbhlParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStmDeclOrExpAssign([NotNull] bhlParser.StmDeclOrExpAssignContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStmYield([NotNull] bhlParser.StmYieldContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYield</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStmYield([NotNull] bhlParser.StmYieldContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYieldCall</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StmYieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StmYieldWhile</c>
+	/// labeled alternative in <see cref="bhlParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>StmChainExp</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.
 	/// </summary>
@@ -572,42 +608,6 @@ public interface IbhlParserListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitStmForeach([NotNull] bhlParser.StmForeachContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYield</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStmYield([NotNull] bhlParser.StmYieldContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYield</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStmYield([NotNull] bhlParser.StmYieldContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYieldCall</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStmYieldCall([NotNull] bhlParser.StmYieldCallContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>StmYieldWhile</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>StmYieldWhile</c>
-	/// labeled alternative in <see cref="bhlParser.statement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitStmYieldWhile([NotNull] bhlParser.StmYieldWhileContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>StmBreak</c>
 	/// labeled alternative in <see cref="bhlParser.statement"/>.

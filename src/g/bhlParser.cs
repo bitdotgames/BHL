@@ -2536,127 +2536,127 @@ public partial class bhlParser : bhlParserBase {
 				}
 				break;
 			case 4:
-				_localctx = new StmChainExpContext(_localctx);
+				_localctx = new StmYieldContext(_localctx);
 				EnterOuterAlt(_localctx, 4);
 				{
-				State = 363; chainExp();
-				State = 365;
+				State = 363; Match(YIELD);
+				State = 364; Match(OPEN_PAREN);
+				State = 365; Match(CLOSE_PAREN);
+				State = 366; eos();
+				}
+				break;
+			case 5:
+				_localctx = new StmYieldCallContext(_localctx);
+				EnterOuterAlt(_localctx, 5);
+				{
+				State = 367; Match(YIELD);
+				State = 368; chainExp();
+				State = 369; eos();
+				}
+				break;
+			case 6:
+				_localctx = new StmYieldWhileContext(_localctx);
+				EnterOuterAlt(_localctx, 6);
+				{
+				State = 371; Match(YIELD);
+				State = 372; Match(WHILE);
+				State = 373; Match(OPEN_PAREN);
+				State = 374; exp(0);
+				State = 375; Match(CLOSE_PAREN);
+				}
+				break;
+			case 7:
+				_localctx = new StmChainExpContext(_localctx);
+				EnterOuterAlt(_localctx, 7);
+				{
+				State = 377; chainExp();
+				State = 379;
 				ErrorHandler.Sync(this);
 				switch ( Interpreter.AdaptivePredict(TokenStream,21,Context) ) {
 				case 1:
 					{
-					State = 364; modifyOp();
+					State = 378; modifyOp();
 					}
 					break;
 				}
-				State = 367; eos();
+				State = 381; eos();
 				}
 				break;
-			case 5:
+			case 8:
 				_localctx = new StmIfContext(_localctx);
-				EnterOuterAlt(_localctx, 5);
+				EnterOuterAlt(_localctx, 8);
 				{
-				State = 369; Match(IF);
-				State = 370; Match(OPEN_PAREN);
-				State = 371; exp(0);
-				State = 372; Match(CLOSE_PAREN);
-				State = 373; block();
-				State = 377;
+				State = 383; Match(IF);
+				State = 384; Match(OPEN_PAREN);
+				State = 385; exp(0);
+				State = 386; Match(CLOSE_PAREN);
+				State = 387; block();
+				State = 391;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,22,Context);
 				while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 					if ( _alt==1 ) {
 						{
 						{
-						State = 374; elseIf();
+						State = 388; elseIf();
 						}
 						} 
 					}
-					State = 379;
+					State = 393;
 					ErrorHandler.Sync(this);
 					_alt = Interpreter.AdaptivePredict(TokenStream,22,Context);
 				}
-				State = 381;
+				State = 395;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				if (_la==ELSE) {
 					{
-					State = 380; @else();
+					State = 394; @else();
 					}
 				}
 
 				}
 				break;
-			case 6:
-				_localctx = new StmWhileContext(_localctx);
-				EnterOuterAlt(_localctx, 6);
-				{
-				State = 383; Match(WHILE);
-				State = 384; Match(OPEN_PAREN);
-				State = 385; exp(0);
-				State = 386; Match(CLOSE_PAREN);
-				State = 387; block();
-				}
-				break;
-			case 7:
-				_localctx = new StmDoWhileContext(_localctx);
-				EnterOuterAlt(_localctx, 7);
-				{
-				State = 389; Match(DO);
-				State = 390; block();
-				State = 391; Match(WHILE);
-				State = 392; Match(OPEN_PAREN);
-				State = 393; exp(0);
-				State = 394; Match(CLOSE_PAREN);
-				State = 395; eos();
-				}
-				break;
-			case 8:
-				_localctx = new StmForContext(_localctx);
-				EnterOuterAlt(_localctx, 8);
-				{
-				State = 397; Match(FOR);
-				State = 398; forExp();
-				State = 399; block();
-				}
-				break;
 			case 9:
-				_localctx = new StmForeachContext(_localctx);
+				_localctx = new StmWhileContext(_localctx);
 				EnterOuterAlt(_localctx, 9);
 				{
-				State = 401; Match(FOREACH);
-				State = 402; foreachExp();
-				State = 403; block();
+				State = 397; Match(WHILE);
+				State = 398; Match(OPEN_PAREN);
+				State = 399; exp(0);
+				State = 400; Match(CLOSE_PAREN);
+				State = 401; block();
 				}
 				break;
 			case 10:
-				_localctx = new StmYieldContext(_localctx);
+				_localctx = new StmDoWhileContext(_localctx);
 				EnterOuterAlt(_localctx, 10);
 				{
-				State = 405; Match(YIELD);
+				State = 403; Match(DO);
+				State = 404; block();
+				State = 405; Match(WHILE);
 				State = 406; Match(OPEN_PAREN);
-				State = 407; Match(CLOSE_PAREN);
-				State = 408; eos();
+				State = 407; exp(0);
+				State = 408; Match(CLOSE_PAREN);
+				State = 409; eos();
 				}
 				break;
 			case 11:
-				_localctx = new StmYieldCallContext(_localctx);
+				_localctx = new StmForContext(_localctx);
 				EnterOuterAlt(_localctx, 11);
 				{
-				State = 409; Match(YIELD);
-				State = 410; chainExp();
-				State = 411; eos();
+				State = 411; Match(FOR);
+				State = 412; forExp();
+				State = 413; block();
 				}
 				break;
 			case 12:
-				_localctx = new StmYieldWhileContext(_localctx);
+				_localctx = new StmForeachContext(_localctx);
 				EnterOuterAlt(_localctx, 12);
 				{
-				State = 413; Match(YIELD);
-				State = 414; Match(WHILE);
-				State = 415; Match(OPEN_PAREN);
-				State = 416; exp(0);
-				State = 417; Match(CLOSE_PAREN);
+				State = 415; Match(FOREACH);
+				State = 416; foreachExp();
+				State = 417; block();
 				}
 				break;
 			case 13:
@@ -6546,7 +6546,7 @@ public partial class bhlParser : bhlParserBase {
 				EnterOuterAlt(_localctx, 3);
 				{
 				State = 813;
-				if (!(this.lineTerminatorAhead())) throw new FailedPredicateException(this, "this.lineTerminatorAhead()");
+				if (!(this.lineTerminator())) throw new FailedPredicateException(this, "this.lineTerminator()");
 				}
 				break;
 			case 4:
@@ -6599,7 +6599,7 @@ public partial class bhlParser : bhlParserBase {
 	}
 	private bool eos_sempred(EosContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 10: return this.lineTerminatorAhead();
+		case 10: return this.lineTerminator();
 		case 11: return this.closeBrace();
 		}
 		return true;
@@ -6677,14 +6677,14 @@ public partial class bhlParser : bhlParserBase {
 		'\n', '\x13', '\x3', '\x13', '\x3', '\x13', '\x3', '\x14', '\x3', '\x14', 
 		'\x3', '\x14', '\x3', '\x14', '\x5', '\x14', '\x166', '\n', '\x14', '\x3', 
 		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
-		'\x14', '\x3', '\x14', '\x3', '\x14', '\x5', '\x14', '\x170', '\n', '\x14', 
+		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
+		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
+		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
+		'\x14', '\x3', '\x14', '\x5', '\x14', '\x17E', '\n', '\x14', '\x3', '\x14', 
 		'\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', 
-		'\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\a', '\x14', '\x17A', '\n', 
-		'\x14', '\f', '\x14', '\xE', '\x14', '\x17D', '\v', '\x14', '\x3', '\x14', 
-		'\x5', '\x14', '\x180', '\n', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
-		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
-		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
-		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
+		'\x3', '\x14', '\x3', '\x14', '\a', '\x14', '\x188', '\n', '\x14', '\f', 
+		'\x14', '\xE', '\x14', '\x18B', '\v', '\x14', '\x3', '\x14', '\x5', '\x14', 
+		'\x18E', '\n', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
 		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
 		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
 		'\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', '\x14', '\x3', 
@@ -6978,42 +6978,42 @@ public partial class bhlParser : bhlParserBase {
 		'\x1B7', '\x3', '\x2', '\x2', '\x2', '\x169', '\x16A', '\x5', 'z', '>', 
 		'\x2', '\x16A', '\x16B', '\x5', '\x80', '\x41', '\x2', '\x16B', '\x16C', 
 		'\x5', '\xA2', 'R', '\x2', '\x16C', '\x1B7', '\x3', '\x2', '\x2', '\x2', 
-		'\x16D', '\x16F', '\x5', '\x16', '\f', '\x2', '\x16E', '\x170', '\x5', 
-		'|', '?', '\x2', '\x16F', '\x16E', '\x3', '\x2', '\x2', '\x2', '\x16F', 
-		'\x170', '\x3', '\x2', '\x2', '\x2', '\x170', '\x171', '\x3', '\x2', '\x2', 
-		'\x2', '\x171', '\x172', '\x5', '\xA2', 'R', '\x2', '\x172', '\x1B7', 
-		'\x3', '\x2', '\x2', '\x2', '\x173', '\x174', '\a', '\a', '\x2', '\x2', 
-		'\x174', '\x175', '\a', '\x43', '\x2', '\x2', '\x175', '\x176', '\x5', 
-		'\x18', '\r', '\x2', '\x176', '\x177', '\a', '\x44', '\x2', '\x2', '\x177', 
-		'\x17B', '\x5', '\x38', '\x1D', '\x2', '\x178', '\x17A', '\x5', '(', '\x15', 
-		'\x2', '\x179', '\x178', '\x3', '\x2', '\x2', '\x2', '\x17A', '\x17D', 
-		'\x3', '\x2', '\x2', '\x2', '\x17B', '\x179', '\x3', '\x2', '\x2', '\x2', 
-		'\x17B', '\x17C', '\x3', '\x2', '\x2', '\x2', '\x17C', '\x17F', '\x3', 
-		'\x2', '\x2', '\x2', '\x17D', '\x17B', '\x3', '\x2', '\x2', '\x2', '\x17E', 
-		'\x180', '\x5', '*', '\x16', '\x2', '\x17F', '\x17E', '\x3', '\x2', '\x2', 
-		'\x2', '\x17F', '\x180', '\x3', '\x2', '\x2', '\x2', '\x180', '\x1B7', 
-		'\x3', '\x2', '\x2', '\x2', '\x181', '\x182', '\a', '\t', '\x2', '\x2', 
-		'\x182', '\x183', '\a', '\x43', '\x2', '\x2', '\x183', '\x184', '\x5', 
-		'\x18', '\r', '\x2', '\x184', '\x185', '\a', '\x44', '\x2', '\x2', '\x185', 
-		'\x186', '\x5', '\x38', '\x1D', '\x2', '\x186', '\x1B7', '\x3', '\x2', 
-		'\x2', '\x2', '\x187', '\x188', '\a', '\n', '\x2', '\x2', '\x188', '\x189', 
-		'\x5', '\x38', '\x1D', '\x2', '\x189', '\x18A', '\a', '\t', '\x2', '\x2', 
-		'\x18A', '\x18B', '\a', '\x43', '\x2', '\x2', '\x18B', '\x18C', '\x5', 
-		'\x18', '\r', '\x2', '\x18C', '\x18D', '\a', '\x44', '\x2', '\x2', '\x18D', 
-		'\x18E', '\x5', '\xA2', 'R', '\x2', '\x18E', '\x1B7', '\x3', '\x2', '\x2', 
-		'\x2', '\x18F', '\x190', '\a', '\v', '\x2', '\x2', '\x190', '\x191', '\x5', 
-		'$', '\x13', '\x2', '\x191', '\x192', '\x5', '\x38', '\x1D', '\x2', '\x192', 
-		'\x1B7', '\x3', '\x2', '\x2', '\x2', '\x193', '\x194', '\a', '\f', '\x2', 
-		'\x2', '\x194', '\x195', '\x5', '\x1E', '\x10', '\x2', '\x195', '\x196', 
-		'\x5', '\x38', '\x1D', '\x2', '\x196', '\x1B7', '\x3', '\x2', '\x2', '\x2', 
-		'\x197', '\x198', '\a', '\x11', '\x2', '\x2', '\x198', '\x199', '\a', 
-		'\x43', '\x2', '\x2', '\x199', '\x19A', '\a', '\x44', '\x2', '\x2', '\x19A', 
-		'\x1B7', '\x5', '\xA2', 'R', '\x2', '\x19B', '\x19C', '\a', '\x11', '\x2', 
-		'\x2', '\x19C', '\x19D', '\x5', '\x16', '\f', '\x2', '\x19D', '\x19E', 
-		'\x5', '\xA2', 'R', '\x2', '\x19E', '\x1B7', '\x3', '\x2', '\x2', '\x2', 
-		'\x19F', '\x1A0', '\a', '\x11', '\x2', '\x2', '\x1A0', '\x1A1', '\a', 
-		'\t', '\x2', '\x2', '\x1A1', '\x1A2', '\a', '\x43', '\x2', '\x2', '\x1A2', 
-		'\x1A3', '\x5', '\x18', '\r', '\x2', '\x1A3', '\x1A4', '\a', '\x44', '\x2', 
+		'\x16D', '\x16E', '\a', '\x11', '\x2', '\x2', '\x16E', '\x16F', '\a', 
+		'\x43', '\x2', '\x2', '\x16F', '\x170', '\a', '\x44', '\x2', '\x2', '\x170', 
+		'\x1B7', '\x5', '\xA2', 'R', '\x2', '\x171', '\x172', '\a', '\x11', '\x2', 
+		'\x2', '\x172', '\x173', '\x5', '\x16', '\f', '\x2', '\x173', '\x174', 
+		'\x5', '\xA2', 'R', '\x2', '\x174', '\x1B7', '\x3', '\x2', '\x2', '\x2', 
+		'\x175', '\x176', '\a', '\x11', '\x2', '\x2', '\x176', '\x177', '\a', 
+		'\t', '\x2', '\x2', '\x177', '\x178', '\a', '\x43', '\x2', '\x2', '\x178', 
+		'\x179', '\x5', '\x18', '\r', '\x2', '\x179', '\x17A', '\a', '\x44', '\x2', 
+		'\x2', '\x17A', '\x1B7', '\x3', '\x2', '\x2', '\x2', '\x17B', '\x17D', 
+		'\x5', '\x16', '\f', '\x2', '\x17C', '\x17E', '\x5', '|', '?', '\x2', 
+		'\x17D', '\x17C', '\x3', '\x2', '\x2', '\x2', '\x17D', '\x17E', '\x3', 
+		'\x2', '\x2', '\x2', '\x17E', '\x17F', '\x3', '\x2', '\x2', '\x2', '\x17F', 
+		'\x180', '\x5', '\xA2', 'R', '\x2', '\x180', '\x1B7', '\x3', '\x2', '\x2', 
+		'\x2', '\x181', '\x182', '\a', '\a', '\x2', '\x2', '\x182', '\x183', '\a', 
+		'\x43', '\x2', '\x2', '\x183', '\x184', '\x5', '\x18', '\r', '\x2', '\x184', 
+		'\x185', '\a', '\x44', '\x2', '\x2', '\x185', '\x189', '\x5', '\x38', 
+		'\x1D', '\x2', '\x186', '\x188', '\x5', '(', '\x15', '\x2', '\x187', '\x186', 
+		'\x3', '\x2', '\x2', '\x2', '\x188', '\x18B', '\x3', '\x2', '\x2', '\x2', 
+		'\x189', '\x187', '\x3', '\x2', '\x2', '\x2', '\x189', '\x18A', '\x3', 
+		'\x2', '\x2', '\x2', '\x18A', '\x18D', '\x3', '\x2', '\x2', '\x2', '\x18B', 
+		'\x189', '\x3', '\x2', '\x2', '\x2', '\x18C', '\x18E', '\x5', '*', '\x16', 
+		'\x2', '\x18D', '\x18C', '\x3', '\x2', '\x2', '\x2', '\x18D', '\x18E', 
+		'\x3', '\x2', '\x2', '\x2', '\x18E', '\x1B7', '\x3', '\x2', '\x2', '\x2', 
+		'\x18F', '\x190', '\a', '\t', '\x2', '\x2', '\x190', '\x191', '\a', '\x43', 
+		'\x2', '\x2', '\x191', '\x192', '\x5', '\x18', '\r', '\x2', '\x192', '\x193', 
+		'\a', '\x44', '\x2', '\x2', '\x193', '\x194', '\x5', '\x38', '\x1D', '\x2', 
+		'\x194', '\x1B7', '\x3', '\x2', '\x2', '\x2', '\x195', '\x196', '\a', 
+		'\n', '\x2', '\x2', '\x196', '\x197', '\x5', '\x38', '\x1D', '\x2', '\x197', 
+		'\x198', '\a', '\t', '\x2', '\x2', '\x198', '\x199', '\a', '\x43', '\x2', 
+		'\x2', '\x199', '\x19A', '\x5', '\x18', '\r', '\x2', '\x19A', '\x19B', 
+		'\a', '\x44', '\x2', '\x2', '\x19B', '\x19C', '\x5', '\xA2', 'R', '\x2', 
+		'\x19C', '\x1B7', '\x3', '\x2', '\x2', '\x2', '\x19D', '\x19E', '\a', 
+		'\v', '\x2', '\x2', '\x19E', '\x19F', '\x5', '$', '\x13', '\x2', '\x19F', 
+		'\x1A0', '\x5', '\x38', '\x1D', '\x2', '\x1A0', '\x1B7', '\x3', '\x2', 
+		'\x2', '\x2', '\x1A1', '\x1A2', '\a', '\f', '\x2', '\x2', '\x1A2', '\x1A3', 
+		'\x5', '\x1E', '\x10', '\x2', '\x1A3', '\x1A4', '\x5', '\x38', '\x1D', 
 		'\x2', '\x1A4', '\x1B7', '\x3', '\x2', '\x2', '\x2', '\x1A5', '\x1A6', 
 		'\a', '\xE', '\x2', '\x2', '\x1A6', '\x1B7', '\x5', '\xA2', 'R', '\x2', 
 		'\x1A7', '\x1A8', '\a', '\xF', '\x2', '\x2', '\x1A8', '\x1B7', '\x5', 
@@ -7028,12 +7028,12 @@ public partial class bhlParser : bhlParserBase {
 		'\x1B7', '\x5', '\x38', '\x1D', '\x2', '\x1B5', '\x1B7', '\x5', '\x38', 
 		'\x1D', '\x2', '\x1B6', '\x161', '\x3', '\x2', '\x2', '\x2', '\x1B6', 
 		'\x162', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x169', '\x3', '\x2', '\x2', 
-		'\x2', '\x1B6', '\x16D', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x173', 
-		'\x3', '\x2', '\x2', '\x2', '\x1B6', '\x181', '\x3', '\x2', '\x2', '\x2', 
-		'\x1B6', '\x187', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x18F', '\x3', 
-		'\x2', '\x2', '\x2', '\x1B6', '\x193', '\x3', '\x2', '\x2', '\x2', '\x1B6', 
-		'\x197', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x19B', '\x3', '\x2', '\x2', 
-		'\x2', '\x1B6', '\x19F', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x1A5', 
+		'\x2', '\x1B6', '\x16D', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x171', 
+		'\x3', '\x2', '\x2', '\x2', '\x1B6', '\x175', '\x3', '\x2', '\x2', '\x2', 
+		'\x1B6', '\x17B', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x181', '\x3', 
+		'\x2', '\x2', '\x2', '\x1B6', '\x18F', '\x3', '\x2', '\x2', '\x2', '\x1B6', 
+		'\x195', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x19D', '\x3', '\x2', '\x2', 
+		'\x2', '\x1B6', '\x1A1', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x1A5', 
 		'\x3', '\x2', '\x2', '\x2', '\x1B6', '\x1A7', '\x3', '\x2', '\x2', '\x2', 
 		'\x1B6', '\x1A9', '\x3', '\x2', '\x2', '\x2', '\x1B6', '\x1AF', '\x3', 
 		'\x2', '\x2', '\x2', '\x1B6', '\x1B1', '\x3', '\x2', '\x2', '\x2', '\x1B6', 
@@ -7310,7 +7310,7 @@ public partial class bhlParser : bhlParserBase {
 		'\x3', '\x2', '\x2', '\x2', '\x332', '\xA3', '\x3', '\x2', '\x2', '\x2', 
 		'P', '\xA7', '\xAE', '\xB5', '\xBE', '\xC4', '\xC8', '\xCE', '\xD2', '\xDD', 
 		'\xE1', '\xEB', '\xF0', '\x10D', '\x12B', '\x12D', '\x13E', '\x14A', '\x152', 
-		'\x157', '\x15D', '\x165', '\x16F', '\x17B', '\x17F', '\x1AC', '\x1B6', 
+		'\x157', '\x15D', '\x165', '\x17D', '\x189', '\x18D', '\x1AC', '\x1B6', 
 		'\x1C5', '\x1D0', '\x1D9', '\x1DD', '\x1E1', '\x1E4', '\x1EC', '\x1F1', 
 		'\x1F9', '\x202', '\x20A', '\x213', '\x218', '\x220', '\x22A', '\x22F', 
 		'\x238', '\x23D', '\x24A', '\x257', '\x25C', '\x261', '\x267', '\x26B', 

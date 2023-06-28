@@ -108,6 +108,9 @@ statement
   | varDeclareList ({this.notLineTerminator()}? assignExp)? eos  #StmDeclOptAssign
   //int a, c.r = foo()
   | varDeclaresOrChainExps assignExp eos                         #StmDeclOrExpAssign
+  | YIELD OPEN_PAREN CLOSE_PAREN eos                             #StmYield                                                                   
+  | YIELD chainExp eos                                           #StmYieldCall
+  | YIELD WHILE OPEN_PAREN exp CLOSE_PAREN                       #StmYieldWhile
   //func call or variable/member read/write access
   | chainExp modifyOp? eos                                       #StmChainExp
   | IF OPEN_PAREN exp CLOSE_PAREN block elseIf* else?            #StmIf
@@ -115,9 +118,6 @@ statement
   | DO block WHILE OPEN_PAREN exp CLOSE_PAREN eos                #StmDoWhile
   | FOR forExp block                                             #StmFor
   | FOREACH foreachExp block                                     #StmForeach
-  | YIELD OPEN_PAREN CLOSE_PAREN eos                             #StmYield                                                                   
-  | YIELD chainExp eos                                           #StmYieldCall
-  | YIELD WHILE OPEN_PAREN exp CLOSE_PAREN                       #StmYieldWhile
   | BREAK eos                                                    #StmBreak
   | CONTINUE eos                                                 #StmContinue
   | RETURN ({this.notLineTerminator()}? expList)? eos            #StmReturn
@@ -382,6 +382,6 @@ jsonValue
 eos
   : SEMI
   | EOF
-  | {this.lineTerminatorAhead()}?
+  | {this.lineTerminator()}?
   | {this.closeBrace()}?
   ;
