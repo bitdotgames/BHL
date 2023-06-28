@@ -121,6 +121,6 @@ SINGLE_LINE_COMMENT : '//' ~[\r\n]* -> channel(HIDDEN) ;
 
 DELIMITED_COMMENT : '/*' .*? '*/' -> channel(HIDDEN) ;
 
-WS: [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
+WS: [ \t]+ -> channel(HIDDEN);
 
-NL: [\r\n\u2028\u2029] -> channel(HIDDEN);
+NL: [\r\n]+ -> channel(HIDDEN);
