@@ -6,6 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 SRC=$DIR/bhl.cs
 EXE=$DIR/build/bhlb.exe
+mkdir -p $DIR/build
 export MONO_PATH="$DIR/build:$DIR/deps/:$MONO_PATH" 
 
 if [ $EXE -ot $SRC ]; then 
