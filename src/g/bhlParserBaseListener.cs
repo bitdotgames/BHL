@@ -1257,18 +1257,6 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVarDeclareList([NotNull] bhlParser.VarDeclareListContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareOptAssign"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

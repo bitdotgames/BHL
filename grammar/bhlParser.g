@@ -278,12 +278,8 @@ varDeclareList
   : varDeclare (COMMA varDeclare)*
   ;
 
-varDeclareAssign
-  : varDeclare assignExp
-  ;
-
 varDeclareOptAssign
-  : varDeclare assignExp?
+  : varDeclare assignExp? eos
   ;
 
 varOrDeclare

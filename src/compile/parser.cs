@@ -148,14 +148,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       this.ast = ast;
       this.scope = scope;
-      if(ctx is bhlParser.VarDeclareAssignContext vda)
-      {
-        this.gvar_decl_ctx = vda.varDeclare();
-        this.gvar_assign_ctx = vda.assignExp();
-        if(!IsValid(this.gvar_decl_ctx))
-          this.gvar_decl_ctx = null;
-      }
-      else if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
+      if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
       {
         this.gvar_decl_ctx = vdoa.varDeclare();
         this.gvar_assign_ctx = vdoa.assignExp();

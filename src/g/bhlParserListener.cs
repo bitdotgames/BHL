@@ -1063,16 +1063,6 @@ public interface IbhlParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitVarDeclareList([NotNull] bhlParser.VarDeclareListContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.varDeclareAssign"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitVarDeclareAssign([NotNull] bhlParser.VarDeclareAssignContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.varDeclareOptAssign"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

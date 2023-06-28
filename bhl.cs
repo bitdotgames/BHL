@@ -120,6 +120,7 @@ public static class Tasks
   [Task()]
   public static void geng(Taskman tm, string[] args)
   {
+    tm.Rm($"{BHL_ROOT}/tmp");
     tm.Mkdir($"{BHL_ROOT}/tmp");
 
     tm.Copy($"{BHL_ROOT}/grammar/bhlLexer.g", $"{BHL_ROOT}/tmp/bhlLexer.g");
