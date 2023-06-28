@@ -105,20 +105,20 @@ forExp
 //NOTE: statements, order is important
 statement
   : SEMI                                       #StmSeparator
-  | varDeclareList assignExp?                  #StmDeclOptAssign
+  | varDeclareList assignExp? eos              #StmDeclOptAssign
   //int a, c.r = foo()
-  | varDeclaresOrChainExps assignExp           #StmDeclOrExpAssign
+  | varDeclaresOrChainExps assignExp eos      #StmDeclOrExpAssign
   //func call or variable/member read/write access
-  | chainExp modifyOp?                         #StmChainExp
+  | chainExp modifyOp? eos                     #StmChainExp
   | IF '(' exp ')' block elseIf* else?         #StmIf
   | WHILE '(' exp ')' block                    #StmWhile
-  | DO block WHILE '(' exp ')'                 #StmDoWhile
+  | DO block WHILE '(' exp ')' eos             #StmDoWhile
   | FOR forExp block                           #StmFor
   | FOREACH foreachExp block                   #StmForeach
-  | YIELD '(' ')'                              #StmYield                                                                   
-  | YIELD chainExp                             #StmYieldCall
+  | YIELD '(' ')' eos                          #StmYield                                                                   
+  | YIELD chainExp eos                         #StmYieldCall
   | YIELD WHILE '(' exp ')'                    #StmYieldWhile
-  | BREAK                                      #StmBreak
+  | BREAK eos                                  #StmBreak
   | CONTINUE eos                               #StmContinue
   | RETURN expList? eos                        #StmReturn
   | PARAL block                                #StmParal
