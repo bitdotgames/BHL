@@ -1073,7 +1073,16 @@ public class TestImport : BHL_TestBase
     conf.proj.use_cache = true;
     conf.proj.max_threads = 1;
 
-    CompileFiles(exec, conf);
+    AssertError<Exception>(
+      delegate() {
+        CompileFiles(exec, conf);
+      },
+      "type 'units.Unit' not found",
+      new PlaceAssert(file_test, @"
+      units.Unit u = {}
+------^"
+      )
+    );
   }
 
 }

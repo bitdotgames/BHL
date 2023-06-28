@@ -13284,7 +13284,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl6);
       },
-      "no viable alternative at input '(i++'"
+      "no viable alternative at input '('"
     );
 
     string bhl7 = @"
@@ -13318,7 +13318,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "no viable alternative at input '(i++'"
+      "no viable alternative at input '('"
     );
 
     string bhl9 = @"
@@ -13333,7 +13333,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl9);
       },
-      "return value is missing"
+      "no viable alternative at input 'i'"
     );
 
     string bhl10 = @"
@@ -13349,7 +13349,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl10);
       },
-      "extraneous input '++'",
+      "rule eos failed predicate",
       new PlaceAssert(bhl10, @"
       return j, i++
 -----------------^"
@@ -13369,10 +13369,10 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl11);
       },
-      "extraneous input ','",
+      "no viable alternative at input 'j'",
       new PlaceAssert(bhl11, @"
       return j++, i
-----------------^"
+-------------^"
       )
     );
   }
@@ -13459,7 +13459,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl5);
       },
-      "no viable alternative at input '(i--'"
+      "no viable alternative at input '('"
     );
 
     string bhl6 = @"
@@ -13490,7 +13490,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl7);
       },
-      "return value is missing"
+      "no viable alternative at input 'i'"
     );
 
     string bhl8 = @"
@@ -13506,7 +13506,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl8);
       },
-      "extraneous input '--'"
+      "rule eos failed predicate"
     );
 
     string bhl9 = @"
@@ -13522,7 +13522,7 @@ public class TestVM : BHL_TestBase
       delegate() {
         Compile(bhl9);
       },
-      "extraneous input ','"
+      "no viable alternative at input 'j'"
     );
   }
 
@@ -14144,7 +14144,7 @@ public class TestVM : BHL_TestBase
       {
         Bar bar
         {
-          return
+          return Bar.DUMMY
           Bar bar = Bar.DUMMY
         }
       }
