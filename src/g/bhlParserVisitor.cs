@@ -86,12 +86,6 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpList([NotNull] bhlParser.ExpListContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.returnVal"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitReturnVal([NotNull] bhlParser.ReturnValContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.name"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

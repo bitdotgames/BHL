@@ -92,7 +92,7 @@ public abstract class bhlParserBase : Parser
 
   protected bool notLineTerminator()
   {
-    return !here(LINE_TERM);
+    return !here(NL);
   }
 
   protected bool closeBrace()
@@ -130,19 +130,19 @@ public abstract class bhlParserBase : Parser
     int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
     IToken ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
 
-    if (ahead.Channel != Lexer.Hidden)
+    if(ahead.Channel != Lexer.Hidden)
     {
       // We're only interested in tokens on the Hidden channel.
       return false;
     }
 
-    if (ahead.Type == LINE_TERM)
+    if(ahead.Type == NL)
     {
       // There is definitely a line terminator ahead.
       return true;
     }
 
-    if (ahead.Type == WS)
+    if(ahead.Type == WS)
     {
       // Get the token ahead of the current whitespaces.
       possibleIndexEosToken = CurrentToken.TokenIndex - 2;
@@ -155,6 +155,6 @@ public abstract class bhlParserBase : Parser
 
     // Check if the token is, or contains a line terminator.
     return (type == DELIMITED_COMMENT && (text.Contains("\r") || text.Contains("\n"))) ||
-      (type == LINE_TERM);
+      (type == NL);
   }
 }

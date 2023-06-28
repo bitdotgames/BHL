@@ -42,14 +42,6 @@ expList
   : exp (COMMA exp)*
   ;
 
-returnVal
-  //including var decls here for cases when 
-  //parser improperly captures the next statement
-  //which is not part of return but we need
-  //to process that as well
-  : (varDeclare | varDeclareAssign | expList)
-  ;
-
 name
   : GLOBAL? NAME
   ;
@@ -128,7 +120,7 @@ statement
   | YIELD WHILE '(' exp ')'                    #StmYieldWhile
   | BREAK                                      #StmBreak
   | CONTINUE eos                               #StmContinue
-  | RETURN returnVal? eos                      #StmReturn
+  | RETURN expList? eos                        #StmReturn
   | PARAL block                                #StmParal
   | PARAL_ALL block                            #StmParalAll
   | DEFER block                                #StmDefer

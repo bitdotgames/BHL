@@ -143,18 +143,6 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpList([NotNull] bhlParser.ExpListContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.returnVal"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterReturnVal([NotNull] bhlParser.ReturnValContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.returnVal"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitReturnVal([NotNull] bhlParser.ReturnValContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.name"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

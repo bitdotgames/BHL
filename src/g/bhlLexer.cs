@@ -43,7 +43,7 @@ public partial class bhlLexer : bhlLexerBase {
 		VARIADIC=58, ASSIGN=59, SEMI=60, COLON=61, DOT=62, OPEN_BRACKET=63, CLOSE_BRACKET=64, 
 		OPEN_PAREN=65, CLOSE_PAREN=66, OPEN_BRACE=67, CLOSE_BRACE=68, EMPTY_BRACE=69, 
 		COMMA=70, QUESTION=71, NORMALSTRING=72, INT=73, HEX=74, FLOAT=75, SINGLE_LINE_COMMENT=76, 
-		DELIMITED_COMMENT=77, WS=78, LINE_TERM=79;
+		DELIMITED_COMMENT=77, WS=78, NL=79;
 	public static string[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
 	};
@@ -63,7 +63,7 @@ public partial class bhlLexer : bhlLexerBase {
 		"DOT", "OPEN_BRACKET", "CLOSE_BRACKET", "OPEN_PAREN", "CLOSE_PAREN", "OPEN_BRACE", 
 		"CLOSE_BRACE", "EMPTY_BRACE", "COMMA", "QUESTION", "NORMALSTRING", "INT", 
 		"HEX", "FLOAT", "ExponentPart", "EscapeSequence", "Digit", "HexDigit", 
-		"SINGLE_LINE_COMMENT", "DELIMITED_COMMENT", "WS", "LINE_TERM"
+		"SINGLE_LINE_COMMENT", "DELIMITED_COMMENT", "WS", "NL"
 	};
 
 
@@ -98,7 +98,7 @@ public partial class bhlLexer : bhlLexerBase {
 		"COLON", "DOT", "OPEN_BRACKET", "CLOSE_BRACKET", "OPEN_PAREN", "CLOSE_PAREN", 
 		"OPEN_BRACE", "CLOSE_BRACE", "EMPTY_BRACE", "COMMA", "QUESTION", "NORMALSTRING", 
 		"INT", "HEX", "FLOAT", "SINGLE_LINE_COMMENT", "DELIMITED_COMMENT", "WS", 
-		"LINE_TERM"
+		"NL"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 

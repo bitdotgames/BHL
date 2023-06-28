@@ -74,7 +74,7 @@ public class AnnotatedParseTree
   }
 }
 
-public class ANTLR_Processor : bhlBaseVisitor<object>
+public class ANTLR_Processor : bhlParserBaseVisitor<object>
 {
   public class Result
   {
@@ -3043,69 +3043,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.RETURN(), SemanticToken.Keyword);
 
-    var ret_val = ctx.returnVal();
-
-    //NOTE: special handling of the following case:
-    //
-    //      return
-    //      string str
-    //
-    if(ret_val?.varDeclare() != null)
-    {
-      var vd = ret_val.varDeclare();
-      VariableSymbol vd_symb;
-      var vd_decl_ast = ProcDeclVar(
-        curr_scope, 
-        vd.NAME(), 
-        vd.type(), 
-        is_ref: false, 
-        func_arg: false, 
-        write: false,
-        symb: out vd_symb
-      );
-      if(vd_decl_ast == null)
-        return null;
-      PeekAST().AddChild(vd_decl_ast);
-      ret_val = null;
-    }
-
-    //NOTE: special handling of the following case:
-    //
-    //      return
-    //      int foo = 1
-    //
-    if(ret_val?.varDeclareAssign() != null)
-    {
-      var vd = ret_val.varDeclareAssign().varDeclare();
-      VariableSymbol vd_symb;
-      var vd_ast = PeekAST();
-      int vd_assign_idx = vd_ast.children.Count;
-      var vd_decl_ast = ProcDeclVar(
-        curr_scope, 
-        vd.NAME(), 
-        vd.type(), 
-        is_ref: false, 
-        func_arg: false, 
-        write: false,
-        symb: out vd_symb
-      );
-      if(vd_decl_ast == null)
-        return null;
-      vd_ast.AddChild(vd_decl_ast);
-      
-      ProcAssignToVar(
-        vd_ast, 
-        vd_assign_idx,
-        Annotate(vd.NAME()),
-        is_auto_var: vd.type().GetText() == "var",
-        is_decl: true, 
-        var_symb: vd_symb,
-        var_idx: 0,
-        vars_num: 1, 
-        assign_exp: ret_val.varDeclareAssign().assignExp()
-      );
-      ret_val = null;
-    }
+    var ret_val = ctx.expList();
 
     if(CountBlocks(BlockType.DEFER) > 0)
       //we can proceed
@@ -3122,9 +3060,9 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
 
     var ret_ast = new AST_Return(ctx.Start.Line);
     
-    if(ret_val?.expList() != null)
+    if(ret_val != null)
     {
-      int explen = ret_val.expList().exp().Length;
+      int explen = ret_val.exp().Length;
 
       var fret_type = func_symb.GetReturnType();
 
@@ -3146,7 +3084,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
       //      where foo has the following signature: func int,string foo() {..}
       if(explen == 1)
       {
-        var exp_item = ret_val.expList().exp()[0];
+        var exp_item = ret_val.exp()[0];
         PushJsonType(fret_type);
         bool ok = TryVisit(exp_item);
         PopJsonType();
@@ -3181,7 +3119,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //      values are properly placed on a stack
         for(int i=explen;i-- > 0;)
         {
-          var exp = ret_val.expList().exp()[i];
+          var exp = ret_val.exp()[i];
           if(!TryVisit(exp))
             return null;
           var exp_eval_type = Annotate(exp).eval_type;
@@ -3193,7 +3131,7 @@ public class ANTLR_Processor : bhlBaseVisitor<object>
         //type checking is in proper order
         for(int i=0;i<explen;++i)
         {
-          var exp = ret_val.expList().exp()[i];
+          var exp = ret_val.exp()[i];
           if(!types.CheckAssign(fmret_type[i].Get(), Annotate(exp), errors))
             return null;
         }
