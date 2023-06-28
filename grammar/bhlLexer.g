@@ -81,7 +81,6 @@ OPEN_PAREN : '(';
 CLOSE_PAREN : ')';
 OPEN_BRACE : '{';
 CLOSE_BRACE : '}';
-EMPTY_BRACE : '{}';
 COMMA : ',' ;
 QUESTION : '?' ;
   

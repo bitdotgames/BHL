@@ -161,7 +161,6 @@ callArg
 
 block 
   : OPEN_BRACE statement* CLOSE_BRACE
-  | EMPTY_BRACE
   ;
 
 extensions
@@ -178,7 +177,6 @@ classDecl
 
 classBlock
   : OPEN_BRACE classMembers CLOSE_BRACE
-  | EMPTY_BRACE
   ;
 
 classMembers
@@ -203,7 +201,6 @@ interfaceDecl
 
 interfaceBlock
   : OPEN_BRACE interfaceMembers CLOSE_BRACE
-  | EMPTY_BRACE
   ;
 
 interfaceMembers
@@ -358,8 +355,6 @@ jsonObject
 
 jsonEmptyObj
   : OPEN_BRACE CLOSE_BRACE
-  //TODO: why this special case?
-  | EMPTY_BRACE
   ;
 
 jsonPair
