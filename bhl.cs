@@ -52,7 +52,7 @@ public static class Tasks
     front_src.AddRange(VM_SRC);
 
     MCSBuild(tm, front_src.ToArray(),
-     $"{BHL_ROOT}/bhl_front.dll",
+     $"{BHL_ROOT}/build/bhl_front.dll",
      "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
      (debug ? " -define:BHL_DEBUG" : "") + 
      (test_debug ? " -define:BHL_TDEBUG" : "") + 
@@ -64,7 +64,7 @@ public static class Tasks
   public static void build_back_dll(Taskman tm, string[] args)
   {
     var mcs_bin = args.Length > 0 ? args[0] : "mcs"; 
-    var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/bhl_back.dll";
+    var dll_file = args.Length > 1 ? args[1] : $"{BHL_ROOT}/build/bhl_back.dll";
     var extra_args = "";
     
     if(args.Length > 2)
@@ -91,7 +91,7 @@ public static class Tasks
   [Task()]
   public static void clean(Taskman tm, string[] args)
   {
-    foreach(var dll in tm.Glob($"{BHL_ROOT}/*.dll"))
+    foreach(var dll in tm.Glob($"{BHL_ROOT}/build/*.dll"))
     {
       if(!dll.StartsWith("bhl_"))
         continue;
@@ -99,7 +99,7 @@ public static class Tasks
       tm.Rm($"{dll}.mdb");
     }
 
-    foreach(var exe in tm.Glob($"{BHL_ROOT}/*.exe"))
+    foreach(var exe in tm.Glob($"{BHL_ROOT}/build/*.exe"))
     {
       //NOTE: when removing itself under Windows we can get an exception, so let's force its staleness
       if(exe.EndsWith("bhlb.exe"))
@@ -148,7 +148,7 @@ public static class Tasks
       new string[] {
         $"{BHL_ROOT}/src/cmd/run.cs",
         $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/bhl_front.dll", 
+        $"{BHL_ROOT}/build/bhl_front.dll", 
         $"{BHL_ROOT}/deps/mono_opts.dll",
         $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
@@ -171,12 +171,12 @@ public static class Tasks
      new string[] {
         $"{BHL_ROOT}/tests/*.cs",
         $"{BHL_ROOT}/deps/mono_opts.dll",
-        $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/bhl_lsp.dll",
+        $"{BHL_ROOT}/build/bhl_front.dll",
+        $"{BHL_ROOT}/build/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"
      },
-      $"{BHL_ROOT}/test.exe",
+      $"{BHL_ROOT}/build/test.exe",
       "-define:BHL_FRONT -debug"
     );
 
@@ -184,7 +184,7 @@ public static class Tasks
     if(Environment.GetEnvironmentVariable("BHL_TDEBUG") == "1")
       mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556";
 
-    MonoRun(tm, $"{BHL_ROOT}/test.exe", args, mono_opts);
+    MonoRun(tm, $"{BHL_ROOT}/build/test.exe", args, mono_opts);
   }
   
   [Task(deps: "build_front_dll")]
@@ -193,11 +193,11 @@ public static class Tasks
     MCSBuild(tm, 
       new string[] {
         $"{BHL_ROOT}/src/lsp/*.cs",
-        $"{BHL_ROOT}/bhl_front.dll",
+        $"{BHL_ROOT}/build/bhl_front.dll",
         $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
         $"{BHL_ROOT}/deps/Newtonsoft.Json.dll"
       },
-      $"{BHL_ROOT}/bhl_lsp.dll",
+      $"{BHL_ROOT}/build/bhl_lsp.dll",
       "-target:library -define:BHLSP_DEBUG"
     );
   }
@@ -211,8 +211,8 @@ public static class Tasks
       new string[] {
         $"{BHL_ROOT}/src/cmd/lsp.cs",
         $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/bhl_front.dll",
-        $"{BHL_ROOT}/bhl_lsp.dll",
+        $"{BHL_ROOT}/build/bhl_front.dll",
+        $"{BHL_ROOT}/build/bhl_lsp.dll",
         $"{BHL_ROOT}/deps/mono_opts.dll"
       },
       "-define:BHLSP_DEBUG",
@@ -224,7 +224,7 @@ public static class Tasks
 
   public static string BHL_ROOT {
     get {
-      return Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+      return Path.GetDirectoryName(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
     }
   }
 
@@ -251,7 +251,7 @@ public static class Tasks
     var sources = new string[] {
       $"{BHL_ROOT}/src/cmd/compile.cs",
       $"{BHL_ROOT}/src/cmd/cmd.cs",
-      $"{BHL_ROOT}/bhl_front.dll", 
+      $"{BHL_ROOT}/build/bhl_front.dll", 
       $"{BHL_ROOT}/deps/mono_opts.dll",
       $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
       $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
@@ -267,7 +267,7 @@ public static class Tasks
       if(string.IsNullOrEmpty(proj.bindings_dll))
         throw new Exception("Resulting 'bindings_dll' is not set");
 
-      bindings_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      bindings_sources.Add($"{BHL_ROOT}/build/bhl_front.dll");
       bindings_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         bindings_sources.ToArray(),
@@ -283,7 +283,7 @@ public static class Tasks
       if(string.IsNullOrEmpty(proj.postproc_dll))
         throw new Exception("Resulting 'postproc_dll' is not set");
 
-      postproc_sources.Add($"{BHL_ROOT}/bhl_front.dll");
+      postproc_sources.Add($"{BHL_ROOT}/build/bhl_front.dll");
       postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
       MCSBuild(tm, 
         postproc_sources.ToArray(),
@@ -360,7 +360,7 @@ public static class Tasks
 
   public static void BuildAndRunDllCmd(Taskman tm, string name, string[] sources, string extra_mcs_args, IList<string> args)
   {
-    var dll_path = $"{BHL_ROOT}/bhl_cmd_{name}.dll";
+    var dll_path = $"{BHL_ROOT}/build/bhl_cmd_{name}.dll";
 
     MCSBuild(tm, 
       sources.ToArray(),

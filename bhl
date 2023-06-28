@@ -5,8 +5,8 @@ set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 SRC=$DIR/bhl.cs
-EXE=$DIR/bhlb.exe
-export MONO_PATH="$DIR/deps/:$MONO_PATH" 
+EXE=$DIR/build/bhlb.exe
+export MONO_PATH="$DIR/build:$DIR/deps/:$MONO_PATH" 
 
 if [ $EXE -ot $SRC ]; then 
   mcs $SRC -debug -r:$DIR/deps/Newtonsoft.Json.dll -r:$DIR/deps/mono_opts.dll -out:$EXE
