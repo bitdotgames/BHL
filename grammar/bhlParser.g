@@ -104,27 +104,27 @@ forExp
 
 //NOTE: statements, order is important
 statement
-  : SEMI                                                #StmSeparator
-  | varDeclareList assignExp? eos                       #StmDeclOptAssign
+  : SEMI                                                         #StmSeparator
+  | varDeclareList ({this.notLineTerminator()}? assignExp)? eos  #StmDeclOptAssign
   //int a, c.r = foo()
-  | varDeclaresOrChainExps assignExp eos                #StmDeclOrExpAssign
+  | varDeclaresOrChainExps assignExp eos                         #StmDeclOrExpAssign
   //func call or variable/member read/write access
-  | chainExp modifyOp? eos                              #StmChainExp
-  | IF OPEN_PAREN exp CLOSE_PAREN block elseIf* else?   #StmIf
-  | WHILE OPEN_PAREN exp CLOSE_PAREN block              #StmWhile
-  | DO block WHILE OPEN_PAREN exp CLOSE_PAREN eos       #StmDoWhile
-  | FOR forExp block                                    #StmFor
-  | FOREACH foreachExp block                            #StmForeach
-  | YIELD OPEN_PAREN CLOSE_PAREN eos                    #StmYield                                                                   
-  | YIELD chainExp eos                                  #StmYieldCall
-  | YIELD WHILE OPEN_PAREN exp CLOSE_PAREN              #StmYieldWhile
-  | BREAK eos                                           #StmBreak
-  | CONTINUE eos                                        #StmContinue
-  | RETURN ({this.notLineTerminator()}? expList)? eos   #StmReturn
-  | PARAL block                                         #StmParal
-  | PARAL_ALL block                                     #StmParalAll
-  | DEFER block                                         #StmDefer
-  | block                                               #StmBlockNested
+  | chainExp modifyOp? eos                                       #StmChainExp
+  | IF OPEN_PAREN exp CLOSE_PAREN block elseIf* else?            #StmIf
+  | WHILE OPEN_PAREN exp CLOSE_PAREN block                       #StmWhile
+  | DO block WHILE OPEN_PAREN exp CLOSE_PAREN eos                #StmDoWhile
+  | FOR forExp block                                             #StmFor
+  | FOREACH foreachExp block                                     #StmForeach
+  | YIELD OPEN_PAREN CLOSE_PAREN eos                             #StmYield                                                                   
+  | YIELD chainExp eos                                           #StmYieldCall
+  | YIELD WHILE OPEN_PAREN exp CLOSE_PAREN                       #StmYieldWhile
+  | BREAK eos                                                    #StmBreak
+  | CONTINUE eos                                                 #StmContinue
+  | RETURN ({this.notLineTerminator()}? expList)? eos            #StmReturn
+  | PARAL block                                                  #StmParal
+  | PARAL_ALL block                                              #StmParalAll
+  | DEFER block                                                  #StmDefer
+  | block                                                        #StmBlockNested
   ;
 
 elseIf
