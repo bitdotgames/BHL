@@ -93,8 +93,6 @@ public static class Tasks
   {
     foreach(var dll in tm.Glob($"{BHL_ROOT}/build/*.dll"))
     {
-      if(!dll.StartsWith("bhl_"))
-        continue;
       tm.Rm(dll);
       tm.Rm($"{dll}.mdb");
     }
