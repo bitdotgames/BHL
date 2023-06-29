@@ -33,6 +33,7 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestStrings());
     counter += Run(names, new TestAny());
     counter += Run(names, new TestEnum());
     counter += Run(names, new TestYield());

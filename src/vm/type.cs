@@ -499,6 +499,17 @@ public class Types : INamedResolver
   static Types()
   {
     {
+      {
+        var fld = new FieldSymbol(new Origin(), "Length", Int, 
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+          {
+            v.SetInt(ctx.str.Length);
+          },
+          null
+        );
+        String.Define(fld);
+      }
+
       String.Setup();
     }
 
