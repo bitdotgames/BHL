@@ -500,7 +500,7 @@ public class Types : INamedResolver
   {
     {
       {
-        var fld = new FieldSymbol(new Origin(), "Length", Int, 
+        var fld = new FieldSymbol(new Origin(), "Count", Int, 
           delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
           {
             v.SetInt(ctx.str.Length);
@@ -508,6 +508,20 @@ public class Types : INamedResolver
           null
         );
         String.Define(fld);
+      }
+
+      {
+        var m = new FuncSymbolNative(new Origin(), "At", String,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+          { 
+            int idx = (int)stack.PopRelease().num;
+            string self = stack.PopRelease().str;
+            stack.Push(Val.NewStr(frm.vm, self[idx].ToString()));
+            return null;
+          }, 
+          new FuncArgSymbol("i", Int)
+        );
+        String.Define(m);
       }
 
       String.Setup();
