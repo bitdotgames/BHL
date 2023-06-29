@@ -82,7 +82,7 @@ public class BoolSymbol : Symbol, IType
   }
 }
 
-public class StringSymbol : Symbol, IType
+public class StringSymbol : ClassSymbolNative
 {
   public const uint CLASS_ID = 3;
 

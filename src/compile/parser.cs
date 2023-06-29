@@ -1417,6 +1417,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
         else if(class_symb != null)
         {
+          if(class_symb is StringSymbol)
+            AddError(name, "symbol usage is not valid");
           type = class_symb;
         }
         else
