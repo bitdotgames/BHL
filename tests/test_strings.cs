@@ -33,4 +33,22 @@ public class TestStrings : BHL_TestBase
     AssertEqual("B", Execute(vm, "test").result.PopRelease().str);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestTraverseString()
+  {
+    string bhl = @"
+    func string test() {
+      string a = ""FooBar""
+      string b = """"
+      for(int i=a.Count-1;i>=0;i--) {
+        b += a.At(i)
+      }
+      return b
+    }
+    ";
+    var vm = MakeVM(bhl);
+    AssertEqual("raBooF", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
 }
