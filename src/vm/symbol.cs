@@ -34,24 +34,7 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
   public abstract void Sync(marshall.SyncContext ctx);
 }
 
-public abstract class BuiltInSymbolType : Symbol, IType 
-{
-  public BuiltInSymbolType(Origin origin, string name) 
-    : base(origin, name) 
-  {}
-
-  //contains no data
-  public override void Sync(marshall.SyncContext ctx)
-  {
-  }
-
-  public static implicit operator Proxy<IType>(BuiltInSymbolType s)
-  {
-    return new Proxy<IType>(s);
-  }
-}
-
-public class IntSymbol : BuiltInSymbolType
+public class IntSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 1;
 
@@ -63,9 +46,19 @@ public class IntSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+  
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(IntSymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class BoolSymbol : BuiltInSymbolType
+public class BoolSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 2;
 
@@ -77,9 +70,19 @@ public class BoolSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(BoolSymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class StringSymbol : BuiltInSymbolType
+public class StringSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 3;
 
@@ -91,9 +94,19 @@ public class StringSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(StringSymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class FloatSymbol : BuiltInSymbolType
+public class FloatSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 4;
 
@@ -105,9 +118,19 @@ public class FloatSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(FloatSymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class VoidSymbol : BuiltInSymbolType
+public class VoidSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 5;
 
@@ -119,9 +142,19 @@ public class VoidSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(VoidSymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class AnySymbol : BuiltInSymbolType
+public class AnySymbol : Symbol, IType
 {
   public const uint CLASS_ID = 6;
 
@@ -133,9 +166,19 @@ public class AnySymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
+
+  //for convenience
+  public static implicit operator Proxy<IType>(AnySymbol s)
+  {
+    return new Proxy<IType>(s);
+  }
 }
 
-public class NullSymbol : BuiltInSymbolType
+public class NullSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 7;
 
@@ -147,9 +190,13 @@ public class NullSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
 }
 
-public class VarSymbol : BuiltInSymbolType
+public class VarSymbol : Symbol
 {
   public const uint CLASS_ID = 8;
 
@@ -161,6 +208,10 @@ public class VarSymbol : BuiltInSymbolType
   {
     return CLASS_ID;
   }
+
+  //contains no data
+  public override void Sync(marshall.SyncContext ctx)
+  {}
 }
 
 public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsIteratable

@@ -657,7 +657,27 @@ public static class ScopeExtensions
       return new TypeArg(tp);
     }
 
-    public static implicit operator TypeArg(BuiltInSymbolType s)
+    public static implicit operator TypeArg(IntSymbol s)
+    {
+      return new TypeArg(s);
+    }
+
+    public static implicit operator TypeArg(BoolSymbol s)
+    {
+      return new TypeArg(s);
+    }
+
+    public static implicit operator TypeArg(StringSymbol s)
+    {
+      return new TypeArg(s);
+    }
+
+    public static implicit operator TypeArg(FloatSymbol s)
+    {
+      return new TypeArg(s);
+    }
+
+    public static implicit operator TypeArg(VoidSymbol s)
     {
       return new TypeArg(s);
     }
