@@ -1028,7 +1028,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  //[IsTested()]
+  [IsTested()]
   public void TestMistakenlyImportedBy3dParty()
   {
     string file_unit = @"

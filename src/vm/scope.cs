@@ -256,6 +256,28 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     return default(LinkConflict);
   }
 
+  public void PreLink(Namespace other)
+  {
+    for(int i=0;i<other.members.Count;++i)
+    {
+      var other_symb = other.members[i];
+
+      var this_symb = Resolve(other_symb.name);
+
+      if(other_symb is Namespace other_ns)
+      {
+        if(this_symb == null)
+        {
+          //NOTE: let's create a local version of the linked namespace
+          //      which is linked to the original one
+          var ns = new Namespace(other_ns.module, other_ns.name);
+          ns.links.Add(other_ns);
+          members.Add(ns);
+        }
+      }
+    }
+  }
+
   public void Unlink(Namespace other)
   {
     for(int i=0;i<other.members.Count;++i)

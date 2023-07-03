@@ -558,6 +558,75 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
+  internal void Phase_PreLinkImports(
+    Dictionary<string, ANTLR_Processor> file2proc, 
+    //NOTE: can be null, contains already cached compile modules.
+    //      an entry present in file2compiled doesn't exist in file2proc
+    Dictionary<string, CompiledModule> file2compiled, 
+    IncludePath inc_path)
+  {
+    if(parsed_imports.Count == 0)
+      return;
+
+    foreach(var kv in parsed_imports)
+    {
+      Module imported_module;
+      Namespace imported_ns;
+      string file_path;
+
+      if(ResolveImportedModule(
+          kv.Value, 
+          file2proc, 
+          file2compiled, 
+          out file_path,
+          //in case of global native module this one will be null for now
+          out imported_module, 
+          out imported_ns
+        ))
+      {
+        ns.PreLink(imported_ns);
+      }
+    }
+  }
+
+  bool ResolveImportedModule(
+    string import,
+    Dictionary<string, ANTLR_Processor> file2proc, 
+    Dictionary<string, CompiledModule> file2compiled,
+    out string file_path,
+    out Module imported_module,
+    out Namespace imported_ns
+  )
+  {
+    file_path = "";
+    imported_module = null;
+    imported_ns = null;
+
+    //let's check if it's a global native module
+    var reg_mod = types.FindRegisteredModule(import);
+    if(reg_mod != null)
+    {
+      imported_ns = reg_mod.ns;
+      return true;
+    }
+
+    file_path = imports.MapToFilePath(import);
+    if(file_path == null || !File.Exists(file_path))
+      return false;
+
+    CompiledModule cm;
+    //let's check if it's a compiled module and
+    //try to fetch it from the cache first
+    if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
+      imported_module = cm.module;
+    else
+      imported_module = file2proc[file_path].module;
+
+    imported_ns = imported_module.ns;
+
+    return true;
+  }
+
   internal void Phase_LinkImports(
     Dictionary<string, ANTLR_Processor> file2proc, 
     //NOTE: can be null, contains already cached compile modules.
@@ -572,49 +641,38 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     foreach(var kv in parsed_imports)
     {
-      //let's check if it's a registered native module
-      var reg_mod = types.FindRegisteredModule(kv.Value);
-      if(reg_mod != null)
-      {
-        try
-        {
-          ns.Link(reg_mod.ns);
-        }
-        catch(SymbolError se)
-        {
-          errors.Add(se);
-        }
-        continue;
-      }
+      Module imported_module;
+      Namespace imported_ns;
+      string file_path;
 
-      //let's check if it's a compiled module
-      var file_path = imports.MapToFilePath(kv.Value);
-      if(file_path == null || !File.Exists(file_path))
+      if(!ResolveImportedModule(
+          kv.Value, 
+          file2proc, 
+          file2compiled, 
+          out file_path,
+          //in case of global native module this one will be null for now
+          out imported_module, 
+          out imported_ns
+        ))
       {
         AddError(kv.Key, "invalid import");
         continue;
       }
 
-      Module imported_module = null;
-      
-      CompiledModule cm;
-      //let's try to fetch from the cache first
-      if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
-        imported_module = cm.module;
-      else
-        imported_module = file2proc[file_path].module;
+      if(imported_module != null)
+      {
+        //NOTE: let's add imported global vars to module's global vars index
+        if(module.local_gvars_mark == -1)
+          module.local_gvars_mark = module.gvars.Count;
 
-      //NOTE: let's add imported global vars to module's global vars index
-      if(module.local_gvars_mark == -1)
-        module.local_gvars_mark = module.gvars.Count;
-
-      //NOTE: adding directly without indexing
-      for(int i=0;i<imported_module.local_gvars_num;++i)
-        module.gvars.index.Add(imported_module.gvars[i]);
+        //NOTE: adding directly without indexing
+        for(int i=0;i<imported_module.local_gvars_num;++i)
+          module.gvars.index.Add(imported_module.gvars[i]);
+      }
 
       try
       {
-        ns.Link(imported_module.ns);
+        ns.Link(imported_ns);
       }
       catch(SymbolError se)
       {
@@ -622,7 +680,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         continue;
       }
 
-      ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
+      if(imported_module != null)
+        ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
     }
 
     root_ast.AddChild(ast_import);
@@ -711,6 +770,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(file2compiled != null)
       LinkCompiledImports(file2compiled, file2proc);
+
+    foreach(var kv in file2proc)
+      kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path);
 
     foreach(var kv in file2proc)
       kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
