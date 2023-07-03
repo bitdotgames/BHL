@@ -805,6 +805,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
+        kv.Value.module.ns.PreLink(mod_name2ns[import]);
+    }
+
+    foreach(var kv in file2compiled)
+    {
+      foreach(string import in kv.Value.imports)
         kv.Value.module.ns.Link(mod_name2ns[import]);
     }
   }
