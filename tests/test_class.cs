@@ -932,6 +932,39 @@ public class TestClasses : BHL_TestBase
     });
   }
 
+  //[IsTested()]
+  public void TestUpvalueTooEarlyCleanupBug()
+  {
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        func() ptr
+        func Dummy() {}
+      }
+
+      func foo(Bar b) {
+        start(func() {
+          b.ptr()
+        })
+      }
+        
+      func test() 
+      {
+        Bar b = {}
+        b.ptr = func() {
+          b.Dummy()
+        }
+
+        foo(b)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
+  }
+
   [IsTested()]
   public void TestUserClassDefaultInitFuncPtr()
   {
