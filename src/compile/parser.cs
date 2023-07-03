@@ -99,12 +99,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public Module module { get; private set; }
 
-  public FileImports imports { get; private set; } 
+  public FileImports imports_maybe { get; private set; } 
 
   //NOTE: passed from above
   CompileErrors errors;
 
-  Dictionary<bhlParser.MimportContext, string> parsed_imports = new Dictionary<bhlParser.MimportContext, string>();
+  Dictionary<bhlParser.MimportContext, string> imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
   //NOTE: module.ns linked with types.ns
   Namespace ns;
@@ -276,7 +276,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   
   public static ANTLR_Processor MakeProcessor(
     Module module, 
-    FileImports imports, 
+    FileImports imports_maybe, 
     ANTLR_Parsed parsed/*can be null*/, 
     Types ts, 
     CompileErrors errors,
@@ -289,7 +289,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       {
         return MakeProcessor(
           module, 
-          imports, 
+          imports_maybe, 
           sfs, 
           ts, 
           errors,
@@ -302,7 +302,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return new ANTLR_Processor(
         parsed, 
         module, 
-        imports, 
+        imports_maybe, 
         ts,
         errors
       );
@@ -311,7 +311,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public static ANTLR_Processor MakeProcessor(
     Module module, 
-    FileImports imports, 
+    FileImports imports_maybe, 
     Stream src, 
     Types ts, 
     CompileErrors errors,
@@ -320,13 +320,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     var p = Stream2Parser(module.file_path, src, err_handlers);
     var parsed = new ANTLR_Parsed(p);
-    return new ANTLR_Processor(parsed, module, imports, ts, errors);
+    return new ANTLR_Processor(parsed, module, imports_maybe, ts, errors);
   }
 
   public ANTLR_Processor(
       ANTLR_Parsed parsed, 
       Module module, 
-      FileImports imports, 
+      FileImports imports_maybe, 
       Types types,
       CompileErrors errors
     )
@@ -336,7 +336,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     this.types = types;
     this.module = module;
-    this.imports = imports;
+    this.imports_maybe = imports_maybe;
 
     this.errors = errors;
 
@@ -565,10 +565,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
-    if(parsed_imports.Count == 0)
+    if(imports_parsed.Count == 0)
       return;
 
-    foreach(var kv in parsed_imports)
+    foreach(var kv in imports_parsed)
     {
       Module imported_module;
       Namespace imported_ns;
@@ -610,7 +610,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return true;
     }
 
-    file_path = imports.MapToFilePath(import);
+    file_path = imports_maybe.MapToFilePath(import);
     if(file_path == null || !File.Exists(file_path))
       return false;
 
@@ -634,12 +634,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
-    if(parsed_imports.Count == 0)
+    if(imports_parsed.Count == 0)
       return;
 
     var ast_import = new AST_Import();
 
-    foreach(var kv in parsed_imports)
+    foreach(var kv in imports_parsed)
     {
       Module imported_module;
       Namespace imported_ns;
@@ -835,7 +835,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //removing quotes
     name = name.Substring(1, name.Length-2);
 
-    parsed_imports[ctx] = name;
+    imports_parsed[ctx] = name;
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)

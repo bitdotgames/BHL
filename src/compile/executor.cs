@@ -126,7 +126,7 @@ public class CompilationExecutor
   {
     public ModulePath module_path;
     public string compiled_file;
-    public FileImports imports;
+    public FileImports imports_maybe;
     public ANTLR_Parsed parsed;
     //loaded from cache compiled result
     public CompiledModule compiled;
@@ -247,7 +247,7 @@ public class CompilationExecutor
           var proc_errs = new CompileErrors();
           var proc = ANTLR_Processor.MakeProcessor(
             file_module, 
-            kv.Value.imports, 
+            kv.Value.imports_maybe, 
             kv.Value.parsed, 
             conf.ts, 
             proc_errs,
@@ -513,8 +513,8 @@ public class CompilationExecutor
           var file = w.conf.files[i]; 
           using(var sfs = File.OpenRead(file))
           {
-            var imports = w.GetImports(file, sfs);
-            var deps = new List<string>(imports.file_paths);
+            var imports_maybe = w.GetImports(file, sfs);
+            var deps = new List<string>(imports_maybe.file_paths);
             deps.Add(file);
 
             //NOTE: adding self binary as a dep
@@ -525,7 +525,7 @@ public class CompilationExecutor
 
             var interim = new InterimResult();
             interim.module_path = new ModulePath(w.conf.proj.inc_path.FilePath2ModuleName(file), file);
-            interim.imports = imports;
+            interim.imports_maybe = imports_maybe;
             interim.compiled_file = compiled_file;
 
             bool use_cache = w.conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
@@ -609,6 +609,8 @@ public class CompilationExecutor
       Marshall.Obj2File(imports, cache_imports_file);
     }
 
+    //TODO: this one doesn't take into account commented imports!
+    //      use ANTLR lightweight parser for that?...
     public static FileImports ParseImports(IncludePath inc_path, string file, Stream stream)
     {
       var imps = new FileImports();
