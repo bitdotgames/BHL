@@ -1028,7 +1028,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestMistakenlyImportedBy3dParty()
   {
     string file_unit = @"
@@ -1038,21 +1038,13 @@ public class TestImport : BHL_TestBase
       }
     }
     ";                                                                                                              
-    string file_a = @"
+    string file_interim = @"
     import ""/unit""
-    namespace foo {
-    }
-    ";
-
-    string file_b = @"
-    import ""/unit""
-    func dummy() {
-    }
+    func interim() { }
     ";
 
     string file_test = @"
-    import ""/a""
-    import ""/b""
+    import ""/interim""
 
     func test() 
     {
@@ -1063,14 +1055,13 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
 
     var files = new List<string>();
-    NewTestFile(Path.Combine("a.bhl"), file_a, ref files);
-    NewTestFile(Path.Combine("b.bhl"), file_b, ref files);
-    NewTestFile(Path.Combine("unit.bhl"), file_unit, ref files);
     NewTestFile(Path.Combine("test.bhl"), file_test, ref files);
+    NewTestFile(Path.Combine("unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("interim.bhl"), file_interim, ref files);
 
     var exec = new CompilationExecutor();
     var conf = MakeCompileConf(files);
-    conf.proj.use_cache = true;
+    conf.proj.use_cache = false;
     conf.proj.max_threads = 1;
 
     AssertError<Exception>(

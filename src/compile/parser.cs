@@ -560,7 +560,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_LinkImports(
     Dictionary<string, ANTLR_Processor> file2proc, 
-    //can be null
+    //NOTE: can be null, contains already cached compile modules.
+    //      an entry present in file2compiled doesn't exist in file2proc
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
@@ -699,7 +700,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   static public void ProcessAll(
     Dictionary<string, ANTLR_Processor> file2proc, 
-    //can be null
+    //NOTE: can be null, contains already cached compile modules.
+    //      an entry present in file2compiled doesn't exist in file2proc
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path
   )
@@ -708,7 +710,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       kv.Value.Phase_Outline();
 
     if(file2compiled != null)
-      LinkImports(file2compiled, file2proc);
+      LinkCompiledImports(file2compiled, file2proc);
+
     foreach(var kv in file2proc)
       kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
 
@@ -725,7 +728,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       kv.Value.Phase_SetResult();
   }
 
-  static void LinkImports(
+  static void LinkCompiledImports(
     Dictionary<string, CompiledModule> file2compiled,
     Dictionary<string, ANTLR_Processor> file2proc
   )
