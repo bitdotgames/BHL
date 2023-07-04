@@ -803,7 +803,7 @@ public class VM : INamedResolver
         if(upval != null)
         {
           frm.locals.Resize(i+1);
-          upval.Retain();
+          upval.RefMod(RefOp.USR_INC | RefOp.INC);
           frm.locals[i] = upval;
         }
       }
@@ -2071,7 +2071,7 @@ public class VM : INamedResolver
         var upval = curr_frame.locals[up_idx];
         //NOTE: let's increase the upval references counter
         ++upval._upval_refs;
-        upval.Retain();
+        upval.RefMod(RefOp.USR_INC | RefOp.INC);
         addr.upvals[local_idx] = upval;
       }
       break;

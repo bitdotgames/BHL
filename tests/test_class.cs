@@ -932,8 +932,8 @@ public class TestClasses : BHL_TestBase
     });
   }
 
-  //[IsTested()]
-  public void TestUpvalueTooEarlyCleanupBug()
+  [IsTested()]
+  public void TestUpvalueNotReleasedBug()
   {
     SubTest(() => {
       string bhl = @"

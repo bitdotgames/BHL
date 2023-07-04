@@ -172,43 +172,6 @@ public class Val
       else if((op & RefOp.USR_DEC) != 0)
       {
         _refc.Release();
-
-        //NOTE: let's process a special case when the value is only referenced in lambdas as upvalues and
-        //      nowhere else. This is needed to properly detect self reference cases like the following:
-        //
-        //      Bar b = {}
-        //      b.ptr = func() {
-        //        b.Dummy() //<-- self reference
-        //      }
-        //
-        //      The trick here is to affect user IValRefcounted refcounting *only* (not Val itself). Class 
-        //      containers are represented using ValList which is IValRefcounted. 
-        //
-        //      Let's consider the case above:
-        //
-        //      Bar b = {} // val_refs:1, class_refs:1, upval_refs:0
-        //      b.ptr = func() {
-        //        b.Dummy() //val_refs:2, class_refs:2, upval_refs:1
-        //      }
-        //      ...
-        //      <exiting frame> val_refs:1, class_refs:1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
-        //      <releasing class Bar> release b.ptr (FuncPtr) since it's a member of Bar 
-        //      <releasing FuncPtr> release upvals and contained b, val_refs:0 
-        if(_upval_refs > 0)
-        {
-          //need to cache the original number
-          int refc_refs = _refc.refs;
-          if(_upval_refs == refc_refs)
-          {
-#if DEBUG_REFS
-          Console.WriteLine("UPDEL: " + _upval_refs + " VS " + refc_refs + " " + this + " " + GetHashCode());
-#endif
-            //NOTE: let's nullify IValRefcounted early
-            _obj = null;
-            for(int r=0;r<refc_refs;++r)
-              _refc.Release();
-          }
-        }
       }
     }
 
@@ -236,6 +199,32 @@ public class Val
 
       if(_refs == 0)
         Del(this);
+
+      //NOTE: Let's process a special case when the value is only referenced in lambdas as upvalues and
+      //      *nowhere* else. This is needed to properly detect self reference cases like the following:
+      //
+      //      Bar b = {}
+      //      b.ptr = func() {
+      //        b.Dummy() //<-- self reference
+      //      }
+      //
+      //      Let's consider the case above:
+      //
+      //      Bar b = {} // refs:1, upval_refs:0
+      //      b.ptr = func() {
+      //        b.Dummy() //refs:2, upval_refs:1
+      //      }
+      //      ...
+      //      <exiting frame> refs:2-1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
+      if(_upval_refs > 0 && _upval_refs == _refs && _obj is IValRefcounted tmp) 
+      {
+        //need to cache the original counter since it might be changed below
+        int c = _upval_refs;
+        //NOTE: let's nullify IValRefcounted early to avoid possible double free
+        _obj = null;
+        for(int r=0;r<c;++r)
+          tmp.Release();
+      }
     }
   }
 
