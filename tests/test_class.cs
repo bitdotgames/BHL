@@ -868,6 +868,33 @@ public class TestClasses : BHL_TestBase
         func() ptr
         func Dummy() {}
       }
+
+      func foo(func() p)
+      {
+        p()
+      }
+        
+      func test() 
+      {
+        Bar b = {}
+        b.ptr = func() {
+          b.Dummy()
+        }
+        foo(b.ptr)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        func() ptr
+        func Dummy() {}
+      }
         
       func test() 
       {
