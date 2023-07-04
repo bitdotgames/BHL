@@ -168,13 +168,16 @@ public class Val
   //NOTE: see RefOp for constants
   public void RefMod(int op)
   {
-    if((op & RefOp.USR_INC) != 0)
+    if(_refc != null)
     {
-      _refc?.Retain();
-    }
-    else if((op & RefOp.USR_DEC) != 0)
-    {
-      _refc?.Release();
+      if((op & RefOp.USR_INC) != 0)
+      {
+        _refc.Retain();
+      }
+      else if((op & RefOp.USR_DEC) != 0)
+      {
+        _refc.Release();
+      }
     }
 
     if((op & RefOp.INC) != 0)
