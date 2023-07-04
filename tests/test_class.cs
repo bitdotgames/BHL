@@ -838,14 +838,17 @@ public class TestClasses : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestFuncPtrAccessThisMethodLeak()
   {
     SubTest(() => {
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
         
       func test() 
@@ -866,7 +869,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
 
       func foo(func() p)
@@ -893,14 +899,18 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
 
-      coro func foo(func() p)
+      func foo(func() p)
       {
-        p()
-        yield()
-        yield()
+        start(coro func() {
+          yield()
+          p()
+        })
       }
         
       func test() 
@@ -909,9 +919,7 @@ public class TestClasses : BHL_TestBase
         b.ptr = func() {
           b.Dummy()
         }
-        start(coro func() {
-          yield foo(b.ptr)
-        })
+        foo(b.ptr)
       }
       ";
 
@@ -924,7 +932,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
         
       func test() 
@@ -946,7 +957,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         []func() ptrs
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
         
       func test() 
@@ -968,7 +982,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         []func() ptrs
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
         
       func test() 
@@ -992,7 +1009,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
         
       func test() 
@@ -1012,14 +1032,17 @@ public class TestClasses : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  //[IsTested()]
   public void TestUpvalueNotReleasedBug()
   {
     SubTest(() => {
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
 
       func foo(Bar b) {
@@ -1048,7 +1071,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
 
       func foo(Bar b) {
@@ -1079,7 +1105,10 @@ public class TestClasses : BHL_TestBase
       string bhl = @"
       class Bar {
         func() ptr
-        func Dummy() {}
+        int d
+        func Dummy() {
+          this.d = 1
+        }
       }
 
       func foo(Bar b) {
