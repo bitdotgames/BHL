@@ -655,7 +655,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           out imported_ns
         ))
       {
-        AddError(kv.Key, "invalid import");
+        AddError(kv.Key, "invalid import '" + kv.Value + "'");
         continue;
       }
 

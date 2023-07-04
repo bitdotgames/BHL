@@ -95,7 +95,7 @@ public class TestImport : BHL_TestBase
       delegate() { 
         CompileFiles(files);
       },
-     "invalid import",
+     "invalid import 'garbage'",
       new PlaceAssert(bhl1, @"
     import ""garbage""  
 ----^"
@@ -1074,6 +1074,75 @@ public class TestImport : BHL_TestBase
 ------^"
       )
     );
+  }
+
+  [IsTested()]
+  public void TestCommentedImportsIgnored()
+  {
+    string file_unit = @"
+    namespace units {
+      class Unit {
+        int foo
+      }
+    }
+    ";                                                                                                              
+    string file_test = @"
+    //import ""/garbage1""
+    import ""/unit""
+    //import ""/garbage2""
+
+    func int test() 
+    {
+      units.Unit u = {foo: 10}
+      return u.foo
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"unit.bhl", file_unit},
+      }
+    );
+
+    vm.LoadModule("test");
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCommentedImportError()
+  {
+    string file_unit = @"
+    namespace units {
+      class Unit {
+        int foo
+      }
+    }
+    ";                                                                                                              
+    string file_test = @"
+    //import ""/unit""
+
+    func test() 
+    {
+      units.Unit u = {}
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+         MakeVM(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"unit.bhl", file_unit},
+      }
+    );
+    },
+    "type 'units.Unit' not found",
+    new PlaceAssert(file_test, @"
+      units.Unit u = {}
+------^"
+      )
+    );
+
   }
 
 }
