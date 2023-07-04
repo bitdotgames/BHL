@@ -869,9 +869,11 @@ public class TestClasses : BHL_TestBase
         func Dummy() {}
       }
 
-      func foo(func() p)
+      coro func foo(func() p)
       {
         p()
+        yield()
+        yield()
       }
         
       func test() 
@@ -880,7 +882,9 @@ public class TestClasses : BHL_TestBase
         b.ptr = func() {
           b.Dummy()
         }
-        foo(b.ptr)
+        start(coro func() {
+          yield foo(b.ptr)
+        })
       }
       ";
 
