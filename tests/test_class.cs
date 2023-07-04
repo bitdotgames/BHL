@@ -994,6 +994,39 @@ public class TestClasses : BHL_TestBase
       Execute(vm, "test");
       CommonChecks(vm);
     });
+
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        func() ptr
+        func Dummy() {}
+      }
+
+      func foo(Bar b) {
+        for(int i=0;i<10;i++) {
+          start(func() {
+            b.ptr()
+          })
+        }
+      }
+        
+      coro func test() 
+      {
+        Bar b = {}
+        b.ptr = func() {
+          b.Dummy()
+        }
+
+        foo(b)
+        yield()
+        yield()
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]
