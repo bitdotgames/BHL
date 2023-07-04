@@ -32,6 +32,9 @@ public class Val
   public int _upval_refs;
   public double _num;
   public object _obj;
+  //it's a cached version of _obj cast to IValRefcounted for less casting 
+  //in refcounting routines
+  public IValRefcounted _refc;
   //NOTE: extra values below are for efficient encoding of small structs,
   //      e.g Vector, Color, etc
   public double _num2;
@@ -139,6 +142,7 @@ public class Val
     _num3 = 0;
     _num4 = 0;
     _obj = null;
+    _refc = null;
   }
 
   //NOTE: doesn't affect refcounting
@@ -150,6 +154,7 @@ public class Val
     _num3 = dv._num3;
     _num4 = dv._num4;
     _obj = dv._obj;
+    _refc = dv._refc;
   }
 
   public Val CloneValue()
@@ -163,16 +168,13 @@ public class Val
   //NOTE: see RefOp for constants
   public void RefMod(int op)
   {
-    if(_obj != null && _obj is IValRefcounted _refc)
+    if((op & RefOp.USR_INC) != 0)
     {
-      if((op & RefOp.USR_INC) != 0)
-      {
-        _refc.Retain();
-      }
-      else if((op & RefOp.USR_DEC) != 0)
-      {
-        _refc.Release();
-      }
+      _refc?.Retain();
+    }
+    else if((op & RefOp.USR_DEC) != 0)
+    {
+      _refc?.Release();
     }
 
     if((op & RefOp.INC) != 0)
@@ -216,12 +218,14 @@ public class Val
       //      }
       //      ...
       //      <exiting frame> refs:2-1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
-      if(_upval_refs > 0 && _upval_refs == _refs && _obj is IValRefcounted tmp) 
+      if(_upval_refs > 0 && _upval_refs == _refs && _refc != null) 
       {
         //need to cache the original counter since it might be changed below
         int c = _upval_refs;
+        var tmp = _refc;
         //NOTE: let's nullify IValRefcounted early to avoid possible double free
         _obj = null;
+        _refc = null;
         for(int r=0;r<c;++r)
           tmp.Release();
       }
@@ -250,6 +254,7 @@ public class Val
     Reset();
     type = Types.String;
     _obj = s;
+    _refc = null;
   }
 
   static public Val NewNum(VM vm, long n)
@@ -322,6 +327,7 @@ public class Val
     Reset();
     this.type = type;
     _obj = o;
+    _refc = o as IValRefcounted;
   }
 
   public bool IsValueEqual(Val o)
@@ -361,7 +367,7 @@ public class Val
     str += " num4:" + _num4;
     str += " obj:" + _obj;
     str += " obj.type:" + _obj?.GetType().Name;
-    str += " (refs:" + _refs + ", up.refs:" + _upval_refs + ")";
+    str += " (refs:" + _refs + ", refcs:" + _refc?.refs + ", up.refs:" + _upval_refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
   }
