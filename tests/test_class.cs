@@ -839,6 +839,28 @@ public class TestClasses : BHL_TestBase
   }
 
   //[IsTested()]
+  public void TestSelfReferenceLeak()
+  {
+    SubTest(() => {
+      string bhl = @"
+      class Bar {
+        Bar b
+      }
+        
+      func test() 
+      {
+        Bar b = {}
+        b.b = b
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Execute(vm, "test");
+      CommonChecks(vm);
+    });
+  }
+
+  //[IsTested()]
   public void TestFuncPtrAccessThisMethodLeak()
   {
     SubTest(() => {

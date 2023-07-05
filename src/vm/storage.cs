@@ -115,7 +115,6 @@ public class Val
 #endif
     }
     dv._refs = 1;
-    dv._upval_refs = 0;
     dv.Reset();
     return dv;
   }
@@ -204,34 +203,6 @@ public class Val
 
       if(_refs == 0)
         Del(this);
-
-      //NOTE: Let's process a special case when the value is only referenced in lambdas as upvalues and
-      //      *nowhere* else. This is needed to properly detect self reference cases like the following:
-      //
-      //      Bar b = {}
-      //      b.ptr = func() {
-      //        b.Dummy() //<-- self reference
-      //      }
-      //
-      //      Let's consider the case above:
-      //
-      //      Bar b = {} // refs:1, upval_refs:0
-      //      b.ptr = func() {
-      //        b.Dummy() //refs:2, upval_refs:1
-      //      }
-      //      ...
-      //      <exiting frame> refs:2-1 == upval_refs:1 <-- let's release Bar(IValRefcounted)!
-      if(_upval_refs > 0 && _upval_refs == _refs && _refc != null) 
-      {
-        //need to cache the original counter since it might be changed below
-        int c = _upval_refs;
-        var tmp = _refc;
-        //NOTE: let's nullify IValRefcounted early to avoid possible double free
-        _obj = null;
-        _refc = null;
-        for(int r=0;r<c;++r)
-          tmp.Release();
-      }
     }
   }
 
@@ -370,7 +341,7 @@ public class Val
     str += " num4:" + _num4;
     str += " obj:" + _obj;
     str += " obj.type:" + _obj?.GetType().Name;
-    str += " (refs:" + _refs + ", refcs:" + _refc?.refs + ", up.refs:" + _upval_refs + ")";
+    str += " (refs:" + _refs + ", refcs:" + _refc?.refs + ")";
 
     return str;// + " " + GetHashCode();//for extra debug
   }

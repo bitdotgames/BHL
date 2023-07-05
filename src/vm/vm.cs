@@ -757,11 +757,7 @@ public class VM : INamedResolver
         var val = upvals[i];
         //NOTE: let's check if it exists
         if(val != null)
-        {
-          //NOTE: let's decrease the upval references counter
-          --val._upval_refs;
           val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-        }
       }
       upvals.Clear();
     }
@@ -2069,8 +2065,6 @@ public class VM : INamedResolver
         addr.upvals.Resize(local_idx+1);
 
         var upval = curr_frame.locals[up_idx];
-        //NOTE: let's increase the upval references counter
-        ++upval._upval_refs;
         upval.RefMod(RefOp.USR_INC | RefOp.INC);
         addr.upvals[local_idx] = upval;
       }
