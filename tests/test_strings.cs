@@ -51,4 +51,46 @@ public class TestStrings : BHL_TestBase
     AssertEqual("raBooF", Execute(vm, "test").result.PopRelease().str);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestIndexOf()
+  {
+    SubTest(() => {
+      string bhl = @"
+      func int test() {
+        string a = ""FooBar""
+        return a.IndexOf(""Bar"")
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func int test() {
+        string a = ""FooBar""
+        return a.IndexOf(""X"")
+      }
+      ";
+      var vm = MakeVM(bhl);
+      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      func int test() {
+        string a = ""FooBar""
+        return a.IndexOf("""")
+      }
+      ";
+      var vm = MakeVM(bhl);
+      //like in C#
+      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+  }
+
 }

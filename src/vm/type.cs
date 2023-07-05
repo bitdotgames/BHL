@@ -524,6 +524,20 @@ public class Types : INamedResolver
         String.Define(m);
       }
 
+      {
+        var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+          { 
+            string s = stack.PopRelease().str;
+            string self = stack.PopRelease().str;
+            stack.Push(Val.NewInt(frm.vm, self.IndexOf(s)));
+            return null;
+          }, 
+          new FuncArgSymbol("s", String)
+        );
+        String.Define(m);
+      }
+
       String.Setup();
     }
 
