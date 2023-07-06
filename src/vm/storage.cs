@@ -28,8 +28,6 @@ public class Val
   //      fast access in case you know what you are doing
   //NOTE: -1 means it's in released state
   public int _refs;
-  //NOTE: upval references counter 
-  public int _upval_refs;
   public double _num;
   public object _obj;
   //it's a cached version of _obj cast to IValRefcounted for less casting 
