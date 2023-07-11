@@ -267,8 +267,9 @@ You can run unit tests by executing the following command:
 
 ## Version 3.0
 1. Generics support
-1. More optimal byte code
+1. More compact byte code
 1. More optimal runtime memory storage layout
+1. Weak references semantics
 
 ## Version 2.0
 
