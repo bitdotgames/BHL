@@ -613,6 +613,12 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitRetType([NotNull] bhlParser.RetTypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.captureList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCaptureList([NotNull] bhlParser.CaptureListContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.types"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -2091,6 +2091,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       func_name,
       ParseFuncSignature(lmb_ctx.CORO() != null, tp, lmb_ctx.funcParams()),
       upvals,
+      lmb_ctx.captureList(),
       this.func_decl_stack
     );
 
@@ -4852,7 +4853,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     LSP_AddSemanticToken(ctx.FOR(), SemanticToken.Keyword);
 
-    var local_scope = new LocalScope(is_paral: false, fallback: curr_scope, is_loop: true);
+    var local_scope = new LocalScope(is_paral: false, fallback: curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
     

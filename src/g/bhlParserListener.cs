@@ -1013,6 +1013,16 @@ public interface IbhlParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitRetType([NotNull] bhlParser.RetTypeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.captureList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCaptureList([NotNull] bhlParser.CaptureListContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.captureList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCaptureList([NotNull] bhlParser.CaptureListContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.types"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

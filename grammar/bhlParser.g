@@ -244,7 +244,7 @@ interfaceFuncDecl
   ;
 
 funcLambda
-  : CORO? FUNC retType? OPEN_PAREN funcParams? CLOSE_PAREN funcBlock
+  : CORO? FUNC retType? OPEN_PAREN funcParams? CLOSE_PAREN captureList? funcBlock
   ;
 
 refType
@@ -253,6 +253,10 @@ refType
 
 retType
   : type (COMMA type)*
+  ;
+
+captureList
+  : OPEN_BRACKET NAME (COMMA NAME)* CLOSE_BRACKET 
   ;
 
 types

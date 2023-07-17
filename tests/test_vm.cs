@@ -8278,7 +8278,7 @@ public class TestVM : BHL_TestBase
     {
       for(int i=0;i<3;i++)
       {
-        start(func() { 
+        start(func() [i] { 
             trace((string)i)
           }) 
       }
