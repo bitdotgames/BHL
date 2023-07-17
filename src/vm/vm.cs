@@ -2055,6 +2055,7 @@ public class VM : INamedResolver
       {
         int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int mode = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
 
         var addr = (FuncPtr)exec.stack.Peek()._obj;
 
@@ -2065,8 +2066,17 @@ public class VM : INamedResolver
         addr.upvals.Resize(local_idx+1);
 
         var upval = curr_frame.locals[up_idx];
-        upval.RefMod(RefOp.USR_INC | RefOp.INC);
-        addr.upvals[local_idx] = upval;
+        if(mode == 1)
+        {
+          var copy = Val.New(this);
+          copy.ValueCopyFrom(upval);
+          addr.upvals[local_idx] = copy;
+        }
+        else
+        {
+          upval.RefMod(RefOp.USR_INC | RefOp.INC);
+          addr.upvals[local_idx] = upval;
+        }
       }
       break;
       case Opcodes.Pop:
