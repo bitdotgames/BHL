@@ -1878,7 +1878,6 @@ public class LambdaSymbol : FuncSymbolScript
       // so we pass a line number)
       src.origin.source_line
     ); 
-    //make a copy of the 'loop scope' variable
     upval.mode = DetectCaptureMode(src.name);
     upvals.Add(upval);
 
