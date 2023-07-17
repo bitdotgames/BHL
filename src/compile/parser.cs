@@ -4852,7 +4852,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     LSP_AddSemanticToken(ctx.FOR(), SemanticToken.Keyword);
 
-    var local_scope = new LocalScope(false, curr_scope);
+    var local_scope = new LocalScope(is_paral: false, fallback: curr_scope, is_loop: true);
     PushScope(local_scope);
     local_scope.Enter();
     

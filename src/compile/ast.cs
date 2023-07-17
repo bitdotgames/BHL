@@ -574,7 +574,7 @@ public class AST_Dumper : AST_Visitor
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
     for(int i=0;i<node.upvals.Count;++i)
-      Console.Write(" " + node.upvals[i].name);
+      Console.Write(" " + node.upvals[i].name + "(" + node.upvals[i].mode + ")");
     VisitChildren(node);
     Console.Write(")");
   }

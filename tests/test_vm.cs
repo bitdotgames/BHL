@@ -8270,6 +8270,32 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestStartLambdaCaptureCopyOfLoopVars()
+  {
+    string bhl = @"
+    func test() 
+    {
+      for(int i=0;i<3;i++)
+      {
+        start(func() { 
+            trace((string)i)
+          }) 
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("012", log.ToString());
+    CommonChecks(vm);
+  }
+
   public void TestClosure()
   {
     string bhl = @"

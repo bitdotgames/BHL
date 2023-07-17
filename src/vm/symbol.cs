@@ -1869,10 +1869,13 @@ public class LambdaSymbol : FuncSymbolScript
       local.name, 
       local.scope_idx, 
       src.scope_idx,
-      //TODO: should be the line of its usage
-      //in case of 'this' there's no associated parse tree
+      //TODO: should be the line of its usage              
+      //(in case of 'this' there's no associated parse tree, 
+      // so we pass a line number)
       src.origin.source_line
     ); 
+    //make a copy of the 'loop scope' variable
+    upval.mode = src.scope is LocalScope ls && ls.is_loop ? 1 : 0;
     upvals.Add(upval);
 
     return local;

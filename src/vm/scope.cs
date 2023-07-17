@@ -47,9 +47,11 @@ public class LocalScope : IScope, ISymbolsIteratable
 
   IScope fallback;
 
+  internal bool is_loop;
+
   internal SymbolsStorage members;
 
-  public LocalScope(bool is_paral, IScope fallback) 
+  public LocalScope(bool is_paral, IScope fallback, bool is_loop = false) 
   { 
     this.is_paral = is_paral;
 
@@ -57,6 +59,9 @@ public class LocalScope : IScope, ISymbolsIteratable
     func_owner = fallback.FindEnclosingFuncSymbol();
     if(func_owner == null)
       throw new Exception("No top func symbol found");
+
+    this.is_loop = is_loop;
+
     members = new SymbolsStorage(this);
   }
 
