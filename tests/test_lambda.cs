@@ -1223,6 +1223,29 @@ public class TestLambda : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestEmptyCaptureNotAllowed()
+  {
+    string bhl = @"
+    func test() 
+    {
+      func() [] { 
+      }() 
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"no viable alternative at input 'func() []'",
+      new PlaceAssert(bhl, @"
+      func() [] { 
+-------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestCaptureNonExisting()
   {
     string bhl = @"
