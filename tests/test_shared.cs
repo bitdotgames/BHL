@@ -33,17 +33,20 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestLambda());
+    counter += Run(names, new TestDefer());
     counter += Run(names, new TestStrings());
     counter += Run(names, new TestAny());
     counter += Run(names, new TestEnum());
     counter += Run(names, new TestYield());
     counter += Run(names, new TestImport());
     counter += Run(names, new TestVariadic());
-    counter += Run(names, new TestClasses());
+    counter += Run(names, new TestClass());
     counter += Run(names, new TestInterfaces());
     counter += Run(names, new TestTypeCasts());
     counter += Run(names, new TestNamespace());
     counter += Run(names, new TestImplicitVar());
+    counter += Run(names, new TestStackTrace());
     counter += Run(names, new TestMaps());
     counter += Run(names, new TestStd());
     counter += Run(names, new TestErrors());
