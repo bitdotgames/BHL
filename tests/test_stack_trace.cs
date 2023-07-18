@@ -838,4 +838,92 @@ public class TestStackTrace : BHL_TestBase
     );
   }
 
+  [IsTested()]
+  public void TestGetStackTraceInDeferFromExceptionWhenStoppedWithinParal()
+  {
+    string bhl = @"
+    coro func wow()
+    {
+      defer {
+        borked()
+      }
+      yield suspend()
+    }
+
+    coro func test() {
+      paral {
+        yield wow()
+        yield wow()
+      }
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          object o = null;
+          o.GetType();
+          return null;
+        }
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+    vm.Tick();
+
+    AssertError<Exception>(
+      delegate() {
+        vm.Stop();
+      },
+      "at wow(..) +13 in .bhl:5"
+    );
+  }
+
+  [IsTested()]
+  public void TestGetStackTraceInDeferFromExceptionWhenStoppedWithinParalAll()
+  {
+    string bhl = @"
+    coro func wow()
+    {
+      defer {
+        borked()
+      }
+      yield suspend()
+    }
+
+    coro func test() {
+      paral_all {
+        yield wow()
+        yield wow()
+      }
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          object o = null;
+          o.GetType();
+          return null;
+        }
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+    vm.Tick();
+
+    AssertError<Exception>(
+      delegate() {
+        vm.Stop();
+      },
+      "at wow(..) +13 in .bhl:5"
+    );
+  }
+
 }

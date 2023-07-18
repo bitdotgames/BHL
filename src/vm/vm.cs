@@ -2958,13 +2958,6 @@ public class CoroutinePool
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
   }
 
-  static internal void Del(VM.Frame frm, VM.ExecState exec, List<Coroutine> coros)
-  {
-    for(int i=0;i<coros.Count;++i)
-      Del(frm, exec, coros[i]);
-    coros.Clear();
-  }
-
   static public void Dump(ICoroutine coro, int level = 0)
   {
     if(level == 0)
@@ -3278,7 +3271,9 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
 
   public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
-    CoroutinePool.Del(frm, exec, branches);
+    for(i=0;i<branches.Count;++i)
+      CoroutinePool.Del(frm, exec, branches[i]);
+    branches.Clear();
     DeferBlock.ExitScope(defers, exec);
   }
 
@@ -3364,7 +3359,9 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspe
 
   public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
-    CoroutinePool.Del(frm, exec, branches);
+    for(i=0;i<branches.Count;++i)
+      CoroutinePool.Del(frm, exec, branches[i]);
+    branches.Clear();
     DeferBlock.ExitScope(defers, exec);
   }
 
