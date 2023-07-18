@@ -566,6 +566,33 @@ public class TestLambda : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLambdaDoesntChangeCopiedVar()
+  {
+    string bhl = @"
+
+    func foo(func void() fn) 
+    {
+      fn()
+    }
+      
+    func float test() 
+    {
+      float a = 2
+      foo(func() [a] { 
+          a = a + 1 
+        } 
+      )
+      return a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(num, 2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLambdaChangesSeveralVars()
   {
     string bhl = @"
@@ -1329,7 +1356,7 @@ public class TestLambda : BHL_TestBase
         int j = i*2
         int k = i*10
         start(func() [i, j] { 
-            trace(i + ":" + j + ":" + k + ";")
+            trace(i + "":"" + j + "":"" + k + "";"")
           }) 
       }
     }
@@ -1342,7 +1369,7 @@ public class TestLambda : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("0:0:30;1:2:30;2:4:30;", log.ToString());
+    AssertEqual("0:0:20;1:2:20;2:4:20;", log.ToString());
     CommonChecks(vm);
   }
 
