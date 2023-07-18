@@ -192,6 +192,12 @@ public class Const : IEquatable<Const>
   }
 }
 
+public enum UpvalMode
+{
+  STRONG = 0,
+  COPY   = 1
+}
+
 public class ModulePath
 {
   public string name;
@@ -2055,7 +2061,7 @@ public class VM : INamedResolver
       {
         int up_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         int local_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
-        int mode = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        var mode = (UpvalMode)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
 
         var addr = (FuncPtr)exec.stack.Peek()._obj;
 
@@ -2066,7 +2072,7 @@ public class VM : INamedResolver
         addr.upvals.Resize(local_idx+1);
 
         var upval = curr_frame.locals[up_idx];
-        if(mode == 1)
+        if(mode == UpvalMode.COPY)
         {
           var copy = Val.New(this);
           copy.ValueCopyFrom(upval);

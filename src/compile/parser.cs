@@ -2082,16 +2082,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(yielded)
       CheckCoroCallValidity(ctx);
 
+    var captures = ParseCaptureList(lmb_ctx.captureList());
+
     var tp = ParseType(lmb_ctx.retType());
 
     var func_name = Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line;
+
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
       Annotate(ctx), 
       func_name,
       ParseFuncSignature(lmb_ctx.CORO() != null, tp, lmb_ctx.funcParams()),
       upvals,
-      lmb_ctx.captureList(),
+      captures,
       this.func_decl_stack
     );
 
@@ -2129,6 +2132,31 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ast.local_vars_num = lmb_symb.local_vars_num;
 
     return ast;
+  }
+
+  Dictionary<VariableSymbol, UpvalMode> ParseCaptureList(bhlParser.CaptureListContext capture_list)
+  {
+    var sym2mode = new Dictionary<VariableSymbol, UpvalMode>();
+    if(capture_list == null)
+      return sym2mode;
+    
+    foreach(var captured in capture_list.NAME())
+    {
+      var var_symb = curr_scope.ResolveWithFallback(captured.GetText()) as VariableSymbol;
+      if(var_symb == null)
+      {
+        AddError(captured, "symbol '" + captured.GetText() + "' not resolved");
+      }
+      else
+      {
+        if(sym2mode.ContainsKey(var_symb))
+          AddError(captured, "symbol '" + captured.GetText() + "' is already included");
+        else
+          sym2mode[var_symb] = UpvalMode.COPY;
+      }
+    }
+
+    return sym2mode;
   }
 
   bool ProcLambdaCall(

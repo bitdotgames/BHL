@@ -1223,6 +1223,53 @@ public class TestLambda : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCaptureNonExisting()
+  {
+    string bhl = @"
+    func test() 
+    {
+      func() [i] { 
+      }() 
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"symbol 'i' not resolved",
+      new PlaceAssert(bhl, @"
+      func() [i] { 
+--------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestCaptureAlreadyExists()
+  {
+    string bhl = @"
+    func test() 
+    {
+      int i = 1
+      func() [i, i] { 
+      }() 
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"symbol 'i' is already included",
+      new PlaceAssert(bhl, @"
+      func() [i, i] { 
+-----------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestStartLambdaCaptureCopyOfLoopVars()
   {
     string bhl = @"

@@ -1842,20 +1842,20 @@ public class LambdaSymbol : FuncSymbolScript
 
   List<FuncSymbolScript> fdecl_stack;
 
-  bhlParser.CaptureListContext capture_list;
+  Dictionary<VariableSymbol, UpvalMode> captures;
 
   public LambdaSymbol(
     AnnotatedParseTree parsed, 
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
-    bhlParser.CaptureListContext capture_list,
+    Dictionary<VariableSymbol, UpvalMode> captures,
     List<FuncSymbolScript> fdecl_stack
   ) 
     : base(parsed, sig, name, 0, -1)
   {
     this.upvals = upvals;
-    this.capture_list = capture_list;
+    this.captures = captures;
     this.fdecl_stack = fdecl_stack;
   }
 
@@ -1878,23 +1878,17 @@ public class LambdaSymbol : FuncSymbolScript
       // so we pass a line number)
       src.origin.source_line
     ); 
-    upval.mode = DetectCaptureMode(src.name);
+    upval.mode = DetectCaptureMode(src);
     upvals.Add(upval);
 
     return local;
   }
 
-  int DetectCaptureMode(string name)
+  UpvalMode DetectCaptureMode(VariableSymbol s)
   {
-    if(capture_list != null)
-    {
-      foreach(var captured in capture_list.NAME())
-      {
-        if(captured.GetText() == name)
-          return 1;
-      }
-    }
-    return 0;
+    UpvalMode m;
+    captures.TryGetValue(s, out m);
+    return m;
   }
 
   public override Symbol Resolve(string name) 
