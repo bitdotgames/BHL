@@ -838,13 +838,14 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO:
   //[IsTested()]
   public void TestSelfReferenceLeak()
   {
     SubTest(() => {
       string bhl = @"
       class Bar {
-        Bar b
+        Bar b?
       }
         
       func test() 
@@ -860,6 +861,7 @@ public class TestClass : BHL_TestBase
     });
   }
 
+  //TODO:
   //[IsTested()]
   public void TestFuncPtrAccessThisMethodLeak()
   {
@@ -876,281 +878,9 @@ public class TestClass : BHL_TestBase
       func test() 
       {
         Bar b = {}
-        b.ptr = func() {
+        b.ptr = func() [b?] {
           b.Dummy()
         }
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-
-      func foo(func() p)
-      {
-        p()
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          b.Dummy()
-        }
-        foo(b.ptr)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-
-      func foo(func() p)
-      {
-        start(coro func() {
-          yield()
-          p()
-        })
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          b.Dummy()
-        }
-        foo(b.ptr)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        var tmp = func() {
-          b.Dummy()
-        }
-        b.ptr = tmp
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        []func() ptrs
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptrs = [
-          func() { b.Dummy() }, 
-          func() { b.Dummy() }
-        ]
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        []func() ptrs
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptrs = [
-          func() { b.Dummy() }, 
-          func() { b.Dummy() },
-          func() { b.Dummy() }
-        ]
-        b.ptrs[1]()
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          func() {
-            b.Dummy()
-          } ()
-        }
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-  }
-
-  //[IsTested()]
-  public void TestUpvalueNotReleasedBug()
-  {
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-
-      func foo(Bar b) {
-        start(func() {
-          b.ptr()
-        })
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          b.Dummy()
-        }
-
-        foo(b)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-
-      func foo(Bar b) {
-        for(int i=0;i<10;i++) {
-          start(func() {
-            b.ptr()
-          })
-        }
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          b.Dummy()
-        }
-
-        foo(b)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
-      }
-
-      func foo(Bar b) {
-        for(int i=0;i<10;i++) {
-          start(func() {
-            b.ptr()
-          })
-        }
-      }
-        
-      coro func test() 
-      {
-        Bar b = {}
-        b.ptr = func() {
-          b.Dummy()
-        }
-
-        foo(b)
-        yield()
-        yield()
       }
       ";
 
