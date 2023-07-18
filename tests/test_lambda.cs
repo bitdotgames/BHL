@@ -1318,6 +1318,34 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestCaptureMixCopyAndStrong()
+  {
+    string bhl = @"
+    func test() 
+    {
+      for(int i=0;i<3;i++)
+      {
+        int j = i*2
+        int k = i*10
+        start(func() [i, j] { 
+            trace(i + ":" + j + ":" + k + ";")
+          }) 
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("0:0:30;1:2:30;2:4:30;", log.ToString());
+    CommonChecks(vm);
+  }
+
   public void TestClosure()
   {
     string bhl = @"
