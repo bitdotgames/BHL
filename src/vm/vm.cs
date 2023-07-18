@@ -3271,6 +3271,8 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
 
   public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
+    //NOTE: let's preserve the current branch index during cleanup routine,
+    //      this is useful for stack trace retrieval
     for(i=0;i<branches.Count;++i)
       CoroutinePool.Del(frm, exec, branches[i]);
     branches.Clear();
@@ -3359,6 +3361,8 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspe
 
   public override void Cleanup(VM.Frame frm, VM.ExecState exec)
   {
+    //NOTE: let's preserve the current branch index during cleanup routine,
+    //      this is useful for stack trace retrieval
     for(i=0;i<branches.Count;++i)
       CoroutinePool.Del(frm, exec, branches[i]);
     branches.Clear();
