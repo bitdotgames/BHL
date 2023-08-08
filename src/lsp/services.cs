@@ -147,11 +147,8 @@ public class LifecycleService : IService
   {
     workspace.logger.Log(1, "Stopping BHL LSP server...");
 
-    if(process_id != null)
-    {
-      //TODO: in this case success response won't be sent
-      Environment.Exit(0);
-    }
+    //TODO: in this case success response won't be sent
+    Environment.Exit(0);
     
     return RpcResult.Success();
   }
