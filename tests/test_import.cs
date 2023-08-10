@@ -1164,7 +1164,12 @@ public class TestImport : BHL_TestBase
     NewTestFile(Path.Combine("a", "test.bhl"), file_test1, ref files);
     NewTestFile(Path.Combine("b", "test.bhl"), file_test2, ref files);
 
-    var conf = MakeCompileConf(files, src_dirs: new List<string>() { TestDirPath() + "/a", TestDirPath() + "/b"});
+    var conf = MakeCompileConf(files, 
+      src_dirs: new List<string>() { 
+        TestDirPath() + "/a", 
+        TestDirPath() + "/b"
+      }
+    );
 
     AssertError<Exception>(
       delegate() { 
