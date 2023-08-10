@@ -662,6 +662,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       if(imported_module != null)
       {
+        //protection against self import
+        if(imported_module.name == module.name) 
+          continue;
+            
         //NOTE: let's add imported global vars to module's global vars index
         if(module.local_gvars_mark == -1)
           module.local_gvars_mark = module.gvars.Count;

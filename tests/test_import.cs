@@ -122,7 +122,7 @@ public class TestImport : BHL_TestBase
     CleanTestDir();
     var files = new List<string>();
     NewTestFile("bhl1.bhl", bhl1, ref files);
-    //let's create it but not include into sources
+    //NOTE: let's create it but remove from processed sources
     files.RemoveAt(NewTestFile("bhl2.bhl", bhl2, ref files));
 
     AssertError<Exception>(
@@ -135,6 +135,22 @@ public class TestImport : BHL_TestBase
 ----^"
       )
     );
+  }
+
+  [IsTested()]
+  public void TestSelfImportIsIgnored()
+  {
+    string bhl1 = @"
+    import ""bhl1""  
+    func bhl1() 
+    {}
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+
+    CompileFiles(files);
   }
 
   [IsTested()]
