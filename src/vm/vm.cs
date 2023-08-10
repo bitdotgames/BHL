@@ -753,6 +753,13 @@ public class VM : INamedResolver
       this.native = native;
     }
 
+    public void Init(FuncAddr addr)
+    {
+      this.module = addr.module;
+      this.func_ip = addr.ip;
+      this.native = null;
+    }
+
     void Clear()
     {
       this.module = null;
@@ -880,6 +887,7 @@ public class VM : INamedResolver
 
   Types types;
 
+  //TODO: add support for native funcs?
   public struct FuncAddr
   {
     public CompiledModule module;
