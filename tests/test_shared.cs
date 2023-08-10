@@ -940,14 +940,26 @@ public class BHL_TestBase
     }
   }
 
-  static public CompileConf MakeCompileConf(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
+  static public CompileConf MakeCompileConf(
+    List<string> files, 
+    Action<Types> ts_fn = null, 
+    bool use_cache = false, 
+    int max_threads = 1, 
+    List<string> src_dirs = null
+  )
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
     var proj = new ProjectConf();
     proj.max_threads = max_threads;
-    proj.src_dirs.Add(TestDirPath());
+    if(src_dirs != null)
+    {
+      foreach(var src_dir in src_dirs)
+        proj.src_dirs.Add(src_dir);
+    }
+    else
+      proj.src_dirs.Add(TestDirPath());
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.result_file = TestDirPath() + "/result.bin";
     proj.tmp_dir = TestDirPath() + "/cache";

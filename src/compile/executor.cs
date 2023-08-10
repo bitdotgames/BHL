@@ -179,6 +179,9 @@ public class CompilationExecutor
   {
     Stopwatch sw;
 
+    if(!CheckModuleNamesCollision(conf, errors))
+      return;
+
     if(conf.proj.deterministic)
       conf.files.Sort();
 
@@ -315,6 +318,25 @@ public class CompilationExecutor
     conf.postproc.Tally();
     sw.Stop();
     conf.logger.Log(2, $"BHL postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+  }
+
+  static bool CheckModuleNamesCollision(CompileConf conf, CompileErrors errors)
+  {
+    var module2file = new Dictionary<string, string>();
+    bool has_collision = false;
+
+    foreach(var file in conf.files)
+    {
+      string module = conf.proj.inc_path.FilePath2ModuleName(file, normalized: true);
+      if(module2file.TryGetValue(module, out var existing_file))
+      {
+        errors.Add(new BuildError(file, $"module '{module}' ambiguous resolving: '{existing_file}' and '{file}'"));
+        has_collision = true;
+      }
+      else
+        module2file.Add(module, file);
+    }
+    return !has_collision;
   }
 
   static List<ParseWorker> StartParseWorkers(CompileConf conf)

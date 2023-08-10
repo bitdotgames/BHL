@@ -7,7 +7,7 @@ public class LifecycleService : IService
 {
   Workspace workspace;
 
-  int? process_id;
+  public int? process_id { get; private set; }
   
   public LifecycleService(Workspace workspace)
   {

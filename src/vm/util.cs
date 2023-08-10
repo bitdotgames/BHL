@@ -216,9 +216,9 @@ public class IncludePath
       return TryIncludePaths(path);
   }
 
-  public string FilePath2ModuleName(string full_path)
+  public string FilePath2ModuleName(string full_path, bool normalized = false)
   {
-    return _FilePath2ModuleName(Util.NormalizeFilePath(full_path));
+    return _FilePath2ModuleName(normalized ? full_path : Util.NormalizeFilePath(full_path));
   }
 
   string _FilePath2ModuleName(string full_path)
