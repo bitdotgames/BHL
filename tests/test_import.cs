@@ -104,6 +104,40 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestBadImportNotInSourceFiles()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+    func float bhl1() 
+    {
+      return bhl2()
+    }
+    ";
+
+    string bhl2 = @"
+    func bhl2() 
+    {}
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    //let's create it but not include into sources
+    files.RemoveAt(NewTestFile("bhl2.bhl", bhl2, ref files));
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(files);
+      },
+     "invalid import 'bhl2'",
+      new PlaceAssert(bhl1, @"
+    import ""bhl2""  
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestIncrementalBuildOfChangedFiles()
   {
     string file_unit = @"

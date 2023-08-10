@@ -614,13 +614,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(file_path == null || !File.Exists(file_path))
       return false;
 
-    CompiledModule cm;
     //let's check if it's a compiled module and
     //try to fetch it from the cache first
-    if(file2compiled != null && file2compiled.TryGetValue(file_path, out cm))
+    if(file2compiled != null && file2compiled.TryGetValue(file_path, out var cm))
       imported_module = cm.module;
-    else
-      imported_module = file2proc[file_path].module;
+    else if(file2proc.TryGetValue(file_path, out var proc))
+      imported_module = proc.module;
+    else 
+      return false;
 
     imported_ns = imported_module.ns;
 
