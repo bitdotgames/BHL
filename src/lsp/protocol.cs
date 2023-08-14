@@ -112,31 +112,31 @@ public struct EitherType<T1, T2> : IEquatable<EitherType<T1, T2>>, ISelectorType
 }
 
 [JsonConverter(typeof(SelectorTypeJsonConverter))]
-public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, ISelectorType
+public struct EitherType<T1, T2, T3> : IEquatable<EitherType<T1, T2, T3>>, ISelectorType
 {
   public object Value { get; }
 
-  public SelectorType(T1 val)
+  public EitherType(T1 val)
   {
     Value = val;
   }
 
-  public SelectorType(T2 val)
+  public EitherType(T2 val)
   {
     Value = val;
   }
 
-  public SelectorType(T3 val)
+  public EitherType(T3 val)
   {
     Value = val;
   }
 
   public override bool Equals(object obj)
   {
-    return obj is SelectorType<T1, T2, T3> other && Equals(other);
+    return obj is EitherType<T1, T2, T3> other && Equals(other);
   }
 
-  public bool Equals(SelectorType<T1, T2, T3> other)
+  public bool Equals(EitherType<T1, T2, T3> other)
   {
     return EqualityComparer<object>.Default.Equals(Value, other.Value);
   }
@@ -146,32 +146,32 @@ public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, I
     return EqualityComparer<object>.Default.GetHashCode(Value) - 1937169414;
   }
 
-  public static bool operator ==(SelectorType<T1, T2, T3> left, SelectorType<T1, T2, T3> right)
+  public static bool operator ==(EitherType<T1, T2, T3> left, EitherType<T1, T2, T3> right)
   {
     return left.Equals(right);
   }
 
-  public static bool operator !=(SelectorType<T1, T2, T3> left, SelectorType<T1, T2, T3> right)
+  public static bool operator !=(EitherType<T1, T2, T3> left, EitherType<T1, T2, T3> right)
   {
     return !(left == right);
   }
 
-  public static implicit operator SelectorType<T1, T2, T3>(T1 val)
+  public static implicit operator EitherType<T1, T2, T3>(T1 val)
   {
-    return new SelectorType<T1, T2, T3>(val);
+    return new EitherType<T1, T2, T3>(val);
   }
 
-  public static implicit operator SelectorType<T1, T2, T3>(T2 val)
+  public static implicit operator EitherType<T1, T2, T3>(T2 val)
   {
-    return new SelectorType<T1, T2, T3>(val);
+    return new EitherType<T1, T2, T3>(val);
   }
 
-  public static implicit operator SelectorType<T1, T2, T3>(T3 val)
+  public static implicit operator EitherType<T1, T2, T3>(T3 val)
   {
-    return new SelectorType<T1, T2, T3>(val);
+    return new EitherType<T1, T2, T3>(val);
   }
 
-  public static explicit operator T1(SelectorType<T1, T2, T3> sum)
+  public static explicit operator T1(EitherType<T1, T2, T3> sum)
   {
     if(sum.Value is T1 obj)
       return obj;
@@ -179,7 +179,7 @@ public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, I
     throw new InvalidCastException();
   }
 
-  public static explicit operator T2(SelectorType<T1, T2, T3> sum)
+  public static explicit operator T2(EitherType<T1, T2, T3> sum)
   {
     if(sum.Value is T2 obj)
       return obj;
@@ -187,7 +187,7 @@ public struct SelectorType<T1, T2, T3> : IEquatable<SelectorType<T1, T2, T3>>, I
     throw new InvalidCastException();
   }
 
-  public static explicit operator T3(SelectorType<T1, T2, T3> sum)
+  public static explicit operator T3(EitherType<T1, T2, T3> sum)
   {
     if(sum.Value is T3 obj)
       return obj;
@@ -837,6 +837,54 @@ public class SemanticTokensClientCapabilities
   public bool? augmentsSyntaxTokens;
 }
 
+public class PublishDiagnosticsClientCapabilities 
+{
+	/**
+	 * Whether the clients accepts diagnostics with related information.
+	 */
+	public bool relatedInformation;
+
+  public class TagSupport 
+  {
+		/**
+		 * The tags supported by the client.
+		 */
+		public DiagnosticTag[] valueSet;
+  }
+
+	/**
+	 * Client supports the tag property to provide meta data about a diagnostic.
+	 * Clients supporting tags have to handle unknown tags gracefully.
+	 *
+	 * @since 3.15.0
+	 */
+	public TagSupport tagSupport;
+
+	/**
+	 * Whether the client interprets the version property of the
+	 * `textDocument/publishDiagnostics` notification's parameter.
+	 *
+	 * @since 3.15.0
+	 */
+	public bool versionSupport;
+
+	/**
+	 * Client supports a codeDescription property
+	 *
+	 * @since 3.16.0
+	 */
+	public bool codeDescriptionSupport;
+
+	/**
+	 * Whether code action supports the `data` property which is
+	 * preserved between a `textDocument/publishDiagnostics` and
+	 * `textDocument/codeAction` request.
+	 *
+	 * @since 3.16.0
+	 */
+	public bool dataSupport;
+}
+
 public class TextDocumentClientCapabilities
 {
   public TextDocumentSyncClientCapabilities synchronization;
@@ -888,6 +936,12 @@ public class TextDocumentClientCapabilities
    * @since 3.16.0
    */
   public SemanticTokensClientCapabilities semanticTokens;
+
+	/**
+	 * Capabilities specific to the `textDocument/publishDiagnostics`
+	 * notification.
+	 */
+	public PublishDiagnosticsClientCapabilities publishDiagnostics;
 }
 
 public class ClientCapabilities
@@ -1068,26 +1122,26 @@ public class ServerCapabilities
    *
    * @since 3.14.0
    */
-  public SelectorType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider;
+  public EitherType<bool, DeclarationOptions, DeclarationRegistrationOptions> declarationProvider;
 
   /**
    * The server provides goto definition support.
    */
-  public SelectorType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider;
+  public EitherType<bool, DefinitionOptions, DefinitionRegistrationOptions> definitionProvider;
 
   /**
    * The server provides goto type definition support.
    *
    * @since 3.6.0
    */
-  public SelectorType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider;
+  public EitherType<bool, TypeDefinitionOptions, TypeDefinitionRegistrationOptions> typeDefinitionProvider;
 
   /**
    * The server provides goto implementation support.
    *
    * @since 3.6.0
    */
-  public SelectorType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider;
+  public EitherType<bool, ImplementationOptions, ImplementationRegistrationOptions> implementationProvider;
 
   /**
    * The server provides find references support.
@@ -1126,7 +1180,7 @@ public class ServerCapabilities
    *
    * @since 3.6.0
    */
-  public SelectorType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider;
+  public EitherType<bool, DocumentColorOptions, DocumentColorRegistrationOptions> colorProvider;
 
   /**
    * The server provides document formatting.
@@ -1155,7 +1209,7 @@ public class ServerCapabilities
    *
    * @since 3.10.0
    */
-  public SelectorType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider;
+  public EitherType<bool, FoldingRangeOptions, FoldingRangeRegistrationOptions> foldingRangeProvider;
 
   /**
    * The server provides execute command support.
@@ -1167,21 +1221,21 @@ public class ServerCapabilities
    *
    * @since 3.15.0
    */
-  public SelectorType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider;
+  public EitherType<bool, SelectionRangeOptions, SelectionRangeRegistrationOptions> selectionRangeProvider;
 
   /**
    * The server provides linked editing range support.
    *
    * @since 3.16.0
    */
-  public SelectorType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider;
+  public EitherType<bool, LinkedEditingRangeOptions, LinkedEditingRangeRegistrationOptions> linkedEditingRangeProvider;
 
   /**
    * The server provides call hierarchy support.
    *
    * @since 3.16.0
    */
-  public SelectorType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider;
+  public EitherType<bool, CallHierarchyOptions, CallHierarchyRegistrationOptions> callHierarchyProvider;
 
   /**
    * The server provides semantic tokens support.
@@ -1195,7 +1249,7 @@ public class ServerCapabilities
    *
    * @since 3.16.0
    */
-  public SelectorType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider;
+  public EitherType<bool, MonikerOptions, MonikerRegistrationOptions> monikerProvider;
 
   /**
    * The server provides workspace symbol support.
@@ -1206,6 +1260,8 @@ public class ServerCapabilities
    * Workspace specific server capabilities
    */
   public ServerCapabilitiesWorkspace workspace;
+
+  public EitherType<DiagnosticOptions, DiagnosticRegistrationOptions> diagnosticProvider;
 
   /**
    * Experimental server capabilities.
@@ -2495,6 +2551,43 @@ public class SemanticTokensParams : WorkDoneProgressParams
   public EitherType<int, string> partialResultToken;
 }
 
+public class DiagnosticOptions : WorkDoneProgressParams
+{
+  /**
+	 * An optional identifier under which the diagnostics are
+	 * managed by the client.
+	 */
+	public string identifier;
+
+	/**
+	 * Whether the language has inter file dependencies meaning that
+	 * editing code in one file can result in a different diagnostic
+	 * set in another file. Inter file dependencies are common for
+	 * most programming languages and typically uncommon for linters.
+	 */
+	public bool interFileDependencies;
+
+	/**
+	 * The server provides support for workspace diagnostics as well.
+	 */
+	public bool workspaceDiagnostics;
+}
+
+public class DiagnosticRegistrationOptions : DiagnosticOptions
+{
+	/**
+	 * The id used to register the request. The id can be used to deregister
+	 * the request again. See also Registration#id.
+	 */
+  public string id;
+
+	/**
+	 * A document selector to identify the scope of the registration. If set to
+	 * null the document selector provided on the client side will be used.
+	 */
+  public DocumentFilter[] documentSelector;
+}
+
 public class SemanticTokens
 {
   /**
@@ -2563,7 +2656,7 @@ public class CancelParams
   /**
    * The request id to cancel.
    */
-  public SelectorType<Int32, Int64, string> id;
+  public EitherType<Int32, Int64, string> id;
 }
 
 }

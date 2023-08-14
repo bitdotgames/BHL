@@ -187,9 +187,10 @@ public class TestLSP : BHL_TestBase
                 "\"callHierarchyProvider\":null," +
                 "\"semanticTokensProvider\":null," +
                 "\"monikerProvider\":null," +
-                "\"workspaceSymbolProvider\":null}," +
-              "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
-              "\"jsonrpc\":\"2.0\"}";
+                "\"workspaceSymbolProvider\":null," +
+                "\"diagnosticProvider\":null}," +
+                "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
+                "\"jsonrpc\":\"2.0\"}";
 
       AssertEqual(rpc.Handle(req), rsp);
     });

@@ -115,6 +115,15 @@ public class LifecycleService : IService
           }
         };
       }
+
+      if(args.capabilities.textDocument.publishDiagnostics != null)
+      {
+        capabilities.diagnosticProvider = new DiagnosticOptions
+        {
+          interFileDependencies = true,
+          workspaceDiagnostics = true
+        };
+      }
     }
     
     return RpcResult.Success(new InitializeResult
