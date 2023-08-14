@@ -58,7 +58,7 @@ public class JsonRpc : IJsonRpc
 
     string resp_json = string.Empty;
 
-    logger.Log(1, $"> ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 300 ? req_json.Substring(0,300) + ".." : req_json)}");
+    logger.Log(1, $"> ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 500 ? req_json.Substring(0,500) + ".." : req_json)}");
     
     //if there's no response error let's handle the request
     if(rsp == null && req != null)
@@ -88,7 +88,7 @@ public class JsonRpc : IJsonRpc
     }
 
     sw.Stop();
-    logger.Log(1, $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json.Length > 300 ? resp_json.Substring(0,300) + ".." : resp_json)}");
+    logger.Log(1, $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json.Length > 500 ? resp_json.Substring(0,500) + ".." : resp_json)}");
     
     return resp_json;
   }
@@ -267,6 +267,12 @@ public class ResponseMessage : MessageBase
   public proto.EitherType<Int32, Int64, string> id { get; set; }
   public object result { get; set; }
   public ResponseError error { get; set; }
+}
+
+public class Notification 
+{
+  public string method { get; set; }
+  public object @params { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Method)]

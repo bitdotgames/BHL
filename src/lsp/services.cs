@@ -1,17 +1,46 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace bhl.lsp.proto {
 
 public class LifecycleService : IService
 {
   Workspace workspace;
+  IConnection conn;
 
   public int? process_id { get; private set; }
+
+  public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
   
-  public LifecycleService(Workspace workspace)
+  public LifecycleService(Workspace workspace, IConnection conn)
   {
     this.workspace = workspace;
+    this.conn = conn;
+
+    workspace.OnDiagnostics += PublishDiagnostics;
+  }
+
+  void PublishDiagnostics(Dictionary<string, CompileErrors> uri2errs)
+  {
+    foreach(var kv in uri2errs)
+    {
+      var dparams = new PublishDiagnosticParams() {
+        uri = new proto.Uri(kv.Key),
+        diagnostics = new Diagnostic[0]
+      };
+
+      var notification = new Notification() {
+        method = "textDocument/publishDiagnostics",
+        @params = dparams
+      };
+
+      //TODO: must not be here
+      var jsettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+      var json = JsonConvert.SerializeObject(notification, Newtonsoft.Json.Formatting.None, jsettings);
+
+      conn.Write(json);
+    }
   }
 
   [RpcMethod("initialize")]
@@ -51,7 +80,7 @@ public class LifecycleService : IService
 
     //TODO: run it in background
     workspace.IndexFiles();
-    
+
     var capabilities = new ServerCapabilities();
 
     if(args.capabilities.textDocument != null)
@@ -125,6 +154,8 @@ public class LifecycleService : IService
         };
       }
     }
+
+    this.capabilities = capabilities;
     
     return RpcResult.Success(new InitializeResult
     {

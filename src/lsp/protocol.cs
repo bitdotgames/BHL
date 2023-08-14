@@ -1261,7 +1261,9 @@ public class ServerCapabilities
    */
   public ServerCapabilitiesWorkspace workspace;
 
-  public EitherType<DiagnosticOptions, DiagnosticRegistrationOptions> diagnosticProvider;
+  //NOTE: we are going to support DiagnosticOptions only
+  //public EitherType<DiagnosticOptions, DiagnosticRegistrationOptions> diagnosticProvider;
+  public DiagnosticOptions diagnosticProvider;
 
   /**
    * Experimental server capabilities.
@@ -2573,19 +2575,25 @@ public class DiagnosticOptions : WorkDoneProgressParams
 	public bool workspaceDiagnostics;
 }
 
-public class DiagnosticRegistrationOptions : DiagnosticOptions
+public class PublishDiagnosticParams
 {
-	/**
-	 * The id used to register the request. The id can be used to deregister
-	 * the request again. See also Registration#id.
+  /**
+	 * The URI for which diagnostic information is reported.
 	 */
-  public string id;
+	public Uri uri;
 
 	/**
-	 * A document selector to identify the scope of the registration. If set to
-	 * null the document selector provided on the client side will be used.
+	 * Optional the version number of the document the diagnostics are published
+	 * for.
+	 *
+	 * @since 3.15.0
 	 */
-  public DocumentFilter[] documentSelector;
+	public int? version;
+
+	/**
+	 * An array of diagnostic information items.
+	 */
+	public Diagnostic[] diagnostics;
 }
 
 public class SemanticTokens

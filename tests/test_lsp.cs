@@ -147,7 +147,7 @@ public class TestLSP : BHL_TestBase
     SubTest("invalid params", () =>
     {
       var rpc = new JsonRpc(NoLogger());
-      rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger())));
+      rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), NoConnection()));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -160,7 +160,7 @@ public class TestLSP : BHL_TestBase
   public void TestInitShutdownExit()
   {
     var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger())));
+    rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), NoConnection()));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -187,8 +187,7 @@ public class TestLSP : BHL_TestBase
                 "\"callHierarchyProvider\":null," +
                 "\"semanticTokensProvider\":null," +
                 "\"monikerProvider\":null," +
-                "\"workspaceSymbolProvider\":null," +
-                "\"diagnosticProvider\":null}," +
+                "\"workspaceSymbolProvider\":null}," +
                 "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
                 "\"jsonrpc\":\"2.0\"}";
 
@@ -841,5 +840,22 @@ public class TestLSP : BHL_TestBase
   static Logger NoLogger()
   {
     return new Logger(0, new NoLogger());
+  }
+
+  public class DummyConnection : IConnection
+  {
+    public string Read()
+    {
+      return null;
+    }
+
+    public void Write(string json)
+    {
+    }
+  }
+
+  static IConnection NoConnection()
+  {
+    return new DummyConnection();
   }
 }

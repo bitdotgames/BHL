@@ -15,6 +15,8 @@ public class Workspace
 
   IncludePath inc_path;
 
+  public event System.Action<Dictionary<string, CompileErrors>> OnDiagnostics;
+
   //NOTE: keeping both collections for convenience of re-indexing
   Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
@@ -61,6 +63,8 @@ public class Workspace
     //TODO: use compiled cache if needed
     ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
 
+    CheckDiagnostics();
+
     foreach(var kv in uri2proc)
     {
       var document = new BHLDocument(new proto.Uri(kv.Key)); 
@@ -78,6 +82,7 @@ public class Workspace
 
     var parser = ANTLR_Processor.Stream2Parser(file, stream, null/*TODO*/);
 
+    //NOTE: ANTLR parsing happens here 
     var parsed = new ANTLR_Parsed(parser);
 
     var proc = ANTLR_Processor.MakeProcessor(
@@ -144,8 +149,19 @@ public class Workspace
 
     ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
 
+    CheckDiagnostics();
+
     document.Update(text, proc);
     return true;
+  }
+
+  void CheckDiagnostics()
+  {
+    var uri2errs = new Dictionary<string, CompileErrors>();
+    foreach(var kv in uri2proc)
+      uri2errs[kv.Key] = kv.Value.result.errors;
+
+    OnDiagnostics(uri2errs);
   }
 
   public List<AnnotatedParseTree> FindReferences(Symbol symb)
