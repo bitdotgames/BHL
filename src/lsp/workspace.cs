@@ -161,7 +161,7 @@ public class Workspace
     foreach(var kv in uri2proc)
       uri2errs[kv.Key] = kv.Value.result.errors;
 
-    OnDiagnostics(uri2errs);
+    OnDiagnostics?.Invoke(uri2errs);
   }
 
   public List<AnnotatedParseTree> FindReferences(Symbol symb)

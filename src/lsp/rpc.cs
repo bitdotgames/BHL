@@ -86,6 +86,8 @@ public class RpcServer : IRpcHandler, IPublisher
         logger.Log(0, e.ToString());
       }
     }
+
+    logger.Log(1, "Stopping BHL LSP server...");
   }
 
   bool ReadAndHandle()
@@ -100,6 +102,9 @@ public class RpcServer : IRpcHandler, IPublisher
 
       if(!string.IsNullOrEmpty(response))
         connection.Write(response);
+      //let's exit the loop
+      else if(response == null)
+        return false;
     }
     catch(Exception e)
     {
@@ -110,6 +115,7 @@ public class RpcServer : IRpcHandler, IPublisher
     return true;
   }
 
+  //NOTE: returns 'null' if the server must break its reading loop and exit
   public string Handle(string req_json)
   {
     var sw = Stopwatch.StartNew();
@@ -140,8 +146,9 @@ public class RpcServer : IRpcHandler, IPublisher
 
     logger.Log(1, $"> ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 500 ? req_json.Substring(0,500) + ".." : req_json)}");
     
-    //if there's no response error let's handle the request
-    if(rsp == null && req != null)
+    //NOTE: if there's no response error by this time 
+    //      let's handle the request
+    if(req != null && rsp == null)
     {
       if(req.IsMessage())
         rsp = HandleRequest(req);
@@ -158,14 +165,16 @@ public class RpcServer : IRpcHandler, IPublisher
 
     if(rsp != null)
     {
+      if((rsp.error?.code??0) == (int)ErrorCodes.Exit)
+        resp_json = null;
       //NOTE: we send responses only if there were an error or if the request 
       //      contains an id
-      if(req == null || req.id.Value != null)
+      else if(req == null || req.id.Value != null)
         resp_json = rsp.ToJson();
     }
 
     sw.Stop();
-    logger.Log(1, $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json.Length > 500 ? resp_json.Substring(0,500) + ".." : resp_json)}");
+    logger.Log(1, $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json?.Length > 500 ? resp_json?.Substring(0,500) + ".." : resp_json)}");
     
     return resp_json;
   }
@@ -191,7 +200,8 @@ public class RpcServer : IRpcHandler, IPublisher
       {
         response = new ResponseMessage
         {
-          id = request.id, error = new ResponseError
+          id = request.id, 
+          error = new ResponseError
           {
             code = (int)ErrorCodes.InvalidRequest,
             message = ""
@@ -205,7 +215,8 @@ public class RpcServer : IRpcHandler, IPublisher
 
       response = new ResponseMessage
       {
-        id = request.id, error = new ResponseError
+        id = request.id, 
+        error = new ResponseError
         {
           code = (int)ErrorCodes.InternalError,
           message = e.ToString()
@@ -289,6 +300,11 @@ public class RpcResult
   {
     return new RpcResult(null, error);
   }
+
+  public static RpcResult Exit()
+  {
+    return new RpcResult(null, new ResponseError() { code = (int)ErrorCodes.Exit } );
+  }
   
   RpcResult(object result, ResponseError error)
   {
@@ -299,6 +315,8 @@ public class RpcResult
 
 public enum ErrorCodes
 {
+  Exit = -1, //special error code which makes the server to exit
+
   ParseError = -32700,
   InvalidRequest = -32600,
   MethodNotFound = -32601,

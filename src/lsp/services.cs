@@ -181,12 +181,7 @@ public class LifecycleService : IService
   [RpcMethod("exit")]
   public RpcResult Exit()
   {
-    workspace.logger.Log(1, "Stopping BHL LSP server...");
-
-    //TODO: in this case success response won't be sent
-    Environment.Exit(0);
-    
-    return RpcResult.Success();
+    return RpcResult.Exit();
   }
 }
 

@@ -195,26 +195,23 @@ public class TestLSP : BHL_TestBase
     });
     
     SubTest(() => {
-      string json = "{\"params\":{},\"method\":\"initialized\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.Handle(json),
-        string.Empty
+        rpc.Handle(new RequestMessage() { id = 1, method = "initialized"}.ToJson()),
+        new ResponseMessage() { id = 1, result = "null" } .ToJson()
       );
     });
     
     SubTest(() => {
-      string json = "{\"id\":1,\"params\":null,\"method\":\"shutdown\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.Handle(json),
-        "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}"
+        rpc.Handle(new RequestMessage() { id = 1, method = "shutdown"}.ToJson()),
+        new ResponseMessage() { id = 1, result = "null" } .ToJson()
       );
     });
     
     SubTest(() => {
-      string json = "{\"params\":null,\"method\":\"exit\",\"jsonrpc\":\"2.0\"}";
       AssertEqual(
-        rpc.Handle(json),
-        string.Empty
+        rpc.Handle(new RequestMessage() { id = 1, method = "exit"}.ToJson()),
+        null
       );
     });
   }
