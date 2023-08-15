@@ -2593,7 +2593,7 @@ public class PublishDiagnosticParams
 	/**
 	 * An array of diagnostic information items.
 	 */
-	public Diagnostic[] diagnostics;
+	public List<Diagnostic> diagnostics;
 }
 
 public class SemanticTokens

@@ -25,7 +25,7 @@ public interface IRpcHandler
 
 public abstract class MessageBase
 {
-  public string jsonrpc { get; set; } = "2.0";
+  public string jsonrpc = "2.0";
 
   public bool IsValid()
   {
@@ -35,9 +35,9 @@ public abstract class MessageBase
 
 public class Request : MessageBase
 {
-  public proto.EitherType<Int32, Int64, string> id { get; set; }
-  public string method { get; set; }
-  public JToken @params { get; set; }
+  public proto.EitherType<Int32, Int64, string> id;
+  public string method;
+  public JToken @params;
 
   //for tests convenience
   public Request(int id, string method, object @params = null)
@@ -51,16 +51,16 @@ public class Request : MessageBase
 
 public class ResponseError
 {
-  public int code { get; set; }
-  public string message { get; set; }
-  public object data { get; set; }
+  public int code;
+  public string message;
+  public object data;
 }
 
 public class Response : MessageBase
 {
-  public proto.EitherType<Int32, Int64, string> id { get; set; }
-  public object result { get; set; }
-  public ResponseError error { get; set; }
+  public proto.EitherType<Int32, Int64, string> id;
+  public object result;
+  public ResponseError error;
 
   public Response()
   {}
@@ -336,6 +336,10 @@ public class RpcServer : IRpcHandler, IPublisher
 
   public void Publish(Notification notification)
   {
+    string json = notification.ToJson();
+
+    logger.Log(1, $"<< ({notification.method} {(json?.Length > 500 ? json?.Substring(0,500) + ".." : json)}");
+
     connection.Write(notification.ToJson());
   }
   

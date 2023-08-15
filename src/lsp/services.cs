@@ -12,6 +12,8 @@ public class LifecycleService : IService
   public int? process_id { get; private set; }
 
   public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
+
+  Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
   
   public LifecycleService(Workspace workspace, IPublisher publisher)
   {
@@ -21,22 +23,36 @@ public class LifecycleService : IService
     workspace.OnDiagnostics += PublishDiagnostics;
   }
 
-  void PublishDiagnostics(Dictionary<string, CompileErrors> uri2errs)
+  void PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
   {
-    foreach(var kv in uri2errs)
+    foreach(var kv in new_uri2errs)
     {
-      var dparams = new PublishDiagnosticParams() {
-        uri = new proto.Uri(kv.Key),
-        diagnostics = new Diagnostic[0]
-      };
+      if(!uri2errs.TryGetValue(kv.Key, out var errs) || errs.Count != kv.Value.Count)
+      {
+        var dparams = new PublishDiagnosticParams() {
+          uri = new proto.Uri(kv.Key),
+          diagnostics = new List<Diagnostic>()
+        };
 
-      var notification = new Notification() {
-        method = "textDocument/publishDiagnostics",
-        @params = dparams
-      };
+        foreach(var err in kv.Value)
+        {
+          var dg = new Diagnostic();
+          dg.severity = DiagnosticSeverity.Error;
+          dg.range = err.range;
+          dg.message = err.text;
+          dparams.diagnostics.Add(dg);
+        }
 
-      publisher.Publish(notification);
+        var notification = new Notification() {
+          method = "textDocument/publishDiagnostics",
+          @params = dparams
+        };
+
+        publisher.Publish(notification);
+      }
     }
+
+    uri2errs = new_uri2errs;
   }
 
   [RpcMethod("initialize")]
