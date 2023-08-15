@@ -206,7 +206,7 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(new Request(1, "shutdown").ToJson()),
-        NullResultJson()
+        NullResultJson(1)
       );
     });
     
@@ -845,7 +845,7 @@ public class TestLSP : BHL_TestBase
     return new Logger(0, new NoLogger());
   }
 
-  static string NullResultJson(int id = 1)
+  static string NullResultJson(int id)
   {
     return "{\"id\":" + id + ",\"jsonrpc\":\"2.0\",\"result\":null}";
   }
