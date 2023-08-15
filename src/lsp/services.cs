@@ -459,24 +459,6 @@ public class TextDocumentSemanticTokensService : IService
   }
 }
 
-//public class WorkspaceService : IService
-//{
-//  [RpcMethod("workspace/didChangeWorkspaceFolders")]
-//  public RpcResult DidChangeWorkspaceFolders(DidChangeWorkspaceFoldersParams args);
-//
-//  [RpcMethod("workspace/didChangeConfiguration")]
-//  public RpcResult DidChangeConfiguration(DidChangeConfigurationParams args);
-//
-//  [RpcMethod("workspace/didChangeWatchedFiles")]
-//  public RpcResult DidChangeWatchedFiles(DidChangeWatchedFilesParams args);
-//
-//  [RpcMethod("workspace/symbol")]
-//  public RpcResult Symbol(WorkspaceSymbolParams args);
-//
-//  [RpcMethod("workspace/executeCommand")]
-//  public RpcResult ExecuteCommand(ExecuteCommandParams args);
-//}
-
 public class TextDocumentFindReferencesService : IService
 {
   Workspace workspace;

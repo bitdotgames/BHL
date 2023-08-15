@@ -1,6 +1,8 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using bhl;
 using bhl.lsp;
 
@@ -196,21 +198,21 @@ public class TestLSP : BHL_TestBase
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new RequestMessage() { id = 1, method = "initialized"}.ToJson()),
-        new ResponseMessage() { id = 1, result = "null" } .ToJson()
+        rpc.Handle(new Request() { id = 1, method = "initialized"}.ToJson()),
+        new Response() { id = 1, result = "null" }.ToJson()
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new RequestMessage() { id = 1, method = "shutdown"}.ToJson()),
-        new ResponseMessage() { id = 1, result = "null" } .ToJson()
+        rpc.Handle(new Request() { id = 1, method = "shutdown"}.ToJson()),
+        new Response() { id = 1, result = "null" }.ToJson()
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new RequestMessage() { id = 1, method = "exit"}.ToJson()),
+        rpc.Handle(new Request() { id = 1, method = "exit"}.ToJson()),
         null
       );
     });
@@ -257,14 +259,20 @@ public class TestLSP : BHL_TestBase
     {
       ws.IndexFiles();
 
-      string json =
-        "{\"params\":{\"textDocument\":{\"languageId\":\"bhl\",\"version\":0,\"uri\":\"" + uri.ToString() +
-        "\",\"text\":\"" + bhl_v1 +
-        "\"}},\"method\":\"textDocument/didOpen\",\"jsonrpc\":\"2.0\"}";
-      
       AssertEqual(
-        rpc.Handle(json),
-        string.Empty
+        rpc.Handle(new Request() { 
+          id = 1, 
+          method = "textDocument/didOpen",
+          @params = JToken.FromObject(new bhl.lsp.proto.DidOpenTextDocumentParams() {
+            textDocument = new bhl.lsp.proto.TextDocumentItem() { 
+              languageId = "bhl", 
+              version = 0, 
+              uri = uri, 
+              text = bhl_v1 
+            }
+          })
+        }.ToJson()),
+        new Response() { id = 1, result = "null" }.ToJson()
       );
     }
 
@@ -275,23 +283,36 @@ public class TestLSP : BHL_TestBase
 
       ws.IndexFiles();
 
-      string json = "{\"params\":{\"textDocument\":{\"version\":1,\"uri\":\"" + uri.ToString() +
-             "\"},\"contentChanges\":[{\"text\":\"" + bhl_v2 +
-             "\"}]},\"method\":\"textDocument/didChange\",\"jsonrpc\":\"2.0\"}";
-      
       AssertEqual(
-        rpc.Handle(json),
-        string.Empty
+        rpc.Handle(new Request() { 
+          id = 1, 
+          method = "textDocument/didChange",
+          @params = JToken.FromObject(new bhl.lsp.proto.DidChangeTextDocumentParams() {
+            textDocument = new bhl.lsp.proto.VersionedTextDocumentIdentifier() { 
+              version = 1, 
+              uri = uri
+            },
+            contentChanges = new[] {
+             new bhl.lsp.proto.TextDocumentContentChangeEvent { text = bhl_v2 }
+            }
+          })
+        }.ToJson()),
+        new Response() { id = 1, result = "null" }.ToJson()
       );
     }
     
     {
-      string json = "{\"params\":{\"textDocument\":{\"uri\":\"" + uri +
-             "\"}},\"method\":\"textDocument/didClose\",\"jsonrpc\":\"2.0\"}";
-      
       AssertEqual(
-        rpc.Handle(json),
-        string.Empty
+        rpc.Handle(new Request() { 
+          id = 1, 
+          method = "textDocument/didClose",
+          @params = JToken.FromObject(new bhl.lsp.proto.DidCloseTextDocumentParams() {
+            textDocument = new bhl.lsp.proto.TextDocumentIdentifier() { 
+              uri = uri
+            }
+          })
+        }.ToJson()),
+        new Response() { id = 1, result = "null" }.ToJson()
       );
     }
   }

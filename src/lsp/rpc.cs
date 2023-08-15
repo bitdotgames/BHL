@@ -20,7 +20,44 @@ public interface IPublisher
 
 public interface IRpcHandler
 {
-  ResponseMessage HandleRequest(RequestMessage request);
+  Response HandleRequest(Request request);
+}
+
+public abstract class MessageBase
+{
+  public string jsonrpc { get; set; } = "2.0";
+
+  public bool IsValid()
+  {
+    return jsonrpc == "2.0";
+  }
+}
+
+public class Request : MessageBase
+{
+  public proto.EitherType<Int32, Int64, string> id { get; set; }
+  public string method { get; set; }
+  public JToken @params { get; set; }
+}
+
+public class ResponseError
+{
+  public int code { get; set; }
+  public string message { get; set; }
+  public object data { get; set; }
+}
+
+public class Response : MessageBase
+{
+  public proto.EitherType<Int32, Int64, string> id { get; set; }
+  public object result { get; set; }
+  public ResponseError error { get; set; }
+}
+
+public class Notification 
+{
+  public string method { get; set; }
+  public object @params { get; set; }
 }
 
 public class RpcServer : IRpcHandler, IPublisher
@@ -84,6 +121,7 @@ public class RpcServer : IRpcHandler, IPublisher
       catch(Exception e)
       {
         logger.Log(0, e.ToString());
+        break;
       }
     }
 
@@ -120,19 +158,19 @@ public class RpcServer : IRpcHandler, IPublisher
   {
     var sw = Stopwatch.StartNew();
     
-    RequestMessage req = null;
-    ResponseMessage rsp = null;
+    Request req = null;
+    Response rsp = null;
     
     try
     {
-      req = req_json.FromJson<RequestMessage>();
+      req = req_json.FromJson<Request>();
     }
     catch(Exception e)
     {
       logger.Log(0, e.ToString());
-      logger.Log(0, $"{req_json}");
+      logger.Log(0, req_json);
 
-      rsp = new ResponseMessage
+      rsp = new Response
       {
         error = new ResponseError
         {
@@ -150,10 +188,10 @@ public class RpcServer : IRpcHandler, IPublisher
     //      let's handle the request
     if(req != null && rsp == null)
     {
-      if(req.IsMessage())
+      if(req.IsValid())
         rsp = HandleRequest(req);
       else
-        rsp = new ResponseMessage
+        rsp = new Response
         {
           error = new ResponseError
           {
@@ -179,9 +217,9 @@ public class RpcServer : IRpcHandler, IPublisher
     return resp_json;
   }
   
-  public ResponseMessage HandleRequest(RequestMessage request)
+  public Response HandleRequest(Request request)
   {
-    ResponseMessage response;
+    Response response;
     
     try
     {
@@ -189,7 +227,7 @@ public class RpcServer : IRpcHandler, IPublisher
       {
         RpcResult result = CallRpcMethod(request.method, request.@params);
         
-        response = new ResponseMessage
+        response = new Response
         {
           id = request.id,
           result = result.result,
@@ -198,7 +236,7 @@ public class RpcServer : IRpcHandler, IPublisher
       }
       else
       {
-        response = new ResponseMessage
+        response = new Response
         {
           id = request.id, 
           error = new ResponseError
@@ -213,7 +251,7 @@ public class RpcServer : IRpcHandler, IPublisher
     {
       logger.Log(0, e.ToString());
 
-      response = new ResponseMessage
+      response = new Response
       {
         id = request.id, 
         error = new ResponseError
@@ -328,43 +366,6 @@ public enum ErrorCodes
   UnknownErrorCode = -32001,
   RequestCancelled = -32800,
   RequestFailed = -32803 // @since 3.17.0
-}
-
-public abstract class MessageBase
-{
-  public string jsonrpc { get; set; } = "2.0";
-
-  public bool IsMessage()
-  {
-    return jsonrpc == "2.0";
-  }
-}
-
-public class RequestMessage : MessageBase
-{
-  public proto.EitherType<Int32, Int64, string> id { get; set; }
-  public string method { get; set; }
-  public JToken @params { get; set; }
-}
-
-public class ResponseError
-{
-  public int code { get; set; }
-  public string message { get; set; }
-  public object data { get; set; }
-}
-
-public class ResponseMessage : MessageBase
-{
-  public proto.EitherType<Int32, Int64, string> id { get; set; }
-  public object result { get; set; }
-  public ResponseError error { get; set; }
-}
-
-public class Notification 
-{
-  public string method { get; set; }
-  public object @params { get; set; }
 }
 
 [AttributeUsage(AttributeTargets.Method)]
