@@ -7,16 +7,16 @@ namespace bhl.lsp.proto {
 public class LifecycleService : IService
 {
   Workspace workspace;
-  IConnection conn;
+  IPublisher publisher;
 
   public int? process_id { get; private set; }
 
   public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
   
-  public LifecycleService(Workspace workspace, IConnection conn)
+  public LifecycleService(Workspace workspace, IPublisher publisher)
   {
     this.workspace = workspace;
-    this.conn = conn;
+    this.publisher = publisher;
 
     workspace.OnDiagnostics += PublishDiagnostics;
   }
@@ -35,11 +35,7 @@ public class LifecycleService : IService
         @params = dparams
       };
 
-      //TODO: must not be here
-      var jsettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-      var json = JsonConvert.SerializeObject(notification, Newtonsoft.Json.Formatting.None, jsettings);
-
-      conn.Write(json);
+      publisher.Publish(notification);
     }
   }
 

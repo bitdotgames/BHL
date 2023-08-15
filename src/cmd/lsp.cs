@@ -36,8 +36,8 @@ public class LSP : ICmd
     
     var connection = new ConnectionStdIO(stdout, stdin);
     
-    var rpc = new JsonRpc(logger);
-    rpc.AttachService(new LifecycleService(workspace, connection));
+    var rpc = new RpcServer(logger, connection);
+    rpc.AttachService(new LifecycleService(workspace, rpc));
     rpc.AttachService(new TextDocumentSynchronizationService(workspace));
     rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
     rpc.AttachService(new TextDocumentGoToService(workspace));
@@ -45,11 +45,9 @@ public class LSP : ICmd
     rpc.AttachService(new TextDocumentHoverService(workspace));
     rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
     
-    var server = new Server(logger, connection, rpc);
-    
     try
     {
-      server.Start();
+      rpc.Start();
     }
     catch (Exception e)
     {

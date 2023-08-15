@@ -7,27 +7,107 @@ using Newtonsoft.Json.Linq;
 
 namespace bhl.lsp {
 
-public interface IJsonRpc
+public interface IService 
 {
-  string Handle(string json);
+  //TODO:
+  //public void Tick();
 }
 
-public interface IService {}
-
-public class JsonRpc : IJsonRpc
+public interface IPublisher
 {
-  List<IService> services = new List<IService>();
+  void Publish(Notification notification);
+}
+
+public interface IRpcHandler
+{
+  ResponseMessage HandleRequest(RequestMessage request);
+}
+
+public class RpcServer : IRpcHandler, IPublisher
+{
+  IConnection connection;
   Logger logger;
 
-  public JsonRpc(Logger logger)
+  public struct ServiceMethod
   {
-    this.logger = logger;
+    public IService service;
+    public MethodInfo method;
+    public System.Type arg_type;
   }
 
-  public JsonRpc AttachService(IService service)
+  List<IService> services = new List<IService>();
+  Dictionary<string, ServiceMethod> name2method = new Dictionary<string, ServiceMethod>();
+
+  public RpcServer(Logger logger, IConnection connection)
   {
+    this.logger = logger;
+    this.connection = connection;
+  }
+
+  public void AttachService(IService service)
+  {
+    foreach(var method in service.GetType().GetMethods())
+    {
+      string name = FindRpcMethodName(method);
+      if(name != null)
+      {
+        var sm = new ServiceMethod();
+        sm.service = service;
+        sm.method = method;
+
+        var pms = method.GetParameters();
+        if(pms.Length == 1)
+          sm.arg_type = pms[0].ParameterType; 
+        else if(pms.Length == 0)
+          sm.arg_type = null;
+        else
+          throw new Exception("Too many method arguments count");
+
+        name2method.Add(name, sm);
+      }
+    }
     services.Add(service);
-    return this;
+  }
+
+  public void Start()
+  {
+    logger.Log(1, "Starting BHL LSP server...");
+
+    while(true)
+    {
+      try
+      {
+        bool success = ReadAndHandle();
+        if(!success)
+          break;
+      }
+      catch(Exception e)
+      {
+        logger.Log(0, e.ToString());
+      }
+    }
+  }
+
+  bool ReadAndHandle()
+  {
+    try
+    {
+      string json = connection.Read();
+      if(string.IsNullOrEmpty(json))
+        return false;
+    
+      string response = Handle(json);
+
+      if(!string.IsNullOrEmpty(response))
+        connection.Write(response);
+    }
+    catch(Exception e)
+    {
+      logger.Log(0, e.ToString());
+      return false;
+    }
+    
+    return true;
   }
 
   public string Handle(string req_json)
@@ -39,7 +119,7 @@ public class JsonRpc : IJsonRpc
     
     try
     {
-      req = JsonConvert.DeserializeObject<RequestMessage>(req_json);
+      req = req_json.FromJson<RequestMessage>();
     }
     catch(Exception e)
     {
@@ -64,7 +144,7 @@ public class JsonRpc : IJsonRpc
     if(rsp == null && req != null)
     {
       if(req.IsMessage())
-        rsp = HandleMessage(req);
+        rsp = HandleRequest(req);
       else
         rsp = new ResponseMessage
         {
@@ -81,10 +161,7 @@ public class JsonRpc : IJsonRpc
       //NOTE: we send responses only if there were an error or if the request 
       //      contains an id
       if(req == null || req.id.Value != null)
-      {
-        var jsettings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-        resp_json = JsonConvert.SerializeObject(rsp, Newtonsoft.Json.Formatting.None, jsettings);
-      }
+        resp_json = rsp.ToJson();
     }
 
     sw.Stop();
@@ -93,7 +170,7 @@ public class JsonRpc : IJsonRpc
     return resp_json;
   }
   
-  ResponseMessage HandleMessage(RequestMessage request)
+  public ResponseMessage HandleRequest(RequestMessage request)
   {
     ResponseMessage response;
     
@@ -149,55 +226,52 @@ public class JsonRpc : IJsonRpc
         message = ""
       });
     }
-    
-    //TODO: build and cache a map of available methods
-    foreach(var service in services)
-    {
-      foreach(var method in service.GetType().GetMethods())
-      {
-        if(IsAllowedToInvoke(method, name))
-        {
-          object[] args = null;
-          var pms = method.GetParameters();
-          if(pms.Length > 0)
-          {
-            try
-            {
-              args = new[] { @params.ToObject(pms[0].ParameterType) };
-            }
-            catch(Exception e)
-            {
-              logger.Log(0, e.ToString());
 
-              return RpcResult.Error(new ResponseError
-              {
-                code = (int)ErrorCodes.InvalidParams,
-                message = e.Message
-              });
-            }
-          }
-          
-          return (RpcResult)method.Invoke(service, args);
-        }
+    if(!name2method.TryGetValue(name, out var sm)) 
+    {
+      return RpcResult.Error(new ResponseError
+      {
+        code = (int)ErrorCodes.MethodNotFound,
+        message = "Method not found"
+      });
+    }
+    
+    object[] args = null;
+    if(sm.arg_type != null)
+    {
+      try
+      {
+        args = new[] { @params.ToObject(sm.arg_type) };
+      }
+      catch(Exception e)
+      {
+        logger.Log(0, e.ToString());
+
+        return RpcResult.Error(new ResponseError
+        {
+          code = (int)ErrorCodes.InvalidParams,
+          message = e.Message
+        });
       }
     }
     
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.MethodNotFound,
-      message = "Method not found"
-    });
+    return (RpcResult)sm.method.Invoke(sm.service, args);
+  }
+
+  public void Publish(Notification notification)
+  {
+    connection.Write(notification.ToJson());
   }
   
-  private bool IsAllowedToInvoke(MethodInfo m, string name)
+  static string FindRpcMethodName(MethodInfo m)
   {
     foreach(var attribute in m.GetCustomAttributes(true))
     {
-      if(attribute is RpcMethod jsonRpcMethod && jsonRpcMethod.Method == name)
-        return true;
+      if(attribute is RpcMethod rm)
+        return rm.Method;
     }
 
-    return false;
+    return null;
   }
 }
 

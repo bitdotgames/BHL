@@ -106,7 +106,7 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("parse error", () =>
     {
-      var rpc = new JsonRpc(NoLogger());
+      var rpc = new RpcServer(NoLogger(), NoConnection());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       AssertEqual(
         rpc.Handle(json),
@@ -116,7 +116,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid request", () =>
     {
-      var rpc = new JsonRpc(NoLogger());
+      var rpc = new RpcServer(NoLogger(), NoConnection());
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -126,7 +126,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid request", () =>
     {
-      var rpc = new JsonRpc(NoLogger());
+      var rpc = new RpcServer(NoLogger(), NoConnection());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -136,7 +136,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest("method not found", () =>
     {
-      var rpc = new JsonRpc(NoLogger());
+      var rpc = new RpcServer(NoLogger(), NoConnection());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -146,8 +146,8 @@ public class TestLSP : BHL_TestBase
     
     SubTest("invalid params", () =>
     {
-      var rpc = new JsonRpc(NoLogger());
-      rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), NoConnection()));
+      var rpc = new RpcServer(NoLogger(), NoConnection());
+      rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), rpc));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
         rpc.Handle(json),
@@ -159,8 +159,8 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestInitShutdownExit()
   {
-    var rpc = new JsonRpc(NoLogger());
-    rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), NoConnection()));
+    var rpc = new RpcServer(NoLogger(), NoConnection());
+    rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger()), rpc));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -248,7 +248,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentSynchronizationService(ws));
     
     CleanTestFiles();
@@ -365,7 +365,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentGoToService(ws));
     
     CleanTestFiles();
@@ -534,7 +534,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentFindReferencesService(ws));
     
     CleanTestFiles();
@@ -598,7 +598,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentHoverService(ws));
     
     CleanTestFiles();
@@ -646,7 +646,7 @@ public class TestLSP : BHL_TestBase
     
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentSignatureHelpService(ws));
     
     CleanTestFiles();
@@ -687,7 +687,7 @@ public class TestLSP : BHL_TestBase
 
     var ws = new Workspace(NoLogger());
 
-    var rpc = new JsonRpc(NoLogger());
+    var rpc = new RpcServer(NoLogger(), NoConnection());
     rpc.AttachService(new bhl.lsp.proto.TextDocumentSemanticTokensService(ws));
     
     CleanTestFiles();
