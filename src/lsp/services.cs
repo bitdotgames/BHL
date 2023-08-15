@@ -40,6 +40,16 @@ public class LifecycleService : IService
           dg.severity = DiagnosticSeverity.Error;
           dg.range = err.range;
           dg.message = err.text;
+
+          if(dparams.diagnostics.Count > 0)
+          {
+            var prev_dg = dparams.diagnostics[dparams.diagnostics.Count-1];
+            //NOTE: let's skip diagnostics which starts on the same line
+            //      just like the previous one
+            if(prev_dg.range.start.line == dg.range.start.line)
+              continue;
+          }
+          
           dparams.diagnostics.Add(dg);
         }
 
