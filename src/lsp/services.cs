@@ -7,62 +7,14 @@ namespace bhl.lsp.proto {
 public class LifecycleService : IService
 {
   Workspace workspace;
-  IPublisher publisher;
 
   public int? process_id { get; private set; }
 
   public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
-
-  Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
   
-  public LifecycleService(Workspace workspace, IPublisher publisher)
+  public LifecycleService(Workspace workspace)
   {
     this.workspace = workspace;
-    this.publisher = publisher;
-
-    workspace.OnDiagnostics += PublishDiagnostics;
-  }
-
-  void PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
-  {
-    foreach(var kv in new_uri2errs)
-    {
-      if(!uri2errs.TryGetValue(kv.Key, out var errs) || errs.Count != kv.Value.Count)
-      {
-        var dparams = new PublishDiagnosticParams() {
-          uri = new proto.Uri(kv.Key),
-          diagnostics = new List<Diagnostic>()
-        };
-
-        foreach(var err in kv.Value)
-        {
-          var dg = new Diagnostic();
-          dg.severity = DiagnosticSeverity.Error;
-          dg.range = err.range;
-          dg.message = err.text;
-
-          if(dparams.diagnostics.Count > 0)
-          {
-            var prev_dg = dparams.diagnostics[dparams.diagnostics.Count-1];
-            //NOTE: let's skip diagnostics which starts on the same line
-            //      just like the previous one
-            if(prev_dg.range.start.line == dg.range.start.line)
-              continue;
-          }
-          
-          dparams.diagnostics.Add(dg);
-        }
-
-        var notification = new Notification() {
-          method = "textDocument/publishDiagnostics",
-          @params = dparams
-        };
-
-        publisher.Publish(notification);
-      }
-    }
-
-    uri2errs = new_uri2errs;
   }
 
   [RpcMethod("initialize")]
@@ -208,6 +160,62 @@ public class LifecycleService : IService
   public RpcResult Exit()
   {
     return RpcResult.Error(ErrorCodes.Exit);
+  }
+}
+
+public class DiagnosticService : IService
+{
+  IPublisher publisher;
+
+  Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
+  
+  public DiagnosticService(Workspace workspace, IPublisher publisher)
+  {
+    this.publisher = publisher;
+
+    workspace.OnDiagnostics += PublishDiagnostics;
+  }
+
+  void PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
+  {
+    foreach(var kv in new_uri2errs)
+    {
+      if(!uri2errs.TryGetValue(kv.Key, out var errs) || errs.Count != kv.Value.Count)
+      {
+        var dparams = new PublishDiagnosticParams() {
+          uri = new proto.Uri(kv.Key),
+          diagnostics = new List<Diagnostic>()
+        };
+
+        foreach(var err in kv.Value)
+        {
+          var dg = new Diagnostic();
+          dg.severity = DiagnosticSeverity.Error;
+          dg.range = err.range;
+          dg.message = err.text;
+
+          if(dparams.diagnostics.Count > 0)
+          {
+            var prev_dg = dparams.diagnostics[dparams.diagnostics.Count-1];
+            //NOTE: let's skip diagnostics which starts on the same line
+            //      just like the previous one
+            if(prev_dg.range.start.line == dg.range.start.line)
+              continue;
+          }
+          
+          dparams.diagnostics.Add(dg);
+        }
+
+        var notification = new Notification() {
+          method = "textDocument/publishDiagnostics",
+          @params = dparams
+        };
+
+        publisher.Publish(notification);
+      }
+    }
+
+    uri2errs = new_uri2errs;
   }
 }
 

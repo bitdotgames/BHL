@@ -37,7 +37,8 @@ public class LSP : ICmd
     var connection = new ConnectionStdIO(stdout, stdin);
     
     var rpc = new RpcServer(logger, connection);
-    rpc.AttachService(new LifecycleService(workspace, rpc));
+    rpc.AttachService(new LifecycleService(workspace));
+    rpc.AttachService(new DiagnosticService(workspace, rpc));
     rpc.AttachService(new TextDocumentSynchronizationService(workspace));
     rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
     rpc.AttachService(new TextDocumentGoToService(workspace));
