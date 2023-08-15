@@ -38,6 +38,15 @@ public class Request : MessageBase
   public proto.EitherType<Int32, Int64, string> id { get; set; }
   public string method { get; set; }
   public JToken @params { get; set; }
+
+  //for tests convenience
+  public Request(int id, string method, object @params = null)
+  {
+    this.id = id;
+    this.method = method;
+    if(@params != null)
+      this.@params = JToken.FromObject(@params); 
+  }
 }
 
 public class ResponseError
@@ -52,6 +61,17 @@ public class Response : MessageBase
   public proto.EitherType<Int32, Int64, string> id { get; set; }
   public object result { get; set; }
   public ResponseError error { get; set; }
+
+  public Response()
+  {}
+
+  //for tests convenience
+  public Response(int id, object result, ResponseError error = null)
+  {
+    this.id = id;
+    this.result = result;
+    this.error = error;
+  }
 }
 
 public class Notification 

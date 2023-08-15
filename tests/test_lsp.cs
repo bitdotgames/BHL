@@ -198,21 +198,21 @@ public class TestLSP : BHL_TestBase
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new Request() { id = 1, method = "initialized"}.ToJson()),
-        new Response() { id = 1, result = "null" }.ToJson()
+        rpc.Handle(new Request(1, "initialized").ToJson()),
+        new Response(1, "null").ToJson()
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new Request() { id = 1, method = "shutdown"}.ToJson()),
-        new Response() { id = 1, result = "null" }.ToJson()
+        rpc.Handle(new Request(1, "shutdown").ToJson()),
+        new Response(1, "null").ToJson()
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new Request() { id = 1, method = "exit"}.ToJson()),
+        rpc.Handle(new Request(1, "exit").ToJson()),
         null
       );
     });
@@ -260,19 +260,16 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        rpc.Handle(new Request() { 
-          id = 1, 
-          method = "textDocument/didOpen",
-          @params = JToken.FromObject(new bhl.lsp.proto.DidOpenTextDocumentParams() {
+        rpc.Handle(new Request(1, "textDocument/didOpen",
+          new bhl.lsp.proto.DidOpenTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentItem() { 
               languageId = "bhl", 
               version = 0, 
               uri = uri, 
               text = bhl_v1 
-            }
-          })
-        }.ToJson()),
-        new Response() { id = 1, result = "null" }.ToJson()
+            }}
+          ).ToJson()),
+        new Response(1, "null").ToJson()
       );
     }
 
@@ -284,10 +281,8 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        rpc.Handle(new Request() { 
-          id = 1, 
-          method = "textDocument/didChange",
-          @params = JToken.FromObject(new bhl.lsp.proto.DidChangeTextDocumentParams() {
+        rpc.Handle(new Request(1, "textDocument/didChange",
+          new bhl.lsp.proto.DidChangeTextDocumentParams() {
             textDocument = new bhl.lsp.proto.VersionedTextDocumentIdentifier() { 
               version = 1, 
               uri = uri
@@ -295,24 +290,22 @@ public class TestLSP : BHL_TestBase
             contentChanges = new[] {
              new bhl.lsp.proto.TextDocumentContentChangeEvent { text = bhl_v2 }
             }
-          })
-        }.ToJson()),
-        new Response() { id = 1, result = "null" }.ToJson()
+          }).ToJson()
+        ),
+        new Response(1, "null").ToJson()
       );
     }
     
     {
       AssertEqual(
-        rpc.Handle(new Request() { 
-          id = 1, 
-          method = "textDocument/didClose",
-          @params = JToken.FromObject(new bhl.lsp.proto.DidCloseTextDocumentParams() {
+        rpc.Handle(new Request(1, "textDocument/didClose",
+          new bhl.lsp.proto.DidCloseTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentIdentifier() { 
               uri = uri
             }
-          })
-        }.ToJson()),
-        new Response() { id = 1, result = "null" }.ToJson()
+          }).ToJson()
+        ),
+        new Response(1, "null").ToJson()
       );
     }
   }
