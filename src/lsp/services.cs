@@ -153,7 +153,7 @@ public class LifecycleService : IService
 
     this.capabilities = capabilities;
     
-    return RpcResult.Success(new InitializeResult
+    return new RpcResult(new InitializeResult
     {
       capabilities = capabilities,
       serverInfo = new InitializeResult.InitializeResultsServerInfo
@@ -167,7 +167,7 @@ public class LifecycleService : IService
   [RpcMethod("initialized")]
   public RpcResult Initialized()
   {
-    return RpcResult.Success();
+    return null;
   }
 
   [RpcMethod("shutdown")]
@@ -175,13 +175,13 @@ public class LifecycleService : IService
   {
     workspace.Shutdown();
 
-    return RpcResult.Success();
+    return new RpcResult(null);
   }
 
   [RpcMethod("exit")]
   public RpcResult Exit()
   {
-    return RpcResult.Exit();
+    return RpcResult.Error(ErrorCodes.Exit);
   }
 }
 
@@ -199,7 +199,7 @@ public class TextDocumentSynchronizationService : IService
   {
     workspace.OpenDocument(args.textDocument.uri, args.textDocument.text);
 
-    return RpcResult.Success();
+    return null;
   }
   
   [RpcMethod("textDocument/didChange")]
@@ -215,43 +215,40 @@ public class TextDocumentSynchronizationService : IService
         });
     }
     
-    return RpcResult.Success();
+    return null;
   }
 
   [RpcMethod("textDocument/didClose")]
   public RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
   {
-    return RpcResult.Success();
+    return null;
   }
   
   [RpcMethod("textDocument/willSave")]
   public RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
 
   [RpcMethod("textDocument/willSaveWaitUntil")]
   public RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
 
   [RpcMethod("textDocument/didSave")]
   public RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
 }
 
@@ -283,7 +280,7 @@ public class TextDocumentSignatureHelpService : IService
         {
           var ps = GetSignatureParams(symb);
 
-          return RpcResult.Success(new SignatureHelp() {
+          return new RpcResult(new SignatureHelp() {
               signatures = new SignatureInformation[] {
                 new SignatureInformation() {
                   label = symb.ToString(),
@@ -299,7 +296,7 @@ public class TextDocumentSignatureHelpService : IService
       }
     }
     
-    return RpcResult.Success();
+    return new RpcResult(null);
   }
 
   static ParameterInformation[] GetSignatureParams(FuncSymbol symb)
@@ -345,7 +342,7 @@ public class TextDocumentGoToService : IService
       if(symb != null)
       {
         var range = (Range)symb.origin.source_range;
-        return RpcResult.Success(new Location
+        return new RpcResult(new Location
         {
           uri = new proto.Uri(symb.origin.source_file),
           range = range
@@ -353,7 +350,7 @@ public class TextDocumentGoToService : IService
       }
     }
 
-    return RpcResult.Success(new Location());
+    return new RpcResult(new Location());
   }
   
   /**
@@ -363,11 +360,10 @@ public class TextDocumentGoToService : IService
   [RpcMethod("textDocument/declaration")]
   public RpcResult GotoDeclaration(DeclarationParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
   
   /**
@@ -377,11 +373,10 @@ public class TextDocumentGoToService : IService
   [RpcMethod("textDocument/typeDefinition")]
   public RpcResult GotoTypeDefinition(TypeDefinitionParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
   
   /**
@@ -391,11 +386,10 @@ public class TextDocumentGoToService : IService
   [RpcMethod("textDocument/implementation")]
   public RpcResult GotoImplementation(ImplementationParams args)
   {
-    return RpcResult.Error(new ResponseError
-    {
-      code = (int)ErrorCodes.RequestFailed,
-      message = "Not supported"
-    });
+    return RpcResult.Error(
+      ErrorCodes.RequestFailed,
+      "Not supported"
+    );
   }
 }
 
@@ -419,7 +413,7 @@ public class TextDocumentHoverService : IService
 
     if(symb != null)
     {
-      return RpcResult.Success(new Hover
+      return new RpcResult(new Hover
       {
         contents = new MarkupContent
         {
@@ -429,7 +423,7 @@ public class TextDocumentHoverService : IService
       });
     }
     
-    return RpcResult.Success();
+    return new RpcResult(null);
   }
 }
 
@@ -449,13 +443,13 @@ public class TextDocumentSemanticTokensService : IService
 
     if(document != null)
     {
-      return RpcResult.Success(new SemanticTokens
+      return new RpcResult(new SemanticTokens
       {
         data = document.proc.GetEncodedSemanticTokens().ToArray()
       });
     }
 
-    return RpcResult.Success();
+    return new RpcResult(null);
   }
 }
 
@@ -521,59 +515,8 @@ public class TextDocumentFindReferencesService : IService
       }
     }
 
-    return RpcResult.Success(refs);
+    return new RpcResult(refs);
   }
 }
-
-//public class TextDocumentServiceProto : IService
-//{
-//  [RpcMethod("textDocument/completion")]
-//  public RpcResult Completion(CompletionParams args);
-//
-//  [RpcMethod("completionItem/resolve")]
-//  public RpcResult ResolveCompletionItem(CompletionItem args);
-//  
-//  [RpcMethod("textDocument/documentHighlight")]
-//  public RpcResult DocumentHighlight(TextDocumentPositionParams args);
-//
-//  [RpcMethod("textDocument/documentSymbol")]
-//  public RpcResult DocumentSymbols(DocumentSymbolParams args);
-//
-//  [RpcMethod("textDocument/documentColor")]
-//  public RpcResult DocumentColor(DocumentColorParams args);
-//
-//  [RpcMethod("textDocument/colorPresentation")]
-//  public RpcResult ColorPresentation(ColorPresentationParams args);
-//
-//  [RpcMethod("textDocument/formatting")]
-//  public RpcResult DocumentFormatting(DocumentFormattingParams args);
-//
-//  [RpcMethod("textDocument/rangeFormatting")]
-//  public RpcResult DocumentRangeFormatting(DocumentRangeFormattingParams args);
-//
-//  [RpcMethod("textDocument/onTypeFormatting")]
-//  public RpcResult DocumentOnTypeFormatting(DocumentOnTypeFormattingParams args);
-//  
-//  [RpcMethod("textDocument/codeAction")]
-//  public RpcResult CodeAction(CodeActionParams args);
-//
-//  [RpcMethod("textDocument/codeLens")]
-//  public RpcResult CodeLens(CodeLensParams args);
-//
-//  [RpcMethod("codeLens/resolve")]
-//  public RpcResult ResolveCodeLens(CodeLens args);
-//
-//  [RpcMethod("textDocument/documentLink")]
-//  public RpcResult DocumentLink(DocumentLinkParams args);
-//
-//  [RpcMethod("documentLink/resolve")]
-//  public RpcResult ResolveDocumentLink(DocumentLink args);
-//
-//  [RpcMethod("textDocument/rename")]
-//  public RpcResult Rename(RenameParams args);
-//
-//  [RpcMethod("textDocument/foldingRange")]
-//  public RpcResult FoldingRange(FoldingRangeParams args);
-//}
 
 }

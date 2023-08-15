@@ -199,14 +199,14 @@ public class TestLSP : BHL_TestBase
     SubTest(() => {
       AssertEqual(
         rpc.Handle(new Request(1, "initialized").ToJson()),
-        new Response(1, "null").ToJson()
+        string.Empty
       );
     });
     
     SubTest(() => {
       AssertEqual(
         rpc.Handle(new Request(1, "shutdown").ToJson()),
-        new Response(1, "null").ToJson()
+        NullResultJson()
       );
     });
     
@@ -269,7 +269,7 @@ public class TestLSP : BHL_TestBase
               text = bhl_v1 
             }}
           ).ToJson()),
-        new Response(1, "null").ToJson()
+        string.Empty
       );
     }
 
@@ -292,7 +292,7 @@ public class TestLSP : BHL_TestBase
             }
           }).ToJson()
         ),
-        new Response(1, "null").ToJson()
+        string.Empty
       );
     }
     
@@ -305,7 +305,7 @@ public class TestLSP : BHL_TestBase
             }
           }).ToJson()
         ),
-        new Response(1, "null").ToJson()
+        string.Empty
       );
     }
   }
@@ -789,16 +789,6 @@ public class TestLSP : BHL_TestBase
       "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   }
 
-  static string NullResultJson()
-  {
-    return "{\"id\":1,\"result\":\"null\",\"jsonrpc\":\"2.0\"}";
-  }
-  
-  static string EmptyResultJson()
-  {
-    return "{\"id\":1,\"result\":{},\"jsonrpc\":\"2.0\"}";
-  }
-  
   static void CleanTestFiles()
   {
     string dir = GetTestDirPath();
@@ -851,6 +841,11 @@ public class TestLSP : BHL_TestBase
   static Logger NoLogger()
   {
     return new Logger(0, new NoLogger());
+  }
+
+  static string NullResultJson(int id = 1)
+  {
+    return "{\"id\":" + id + ",\"jsonrpc\":\"2.0\",\"result\":null}";
   }
 
   public class DummyConnection : IConnection

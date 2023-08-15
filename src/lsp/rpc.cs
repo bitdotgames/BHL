@@ -223,12 +223,15 @@ public class RpcServer : IRpcHandler, IPublisher
 
     if(rsp != null)
     {
+      //NOTE: handling special type of response: server exit 
       if((rsp.error?.code??0) == (int)ErrorCodes.Exit)
         resp_json = null;
-      //NOTE: we send responses only if there were an error or if the request 
-      //      contains an id
-      else if(req == null || req.id.Value != null)
+      else if(rsp.error != null || rsp.result != null)
         resp_json = rsp.ToJson();
+      //NOTE: special 'null-result' case: we need the null result to be sent to the client,
+      //      however null values are omitted when serialized to JSON, hence the hack
+      else if(rsp.result == null)
+        resp_json = rsp.ToJson().TrimEnd('}') + ",\"result\":null}";
     }
 
     sw.Stop();
@@ -246,13 +249,17 @@ public class RpcServer : IRpcHandler, IPublisher
       if(!string.IsNullOrEmpty(request.method))
       {
         RpcResult result = CallRpcMethod(request.method, request.@params);
-        
-        response = new Response
+        if(result != null)
         {
-          id = request.id,
-          result = result.result,
-          error = result.error
-        };
+          response = new Response
+          {
+            id = request.id,
+            result = result.result,
+            error = result.error
+          };
+        }
+        else
+          response = null;
       }
       else
       {
@@ -349,22 +356,17 @@ public class RpcResult
   public object result;
   public ResponseError error;
   
-  public static RpcResult Success(object result = null)
-  {
-    return new RpcResult(result ?? "null", null);
-  }
-
   public static RpcResult Error(ResponseError error)
   {
     return new RpcResult(null, error);
   }
 
-  public static RpcResult Exit()
+  public static RpcResult Error(ErrorCodes code, string msg = "")
   {
-    return new RpcResult(null, new ResponseError() { code = (int)ErrorCodes.Exit } );
+    return new RpcResult(null, new ResponseError() { code = (int)code, message = msg });
   }
-  
-  RpcResult(object result, ResponseError error)
+
+  public RpcResult(object result, ResponseError error = null)
   {
     this.result = result;
     this.error = error;
