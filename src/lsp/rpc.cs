@@ -95,6 +95,8 @@ public class RpcServer : IRpcHandler, IPublisher
   List<IService> services = new List<IService>();
   Dictionary<string, ServiceMethod> name2method = new Dictionary<string, ServiceMethod>();
 
+  public bool need_to_exit { get; private set; } = false;
+
   public RpcServer(Logger logger, IConnection connection)
   {
     this.logger = logger;
@@ -160,8 +162,7 @@ public class RpcServer : IRpcHandler, IPublisher
 
       if(!string.IsNullOrEmpty(response))
         connection.Write(response);
-      //let's exit the loop
-      else if(response == null)
+      else if(need_to_exit)
         return false;
     }
     catch(Exception e)
@@ -173,7 +174,6 @@ public class RpcServer : IRpcHandler, IPublisher
     return true;
   }
 
-  //NOTE: returns 'null' if the server must break its reading loop and exit
   public string Handle(string req_json)
   {
     var sw = Stopwatch.StartNew();
@@ -225,7 +225,7 @@ public class RpcServer : IRpcHandler, IPublisher
     {
       //NOTE: handling special type of response: server exit 
       if((rsp.error?.code??0) == (int)ErrorCodes.Exit)
-        resp_json = null;
+        need_to_exit = true;
       else if(rsp.error != null || rsp.result != null)
         resp_json = rsp.ToJson();
       //NOTE: special 'null-result' case: we need the null result to be sent to the client,

@@ -211,10 +211,12 @@ public class TestLSP : BHL_TestBase
     });
     
     SubTest(() => {
+      AssertFalse(rpc.need_to_exit);
       AssertEqual(
         rpc.Handle(new Request(1, "exit").ToJson()),
-        null
+        string.Empty
       );
+      AssertTrue(rpc.need_to_exit);
     });
   }
 
