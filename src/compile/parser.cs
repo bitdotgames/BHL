@@ -1767,9 +1767,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
 
         var func_arg_symb = func_symb.GetArg(i);
-        var func_arg_type = func_arg_symb.GuessType();
+        var varg_arr_type = func_arg_symb.GuessType() as ArrayTypeSymbol;
 
-        var varg_arr_type = (ArrayTypeSymbol)func_arg_type;
+        if(varg_arr_type == null)
+        {
+          AddError(na.ca, "unresolved type " + func_arg_symb.type);
+          PopAST();
+          return;
+        }
 
         if(variadic_args.Count == 1 && variadic_args[0].VARIADIC() != null)
         {
