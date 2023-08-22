@@ -1698,7 +1698,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
 
           var func_arg_symb = func_symb.GetArg(i);
-          var func_arg_type = func_arg_symb.GuessType();
 
           bool is_ref = na.ca.REF() != null;
           if(!is_ref && func_arg_symb.is_ref)
@@ -1710,6 +1709,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           else if(is_ref && !func_arg_symb.is_ref)
           {
             AddError(na.ca, "argument is not a 'ref'");
+            PopAST();
+            return;
+          }
+
+          var func_arg_type = func_arg_symb.GuessType();
+          if(func_arg_type == null)
+          {
+            AddError(na.ca, "unresolved type " + func_arg_symb.type);
             PopAST();
             return;
           }
@@ -1742,12 +1749,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           PopJsonType();
           PopCallByRef();
 
-          if(func_arg_type == null)
-          {
-            AddError(na.ca, "unresolved type " + func_arg_symb.type);
-            PopAST();
-            return;
-          }
           if(!types.CheckAssign(func_arg_type, Annotate(na.ca), errors))
           {
             PopAST();
