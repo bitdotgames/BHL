@@ -108,51 +108,51 @@ public class TestLSP : BHL_TestBase
   {
     SubTest("parse error", () =>
     {
-      var rpc = new RpcServer(NoLogger(), NoConnection());
+      var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       AssertEqual(
-        rpc.Handle(json),
+        srv.Handle(json),
         "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
     SubTest("invalid request", () =>
     {
-      var rpc = new RpcServer(NoLogger(), NoConnection());
+      var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
       AssertEqual(
-        rpc.Handle(json),
+        srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
     SubTest("invalid request", () =>
     {
-      var rpc = new RpcServer(NoLogger(), NoConnection());
+      var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        rpc.Handle(json),
+        srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
     SubTest("method not found", () =>
     {
-      var rpc = new RpcServer(NoLogger(), NoConnection());
+      var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
       AssertEqual(
-        rpc.Handle(json),
+        srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found\"},\"jsonrpc\":\"2.0\"}"
       );
     });
     
     SubTest("invalid params", () =>
     {
-      var rpc = new RpcServer(NoLogger(), NoConnection());
-      rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger())));
+      var srv = new Server(NoLogger(), NoConnection(), new Workspace());
+      srv.AttachService(new bhl.lsp.LifecycleService(srv));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        rpc.Handle(json),
+        srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.proto.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
       );
     });
@@ -161,8 +161,8 @@ public class TestLSP : BHL_TestBase
   [IsTested()]
   public void TestInitShutdownExit()
   {
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.LifecycleService(new Workspace(NoLogger())));
+    var srv = new Server(NoLogger(), NoConnection(), new Workspace());
+    srv.AttachService(new bhl.lsp.LifecycleService(srv));
 
     SubTest(() => {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
@@ -193,30 +193,30 @@ public class TestLSP : BHL_TestBase
                 "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
                 "\"jsonrpc\":\"2.0\"}";
 
-      AssertEqual(rpc.Handle(req), rsp);
+      AssertEqual(srv.Handle(req), rsp);
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new Request(1, "initialized").ToJson()),
+        srv.Handle(new Request(1, "initialized").ToJson()),
         string.Empty
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(new Request(1, "shutdown").ToJson()),
+        srv.Handle(new Request(1, "shutdown").ToJson()),
         NullResultJson(1)
       );
     });
     
     SubTest(() => {
-      AssertFalse(rpc.need_to_exit);
+      AssertFalse(srv.going_to_exit);
       AssertEqual(
-        rpc.Handle(new Request(1, "exit").ToJson()),
+        srv.Handle(new Request(1, "exit").ToJson()),
         string.Empty
       );
-      AssertTrue(rpc.need_to_exit);
+      AssertTrue(srv.going_to_exit);
     });
   }
 
@@ -247,10 +247,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentSynchronizationService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentSynchronizationService(srv));
     
     CleanTestFiles();
 
@@ -262,7 +262,7 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        rpc.Handle(new Request(1, "textDocument/didOpen",
+        srv.Handle(new Request(1, "textDocument/didOpen",
           new bhl.lsp.proto.DidOpenTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentItem() { 
               languageId = "bhl", 
@@ -283,7 +283,7 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        rpc.Handle(new Request(1, "textDocument/didChange",
+        srv.Handle(new Request(1, "textDocument/didChange",
           new bhl.lsp.proto.DidChangeTextDocumentParams() {
             textDocument = new bhl.lsp.proto.VersionedTextDocumentIdentifier() { 
               version = 1, 
@@ -300,7 +300,7 @@ public class TestLSP : BHL_TestBase
     
     {
       AssertEqual(
-        rpc.Handle(new Request(1, "textDocument/didClose",
+        srv.Handle(new Request(1, "textDocument/didClose",
           new bhl.lsp.proto.DidCloseTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentIdentifier() { 
               uri = uri
@@ -376,10 +376,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentGoToService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentGoToService(srv));
     
     CleanTestFiles();
     
@@ -395,104 +395,104 @@ public class TestLSP : BHL_TestBase
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri1, "st1(42)")),
+        srv.Handle(GoToDefinitionReq(uri1, "st1(42)")),
         GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3)
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "est2()")),
+        srv.Handle(GoToDefinitionReq(uri2, "est2()")),
         GoToDefinitionRsp(uri1, "func test2()", end_line_offset: 4)
       );
     });
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
+        srv.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
+        srv.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
+        srv.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
+        srv.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "AR = 1")),
+        srv.Handle(GoToDefinitionReq(uri2, "AR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
+        srv.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
         GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 2)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "k = 10")),
+        srv.Handle(GoToDefinitionReq(uri2, "k = 10")),
         GoToDefinitionRsp(uri2, "k, int j)")
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "j = 100")),
+        srv.Handle(GoToDefinitionReq(uri2, "j = 100")),
         GoToDefinitionRsp(uri2, "j)")
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "test4()")),
+        srv.Handle(GoToDefinitionReq(uri2, "test4()")),
         GoToDefinitionRsp(uri2, "func ErrorCodes test4()", end_line_offset: 7)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
+        srv.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
         GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3)
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
+        srv.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
         GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 6)
       );
     });
 
     SubTest(() => {
-      var rsp = rpc.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
+      var rsp = srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
       AssertContains(rsp, "test_lsp.cs");
       AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(GoToDefinitionReq(uri2, "pval + 1")),
+        srv.Handle(GoToDefinitionReq(uri2, "pval + 1")),
         GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4)
       );
     });
@@ -545,10 +545,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentFindReferencesService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentFindReferencesService(srv));
     
     CleanTestFiles();
     
@@ -562,7 +562,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(FindReferencesReq(uri1, "st1(42)")),
+        srv.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
           new UriNeedle(uri1, "func float test1(float k)", end_line_offset: 3),
           new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
@@ -573,7 +573,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(FindReferencesReq(uri1, "pval + 1")),
+        srv.Handle(FindReferencesReq(uri1, "pval + 1")),
         FindReferencesRsp(
           new UriNeedle(uri1, "int upval = 1", end_column_offset: 8),
           new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
@@ -584,7 +584,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
+        srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
         FindReferencesRsp(
           new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
           new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
@@ -609,10 +609,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentHoverService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentHoverService(srv));
     
     CleanTestFiles();
     
@@ -623,14 +623,14 @@ public class TestLSP : BHL_TestBase
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(HoverReq(uri, "est1() //hover 1")),
+        srv.Handle(HoverReq(uri, "est1() //hover 1")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float k,float n)\"}},\"jsonrpc\":\"2.0\"}"
       );
     });
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(HoverReq(uri, "k //return k")),
+        srv.Handle(HoverReq(uri, "k //return k")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"float k\"}},\"jsonrpc\":\"2.0\"}"
       );
     });
@@ -657,10 +657,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentSignatureHelpService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentSignatureHelpService(srv));
     
     CleanTestFiles();
     
@@ -671,7 +671,7 @@ public class TestLSP : BHL_TestBase
 
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(SignatureHelpReq(uri, ") //signature help 1")),
+        srv.Handle(SignatureHelpReq(uri, ") //signature help 1")),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
@@ -680,7 +680,7 @@ public class TestLSP : BHL_TestBase
     
     SubTest(() => {
       AssertEqual(
-        rpc.Handle(SignatureHelpReq(uri, ", //signature help 2")),
+        srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
         "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
         "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
         "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
@@ -698,10 +698,10 @@ public class TestLSP : BHL_TestBase
     }
     ";
 
-    var ws = new Workspace(NoLogger());
+    var ws = new Workspace();
 
-    var rpc = new RpcServer(NoLogger(), NoConnection());
-    rpc.AttachService(new bhl.lsp.proto.TextDocumentSemanticTokensService(ws));
+    var srv = new Server(NoLogger(), NoConnection(), ws);
+    srv.AttachService(new bhl.lsp.TextDocumentSemanticTokensService(srv));
     
     CleanTestFiles();
     
@@ -715,7 +715,7 @@ public class TestLSP : BHL_TestBase
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
     
     AssertEqual(
-      rpc.Handle(json),
+      srv.Handle(json),
       "{\"id\":1,\"result\":{\"data\":" +
       "[1,4,5,6,0,"+"0,6,13,0,0,"+"2,8,6,5,0,"+"0,7,15,2,2]},\"jsonrpc\":\"2.0\"}"
     );

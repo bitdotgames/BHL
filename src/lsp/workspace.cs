@@ -9,8 +9,6 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  public Logger logger { get; private set; }
-
   Types ts;
 
   IncludePath inc_path;
@@ -22,11 +20,6 @@ public class Workspace
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
 
   public lsp.proto.ClientCapabilities capabilities { get; private set; }
-
-  public Workspace(Logger logger)
-  {
-    this.logger = logger;
-  }
 
   public void Init(Types ts, IncludePath inc_path)
   {

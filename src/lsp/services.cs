@@ -1,21 +1,25 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using bhl.lsp.proto;
 
-namespace bhl.lsp.proto {
+namespace bhl.lsp {
 
 public class LifecycleService : IService
 {
+  Server srv;
   Workspace workspace;
 
   public int? process_id { get; private set; }
-
-  public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
   
-  public LifecycleService(Workspace workspace)
+  public LifecycleService(Server srv)
   {
-    this.workspace = workspace;
+    this.srv = srv;
+    this.workspace = srv.workspace;
   }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {}
 
   [RpcMethod("initialize")]
   public RpcResult Initialize(InitializeParams args)
@@ -46,7 +50,7 @@ public class LifecycleService : IService
     if(proj == null)
       proj = new ProjectConf();
 
-    workspace.logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
+    srv.logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
 
     proj.LoadBindings().Register(ts);
     
@@ -55,85 +59,13 @@ public class LifecycleService : IService
     //TODO: run it in background
     workspace.IndexFiles();
 
-    var capabilities = new ServerCapabilities();
-
-    if(args.capabilities.textDocument != null)
-    {
-      if(args.capabilities.textDocument.synchronization != null)
-      {
-        capabilities.textDocumentSync = new TextDocumentSyncOptions
-        {
-          openClose = true, //open and close notifications are sent to server
-          change = proto.TextDocumentSyncKind.Full,
-          save = false //didSave
-        };
-      }
-      
-      //TODO:
-      //if(args.capabilities.textDocument.signatureHelp != null)
-      //{
-      //  capabilities.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
-      //}
-
-      if(args.capabilities.textDocument.hover != null)
-      {
-        capabilities.hoverProvider = true; //textDocument/hover
-      }
-
-      if(args.capabilities.textDocument.declaration != null)
-      {
-        capabilities.declarationProvider = false; //textDocument/declaration
-      }
-
-      if(args.capabilities.textDocument.definition != null)
-      {
-        capabilities.definitionProvider = true; //textDocument/definition
-      }
-
-      if(args.capabilities.textDocument.typeDefinition != null)
-      {
-        capabilities.typeDefinitionProvider = false; //textDocument/typeDefinition
-      }
-      
-      if(args.capabilities.textDocument.implementation != null)
-      {
-        capabilities.implementationProvider = false; //textDocument/implementation
-      }
-
-      if(args.capabilities.textDocument.references != null)
-      {
-        capabilities.referencesProvider = true; //textDocument/references
-      }
-
-      if(args.capabilities.textDocument.semanticTokens != null)
-      {
-        capabilities.semanticTokensProvider = new SemanticTokensOptions
-        {
-          full = true,
-          range = false,
-          legend = new SemanticTokensLegend
-          {
-            tokenTypes = bhl.ANTLR_Processor.SemanticTokens.token_types,
-            tokenModifiers = bhl.ANTLR_Processor.SemanticTokens.modifiers
-          }
-        };
-      }
-
-      if(args.capabilities.textDocument.publishDiagnostics != null)
-      {
-        capabilities.diagnosticProvider = new DiagnosticOptions
-        {
-          interFileDependencies = true,
-          workspaceDiagnostics = true
-        };
-      }
-    }
-
-    this.capabilities = capabilities;
+    var server_capabilities = srv.capabilities;
+    foreach(var service in srv.services)
+      service.GetCapabilities(args.capabilities, ref server_capabilities);
     
     return new RpcResult(new InitializeResult
     {
-      capabilities = capabilities,
+      capabilities = server_capabilities,
       serverInfo = new InitializeResult.InitializeResultsServerInfo
       {
         name = "bhlsp",
@@ -165,15 +97,27 @@ public class LifecycleService : IService
 
 public class DiagnosticService : IService
 {
-  IPublisher publisher;
+  Server srv;
 
   Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
   
-  public DiagnosticService(Workspace workspace, IPublisher publisher)
+  public DiagnosticService(Server srv)
   {
-    this.publisher = publisher;
+    this.srv = srv;
 
-    workspace.OnDiagnostics += PublishDiagnostics;
+    srv.workspace.OnDiagnostics += PublishDiagnostics;
+  }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.publishDiagnostics != null)
+    {
+      sc.diagnosticProvider = new DiagnosticOptions
+      {
+        interFileDependencies = true,
+        workspaceDiagnostics = true
+      };
+    }
   }
 
   void PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
@@ -211,7 +155,7 @@ public class DiagnosticService : IService
           @params = dparams
         };
 
-        publisher.Publish(notification);
+        srv.Publish(notification);
       }
     }
 
@@ -223,9 +167,22 @@ public class TextDocumentSynchronizationService : IService
 {
   Workspace workspace;
 
-  public TextDocumentSynchronizationService(Workspace workspace)
+  public TextDocumentSynchronizationService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+  
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.synchronization != null)
+    {
+      sc.textDocumentSync = new TextDocumentSyncOptions
+      {
+        openClose = true, //open and close notifications are sent to server
+        change = proto.TextDocumentSyncKind.Full,
+        save = false //didSave
+      };
+    }
   }
 
   [RpcMethod("textDocument/didOpen")]
@@ -290,9 +247,18 @@ public class TextDocumentSignatureHelpService : IService
 {
   Workspace workspace;
 
-  public TextDocumentSignatureHelpService(Workspace workspace)
+  public TextDocumentSignatureHelpService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    //TODO:
+    //if(cc.textDocument?.signatureHelp != null)
+    //{
+    //  sc.signatureHelpProvider = new SignatureHelpOptions { triggerCharacters = new[] {"(", ","} };
+    //}
   }
 
   [RpcMethod("textDocument/signatureHelp")]
@@ -355,9 +321,24 @@ public class TextDocumentGoToService : IService
 {
   Workspace workspace;
 
-  public TextDocumentGoToService(Workspace workspace)
+  public TextDocumentGoToService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.definition != null)
+      sc.definitionProvider = true; //textDocument/definition
+
+    if(cc.textDocument?.declaration != null)
+      sc.declarationProvider = false; //textDocument/declaration
+
+    if(cc.textDocument?.typeDefinition != null)
+      sc.typeDefinitionProvider = false; //textDocument/typeDefinition
+    
+    if(cc.textDocument?.implementation != null)
+      sc.implementationProvider = false; //textDocument/implementation
   }
 
   /**
@@ -375,7 +356,7 @@ public class TextDocumentGoToService : IService
 
       if(symb != null)
       {
-        var range = (Range)symb.origin.source_range;
+        var range = (bhl.lsp.proto.Range)symb.origin.source_range;
         return new RpcResult(new Location
         {
           uri = new proto.Uri(symb.origin.source_file),
@@ -431,9 +412,15 @@ public class TextDocumentHoverService : IService
 {
   Workspace workspace;
 
-  public TextDocumentHoverService(Workspace workspace)
+  public TextDocumentHoverService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.hover != null)
+      sc.hoverProvider = true; //textDocument/hover
   }
 
   [RpcMethod("textDocument/hover")]
@@ -465,9 +452,26 @@ public class TextDocumentSemanticTokensService : IService
 {
   Workspace workspace;
 
-  public TextDocumentSemanticTokensService(Workspace workspace)
+  public TextDocumentSemanticTokensService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+  
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.semanticTokens != null)
+    {
+      sc.semanticTokensProvider = new SemanticTokensOptions
+      {
+        full = true,
+        range = false,
+        legend = new SemanticTokensLegend
+        {
+          tokenTypes = bhl.ANTLR_Processor.SemanticTokens.token_types,
+          tokenModifiers = bhl.ANTLR_Processor.SemanticTokens.modifiers
+        }
+      };
+    }
   }
 
   [RpcMethod("textDocument/semanticTokens/full")]
@@ -491,9 +495,15 @@ public class TextDocumentFindReferencesService : IService
 {
   Workspace workspace;
 
-  public TextDocumentFindReferencesService(Workspace workspace)
+  public TextDocumentFindReferencesService(Server srv)
   {
-    this.workspace = workspace;
+    this.workspace = srv.workspace;
+  }
+
+  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
+  {
+    if(cc.textDocument?.references != null)
+      sc.referencesProvider = true; //textDocument/references
   }
 
   /**
@@ -518,7 +528,7 @@ public class TextDocumentFindReferencesService : IService
           {
             if(an_kv.Value.lsp_symbol == symb)
             {
-              var range = (Range)an_kv.Value.range;
+              var range = (bhl.lsp.proto.Range)an_kv.Value.range;
               var loc = new Location {
                 uri = new proto.Uri(kv.Key),
                 range = range
@@ -543,7 +553,7 @@ public class TextDocumentFindReferencesService : IService
         {
           refs.Add(new Location {
             uri = new proto.Uri(symb.origin.source_file),
-            range = (Range)symb.origin.source_range
+            range = (bhl.lsp.proto.Range)symb.origin.source_range
           });
         }
       }

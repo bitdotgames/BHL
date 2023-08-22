@@ -27,7 +27,7 @@ public class LSP : ICmd
 
     var logger = new Logger(1, log_writer);
 
-    var workspace = new Workspace(logger);
+    var workspace = new Workspace();
 
     Console.OutputEncoding = new UTF8Encoding();
 
@@ -36,19 +36,12 @@ public class LSP : ICmd
     
     var connection = new ConnectionStdIO(stdout, stdin);
     
-    var rpc = new RpcServer(logger, connection);
-    rpc.AttachService(new LifecycleService(workspace));
-    rpc.AttachService(new DiagnosticService(workspace, rpc));
-    rpc.AttachService(new TextDocumentSynchronizationService(workspace));
-    rpc.AttachService(new TextDocumentSignatureHelpService(workspace));
-    rpc.AttachService(new TextDocumentGoToService(workspace));
-    rpc.AttachService(new TextDocumentFindReferencesService(workspace));
-    rpc.AttachService(new TextDocumentHoverService(workspace));
-    rpc.AttachService(new TextDocumentSemanticTokensService(workspace));
+    var srv = new Server(logger, connection, workspace);
     
     try
     {
-      rpc.Start();
+      srv.AttachAllServices();
+      srv.Start();
     }
     catch (Exception e)
     {

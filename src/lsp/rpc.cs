@@ -4,23 +4,13 @@ using System.Collections.Generic;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using bhl.lsp.proto;
 
 namespace bhl.lsp {
 
 public interface IService 
 {
-  //TODO:
-  //public void Tick();
-}
-
-public interface IPublisher
-{
-  void Publish(Notification notification);
-}
-
-public interface IRpcHandler
-{
-  Response HandleRequest(Request request);
+  void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc);
 }
 
 public abstract class MessageBase
@@ -80,10 +70,13 @@ public class Notification
   public object @params { get; set; }
 }
 
-public class RpcServer : IRpcHandler, IPublisher
+public class Server
 {
-  IConnection connection;
-  Logger logger;
+  public IConnection connection { get; private set; }
+  public Logger logger { get; private set; }
+  public Workspace workspace { get; private set; }
+
+  public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
 
   public struct ServiceMethod
   {
@@ -92,15 +85,28 @@ public class RpcServer : IRpcHandler, IPublisher
     public System.Type arg_type;
   }
 
-  List<IService> services = new List<IService>();
+  public List<IService> services { get; private set; } = new List<IService>();
   Dictionary<string, ServiceMethod> name2method = new Dictionary<string, ServiceMethod>();
 
-  public bool need_to_exit { get; private set; } = false;
+  public bool going_to_exit { get; private set; } = false;
 
-  public RpcServer(Logger logger, IConnection connection)
+  public Server(Logger logger, IConnection connection, Workspace workspace)
   {
     this.logger = logger;
     this.connection = connection;
+    this.workspace = workspace;
+  }
+
+  public void AttachAllServices()
+  {
+    AttachService(new LifecycleService(this));
+    AttachService(new DiagnosticService(this));
+    AttachService(new TextDocumentSynchronizationService(this));
+    AttachService(new TextDocumentSignatureHelpService(this));
+    AttachService(new TextDocumentGoToService(this));
+    AttachService(new TextDocumentFindReferencesService(this));
+    AttachService(new TextDocumentHoverService(this));
+    AttachService(new TextDocumentSemanticTokensService(this));
   }
 
   public void AttachService(IService service)
@@ -162,7 +168,7 @@ public class RpcServer : IRpcHandler, IPublisher
 
       if(!string.IsNullOrEmpty(response))
         connection.Write(response);
-      else if(need_to_exit)
+      else if(going_to_exit)
         return false;
     }
     catch(Exception e)
@@ -225,7 +231,7 @@ public class RpcServer : IRpcHandler, IPublisher
     {
       //NOTE: handling special type of response: server exit 
       if((rsp.error?.code??0) == (int)ErrorCodes.Exit)
-        need_to_exit = true;
+        going_to_exit = true;
       else if(rsp.error != null || rsp.result != null)
         resp_json = rsp.ToJson();
       //NOTE: special 'null-result' case: we need the null result to be sent to the client,
