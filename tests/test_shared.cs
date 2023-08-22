@@ -45,7 +45,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestInterfaces());
     counter += Run(names, new TestTypeCasts());
     counter += Run(names, new TestNamespace());
-    counter += Run(names, new TestImplicitVar());
+    counter += Run(names, new TestImplicit());
     counter += Run(names, new TestStackTrace());
     counter += Run(names, new TestMaps());
     counter += Run(names, new TestStd());
