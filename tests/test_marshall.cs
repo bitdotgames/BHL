@@ -24,6 +24,8 @@ public class TestMarshall : BHL_TestBase
 
       ns.Define(new VariableSymbol(new Origin(), "wow", ns.TArr(Types.Bool)));
 
+      ns.Define(new VariableSymbol(new Origin(), "hey", ns.TMap(Types.String, Types.Int)));
+
       var Test = new FuncSymbolScript(new Origin(), new FuncSignature(false, ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       Test.Define(new FuncArgSymbol("s", Types.String));
@@ -65,8 +67,8 @@ public class TestMarshall : BHL_TestBase
       //NOTE: right after un-marshalling some symbols are not setup yet
       ns.SetupSymbols();
 
-      AssertEqual(8 + ts.ns.members.Count, ns.GetSymbolsIterator().Count);
-      AssertEqual(8, ns.members.Count);
+      AssertEqual(9 + ts.ns.members.Count, ns.GetSymbolsIterator().Count);
+      AssertEqual(9, ns.members.Count);
 
       var foo = (VariableSymbol)ns.Resolve("foo");
       AssertEqual(foo.name, "foo");
@@ -87,6 +89,13 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(wow.scope, ns);
       AssertEqual(wow.scope_idx, 2);
 
+      var hey = (VariableSymbol)ns.Resolve("hey");
+      AssertEqual(hey.name, "hey");
+      AssertEqual(hey.type.Get().GetName(), ns.TMap(Types.String, Types.Int).Get().GetName());
+      AssertEqual(((GenericMapTypeSymbol)hey.type.Get()).key_type.Get(), Types.String);
+      AssertEqual(hey.scope, ns);
+      AssertEqual(hey.scope_idx, 3);
+
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
       AssertFalse(Test.attribs.HasFlag(FuncAttrib.Coro));
@@ -95,7 +104,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(1, Test.default_args_num);
       AssertEqual(2, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
-      AssertEqual(3, Test.scope_idx);
+      AssertEqual(4, Test.scope_idx);
       AssertEqual(2, Test.GetTotalArgsNum());
       AssertEqual("a", Test.GetArg(0).name);
       AssertTrue(Test.GetArg(0).is_ref);
@@ -118,7 +127,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(3, Make.default_args_num);
       AssertEqual(1, Make.local_vars_num);
       AssertEqual(15, Make.ip_addr);
-      AssertEqual(4, Make.scope_idx);
+      AssertEqual(5, Make.scope_idx);
 
       var Foo = (ClassSymbolScript)ns.Resolve("Foo");
       AssertEqual(Foo.scope, ns);

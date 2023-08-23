@@ -419,8 +419,8 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
-  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), new Proxy<IType>());  
-  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), new Proxy<IType>(), new Proxy<IType>());  
+  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), Any);  
+  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), Any, Any);  
 
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();

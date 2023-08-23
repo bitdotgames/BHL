@@ -523,34 +523,4 @@ public class TestImplicit : BHL_TestBase
        )
     );
   }
-
-  [IsTested()]
-  public void TestAssignGlobalVarFromAnotherModule()
-  {
-    string file_a = @"
-      []string Strings = []
-    ";
-
-    string file_test =  @"
-    import ""/a""
-
-    func int test() {
-      var t = Strings
-      return t.IndexOf(""foo"")
-    }
-    ";                 
-
-    CleanTestDir();
-
-    var vm = MakeVM(new Dictionary<string, string>() {
-        {"a.bhl", file_a},
-        {"test.bhl", file_test},
-      }
-    );
-
-    vm.LoadModule("test");
-    AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
-  }
-
 }

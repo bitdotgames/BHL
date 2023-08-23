@@ -1228,4 +1228,41 @@ public class TestImport : BHL_TestBase
      "module 'test' ambiguous resolving"
     );
   }
+
+  [IsTested()]
+  public void TestUseGlobalVarFromAnotherModuleAfterIncrementalBuild()
+  {
+    string file_a = @"
+      []string Strings = []
+    ";
+
+    string file_test =  @"
+    import ""/a""
+
+    func int test() {
+      return Strings.IndexOf(""test"")
+    }
+    ";                 
+
+    var files = MakeFiles(new Dictionary<string, string>() {
+          {"a.bhl", file_a},
+          {"test.bhl", file_test},
+        }       
+    );
+
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("test");
+      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+    }
+
+    {
+      //emulate changes and try incremental build
+      System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+      var vm = MakeVM(files, use_cache: true);
+      vm.LoadModule("test");
+      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+    }
+  }
+
 }

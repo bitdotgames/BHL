@@ -699,15 +699,28 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
 
 public abstract class ArrayTypeSymbol : ClassSymbol
 {
-  public readonly FuncSymbolNative FuncArrIdx = null;
-  public readonly FuncSymbolNative FuncArrIdxW = null;
+  internal FuncSymbolNative FuncArrIdx;
+  internal FuncSymbolNative FuncArrIdxW;
 
   public Proxy<IType> item_type;
+
+  //marshall factory version
+  public ArrayTypeSymbol()     
+    : base(null, null)
+  {}
 
   public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type)     
     : base(origin, name)
   {
     this.item_type = item_type;
+
+    Setup();
+  }
+
+  public override void Setup()
+  {
+    if(item_type.IsEmpty())
+      throw new Exception("Invalid item type");
 
     this.creator = CreateArr;
 
@@ -753,8 +766,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, ArrIdxW);
     }
 
-    Setup();
+    base.Setup();
   }
+
+  public ArrayTypeSymbol(Origin origin, string name)     
+    : base(origin, name)
+  {}
 
   public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
     : this(origin, "[]" + item_type.path, item_type)
@@ -780,7 +797,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 
   //marshall factory version
   public GenericArrayTypeSymbol()
-    : this(null, new Proxy<IType>())
+    : base()
   {}
 
   static IList<Val> AsList(Val arr)
@@ -889,7 +906,12 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     marshall.Marshall.Sync(ctx, ref item_type);
 
     if(ctx.is_read)
+    {
       name = "[]" + item_type.path;
+
+      //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
+      Setup();
+    }
   }
 
   public override bool Equals(object o)
@@ -1020,19 +1042,34 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
 public abstract class MapTypeSymbol : ClassSymbol
 {
-  public readonly FuncSymbolNative FuncMapIdx = null;
-  public readonly FuncSymbolNative FuncMapIdxW = null;
+  internal FuncSymbolNative FuncMapIdx;
+  internal FuncSymbolNative FuncMapIdxW;
 
   public Proxy<IType> key_type;
   public Proxy<IType> val_type;
 
   public ClassSymbol enumerator_type = new ClassSymbolNative(new Origin(), "Enumerator");
 
+  //marshall factory version
+  public MapTypeSymbol()     
+    : base(null, null)
+  {}
+
   public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(origin, "[" + key_type.path + "]" + val_type.path)
   {
     this.key_type = key_type;
     this.val_type = val_type;
+
+    Setup();
+  }
+
+  public override void Setup()
+  {
+    if(key_type.IsEmpty())
+      throw new Exception("Invalid key type");
+    if(val_type.IsEmpty())
+      throw new Exception("Invalid value type");
 
     this.creator = CreateMap;
 
@@ -1103,7 +1140,7 @@ public abstract class MapTypeSymbol : ClassSymbol
       enumerator_type.Define(fn);
     }
 
-    Setup();
+    base.Setup();
     enumerator_type.Setup();
   }
 
@@ -1132,7 +1169,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   
   //marshall factory version
   public GenericMapTypeSymbol()
-    : this(null, new Proxy<IType>(), new Proxy<IType>())
+    : base()
   {}
 
   static ValMap AsMap(Val arr)
@@ -1154,7 +1191,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     marshall.Marshall.Sync(ctx, ref val_type);
 
     if(ctx.is_read)
+    {
       name = "[" + key_type.path + "]" + val_type.path;
+
+      //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
+      Setup();
+    }
   }
 
   public override bool Equals(object o)

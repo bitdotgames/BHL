@@ -604,7 +604,7 @@ public class BHL_TestBase
     return vm;
   }
 
-  public VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
+  public static List<string> MakeFiles(Dictionary<string, string> file2src, bool clean_dir = true)
   {
     if(clean_dir)
       CleanTestDir();
@@ -612,13 +612,22 @@ public class BHL_TestBase
     var files = new List<string>();
     foreach(var kv in file2src)
       NewTestFile(kv.Key, kv.Value, ref files);
+    return files;
+  }
 
+  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false)
+  {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
     var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache));
     var vm = new VM(ts, loader);
     return vm;
+  }
+
+  public static VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
+  {
+    return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
