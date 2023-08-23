@@ -970,17 +970,15 @@ public class TestImport : BHL_TestBase
       func garbage() {}
     ";
 
-    CleanTestDir();
-
-    var files = new List<string>();
-    NewTestFile("unit.bhl", file_unit, ref files);
-    NewTestFile("test.bhl", file_test, ref files);
-    NewTestFile("garbage.bhl", file_garbage, ref files);
+    var files = MakeFiles(new Dictionary<string, string>() {
+          {"unit.bhl", file_unit},
+          {"test.bhl", file_test},
+          {"garbage.bhl", file_garbage},
+        }       
+    );
 
     {
-      var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
-      var vm = new VM(ts, loader);
+      var vm = MakeVM(files, use_cache: true);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
@@ -992,13 +990,11 @@ public class TestImport : BHL_TestBase
       }
       Unit u = {test: 32}
     ";
-    int fidx = NewTestFile("unit.bhl", new_file_unit, ref files, unique: true);
-    System.IO.File.SetLastWriteTimeUtc(files[fidx], DateTime.UtcNow.AddSeconds(1));
+    File.WriteAllText(files[0], new_file_unit);
+    System.IO.File.SetLastWriteTimeUtc(files[0], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
-      var vm = new VM(ts, loader);
+      var vm = MakeVM(files, use_cache: true);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 32);
     }
