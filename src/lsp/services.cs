@@ -139,9 +139,8 @@ public class DiagnosticService : IService
           //NOTE: let's force the error to be 'one-line'
           if(dg.range.start.line != dg.range.end.line)
           {
-            dg.range.end.line = dg.range.start.line;
-            //adding some arbitrary offset
-            dg.range.end.character = dg.range.start.character + 1000;
+            dg.range.end.line = dg.range.start.line+1;
+            dg.range.end.character = 0;
           }
           dg.message = err.text;
 
