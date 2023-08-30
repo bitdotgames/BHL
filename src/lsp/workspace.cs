@@ -73,7 +73,14 @@ public class Workspace
 
     var errors = new CompileErrors();
 
-    var parser = ANTLR_Processor.Stream2Parser(file, stream, null/*TODO*/);
+    //TODO: use different error handlers?
+    var err_handlers = ErrorHandlers.MakeStandard(file, errors);
+
+    var parser = ANTLR_Processor.Stream2Parser(
+      file, 
+      stream, 
+      err_handlers
+    );
 
     //NOTE: ANTLR parsing happens here 
     var parsed = new ANTLR_Parsed(parser);
@@ -84,7 +91,7 @@ public class Workspace
       parsed, 
       ts, 
       errors, 
-      err_handlers: null/*TODO*/
+      err_handlers
     );
 
     return proc;
