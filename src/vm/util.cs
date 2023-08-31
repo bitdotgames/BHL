@@ -421,6 +421,18 @@ public static class Extensions
       s[idx] = curr;
     }
   }
+
+  public static FuncSignatureAttrib ToFuncSignatureAttrib(this FuncAttrib attrib)
+  {
+    return (FuncSignatureAttrib)((byte)FuncSignatureAttrib.FuncAttribMask & (byte)attrib);
+  }
+
+  public static void SetFuncAttrib(this FuncSignatureAttrib attrib, ref byte other)
+  {
+    //NOTE: we want to force FuncSignatureAttrib bits only, for this we mask out
+    //      these bits in the target value and 'or' the bits we want to set
+    other = (byte)((other & (byte)~FuncSignatureAttrib.FuncAttribMask) | (byte)attrib);
+  }
 }
 
 public struct FuncArgsInfo

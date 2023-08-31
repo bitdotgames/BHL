@@ -753,7 +753,12 @@ public static class ScopeExtensions
 
   public static Proxy<IType> TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)
   {           
-    var sig = new FuncSignature(is_coro, self.T(ret_type));
+    return self.TFunc(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type, arg_types);
+  }
+
+  public static Proxy<IType> TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type, params TypeArg[] arg_types)
+  {           
+    var sig = new FuncSignature(attribs, self.T(ret_type));
     foreach(var arg_type in arg_types)
       sig.AddArg(self.T(arg_type));
     return self.T(sig);

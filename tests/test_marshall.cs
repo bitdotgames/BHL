@@ -26,23 +26,23 @@ public class TestMarshall : BHL_TestBase
 
       ns.Define(new VariableSymbol(new Origin(), "hey", ns.TMap(Types.String, Types.Int)));
 
-      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(false, ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
+      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       Test.Define(new FuncArgSymbol("s", Types.String));
       ns.Define(Test);
 
-      var Make = new FuncSymbolScript(new Origin(), new FuncSignature(true, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
+      var Make = new FuncSymbolScript(new Origin(), new FuncSignature(FuncSignatureAttrib.Coro, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
       Make.Define(new FuncArgSymbol("bar", ns.T("Bar")));
       ns.Define(Make);
 
       var Foo = new ClassSymbolScript(new Origin(), "Foo");
       Foo.Define(new FieldSymbolScript(new Origin(), "Int", Types.Int));
-      Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(false, Types.Void), "Hey", 0, 3));
+      Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
       var Bar = new ClassSymbolScript(new Origin(), "Bar");
       Bar.SetSuperAndInterfaces(Foo);
       Bar.Define(new FieldSymbolScript(new Origin(), "Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(false, ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);
 
       var Enum = new EnumSymbolScript(new Origin(), "Enum");

@@ -1239,12 +1239,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(is_last)
     {
-      if(!yielded && fsig.is_coro)
+      if(!yielded && fsig.attribs.HasFlag(FuncSignatureAttrib.Coro))
       {
         AddError(call.node, "coro function must be called via yield");
         return;
       }
-      else if(yielded && !fsig.is_coro)
+      else if(yielded && !fsig.attribs.HasFlag(FuncSignatureAttrib.Coro))
       {
         AddError(call.node, "not a coro function");
         return;
@@ -1252,7 +1252,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
     else 
     {
-      if(fsig.is_coro)
+      if(fsig.attribs.HasFlag(FuncSignatureAttrib.Coro))
       {
         AddError(call.node, "coro function must be called via yield");
         return;
@@ -1932,7 +1932,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return cargs;
   }
 
-  FuncSignature ParseFuncSignature(bool is_async, bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
+  FuncSignature ParseFuncSignature(bool is_coro, bhlParser.RetTypeContext ret_ctx, bhlParser.TypesContext types_ctx)
   {
     var ret_type = ParseType(ret_ctx);
 
@@ -1952,7 +1952,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
     }
 
-    return new FuncSignature(is_async, ret_type, arg_types);
+    return new FuncSignature(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type, arg_types);
   }
 
   FuncSignature ParseFuncSignature(bhlParser.FuncTypeContext ctx)
@@ -1962,10 +1962,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(bool is_async, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(bool is_coro, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
-    var sig = new FuncSignature(is_async, ret_type);
+    var sig = new FuncSignature(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type);
     if(fparams != null)
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
@@ -1987,7 +1987,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(vd.assignExp() != null)
             AddError(vd.assignExp(), "default argument is not allowed");
 
-          sig.has_variadic = true;
+          sig.attribs |= FuncSignatureAttrib.VariadicArgs;
           ++default_args_num;
         }
         else if(vd.assignExp() != null)

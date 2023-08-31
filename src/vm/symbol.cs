@@ -1555,14 +1555,26 @@ public class FieldSymbolScript : FieldSymbol
 }
 
 [System.Flags]
+public enum FuncSignatureAttrib : byte
+{
+  None           = 0,
+  Coro           = 1,
+  VariadicArgs   = 2,
+  //it's a value which masks from FuncAttrib only
+  //supported values by FuncSignatureAttrib
+  FuncAttribMask = 3
+}
+
+//NOTE: it's a superset of FuncSignatureAttrib
+[System.Flags]
 public enum FuncAttrib : byte
 {
   None         = 0,
-  Virtual      = 1,
-  Override     = 2,
-  Static       = 4,
-  VariadicArgs = 8,
-  Coro        = 16,
+  Coro         = 1,
+  VariadicArgs = 2,
+  Virtual      = 4,
+  Override     = 8,
+  Static       = 16,
 }
 
 public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsIteratable
@@ -1575,15 +1587,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     set {
       _signature = value;
 
-      if(_signature.is_coro)
-        _attribs |= (byte)FuncAttrib.Coro;
-      else
-        _attribs &= (byte)~FuncAttrib.Coro;
-
-      if(_signature.has_variadic)
-        _attribs |= (byte)FuncAttrib.VariadicArgs;
-      else
-        _attribs &= (byte)~FuncAttrib.VariadicArgs;
+      _signature.attribs.SetFuncAttrib(ref _attribs);
     }
   }
 
@@ -1608,8 +1612,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     }
     set {
       _attribs = (byte)value;
-      signature.is_coro = value.HasFlag(FuncAttrib.Coro);
-      signature.has_variadic = value.HasFlag(FuncAttrib.VariadicArgs);
+      signature.attribs = value.ToFuncSignatureAttrib();
     }
   }
 
@@ -1737,13 +1740,13 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
   {
     string buf = 
       "func " + signature.ret_type.path + " " + name +"("; 
-    if(signature.is_coro)
+    if(signature.attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
     for(int i=0;i<signature.arg_types.Count;++i)
     {
       if(i > 0)
         buf += ",";
-      if(signature.has_variadic && i == signature.arg_types.Count-1)
+      if(signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == signature.arg_types.Count-1)
         buf += "...";
       buf += signature.arg_types[i].path + " " + members[i].name;
     }
@@ -2092,7 +2095,7 @@ public class FuncSymbolNative : FuncSymbol
     Cb cb,
     params FuncArgSymbol[] args
   ) 
-    : base(origin, name, new FuncSignature(attribs.HasFlag(FuncAttrib.Coro), ret_type))
+    : base(origin, name, new FuncSignature(attribs.ToFuncSignatureAttrib(), ret_type))
   {
     this.attribs = attribs;
 

@@ -299,33 +299,36 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public int default_args_num;
 
-  public bool has_variadic;
-
-  public bool is_coro;
+  byte _attribs = 0;
+  public FuncSignatureAttrib attribs {
+    get {
+      return (FuncSignatureAttrib)_attribs;
+    }
+    set {
+      _attribs = (byte)value;
+    }
+  }
 
   public string GetName() { return name; }
 
-  public FuncSignature(bool is_coro, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+    : this(0, ret_type, arg_types)
+  {}
+
+  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
   {
-    this.is_coro = is_coro;
+    this.attribs = attribs;
     this.ret_type = ret_type;
     foreach(var arg_type in arg_types)
       this.arg_types.Add(arg_type);
     Update();
   }
 
-  public FuncSignature(bool is_coro, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
   {
-    this.is_coro = is_coro;
+    this.attribs = attribs;
     this.ret_type = ret_type;
     this.arg_types = arg_types;
-    Update();
-  }
-
-  public FuncSignature(bool is_coro, Proxy<IType> ret_type)
-  {
-    this.is_coro = is_coro;
-    this.ret_type = ret_type;
     Update();
   }
 
@@ -343,13 +346,13 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   {
     string buf = 
       "func " + ret_type.path + "("; 
-    if(is_coro)
+    if(attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
         buf += ",";
-      if(has_variadic && i == arg_types.Count-1)
+      if(attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == arg_types.Count-1)
         buf += "...";
       buf += arg_types[i].path;
     }
@@ -365,11 +368,10 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, ref is_coro);
+    marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref ret_type);
     marshall.Marshall.Sync(ctx, arg_types);
     marshall.Marshall.Sync(ctx, ref default_args_num);
-    marshall.Marshall.Sync(ctx, ref has_variadic);
     if(ctx.is_read)
       Update();
   }
@@ -388,7 +390,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     if(ReferenceEquals(this, o))
       return true;
     //TODO: 'non-coro' function is a subset of a 'coro' one
-    if(is_coro && !o.is_coro)
+    if(attribs.HasFlag(FuncSignatureAttrib.Coro) && !o.attribs.HasFlag(FuncSignatureAttrib.Coro))
       return false;
     if(!ret_type.Equals(o.ret_type))
       return false;
