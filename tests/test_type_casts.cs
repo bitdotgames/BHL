@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using bhl;
 
@@ -619,6 +620,76 @@ public class TestTypeCasts : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIsForChildNativeClass()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+      Foo f = {}
+      return f is Bar
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { 
+      var cl1 = new ClassSymbolNative(new Origin(), "Bar", null,
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null/*dummy*/, type);
+        }
+      );
+      ts.ns.Define(cl1);
+      cl1.Setup();
+
+      var cl2 = new ClassSymbolNative(new Origin(), "Foo", ts.T("Bar"),
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null/*dummy*/, type);
+        }
+      );
+      ts.ns.Define(cl2);
+      cl2.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIsForClassImplementingNativeInterface()
+  {
+    string bhl = @"
+      func bool test() {
+        IFoo foo = new Foo
+        return foo is Foo 
+      }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { 
+      var ifs = new InterfaceSymbolNative(
+          new Origin(),
+          "IFoo", 
+          null
+      );
+      ts.ns.Define(ifs);
+      ifs.Setup();
+
+      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null/*dummy*/, type);
+        }
+      );
+      ts.ns.Define(cl);
+      cl.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
