@@ -984,12 +984,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
       }
 
+      Symbol curr_symb = null;
+
       if(!ProcChainItems(
           chain.items, 
           chain_offset,
           ref curr_name,
           ref scope,
           ref curr_type,
+          ref curr_symb,
           write
         ))
       {
@@ -1000,7 +1003,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       //checking the leftover of the call chain or a root call
       if(curr_name != null)
       {
-        ProcChainItem(
+        curr_symb = ProcChainItem(
           scope, 
           curr_name, 
           null, 
@@ -1013,7 +1016,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         );
       }
 
-      if(!CheckExpClassFunctionReadWrite(chain, curr_name, scope, curr_type, write))
+      if(!CheckExpClassFunctionReadWrite(
+          chain, 
+          curr_name, 
+          scope, 
+          curr_type, 
+          curr_symb,
+          write
+        ))
       {
         PopAST();
         return false;
@@ -1040,28 +1050,25 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ITerminalNode curr_name, 
     IScope scope, 
     IType curr_type, 
+    Symbol curr_symb,
     bool write
   )
   {
-    if(chain.IsVarAccess && curr_type is FuncSignature && scope is ClassSymbol cl)
+    if(chain.IsVarAccess && curr_symb is FuncSymbol m && scope is ClassSymbol)
     {
-      //TODO: FuncSymbol must be a type as well? The code below looks a bit like ugly
-      if(cl.Resolve(curr_name.GetText()) is FuncSymbol m)
+      if(!write)
       {
-        if(!write)
+        //NOTE: allowing only static method pointers
+        if(!m.attribs.HasFlag(FuncAttrib.Static))
         {
-          //NOTE: allowing static method pointers
-          if(!m.attribs.HasFlag(FuncAttrib.Static))
-          {
-            AddError(chain.items.At(chain.items.Count-1), "method pointers not supported");
-            return false;
-          }
-        }
-        else
-        {
-          AddError(chain.items.At(chain.items.Count-1), "invalid assignment");
+          AddError(chain.items.At(chain.items.Count-1), "method pointers not supported");
           return false;
         }
+      }
+      else
+      {
+        AddError(chain.items.At(chain.items.Count-1), "invalid assignment");
+        return false;
       }
     }
     return true;
@@ -1123,6 +1130,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ref ITerminalNode curr_name, 
     ref IScope scope, 
     ref IType curr_type, 
+    ref Symbol curr_symb,
     bool write
     )
   {
@@ -1136,7 +1144,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       if(cargs != null)
       {
-        ProcChainItem(
+        curr_symb = ProcChainItem(
           scope, 
           curr_name, 
           cargs, 
@@ -1150,7 +1158,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
       else if(arracc != null)
       {
-        ProcChainItem(
+        curr_symb = ProcChainItem(
           scope, 
           curr_name, 
           null, 
@@ -1193,7 +1201,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
 
         curr_name = macc.NAME();
+        curr_symb = macc_name_symb;
       }
+      else
+        throw new Exception("Unhandled case");
     }
 
     return true;
@@ -2192,6 +2203,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var scope = curr_scope;
     ITerminalNode curr_name = null;
+    Symbol curr_symb = null;
 
     if(!ProcChainItems(
       chain_items,
@@ -2199,6 +2211,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ref curr_name,
       ref scope, 
       ref curr_type,
+      ref curr_symb,
       write
     ))
     {
