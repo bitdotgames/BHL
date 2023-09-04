@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using bhl;
 
-public class TestInterfaces : BHL_TestBase
+public class TestInterface : BHL_TestBase
 {
   [IsTested()]
   public void TestEmptyUserInterface()
@@ -1052,6 +1052,40 @@ public class TestInterfaces : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIsForClassImplementingNativeInterface()
+  {
+    string bhl = @"
+      func bool test() {
+        IFoo foo = new Foo
+        return foo is Foo 
+      }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { 
+      var ifs = new InterfaceSymbolNative(
+          new Origin(),
+          "IFoo", 
+          null
+      );
+      ts.ns.Define(ifs);
+      ifs.Setup();
+
+      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(null/*dummy*/, type);
+        }
+      );
+      ts.ns.Define(cl);
+      cl.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 }

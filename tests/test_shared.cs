@@ -42,7 +42,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestImport());
     counter += Run(names, new TestVariadic());
     counter += Run(names, new TestClass());
-    counter += Run(names, new TestInterfaces());
+    counter += Run(names, new TestInterface());
     counter += Run(names, new TestTypeCasts());
     counter += Run(names, new TestNamespace());
     counter += Run(names, new TestImplicit());
