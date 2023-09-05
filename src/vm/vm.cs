@@ -2309,7 +2309,7 @@ public class VM : INamedResolver
     exec.stack.Push(Val.NewBool(this, 
           type != null && 
           val.type != null && 
-          Types.Is(val.type, type)
+          Types.Is(val, type)
         )
     );
     val.Release();

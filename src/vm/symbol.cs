@@ -87,7 +87,7 @@ public class StringSymbol : ClassSymbolNative
   public const uint CLASS_ID = 3;
 
   public StringSymbol()
-    : base(new Origin(), "string")
+    : base(new Origin(), "string", native_type: typeof(string))
   {}
 
   public override uint ClassId()
@@ -318,10 +318,11 @@ public class InterfaceSymbolScript : InterfaceSymbol
   }
 }
 
-public class InterfaceSymbolNative : InterfaceSymbol
+public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 {
   IList<Proxy<IType>> proxy_inherits;
   FuncSymbol[] funcs;
+  System.Type native_type;
 
   public InterfaceSymbolNative(
     Origin origin,
@@ -333,6 +334,23 @@ public class InterfaceSymbolNative : InterfaceSymbol
   {
     this.proxy_inherits = proxy_inherits;
     this.funcs = funcs;
+  }
+
+  public InterfaceSymbolNative(
+    Origin origin,
+    string name, 
+    IList<Proxy<IType>> proxy_inherits,
+    System.Type native_type,
+    params FuncSymbol[] funcs
+  )
+    : this(origin, name, proxy_inherits, funcs)
+  {
+    this.native_type = native_type;
+  }
+
+  public System.Type GetNativeType()
+  {
+    return native_type;
   }
   
   public void Setup()
@@ -2132,35 +2150,44 @@ public class FuncSymbolNative : FuncSymbol
   }
 }
 
-public class ClassSymbolNative : ClassSymbol
+public interface INativeType
+{
+  System.Type GetNativeType();
+}
+
+public class ClassSymbolNative : ClassSymbol, INativeType
 {
   Proxy<IType> proxy_super_class;
   IList<Proxy<IType>> proxy_implements;
+  System.Type native_type;
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
-    VM.ClassCreator creator = null
+    VM.ClassCreator creator = null,
+    System.Type native_type = null
   )
-    : this(origin, name, new Proxy<IType>(), null, creator)
+    : this(origin, name, new Proxy<IType>(), null, creator, native_type)
   {}
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
     IList<Proxy<IType>> proxy_implements,
-    VM.ClassCreator creator = null
+    VM.ClassCreator creator = null,
+    System.Type native_type = null
   )
-    : this(origin, name, new Proxy<IType>(), proxy_implements, creator)
+    : this(origin, name, new Proxy<IType>(), proxy_implements, creator, native_type)
   {}
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
     Proxy<IType> proxy_super_class,
-    VM.ClassCreator creator = null
+    VM.ClassCreator creator = null,
+    System.Type native_type = null
   )
-    : this(origin, name, proxy_super_class, null, creator)
+    : this(origin, name, proxy_super_class, null, creator, native_type)
   {}
 
   public ClassSymbolNative(
@@ -2168,12 +2195,19 @@ public class ClassSymbolNative : ClassSymbol
     string name, 
     Proxy<IType> proxy_super_class,
     IList<Proxy<IType>> proxy_implements,
-    VM.ClassCreator creator = null
+    VM.ClassCreator creator = null,
+    System.Type native_type = null
   )
     : base(origin, name, creator)
   {
     this.proxy_super_class = proxy_super_class;
     this.proxy_implements = proxy_implements;
+    this.native_type = native_type;
+  }
+
+  public System.Type GetNativeType()
+  {
+    return native_type;
   }
 
   public override void Setup()

@@ -623,13 +623,16 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
+  public class NativeFoo {}
+  public class NativeBar : NativeFoo {}
+
   [IsTested()]
   public void TestIsForChildNativeClass()
   {
     string bhl = @"
     func bool test() 
     {
-      Foo f = {}
+      var f = NewFooHiddenBar();
       return f is Bar
     }
     ";
@@ -638,8 +641,9 @@ public class TestTypeCasts : BHL_TestBase
       var cl1 = new ClassSymbolNative(new Origin(), "Bar", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.SetObj(null/*dummy*/, type);
-        }
+          v.SetObj(new NativeBar(), type);
+        },
+        typeof(Bar)
       );
       ts.ns.Define(cl1);
       cl1.Setup();
@@ -647,11 +651,20 @@ public class TestTypeCasts : BHL_TestBase
       var cl2 = new ClassSymbolNative(new Origin(), "Foo", ts.T("Bar"),
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.SetObj(null/*dummy*/, type);
-        }
+          v.SetObj(new NativeFoo(), type);
+        },
+        typeof(Foo)
       );
       ts.ns.Define(cl2);
       cl2.Setup();
+
+      var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"), 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          stack.Push(Val.NewObj(frm.vm, new Bar(), ts.T("Foo").Get()));
+          return null;
+        }
+      );
+      ts.ns.Define(fn);
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -686,6 +699,53 @@ public class TestTypeCasts : BHL_TestBase
       );
       ts.ns.Define(cl);
       cl.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  public interface INativeWow {}
+  public class NativeWow : INativeWow {}
+
+  [IsTested()]
+  public void TestIsForClassImplementingNativeInterfaceReturnedAsInterface()
+  {
+    string bhl = @"
+      func bool test() {
+        IWow wow = MakeIWow()
+        return wow is Wow
+      }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { 
+      var ifs = new InterfaceSymbolNative(
+          new Origin(),
+          "IWow", 
+          null,
+          typeof(INativeWow)
+      );
+      ts.ns.Define(ifs);
+      ifs.Setup();
+
+      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<Proxy<IType>>(){ ts.T("IWow") },
+        native_type: typeof(NativeWow),
+        creator: delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new NativeWow(), type);
+        }
+      );
+      ts.ns.Define(cl);
+      cl.Setup();
+
+      var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"), 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          stack.Push(Val.NewObj(frm.vm, new NativeWow(), ts.T("IWow").Get()));
+          return null;
+        }
+      );
+      ts.ns.Define(fn);
     });
 
     var vm = MakeVM(bhl, ts_fn);
