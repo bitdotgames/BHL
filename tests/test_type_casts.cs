@@ -635,10 +635,17 @@ public class TestTypeCasts : BHL_TestBase
       var f = NewFooHiddenBar();
       return f is Bar
     }
+
+    func bool test2() 
+    {
+      var b = NewFooHiddenBar() as Bar;
+      return b != null
+    }
+
     ";
 
     var ts_fn = new Action<Types>((ts) => { 
-      var cl1 = new ClassSymbolNative(new Origin(), "Bar", null,
+      var cl1 = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeBar(), type);
@@ -646,9 +653,8 @@ public class TestTypeCasts : BHL_TestBase
         typeof(Bar)
       );
       ts.ns.Define(cl1);
-      cl1.Setup();
 
-      var cl2 = new ClassSymbolNative(new Origin(), "Foo", ts.T("Bar"),
+      var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeFoo(), type);
@@ -656,6 +662,8 @@ public class TestTypeCasts : BHL_TestBase
         typeof(Foo)
       );
       ts.ns.Define(cl2);
+
+      cl1.Setup();
       cl2.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"), 
@@ -669,6 +677,7 @@ public class TestTypeCasts : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert(Execute(vm, "test").result.PopRelease().bval);
+    Assert(Execute(vm, "test2").result.PopRelease().bval);
     CommonChecks(vm);
   }
 

@@ -2291,7 +2291,7 @@ public class VM : INamedResolver
   {
     var val = exec.stack.Pop();
 
-    if(type != null && val.type != null && Types.Is(val.type, type))
+    if(type != null && val.type != null && Types.Is(val, type))
     {
       var new_val = Val.New(this);
       new_val.ValueCopyFrom(val);
