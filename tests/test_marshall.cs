@@ -169,7 +169,7 @@ public class TestMarshall : BHL_TestBase
       var Enum = (EnumSymbolScript)ns.Resolve("Enum");
       AssertEqual(Enum.scope, ns);
       AssertEqual(Enum.name, "Enum");
-      AssertEqual(Enum.members.Count, 2);
+      AssertEqual(Enum.GetSymbolsIterator().Count, 2);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).owner, Enum);
       AssertEqual(Enum.Resolve("Type1").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);

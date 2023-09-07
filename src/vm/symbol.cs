@@ -2309,9 +2309,9 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
+public abstract class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
 {
-  public SymbolsStorage members;
+  internal SymbolsStorage members;
 
   public EnumSymbol(Origin origin, string name)
      : base(origin, name)
@@ -2328,6 +2328,8 @@ public class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
 
   public void Define(Symbol sym)
   {
+    if(!(sym is EnumItemSymbol))
+      throw new Exception("Invalid item");
     members.Add(sym);
   }
 
@@ -2398,6 +2400,22 @@ public class EnumSymbolScript : EnumSymbol
         item.scope = this;
       }
     }
+  }
+}
+
+public class EnumSymbolNative : EnumSymbol, INativeType
+{
+  System.Type native_type;
+
+  public EnumSymbolNative(Origin origin, string name, System.Type native_type)
+    : base(origin, name)
+  {
+    this.native_type = native_type;
+  }
+
+  public System.Type GetNativeType()
+  {
+    return native_type;
   }
 }
 

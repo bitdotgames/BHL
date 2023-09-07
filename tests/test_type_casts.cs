@@ -1715,6 +1715,15 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
+  public void BindEnum(Types ts)
+  {
+    var en = new EnumSymbolScript(new Origin(), "EnumState");
+    ts.ns.Define(en);
+
+    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED",  10));
+    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED2", 20));
+  }
+
   [IsTested()]
   public void TestCastEnumToInt()
   {

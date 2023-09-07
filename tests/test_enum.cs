@@ -4,6 +4,15 @@ using bhl;
 
 public class TestEnum : BHL_TestBase
 {
+  public void BindEnumState(Types ts)
+  {
+    var en = new EnumSymbolScript(new Origin(), "EnumState");
+    ts.ns.Define(en);
+
+    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED",  10));
+    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED2", 20));
+  }
+
   [IsTested()]
   public void TestBindEnum()
   {
@@ -16,12 +25,43 @@ public class TestEnum : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
+      BindEnumState(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(res, 30);
+    CommonChecks(vm);
+  }
+
+  public enum NativeEnum
+  {
+    Foo = 1,
+    Bar = 2
+  }
+
+  [IsTested()]
+  public void TestBindEnumNative()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      return (int)NativeEnum.Foo + (int)NativeEnum.Bar
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var en = new EnumSymbolNative(new Origin(), "NativeEnum", typeof(NativeEnum));
+      ts.ns.Define(en);
+
+      en.Define(new EnumItemSymbol(new Origin(), "Foo",  (int)NativeEnum.Foo));
+      en.Define(new EnumItemSymbol(new Origin(), "Bar", (int)NativeEnum.Bar));
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 3);
     CommonChecks(vm);
   }
 
@@ -37,7 +77,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
+      BindEnumState(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -58,7 +98,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
+      BindEnumState(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -82,7 +122,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
+      BindEnumState(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
@@ -107,7 +147,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
+      BindEnumState(ts);
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),

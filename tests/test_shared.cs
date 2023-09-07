@@ -564,16 +564,6 @@ public class BHL_TestBase
     }
   }
 
-  public void BindEnum(Types ts)
-  {
-    var en = new EnumSymbol(new Origin(), "EnumState");
-    ts.ns.Define(en);
-
-    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED",  10));
-    en.Define(new EnumItemSymbol(new Origin(), "SPAWNED2", 20));
-  }
-
-
   public VM MakeVM(string bhl, Action<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
   {
     return MakeVM(
