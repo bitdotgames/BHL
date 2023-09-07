@@ -641,7 +641,6 @@ public class TestTypeCasts : BHL_TestBase
       var b = NewFooHiddenBar() as Bar;
       return b != null
     }
-
     ";
 
     var ts_fn = new Action<Types>((ts) => { 
