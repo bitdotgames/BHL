@@ -611,6 +611,11 @@ public class Types : INamedResolver
     ns.Define(Var);
     ns.Define(ClassType);
 
+    DefineBuiltinFuncs();
+  }
+
+  void DefineBuiltinFuncs()
+  {
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", this.T("void"),
@@ -627,7 +632,7 @@ public class Types : INamedResolver
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, this.T("void"), 0, 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
-          //TODO: this of static instance usage for this case
+          //TODO: use static instance for this case?
           return CoroutinePool.New<CoroutineSuspend>(frm.vm);
         } 
       );
@@ -658,6 +663,17 @@ public class Types : INamedResolver
           return null;
         }, 
         new FuncArgSymbol("fid", this.T("int"))
+      );
+      ns.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative(new Origin(), "debugger", this.T("void"),
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          System.Diagnostics.Debugger.Break();
+          return null;
+        } 
       );
       ns.Define(fn);
     }
