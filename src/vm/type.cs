@@ -297,8 +297,6 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   //TODO: include arg names as well since we support named args?
   public List<Proxy<IType>> arg_types = new List<Proxy<IType>>();
 
-  public int default_args_num;
-
   byte _attribs = 0;
   public FuncSignatureAttrib attribs {
     get {
@@ -371,7 +369,6 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     marshall.Marshall.Sync(ctx, ref _attribs);
     marshall.Marshall.Sync(ctx, ref ret_type);
     marshall.Marshall.Sync(ctx, arg_types);
-    marshall.Marshall.Sync(ctx, ref default_args_num);
     if(ctx.is_read)
       Update();
   }
