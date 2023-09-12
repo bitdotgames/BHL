@@ -1192,7 +1192,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return false;
         }
 
-        if(!(macc_name_symb is ClassSymbol) && 
+        var macc_name_class_symb = macc_name_symb as ClassSymbol;
+
+        if(macc_name_class_symb == null && 
             scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
             macc_fs.attribs.HasFlag(FuncAttrib.Static))
         {
@@ -1200,9 +1202,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return false;
         }
 
-        if(macc_name_symb is ClassSymbol && 
+        if(macc_name_class_symb == null && 
            scope.ResolveWithFallback(macc.NAME().GetText()) is FieldSymbol macc_fld &&
-           !macc_fld.attribs.HasFlag(FieldAttrib.Static))
+           macc_fld.attribs.HasFlag(FieldAttrib.Static))
+        {
+          AddError(macc, "accessing static field on instance is forbidden");
+          return false;
+        }
+
+        if(macc_name_class_symb != null && 
+           scope.ResolveWithFallback(macc.NAME().GetText()) is FieldSymbol macc_fld2 &&
+           !macc_fld2.attribs.HasFlag(FieldAttrib.Static))
         {
           AddError(macc, "invalid access to non-static attribute");
           return false;

@@ -1659,7 +1659,7 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestInstanceAttributeAccessAsStaticNotAllowed()
+  public void TestNonStaticFieldAccessAsStaticNotAllowed()
   {
     string bhl = @"
     class Foo {
@@ -1678,6 +1678,32 @@ public class TestClass : BHL_TestBase
       "invalid access to non-static attribute",
       new PlaceAssert(bhl, @"
       return Foo.a
+----------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestStaticFieldAccessAsNonStaticNotAllowed()
+  {
+    string bhl = @"
+    class Foo {
+      static int a
+    }
+
+    func int test() {
+      Foo foo = {}
+      return foo.a
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "accessing static field on instance is forbidden",
+      new PlaceAssert(bhl, @"
+      return foo.a
 ----------------^"
       )
     );
