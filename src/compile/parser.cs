@@ -1200,6 +1200,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return false;
         }
 
+        if(macc_name_symb is ClassSymbol && 
+           scope.ResolveWithFallback(macc.NAME().GetText()) is FieldSymbol macc_fld &&
+           !macc_fld.attribs.HasFlag(FieldAttrib.Static))
+        {
+          AddError(macc, "invalid access to non-static attribute");
+          return false;
+        }
+
         curr_name = macc.NAME();
         curr_symb = macc_name_symb;
       }

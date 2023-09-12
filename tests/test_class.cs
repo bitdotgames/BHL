@@ -1659,6 +1659,31 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestInstanceAttributeAccessAsStaticNotAllowed()
+  {
+    string bhl = @"
+    class Foo {
+      int a
+    }
+
+    func int test() {
+      return Foo.a
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "invalid access to non-static attribute",
+      new PlaceAssert(bhl, @"
+      return Foo.a
+----------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
