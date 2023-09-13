@@ -206,9 +206,7 @@ public class UriJsonConverter : JsonConverter
   public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
   {
     string path = (string)reader.Value;
-    var uri = new Uri();
-    //let's skip the 'file://' part and extra '/' for Windows 
-    uri.path = path.Substring(7 + (System.IO.Path.DirectorySeparatorChar == '\\' ? 1 : 0)); 
+    var uri = Uri.Decode(path);
     return uri;
   }
 
@@ -231,9 +229,27 @@ public class Uri
     this.path = Util.NormalizeFilePath(path);
   }
 
+  public static Uri Decode(string path)
+  {
+    //let's skip the 'file://' part and extra '/' for Windows 
+    return new Uri(
+      path.Substring(7 + 
+        (System.IO.Path.DirectorySeparatorChar == '\\' ? 1 : 0)
+      )
+    ); 
+  }
+
+  public string Encode()
+  {
+    string tmp = path;
+    if(System.IO.Path.DirectorySeparatorChar == '\\')
+      tmp = tmp.Substring(1);
+    return "file://" + tmp;
+  }
+
   public override string ToString()
   {
-    return "file://" + path;
+    return Encode();
   }
 }
 
