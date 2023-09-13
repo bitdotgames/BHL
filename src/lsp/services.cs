@@ -485,15 +485,15 @@ public class TextDocumentSemanticTokensService : IService
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
-    if(document != null)
+    if(document?.proc != null)
     {
       return new RpcResult(new SemanticTokens
       {
         data = document.proc.GetEncodedSemanticTokens().ToArray()
       });
     }
-
-    return new RpcResult(null);
+    else
+      return new RpcResult(null);
   }
 }
 
