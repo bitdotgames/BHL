@@ -207,7 +207,8 @@ public class UriJsonConverter : JsonConverter
   {
     string path = (string)reader.Value;
     var uri = new Uri();
-    uri.path = path.Substring(7); //let's skip the 'file://' part 
+    //let's skip the 'file://' part and extra '/' for Windows 
+    uri.path = path.Substring(7 + (System.IO.Path.PathSeparator == '\\' ? 1 : 0)); 
     return uri;
   }
 
