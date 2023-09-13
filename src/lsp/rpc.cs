@@ -314,7 +314,7 @@ public class Server
       return RpcResult.Error(new ResponseError
       {
         code = (int)ErrorCodes.MethodNotFound,
-        message = "Method not found"
+        message = "Method not found: " + name
       });
     }
     
