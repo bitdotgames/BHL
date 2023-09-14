@@ -244,7 +244,7 @@ public class Uri
     string tmp = path;
     //let's remove the starting slashes for Windows
     if(System.IO.Path.DirectorySeparatorChar == '\\')
-      tmp = tmp.TrimStart('\\', '/');
+      tmp = '/' + tmp.TrimStart('\\', '/');
 
     return "file://" + tmp;
   }
