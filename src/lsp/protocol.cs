@@ -231,11 +231,10 @@ public class Uri
 
   public static Uri Decode(string path)
   {
-    //let's skip the 'file://' part and extra '/' for Windows 
+    //let's skip the 'file://' part and extra slashes for Windows 
     string tmp = path.Substring(7); 
-    if(System.IO.Path.DirectorySeparatorChar == '\\' && 
-        tmp.Length > 3 && tmp[0] == '/' && tmp[2] == ':')
-      tmp = tmp.Substring(1);
+    if(System.IO.Path.DirectorySeparatorChar == '\\')
+      tmp = tmp.TrimStart('\\', '/');
 
     return new Uri(tmp);
   }
@@ -243,10 +242,9 @@ public class Uri
   public string Encode()
   {
     string tmp = path;
-    //let's remove the starting '/' for Windows if there's one
-    if(System.IO.Path.DirectorySeparatorChar == '\\' && 
-        tmp.Length > 3 && tmp[0] == '/' && tmp[2] == ':')
-      tmp = tmp.Substring(1);
+    //let's remove the starting slashes for Windows
+    if(System.IO.Path.DirectorySeparatorChar == '\\')
+      tmp = tmp.TrimStart('\\', '/');
 
     return "file://" + tmp;
   }
