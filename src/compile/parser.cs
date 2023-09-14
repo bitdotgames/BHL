@@ -1437,9 +1437,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             0,
             name
           );
-          //NOTE: let's mark native func call with a special semantic color
-          if(func_symb is FuncSymbolNative)
-            LSP_AddSemanticToken(name, SemanticToken.Parameter);
+          //NOTE: let's mark func calls native and useland with different colors
+          LSP_AddSemanticToken(name, 
+              func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }
