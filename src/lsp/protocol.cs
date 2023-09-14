@@ -232,18 +232,22 @@ public class Uri
   public static Uri Decode(string path)
   {
     //let's skip the 'file://' part and extra '/' for Windows 
-    return new Uri(
-      path.Substring(7 + 
-        (System.IO.Path.DirectorySeparatorChar == '\\' ? 1 : 0)
-      )
-    ); 
+    string tmp = path.Substring(7); 
+    if(System.IO.Path.DirectorySeparatorChar == '\\' && 
+        tmp.Length > 3 && tmp[0] == '/' && tmp[2] == ':')
+      tmp = tmp.Substring(1);
+
+    return new Uri(tmp);
   }
 
   public string Encode()
   {
     string tmp = path;
-    if(System.IO.Path.DirectorySeparatorChar == '\\')
+    //let's remove the starting '/' for Windows if there's one
+    if(System.IO.Path.DirectorySeparatorChar == '\\' && 
+        tmp.Length > 3 && tmp[0] == '/' && tmp[2] == ':')
       tmp = tmp.Substring(1);
+
     return "file://" + tmp;
   }
 
