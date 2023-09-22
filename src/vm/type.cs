@@ -424,7 +424,6 @@ public class Types : INamedResolver
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
   static public ClassSymbolNative ClassType = null;
-  static public FuncSymbolNative YieldFunc = null;
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -608,72 +607,7 @@ public class Types : INamedResolver
     ns.Define(Var);
     ns.Define(ClassType);
 
-    DefineBuiltinFuncs();
-  }
-
-  void DefineBuiltinFuncs()
-  {
-    {
-      //NOTE: it's a builtin non-directly available function
-      var fn = new FuncSymbolNative(new Origin(), "$yield", this.T("void"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          return CoroutinePool.New<CoroutineYield>(frm.vm);
-        } 
-      );
-      YieldFunc = fn;
-      ns.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, this.T("void"), 0, 
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          //TODO: use static instance for this case?
-          return CoroutinePool.New<CoroutineSuspend>(frm.vm);
-        } 
-      );
-      ns.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative(new Origin(), "start", this.T("int"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var val_ptr = stack.Pop();
-          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm, stack).id;
-          val_ptr.Release();
-          stack.Push(Val.NewNum(frm.vm, id));
-          return null;
-        }, 
-        new FuncArgSymbol("p", this.TFunc(true/*is coro*/, "void"))
-      );
-      ns.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative(new Origin(), "stop", this.T("void"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var fid = (int)stack.PopRelease().num;
-          frm.vm.Stop(fid);
-          return null;
-        }, 
-        new FuncArgSymbol("fid", this.T("int"))
-      );
-      ns.Define(fn);
-    }
-
-    {
-      var fn = new FuncSymbolNative(new Origin(), "debugger", this.T("void"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          System.Diagnostics.Debugger.Break();
-          return null;
-        } 
-      );
-      ns.Define(fn);
-    }
+    Prelude.Define(this);
   }
 
   static public bool IsCompoundType(string name)
