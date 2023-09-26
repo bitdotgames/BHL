@@ -3001,33 +3001,6 @@ public interface IInspectableCoroutine
   ICoroutine At(int i);
 }
 
-class CoroutineSuspend : Coroutine
-{
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
-  {
-    status = BHS.RUNNING;
-  }
-}
-
-class CoroutineYield : Coroutine
-{
-  bool first_time = true;
-
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
-  {
-    if(first_time)
-    {
-      status = BHS.RUNNING;
-      first_time = false;
-    }
-  }
-
-  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
-  {
-    first_time = true;
-  }
-}
-
 public struct DeferBlock
 {
   public VM.Frame frm;

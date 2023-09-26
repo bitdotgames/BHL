@@ -60,7 +60,7 @@ coro func StateChanged(ref int state)
 coro func RandomStateChanger(ref int state)
 {
   while(true) {
-    yield Wait(1 + Rand() * 4)
+    yield Wait((1 + Rand() * 4))
     state = state + 1
   }
 }
