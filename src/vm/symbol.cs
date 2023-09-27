@@ -2157,8 +2157,10 @@ public interface INativeType
 
 public class ClassSymbolNative : ClassSymbol, INativeType
 {
-  Proxy<IType> proxy_super_class;
-  IList<Proxy<IType>> proxy_implements;
+  //NOTE: during Setup() routine will be resolved
+  Proxy<IType> tmp_super_class;
+  IList<Proxy<IType>> tmp_implements;
+
   System.Type native_type;
 
   public ClassSymbolNative(
@@ -2200,8 +2202,8 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   )
     : base(origin, name, creator)
   {
-    this.proxy_super_class = proxy_super_class;
-    this.proxy_implements = proxy_implements;
+    this.tmp_super_class = proxy_super_class;
+    this.tmp_implements = proxy_implements;
     this.native_type = native_type;
   }
 
@@ -2213,18 +2215,18 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public override void Setup()
   {
     ClassSymbol super_class = null;
-    if(!proxy_super_class.IsEmpty())
+    if(!tmp_super_class.IsEmpty())
     {
-      super_class = proxy_super_class.Get() as ClassSymbol;
+      super_class = tmp_super_class.Get() as ClassSymbol;
       if(super_class == null)
-        throw new Exception("Parent class is not found: " + proxy_super_class.path);
+        throw new Exception("Parent class is not found: " + tmp_super_class.path);
     }
 
     List<InterfaceSymbol> implements = null;
-    if(proxy_implements != null)
+    if(tmp_implements != null)
     {
       implements = new List<InterfaceSymbol>();
-      foreach(var pi in proxy_implements)
+      foreach(var pi in tmp_implements)
       {
         var iface = pi.Get() as InterfaceSymbol;
         if(iface == null) 
