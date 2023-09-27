@@ -4282,8 +4282,9 @@ public class TestClass : BHL_TestBase
       }
 
       {
-        (ts.T("B").Get() as ClassSymbolNative).Setup();
+        //NOTE: setting up classes not in 'natural' order  
         (ts.T("C").Get() as ClassSymbolNative).Setup();
+        (ts.T("B").Get() as ClassSymbolNative).Setup();
         (ts.T("A").Get() as ClassSymbolNative).Setup();
       }
     });
@@ -4329,9 +4330,8 @@ public class TestClass : BHL_TestBase
       func int test() 
       {
         C c = {}
-        c.a2 = 10
-        B b = c
-        return b.a2
+        c.b2 = 10
+        return c.b2
       }
       ";
 

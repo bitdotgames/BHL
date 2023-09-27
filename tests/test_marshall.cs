@@ -40,7 +40,7 @@ public class TestMarshall : BHL_TestBase
       Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(Types.Void), "Hey", 0, 3));
       ns.Define(Foo);
       var Bar = new ClassSymbolScript(new Origin(), "Bar");
-      Bar.SetSuperAndInterfaces(Foo);
+      Bar.SetSuperClassAndInterfaces(Foo);
       Bar.Define(new FieldSymbolScript(new Origin(), "Float", Types.Float));
       Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
       ns.Define(Bar);

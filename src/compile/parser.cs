@@ -3913,7 +3913,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
       }
 
-      pass.class_symb.SetSuperAndInterfaces(super_class, implements);
+      pass.class_symb.SetSuperClassAndInterfaces(super_class, implements);
     }
   }
 

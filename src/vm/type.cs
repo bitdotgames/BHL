@@ -56,6 +56,12 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
            named == null;
   }
 
+  public void Clear()
+  {
+    _path = null;
+    named = null;
+  }
+
   public T Get()
   {
     if(named != null)

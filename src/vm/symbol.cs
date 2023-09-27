@@ -427,7 +427,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
     this.creator = creator;
   }
 
-  public void SetSuperAndInterfaces(ClassSymbol super_class, IList<InterfaceSymbol> implements = null)
+  public void SetSuperClassAndInterfaces(ClassSymbol super_class, IList<InterfaceSymbol> implements = null)
   {
     if(super_class != null)
       _super_class = new Proxy<ClassSymbol>(super_class);
@@ -2214,30 +2214,47 @@ public class ClassSymbolNative : ClassSymbol, INativeType
 
   public override void Setup()
   {
+    ResolveTmpSuperClassAndInterfaces(this);
+
+    base.Setup();
+  }
+
+  static void ResolveTmpSuperClassAndInterfaces(ClassSymbolNative curr_class)
+  {
+    if(curr_class.tmp_super_class.IsEmpty() && curr_class.tmp_implements == null)
+      return;
+
     ClassSymbol super_class = null;
-    if(!tmp_super_class.IsEmpty())
+    if(!curr_class.tmp_super_class.IsEmpty())
     {
-      super_class = tmp_super_class.Get() as ClassSymbol;
+      super_class = curr_class.tmp_super_class.Get() as ClassSymbol;
       if(super_class == null)
-        throw new Exception("Parent class is not found: " + tmp_super_class.path);
+        throw new Exception("Parent class is not found: " + curr_class.tmp_super_class.path);
+
+      //let's reset tmp member once it's resolved
+      curr_class.tmp_super_class.Clear();
     }
 
     List<InterfaceSymbol> implements = null;
-    if(tmp_implements != null)
+    if(curr_class.tmp_implements != null)
     {
       implements = new List<InterfaceSymbol>();
-      foreach(var pi in tmp_implements)
+      foreach(var pi in curr_class.tmp_implements)
       {
         var iface = pi.Get() as InterfaceSymbol;
         if(iface == null) 
           throw new Exception("Implemented interface not found: " + pi.path);
         implements.Add(iface);
       }
+
+      //let's reset tmp member once it's resolved
+      curr_class.tmp_implements = null;
     }
 
-    SetSuperAndInterfaces(super_class, implements);
+    if(super_class != null)
+      ResolveTmpSuperClassAndInterfaces((ClassSymbolNative)super_class);
 
-    base.Setup();
+    curr_class.SetSuperClassAndInterfaces(super_class, implements);
   }
 
   public override uint ClassId()
