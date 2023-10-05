@@ -899,6 +899,8 @@ public class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
+  IReadOnlyList<Fiber> Fibers => fibers;
+
   IModuleLoader loader;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res, IType type);
