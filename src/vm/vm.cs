@@ -899,7 +899,8 @@ public class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
-  public IReadOnlyList<Fiber> Fibers => fibers;
+  public delegate void OnNewFiberCb(Fiber fb);
+  public event OnNewFiberCb OnNewFiber;
 
   IModuleLoader loader;
 
@@ -1468,6 +1469,8 @@ public class VM : INamedResolver
   {
     fb.id = ++fibers_ids;
     fibers.Add(fb);
+
+    OnNewFiber?.Invoke(fb);
   }
 
   public void Stop(Fiber fb)
@@ -1517,7 +1520,7 @@ public class VM : INamedResolver
     }
   }
 
-  Fiber FindFiber(int fid)
+  public Fiber FindFiber(int fid)
   {
     for(int i=0;i<fibers.Count;++i)
       if(fibers[i].id == fid)
