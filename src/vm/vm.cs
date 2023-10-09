@@ -394,6 +394,12 @@ public class VM : INamedResolver
       {
         var frm = exec.frames[i];
         frm.ExitScope(null, exec);
+      }
+
+      //NOTE: we need to release frames only after we actually exited their scopes
+      for(int i=exec.frames.Count;i-- > 0;)
+      {
+        var frm = exec.frames[i];
         frm.Release();
       }
 

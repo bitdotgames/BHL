@@ -79,6 +79,45 @@ public class TestDefer : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDeferCallFuncWithSeveralArgs()
+  {
+    string bhl = @"
+
+    func foo(int a, string b)
+    {
+      trace(a + "" "" + b)
+    }
+
+    coro func doer(int a = 1, string b = ""b"")
+    {
+      defer {
+        foo(a, b)
+      }
+      a = 2
+      yield while(true)
+    }
+
+    coro func test() 
+    {
+      yield doer()
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+    vm.Tick();
+    vm.Tick();
+    vm.Stop();
+    AssertEqual("2 b", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestDeferAccessVarInCoroutine()
   {
     string bhl = @"
