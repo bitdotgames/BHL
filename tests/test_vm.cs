@@ -15640,6 +15640,33 @@ public class TestVM : BHL_TestBase
 
       var vm = MakeVM(bhl);
       AssertTrue(vm.TryFindVarAddr("what.foo", out var addr));
+      AssertEqual(10, addr.val.num);
+      addr.val.num = 100;
+      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bar_bhl = @"
+      int bar = 1
+      ";
+
+      string test_bhl = @"
+      import ""bar""
+
+      func int test() {
+        return bar
+      }
+      ";
+
+      var vm = MakeVM(new Dictionary<string, string>() {
+          {"bar.bhl", bar_bhl},
+          {"test.bhl", test_bhl},
+        }
+      );
+      vm.LoadModule("test");
+      AssertTrue(vm.TryFindVarAddr("bar", out var addr));
+      AssertEqual(1, addr.val.num);
       addr.val.num = 100;
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
