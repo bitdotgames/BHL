@@ -15664,10 +15664,14 @@ public class TestVM : BHL_TestBase
           {"test.bhl", test_bhl},
         }
       );
-      vm.LoadModule("test");
+      AssertFalse(vm.TryFindVarAddr("bar", out var _));
+
+      vm.LoadModule("bar");
       AssertTrue(vm.TryFindVarAddr("bar", out var addr));
       AssertEqual(1, addr.val.num);
       addr.val.num = 100;
+
+      vm.LoadModule("test");
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     });
