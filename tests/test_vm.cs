@@ -15598,6 +15598,17 @@ public class TestVM : BHL_TestBase
 
     SubTest(() => {
       string bhl = @"
+      namespace what {
+        int hey = 10
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertFalse(vm.TryFindVarAddr("hey", out var addr));
+    });
+
+    SubTest(() => {
+      string bhl = @"
       int bar = 1
       int foo = 10
         
