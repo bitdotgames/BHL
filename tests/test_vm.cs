@@ -15585,6 +15585,57 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSetGlobalFromOutside()
+  {
+    SubTest(() => {
+      string bhl = @"
+      int foo = 10
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertFalse(vm.TryFindVarAddr("hey", out var addr));
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      int bar = 1
+      int foo = 10
+        
+      func int test() 
+      {
+        return foo
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(vm.TryFindVarAddr("foo", out var addr));
+      addr.val.num = 100;
+      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      int bar = 1
+      namespace what {
+        int foo = 10
+      }
+        
+      func int test() 
+      {
+        return what.foo
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(vm.TryFindVarAddr("what.foo", out var addr));
+      addr.val.num = 100;
+      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+  }
+
+  [IsTested()]
   public void TestWeirdMix()
   {
     string bhl = @"

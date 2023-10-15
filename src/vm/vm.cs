@@ -901,6 +901,13 @@ public class VM : INamedResolver
     public int ip;
   }
 
+  public struct VarAddr
+  {
+    public CompiledModule module;
+    public VariableSymbol vs;
+    public Val val;
+  }
+
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
@@ -1337,14 +1344,17 @@ public class VM : INamedResolver
     return fb;
   }
 
-  public bool TryFindFuncAddr(string path, out FuncAddr addr, out FuncSymbolScript fs)
+  public bool TryFindFuncAddr(string path, out FuncAddr addr)
   {
     addr = default(FuncAddr);
 
-    fs = ResolveNamedByPath(path) as FuncSymbolScript;
+    var fs = ResolveNamedByPath(path, out var _) as FuncSymbolScript;
     if(fs == null)
       return false;
 
+    //TODO: Using cm from ResolveNamedByPath(..) from the call above
+    //      gives an error in tests. Find out why. This could help
+    //      get rid of an extra lookup
     var cm = compiled_mods[((Namespace)fs.scope).module.name];
 
     addr = new FuncAddr() {
@@ -1356,15 +1366,50 @@ public class VM : INamedResolver
     return true;
   }
 
-  public INamed ResolveNamedByPath(string path)
+  // Obsolete
+  public bool TryFindFuncAddr(string path, out FuncAddr addr, out FuncSymbolScript fs)
   {
+    bool yes = TryFindFuncAddr(path, out addr);
+    fs = addr.fs;
+    return yes;
+  }
+
+  public bool TryFindVarAddr(string path, out VarAddr addr)
+  {
+    addr = default(VarAddr);
+
+    var vs = ResolveNamedByPath(path, out var cm) as VariableSymbol;
+    if(vs == null)
+      return false;
+
+    addr = new VarAddr() {
+      module = cm,
+      vs = vs,
+      val = cm.gvars[vs.scope_idx]
+    };
+
+    return true;
+  }
+
+  public INamed ResolveNamedByPath(string path, out CompiledModule cm)
+  {
+    cm = null;
+
     foreach(var kv in compiled_mods)
     {
       var s = kv.Value.ns.ResolveSymbolByPath(path);
       if(s != null)
+      {
+        cm = kv.Value;
         return s;
+      }
     }
     return null;
+  }
+
+  public INamed ResolveNamedByPath(string path)
+  {
+    return ResolveNamedByPath(path, out var _);
   }
 
   static FuncSymbolScript TryMapIp2Func(CompiledModule cm, int ip)
