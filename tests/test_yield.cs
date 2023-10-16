@@ -886,4 +886,29 @@ public class TestYield : BHL_TestBase
        )
     );
   }
+
+  [IsTested()]
+  public void TestWait()
+  {
+    string bhl = @"
+    coro func test()
+    {
+      yield wait(5)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    int start = System.Environment.TickCount;
+    var fb = vm.Start("test");
+    for(int c=0;c<10;++c)
+    {
+      if(!vm.Tick())
+        break;
+      System.Threading.Thread.Sleep(1);
+    }
+    AssertTrue(fb.IsStopped());
+    AssertTrue(System.Environment.TickCount - start >= 5);
+    CommonChecks(vm);
+  }
+
 }
