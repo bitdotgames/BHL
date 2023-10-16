@@ -3397,18 +3397,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].CORO() == null)
+    if(pass.func_ctx.funcAttribs().Length > 0 && 
+        pass.func_ctx.funcAttribs()[0].CORO() == null)
     {
       //we can proceed after this error
       AddError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
     }
 
     var func_ann = Annotate(pass.func_ctx);
-    pass.func_symb = new FuncSymbolScript(
-      func_ann, 
-      new FuncSignature(),
-      name
-    ); 
+    pass.func_symb = new FuncSymbolScript(func_ann, new FuncSignature(), name); 
 
     if(!pass.scope.TryDefine(pass.func_symb, out SymbolError err))
     {
