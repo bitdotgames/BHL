@@ -42,16 +42,6 @@ public class MyBindings : IUserBindings
       );
       types.ns.Define(fn);
     }
-
-    {
-      var fn = new FuncSymbolNative(new Origin(), "Wait", FuncAttrib.Coro, Types.Void, 0,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          { return CoroutinePool.New<WaitNode>(frm.vm); },
-          new FuncArgSymbol("t", Types.Float)
-        );
-
-      types.ns.Define(fn);
-    }
   }
 }
 
@@ -59,33 +49,6 @@ public class MyBindings : IUserBindings
 public static class Time
 {
   public static float dt;
-}
-
-public class WaitNode : Coroutine
-{
-  bool first_time = true;
-  float time_left;
-
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
-  {
-    if(first_time)
-    {
-      status = BHS.RUNNING;
-      time_left = (float)exec.stack.PopRelease().num;
-      first_time = false;
-    }
-    else 
-    {
-      time_left -= Time.dt;
-      if(time_left > 0)
-        status = BHS.RUNNING; 
-    }
-  }
-
-  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
-  {
-    first_time = true;
-  }
 }
 
 } //namespace bhl

@@ -27,6 +27,7 @@ public class Example
       vm.Tick();
       Thread.Sleep((int)(Time.dt * 1000));
       time_accum += Time.dt;
+      //let's quit after 10 seconds
       if(time_accum > 10)
         break;
     }

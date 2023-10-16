@@ -13,7 +13,7 @@ coro func bool Idle()
   int sec = (int)(1 + Rand() * 3)
   Trace("Idling " + (string)sec + " sec...")
 
-  yield Wait(sec)
+  yield wait(sec*1000)
 
   done = true
   return true
@@ -32,7 +32,7 @@ coro func bool FindTarget(ref int target_id)
   Trace("Found new target " + (string)tmp_target_id + "! Approaching it.")
 
   int sec = (int)(1 + Rand() * 3)
-  yield Wait(sec)
+  yield wait(sec*1000)
   target_id = tmp_target_id
   return true
 }
@@ -44,7 +44,7 @@ coro func bool AttackTarget(ref int target_id)
   }
 
   Trace("Attacking target " + (string)target_id + "")
-  yield Wait(0.2)
+  yield wait(200)
   Trace("Target " + (string)target_id + " is dead!")
   target_id = 0
   return true
@@ -60,7 +60,7 @@ coro func StateChanged(ref int state)
 coro func RandomStateChanger(ref int state)
 {
   while(true) {
-    yield Wait((1 + Rand() * 4))
+    yield wait((int)(1 + Rand() * 4)*1000)
     state = state + 1
   }
 }
