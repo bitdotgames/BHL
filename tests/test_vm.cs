@@ -15675,6 +15675,42 @@ public class TestVM : BHL_TestBase
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     });
+
+    SubTest(() => {
+      string bar_bhl = @"
+      namespace N {
+        int bar = 1
+      }
+      ";
+
+      string test_bhl = @"
+      import ""bar""
+
+      namespace N {
+        int foo = 2
+      }
+
+      func int test() {
+        return N.bar
+      }
+      ";
+
+      var vm = MakeVM(new Dictionary<string, string>() {
+          {"test.bhl", test_bhl},
+          {"bar.bhl", bar_bhl},
+        }
+      );
+      AssertFalse(vm.TryFindVarAddr("N.bar", out var _));
+
+      vm.LoadModule("test");
+      AssertTrue(vm.TryFindVarAddr("N.bar", out var addr));
+      AssertEqual(1, addr.val.num);
+      addr.val.num = 100;
+
+      vm.LoadModule("test");
+      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]

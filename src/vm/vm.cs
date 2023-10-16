@@ -1348,13 +1348,10 @@ public class VM : INamedResolver
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveNamedByPath(path, out var _) as FuncSymbolScript;
+    var fs = ResolveNamedByPath(path) as FuncSymbolScript;
     if(fs == null)
       return false;
 
-    //TODO: Using cm from ResolveNamedByPath(..) from the call above
-    //      gives an error in tests. Find out why. This could help
-    //      get rid of an extra lookup
     var cm = compiled_mods[((Namespace)fs.scope).module.name];
 
     addr = new FuncAddr() {
@@ -1378,9 +1375,11 @@ public class VM : INamedResolver
   {
     addr = default(VarAddr);
 
-    var vs = ResolveNamedByPath(path, out var cm) as VariableSymbol;
+    var vs = ResolveNamedByPath(path) as VariableSymbol;
     if(vs == null)
       return false;
+
+    var cm = compiled_mods[((Namespace)vs.scope).module.name];
 
     addr = new VarAddr() {
       module = cm,
@@ -1391,25 +1390,15 @@ public class VM : INamedResolver
     return true;
   }
 
-  public INamed ResolveNamedByPath(string path, out CompiledModule cm)
+  public INamed ResolveNamedByPath(string path)
   {
-    cm = null;
-
     foreach(var kv in compiled_mods)
     {
       var s = kv.Value.ns.ResolveSymbolByPath(path);
       if(s != null)
-      {
-        cm = kv.Value;
         return s;
-      }
     }
     return null;
-  }
-
-  public INamed ResolveNamedByPath(string path)
-  {
-    return ResolveNamedByPath(path, out var _);
   }
 
   static FuncSymbolScript TryMapIp2Func(CompiledModule cm, int ip)
