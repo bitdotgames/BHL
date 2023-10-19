@@ -8826,6 +8826,34 @@ public class TestVM : BHL_TestBase
     AssertEqual(res, "foo");
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestInsert()
+  {
+    string bhl = @"
+
+    func int test1() 
+    {
+      []int arr = []
+      arr.Add(14)
+      arr.Insert(0, 42)
+      return arr[0]
+    }
+
+    func int test2() 
+    {
+      []int arr = []
+      arr.Add(14)
+      arr.Insert(arr.Count, 42)
+      return arr[arr.Count - 1]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(42, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 
 
   [IsTested()]
