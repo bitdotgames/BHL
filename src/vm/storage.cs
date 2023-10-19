@@ -443,9 +443,9 @@ public class ValList : IList<Val>, IValRefcounted
     throw new NotImplementedException();
   }
 
-  public void Insert(int pos, Val o)
+  public void Insert(int pos, Val dv)
   {
-    throw new NotImplementedException();
+    lst.Insert(pos, dv.CloneValue());
   }
 
   public IEnumerator<Val> GetEnumerator()

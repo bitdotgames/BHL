@@ -763,6 +763,14 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
 
     {
+      var fn = new FuncSymbolNative(new Origin(), "Insert", Types.Void, Insert,
+        new FuncArgSymbol("idx", Types.Int),
+        new FuncArgSymbol("o", item_type)
+      );
+      this.Define(fn);
+    }
+
+    {
       var vs = new FieldSymbol(new Origin(), "Count", Types.Int, GetCount, null);
       this.Define(vs);
     }
@@ -803,6 +811,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract Coroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
   public abstract Coroutine IndexOf(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
   public abstract Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  public abstract Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
 }
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeral
@@ -910,6 +919,19 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
     var arr = stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
+    arr.Release();
+    return null;
+  }
+  
+  public override Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var idx = stack.Pop();
+    var arr = stack.Pop();
+    var lst = AsList(arr);
+    lst.Insert((int)idx.num, val);
+    idx.Release();
+    val.Release();
     arr.Release();
     return null;
   }
@@ -1044,6 +1066,19 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     var lst = (IList<T>)arr.obj;
     lst.Clear();
     arr.Release();
+    return null;
+  }
+  
+  public override Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var idx = stack.Pop();
+    var arr = stack.Pop();
+    var lst = (IList<T>)arr.obj;
+    lst.Insert((int)idx.num, (T)val.obj); 
+    arr.Release();
+    idx.Release();
+    val.Release();
     return null;
   }
 
