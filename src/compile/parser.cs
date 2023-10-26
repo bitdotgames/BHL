@@ -1999,28 +1999,36 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
+        var tp = new Proxy<IType>();
+
         var vd = fparams.funcParamDeclare()[i];
-
-        var tp = ParseType(vd.type());
-        if(vd.REF() != null)
-          tp = curr_scope.R().T(new RefType(tp));
-
-        if(vd.VARIADIC() != null)
+        if(vd?.type() == null)
         {
-          if(vd.REF() != null)
-            AddError(vd.REF(), "pass by ref not allowed");
-
-          if(i != fparams.funcParamDeclare().Length-1)
-            AddError(vd, "variadic argument must be last");
-
-          if(vd.assignExp() != null)
-            AddError(vd.assignExp(), "default argument is not allowed");
-
-          sig.attribs |= FuncSignatureAttrib.VariadicArgs;
-          ++default_args_num;
+          AddError(vd, "invalid func signature");
         }
-        else if(vd.assignExp() != null)
-          ++default_args_num;
+        else
+        {
+          tp = ParseType(vd.type());
+          if(vd.REF() != null)
+            tp = curr_scope.R().T(new RefType(tp));
+
+          if(vd.VARIADIC() != null)
+          {
+            if(vd.REF() != null)
+              AddError(vd.REF(), "pass by ref not allowed");
+
+            if(i != fparams.funcParamDeclare().Length-1)
+              AddError(vd, "variadic argument must be last");
+
+            if(vd.assignExp() != null)
+              AddError(vd.assignExp(), "default argument is not allowed");
+
+            sig.attribs |= FuncSignatureAttrib.VariadicArgs;
+            ++default_args_num;
+          }
+          else if(vd.assignExp() != null)
+            ++default_args_num;
+        }
 
         sig.AddArg(tp);
       }
