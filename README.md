@@ -2,13 +2,13 @@
 
 ![CI](https://github.com/bitdotgames/bhl/workflows/CI/badge.svg?branch=master&event=push)
 
-> **bhl** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines Behaviour Trees(BT) primitives with familiar imperative coding style. 
+> **BHL** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines Behaviour Trees(BT) primitives with familiar imperative coding style. 
 
 First time it was presented at the [nucl.ai](https://nucl.ai/) conference in 2016. Here's the [presentation slides](https://docs.google.com/presentation/d/1As-bw3pY5pLij86j7nf_ycaG0Hb2EqnrwR3R8ID47sQ/edit?usp=sharing). 
 
-Please note that bhl is in alpha state and currently targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development built with [Unity](https://unity.com/).
+Please note that BHL is in beta state and currently targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development built with [Unity](https://unity.com/).
 
-## bhl features
+## BHL features
 
 * [ANTLR](http://www.antlr.org/) based: C# frontend + C# interpreting backend
 * Statically typed
@@ -198,9 +198,9 @@ coro func UnitScript(Unit u) {
 
 ## Architecture
 
-![bhl architecture](https://puu.sh/qEkYv/edf3b678aa.png)
+![BHL architecture](https://puu.sh/qEkYv/edf3b678aa.png)
 
-bhl utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backend can be nicely integrated with [Unity](https://unity.com/). 
+BHL utilizes a standard interpreter architecture with a **frontend** and a **backend**. Frontend is responsible for reading input files, static type checking and bytecode generation. Binary bytecode is post-processed and optimized in a separate stage. Processed byte code can be used by the backend. Backend is a interpreter responsible for runtime bytecode evaluation. Backend can be nicely integrated with [Unity](https://unity.com/). 
 
 ### Frontend
 
@@ -212,7 +212,7 @@ Before using the backend you have to compile the **bhl_back.dll** and somehow in
 
 ## Quick build example
 
-Currently bhl assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
+Currently BHL assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
 
 In the example directory you can find a simple illustration of gluing together **frontend** and **backend**. 
 
@@ -237,19 +237,19 @@ Found new target 902! Approaching it.
 ...
 ```
 
-Please note that while bhl works fine under Windows the example assumes you are using \*nix platform.     
+Please note that while BHL works fine under Windows the example assumes you are using \*nix platform.     
 
 ### Unity engine integration
 
-The example script has also a special Unity compatibility mode. It illustrates how you can build a bhl backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use bhl for your Unity game development. You can run the example script in this mode just as follows: 
+The example script has also a special Unity compatibility mode. It illustrates how you can build a BHL backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use BHL for your Unity game development. You can run the example script in this mode just as follows: 
 
 > cd example && ./run.sh -unity
 
 ## Building
 
-bhl comes with its own simple build tool **bhl**. bhl tool is written in C# and should work just fine both on \*nix and Windows platforms. 
+BHL comes with its own simple build tool **bhl**. bhl tool is written in C# and should work just fine both on \*nix and Windows platforms. 
 
-It allows you to build frontend dll, backend dll, compile bhl sources into a binary, run unit tests etc. 
+It allows you to build frontend dll, backend dll, compile BHL sources into a binary, run unit tests etc. 
 
 You can view all available build tasks with the following command:
 
@@ -257,7 +257,7 @@ You can view all available build tasks with the following command:
 
 ## Tests
 
-For now there is no any documentation for bhl except presentation slides. However, there are many [unit tests](test.cs) which cover all bhl features.
+For now there is no any documentation for BHL except presentation slides. However, there are many [unit tests](test.cs) which cover all BHL features.
 
 You can run unit tests by executing the following command:
 
@@ -270,6 +270,8 @@ You can run unit tests by executing the following command:
 1. More compact byte code
 1. More optimal runtime memory storage layout
 1. Weak references semantics
+1. Improved debugger support
+
 
 ## Version 2.0
 
@@ -289,7 +291,7 @@ You can run unit tests by executing the following command:
 1. ~~Built-in strings basic routines~~
 1. ~~Implicit variable types using 'var'~~ 
 1. LSP integration
-1. Debugger support
+1. ~~Basic debugger support~~
 
 ## Version 1.0
 
