@@ -2544,6 +2544,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   void CheckCoroCallValidity(ParserRuleContext ctx)
   {
     var curr_func = PeekFuncDecl();
+    if(curr_func == null)
+    {
+      AddError(ctx, "invalid context");
+      return;
+    }
+
     if(!curr_func.attribs.HasFlag(FuncAttrib.Coro))
     {
       AddError(curr_func.origin, "function with yield calls must be coro");

@@ -55,7 +55,7 @@ public class TestErrors : BHL_TestBase
   public void TestIncompleteFuncSignature()
   {
     string bhl = @"
-    func foo(int a, ";
+    func foo(int a,";
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
@@ -64,8 +64,27 @@ public class TestErrors : BHL_TestBase
       },
       "mismatched input",
       new PlaceAssert(bhl, @"
-    func foo(int a, 
---------------------^"
+    func foo(int a,
+-------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestIncompleteCoroFuncSignature()
+  {
+    string bhl = @"
+    coro func foo(, int a)";
+
+    //TODO: error hint placement must be more precise
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input 'coro func foo(,'",
+      new PlaceAssert(bhl, @"
+    coro func foo(, int a)
+------------------^"
       )
     );
   }
