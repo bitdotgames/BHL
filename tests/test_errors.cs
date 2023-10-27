@@ -51,33 +51,48 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
+  public void TestIncompleteFuncSignature()
+  {
+    string bhl = @"
+    func foo(int a, ";
+
+    //TODO: error hint placement must be more precise
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "mismatched input",
+      new PlaceAssert(bhl, @"
+    func foo(int a, 
+--------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestIncompleteFuncCall()
   {
     string bhl = @"
-    func foo(int a) {
-    }
-
     func test() {
       foo(1,
     }
     ";
 
+    //TODO: error hint placement must be more precise
     AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
-      "incomplete statement",
+      "mismatched input",
       new PlaceAssert(bhl, @"
-      foo(1,
-------^"
+    }
+----^"
       )
     );
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestIncompleteMemberAccess()
   {
     string bhl = @"
@@ -91,14 +106,15 @@ public class TestErrors : BHL_TestBase
     }
     ";
 
+    //TODO: error hint placement must be more precise
     AssertError<Exception>(
       delegate() { 
         Compile(bhl);
       },
-      "incomplete statement",
+      "no viable alternative at input",
       new PlaceAssert(bhl, @"
-      f.
-------^"
+    }
+----^"
       )
     );
   }
