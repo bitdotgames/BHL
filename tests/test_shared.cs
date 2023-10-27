@@ -801,6 +801,12 @@ public class BHL_TestBase
     return Path.Combine(Path.GetDirectoryName(self_bin), "tmp", "tests");
   }
 
+  public static bool IsUnix()
+  {
+    int p = (int)Environment.OSVersion.Platform;
+    return (p == 4) || (p == 6) || (p == 128);
+  }
+
   public static void Assert(bool condition, string msg = null)
   {
     if(!condition)
