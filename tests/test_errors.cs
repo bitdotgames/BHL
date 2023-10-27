@@ -55,7 +55,8 @@ public class TestErrors : BHL_TestBase
   public void TestIncompleteFuncSignature()
   {
     string bhl = @"
-    func foo(int a,";
+    func foo(int a,
+    {";
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
@@ -64,8 +65,8 @@ public class TestErrors : BHL_TestBase
       },
       "mismatched input",
       new PlaceAssert(bhl, @"
-    func foo(int a,
--------------------^"
+    {
+----^"
       )
     );
   }
