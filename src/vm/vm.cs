@@ -1582,8 +1582,7 @@ public class VM : INamedResolver
   internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
   {
     var status = BHS.SUCCESS;
-    int exec_len = 0;
-    while((exec_len = exec.regions.Count) > exec_waterline_idx && status == BHS.SUCCESS)
+    while(exec.regions.Count > exec_waterline_idx && status == BHS.SUCCESS)
     {
       status = ExecuteOnce(exec);
     }
