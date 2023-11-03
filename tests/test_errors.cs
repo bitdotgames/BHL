@@ -148,6 +148,32 @@ public class TestErrors : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestIncompleteEnumAccess()
+  {
+    string bhl = @"
+    enum Foo {
+      Item = 1
+    }
+
+    func test() {
+      Foo.
+    }
+    ";
+
+    //TODO: error hint placement must be more precise
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "no viable alternative at input",
+      new PlaceAssert(bhl, @"
+    }
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestSeveralSemanticErrorsInOneFile()
   {
     string bhl = @"

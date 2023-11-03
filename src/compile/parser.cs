@@ -1192,6 +1192,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return false;
         }
 
+        if(macc.NAME() == null)
+        {
+          AddError(macc, "incomplete parsing context");
+          return false;
+        }
+
         var macc_name_class_symb = macc_name_symb as ClassSymbol;
 
         if(macc_name_class_symb == null && 
@@ -3527,7 +3533,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_OutlineInterfaceDecl(ParserPass pass)
   {
-    if(pass.iface_ctx == null)
+    if(pass.iface_ctx?.NAME() == null)
       return;
 
     LSP_AddSemanticToken(pass.iface_ctx.INTERFACE(), SemanticToken.Keyword);
@@ -3547,16 +3553,22 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseInterfaceMethods(ParserPass pass)
   {
-    if(pass.iface_ctx == null)
+    if(pass.iface_ctx?.NAME() == null)
       return;
 
-    for(int i=0;i<pass.iface_ctx.interfaceBlock().interfaceMembers()?.interfaceMember().Length;++i)
+    for(int i=0;i<pass.iface_ctx.interfaceBlock()?.interfaceMembers()?.interfaceMember().Length;++i)
     {
       var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
 
       var fd = ib.interfaceFuncDecl();
       if(fd != null)
       {
+        if(fd.NAME() == null)
+        {
+          AddError(fd, "incomplete parsing context");
+          return;
+        }
+
         int default_args_num;
         var sig = ParseFuncSignature(fd.CORO() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
@@ -3594,7 +3606,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_AddInterfaceExtensions(ParserPass pass)
   {
-    if(pass.iface_ctx == null)
+    if(pass.iface_ctx?.NAME() == null)
       return;
 
     if(pass.iface_ctx.extensions() != null)
@@ -3685,7 +3697,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_OutlineClassDecl(ParserPass pass)
   {
-    if(pass.class_ctx == null)
+    if(pass.class_ctx?.NAME() == null)
       return;
 
     LSP_AddSemanticToken(pass.class_ctx.CLASS(), SemanticToken.Keyword);
@@ -3703,12 +3715,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
+        if(fldd.varDeclare()?.NAME() == null)
+        {
+          AddError(fldd, "incomplete parsing context");
+          return;
+        }
+
         var vd = fldd.varDeclare();
 
         if(vd.NAME().GetText() == "this")
@@ -3812,7 +3830,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseClassMembersTypes(ParserPass pass)
   {
-    if(pass.class_ctx == null)
+    if(pass.class_ctx?.NAME() == null)
       return;
 
     PushScope(pass.class_symb);
@@ -3824,12 +3842,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     pass.class_symb._resolve_only_decl_members = true;
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fldd = cm.fldDeclare();
       if(fldd != null)
       {
+        if(fldd.varDeclare()?.NAME() == null)
+        {
+          AddError(fldd, "incomplete parsing context");
+          continue;
+        }
+
         var vd = fldd.varDeclare();
         var fld_symb = (FieldSymbolScript)pass.class_symb.members.Find(vd.NAME().GetText());
         if(fld_symb == null)
@@ -3840,7 +3864,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbolScript)pass.class_symb.members.Find(fd.NAME().GetText());
+        var func_symb = pass.class_symb.members.Find(fd.NAME().GetText()) as FuncSymbolScript;
         if(func_symb == null)
           break;
 
@@ -3863,7 +3887,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_AddClassExtensions(ParserPass pass)
   {
-    if(pass.class_ctx == null)
+    if(pass.class_ctx?.NAME() == null)
       return;
 
     if(pass.class_ctx.extensions() != null)
@@ -3930,7 +3954,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_SetupClass(ParserPass pass)
   {
-    if(pass.class_ctx == null)
+    if(pass.class_ctx?.NAME() == null)
       return;
 
     pass.class_symb.Setup();
@@ -3947,17 +3971,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
   {
-    if(pass.class_ctx == null)
+    if(pass.class_ctx?.NAME() == null)
       return;
 
     //class methods bodies
-    for(int i=0;i<pass.class_ctx.classBlock().classMembers()?.classMember().Length;++i)
+    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fd = cm.funcDecl();
       if(fd != null)
       {
-        var func_symb = (FuncSymbol)pass.class_symb.Resolve(fd.NAME().GetText());
+        var func_symb = pass.class_symb.Resolve(fd.NAME().GetText()) as FuncSymbol;
         if(func_symb == null)
           break;
 
@@ -3982,6 +4006,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitEnumDecl(bhlParser.EnumDeclContext ctx)
   {
+    if(ctx.NAME() == null)
+      return null;
+
     LSP_AddSemanticToken(ctx.ENUM(), SemanticToken.Keyword);
 
     var enum_name = ctx.NAME().GetText();
@@ -3997,11 +4024,27 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    for(int i=0;i<ctx.enumBlock().enumMember().Length;++i)
+    for(int i=0;i<ctx.enumBlock()?.enumMember()?.Length;++i)
     {
       var em = ctx.enumBlock().enumMember()[i];
+      if(em.NAME() == null || em.INT() == null)
+      {
+        AddError(em, "incomplete parsing context");
+        return null;
+      }
+
       var em_name = em.NAME().GetText();
-      int em_val = int.Parse(em.INT().GetText(), System.Globalization.CultureInfo.InvariantCulture);
+      int em_val = 0;
+      if(!int.TryParse(
+          em.INT().GetText(), 
+          System.Globalization.NumberStyles.Integer, 
+          System.Globalization.CultureInfo.InvariantCulture, 
+          out em_val)
+        )
+      {
+        AddError(em, "invalid value");
+        return null;
+      }
 
       int res = symb.TryAddItem(Annotate(em), em_name, em_val);
       if(res == 1)
