@@ -450,7 +450,7 @@ public class ValList : IList<Val>, IValRefcounted
 
   public IEnumerator<Val> GetEnumerator()
   {
-    throw new NotImplementedException();
+    return lst.GetEnumerator();
   }
 
   IEnumerator IEnumerable.GetEnumerator()
