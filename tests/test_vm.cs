@@ -15963,6 +15963,31 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestValListGetEnumerator()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var dv1 = Val.NewInt(vm, 1);
+    lst.Add(dv1);
+
+    var dv2 = Val.NewInt(vm, 2);
+    lst.Add(dv2);
+
+    int c = 0;
+    foreach(var tmp in lst) 
+    {
+      ++c;
+      if(c == 1)
+        AssertEqual(tmp.num, dv1.num);
+      else if(c == 2)
+        AssertEqual(tmp.num, dv2.num);
+    }
+    AssertEqual(2, c);
+  }
+
+  [IsTested()]
   public void TestRefCountSimple()
   {
     string bhl = @"
