@@ -1635,8 +1635,9 @@ public class VM : INamedResolver
       {
         int cast_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var as_type = curr_frame.constants[cast_type_idx].itype.Get();
+        bool force_type = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip) == 1;
 
-        HandleTypeAs(exec, as_type);
+        HandleTypeAs(exec, as_type, force_type);
       }
       break;
       case Opcodes.TypeIs:
@@ -2331,14 +2332,16 @@ public class VM : INamedResolver
     exec.stack.Push(new_val);
   }
 
-  void HandleTypeAs(ExecState exec, IType type)
+  void HandleTypeAs(ExecState exec, IType cast_type, bool force_type)
   {
     var val = exec.stack.Pop();
 
-    if(type != null && val.type != null && Types.Is(val, type))
+    if(cast_type != null && val.type != null && Types.Is(val, cast_type))
     {
       var new_val = Val.New(this);
       new_val.ValueCopyFrom(val);
+      if(force_type)
+        new_val.type = cast_type;
       new_val.RefMod(RefOp.USR_INC);
       exec.stack.Push(new_val);
     }

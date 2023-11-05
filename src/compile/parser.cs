@@ -2608,6 +2608,26 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var tp = ParseType(ctx.type());
 
     var cast_type = tp.Get();
+    bool force_type = NeedToForceCastType(cast_type);
+
+    var ast = new AST_TypeCast(cast_type, force_type, ctx.Start.Line);
+    var exp = ctx.exp();
+    PushAST(ast);
+    bool ok = TryVisit(exp);
+    PopAST();
+
+    Annotate(ctx).eval_type = cast_type;
+
+    if(ok)
+      Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
+  static bool NeedToForceCastType(IType cast_type)
+  {
     //NOTE: For native types we need to enforce the cast type since we don't have
     //      vtables for them like for userland classes. If we don't do that later 
     //      method/properties calls will use wrong type info.
@@ -2641,22 +2661,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //      userland classes roughly equals 'static casting' in C++. We do that only in some
     //      edge cases, e.g. when calling 'base' virtual class method implementation from the 
     //      one overriden one 
-    bool force_type = cast_type is ClassSymbolNative || cast_type is InterfaceSymbolNative;
-
-    var ast = new AST_TypeCast(cast_type, force_type: force_type, line_num: ctx.Start.Line);
-    var exp = ctx.exp();
-    PushAST(ast);
-    bool ok = TryVisit(exp);
-    PopAST();
-
-    Annotate(ctx).eval_type = cast_type;
-
-    if(ok)
-      Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
-
-    PeekAST().AddChild(ast);
-
-    return null;
+    return cast_type is ClassSymbolNative || 
+      cast_type is InterfaceSymbolNative;
   }
 
   public override object VisitExpAs(bhlParser.ExpAsContext ctx)
@@ -2664,8 +2670,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_AddSemanticToken(ctx.AS(), SemanticToken.Keyword);
 
     var tp = ParseType(ctx.type());
+    var cast_type = tp.Get();
+    bool force_type = NeedToForceCastType(cast_type);
 
-    var ast = new AST_TypeAs(tp.Get(), ctx.Start.Line);
+    var ast = new AST_TypeAs(cast_type, force_type, ctx.Start.Line);
     var exp = ctx.exp();
     PushAST(ast);
     TryVisit(exp);

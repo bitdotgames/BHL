@@ -589,7 +589,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.TypeAs, new int[] { ConstIdx(c, c.ns.T("Foo")) })
+      .EmitThen(Opcodes.TypeAs, new int[] { ConstIdx(c, c.ns.T("Foo")), 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
@@ -623,8 +623,13 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public class NativeFoo {}
-  public class NativeBar : NativeFoo {}
+  public class NativeFoo {
+    public int foo = 10;
+  }
+  public class NativeBar : NativeFoo 
+  {
+    public int bar = 100;
+  }
 
   [IsTested()]
   public void TestIsForChildNativeClass()
@@ -641,6 +646,12 @@ public class TestTypeCasts : BHL_TestBase
       var b = NewFooHiddenBar() as Bar;
       return b != null
     }
+
+    func int test3() 
+    {
+      var b = NewFooHiddenBar() as Bar;
+      return b.bar
+    }
     ";
 
     var ts_fn = new Action<Types>((ts) => { 
@@ -649,8 +660,16 @@ public class TestTypeCasts : BHL_TestBase
         { 
           v.SetObj(new NativeBar(), type);
         },
-        typeof(Bar)
+        typeof(NativeBar)
       );
+      cl1.Define(new FieldSymbol(new Origin(), "bar", ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var bar = (NativeBar)ctx.obj;
+          v.SetInt(bar.bar);
+        },
+        null
+      ));
       ts.ns.Define(cl1);
 
       var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
@@ -658,8 +677,16 @@ public class TestTypeCasts : BHL_TestBase
         { 
           v.SetObj(new NativeFoo(), type);
         },
-        typeof(Foo)
+        typeof(NativeFoo)
       );
+      cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"), 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var foo = (NativeFoo)ctx.obj;
+          v.SetInt(foo.foo);
+        },
+        null
+      ));
       ts.ns.Define(cl2);
 
       cl1.Setup();
@@ -667,7 +694,7 @@ public class TestTypeCasts : BHL_TestBase
 
       var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"), 
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-          stack.Push(Val.NewObj(frm.vm, new Bar(), ts.T("Foo").Get()));
+          stack.Push(Val.NewObj(frm.vm, new NativeBar(), ts.T("Foo").Get()));
           return null;
         }
       );
@@ -677,6 +704,7 @@ public class TestTypeCasts : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Assert(Execute(vm, "test").result.PopRelease().bval);
     Assert(Execute(vm, "test2").result.PopRelease().bval);
+    AssertEqual(100, Execute(vm, "test3").result.PopRelease().num);
     CommonChecks(vm);
   }
 

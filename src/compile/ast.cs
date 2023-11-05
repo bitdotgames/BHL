@@ -302,11 +302,13 @@ public class AST_TypeCast : AST_Tree
 public class AST_TypeAs : AST_Tree 
 {
   public IType type;
+  public bool force_type;
   public int line_num;
 
-  public AST_TypeAs(IType type, int line_num)
+  public AST_TypeAs(IType type, bool force_type, int line_num)
   {
     this.type = type;
+    this.force_type = force_type;
     this.line_num = line_num;
   }
 }
