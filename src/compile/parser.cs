@@ -2629,10 +2629,38 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   static bool NeedToForceCastType(IType cast_type)
   {
     //NOTE: For native types we need to enforce the cast type since we don't have
-    //      vtables for them like for userland classes. If we don't do that later 
-    //      method/properties calls will use wrong type info.
+    //      vtables for them like for userland classes. (for native types we rely on 
+    //      C# casting checks anyway)
     //
-    //      For example, here's the native interface and class:
+    //      If we don't enforce the type then later method/properties calls will use wrong type info.
+    //
+    //      We have no control on which instance of the native class is actually will 
+    //      be set in the runtime when, say, the base class is used as a returned type 
+    //      in the function signature.
+    //
+    //      For example, here's the native base and child classes:
+    //
+    //      class Base {
+    //         int a;
+    //      }
+    //
+    //      class Child : Base {
+    //         int b;
+    //      }
+    //
+    //      Base make() {
+    //        return new Child() //this happens in C# bindings!
+    //      }
+    //
+    //      Now if we make bindings for these entities the returned type of the 'make()' 
+    //      function will be Base and the following bhl code will throw an exception in runtime
+    //      without enforcing of the type:
+    //
+    //      Base b = make()
+    //      Child c = (Child)b // without 'type enforcing' value's type will be 'Base'    
+    //      c.b = 10           // runtime error: b's index can't be found in 'Base'
+    //
+    //      Or for example, here's the native interface and class:
     //
     //      interface IFoo {
     //      }
@@ -2640,19 +2668,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //      class Foo : IFoo {
     //        public int X() { .. }
     //
-    //        //NOTE: we return IFoo not Foo
     //        static IFoo create() {
-    //          return new Foo();
+    //          return new Foo(); //this happens in C# bindings!
     //        }
     //      }
     //
-    //      Now if we make bindings for these entities the returned type of 'Foo.create()' 
-    //      method will be IFoo and the following bhl code won't simply work without 
-    //      enforcing of the type:
-    //
     //      IFoo ifoo = create()
-    //      Foo foo = (Foo)foo // without 'type enforcing' Value's type will be 'IFoo'    
-    //      foo.X()            // error: X's index can't be found in 'IFoo'
+    //      Foo foo = (Foo)foo // without 'type enforcing' value's type will be 'IFoo'    
+    //      foo.X()            // runtime error: X's index can't be found in 'IFoo'
     //
     //      In case of userland classes if we enforce the cast type we wipe information about 
     //      the original type and later virtual/interface method invocations will be wrong.
