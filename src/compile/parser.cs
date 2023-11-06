@@ -2660,7 +2660,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //      information for proper methods dispatching. Basically enforcing the cast type for 
     //      userland classes roughly equals 'static casting' in C++. We do that only in some
     //      edge cases, e.g. when calling 'base' virtual class method implementation from the 
-    //      one overriden one 
+    //      overriden one 
     return cast_type is ClassSymbolNative || 
       cast_type is InterfaceSymbolNative;
   }

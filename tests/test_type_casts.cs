@@ -701,11 +701,23 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(fn);
     });
 
-    var vm = MakeVM(bhl, ts_fn);
-    Assert(Execute(vm, "test").result.PopRelease().bval);
-    Assert(Execute(vm, "test2").result.PopRelease().bval);
-    AssertEqual(100, Execute(vm, "test3").result.PopRelease().num);
-    CommonChecks(vm);
+    SubTest(() => {
+      var vm = MakeVM(bhl, ts_fn);
+      Assert(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      var vm = MakeVM(bhl, ts_fn);
+      Assert(Execute(vm, "test2").result.PopRelease().bval);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      var vm = MakeVM(bhl, ts_fn);
+      AssertEqual(100, Execute(vm, "test3").result.PopRelease().num);
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]
@@ -803,16 +815,48 @@ public class TestTypeCasts : BHL_TestBase
       int foo
     }
 
+    func Bar make_bar() 
+    {
+      Foo f = {foo: 14, bar: 41}
+      return f; 
+    }
+
     func int test() 
     {
       Foo f = {foo: 14, bar: 41}
       return (f as Bar).bar
     }
+
+    func int test2() 
+    {
+      Bar b = make_bar()
+      return (b as Foo).foo
+    }
+
+    func int test3() 
+    {
+      Bar b = make_bar()
+      return (b as Bar).bar
+    }
     ";
 
-    var vm = MakeVM(bhl);
-    AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
-    CommonChecks(vm);
+    SubTest(() => {
+      var vm = MakeVM(bhl);
+      AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      var vm = MakeVM(bhl);
+      AssertEqual(14, Execute(vm, "test2").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      var vm = MakeVM(bhl);
+      AssertEqual(41, Execute(vm, "test3").result.PopRelease().num);
+      CommonChecks(vm);
+    });
   }
 
   [IsTested()]
