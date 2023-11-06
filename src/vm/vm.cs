@@ -2336,7 +2336,7 @@ public class VM : INamedResolver
   {
     var val = exec.stack.Pop();
 
-    if(cast_type != null && val.type != null && Types.Is(val, cast_type))
+    if(Types.Is(val, cast_type))
     {
       var new_val = Val.New(this);
       new_val.ValueCopyFrom(val);
@@ -2353,12 +2353,7 @@ public class VM : INamedResolver
   void HandleTypeIs(ExecState exec, IType type)
   {
     var val = exec.stack.Pop();
-    exec.stack.Push(Val.NewBool(this, 
-          type != null && 
-          val.type != null && 
-          Types.Is(val, type)
-        )
-    );
+    exec.stack.Push(Val.NewBool(this, Types.Is(val, type)));
     val.Release();
   }
 

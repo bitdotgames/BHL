@@ -646,10 +646,10 @@ public class Types : INamedResolver
 
   static public bool Is(Val v, IType dest_type) 
   {
-    if(v.obj != null && dest_type is INativeType ndi)
+    if(v?.obj != null && dest_type is INativeType ndi)
       return ndi.GetNativeType().IsAssignableFrom(v.obj.GetType());
     else
-      return Is(v.type, dest_type);
+      return Is(v?.type, dest_type);
   }
 
   static public bool CheckCast(IType dest_type, IType from_type) 
