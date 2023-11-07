@@ -353,7 +353,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void AddError(IParseTree place, string msg) 
   {
-    errors.Add(new ParseError(module, place, tokens, msg));
+    try
+    {
+      errors.Add(new ParseError(module, place, tokens, msg));
+    }
+    catch(Exception)
+    {}
   }
 
   void PushBlock(AST_Block block)
