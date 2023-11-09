@@ -302,9 +302,33 @@ public class VM : INamedResolver
     public ValStack stack;
   }
 
+  public struct FiberRef
+  {
+    int id;
+    Fiber fiber;
+
+    public Fiber Get()
+    {
+      return (fiber?.id ?? 0) == id ? fiber : null;
+    }
+
+    public void Set(Fiber fiber)
+    {
+      this.id = fiber.id;
+      this.fiber = fiber;
+    }
+
+    public void Clear()
+    {
+      this.fiber = null;
+    }
+  }
+
   public class Fiber
   {
     public VM vm;
+
+    public FiberRef parent;
 
     //NOTE: -1 means it's in released state,
     //      public only for inspection
@@ -348,6 +372,7 @@ public class VM : INamedResolver
       }
 
       fb.refs = 1;
+      fb.parent.Clear();
 
       //0 index frame used for return values consistency
       fb.exec.frames.Push(Frame.New(vm));
@@ -1418,6 +1443,7 @@ public class VM : INamedResolver
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
     var fb = Fiber.New(this);
+    fb.parent.Set(curr_frame.fb);
     Register(fb);
 
     //checking native call
@@ -1448,6 +1474,7 @@ public class VM : INamedResolver
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
   {
     var fb = Fiber.New(this);
+    fb.parent.Set(curr_frame.fb);
     Register(fb);
 
     //checking native call
