@@ -42,6 +42,10 @@ public class TestFiber : BHL_TestBase
 
     AssertTrue(fb.Children[0].Get().IsStopped());
     AssertTrue(fb.Children[1].Get().IsStopped());
+
+    vm.Tick(fb);
+
+    CommonChecks(vm);
   }
 
   [IsTested()]
