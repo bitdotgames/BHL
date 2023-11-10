@@ -6,7 +6,7 @@ using bhl;
 public class TestFiber : BHL_TestBase
 {
   [IsTested()]
-  public void TestFiberChildren()
+  public void TestFiberStopChildren()
   {
     string bhl = @"
     coro func foo() {
