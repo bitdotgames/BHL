@@ -26,6 +26,8 @@ public class TestFiber : BHL_TestBase
     vm.Tick(fb);
     AssertEqual(1, fb.Children.Count);
     AssertEqual(fb, fb.Children[0].Get().Parent.Get());
+    vm.Tick(fb);
+    AssertTrue(fb.IsStopped());
   }
 
   [IsTested()]

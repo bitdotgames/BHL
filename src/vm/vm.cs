@@ -1572,6 +1572,16 @@ public class VM : INamedResolver
     }
   }
 
+  internal void _StopChildren(Fiber fb)
+  {
+    foreach(var child_ref in fb.children)
+    {
+      var child = child_ref.Get();
+      if(child != null)
+        _Stop(child);
+    }
+  }
+
   internal void _Stop(Fiber fb)
   {
     if(fb.IsStopped())
