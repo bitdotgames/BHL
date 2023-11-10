@@ -2670,6 +2670,41 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestNativeClassTypeRefNotFound()
+  {
+    string bhl = @"
+    func test(Foo foo) 
+    {
+      var native = foo.sub
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
+        ts.ns.Define(cl);
+
+        cl.Define(new FieldSymbol(new Origin(), "sub", ts.T("Bar"),
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+          {}, null
+        ));
+        cl.Setup();
+      }
+    });
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl, ts_fn);
+      },
+      "unresolved type Bar",
+      new PlaceAssert(bhl, @"
+      var native = foo.sub
+-----------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestNullWithClassInstance()
   {
     string bhl = @"

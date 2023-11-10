@@ -1510,6 +1510,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
 
           type = var_symb.type.Get();
+          if(type == null)
+            AddError(name, "unresolved type " + var_symb.type);
         }
         else if(func_symb != null)
         {
