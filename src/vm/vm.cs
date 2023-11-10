@@ -307,6 +307,12 @@ public class VM : INamedResolver
     int id;
     Fiber fiber;
 
+    public FiberRef(Fiber fiber)
+    {
+      this.id = (fiber?.id ?? 0);
+      this.fiber = fiber;
+    }
+
     public Fiber Get()
     {
       return (fiber?.id ?? 0) == id ? fiber : null;
@@ -314,7 +320,7 @@ public class VM : INamedResolver
 
     public void Set(Fiber fiber)
     {
-      this.id = fiber.id;
+      this.id = (fiber?.id ?? 0);
       this.fiber = fiber;
     }
 
@@ -328,18 +334,19 @@ public class VM : INamedResolver
   {
     public VM vm;
 
-    public FiberRef parent;
+    internal FiberRef parent;
+    public FiberRef Parent => parent;
+
+    internal List<FiberRef> children = new List<FiberRef>(); 
+
+    public IReadOnlyList<FiberRef> Children => children;
 
     //NOTE: -1 means it's in released state,
     //      public only for inspection
     public int refs;
 
     internal int id;
-    public int Id {
-      get {
-        return id;
-      }
-    }
+    public int Id => id;
 
     internal int tick;
 
@@ -373,6 +380,7 @@ public class VM : INamedResolver
 
       fb.refs = 1;
       fb.parent.Clear();
+      fb.children.Clear();
 
       //0 index frame used for return values consistency
       fb.exec.frames.Push(Frame.New(vm));
@@ -432,6 +440,12 @@ public class VM : INamedResolver
       exec.frames.Clear();
 
       tick = 0;
+    }
+
+    internal void AddChild(Fiber fb)
+    {
+      fb.parent.Set(this);
+      children.Add(new FiberRef(fb));
     }
 
     public void Retain()
@@ -1443,8 +1457,7 @@ public class VM : INamedResolver
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
     var fb = Fiber.New(this);
-    fb.parent.Set(curr_frame.fb);
-    Register(fb);
+    Register(fb, curr_frame.fb);
 
     //checking native call
     if(ptr.native != null)
@@ -1474,8 +1487,7 @@ public class VM : INamedResolver
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
   {
     var fb = Fiber.New(this);
-    fb.parent.Set(curr_frame.fb);
-    Register(fb);
+    Register(fb, curr_frame.fb);
 
     //checking native call
     if(ptr.native != null)
@@ -1532,10 +1544,11 @@ public class VM : INamedResolver
     fb.exec.stack = frm._stack;
   }
 
-  void Register(Fiber fb)
+  void Register(Fiber fb, Fiber parent = null)
   {
     fb.id = ++fibers_ids;
     fibers.Add(fb);
+    parent?.AddChild(fb);
 
     OnNewFiber?.Invoke(fb);
   }
