@@ -2696,7 +2696,7 @@ public class TestClass : BHL_TestBase
       delegate() { 
         Compile(bhl, ts_fn);
       },
-      "unresolved type Bar",
+      "type 'Bar' not found",
       new PlaceAssert(bhl, @"
       var native = foo.sub
 -----------------------^"

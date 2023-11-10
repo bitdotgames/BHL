@@ -1429,15 +1429,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
-            type = ftype.ret_type.Get();
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb, 0, name));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
-            type = ftype.ret_type.Get();
           }
+
+          type = ftype.ret_type.Get();
+          if(type == null)
+            AddError(name, "type '" + ftype.ret_type + "' not found");
         }
         else if(func_symb != null)
         {
@@ -1511,7 +1513,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
           type = var_symb.type.Get();
           if(type == null)
-            AddError(name, "unresolved type " + var_symb.type);
+            AddError(name, "type '" + var_symb.type + "' not found");
         }
         else if(func_symb != null)
         {
@@ -1558,6 +1560,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.ret_type.Get();
+      if(type == null)
+        AddError(name, "type '" + ftype.ret_type + "' not found");
     }
 
     if(ast != null)
@@ -1758,7 +1762,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           var func_arg_type = func_arg_symb.GuessType();
           if(func_arg_type == null)
           {
-            AddError(na.ca, "unresolved type " + func_arg_symb.type);
+            AddError(na.ca, "type '" + func_arg_symb.type + "' not found");
             PopAST();
             return;
           }
@@ -1813,7 +1817,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         if(varg_arr_type == null)
         {
-          AddError(na.ca, "unresolved type " + func_arg_symb.type);
+          AddError(na.ca, "type '" + func_arg_symb.type + "' not found");
           PopAST();
           return;
         }
@@ -1835,7 +1839,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           var varg_type = varg_arr_type.item_type.Get();
           if(variadic_args.Count > 0 && varg_type == null)
           {
-            AddError(na.ca, "unresolved type " + varg_arr_type.item_type);
+            AddError(na.ca, "type '" + varg_arr_type.item_type + "' not found");
             PopAST();
             return;
           }
