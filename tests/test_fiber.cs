@@ -16,18 +16,32 @@ public class TestFiber : BHL_TestBase
 
     coro func test() {
       start(foo)
+      start(foo)
       yield()
     }
     ";
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
+
     AssertEqual(0, fb.Children.Count);
+
     vm.Tick(fb);
-    AssertEqual(1, fb.Children.Count);
+
+    AssertEqual(2, fb.Children.Count);
     AssertEqual(fb, fb.Children[0].Get().Parent.Get());
+    AssertEqual(fb, fb.Children[1].Get().Parent.Get());
+
     vm.Tick(fb);
+
     AssertTrue(fb.IsStopped());
+    AssertFalse(fb.Children[0].Get().IsStopped());
+    AssertFalse(fb.Children[1].Get().IsStopped());
+
+    vm.StopChildren(fb);
+
+    AssertTrue(fb.Children[0].Get().IsStopped());
+    AssertTrue(fb.Children[1].Get().IsStopped());
   }
 
   [IsTested()]
