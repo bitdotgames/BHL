@@ -73,7 +73,8 @@ public abstract class BehaviorTreeNode : IBehaviorTreeNode, ITask
 
   void ITask.Stop()
   {
-    this.Stop();
+    //being explicit to avoid possible recursion
+    NodeExtensions.Stop(this);
   }
 }
 
