@@ -49,7 +49,7 @@ public static class NodeExtensions
   }
 }
 
-public abstract class BehaviorTreeNode : IBehaviorTreeNode
+public abstract class BehaviorTreeNode : IBehaviorTreeNode, ITask
 {
   BHS _last_status = BHS.NONE; 
   public BHS last_status { 
@@ -65,6 +65,16 @@ public abstract class BehaviorTreeNode : IBehaviorTreeNode
   public abstract void Deinit();
   public abstract BHS Execute();
   public abstract void Defer();
+
+  bool ITask.Tick()
+  {
+    return this.Run() == BHS.RUNNING;
+  }
+
+  void ITask.Stop()
+  {
+    this.Stop();
+  }
 }
 
 public abstract class BehaviorTreeTerminalNode : BehaviorTreeNode

@@ -330,7 +330,7 @@ public class VM : INamedResolver
     }
   }
 
-  public class Fiber
+  public class Fiber : ITask
   {
     public VM vm;
 
@@ -557,6 +557,16 @@ public class VM : INamedResolver
         return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
       else
         return false;
+    }
+
+    bool ITask.Tick()
+    {
+      return vm.Tick(this);
+    }
+
+    void ITask.Stop()
+    {
+      vm.Stop(this);
     }
   }
 
