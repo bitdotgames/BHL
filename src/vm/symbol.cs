@@ -411,6 +411,12 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
   //all 'flattened' members including all parents
   internal SymbolsStorage _all_members;
 
+  // we want to prevent resolving of attributes and methods at some point
+  // since they might collide with types. For example:
+  // class Foo {
+  //   a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type  
+  // }
+  // setting this attribute controls this behavior
   internal bool _resolve_only_decl_members;
 
   public VM.ClassCreator creator;
