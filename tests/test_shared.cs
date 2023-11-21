@@ -952,7 +952,8 @@ public class BHL_TestBase
     Action<Types> ts_fn = null, 
     bool use_cache = false, 
     int max_threads = 1, 
-    List<string> src_dirs = null
+    List<string> src_dirs = null,
+    List<string> inc_paths = null
   )
   {
     Types ts = new Types();
@@ -967,6 +968,11 @@ public class BHL_TestBase
     }
     else
       proj.src_dirs.Add(TestDirPath());
+    if(inc_paths != null)
+    {
+      foreach(var path in inc_paths)
+        proj.inc_path.Add(path);
+    }
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.result_file = TestDirPath() + "/result.bin";
     proj.tmp_dir = TestDirPath() + "/cache";

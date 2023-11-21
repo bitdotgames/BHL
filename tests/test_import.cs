@@ -1261,4 +1261,39 @@ public class TestImport : BHL_TestBase
     }
   }
 
+  [IsTested()]
+  public void TestImportUsingIncPath()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""/units/unit""
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile(Path.Combine("src", "units", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("src", "tests", "test.bhl"), file_test, ref files);
+
+    {
+      var ts = new Types();
+
+      var conf = MakeCompileConf(files, use_cache: true, inc_paths: new List<string>() { TestDirPath() + "/src/" });
+      var loader = new ModuleLoader(ts, CompileFiles(conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("tests/test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+  }
 }
