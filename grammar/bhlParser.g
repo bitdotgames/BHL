@@ -220,7 +220,7 @@ enumBlock
   ;
 
 enumMember
-  : NAME ASSIGN INT
+  : NAME ASSIGN MINUS? INT
   ;
 
 funcAttribs

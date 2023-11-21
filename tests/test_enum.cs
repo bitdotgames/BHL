@@ -193,6 +193,30 @@ public class TestEnum : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestUserNegativeEnum()
+  {
+    string bhl = @"
+
+    enum Foo
+    {
+      A = 1
+      B = -2
+    }
+      
+    func int test() 
+    {
+      Foo f = Foo.B 
+      return (int)f
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, -2);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserEnumOrderIrrelevant()
   {
     string bhl = @"

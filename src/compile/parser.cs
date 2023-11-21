@@ -4088,6 +4088,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return null;
       }
 
+      if(em.MINUS() != null)
+        em_val = -em_val;
+
       int res = symb.TryAddItem(Annotate(em), em_name, em_val);
       if(res == 1)
       {
