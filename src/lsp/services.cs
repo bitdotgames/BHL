@@ -54,7 +54,7 @@ public class LifecycleService : IService
 
     proj.LoadBindings().Register(ts);
     
-    workspace.Init(ts, proj.inc_path);
+    workspace.Init(ts, proj);
 
     //TODO: run it in background
     workspace.IndexFiles();

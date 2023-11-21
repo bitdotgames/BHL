@@ -11,7 +11,7 @@ public class Workspace
 {
   Types ts;
 
-  IncludePath inc_path;
+  ProjectConf conf;
 
   public event System.Action<Dictionary<string, CompileErrors>> OnDiagnostics;
 
@@ -21,10 +21,10 @@ public class Workspace
 
   public lsp.proto.ClientCapabilities capabilities { get; private set; }
 
-  public void Init(Types ts, IncludePath inc_path)
+  public void Init(Types ts, ProjectConf conf)
   {
     this.ts = ts;
-    this.inc_path = inc_path;
+    this.conf = conf;
   }
   
   public void Shutdown()
@@ -36,11 +36,11 @@ public class Workspace
     uri2proc.Clear();
     uri2doc.Clear();
 
-    for(int i=0;i<inc_path.Count;++i)
+    for(int i=0;i<conf.src_dirs.Count;++i)
     {
-      var path = inc_path[i];
+      var src_dir = conf.src_dirs[i];
 
-      var files = Directory.GetFiles(path, "*.bhl", SearchOption.AllDirectories);
+      var files = Directory.GetFiles(src_dir, "*.bhl", SearchOption.AllDirectories);
       foreach(var file in files)
       {
         string norm_file = Util.NormalizeFilePath(file);
@@ -54,7 +54,7 @@ public class Workspace
     }
 
     //TODO: use compiled cache if needed
-    ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
+    ANTLR_Processor.ProcessAll(uri2proc, null, conf.inc_path);
 
     CheckDiagnostics();
 
@@ -68,8 +68,8 @@ public class Workspace
 
   ANTLR_Processor ParseFile(Types ts, string file, Stream stream)
   {
-    var imports = CompilationExecutor.ParseWorker.ParseImports(inc_path, file, stream);
-    var module = new bhl.Module(ts, inc_path.FilePath2ModuleName(file), file);
+    var imports = CompilationExecutor.ParseWorker.ParseImports(conf.inc_path, file, stream);
+    var module = new bhl.Module(ts, conf.inc_path.FilePath2ModuleName(file), file);
 
     var errors = new CompileErrors();
 
@@ -147,7 +147,7 @@ public class Workspace
 
     uri2proc[document.uri.path] = proc;
 
-    ANTLR_Processor.ProcessAll(uri2proc, null, inc_path);
+    ANTLR_Processor.ProcessAll(uri2proc, null, conf.inc_path);
 
     CheckDiagnostics();
 

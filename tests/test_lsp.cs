@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using bhl;
 using bhl.lsp;
 
@@ -256,7 +254,7 @@ public class TestLSP : BHL_TestBase
 
     var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
 
-    ws.Init(new bhl.Types(), GetTestIncPath());
+    ws.Init(new bhl.Types(), GetTestProjConf());
     
     {
       ws.IndexFiles();
@@ -390,7 +388,7 @@ public class TestLSP : BHL_TestBase
     var fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
     ts.ns.Define(fn_TEST);
     
-    ws.Init(ts, GetTestIncPath());
+    ws.Init(ts, GetTestProjConf());
     ws.IndexFiles();
     
     SubTest(() => {
@@ -557,7 +555,7 @@ public class TestLSP : BHL_TestBase
 
     var ts = new bhl.Types();
     
-    ws.Init(ts, GetTestIncPath());
+    ws.Init(ts, GetTestProjConf());
     ws.IndexFiles();
     
     SubTest(() => {
@@ -618,7 +616,7 @@ public class TestLSP : BHL_TestBase
     
     var uri = MakeTestDocument("bhl1.bhl", bhl1);
 
-    ws.Init(new bhl.Types(), GetTestIncPath());
+    ws.Init(new bhl.Types(), GetTestProjConf());
     ws.IndexFiles();
 
     SubTest(() => {
@@ -666,7 +664,7 @@ public class TestLSP : BHL_TestBase
     
     var uri = MakeTestDocument("bhl1.bhl", bhl1);
 
-    ws.Init(new bhl.Types(), GetTestIncPath());
+    ws.Init(new bhl.Types(), GetTestProjConf());
     ws.IndexFiles();
 
     SubTest(() => {
@@ -708,7 +706,7 @@ public class TestLSP : BHL_TestBase
     var uri1 = MakeTestDocument("bhl1.bhl", bhl);
 
     var ts = new bhl.Types();
-    ws.Init(ts, GetTestIncPath());
+    ws.Init(ts, GetTestProjConf());
     ws.IndexFiles();
     
     var json = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/semanticTokens/full\", \"params\":";
@@ -796,6 +794,14 @@ public class TestLSP : BHL_TestBase
     string dir = GetTestDirPath();
     if(Directory.Exists(dir))
       Directory.Delete(dir, true/*recursive*/);
+  }
+
+  static bhl.ProjectConf GetTestProjConf()
+  {
+    var conf = new bhl.ProjectConf();
+    conf.src_dirs.Add(GetTestDirPath());
+    conf.inc_path = GetTestIncPath();
+    return conf;
   }
 
   static bhl.IncludePath GetTestIncPath()

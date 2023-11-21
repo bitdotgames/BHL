@@ -34,9 +34,11 @@ public class ProjectConf
 
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
-  public List<string> src_dirs = new List<string>();
+  public List<string> inc_dirs = new List<string>();
   [JsonIgnore]
   public IncludePath inc_path = new IncludePath();
+
+  public List<string> src_dirs = new List<string>();
 
   public string result_file = "";
   public string tmp_dir = "";
@@ -63,10 +65,17 @@ public class ProjectConf
 
   public void Setup()
   {
+    for(int i=0;i<inc_dirs.Count;++i)
+    {
+      inc_dirs[i] = NormalizePath(inc_dirs[i]);
+      inc_path.Add(inc_dirs[i]);
+    }
+
     for(int i=0;i<src_dirs.Count;++i)
     {
       src_dirs[i] = NormalizePath(src_dirs[i]);
-      inc_path.Add(src_dirs[i]);
+      if(inc_dirs.Count == 0)
+        inc_path.Add(src_dirs[i]);
     }
 
     for(int i=0;i<bindings_sources.Count;++i)
