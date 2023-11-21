@@ -1041,7 +1041,7 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportAbsolutePath()
+  public void TestImportTryIncludePathWithSlash()
   {
     string file_unit = @"
       class Unit {
@@ -1070,6 +1070,76 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+  }
+
+  [IsTested()]
+  public void TestImportTryIncludePathNoInitialSlash()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""units/unit""
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile(Path.Combine("units", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("tests", "test.bhl"), file_test, ref files);
+
+    {
+      var ts = new Types();
+      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("tests/test");
+      AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
+    }
+  }
+
+  [IsTested()]
+  public void TestImportUseRelativePath()
+  {
+    string file_unit = @"
+      class Unit {
+        int test
+      }
+      Unit u = {test: 23}
+    ";
+
+    string file_test = @"
+    import ""./unit""
+
+    func int test() 
+    {
+      return u.test
+    }
+    ";
+
+    CleanTestDir();
+
+    var files = new List<string>();
+    NewTestFile(Path.Combine("src", "tests", "unit.bhl"), file_unit, ref files);
+    NewTestFile(Path.Combine("src", "tests", "test.bhl"), file_test, ref files);
+
+    {
+      var ts = new Types();
+
+      var conf = MakeCompileConf(files, use_cache: true);
+      var loader = new ModuleLoader(ts, CompileFiles(conf));
+      var vm = new VM(ts, loader);
+      vm.LoadModule("src/tests/test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
   }
@@ -1262,7 +1332,7 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestImportUsingIncPath()
+  public void TestImportUseSrcDirsWithIncPath()
   {
     string file_unit = @"
       class Unit {

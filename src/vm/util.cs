@@ -206,12 +206,12 @@ public class IncludePath
   public string ResolveImportPath(string self_path, string path)
   {
     //relative import
-    if(!Path.IsPathRooted(path))
+    if(path[0] == '.')
     {
       var dir = Path.GetDirectoryName(self_path);
       return Util.NormalizeFilePath(Path.Combine(dir, path) + ".bhl");
     }
-    //absolute import
+    //import via include path
     else
       return TryIncludePaths(path);
   }
