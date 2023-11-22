@@ -849,4 +849,22 @@ public class TestMaps : BHL_TestBase
       );
     }
   }
+
+  //TODO:
+  //[IsTested()]
+  public void TestParseMapAmbuiguity()
+  {
+    string bhl = @"
+    func test() 
+    {
+      int foo = 10
+      float a = 1/foo;
+
+      int[string] m = []
+    }
+    ";
+
+    Compile(bhl);
+  }
+
 }
