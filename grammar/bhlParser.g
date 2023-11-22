@@ -140,7 +140,7 @@ chainExpItem
   ;
 
 arrAccess
-  : (OPEN_BRACKET exp CLOSE_BRACKET)
+  : ({this.notLineTerminator()}? OPEN_BRACKET exp CLOSE_BRACKET)
   ;
 
 memberAccess
