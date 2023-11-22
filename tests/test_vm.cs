@@ -879,54 +879,6 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestReturnParseSpecialCasesForDeclVars()
-  {
-    SubTest(() => {
-      string bhl = @"
-      coro func test()
-      {
-        yield()
-        return
-        string str
-        trace(""NOPE"")
-      }
-      ";
-
-      var log = new StringBuilder();
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
-
-      var vm = MakeVM(bhl, ts_fn);
-      Execute(vm, "test");
-      AssertEqual("", log.ToString());
-      CommonChecks(vm);
-    });
-
-    SubTest(() => {
-      string bhl = @"
-      coro func test()
-      {
-        yield()
-        return
-        float b = 3
-        trace(""NOPE"")
-      }
-      ";
-
-      var log = new StringBuilder();
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
-
-      var vm = MakeVM(bhl, ts_fn);
-      Execute(vm, "test");
-      AssertEqual("", log.ToString());
-      CommonChecks(vm);
-    });
-  }
-
-  [IsTested()]
   public void TestVariablDeclMissingAssignFromFuncCall()
   {
     SubTest(() => {

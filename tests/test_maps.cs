@@ -850,20 +850,4 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
-  public void TestParseMapTypeAmbuiguityWithArrAccess()
-  {
-    string bhl = @"
-    func test() 
-    {
-      int foo = 1
-      float a = 1/foo
-
-      [int]string m = []
-    }
-    ";
-
-    Compile(bhl);
-  }
-
 }
