@@ -605,6 +605,8 @@ public static class ScopeExtensions
   {
     if(symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Static) && fs.scope is Namespace)
       return true;
+    else if(symb is GlobalVariableSymbol gs && gs.is_local)
+      return true;
 
     return false;
   }

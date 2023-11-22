@@ -121,8 +121,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public int ns_level;
 
     public bhlParser.VarDeclareContext gvar_decl_ctx;
+    public bool gvar_is_local;
     public bhlParser.AssignExpContext gvar_assign_ctx;
-    public VariableSymbol gvar_symb;
+    public GlobalVariableSymbol gvar_symb;
 
     public bhlParser.FuncDeclContext func_ctx;
     public AST_FuncDecl func_ast;
@@ -151,6 +152,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
       {
         this.gvar_decl_ctx = vdoa.varDeclare();
+        this.gvar_is_local = vdoa.STATIC() != null;
         this.gvar_assign_ctx = vdoa.assignExp();
         if(!IsValid(this.gvar_decl_ctx))
           this.gvar_decl_ctx = null;
@@ -3583,7 +3585,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var vd = pass.gvar_decl_ctx;
 
-    pass.gvar_symb = new VariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    pass.gvar_symb = new GlobalVariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
+    pass.gvar_symb.is_local = pass.gvar_is_local;
     LSP_SetSymbol(vd, pass.gvar_symb);
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))

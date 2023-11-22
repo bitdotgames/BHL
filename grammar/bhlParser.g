@@ -280,7 +280,7 @@ varDeclareList
   ;
 
 varDeclareOptAssign
-  : varDeclare assignExp? eos
+  : STATIC? varDeclare assignExp? eos
   ;
 
 varOrDeclare

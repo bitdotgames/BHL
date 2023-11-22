@@ -1481,6 +1481,34 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 }
 
+public class GlobalVariableSymbol : VariableSymbol
+{
+  new public const uint CLASS_ID = 22;
+
+  public bool is_local;
+
+  public GlobalVariableSymbol(Origin origin, string name, Proxy<IType> type) 
+    : base(origin, name, type) 
+  {}
+  
+  //marshall factory version
+  public GlobalVariableSymbol()
+    : base(null, "", new Proxy<IType>())
+  {}
+
+  public override void Sync(marshall.SyncContext ctx)
+  {
+    base.Sync(ctx);
+
+    marshall.Marshall.Sync(ctx, ref is_local);
+  }
+
+  public override uint ClassId()
+  {
+    return CLASS_ID;
+  }
+}
+
 public class FuncArgSymbol : VariableSymbol
 {
   new public const uint CLASS_ID = 19;
@@ -2782,6 +2810,8 @@ public class SymbolFactory : marshall.IFactory
         return Types.Void;
       case VariableSymbol.CLASS_ID:
         return new VariableSymbol(); 
+      case GlobalVariableSymbol.CLASS_ID:
+        return new GlobalVariableSymbol(); 
       case FuncArgSymbol.CLASS_ID:
         return new FuncArgSymbol(); 
       case FieldSymbolScript.CLASS_ID:
