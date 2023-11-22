@@ -249,7 +249,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
         }
       }
       else if(this_symb != null)
-        return new LinkConflict(this_symb, other_symb);
+      {
+        //NOTE: let's ignore other local module symbols
+        if(!other_symb.IsLocal())
+          return new LinkConflict(this_symb, other_symb);
+      }
     }
 
     links.Add(other);
@@ -376,6 +380,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     while(it.Next())
     {
       var s = it.current.members.Find(name);
+
       if(s != null)
         return s;
     }
@@ -579,14 +584,29 @@ public static class ScopeExtensions
   public static Symbol ResolveWithFallback(this IScope scope, string name)
   {
     var s = scope.Resolve(name);
+
     if(s != null)
-      return s;
+    {
+      //NOTE: in case the symbol is local to module we should 
+      //      return it only if we actually own it
+      bool is_local = s.IsLocal();
+      if(!is_local || (is_local && s.scope == scope))
+        return s;
+    }
 
     var fallback = scope.GetFallbackScope();
     if(fallback != null) 
       return fallback.ResolveWithFallback(name);
 
     return null;
+  }
+
+  public static bool IsLocal(this Symbol symb)
+  {
+    if(symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Static) && fs.scope is Namespace)
+      return true;
+
+    return false;
   }
 
   public static Symbol ResolveRelatedOnly(this IScope scope, string name)

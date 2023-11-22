@@ -1246,12 +1246,11 @@ public class TestImport : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { 
-         MakeVM(new Dictionary<string, string>() {
+       MakeVM(new Dictionary<string, string>() {
         {"test.bhl", file_test},
         {"unit.bhl", file_unit},
-      }
-    );
-    },
+       });
+      },
     "type 'units.Unit' not found",
     new PlaceAssert(file_test, @"
       units.Unit u = {}

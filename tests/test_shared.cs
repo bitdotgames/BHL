@@ -34,6 +34,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
     counter += Run(names, new TestFiber());
+    counter += Run(names, new TestLocal());
     counter += Run(names, new TestInit());
     counter += Run(names, new TestLambda());
     counter += Run(names, new TestDefer());

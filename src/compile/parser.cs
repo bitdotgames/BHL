@@ -3459,15 +3459,35 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     string name = pass.func_ctx.NAME().GetText();
 
-    if(pass.func_ctx.funcAttribs().Length > 0 && 
-        pass.func_ctx.funcAttribs()[0].CORO() == null)
-    {
-      //we can proceed after this error
-      AddError(pass.func_ctx.funcAttribs()[0], "improper usage of attribute");
-    }
-
     var func_ann = Annotate(pass.func_ctx);
     pass.func_symb = new FuncSymbolScript(func_ann, new FuncSignature(), name); 
+
+    foreach(var attr in pass.func_ctx.funcAttribs())
+    {
+      var attr_type = FuncAttrib.None;
+
+      if(attr.CORO() != null)
+      {
+        attr_type = FuncAttrib.Coro;
+        LSP_AddSemanticToken(attr.CORO(), SemanticToken.Keyword);
+      }
+      else if(attr.STATIC() != null)
+      {
+        attr_type = FuncAttrib.Static;
+        LSP_AddSemanticToken(attr.STATIC(), SemanticToken.Keyword);
+      }
+      else
+      {
+        //we can proceed after this error
+        AddError(attr, "improper usage of attribute");
+        continue;
+      }
+
+      if(pass.func_symb.attribs.HasFlag(attr_type))
+        AddError(attr, "this attribute is set already");
+
+      pass.func_symb.attribs |= attr_type;
+    }
 
     if(!pass.scope.TryDefine(pass.func_symb, out SymbolError err))
     {
@@ -3487,7 +3507,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
 
     pass.func_symb.signature = ParseFuncSignature(
-      pass.func_ctx.funcAttribs().Length > 0 && pass.func_ctx.funcAttribs()[0].CORO() != null, 
+      pass.func_symb.attribs.HasFlag(FuncAttrib.Coro),
       ParseType(pass.func_ctx.retType()), 
       pass.func_ctx.funcParams()
     );
