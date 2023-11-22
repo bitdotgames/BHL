@@ -1619,8 +1619,8 @@ public enum FuncSignatureAttrib : byte
   None           = 0,
   Coro           = 1,
   VariadicArgs   = 2,
-  //it's a value which masks from FuncAttrib only
-  //supported values by FuncSignatureAttrib
+  //it's a mask which includes all enum bits, 
+  //can be used e.g to convert FuncAttrib into FuncSignatureAttrib
   FuncAttribMask = 3
 }
 
