@@ -349,4 +349,69 @@ public class TestEnum : BHL_TestBase
       )
     );
   }
+
+  [IsTested()]
+  public void TestImplicitCastEnumToInt()
+  {
+    SubTest(() => {
+      string bhl = @"
+      enum Foo {
+        A = 1
+        B = 2
+      }
+
+      func bool test() 
+      {
+        return Foo.B == 2
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      enum Foo {
+        A = 1
+        B = 2
+      }
+
+      func int test() 
+      {
+        int tmp = Foo.B
+        return tmp
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+
+    SubTest(() => {
+      string bhl = @"
+      enum Foo {
+        A = 1
+        B = 2
+      }
+
+      func int get(int a) 
+      {
+        return a
+      }
+
+      func int test() 
+      {
+        return get(Foo.B)
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    });
+  }
+
 }

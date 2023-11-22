@@ -715,6 +715,7 @@ public class Types : INamedResolver
 
     return rhs == lhs || 
            lhs == Any ||
+           (lhs == Types.Int && rhs is EnumSymbol) ||
            (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
            (lhs is IInstanceType && rhs == Null) ||
            (lhs is FuncSignature && rhs == Null) || 
@@ -741,7 +742,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs, rhs.eval_type)) 
     {
-      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(MakeIncompatibleTypesError(rhs, lhs.GetFullPath(), rhs.eval_type.GetFullPath()));
       return false;
     }
     return true;
@@ -751,10 +752,15 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs)) 
     {
-      errors.Add(new ParseError(lhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.GetFullPath() + "'"));
+      errors.Add(MakeIncompatibleTypesError(lhs, lhs.eval_type.GetFullPath(), rhs.GetFullPath()));
       return false;
     }
     return true;
+  }
+
+  static ParseError MakeIncompatibleTypesError(AnnotatedParseTree pt, string lhs_path, string rhs_path)
+  {
+    return new ParseError(pt, "incompatible types: '" + lhs_path + "' and '" + rhs_path + "'");
   }
 
   static public bool CheckCast(AnnotatedParseTree dest, AnnotatedParseTree from, CompileErrors errors) 
