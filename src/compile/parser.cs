@@ -120,8 +120,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public Namespace ns;
     public int ns_level;
 
-    public bhlParser.VarDeclareContext gvar_decl_ctx;
-    public bool gvar_is_local;
+    public bhlParser.VarDeclareOptAssignContext gvar_decl_ctx;
     public bhlParser.AssignExpContext gvar_assign_ctx;
     public GlobalVariableSymbol gvar_symb;
 
@@ -151,10 +150,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       this.scope = scope;
       if(ctx is bhlParser.VarDeclareOptAssignContext vdoa)
       {
-        this.gvar_decl_ctx = vdoa.varDeclare();
-        this.gvar_is_local = vdoa.STATIC() != null;
+        this.gvar_decl_ctx = vdoa;
         this.gvar_assign_ctx = vdoa.assignExp();
-        if(!IsValid(this.gvar_decl_ctx))
+        if(!IsValid(vdoa.varDeclare()))
           this.gvar_decl_ctx = null;
       }
       else if(ctx is bhlParser.FuncDeclContext fdc)
@@ -3601,10 +3599,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(pass.gvar_decl_ctx == null)
       return;
 
-    var vd = pass.gvar_decl_ctx;
+    var vd = pass.gvar_decl_ctx.varDeclare();
 
     pass.gvar_symb = new GlobalVariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
-    pass.gvar_symb.is_local = pass.gvar_is_local;
+    pass.gvar_symb.is_local = pass.gvar_decl_ctx.STATIC() != null;
+
+    LSP_AddSemanticToken(pass.gvar_decl_ctx.STATIC(), SemanticToken.Keyword);
     LSP_SetSymbol(vd, pass.gvar_symb);
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
@@ -4153,7 +4153,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(pass.gvar_symb == null)
       return;
 
-    var vd = pass.gvar_decl_ctx;
+    var vd = pass.gvar_decl_ctx.varDeclare();
 
     //NOTE: we want to temprarily 'disable' the symbol so that it doesn't
     //      interfere with type lookups and invalid self assignments
