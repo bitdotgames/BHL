@@ -289,6 +289,7 @@ public class AST_TypeCast : AST_Tree
 {
   public IType type;
   public bool force_type;
+  public IType hint_exp_type;
   public int line_num;
 
   public AST_TypeCast(IType type, bool force_type, int line_num)

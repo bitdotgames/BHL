@@ -1104,7 +1104,21 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_TypeCast ast)
   {
     VisitChildren(ast);
+    if(CastCanBeOmitted(ast.type, ast.hint_exp_type))
+      return;
     Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type), ast.force_type ? 1 : 0 }, ast.line_num);
+  }
+
+  static bool CastCanBeOmitted(IType cast_type, IType exp_type)
+  {
+    //TODO: add test for this case
+    //if(cast_type != null && cast_type == exp_type)
+    //  return true;
+
+    if(cast_type == Types.Int && exp_type is EnumSymbol)
+      return true;
+
+    return false;
   }
 
   public override void DoVisit(AST_TypeAs ast)

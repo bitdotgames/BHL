@@ -1884,4 +1884,35 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [IsTested()]
+  public void TestCastFromEnumToIntIsNoOp()
+  {
+    string bhl = @"
+    enum Foo {
+      A = 1
+    }
+
+    func int test() {
+      return (int)Foo.A
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 1);
+    CommonChecks(vm);
+  }
 }
