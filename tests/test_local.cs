@@ -151,4 +151,38 @@ public class TestLocal : BHL_TestBase
     AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestLocalFuncDontClashInDifferentNamespaces()
+  {
+    string file_a = @"
+      namespace Foo {
+        static func int foo() { return 10 }
+
+        func int bar() { return foo() }
+      }
+    ";
+
+    string file_test = @"
+    import ""./a""
+
+    namespace Foo {
+      static func int foo() { return 20 }
+    }
+
+    func int test() 
+    {
+      return Foo.foo() + Foo.bar()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"a.bhl", file_a},
+      }
+    );
+    vm.LoadModule("test");
+    AssertEqual(30, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
