@@ -414,4 +414,56 @@ public class TestEnum : BHL_TestBase
     });
   }
 
+  [IsTested()]
+  public void TestImplicitCastFromIntToEnumIsNotAllowed()
+  {
+    string bhl = @"
+    enum Foo {
+      A = 1
+      B = 2
+    }
+
+    func test() {
+      Foo foo = 1
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"incompatible types: 'Foo' and 'int'",
+      new PlaceAssert(bhl, @"
+      Foo foo = 1
+----------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestImplicitCastFromFloatToEnumIsNotAllowed()
+  {
+    string bhl = @"
+    enum Foo {
+      A = 1
+      B = 2
+    }
+
+    func test() {
+      float b = Foo.B
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"incompatible types: 'float' and 'Foo'",
+      new PlaceAssert(bhl, @"
+      float b = Foo.B
+------------^"
+      )
+    );
+  }
+
 }
