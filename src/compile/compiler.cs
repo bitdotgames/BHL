@@ -839,7 +839,8 @@ public class ModuleCompiler : AST_Visitor
     var fs = curr_scope.Resolve("init") as FuncSymbol;
     if(fs == null)
       return -1;
-    return fs.attribs.HasFlag(FuncAttrib.Static) ? fs.scope_idx : -1;
+    return fs.scope == curr_scope && fs.attribs.HasFlag(FuncAttrib.Static) ? 
+        fs.scope_idx : -1;
   }
 
   public override void DoVisit(AST_Interim ast)

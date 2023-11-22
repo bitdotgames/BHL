@@ -122,4 +122,48 @@ public class TestInit : BHL_TestBase
       "module 'init' function must be void"
     );
   }
+
+  [IsTested()]
+  public void TestSeveralModulesInit()
+  {
+    string file_foo = @"
+      static int FOO
+
+      static func init() { 
+        FOO = 10
+      }
+
+      func int foo() { return FOO }
+    ";
+
+    string file_bar = @"
+      static int BAR
+
+      static func init() { 
+        BAR = 100
+      }
+
+      func int bar() { return BAR }
+    ";
+
+    string file_test = @"
+    import ""./foo""
+    import ""./bar""
+
+    func int test() 
+    {
+      return foo() + bar()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"foo.bhl", file_foo},
+        {"bar.bhl", file_bar},
+      }
+    );
+    vm.LoadModule("test");
+    AssertEqual(110, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
