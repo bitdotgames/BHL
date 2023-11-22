@@ -199,6 +199,8 @@ public class ModuleCompiler : AST_Visitor
       if(ast != null)
         Visit(ast);
 
+      int init_func_idx = FindInitFuncIdx();
+
       byte[] init_bytes;
       byte[] code_bytes;
       Ip2SrcLine ip2src_line;
@@ -206,6 +208,7 @@ public class ModuleCompiler : AST_Visitor
 
       compiled = new CompiledModule(
         module,
+        init_func_idx,
         module.gvars.Count,
         imports,
         constants, 
@@ -804,7 +807,7 @@ public class ModuleCompiler : AST_Visitor
     PatchOffsets();
   }
 
-  public void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
+  void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
   {
     PatchInstructions();
 
@@ -829,6 +832,12 @@ public class ModuleCompiler : AST_Visitor
       pos += code[i].def.size;
       ip2src_line.Add(pos-1, code[i].line_num);
     }
+  }
+
+  int FindInitFuncIdx()
+  {
+    var fs = curr_scope.Resolve("init") as FuncSymbol;
+    return fs.attribs.HasFlag(FuncAttrib.Static) ? fs.scope_idx : -1;
   }
 
   public override void DoVisit(AST_Interim ast)

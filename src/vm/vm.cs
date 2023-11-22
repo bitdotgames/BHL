@@ -1074,8 +1074,6 @@ public class VM : INamedResolver
       FinishRegistration(loading_modules[i].module);
     loading_modules.Clear();
 
-    //Console.WriteLine("==END LOAD " + module_name);
-
     return true;
   }
 
@@ -1148,7 +1146,8 @@ public class VM : INamedResolver
   void FinishRegistration(CompiledModule cm)
   {
     SetupModule(cm);
-    ExecInit(cm);
+    ExecInitCode(cm);
+    ExecModuleInitFunc(cm);
   }
 
   Namespace FindModuleNamespace(string module_name)
@@ -1238,7 +1237,7 @@ public class VM : INamedResolver
       UnloadModule(key);
   }
 
-  void ExecInit(CompiledModule module)
+  void ExecInitCode(CompiledModule module)
   {
     var bytecode = module.initcode;
     if(bytecode == null || bytecode.Length == 0)
@@ -1350,6 +1349,22 @@ public class VM : INamedResolver
       }
       ++ip;
     }
+  }
+
+  void ExecModuleInitFunc(CompiledModule cm)
+  {
+    if(cm.init_func_idx == -1)
+      return;
+    
+    var fs = (FuncSymbolScript)cm.ns.members[cm.init_func_idx];
+    var addr = new FuncAddr() {
+      module = cm,
+      fs = fs,
+      ip = fs.ip_addr
+    };
+    var fb = Start(addr);
+    if(Tick(fb))
+      throw new Exception("Module '" + cm.name + "' init function is still running");
   }
 
   public Fiber Start(string func, params Val[] args)
@@ -2686,7 +2701,7 @@ public class Ip2SrcLine
 
 public class CompiledModule
 {
-  const uint HEADER_VERSION = 1;
+  const uint HEADER_VERSION = 2;
   public const int MAX_GLOBALS = 128;
 
   public Module module;
@@ -2710,9 +2725,11 @@ public class CompiledModule
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
+  public int init_func_idx = -1;
 
   public CompiledModule(
     Module module,
+    int init_func_idx,
     int total_gvars_num,
     List<string> imports,
     List<Const> constants, 
@@ -2722,6 +2739,7 @@ public class CompiledModule
   )
   {
     this.module = module;
+    this.init_func_idx = init_func_idx;
     this.imports = imports;
     this.constants = constants;
     this.initcode = initcode;
@@ -2749,6 +2767,7 @@ public class CompiledModule
 
     string name = "";
     string file_path = "";
+    int init_func_idx = -1;
     var imports = new List<string>();
     int constants_len = 0;
     int total_gvars_num = 0;
@@ -2770,6 +2789,8 @@ public class CompiledModule
       name = r.ReadString();
       file_path = r.ReadString();
       module.path = new ModulePath(name, file_path);
+
+      init_func_idx = r.ReadInt32();
 
       int imports_len = r.ReadInt32();
       for(int i=0;i<imports_len;++i)
@@ -2825,6 +2846,7 @@ public class CompiledModule
     return new 
       CompiledModule(
         module,
+        init_func_idx,
         total_gvars_num,
         imports,
         constants, 
@@ -2885,6 +2907,8 @@ public class CompiledModule
 
       w.Write(cm.module.name);
       w.Write(cm.module.file_path);
+      
+      w.Write(cm.init_func_idx);
 
       w.Write(cm.imports.Count);
       foreach(var import in cm.imports)

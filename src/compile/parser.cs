@@ -3522,7 +3522,25 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
 
+    ValidateModuleInitFunc(pass);
+
     Annotate(pass.func_ctx).eval_type = pass.func_symb.GetReturnType();
+  }
+
+  void ValidateModuleInitFunc(ParserPass pass)
+  {
+    if(pass.func_symb.attribs.HasFlag(FuncAttrib.Static) && 
+        pass.func_symb.name == "init")
+    {
+      if(pass.func_symb.attribs.HasFlag(FuncAttrib.Coro))
+        AddError(pass.func_symb.origin, "module 'init' function can't be a coroutine");
+
+      if(pass.func_symb.GetTotalArgsNum() > 0)
+        AddError(pass.func_symb.origin, "module 'init' function can't have any arguments");
+
+      if(pass.func_symb.GetReturnType() != Types.Void)
+        AddError(pass.func_symb.origin, "module 'init' function must be void");
+    }
   }
 
   void ParseFuncParams(bhlParser.FuncDeclContext ctx, AST_FuncDecl func_ast)
