@@ -28,6 +28,52 @@ public class TestInit : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDontCallNonLocalInitFunc()
+  {
+    string bhl = @"
+    static int foo = 0
+
+    func init()
+    {
+      foo = 10
+    }
+
+    func int test() 
+    {
+      return foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").result.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestDontCallLocalInitFuncInNamespace()
+  {
+    string bhl = @"
+    static int foo = 0
+
+    namespace Foo {
+      static func init()
+      {
+        foo = 10
+      }
+    }
+
+    func int test() 
+    {
+      return foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(Execute(vm, "test").result.PopRelease().num, 0);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInitFuncCantBeCoro()
   {
     string bhl = @"

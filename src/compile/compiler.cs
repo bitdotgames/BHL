@@ -837,6 +837,8 @@ public class ModuleCompiler : AST_Visitor
   int FindInitFuncIdx()
   {
     var fs = curr_scope.Resolve("init") as FuncSymbol;
+    if(fs == null)
+      return -1;
     return fs.attribs.HasFlag(FuncAttrib.Static) ? fs.scope_idx : -1;
   }
 
