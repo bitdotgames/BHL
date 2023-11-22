@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using bhl;
 
 public class TestLocal : BHL_TestBase
@@ -187,6 +186,35 @@ public class TestLocal : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalModuleFuncClashWithOtherGlobalFunc()
+  {
+    string file_a = @"
+      func foo() { }
+    ";
+
+    string file_test = @"
+    import ""./a""
+
+    static func foo() { }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(new Dictionary<string, string>() {
+            {"test.bhl", file_test},
+            {"a.bhl", file_a},
+          }
+        );
+      },
+      "already defined symbol 'foo'",
+      new PlaceAssert(file_test, @"
+    static func foo() { }
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestLocalModuleVar()
   {
     string bhl = @"
@@ -283,6 +311,35 @@ public class TestLocal : BHL_TestBase
     vm.LoadModule("test");
     AssertEqual(20, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestLocalModuleVarClashWithOtherGlobalVar()
+  {
+    string file_a = @"
+      int foo = 10
+    ";
+
+    string file_test = @"
+    import ""./a""
+
+    static int foo = 20
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(new Dictionary<string, string>() {
+            {"test.bhl", file_test},
+            {"a.bhl", file_a},
+          }
+        );
+      },
+      "already defined symbol 'foo'",
+      new PlaceAssert(file_test, @"
+    static int foo = 20
+---------------^"
+      )
+    );
   }
 
 }
