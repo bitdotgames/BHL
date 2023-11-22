@@ -26,12 +26,75 @@ public class TestLocal : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalModuleFuncClash()
+  {
+    string bhl = @"
+    static func int foo()
+    {
+      return 10
+    }
+
+    static func int foo()
+    {
+      return 100
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(bhl);
+      },
+      "already defined symbol 'foo'",
+      new PlaceAssert(bhl, @"
+    static func int foo()
+--------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestLocalFuncNotImported()
   {
     string file_a = @"
       static func int foo() { return 10 }
 
       func int bar() { return 42 }
+    ";
+
+    string file_test = @"
+    import ""./a""
+
+    func int test() 
+    {
+      return foo()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(new Dictionary<string, string>() {
+            {"test.bhl", file_test},
+            {"a.bhl", file_a},
+          }
+        );
+      },
+      "symbol 'foo' not resolved",
+      new PlaceAssert(file_test, @"
+      return foo()
+-------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestLocalFuncNotImportedInNamespace()
+  {
+    string file_a = @"
+      namespace Foo {
+        static func int foo() { return 10 }
+
+        func int bar() { return 42 }
+      }
     ";
 
     string file_test = @"
