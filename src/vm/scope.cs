@@ -544,6 +544,11 @@ public static class ScopeExtensions
     return scope.GetRootScope() as Namespace;
   }
 
+  public static Module GetModule(this IScope scope)
+  {
+    return scope.GetNamespace()?.module;
+  }
+
   //NOTE: the first item of the resolved path is tried to be resolved
   //      with fallback (e.g. trying the 'upper' scopes)
   public static Symbol ResolveSymbolByPath(this IScope scope, string path)
@@ -583,22 +588,25 @@ public static class ScopeExtensions
     return null;
   }
 
-  public static Symbol ResolveWithFallback(this IScope scope, string name)
+  public static Symbol ResolveWithFallback(this IScope scope, string name, int level = 0)
   {
     var s = scope.Resolve(name);
+
+    if(s == null)
+    {
+      var fallback = scope.GetFallbackScope();
+      if(fallback != null) 
+        s = fallback.ResolveWithFallback(name, level + 1);
+    }
 
     if(s != null)
     {
       //NOTE: in case the symbol is local to module we should 
       //      return it only if we actually own it
-      bool is_local = s.IsLocal();
-      if(!is_local || (is_local && s.scope == scope))
+      bool check_local = level == 0 && s.IsLocal();
+      if(!check_local || (check_local && s.scope.GetModule() == scope.GetModule()))
         return s;
     }
-
-    var fallback = scope.GetFallbackScope();
-    if(fallback != null) 
-      return fallback.ResolveWithFallback(name);
 
     return null;
   }
