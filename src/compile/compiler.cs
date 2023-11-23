@@ -441,6 +441,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.GetLocalPtr,
+        3/*ip addr*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.GetFuncPtr,
         3/*func named idx*/
       )
@@ -1195,25 +1201,17 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         var instr = EmitGetFuncAddr(ast);
         //let's optimize some primitive calls
-        if(instr.op == Opcodes.GetFuncPtr)
+        if(instr.op == Opcodes.GetLocalPtr)
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb; 
-          //let's check if we can optimize the local func call to a very
-          //fast opcode version
-          if(fsymb.GetNamespace().module == module)
-          {
-            //NOTE: let's remove the last added constant if it points
-            //      to our function - we don't need to serialize it 
-            //      since we simplify the call
-            if(constants[constants.Count-1].inamed.named == fsymb)
-              constants.RemoveAt(constants.Count-1);
-
-            var call_op = Emit(Opcodes.CallLocal, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
-            PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
-          }
-          else
-            Emit(Opcodes.CallFunc, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.CallLocal, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
+        }
+        else if(instr.op == Opcodes.GetFuncPtr)
+        {
+          Pop();
+          Emit(Opcodes.CallFunc, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else if(instr.op == Opcodes.GetFuncNativePtr)
         {
@@ -1347,8 +1345,18 @@ public class ModuleCompiler : AST_Visitor
       return Emit(Opcodes.GetFuncNativePtr, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
-      int named_idx = AddConstant((INamed)ast.symb);
-      return Emit(Opcodes.GetFuncPtr, new int[] { named_idx }, ast.line_num);
+      var fscript = (FuncSymbolScript)func_symb;
+      if(fscript.GetNamespace().module == module)
+      {
+        var get_ptr_op = Emit(Opcodes.GetLocalPtr, new int[] {0 /*patched later*/}, ast.line_num);
+        PatchLater(get_ptr_op, (inst) => inst.operands[0] = fscript.ip_addr);
+        return get_ptr_op;
+      }
+      else
+      {
+        int named_idx = AddConstant((INamed)ast.symb);
+        return Emit(Opcodes.GetFuncPtr, new int[] { named_idx }, ast.line_num);
+      }
     }
   }
 

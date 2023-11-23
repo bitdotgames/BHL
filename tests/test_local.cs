@@ -152,6 +152,35 @@ public class TestLocal : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLocalFuncPtrDontClash()
+  {
+    string file_a = @"
+      static func int foo() { return 10 }
+    ";
+
+    string file_test = @"
+    import ""./a""
+
+    func int test() 
+    {
+      func int() p = foo
+      return p()
+    }
+
+    static func int foo() { return 20 }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"a.bhl", file_a},
+      }
+    );
+    vm.LoadModule("test");
+    AssertEqual(20, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestLocalFuncDontClashInDifferentNamespaces()
   {
     string file_a = @"

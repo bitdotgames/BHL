@@ -415,6 +415,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
       {
         if(s is ClassSymbolScript cs)
           cs.Setup();
+        else if(s is FuncSymbolScript fs && module != null)
+          module._ip2func[fs.ip_addr] = fs;
       }
     );
   }
@@ -519,21 +521,21 @@ public static class ScopeExtensions
 
   public static IScope GetRootScope(this IScope scope)
   {
-    var tmp = scope;
-    while(tmp.GetFallbackScope() != null)
-      tmp = tmp.GetFallbackScope();
-    return tmp;
+    IScope tmp;
+    while((tmp = scope.GetFallbackScope()) != null) 
+      scope = tmp;
+    return scope;
   }
 
   public static Namespace GetNamespace(this IScope scope)
   {
     var tmp = scope;
-    while(tmp.GetFallbackScope() != null)
+    do
     {
-      tmp = tmp.GetFallbackScope();
       if(tmp is Namespace ns)
         return ns;
-    }
+      tmp = tmp.GetFallbackScope();
+    } while(tmp != null);
     return null;
   }
 

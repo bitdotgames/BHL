@@ -31,10 +31,11 @@ public enum Opcodes
   CallFunc              = 25,
   CallMethod            = 26,
   CallMethodNative      = 27,
-  CallMethodIface       = 29,
-  CallMethodIfaceNative = 30,
-  CallMethodVirt        = 31,
-  CallFuncPtr           = 38,
+  CallMethodIface       = 28,
+  CallMethodIfaceNative = 29,
+  CallMethodVirt        = 30,
+  CallFuncPtr           = 31,
+  GetLocalPtr           = 38,
   GetFuncPtr            = 39,
   GetFuncNativePtr      = 40,
   GetFuncPtrFromVar     = 41,
@@ -230,6 +231,10 @@ public class Module
   public VarIndexer gvars = new VarIndexer();
   //used for assigning incremental indexes to native funcs
   public NativeFuncIndexer nfuncs;
+
+  //TODO: probably we need script functions per module indexer, like gvars?
+  //setup once the module is loaded to find functions by their ip
+  internal Dictionary<int, FuncSymbolScript> _ip2func = new Dictionary<int, FuncSymbolScript>();
 
   //if set this mark is the index starting from which 
   //*imported* module variables are stored in gvars
@@ -1968,6 +1973,16 @@ public class VM : INamedResolver
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
+      case Opcodes.GetLocalPtr:
+      {
+        int ip_addr = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+
+        var ptr = FuncPtr.New(this);
+        ptr.Init(curr_frame.module, ip_addr);
+        var func_symb = curr_frame.module.module._ip2func[ip_addr];
+        exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
+      }
+      break;
       case Opcodes.GetFuncPtr:
       {
         int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
@@ -2831,7 +2846,7 @@ public class CompiledModule
     module.local_gvars_mark = local_gvars_num;
 
     //let's restore required object connections after unmarshalling
-    module.ns.ForAllLocalSymbols(delegate(Symbol s) 
+    module.ns.ForAllLocalSymbols((s) => 
       {
         if(s is Namespace ns)
           ns.module = module;
