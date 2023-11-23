@@ -441,13 +441,13 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetFunc,
+        Opcodes.GetFuncPtr,
         3/*func named idx*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetFuncNative,
+        Opcodes.GetFuncNativePtr,
         3/*globs idx*/
       )
     );
@@ -459,13 +459,13 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetFuncFromVar,
+        Opcodes.GetFuncPtrFromVar,
         1/*local idx*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Call,
+        Opcodes.CallLocal,
         3/*func ip*/, 4/*args bits*/
       )
     );
@@ -513,7 +513,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallPtr,
+        Opcodes.CallFuncPtr,
         4/*args bits*/
       )
     );
@@ -1195,7 +1195,7 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         var instr = EmitGetFuncAddr(ast);
         //let's optimize some primitive calls
-        if(instr.op == Opcodes.GetFunc)
+        if(instr.op == Opcodes.GetFuncPtr)
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb; 
@@ -1209,19 +1209,19 @@ public class ModuleCompiler : AST_Visitor
             if(constants[constants.Count-1].inamed.named == fsymb)
               constants.RemoveAt(constants.Count-1);
 
-            var call_op = Emit(Opcodes.Call, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+            var call_op = Emit(Opcodes.CallLocal, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
             PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
           }
           else
             Emit(Opcodes.CallFunc, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
-        else if(instr.op == Opcodes.GetFuncNative)
+        else if(instr.op == Opcodes.GetFuncNativePtr)
         {
           Pop();
           Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
         }
         else
-          Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.MVAR:
@@ -1310,21 +1310,21 @@ public class ModuleCompiler : AST_Visitor
       {
         VisitChildren(ast);
         Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncFromVar, new int[] {ast.symb_idx}, ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.GetFuncPtrFromVar, new int[] {ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
-        Emit(Opcodes.CallPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
       break;
       case EnumCall.GET_ADDR:
@@ -1344,11 +1344,11 @@ public class ModuleCompiler : AST_Visitor
       throw new Exception("Symbol '" + ast.symb?.name + "' is not a func");
 
     if(func_symb is FuncSymbolNative)
-      return Emit(Opcodes.GetFuncNative, new int[] { func_symb.scope_idx }, ast.line_num);
+      return Emit(Opcodes.GetFuncNativePtr, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
       int named_idx = AddConstant((INamed)ast.symb);
-      return Emit(Opcodes.GetFunc, new int[] { named_idx }, ast.line_num);
+      return Emit(Opcodes.GetFuncPtr, new int[] { named_idx }, ast.line_num);
     }
   }
 

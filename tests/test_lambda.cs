@@ -64,7 +64,7 @@ public class TestLambda : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
@@ -402,7 +402,7 @@ public class TestLambda : BHL_TestBase
       .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
       .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
@@ -462,7 +462,7 @@ public class TestLambda : BHL_TestBase
       .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
       .EmitThen(Opcodes.UseUpval, new int[] { 1, 2, 0 })
       .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
@@ -521,11 +521,11 @@ public class TestLambda : BHL_TestBase
       .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
       .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallPtr, new int[] { 0 })
+      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;

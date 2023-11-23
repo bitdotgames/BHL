@@ -26,7 +26,7 @@ public enum Opcodes
   JumpPeekZ             = 18,
   JumpPeekNZ            = 19,
   Pop                   = 22,
-  Call                  = 23,
+  CallLocal             = 23,
   CallNative            = 24,
   CallFunc              = 25,
   CallMethod            = 26,
@@ -34,10 +34,10 @@ public enum Opcodes
   CallMethodIface       = 29,
   CallMethodIfaceNative = 30,
   CallMethodVirt        = 31,
-  CallPtr               = 38,
-  GetFunc               = 39,
-  GetFuncNative         = 40,
-  GetFuncFromVar        = 41,
+  CallFuncPtr           = 38,
+  GetFuncPtr            = 39,
+  GetFuncNativePtr      = 40,
+  GetFuncPtrFromVar     = 41,
   LastArgToTop          = 43,
   GetAttr               = 44,
   RefAttr               = 45,
@@ -1968,7 +1968,7 @@ public class VM : INamedResolver
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
-      case Opcodes.GetFunc:
+      case Opcodes.GetFuncPtr:
       {
         int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
@@ -1978,7 +1978,7 @@ public class VM : INamedResolver
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
-      case Opcodes.GetFuncNative:
+      case Opcodes.GetFuncNativePtr:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var func_symb = (FuncSymbolNative)types.nfunc_index[func_idx];
@@ -1987,7 +1987,7 @@ public class VM : INamedResolver
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
-      case Opcodes.GetFuncFromVar:
+      case Opcodes.GetFuncPtrFromVar:
       {
         int local_var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var val = curr_frame.locals[local_var_idx];
@@ -2007,7 +2007,7 @@ public class VM : INamedResolver
         exec.stack.Push(arg);
       }
       break;
-      case Opcodes.Call:
+      case Opcodes.CallLocal:
       {
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip); 
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
@@ -2143,7 +2143,7 @@ public class VM : INamedResolver
           return status;
       }
       break;
-      case Opcodes.CallPtr:
+      case Opcodes.CallFuncPtr:
       {
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
