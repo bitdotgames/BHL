@@ -4042,7 +4042,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(pass.class_ctx?.NAME() == null)
       return;
 
-    pass.class_symb.Setup();
+    try
+    {
+      pass.class_symb.Setup();
+    }
+    catch(SymbolError err)
+    {
+      errors.Add(err);
+    }
 
     //NOTE: let's declare static class variables as module global variables 
     //      so that they are properly initialized upon module loading
@@ -4050,7 +4057,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
         pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvars.IndexOf(fld)));
-
     }
   }
 
