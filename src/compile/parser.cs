@@ -3700,8 +3700,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       for(int i=0;i<pass.iface_ctx.extensions().nsName().Length;++i)
       {
         var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
-        string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
-        var ext = ns.ResolveSymbolByPath(ext_full_path);
+        var ext = ns.ResolveSymbolByPath(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
           if(ext == pass.iface_symb)
@@ -3986,8 +3985,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         LSP_AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
 
-        string ext_full_path = curr_scope.GetFullPath(ext_name.GetText());
-        var ext = curr_scope.ResolveSymbolByPath(ext_full_path);
+        var ext = curr_scope.ResolveSymbolByPath(ext_name.GetText());
         if(ext is ClassSymbol cs)
         {
           if(ext == pass.class_symb)

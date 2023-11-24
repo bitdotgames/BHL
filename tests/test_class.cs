@@ -3300,6 +3300,64 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestImportedClassVirtualMethodsSupportFromRootNamespace()
+  {
+    string bhl1 = @"
+      class BaseBar {
+        
+        int b
+        int a
+
+        func int DummyGarbage0() {
+          return 42
+        }
+
+        virtual func int getA() {
+          return this.a
+        }
+
+        func int getB() {
+          return this.b
+        }
+      }
+  ";
+
+  string bhl2 = @"
+    import ""bhl1""  
+
+    namespace foo {
+      class Bar : BaseBar {
+        int new_a
+
+        override func int getA() {
+          return this.new_a
+        }
+
+        func DummyGarbage1() {}
+      }
+    }
+
+    func int test()
+    {
+      foo.Bar b = {}
+      b.a = 1
+      b.new_a = 100
+      return b.getA()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+    
+    vm.LoadModule("bhl2");
+    AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestImportedClassVirtualMethodsSupportInADifferentNamespace()
   {
     string bhl1 = @"
