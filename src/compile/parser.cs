@@ -776,28 +776,91 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   )
   {
     foreach(var kv in file2proc)
-      kv.Value.Phase_Outline();
+    {
+      try
+      {
+        kv.Value.Phase_Outline();
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     if(file2compiled != null)
       LinkCompiledImports(file2compiled, file2proc);
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path);
+    {
+      try
+      {
+        kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path);
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
+    {
+      try
+      {
+        kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_ParseTypes1();
+    {
+      try
+      {
+        kv.Value.Phase_ParseTypes1();
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_ParseTypes2();
+    {
+      try
+      {
+        kv.Value.Phase_ParseTypes2();
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_ParseFuncBodies();
+    {
+      try
+      {
+        kv.Value.Phase_ParseFuncBodies();
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
 
     foreach(var kv in file2proc)
-      kv.Value.Phase_SetResult();
+    {
+      try
+      {
+        kv.Value.Phase_SetResult();
+      }
+      catch(SymbolError err)
+      {
+        kv.Value.errors.Add(err);
+      }
+    }
   }
 
   static void LinkCompiledImports(
@@ -3505,7 +3568,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseFuncSignature_1(ParserPass pass)
   {
-    if(pass.func_ctx == null)
+    if(pass.func_symb == null)
       return;
 
     pass.func_symb.signature = ParseFuncSignature(
@@ -3517,7 +3580,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseFuncSignature_2(ParserPass pass)
   {
-    if(pass.func_ctx == null)
+    if(pass.func_symb == null)
       return;
 
     ParseFuncParams(pass.func_ctx, pass.func_ast);
@@ -3563,7 +3626,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseFuncBlock(ParserPass pass)
   {
-    if(pass.func_ctx == null)
+    if(pass.func_ctx == null || pass.func_ast?.symbol == null)
       return;
 
     PushScope(pass.func_ast.symbol);
@@ -3920,7 +3983,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseClassMembersTypes(ParserPass pass)
   {
-    if(pass.class_ctx?.NAME() == null)
+    if(pass.class_symb == null)
       return;
 
     PushScope(pass.class_symb);
@@ -4043,18 +4106,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_SetupClass(ParserPass pass)
   {
-    if(pass.class_ctx?.NAME() == null)
+    if(pass.class_symb == null)
       return;
 
-    try
-    {
-      pass.class_symb.Setup();
-    }
-    catch(SymbolError err)
-    {
-      errors.Add(err);
-    }
-
+    pass.class_symb.Setup();
+    
     //NOTE: let's declare static class variables as module global variables 
     //      so that they are properly initialized upon module loading
     for(int m=0;m<pass.class_symb.members.Count;++m)
@@ -4066,7 +4122,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
   {
-    if(pass.class_ctx?.NAME() == null)
+    if(pass.class_symb == null)
       return;
 
     //class methods bodies
