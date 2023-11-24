@@ -3730,6 +3730,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
   {
+    LSP_AddSemanticToken(ctx?.NAMESPACE(), SemanticToken.Keyword);
+
     string name = ctx?.dotName()?.NAME()?.GetText();
     if(name == null)
       return null;
