@@ -3648,6 +3648,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var fd = ib.interfaceFuncDecl();
       if(fd != null)
       {
+        LSP_AddSemanticToken(fd.FUNC(), SemanticToken.Keyword);
+
         if(fd.NAME() == null)
         {
           AddError(fd, "incomplete parsing context");
@@ -4072,8 +4074,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fd = cm.funcDecl();
+
       if(fd != null)
       {
+        LSP_AddSemanticToken(fd.FUNC(), SemanticToken.Keyword);
+
         var func_symb = pass.class_symb.Resolve(fd.NAME().GetText()) as FuncSymbol;
         if(func_symb == null)
           break;
