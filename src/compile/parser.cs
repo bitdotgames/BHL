@@ -3730,7 +3730,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitNsDecl(bhlParser.NsDeclContext ctx)
   {
-    string name = ctx.dotName().NAME().GetText();
+    string name = ctx?.dotName()?.NAME()?.GetText();
+    if(name == null)
+      return null;
 
     //NOTE: taking into account nested namespaces named like 'foo.bar'
     int nested_level = 0;
