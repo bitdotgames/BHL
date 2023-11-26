@@ -1267,28 +1267,33 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
 
         var macc_name_class_symb = macc_name_symb as ClassSymbol;
+        var tmp_macc_symb = scope.ResolveWithFallback(macc.NAME().GetText());
 
-        if(macc_name_class_symb == null && 
-            scope.ResolveWithFallback(macc.NAME().GetText()) is FuncSymbol macc_fs && 
-            macc_fs.attribs.HasFlag(FuncAttrib.Static))
+        if(macc_name_class_symb == null && tmp_macc_symb is FuncSymbol macc_fs && 
+           macc_fs.attribs.HasFlag(FuncAttrib.Static))
         {
           AddError(macc, "calling static method on instance is forbidden");
           return false;
         }
 
-        if(macc_name_class_symb == null && 
-           scope.ResolveWithFallback(macc.NAME().GetText()) is FieldSymbol macc_fld &&
+        if(macc_name_class_symb != null && tmp_macc_symb is FuncSymbol macc_fs2 && 
+          !macc_fs2.attribs.HasFlag(FuncAttrib.Static))
+        {
+          AddError(macc, "calling instance method as static is forbidden");
+          return false;
+        }
+
+        if(macc_name_class_symb == null && tmp_macc_symb is FieldSymbol macc_fld &&
            macc_fld.attribs.HasFlag(FieldAttrib.Static))
         {
           AddError(macc, "accessing static field on instance is forbidden");
           return false;
         }
 
-        if(macc_name_class_symb != null && 
-           scope.ResolveWithFallback(macc.NAME().GetText()) is FieldSymbol macc_fld2 &&
+        if(macc_name_class_symb != null && tmp_macc_symb is FieldSymbol macc_fld2 &&
            !macc_fld2.attribs.HasFlag(FieldAttrib.Static))
         {
-          AddError(macc, "invalid access to non-static attribute");
+          AddError(macc, "accessing instance attribute as static is forbidden");
           return false;
         }
 

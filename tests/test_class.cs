@@ -1675,7 +1675,7 @@ public class TestClass : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "invalid access to non-static attribute",
+      "accessing instance attribute as static is forbidden",
       new PlaceAssert(bhl, @"
       return Foo.a
 ----------------^"
@@ -4003,6 +4003,34 @@ public class TestClass : BHL_TestBase
       new PlaceAssert(bhl, @"
       return b.foo()
 --------------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestInstanceMethodCantBeCalledAsStatic()
+  {
+    string bhl = @"
+    class Bar {
+      func int foo() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      return Bar.foo()
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "calling instance method as static is forbidden",
+      new PlaceAssert(bhl, @"
+      return Bar.foo()
+----------------^"
       )
     );
   }
