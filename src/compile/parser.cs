@@ -776,90 +776,39 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   )
   {
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_Outline();
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_Outline());
 
     if(file2compiled != null)
       LinkCompiledImports(file2compiled, file2proc);
 
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path);
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path));
 
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path);
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path));
 
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_ParseTypes1();
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
 
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_ParseTypes2();
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_ParseTypes2());
 
     foreach(var kv in file2proc)
-    {
-      try
-      {
-        kv.Value.Phase_ParseFuncBodies();
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
-    }
+      WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
 
     foreach(var kv in file2proc)
+      WrapError(kv.Value, () => kv.Value.Phase_SetResult()); 
+  }
+
+  static void WrapError(ANTLR_Processor proc, Action action)
+  {
+    try
     {
-      try
-      {
-        kv.Value.Phase_SetResult();
-      }
-      catch(SymbolError err)
-      {
-        kv.Value.errors.Add(err);
-      }
+      action();
+    }
+    catch(SymbolError err)
+    {
+      proc.errors.Add(err);
     }
   }
 
