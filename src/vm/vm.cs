@@ -2198,7 +2198,7 @@ public class VM : INamedResolver
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, exec.ip+1);
-        exec.stack.Push(Val.NewObj(this, ptr, Types.Any));
+        exec.stack.Push(Val.NewObj(this, ptr, Types.Any/*TODO: should be a FuncPtr type*/));
 
         exec.ip += offset;
       }
@@ -2439,7 +2439,7 @@ public class VM : INamedResolver
       exec.stack.Push(new_val);
     }
     else
-      exec.stack.Push(Val.NewObj(this, null, Types.Any));
+      exec.stack.Push(Null);
     val.Release();
   }
 
