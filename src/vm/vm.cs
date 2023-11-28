@@ -1054,7 +1054,7 @@ public class VM : INamedResolver
     init_frame = new Frame(this);
 
     null_val = new Val(this);
-    null_val.SetObj(null, Types.Any);
+    null_val.SetObj(null, Types.Null);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never 
     //      accidentally released when pushed/popped
