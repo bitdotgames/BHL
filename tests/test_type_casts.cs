@@ -1915,4 +1915,34 @@ public class TestTypeCasts : BHL_TestBase
     AssertEqual(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestBugCastForTemporaryInstance()
+  {
+    string bhl = @"
+
+    class StateHandler {
+    }
+
+    class PlayerState_AbilityBase : StateHandler
+    {
+      func StateHandler Init() {
+        return this
+      }
+    }
+
+    func StateHandler GetShootArrowState() {
+      return (new PlayerState_AbilityBase).Init()
+    }
+      
+    func bool test() {
+      return ((PlayerState_AbilityBase)GetShootArrowState()) != null
+    }
+    ";
+    
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().bval;
+    AssertTrue(res);
+    CommonChecks(vm);
+  }
 }

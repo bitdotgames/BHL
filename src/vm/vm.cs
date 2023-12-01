@@ -2405,7 +2405,7 @@ public class VM : INamedResolver
   void HandleTypeCast(ExecState exec, IType cast_type, bool force_type)
   {
     var new_val = Val.New(this);
-    var val = exec.stack.PopRelease();
+    var val = exec.stack.Pop();
 
     if(cast_type == Types.Int)
       new_val.SetNum((long)val.num);
@@ -2421,6 +2421,8 @@ public class VM : INamedResolver
         new_val.type = cast_type;
       new_val.RefMod(RefOp.USR_INC);
     }
+
+    val.Release();
 
     exec.stack.Push(new_val);
   }
@@ -2440,6 +2442,7 @@ public class VM : INamedResolver
     }
     else
       exec.stack.Push(Null);
+
     val.Release();
   }
 
