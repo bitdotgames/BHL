@@ -580,7 +580,9 @@ public class CompilationExecutor
               var parser = ANTLR_Processor.Stream2Parser(
                 file, 
                 sfs, 
-                ErrorHandlers.MakeStandard(file, w.errors)
+                ErrorHandlers.MakeStandard(file, w.errors),
+                //TODO: pass actual defines
+                defines: null
               );
               interim.parsed = new ANTLR_Parsed(parser);
 

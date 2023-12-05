@@ -37,7 +37,7 @@ public partial class bhlPreprocParser : Parser {
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
 		SHARP=1, CODE=2, IF=3, ELIF=4, ELSE=5, ENDIF=6, BANG=7, DIRECTIVE_WHITESPACES=8, 
-		DIRECTIVE_STRING=9, CONDITIONAL_SYMBOL=10, NEW_LINE=11, DIRECITVE_COMMENT=12, 
+		DIRECTIVE_STRING=9, CONDITIONAL_SYMBOL=10, NEW_LINE=11, DIRECTIVE_COMMENT=12, 
 		SLASH=13;
 	public const int
 		RULE_program = 0, RULE_text = 1, RULE_code = 2, RULE_directive = 3, RULE_preprocessor_expression = 4;
@@ -51,7 +51,7 @@ public partial class bhlPreprocParser : Parser {
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, "SHARP", "CODE", "IF", "ELIF", "ELSE", "ENDIF", "BANG", "DIRECTIVE_WHITESPACES", 
-		"DIRECTIVE_STRING", "CONDITIONAL_SYMBOL", "NEW_LINE", "DIRECITVE_COMMENT", 
+		"DIRECTIVE_STRING", "CONDITIONAL_SYMBOL", "NEW_LINE", "DIRECTIVE_COMMENT", 
 		"SLASH"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);

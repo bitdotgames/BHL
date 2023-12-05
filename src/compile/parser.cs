@@ -76,7 +76,13 @@ public class AnnotatedParseTree
 
 public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
 {
-  System.Text.StringBuilder code = new System.Text.StringBuilder();
+  Stream src;
+  CommonTokenStream tokens;
+
+  HashSet<string> defines;
+
+  MemoryStream dst;
+  StreamWriter writer;
 
   Dictionary<IParseTree, Annotated> annotated_nodes = new Dictionary<IParseTree, Annotated>();
 
@@ -86,8 +92,6 @@ public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
     public bool eval;
   }
 
-  Stream src;
-  HashSet<string> defines;
   Stack<Annotated> evals = new Stack<Annotated>();
 
   public ANTLR_PreprocProcessor(Stream src, HashSet<string> defines)
@@ -98,26 +102,28 @@ public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
 
   public Stream Process()
   {                          
-    var pos = src.Position;
-
     var ais = new AntlrInputStream(src);
     var lex = new bhlPreprocLexer(ais);
-    var tokens = new CommonTokenStream(lex);
+    tokens = new CommonTokenStream(lex);
 
     var p = new bhlPreprocParser(tokens);
 
-    var sb = new System.Text.StringBuilder();
-    Console.WriteLine(">>>>>");
-    ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
-    Console.WriteLine(sb.ToString());
-    Console.WriteLine("<<<<<");
+    dst = new MemoryStream();
+    dst.Capacity = (int)src.Length;
+    writer = new StreamWriter(dst);
+
+    //var sb = new System.Text.StringBuilder();
+    //Console.WriteLine(">>>>>");
+    //ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
+    //Console.WriteLine(sb.ToString());
+    //Console.WriteLine("<<<<<");
 
     VisitProgram(p.program());
 
-    Console.WriteLine(code.ToString());
+    writer.Flush();
+    dst.Position = 0;
 
-    src.Position = pos;
-    return src;
+    return dst;
   }
 
   bool IsStripped()
@@ -129,39 +135,34 @@ public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
 
   public override object VisitProgram(bhlPreprocParser.ProgramContext ctx)
   {
+    //TODO: a) white space is not properly preserved
+    //      b) use tokens from stream directly instead of strings?
     foreach(var item in ctx.text())
     {
-      if(item.directive() == null)
+      if(item.code() != null)
       {
         if(IsStripped())
-        {
-          //replacing with white space
-          code.Append(' ', item.GetText().Length-1);
-          code.Append('\n');
-        }
+          ReplaceWithWiteSpace(item.GetText());
         else
-          code.Append(item.GetText());
+          writer.Write(item.GetText());
       }
       else 
       {
-        if(item.NEW_LINE() != null)
-        {
-          //replacing with white space
-          code.Append(' ', item.GetText().Length-1);
-          code.Append('\n');
-        }
-        else
-          //replacing with white space
-          code.Append(' ', item.GetText().Length);
-      }
+        ReplaceWithWiteSpace(item.GetText());
 
-      if(item.directive() != null)
-      {
         Visit(item.directive());
       }
     }
 
     return null;
+  }
+
+  void ReplaceWithWiteSpace(string ws)
+  {
+    if(ws.Length > 1)
+      writer.Write(new string(' ', ws.Length-1));
+    //let's preserve the last character
+    writer.Write(ws[ws.Length-1]);
   }
 
   public override object VisitPreprocConditional(bhlPreprocParser.PreprocConditionalContext ctx)
@@ -181,7 +182,7 @@ public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
   public override object VisitPreprocConditionalSymbol(bhlPreprocParser.PreprocConditionalSymbolContext ctx)
   {
     var symbol = ctx.CONDITIONAL_SYMBOL();
-    Annotate(ctx).eval &= defines.Contains(symbol.GetText());
+    Annotate(ctx).eval = defines?.Contains(symbol.GetText()) ?? false;
 
     return null;
   }
@@ -384,9 +385,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return new CommonTokenStream(lex);
   }
 
-  public static bhlParser Stream2Parser(string file, Stream src, ErrorHandlers handlers)
+  public static bhlParser Stream2Parser(
+      string file, 
+      Stream src, 
+      ErrorHandlers handlers,
+      HashSet<string> defines
+    )
   {
-    src = PreProcessStream(src);
+    src = PreProcessStream(src, defines);
 
     var tokens = Stream2Tokens(file, src, handlers);
     var p = new bhlParser(tokens);
@@ -403,7 +409,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return p;
   }
 
-  public static Stream PreProcessStream(Stream src)
+  public static Stream PreProcessStream(Stream src, HashSet<string> defines)
   {
     var pos = src.Position;
     while(true)
@@ -420,11 +426,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         break;
     }
 
+    //let's restore the original position
     src.Position = pos;
-    return src;
-    //TODO:
-    //var preproc = new ANTLR_PreprocProcessor(src, new HashSet<string>() {"BAR"});
-    //return preproc.Process();
+    
+    var preproc = new ANTLR_PreprocProcessor(src, defines);
+    var dst = preproc.Process();
+
+    dst.Position = 0;
+    return dst;
   }
   
   public static ANTLR_Processor MakeProcessor(
@@ -433,7 +442,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ANTLR_Parsed parsed/*can be null*/, 
     Types ts, 
     CompileErrors errors,
-    ErrorHandlers err_handlers
+    ErrorHandlers err_handlers,
+    HashSet<string> defines = null
     )
   {
     if(parsed == null)
@@ -446,7 +456,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           sfs, 
           ts, 
           errors,
-          err_handlers
+          err_handlers,
+          defines
         );
       }
     }
@@ -468,13 +479,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Stream src, 
     Types ts, 
     CompileErrors errors,
-    ErrorHandlers err_handlers
+    ErrorHandlers err_handlers,
+    HashSet<string> defines = null
     )
   {
-    var p = Stream2Parser(module.file_path, src, err_handlers);
+    var p = Stream2Parser(module.file_path, src, err_handlers, defines);
     //NOTE: parsing happens here 
     var parsed = new ANTLR_Parsed(p);
-    return new ANTLR_Processor(parsed, module, imports_maybe, ts, errors);
+    return new ANTLR_Processor(
+      parsed, 
+      module, 
+      imports_maybe, 
+      ts, 
+      errors
+    );
   }
 
   public ANTLR_Processor(
@@ -3028,7 +3046,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         var tmp_parser = Stream2Parser(
           "", 
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
-          ErrorHandlers.MakeStandard("", new CompileErrors())
+          ErrorHandlers.MakeStandard("", new CompileErrors()),
+          defines: null
         );
         _one_literal_exp = tmp_parser.exp();
       }

@@ -1,7 +1,7 @@
 lexer grammar bhlPreprocLexer;
 
 channels {
-    COMMENTS_CHANNEL
+  COMMENTS_CHANNEL
 }
 
 SHARP             : '#'                                          -> mode(DIRECTIVE_MODE);
@@ -65,7 +65,7 @@ DIRECTIVE_COMMENT      : '/*' .*? '*/'   -> channel(COMMENTS_CHANNEL);
 //TEXT_NEW_LINE           : '\r'? '\n'      -> type(NEW_LINE), mode(DEFAULT_MODE);
 //DIRECTIVE_COMMENT       : '/*' .*? '*/'   -> channel(COMMENTS_CHANNEL), type(DIRECITVE_COMMENT);
 ////DIRECTIVE_LINE_COMMENT:
-////    '//' ~[\r\n]* -> channel(COMMENTS_CHANNEL), type(DIRECITVE_LINE_COMMENT)
+////    '//' ~[\r\n]* -> channel(COMMENTS_CHANNEL), type(DIRECTIVE_LINE_COMMENT)
 ////;
 //DIRECTIVE_SLASH : '/' -> type(TEXT);
 //TEXT            : ~[\r\n\\/]+;

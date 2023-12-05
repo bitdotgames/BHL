@@ -569,7 +569,14 @@ public class BHL_TestBase
     }
   }
 
-  public VM MakeVM(string bhl, Action<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
+  public VM MakeVM(
+    string bhl, 
+    Action<Types> ts_fn = null, 
+    bool show_ast = false, 
+    bool show_bytes = false, 
+    bool show_parse_tree = false, 
+    HashSet<string> defines = null
+  )
   {
     return MakeVM(
         Compile(
@@ -577,7 +584,8 @@ public class BHL_TestBase
           ts_fn, 
           show_ast: show_ast, 
           show_bytes: show_bytes, 
-          show_parse_tree: show_parse_tree
+          show_parse_tree: show_parse_tree,
+          defines: defines
         ), 
       ts_fn);
   }
@@ -1026,7 +1034,14 @@ public class BHL_TestBase
     return CompileFiles(new CompilationExecutor(), conf);
   }
 
-  public CompiledModule Compile(string bhl, Action<Types> ts_fn = null, bool show_ast = false, bool show_bytes = false, bool show_parse_tree = false)
+  public CompiledModule Compile(
+    string bhl, 
+    Action<Types> ts_fn = null, 
+    bool show_ast = false, 
+    bool show_bytes = false, 
+    bool show_parse_tree = false,
+    HashSet<string> defines = null
+    )
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
@@ -1036,7 +1051,8 @@ public class BHL_TestBase
       ts, 
       show_ast: show_ast, 
       show_parse_tree: show_parse_tree, 
-      throw_errors: true
+      throw_errors: true,
+      defines: defines
     );
 
     var c  = new ModuleCompiler(proc.result);
@@ -1051,7 +1067,8 @@ public class BHL_TestBase
     Types ts, 
     bool show_ast = false, 
     bool show_parse_tree = false, 
-    bool throw_errors = false
+    bool throw_errors = false,
+    HashSet<string> defines = null
   ) 
   {
     var mdl = new bhl.Module(ts, "");
@@ -1062,7 +1079,8 @@ public class BHL_TestBase
       bhl.ToStream(), 
       ts, 
       errors,
-      ErrorHandlers.MakeStandard("", errors)
+      ErrorHandlers.MakeStandard("", errors),
+      defines
     );
 
     if(show_parse_tree)
