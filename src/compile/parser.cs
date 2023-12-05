@@ -28,11 +28,11 @@ public class ANTLR_Parsed
   public static string PrintTree(Parser parser, IParseTree root)
   {
     var sb = new System.Text.StringBuilder();
-    DoPrintTree(root, sb, 0, parser.RuleNames);
+    PrintTree(root, sb, 0, parser.RuleNames);
     return sb.ToString();
   }
 
-  static void DoPrintTree(IParseTree root, System.Text.StringBuilder sb, int offset, IList<String> rule_names) 
+  public static void PrintTree(IParseTree root, System.Text.StringBuilder sb, int offset, IList<String> rule_names) 
   {
     for(int i = 0; i < offset; i++)
       sb.Append("  ");
@@ -46,7 +46,7 @@ public class ANTLR_Parsed
         {
           if(child is IErrorNode)
             sb.Append("!");
-          DoPrintTree(child, sb, offset + 1, rule_names);
+          PrintTree(child, sb, offset + 1, rule_names);
         }
       }
     }
@@ -71,6 +71,133 @@ public class AnnotatedParseTree
     get { 
       return module.file_path;
     } 
+  }
+}
+
+public class ANTLR_PreprocProcessor : bhlPreprocParserBaseVisitor<object>
+{
+  System.Text.StringBuilder code = new System.Text.StringBuilder();
+
+  Dictionary<IParseTree, Annotated> annotated_nodes = new Dictionary<IParseTree, Annotated>();
+
+  internal class Annotated
+  {
+    public IParseTree tree;
+    public bool eval;
+  }
+
+  Stream src;
+  HashSet<string> defines;
+  Stack<Annotated> evals = new Stack<Annotated>();
+
+  public ANTLR_PreprocProcessor(Stream src, HashSet<string> defines)
+  {
+    this.src = src;
+    this.defines = defines;
+  }
+
+  public Stream Process()
+  {                          
+    var pos = src.Position;
+
+    var ais = new AntlrInputStream(src);
+    var lex = new bhlPreprocLexer(ais);
+    var tokens = new CommonTokenStream(lex);
+
+    var p = new bhlPreprocParser(tokens);
+
+    var sb = new System.Text.StringBuilder();
+    Console.WriteLine(">>>>>");
+    ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
+    Console.WriteLine(sb.ToString());
+    Console.WriteLine("<<<<<");
+
+    VisitProgram(p.program());
+
+    Console.WriteLine(code.ToString());
+
+    src.Position = pos;
+    return src;
+  }
+
+  bool IsStripped()
+  {
+    if(evals.Count == 0)
+      return false;
+    return evals.Peek().eval == false;
+  }
+
+  public override object VisitProgram(bhlPreprocParser.ProgramContext ctx)
+  {
+    foreach(var item in ctx.text())
+    {
+      if(item.directive() == null)
+      {
+        if(IsStripped())
+        {
+          //replacing with white space
+          code.Append(' ', item.GetText().Length-1);
+          code.Append('\n');
+        }
+        else
+          code.Append(item.GetText());
+      }
+      else 
+      {
+        if(item.NEW_LINE() != null)
+        {
+          //replacing with white space
+          code.Append(' ', item.GetText().Length-1);
+          code.Append('\n');
+        }
+        else
+          //replacing with white space
+          code.Append(' ', item.GetText().Length);
+      }
+
+      if(item.directive() != null)
+      {
+        Visit(item.directive());
+      }
+    }
+
+    return null;
+  }
+
+  public override object VisitPreprocConditional(bhlPreprocParser.PreprocConditionalContext ctx)
+  {
+    if(ctx.IF() != null)
+    {
+      Visit(ctx.preprocessor_expression());
+      evals.Push(Annotate(ctx.preprocessor_expression()));
+    }
+    else if(ctx.ENDIF() != null)
+    {
+      evals.Pop();
+    }
+    return null;
+  }
+
+  public override object VisitPreprocConditionalSymbol(bhlPreprocParser.PreprocConditionalSymbolContext ctx)
+  {
+    var symbol = ctx.CONDITIONAL_SYMBOL();
+    Annotate(ctx).eval &= defines.Contains(symbol.GetText());
+
+    return null;
+  }
+
+  Annotated Annotate(IParseTree t)
+  {
+    Annotated at;
+    if(!annotated_nodes.TryGetValue(t, out at))
+    {
+      at = new Annotated();
+      at.tree = t;
+      at.eval = true;
+
+      annotated_nodes.Add(t, at);
+    }
+    return at;
   }
 }
 
@@ -243,7 +370,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
   List<uint> encoded_semantic_tokens = new List<uint>();
 
-  public static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
+  static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
   {
     var ais = new AntlrInputStream(s);
     var lex = new bhlLexer(ais);
@@ -259,6 +386,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public static bhlParser Stream2Parser(string file, Stream src, ErrorHandlers handlers)
   {
+    src = PreProcessStream(src);
+
     var tokens = Stream2Tokens(file, src, handlers);
     var p = new bhlParser(tokens);
 
@@ -272,6 +401,30 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       p.ErrorHandler = handlers.error_strategy;
 
     return p;
+  }
+
+  public static Stream PreProcessStream(Stream src)
+  {
+    var pos = src.Position;
+    while(true)
+    {
+      int b = src.ReadByte();
+      //we are at the end let's jump out 
+      if(b == -1)
+      {
+        src.Position = pos;
+        return src;
+      }
+      //check if there's any # character
+      if(b == 35)
+        break;
+    }
+
+    src.Position = pos;
+    return src;
+    //TODO:
+    //var preproc = new ANTLR_PreprocProcessor(src, new HashSet<string>() {"BAR"});
+    //return preproc.Process();
   }
   
   public static ANTLR_Processor MakeProcessor(
@@ -319,6 +472,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     )
   {
     var p = Stream2Parser(module.file_path, src, err_handlers);
+    //NOTE: parsing happens here 
     var parsed = new ANTLR_Parsed(p);
     return new ANTLR_Processor(parsed, module, imports_maybe, ts, errors);
   }
@@ -4967,7 +5121,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitExpTernaryIf(bhlParser.ExpTernaryIfContext ctx)
   {
-    var ast = new AST_Block(BlockType.IF); //short-circuit evaluation
+    var ast = new AST_Block(BlockType.IF); //short-circuit eval
 
     var exp_0 = ctx.exp();
     var exp_1 = ctx.ternaryIfExp().exp(0);

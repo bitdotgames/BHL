@@ -34,6 +34,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
     counter += Run(names, new TestParsing());
+    counter += Run(names, new TestPreproc());
     counter += Run(names, new TestFiber());
     counter += Run(names, new TestLocal());
     counter += Run(names, new TestInit());
@@ -1030,7 +1031,13 @@ public class BHL_TestBase
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
-    var proc = Parse(bhl, ts, show_ast: show_ast, show_parse_tree: show_parse_tree, throw_errors: true);
+    var proc = Parse(
+      bhl, 
+      ts, 
+      show_ast: show_ast, 
+      show_parse_tree: show_parse_tree, 
+      throw_errors: true
+    );
 
     var c  = new ModuleCompiler(proc.result);
     var cm = c.Compile();
