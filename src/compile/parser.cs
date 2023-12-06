@@ -2885,7 +2885,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(_one_literal_exp == null)
       {
         _one_literal_exp = Stream2Parser(
-          new Module(null), 
+          new Module(types), 
           null,
           ErrorHandlers.MakeStandard("", new CompileErrors()),
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 

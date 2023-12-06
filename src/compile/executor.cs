@@ -40,6 +40,8 @@ public class ProjectConf
 
   public List<string> src_dirs = new List<string>();
 
+  public List<string> defines = new List<string>();
+
   public string result_file = "";
   public string tmp_dir = "";
   public string error_file = "";
@@ -583,8 +585,7 @@ public class CompilationExecutor
                 w.errors,
                 err_handlers,
                 sfs, 
-                //TODO: pass actual defines
-                defines: null
+                defines: new HashSet<string>(w.conf.proj.defines)
               );
               interim.parsed = new ANTLR_Parsed(parser);
 
