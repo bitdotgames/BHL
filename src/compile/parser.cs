@@ -2880,8 +2880,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   bhlParser.ExpContext one_literal_exp {
     get {
       //TODO: make expression AST on the fly somehow?
-      //var exp = new ExpContext(); 
-      //exp.Add(new ExpLiteralNumContext("1"));
+      //exp = new bhlParser.ExpLiteralNumContext("1");
       if(_one_literal_exp == null)
       {
         _one_literal_exp = Stream2Parser(
