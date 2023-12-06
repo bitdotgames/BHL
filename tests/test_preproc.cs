@@ -6,7 +6,7 @@ using bhl;
 public class TestPreproc : BHL_TestBase
 {
   [IsTested()]
-  public void TestIf()
+  public void TestIfMissingDefine()
   {
     string bhl = @"
     func bool test() 
@@ -24,7 +24,7 @@ public class TestPreproc : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestIfDefined()
+  public void TestIfDefineExists()
   {
     string bhl = @"
     func bool test() 
@@ -42,7 +42,43 @@ public class TestPreproc : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestElse()
+  public void TestIfNotMissingDefine()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+#if !FOO
+      return false
+#endif
+      return true
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestIfNotDefineExists()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+#if !FOO
+      return false
+#endif
+      return true
+    }
+    ";
+
+    var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestElseMissingDefine()
   {
     string bhl = @"
     func int test() 
@@ -62,7 +98,7 @@ public class TestPreproc : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestElseWithDefined()
+  public void TestElseDefineExists()
   {
     string bhl = @"
     func int test() 

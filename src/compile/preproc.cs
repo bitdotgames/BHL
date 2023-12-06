@@ -21,10 +21,10 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   internal class Annotated
   {
     public IParseTree tree;
-    public bool condition;
+    public bool strip_condition;
   }
 
-  Stack<Annotated> evals = new Stack<Annotated>();
+  Stack<Annotated> ifs = new Stack<Annotated>();
 
   const int SHARP_CODE = 35;
 
@@ -89,9 +89,9 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   bool IsStripped()
   {
-    if(evals.Count == 0)
+    if(ifs.Count == 0)
       return false;
-    return evals.Peek().condition == false;
+    return ifs.Peek().strip_condition == false;
   }
 
   public override object VisitProgram(bhlPreprocParser.ProgramContext ctx)
@@ -131,15 +131,15 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     if(ctx.IF() != null)
     {
       Visit(ctx.preprocessor_expression());
-      evals.Push(Annotate(ctx.preprocessor_expression()));
+      ifs.Push(Annotate(ctx.preprocessor_expression()));
     }
     else if(ctx.ELSE() != null)
     {
-      evals.Peek().condition = !evals.Peek().condition;
+      ifs.Peek().strip_condition = !ifs.Peek().strip_condition;
     }
     else if(ctx.ENDIF() != null)
     {
-      evals.Pop();
+      ifs.Pop();
     }
     return null;
   }
@@ -147,7 +147,15 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   public override object VisitPreprocConditionalSymbol(bhlPreprocParser.PreprocConditionalSymbolContext ctx)
   {
     var symbol = ctx.CONDITIONAL_SYMBOL();
-    Annotate(ctx).condition = defines?.Contains(symbol.GetText()) ?? false;
+    Annotate(ctx).strip_condition = defines?.Contains(symbol.GetText()) ?? false;
+
+    return null;
+  }
+
+  public override object VisitPreprocNot(bhlPreprocParser.PreprocNotContext ctx)
+  {
+    Visit(ctx.preprocessor_expression());
+    Annotate(ctx).strip_condition = !Annotate(ctx.preprocessor_expression()).strip_condition;
 
     return null;
   }
@@ -159,7 +167,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     {
       at = new Annotated();
       at.tree = t;
-      at.condition = true;
+      at.strip_condition = true;
 
       annotated_nodes.Add(t, at);
     }
