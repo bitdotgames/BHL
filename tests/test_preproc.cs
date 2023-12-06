@@ -208,4 +208,53 @@ public class TestPreproc : BHL_TestBase
       )
     );
   }
+
+  [IsTested()]
+  public void TestErrorReportingFromParser()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+      return
+#if FOO
+      10
+#endif
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"return value is missing",
+      new PlaceAssert(bhl, @"
+      return
+------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestErrorReportingFromParser2()
+  {
+    string bhl = @"
+    func bool test() 
+    {
+#if !FOO
+      return 10
+#endif
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"incompatible types: 'bool' and 'int'",
+      new PlaceAssert(bhl, @"
+      return 10
+-------------^"
+      )
+    );
+  }
 }
