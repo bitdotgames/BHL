@@ -24,8 +24,6 @@ directive
     //| ELIF preprocessor_expression              # preprocConditional
     | ELSE                                      # preprocConditional
     | ENDIF                                     # preprocConditional
-//    | IFDEF CONDITIONAL_SYMBOL                  # preprocDef
-//    | IFNDEF CONDITIONAL_SYMBOL                 # preprocDef
 //    | UNDEF CONDITIONAL_SYMBOL                  # preprocDef
 //    | PRAGMA directive_text                     # preprocPragma
 //    | ERROR directive_text                      # preprocError

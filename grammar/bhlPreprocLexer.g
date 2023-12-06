@@ -22,8 +22,8 @@ mode DIRECTIVE_MODE;
 //DEFINE  : 'define' [ \t]+ -> mode(DIRECTIVE_DEFINE);
 
 IF      : 'if';
-ELIF    : 'elif';
 ELSE    : 'else';
+//ELIF    : 'elif';
 ENDIF   : 'endif';
 //UNDEF   : 'undef';
 //TRUE    : 'true';
