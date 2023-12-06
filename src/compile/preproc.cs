@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
@@ -140,21 +141,18 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public override object VisitProgram(bhlPreprocParser.ProgramContext ctx)
   {
-    //TODO: a) white space is not properly preserved
-    //      b) use tokens from stream directly instead of strings?
     foreach(var item in ctx.text())
     {
       if(item.code() != null)
       {
         if(IsStripped())
-          ReplaceWithWiteSpace(item.GetText());
+          MakeWhiteSpace(item);
         else
-          writer.Write(item.GetText());
+          CopyBytes(item);
       }
-      else 
+      else
       {
-        ReplaceWithWiteSpace(item.GetText());
-
+        MakeWhiteSpace(item);
         Visit(item.directive());
       }
     }
@@ -162,12 +160,22 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     return null;
   }
 
-  void ReplaceWithWiteSpace(string ws)
+  void CopyBytes(ParserRuleContext ctx)
   {
-    if(ws.Length > 1)
-      writer.Write(new string(' ', ws.Length-1));
+    int len = ctx.Stop.StopIndex - ctx.Start.StartIndex + 1;
+    src.Position = ctx.Start.StartIndex;
+    for(int i=0;i<len;++i)
+      writer.Write((char)src.ReadByte());
+  }
+  
+  void MakeWhiteSpace(ParserRuleContext ctx)
+  {
+    int len = ctx.Stop.StopIndex - ctx.Start.StartIndex + 1;
+    for(int i=0;i<len-1;++i)
+      writer.Write(' ');
     //let's preserve the last character
-    writer.Write(ws[ws.Length-1]);
+    src.Position = ctx.Start.StartIndex + len - 1;
+    writer.Write((char)src.ReadByte());
   }
 
   public override object VisitPreprocConditional(bhlPreprocParser.PreprocConditionalContext ctx)
