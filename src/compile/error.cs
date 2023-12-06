@@ -132,6 +132,18 @@ public class ErrorHandlers
     eh.error_strategy = new ErrorStrategy();
     return eh;
   }
+
+  public void AttachToParser(Parser p)
+  {
+    if(parser_listener != null)
+    {
+      p.RemoveErrorListeners();
+      p.AddErrorListener(parser_listener);
+    }
+
+    if(error_strategy != null)
+      p.ErrorHandler = error_strategy;
+  }
 }
 
 public class ErrorLexerListener : IAntlrErrorListener<int>

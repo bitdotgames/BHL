@@ -79,8 +79,8 @@ public class Workspace
     var parser = ANTLR_Processor.Stream2Parser(
       module, 
       errors,
-      stream, 
       err_handlers,
+      stream, 
       //TODO: pass actual defines
       defines: null
     );

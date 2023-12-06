@@ -12,6 +12,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   //NOTE: passed from above
   CompileErrors errors;
+  ErrorHandlers err_handlers;
 
   Stream src;
   CommonTokenStream tokens;
@@ -29,13 +30,21 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     public bool strip_condition;
   }
 
-  Stack<Annotated> ifs = new Stack<Annotated>();
+  internal struct IfBlock
+  {
+    internal IParseTree if_node;
+    internal bool else_found;
+    internal Annotated expression; 
+  }
+
+  Stack<IfBlock> ifs = new Stack<IfBlock>();
 
   const int SHARP_CODE = 35;
 
   public static Stream ProcessStream(
     Module module, 
     CompileErrors errors,
+    ErrorHandlers err_handlers,
     Stream src, 
     HashSet<string> defines
   )
@@ -58,17 +67,25 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     //let's restore the original position
     src.Position = pos;
     
-    var preproc = new ANTLR_Preprocessor(module, errors, src, defines);
+    var preproc = new ANTLR_Preprocessor(module, errors, err_handlers, src, defines);
+
     var dst = preproc.Process();
 
     dst.Position = 0;
     return dst;
   }
 
-  public ANTLR_Preprocessor(Module module, CompileErrors errors, Stream src, HashSet<string> defines)
+  public ANTLR_Preprocessor(
+    Module module, 
+    CompileErrors errors, 
+    ErrorHandlers err_handlers,
+    Stream src, 
+    HashSet<string> defines
+  )
   {
     this.module = module;
     this.errors = errors;
+    this.err_handlers = err_handlers;
     this.src = src;
     this.defines = defines;
   }
@@ -81,17 +98,15 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     var p = new bhlPreprocParser(tokens);
 
+    err_handlers?.AttachToParser(p);
+
     dst = new MemoryStream();
     dst.Capacity = (int)src.Length;
     writer = new StreamWriter(dst);
 
-    //var sb = new System.Text.StringBuilder();
-    //Console.WriteLine(">>>>>");
-    //ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
-    //Console.WriteLine(sb.ToString());
-    //Console.WriteLine("<<<<<");
-
     VisitProgram(p.program());
+
+    CheckValidity();
 
     writer.Flush();
     dst.Position = 0;
@@ -99,11 +114,28 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     return dst;
   }
 
+  void CheckValidity()
+  {
+    foreach(var if_block in ifs)
+    {
+      AddError(if_block.if_node, "invalid usage");
+    }
+  }
+
+  static void DebugPrint(bhlPreprocParser p)
+  {
+    var sb = new System.Text.StringBuilder();
+    Console.WriteLine(">>>>>");
+    ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
+    Console.WriteLine(sb.ToString());
+    Console.WriteLine("<<<<<");
+  }
+
   bool IsStripped()
   {
     if(ifs.Count == 0)
       return false;
-    return ifs.Peek().strip_condition == false;
+    return ifs.Peek().expression.strip_condition == false;
   }
 
   public override object VisitProgram(bhlPreprocParser.ProgramContext ctx)
@@ -142,19 +174,39 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   {
     if(ctx.IF() != null)
     {
-      Visit(ctx.preprocessor_expression());
-      ifs.Push(Annotate(ctx.preprocessor_expression()));
+      if(ctx.preprocessor_expression() == null)
+      {
+        AddError(ctx, "invalid usage");
+      }
+      else
+      {
+        Visit(ctx.preprocessor_expression());
+         
+        ifs.Push(new IfBlock() { 
+            if_node = ctx,
+            expression = Annotate(ctx.preprocessor_expression())
+          }
+        );
+      }
     }
     else if(ctx.ELSE() != null)
     {
-      ifs.Peek().strip_condition = !ifs.Peek().strip_condition;
+      if(!ifs.Peek().else_found)
+      {
+        var tmp = ifs.Pop();
+        tmp.else_found = true;
+        tmp.expression.strip_condition = !tmp.expression.strip_condition;
+        ifs.Push(tmp);
+      }
+      else
+        AddError(ctx, "invalid usage");
     }
     else if(ctx.ENDIF() != null)
     {
       if(ifs.Count == 0)
         AddError(ctx, "invalid usage");
       else
-      ifs.Pop();
+        ifs.Pop();
     }
     return null;
   }

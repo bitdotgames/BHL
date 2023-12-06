@@ -134,9 +134,78 @@ public class TestPreproc : BHL_TestBase
       @"invalid usage",
       new PlaceAssert(bhl, @"
   #endif
---^"
+---^"
       )
     );
   }
 
+  [IsTested()]
+  public void TestDoubleElse()
+  {
+    string bhl = @"
+    func test() 
+    {
+  #if FOO
+  #else
+  #else
+  #endif
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"invalid usage",
+      new PlaceAssert(bhl, @"
+  #else
+---^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestNotClosedIf()
+  {
+    string bhl = @"
+    func test() 
+    {
+  #if FOO
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"invalid usage",
+      new PlaceAssert(bhl, @"
+  #if FOO
+---^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestWeirdIf()
+  {
+    string bhl = @"
+    func test() 
+    {
+  #if
+  #endif
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"mismatched input",
+      new PlaceAssert(bhl, @"
+  #if
+-----^"
+      )
+    );
+  }
 }
