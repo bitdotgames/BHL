@@ -77,7 +77,8 @@ public class Workspace
     var err_handlers = ErrorHandlers.MakeStandard(file, errors);
 
     var parser = ANTLR_Processor.Stream2Parser(
-      file, 
+      module, 
+      errors,
       stream, 
       err_handlers,
       //TODO: pass actual defines

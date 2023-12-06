@@ -8,6 +8,11 @@ namespace bhl {
 
 public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 {
+  Module module;
+
+  //NOTE: passed from above
+  CompileErrors errors;
+
   Stream src;
   CommonTokenStream tokens;
 
@@ -28,7 +33,12 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   const int SHARP_CODE = 35;
 
-  public static Stream ProcessStream(Stream src, HashSet<string> defines)
+  public static Stream ProcessStream(
+    Module module, 
+    CompileErrors errors,
+    Stream src, 
+    HashSet<string> defines
+  )
   {
     var pos = src.Position;
     while(true)
@@ -48,15 +58,17 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     //let's restore the original position
     src.Position = pos;
     
-    var preproc = new ANTLR_Preprocessor(src, defines);
+    var preproc = new ANTLR_Preprocessor(module, errors, src, defines);
     var dst = preproc.Process();
 
     dst.Position = 0;
     return dst;
   }
 
-  public ANTLR_Preprocessor(Stream src, HashSet<string> defines)
+  public ANTLR_Preprocessor(Module module, CompileErrors errors, Stream src, HashSet<string> defines)
   {
+    this.module = module;
+    this.errors = errors;
     this.src = src;
     this.defines = defines;
   }
@@ -139,6 +151,9 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     }
     else if(ctx.ENDIF() != null)
     {
+      if(ifs.Count == 0)
+        AddError(ctx, "invalid usage");
+      else
       ifs.Pop();
     }
     return null;
@@ -172,6 +187,11 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
       annotated_nodes.Add(t, at);
     }
     return at;
+  }
+
+  void AddError(IParseTree place, string msg) 
+  {
+    errors.Add(new ParseError(module, place, tokens, msg));
   }
 }
 

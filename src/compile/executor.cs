@@ -578,7 +578,8 @@ public class CompilationExecutor
             if(!use_cache)
             {
               var parser = ANTLR_Processor.Stream2Parser(
-                file, 
+                new Module(w.conf.ts, interim.module_path), 
+                w.errors,
                 sfs, 
                 ErrorHandlers.MakeStandard(file, w.errors),
                 //TODO: pass actual defines

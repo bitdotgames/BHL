@@ -258,15 +258,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   public static bhlParser Stream2Parser(
-      string file, 
+      Module module,
+      CompileErrors errors,
       Stream src, 
       ErrorHandlers handlers,
       HashSet<string> defines
     )
   {
-    src = ANTLR_Preprocessor.ProcessStream(src, defines);
+    src = ANTLR_Preprocessor.ProcessStream(module, errors, src, defines);
 
-    var tokens = Stream2Tokens(file, src, handlers);
+    var tokens = Stream2Tokens(module.file_path, src, handlers);
     var p = new bhlParser(tokens);
 
     if(handlers?.parser_listener != null)
@@ -328,9 +329,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     HashSet<string> defines = null
     )
   {
-    var p = Stream2Parser(module.file_path, src, err_handlers, defines);
+    var p = Stream2Parser(module, errors, src, err_handlers, defines);
+
     //NOTE: parsing happens here 
     var parsed = new ANTLR_Parsed(p);
+
     return new ANTLR_Processor(
       parsed, 
       module, 
@@ -2889,7 +2892,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(_one_literal_exp == null)
       {
         _one_literal_exp = Stream2Parser(
-          "", 
+          new Module(null), 
+          null,
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
           ErrorHandlers.MakeStandard("", new CompileErrors()),
           defines: null

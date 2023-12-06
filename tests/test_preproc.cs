@@ -116,4 +116,27 @@ public class TestPreproc : BHL_TestBase
     AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+
+  [IsTested()]
+  public void TestDanglingEndif()
+  {
+    string bhl = @"
+    func test() 
+    {
+  #endif
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"invalid usage",
+      new PlaceAssert(bhl, @"
+  #endif
+--^"
+      )
+    );
+  }
+
 }
