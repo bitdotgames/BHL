@@ -257,4 +257,33 @@ public class TestPreproc : BHL_TestBase
       )
     );
   }
+
+  [IsTested()]
+  public void TestErrorReportingPreserveLines()
+  {
+    string bhl = @"
+    func test() 
+    {
+#if SERVER
+      some junk
+      some junk
+      some junk
+#endif
+      int a = 10
+
+      string f = a
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      @"incompatible types: 'string' and 'int'",
+      new PlaceAssert(bhl, @"
+      string f = a
+-------------^"
+      )
+    );
+  }
 }

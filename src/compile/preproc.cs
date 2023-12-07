@@ -93,8 +93,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public Stream Process()
   {                          
-    var ais = new AntlrInputStream(src);
-    var lex = new bhlPreprocLexer(ais);
+    var lex = new bhlPreprocLexer(new AntlrInputStream(src));
     tokens = new CommonTokenStream(lex);
 
     var p = new bhlPreprocParser(tokens);
@@ -111,6 +110,11 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     writer.Flush();
     dst.Position = 0;
+
+    //for debug
+    //Console.WriteLine(">>>>");
+    //Console.WriteLine(Encoding.UTF8.GetString(dst.GetBuffer(), 0 , (int)dst.Length));
+    //Console.WriteLine("<<<<");
 
     return dst;
   }
@@ -146,13 +150,13 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
       if(item.code() != null)
       {
         if(IsStripped())
-          MakeWhiteSpace(item);
+          ConvertToWhiteSpace(item);
         else
           CopyBytes(item);
       }
       else
       {
-        MakeWhiteSpace(item);
+        ConvertToWhiteSpace(item);
         Visit(item.directive());
       }
     }
@@ -168,14 +172,18 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
       writer.Write((char)src.ReadByte());
   }
   
-  void MakeWhiteSpace(ParserRuleContext ctx)
+  void ConvertToWhiteSpace(ParserRuleContext ctx)
   {
     int len = ctx.Stop.StopIndex - ctx.Start.StartIndex + 1;
-    for(int i=0;i<len-1;++i)
-      writer.Write(' ');
-    //let's preserve the last character
-    src.Position = ctx.Start.StartIndex + len - 1;
-    writer.Write((char)src.ReadByte());
+    src.Position = ctx.Start.StartIndex;
+    for(int i=0;i<len;++i)
+    {
+      var c = (char)src.ReadByte();
+      if(c != '\n')
+        writer.Write(' ');
+      else
+        writer.Write(c);
+    }
   }
 
   public override object VisitPreprocConditional(bhlPreprocParser.PreprocConditionalContext ctx)

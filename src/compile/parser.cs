@@ -243,10 +243,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
   List<uint> encoded_semantic_tokens = new List<uint>();
 
-  static CommonTokenStream Stream2Tokens(string file, Stream s, ErrorHandlers handlers)
+  static CommonTokenStream Stream2Tokens(Stream s, ErrorHandlers handlers)
   {
-    var ais = new AntlrInputStream(s);
-    var lex = new bhlLexer(ais);
+    var lex = new bhlLexer(new AntlrInputStream(s));
 
     if(handlers?.lexer_listener != null)
     {
@@ -267,7 +266,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     src = ANTLR_Preprocessor.ProcessStream(module, errors, err_handlers, src, defines);
 
-    var tokens = Stream2Tokens(module.file_path, src, err_handlers);
+    var tokens = Stream2Tokens(src, err_handlers);
+
     var p = new bhlParser(tokens);
 
     err_handlers?.AttachToParser(p);
