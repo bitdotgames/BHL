@@ -672,6 +672,8 @@ public class CompilationExecutor
               string file_path = inc_path.ResolveImportPath(file, rel_import);
               imps.Add(rel_import, file_path);
             }
+            else
+              break;
             import_idx = line.IndexOf("import", q2_idx + 1);
           }
           else

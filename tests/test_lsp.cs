@@ -218,6 +218,65 @@ public class TestLSP : BHL_TestBase
     });
   }
 
+  public class MockConnection : IConnection
+  {
+    public string buffer = "";
+
+    public string Read()
+    {
+      return null;
+    }
+
+    public void Write(string json)
+    {
+      buffer += json;
+    }
+  }
+
+  [IsTested()]
+  public void TestBadImportError()
+  {
+    string bhl_v1 = @"
+    import hey""
+
+    class Foo {
+      int BAR
+    }
+    ";
+
+    var ws = new Workspace();
+
+    var conn = new MockConnection();
+    var srv = new Server(NoLogger(), conn, ws);
+    srv.AttachService(new bhl.lsp.TextDocumentSynchronizationService(srv));
+    srv.AttachService(new bhl.lsp.DiagnosticService(srv));
+
+    CleanTestFiles();
+
+    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
+
+    ws.Init(new bhl.Types(), GetTestProjConf());
+
+    {
+      ws.IndexFiles();
+
+      AssertEqual(
+        srv.Handle(new Request(1, "textDocument/didOpen",
+          new bhl.lsp.proto.DidOpenTextDocumentParams() {
+            textDocument = new bhl.lsp.proto.TextDocumentItem() { 
+              languageId = "bhl", 
+              version = 0, 
+              uri = uri, 
+              text = bhl_v1 
+            }}
+          ).ToJson()),
+        string.Empty
+      );
+
+      AssertContains(conn.buffer, "invalid import 'missing NORMALSTRING'");
+    }
+  }
+
   [IsTested()]
   public void TestOpenChangeCloseDocument()
   {
