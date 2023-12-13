@@ -4089,7 +4089,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void Pass_ParseClassMethodsBlocks(ParserPass pass)
   {
-    if(pass.class_symb == null)
+    if(pass.class_symb == null || pass.class_ast == null)
       return;
 
     //class methods bodies
