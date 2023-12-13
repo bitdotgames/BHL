@@ -414,6 +414,27 @@ public class TestErrors : BHL_TestBase
     }
   }
 
+  [IsTested()]
+  public void TestBadImport()
+  {
+    string bhl = @"
+      import foo""
+      func test() {
+      }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "token recognition error at: '\"",
+      new PlaceAssert(bhl, @"
+      import foo""
+----------------^"
+      )
+    );
+  }
+
 //  [IsTested()]
 //  public void TestErrorNodes()
 //  {
