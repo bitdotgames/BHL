@@ -7,6 +7,23 @@ using bhl;
 public class TestParsing : BHL_TestBase
 {
   [IsTested()]
+  public void TestUtf8Comments()
+  {
+    string bhl = @"
+    //надеюсь тут нет ошибки?
+    func int test() 
+    {
+      //привет всем!
+      return 10
+    //а тут?
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+  }
+
+  [IsTested()]
   public void TestReturnParseSpecialCasesForDeclVars()
   {
     SubTest(() => {
