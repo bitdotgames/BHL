@@ -158,11 +158,11 @@ coro func Attack(Unit u) {
   paral_all {
    yield PlayAnim(u, trigger: "Attack")
    SoundPlay(u, sound: "Swoosh")
-   seq {
+   {
      yield WaitAnimEvent(u, event: "Hit")
      SoundPlay(u, sound: "Damage")
      yeld HitTarget(u, t, damage: RandRange(1,16))
-  }
+   }
 }
 ```
 
