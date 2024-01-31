@@ -109,7 +109,7 @@ public class SymbolError : Exception
 
   public string file { 
     get { 
-      return symbol.origin?.source_file;
+      return symbol.origin?.source_file ?? "";
     } 
   }
 
