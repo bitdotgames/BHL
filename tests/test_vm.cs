@@ -1424,6 +1424,24 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestLogicalAndHasPriorityOverOr()
+  {
+    string bhl = @"
+    bool a = true
+    bool b = true
+    bool c = false
+    func bool test()
+    {
+      return a && b || c && b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBitAnd()
   {
     string bhl = @"

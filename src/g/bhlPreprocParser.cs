@@ -36,9 +36,9 @@ public partial class bhlPreprocParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		SHARP=1, CODE=2, IF=3, ELIF=4, ELSE=5, ENDIF=6, BANG=7, DIRECTIVE_WHITESPACES=8, 
-		DIRECTIVE_STRING=9, CONDITIONAL_SYMBOL=10, NEW_LINE=11, DIRECTIVE_COMMENT=12, 
-		SLASH=13;
+		SHARP=1, CODE=2, IF=3, ELSE=4, ENDIF=5, BANG=6, DIRECTIVE_WHITESPACES=7, 
+		DIRECTIVE_STRING=8, CONDITIONAL_SYMBOL=9, NEW_LINE=10, DIRECTIVE_COMMENT=11, 
+		SLASH=12;
 	public const int
 		RULE_program = 0, RULE_text = 1, RULE_code = 2, RULE_directive = 3, RULE_preprocessor_expression = 4;
 	public static readonly string[] ruleNames = {
@@ -46,11 +46,11 @@ public partial class bhlPreprocParser : Parser {
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'#'", null, "'if'", "'elif'", "'else'", "'endif'", "'!'", null, 
-		null, null, null, null, "'/'"
+		null, "'#'", null, "'if'", "'else'", "'endif'", "'!'", null, null, null, 
+		null, null, "'/'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "SHARP", "CODE", "IF", "ELIF", "ELSE", "ENDIF", "BANG", "DIRECTIVE_WHITESPACES", 
+		null, "SHARP", "CODE", "IF", "ELSE", "ENDIF", "BANG", "DIRECTIVE_WHITESPACES", 
 		"DIRECTIVE_STRING", "CONDITIONAL_SYMBOL", "NEW_LINE", "DIRECTIVE_COMMENT", 
 		"SLASH"
 	};
@@ -459,7 +459,7 @@ public partial class bhlPreprocParser : Parser {
 
 	private static char[] _serializedATN = {
 		'\x3', '\x608B', '\xA72A', '\x8133', '\xB9ED', '\x417C', '\x3BE7', '\x7786', 
-		'\x5964', '\x3', '\xF', ',', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
+		'\x5964', '\x3', '\xE', ',', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
 		'\t', '\x3', '\x4', '\x4', '\t', '\x4', '\x4', '\x5', '\t', '\x5', '\x4', 
 		'\x6', '\t', '\x6', '\x3', '\x2', '\a', '\x2', '\xE', '\n', '\x2', '\f', 
 		'\x2', '\xE', '\x2', '\x11', '\v', '\x2', '\x3', '\x2', '\x3', '\x2', 
@@ -469,7 +469,7 @@ public partial class bhlPreprocParser : Parser {
 		'\x3', '\x5', '\x3', '\x5', '\x5', '\x5', '%', '\n', '\x5', '\x3', '\x6', 
 		'\x3', '\x6', '\x3', '\x6', '\x5', '\x6', '*', '\n', '\x6', '\x3', '\x6', 
 		'\x2', '\x2', '\a', '\x2', '\x4', '\x6', '\b', '\n', '\x2', '\x3', '\x3', 
-		'\x3', '\r', '\r', '\x2', ',', '\x2', '\xF', '\x3', '\x2', '\x2', '\x2', 
+		'\x3', '\f', '\f', '\x2', ',', '\x2', '\xF', '\x3', '\x2', '\x2', '\x2', 
 		'\x4', '\x19', '\x3', '\x2', '\x2', '\x2', '\x6', '\x1C', '\x3', '\x2', 
 		'\x2', '\x2', '\b', '$', '\x3', '\x2', '\x2', '\x2', '\n', ')', '\x3', 
 		'\x2', '\x2', '\x2', '\f', '\xE', '\x5', '\x4', '\x3', '\x2', '\r', '\f', 
@@ -487,10 +487,10 @@ public partial class bhlPreprocParser : Parser {
 		'\x2', '\x2', '\x1E', '\x1C', '\x3', '\x2', '\x2', '\x2', '\x1E', '\x1F', 
 		'\x3', '\x2', '\x2', '\x2', '\x1F', '\a', '\x3', '\x2', '\x2', '\x2', 
 		' ', '!', '\a', '\x5', '\x2', '\x2', '!', '%', '\x5', '\n', '\x6', '\x2', 
-		'\"', '%', '\a', '\a', '\x2', '\x2', '#', '%', '\a', '\b', '\x2', '\x2', 
+		'\"', '%', '\a', '\x6', '\x2', '\x2', '#', '%', '\a', '\a', '\x2', '\x2', 
 		'$', ' ', '\x3', '\x2', '\x2', '\x2', '$', '\"', '\x3', '\x2', '\x2', 
 		'\x2', '$', '#', '\x3', '\x2', '\x2', '\x2', '%', '\t', '\x3', '\x2', 
-		'\x2', '\x2', '&', '*', '\a', '\f', '\x2', '\x2', '\'', '(', '\a', '\t', 
+		'\x2', '\x2', '&', '*', '\a', '\v', '\x2', '\x2', '\'', '(', '\a', '\b', 
 		'\x2', '\x2', '(', '*', '\x5', '\n', '\x6', '\x2', ')', '&', '\x3', '\x2', 
 		'\x2', '\x2', ')', '\'', '\x3', '\x2', '\x2', '\x2', '*', '\v', '\x3', 
 		'\x2', '\x2', '\x2', '\a', '\xF', '\x19', '\x1E', '$', ')',

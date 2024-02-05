@@ -196,13 +196,6 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpAddSub([NotNull] bhlParser.ExpAddSubContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ExpLogical</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitExpLogical([NotNull] bhlParser.ExpLogicalContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpYieldCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// </summary>
@@ -237,6 +230,20 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpLogicalAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpLogicalAnd([NotNull] bhlParser.ExpLogicalAndContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpLogicalOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpLogicalOr([NotNull] bhlParser.ExpLogicalOrContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ExpLambda</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -696,12 +703,6 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAssignExp([NotNull] bhlParser.AssignExpContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// </summary>

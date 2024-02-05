@@ -363,20 +363,6 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpAddSub([NotNull] bhlParser.ExpAddSubContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ExpLogical</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterExpLogical([NotNull] bhlParser.ExpLogicalContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by the <c>ExpLogical</c>
-	/// labeled alternative in <see cref="bhlParser.exp"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitExpLogical([NotNull] bhlParser.ExpLogicalContext context) { }
-	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpYieldCall</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -446,6 +432,34 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitExpTernaryIf([NotNull] bhlParser.ExpTernaryIfContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpLogicalAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpLogicalAnd([NotNull] bhlParser.ExpLogicalAndContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpLogicalAnd</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpLogicalAnd([NotNull] bhlParser.ExpLogicalAndContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpLogicalOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpLogicalOr([NotNull] bhlParser.ExpLogicalOrContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpLogicalOr</c>
+	/// labeled alternative in <see cref="bhlParser.exp"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpLogicalOr([NotNull] bhlParser.ExpLogicalOrContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ExpLambda</c>
 	/// labeled alternative in <see cref="bhlParser.exp"/>.
@@ -1364,18 +1378,6 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAssignExp([NotNull] bhlParser.AssignExpContext context) { }
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void EnterOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context) { }
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="bhlParser.operatorLogical"/>.
-	/// <para>The default implementation does nothing.</para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	public virtual void ExitOperatorLogical([NotNull] bhlParser.OperatorLogicalContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.operatorBitwise"/>.
 	/// <para>The default implementation does nothing.</para>

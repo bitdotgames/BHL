@@ -3083,11 +3083,42 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return null;
   }
 
-  public override object VisitExpLogical(bhlParser.ExpLogicalContext ctx)
+  public override object VisitExpLogicalAnd(bhlParser.ExpLogicalAndContext ctx)
   {
-    LSP_AddSemanticToken(ctx.operatorLogical(), SemanticToken.Operator);
+    LSP_AddSemanticToken(ctx.LAND(), SemanticToken.Operator);
 
-    var ast = new AST_BinaryOpExp(ctx.operatorLogical().LOR() != null ? EnumBinaryOp.OR : EnumBinaryOp.AND, ctx.Start.Line);
+    var ast = new AST_BinaryOpExp(EnumBinaryOp.AND, ctx.Start.Line);
+    var exp_0 = ctx.exp(0);
+    var exp_1 = ctx.exp(1);
+
+    //logical operand node has exactly two children
+    var tmp0 = new AST_Interim();
+    PushAST(tmp0);
+    bool ok1 = TryVisit(exp_0);
+    PopAST();
+    ast.AddChild(tmp0);
+
+    var tmp1 = new AST_Interim();
+    PushAST(tmp1);
+    bool ok2 = TryVisit(exp_1);
+    PopAST();
+    ast.AddChild(tmp1);
+
+    if(!ok1 || !ok2)
+      return null;
+
+    Annotate(ctx).eval_type = types.CheckLogicalOp(Annotate(exp_0), Annotate(exp_1), errors);
+
+    PeekAST().AddChild(ast);
+
+    return null;
+  }
+
+  public override object VisitExpLogicalOr(bhlParser.ExpLogicalOrContext ctx)
+  {
+    LSP_AddSemanticToken(ctx.LOR(), SemanticToken.Operator);
+
+    var ast = new AST_BinaryOpExp(EnumBinaryOp.OR, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 
