@@ -380,6 +380,25 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastIntsDivResultToToInt()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      int a = 11
+      int b = 2
+      return a / b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 5);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCastIntToAny()
   {
     string bhl = @"

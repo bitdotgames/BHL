@@ -3037,6 +3037,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     PeekAST().AddChild(ast);
+
+    if(op_type == EnumBinaryOp.DIV && 
+        ann_lhs.eval_type == Types.Int && 
+        ann_rhs.eval_type == Types.Int
+      )
+      PeekAST().AddChild(new AST_TypeCast(Types.Int, force_type: true, line_num: ctx.Start.Line));
   }
 
   static bool SupportsImplictCastToString(IType type)
