@@ -1015,15 +1015,24 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     set => this[index] = (T)value;
   }
 
-  public StackList(List<T> list) : this()
+  public StackList(IList<T> list) 
+    : this()
   {
     storage = new Array16<T>();
     AddRange(list);
   }
 
+  //convenience special case
+  public StackList(T v) 
+    : this()
+  {
+    storage = new Array16<T>();
+    Add(v);
+  }
+
   public void AddRange(IList<T> list)
   {
-    for(int i=0; i<list.Count; ++i)
+    for(int i=0; i<list?.Count; ++i)
       Add(list[i]);
   }
 

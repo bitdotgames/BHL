@@ -1120,20 +1120,20 @@ public class VM : INamedResolver
 
   public Fiber Start(string func, uint cargs_bits, params Val[] args)
   {
-    return Start(func, cargs_bits, args.AsSpan());
+    return Start(func, cargs_bits, new StackList<Val>(args));
   }
 
-  public Fiber Start(string func, ReadOnlySpan<Val> args)
+  public Fiber Start(string func, StackList<Val> args)
   {
     return Start(func, 0, args);
   }
 
-  public Fiber Start(string func, FuncArgsInfo args_info, ReadOnlySpan<Val> args)
+  public Fiber Start(string func, FuncArgsInfo args_info, StackList<Val> args)
   {
     return Start(func, args_info.bits, args);
   }
 
-  public Fiber Start(string func, uint cargs_bits, ReadOnlySpan<Val> args)
+  public Fiber Start(string func, uint cargs_bits, StackList<Val> args)
   {
     FuncAddr addr;
     FuncSymbolScript fs;
@@ -1145,15 +1145,15 @@ public class VM : INamedResolver
 
   public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
   {
-    return Start(addr, cargs_bits, (args?.Length ?? 0) > 0 ? args.AsSpan() : Span<Val>.Empty);
+    return Start(addr, cargs_bits, new StackList<Val>(args));
   }
 
-  public Fiber Start(FuncAddr addr, ReadOnlySpan<Val> args)
+  public Fiber Start(FuncAddr addr, StackList<Val> args)
   {
     return Start(addr, 0, args);
   }
 
-  public Fiber Start(FuncAddr addr, uint cargs_bits, ReadOnlySpan<Val> args)
+  public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {
     var fb = Fiber.New(this);
     Register(fb);
@@ -1161,7 +1161,7 @@ public class VM : INamedResolver
     var frame = Frame.New(this);
     frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, addr.ip);
 
-    for (int i = args.Length; i-- > 0;)
+    for (int i = args.Count; i-- > 0;)
     {
       var arg = args[i];
       frame._stack.Push(arg);
