@@ -698,6 +698,39 @@ public class VM : INamedResolver
     public Val val;
   }
 
+  public struct SymbolSpec : IEquatable<SymbolSpec>
+  {
+    public string module;
+    public string path;
+
+    public SymbolSpec(string module, string path)
+    {
+      this.module = module;
+      this.path = path;
+    }
+
+    public bool Equals(SymbolSpec other)
+    {
+      return module == other.module && path == other.path;
+    }
+
+    public override bool Equals(object obj)
+    {
+      return obj is SymbolSpec other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+      return HashCode.Combine(module, path);
+    }
+  }
+
+  public struct ModuleSymbol
+  {
+    public CompiledModule cm;
+    public Symbol symbol;
+  }
+
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
@@ -833,7 +866,7 @@ public class VM : INamedResolver
     return cm;
   }
 
-  //NOTE: returns false is module is already loaded
+  //NOTE: returns false if module is already loaded
   bool TryAddToLoadingList(string module_name)
   {
     //let's check if it's already available
@@ -1193,7 +1226,7 @@ public class VM : INamedResolver
     return true;
   }
 
-  // Obsolete
+  [Obsolete("Use TryFindFuncAddr(string path, out FuncAddr addr) instead.")]
   public bool TryFindFuncAddr(string path, out FuncAddr addr, out FuncSymbolScript fs)
   {
     bool yes = TryFindFuncAddr(path, out addr);
@@ -1218,6 +1251,37 @@ public class VM : INamedResolver
     };
 
     return true;
+  }
+
+  Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module = new Dictionary<SymbolSpec, ModuleSymbol>();
+
+  public enum LoadModuleSymbolError
+  {
+    Ok,
+    ModuleNotFound,
+    SymbolNotFound
+  }
+
+  public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms)
+  {
+    if(symbol_spec2module.TryGetValue(spec, out ms))
+      return LoadModuleSymbolError.Ok;
+    
+    if(!LoadModule(spec.module))
+      return LoadModuleSymbolError.ModuleNotFound;
+
+    var symb = ResolveNamedByPath(spec.path) as Symbol;
+    if(symb == null)
+      return LoadModuleSymbolError.SymbolNotFound;
+
+    var cm = compiled_mods[((Namespace)symb.scope).module.name];
+
+    ms.cm = cm;
+    ms.symbol = symb;
+
+    symbol_spec2module.Add(spec, ms);
+
+    return LoadModuleSymbolError.Ok;
   }
 
   public INamed ResolveNamedByPath(string path)
