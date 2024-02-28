@@ -18,7 +18,7 @@ public class TestPreproc : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_parse_tree: true);
+    var vm = MakeVM(bhl);
     AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }

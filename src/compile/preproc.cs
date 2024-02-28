@@ -14,7 +14,6 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   CompileErrors errors;
   ErrorHandlers err_handlers;
 
-  bhlPreprocParser parser;
   Stream src;
   CommonTokenStream tokens;
 
@@ -56,24 +55,20 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     preproc_parsed = null;
 
     var pos = src.Position;
-    while(true)
-    {
-      int b = src.ReadByte();
-      //we are at the end let's jump out 
-      if(b == -1)
-      {
-        src.Position = pos;
-        return src;
-      }
-      //check if there's any # character
-      if(b == SHARP_CODE)
-        break;
-    }
-
+    bool need_preproc = HasPossiblePreprocDirectives(src);
     //let's restore the original position
     src.Position = pos;
+
+    if(!need_preproc)
+      return src;
     
-    var preproc = new ANTLR_Preprocessor(module, errors, err_handlers, src, defines);
+    var preproc = new ANTLR_Preprocessor(
+      module, 
+      errors, 
+      err_handlers, 
+      src, 
+      defines
+    );
 
     var dst = preproc.Process();
 
@@ -81,6 +76,20 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     dst.Position = 0;
     return dst;
+  }
+
+  static bool HasPossiblePreprocDirectives(Stream src)
+  {
+    while(true)
+    {
+      int b = src.ReadByte();
+      //we are at the end let's jump out 
+      if(b == -1)
+        return false;
+      //check if there's any # character
+      if(b == SHARP_CODE)
+        return true;
+    }
   }
 
   public ANTLR_Preprocessor(
@@ -96,23 +105,25 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     this.err_handlers = err_handlers;
     this.src = src;
     this.defines = defines;
-
-    var lex = new bhlPreprocLexer(new AntlrInputStream(src));
-    tokens = new CommonTokenStream(lex);
-    parser = new bhlPreprocParser(tokens);
   }
 
   public Stream Process()
   {                          
+    var lex = new bhlPreprocLexer(new AntlrInputStream(src));
+    tokens = new CommonTokenStream(lex);
+    var parser = new bhlPreprocParser(tokens);
+
     err_handlers?.AttachToParser(parser);
 
     dst = new MemoryStream();
     dst.Capacity = (int)src.Length;
     writer = new StreamWriter(dst);
 
-    parsed = new ANTLR_Parsed(parser, parser.program());
+    //NOTE: parsing happens here
+    var parsed_tree = parser.program();
+    parsed = new ANTLR_Parsed(parser, parsed_tree);
 
-    VisitProgram(parser.program());
+    VisitProgram(parsed_tree);
 
     CheckValidity();
 
@@ -121,7 +132,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     //for debug
     //Console.WriteLine(">>>>");
-    //Console.WriteLine(Encoding.UTF8.GetString(dst.GetBuffer(), 0 , (int)dst.Length));
+    //Console.WriteLine(System.Text.Encoding.UTF8.GetString(dst.GetBuffer(), 0 , (int)dst.Length));
     //Console.WriteLine("<<<<");
 
     return dst;
