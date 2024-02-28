@@ -59,7 +59,6 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     bool need_preproc = HasPossiblePreprocDirectives(src);
     //let's restore the original position
     src.Position = pos;
-
     if(!need_preproc)
       return src;
     
