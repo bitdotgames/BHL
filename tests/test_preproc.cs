@@ -300,7 +300,7 @@ func test()
 }
 ";
 
-    var vm = MakeVM(bhl, show_parse_tree: true);
+    var vm = MakeVM(bhl);
     Execute(vm, "test");
     CommonChecks(vm);
   }

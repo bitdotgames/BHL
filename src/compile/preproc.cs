@@ -119,6 +119,8 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public Stream Process()
   {                          
+    var pos = src.Position;
+
     input = new CustomInputStream(src);
     var lex = new bhlPreprocLexer(input);
     tokens = new CommonTokenStream(lex);
@@ -134,6 +136,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     var parsed_tree = parser.program();
     parsed = new ANTLR_Parsed(parser, parsed_tree);
 
+    src.Position = pos; 
     VisitProgram(parsed_tree);
 
     CheckValidity();
@@ -141,10 +144,13 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     writer.Flush();
     dst.Position = 0;
 
+    if(src.Length != dst.Length)
+      throw new Exception("Stream lengths don't match, source: " + src.Length + ", dest: " + dst.Length);
+
     //for debug
-    Console.WriteLine(">>>> src len: " + src.Length + " VS dst len: " + dst.Length);
-    Console.WriteLine(System.Text.Encoding.UTF8.GetString(dst.GetBuffer(), 0 , (int)dst.Length));
-    Console.WriteLine("<<<<");
+    //Console.WriteLine(">>>> src len: " + src.Length + " VS dst len: " + dst.Length);
+    //Console.WriteLine(System.Text.Encoding.UTF8.GetString(dst.GetBuffer(), 0 , (int)dst.Length));
+    //Console.WriteLine("<<<<");
 
     return dst;
   }
@@ -188,32 +194,26 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   void CopyBytes(ParserRuleContext ctx)
   {
     var t1 = tokens.Get(ctx.Start.TokenIndex); 
-    var t2 = tokens.Get(ctx.Stop.TokenIndex-1); 
+    var t2 = tokens.Get(ctx.Stop.TokenIndex); 
 
-    int offset_count = System.Text.Encoding.UTF8.GetByteCount(input.Data, 0, t1.StartIndex);
-    int total_count = System.Text.Encoding.UTF8.GetByteCount(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
+    var span = new ReadOnlySpan<char>(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
 
-    src.Position = offset_count;
-    for(int i=0;i<total_count;++i)
-      writer.Write((char)src.ReadByte());
+    writer.Write(span);
   }
   
   void ConvertToWhiteSpace(ParserRuleContext ctx)
   {
     var t1 = tokens.Get(ctx.Start.TokenIndex); 
-    var t2 = tokens.Get(ctx.Stop.TokenIndex-1); 
+    var t2 = tokens.Get(ctx.Stop.TokenIndex); 
 
-    int offset_count = System.Text.Encoding.UTF8.GetByteCount(input.Data, 0, t1.StartIndex);
-    int total_count = System.Text.Encoding.UTF8.GetByteCount(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
+    var span = new ReadOnlySpan<char>(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
 
-    src.Position = offset_count;
-    for(int i=0;i<total_count;++i)
+    foreach(var c in span)
     {
-      var c = (char)src.ReadByte();
-      if(c != '\n')
-        writer.Write(' ');
-      else
+      if(c == '\n')
         writer.Write(c);
+      else
+        writer.Write(' ');
     }
   }
 
