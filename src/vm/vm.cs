@@ -1274,6 +1274,8 @@ public class VM : INamedResolver
     if(symb == null)
       return LoadModuleSymbolError.SymbolNotFound;
 
+    //TODO: should we actually check if loaded module matches 
+    //      the module where the found symbol actually resides?
     var cm = compiled_mods[((Namespace)symb.scope).module.name];
 
     ms.cm = cm;
