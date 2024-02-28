@@ -265,7 +265,8 @@ public class CompilationExecutor
             kv.Value.parsed, 
             conf.ts, 
             proc_errs,
-            ErrorHandlers.MakeStandard(kv.Key, proc_errs)
+            ErrorHandlers.MakeStandard(kv.Key, proc_errs),
+            out var preproc_parsed
           );
           file2proc.Add(kv.Key, proc);
         }
@@ -585,9 +586,11 @@ public class CompilationExecutor
                 w.errors,
                 err_handlers,
                 sfs, 
-                defines: new HashSet<string>(w.conf.proj.defines)
+                defines: new HashSet<string>(w.conf.proj.defines),
+                preproc_parsed: out var preproc_parsed
               );
-              interim.parsed = new ANTLR_Parsed(parser);
+              //NOTE: parsing happens here 
+              interim.parsed = new ANTLR_Parsed(parser, parser.program());
 
               ++w.cache_miss;
             }

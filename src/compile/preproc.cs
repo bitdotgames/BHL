@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
@@ -15,8 +14,11 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   CompileErrors errors;
   ErrorHandlers err_handlers;
 
+  bhlPreprocParser parser;
   Stream src;
   CommonTokenStream tokens;
+
+  public ANTLR_Parsed parsed { get; private set; }
 
   HashSet<string> defines;
 
@@ -47,9 +49,12 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     CompileErrors errors,
     ErrorHandlers err_handlers,
     Stream src, 
-    HashSet<string> defines
+    HashSet<string> defines,
+    out ANTLR_Parsed preproc_parsed
   )
   {
+    preproc_parsed = null;
+
     var pos = src.Position;
     while(true)
     {
@@ -72,6 +77,8 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     var dst = preproc.Process();
 
+    preproc_parsed = preproc.parsed;
+
     dst.Position = 0;
     return dst;
   }
@@ -89,22 +96,23 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     this.err_handlers = err_handlers;
     this.src = src;
     this.defines = defines;
+
+    var lex = new bhlPreprocLexer(new AntlrInputStream(src));
+    tokens = new CommonTokenStream(lex);
+    parser = new bhlPreprocParser(tokens);
   }
 
   public Stream Process()
   {                          
-    var lex = new bhlPreprocLexer(new AntlrInputStream(src));
-    tokens = new CommonTokenStream(lex);
-
-    var p = new bhlPreprocParser(tokens);
-
-    err_handlers?.AttachToParser(p);
+    err_handlers?.AttachToParser(parser);
 
     dst = new MemoryStream();
     dst.Capacity = (int)src.Length;
     writer = new StreamWriter(dst);
 
-    VisitProgram(p.program());
+    parsed = new ANTLR_Parsed(parser, parser.program());
+
+    VisitProgram(parser.program());
 
     CheckValidity();
 
@@ -125,15 +133,6 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     {
       AddError(if_block.if_node, "invalid usage");
     }
-  }
-
-  static void DebugPrint(bhlPreprocParser p)
-  {
-    var sb = new System.Text.StringBuilder();
-    Console.WriteLine(">>>>>");
-    ANTLR_Parsed.PrintTree(p.program(), sb, 0, p.RuleNames);
-    Console.WriteLine(sb.ToString());
-    Console.WriteLine("<<<<<");
   }
 
   bool IsStripped()

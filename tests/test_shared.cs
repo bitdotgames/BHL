@@ -1080,11 +1080,21 @@ public class BHL_TestBase
       ts, 
       errors,
       ErrorHandlers.MakeStandard("", errors),
+      out var preproc_parsed,
       defines
     );
 
     if(show_parse_tree)
+    {
+      if(preproc_parsed != null)
+      {
+        Console.WriteLine("<PREPROC>");
+        Console.WriteLine(preproc_parsed);
+        Console.WriteLine("</PREPROC>");
+      }
+
       Console.WriteLine(proc.parsed);
+    }
 
     ANTLR_Processor.ProcessAll(
       new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 

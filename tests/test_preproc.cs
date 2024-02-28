@@ -18,7 +18,7 @@ public class TestPreproc : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_parse_tree: true);
     AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
@@ -285,5 +285,23 @@ public class TestPreproc : BHL_TestBase
 -------------^"
       )
     );
+  }
+
+  [IsTested()]
+  public void TestCommentedSimilarToDirectiveBug()
+  {
+    string bhl = @"
+func test()
+{
+  //кек
+  #if SERVER
+  
+  #endif
+}
+";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
   }
 }

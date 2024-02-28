@@ -82,11 +82,12 @@ public class Workspace
       err_handlers,
       stream, 
       //TODO: pass actual defines
-      defines: null
+      defines: null,
+      preproc_parsed: out var _
     );
 
     //NOTE: ANTLR parsing happens here 
-    var parsed = new ANTLR_Parsed(parser);
+    var parsed = new ANTLR_Parsed(parser, parser.program());
 
     var proc = ANTLR_Processor.MakeProcessor(
       module, 
@@ -94,7 +95,8 @@ public class Workspace
       parsed, 
       ts, 
       errors, 
-      err_handlers
+      err_handlers,
+      preproc_parsed: out var __
     );
 
     return proc;
