@@ -8053,10 +8053,8 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    VM.FuncAddr addr;
-    FuncSymbolScript fs;
-    AssertFalse(vm.TryFindFuncAddr("garbage", out addr, out fs));
-    AssertTrue(vm.TryFindFuncAddr("test", out addr, out fs));
+    AssertFalse(vm.TryFindFuncAddr("garbage", out var _));
+    AssertTrue(vm.TryFindFuncAddr("test", out var addr));
     {
       var fb = vm.Start(addr);
       AssertFalse(vm.Tick());

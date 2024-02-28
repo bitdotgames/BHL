@@ -1168,9 +1168,7 @@ public class VM : INamedResolver
 
   public Fiber Start(string func, uint cargs_bits, StackList<Val> args)
   {
-    FuncAddr addr;
-    FuncSymbolScript fs;
-    if(!TryFindFuncAddr(func, out addr, out fs))
+    if(!TryFindFuncAddr(func, out var addr))
       return null;
 
     return Start(addr, cargs_bits, args);

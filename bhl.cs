@@ -53,7 +53,7 @@ public static class Tasks
 
     MCSBuild(tm, front_src.ToArray(),
      $"{BHL_ROOT}/build/bhl_front.dll",
-     "-define:BHL_FRONT -warnaserror -warnaserror-:3021,CS0618 -nowarn:3021,CS0618 -debug -target:library" + 
+     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
      (debug ? " -define:BHL_DEBUG" : "") + 
      (test_debug ? " -define:BHL_TDEBUG" : "") + 
      (tests ? " -define:BHL_TEST" : "")
