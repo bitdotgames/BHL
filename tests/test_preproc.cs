@@ -288,7 +288,7 @@ public class TestPreproc : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestCommentedSimilarToDirectiveBug()
+  public void TestUtf8SymbolsCopiedProperly()
   {
     string bhl = @"
 func test()
@@ -302,6 +302,40 @@ func test()
 
     var vm = MakeVM(bhl);
     Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCommentedPreprocessorDirective()
+  {
+    string bhl = @"
+func bool test()
+{
+  //#if SERVER
+  return false
+  //#endif
+  return true
+}
+";
+
+    var vm = MakeVM(bhl);
+    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSharpSymbolInComments()
+  {
+    string bhl = @"
+func bool test()
+{
+  //TODO: move this to C#?
+  return true
+}
+";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 }
