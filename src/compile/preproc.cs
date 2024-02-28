@@ -75,22 +75,27 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     preproc_parsed = preproc.parsed;
 
-    dst.Position = 0;
     return dst;
   }
 
   static bool HasPossiblePreprocDirectives(Stream src)
   {
-    while(true)
+    var buf = new byte[1024];
+
+    int total_bytes = (int)src.Length;
+    do
     {
-      int b = src.ReadByte();
-      //we are at the end let's jump out 
-      if(b == -1)
-        return false;
+      int n = src.Read(buf, 0, 1024); 
+
       //check if there's any # character
-      if(b == SHARP_CODE)
-        return true;
-    }
+      for(int i=0;i<n;++i)
+        if(buf[i] == SHARP_CODE)
+          return true;
+
+      total_bytes -= n;
+    } while(total_bytes > 0);
+
+    return false;
   }
 
   public ANTLR_Preprocessor(
@@ -119,8 +124,6 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public Stream Process()
   {                          
-    var pos = src.Position;
-
     input = new CustomInputStream(src);
     var lex = new bhlPreprocLexer(input);
     tokens = new CommonTokenStream(lex);
@@ -136,7 +139,6 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     var parsed_tree = parser.program();
     parsed = new ANTLR_Parsed(parser, parsed_tree);
 
-    src.Position = pos; 
     VisitProgram(parsed_tree);
 
     CheckValidity();
