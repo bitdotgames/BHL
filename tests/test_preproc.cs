@@ -306,6 +306,24 @@ func test()
   }
 
   [IsTested()]
+  public void TestUtf8SymbolsRemovedProperly()
+  {
+    string bhl = @"
+func test()
+{
+  #if SERVER
+  //你好
+  
+  #endif
+}
+";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestCommentedPreprocessorDirective()
   {
     string bhl = @"

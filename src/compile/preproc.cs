@@ -197,9 +197,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     var t1 = tokens.Get(ctx.Start.TokenIndex); 
     var t2 = tokens.Get(ctx.Stop.TokenIndex); 
 
-    var span = new ReadOnlySpan<char>(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
-
-    writer.Write(span);
+    writer.Write(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
   }
   
   void ConvertToWhiteSpace(ParserRuleContext ctx)
@@ -207,14 +205,16 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     var t1 = tokens.Get(ctx.Start.TokenIndex); 
     var t2 = tokens.Get(ctx.Stop.TokenIndex); 
 
-    var span = new ReadOnlySpan<char>(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
-
-    foreach(var c in span)
+    for(int i = t1.StartIndex; i < (t2.StopIndex + 1); ++i)
     {
-      if(c == '\n')
-        writer.Write(c);
+      char c = input.Data[i];
+      if(c != '\n')
+      {
+        int bytes_len = System.Text.Encoding.UTF8.GetByteCount(input.Data, i, 1);
+        writer.Write(new string(' ', bytes_len));
+      }
       else
-        writer.Write(' ');
+        writer.Write(c);
     }
   }
 
