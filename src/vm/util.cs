@@ -763,32 +763,6 @@ public class FixedStack<T>
   }
 }
 
-//NOTE: cache for less GC operations
-public static class TempBuffer
-{
-  static byte[][] tmp_bufs = new byte[][] { new byte[512], new byte[512], new byte[512] };
-  static int tmp_buf_counter = 0;
-  static public int stats_max_buf = 0;
-
-  static public byte[] Get()
-  {
-    var buf = tmp_bufs[tmp_buf_counter % 3];
-    ++tmp_buf_counter;
-    return buf;
-  }
-
-  static public void Update(byte[] buf)
-  {
-    var idx = (tmp_buf_counter-1) % 3;
-    //for debug
-    //var curr = tmp_bufs[idx];
-    //if(curr != buf)
-    //  Util.Debug(curr.Length + " VS " + buf.Length);
-    tmp_bufs[idx] = buf;
-    stats_max_buf = stats_max_buf < buf.Length ? buf.Length : stats_max_buf;
-  }
-}
-
 public class Bytecode
 {
   public ushort Position { get { return (ushort)stream.Position; } }

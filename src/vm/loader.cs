@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Buffers;
 
 namespace bhl {
 
@@ -72,7 +73,8 @@ public class ModuleLoader : IModuleLoader
 
     int num_entries = 0;
     reader.ReadI32(ref num_entries);
-    //Util.Debug("Total modules: " + total_modules);
+    
+    //TODO: don't store binary blobs alongside entries
     while(num_entries-- > 0)
     {
       int format = 0;
@@ -89,10 +91,11 @@ public class ModuleLoader : IModuleLoader
       name2entry.Add(name, ent);
 
       //skipping binary blob
-      var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
-      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
-      TempBuffer.Update(tmp_buf);
+      reader.ReadRawBegin(ref tmp_buf_len);
+      var tmp_buf = ArrayPool<byte>.Shared.Rent(tmp_buf_len);
+      reader.ReadRawEnd(tmp_buf);
+      ArrayPool<byte>.Shared.Return(tmp_buf);
     }
   }
 
@@ -108,43 +111,47 @@ public class ModuleLoader : IModuleLoader
 
     byte[] res = null;
     int res_len = 0;
-    DecodeBin(ent, ref res, ref res_len);
+    bool res_release = false;
+    DecodeBin(ent, ref res, ref res_len, ref res_release);
 
     mod_stream.SetData(res, 0, res_len);
 
-    return CompiledModule.FromStream(
+    var cm = CompiledModule.FromStream(
       types, 
       mod_stream, 
       resolver, 
       on_import
     );
+
+    if(res_release)
+      ArrayPool<byte>.Shared.Return(res);
+
+    return cm;
   }
 
-  void DecodeBin(Entry ent, ref byte[] res, ref int res_len)
+  void DecodeBin(Entry ent, ref byte[] res, ref int res_len, ref bool release_res)
   {
     if(ent.format == ModuleBinaryFormat.FMT_BIN)
     {
-      var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
       reader.SetPos(ent.stream_pos);
-      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
-      TempBuffer.Update(tmp_buf);
+      reader.ReadRawBegin(ref tmp_buf_len);
+      var tmp_buf = ArrayPool<byte>.Shared.Rent(tmp_buf_len);
+      reader.ReadRawEnd(tmp_buf);
       res = tmp_buf;
       res_len = tmp_buf_len;
+      release_res = true;
     }
     else if(ent.format == ModuleBinaryFormat.FMT_LZ4)
     {
-      var lz_buf = TempBuffer.Get();
       int lz_buf_len = 0;
       reader.SetPos(ent.stream_pos);
-      reader.ReadRaw(ref lz_buf, ref lz_buf_len);
-      TempBuffer.Update(lz_buf);
+      reader.ReadRawBegin(ref lz_buf_len);
+      var lz_buf = ArrayPool<byte>.Shared.Rent(lz_buf_len);
+      reader.ReadRawEnd(lz_buf);
 
-      var dst_buf = TempBuffer.Get();
       var lz_size = (int)BitConverter.ToUInt32(lz_buf, 0);
-      if(lz_size > dst_buf.Length)
-        Array.Resize(ref dst_buf, lz_size);
-      TempBuffer.Update(dst_buf);
+      var dst_buf = ArrayPool<byte>.Shared.Rent(lz_size);
 
       lz_dst_stream.SetData(dst_buf, 0, dst_buf.Length);
       //NOTE: uncompressed size is only added by PHP implementation
@@ -155,18 +162,25 @@ public class ModuleLoader : IModuleLoader
       decoder.CopyTo(lz_dst_stream);
       res = lz_dst_stream.GetBuffer();
       res_len = (int)lz_dst_stream.Position;
+      release_res = false;
+
+      ArrayPool<byte>.Shared.Return(lz_buf);
+      ArrayPool<byte>.Shared.Return(dst_buf);
     }
     else if(ent.format == ModuleBinaryFormat.FMT_FILE_REF)
     {
-      var tmp_buf = TempBuffer.Get();
       int tmp_buf_len = 0;
       reader.SetPos(ent.stream_pos);
-      reader.ReadRaw(ref tmp_buf, ref tmp_buf_len);
-      TempBuffer.Update(tmp_buf);
+      reader.ReadRawBegin(ref tmp_buf_len);
+      var tmp_buf = ArrayPool<byte>.Shared.Rent(tmp_buf_len);
+      reader.ReadRawEnd(tmp_buf);
       string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
       var file_bytes = File.ReadAllBytes(file_path);
       res = file_bytes;
       res_len = file_bytes.Length;
+      release_res = false;
+
+      ArrayPool<byte>.Shared.Return(tmp_buf);
     }
     else
       throw new Exception("Unknown format: " + ent.format);

@@ -2,6 +2,7 @@ using System.IO;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Buffers;
 
 namespace bhl.marshall {
 
@@ -91,7 +92,8 @@ public interface IReader
   void ReadBool(ref bool v);
   void ReadDouble(ref double v);
   void ReadString(ref string v);
-  void ReadRaw(ref byte[] v, ref int vlen);
+  void ReadRawBegin(ref int vlen);
+  void ReadRawEnd(byte[] v);
   int BeginContainer(); 
   void EndContainer(); 
 }
@@ -867,7 +869,7 @@ public class MsgPackDataReader : IReader
     }
   }
 
-  public void ReadRaw(ref byte[] v, ref int vlen) 
+  public void ReadRawBegin(ref int vlen) 
   {
     Next();
 
@@ -875,9 +877,14 @@ public class MsgPackDataReader : IReader
       throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
     vlen = (int)io.Length;
-    if(v.Length < vlen)
-      Array.Resize(ref v, vlen);
-    io.ReadValueRaw(v, 0, vlen);
+  }
+
+  public void ReadRawEnd(byte[] v) 
+  {
+    if(!io.IsRaw()) 
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+
+    io.ReadValueRaw(v, 0, (int)io.Length);
   }
 
   public void ReadString(ref string v) 
@@ -887,10 +894,10 @@ public class MsgPackDataReader : IReader
     if(!io.IsRaw()) 
       throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
 
-    //TODO: use shared buffer for strings loading
-    byte[] strval = new byte[io.Length];
-    io.ReadValueRaw(strval, 0, strval.Length);
-    v = System.Text.Encoding.UTF8.GetString(strval);
+    var strbuf = ArrayPool<byte>.Shared.Rent((int)io.Length);
+    io.ReadValueRaw(strbuf, 0, (int)io.Length);
+    v = System.Text.Encoding.UTF8.GetString(strbuf, 0, (int)io.Length);
+    ArrayPool<byte>.Shared.Return(strbuf);
   }
 
   public int BeginContainer() 
