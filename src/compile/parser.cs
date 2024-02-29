@@ -3051,6 +3051,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PeekAST().AddChild(ast);
 
+    //NOTE: adding implicit casting to int of the result of the division product of two ints 
     if(op_type == EnumBinaryOp.DIV && 
         ann_lhs.eval_type == Types.Int && 
         ann_rhs.eval_type == Types.Int
