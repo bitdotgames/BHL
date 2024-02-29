@@ -1030,6 +1030,23 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     Add(v);
   }
 
+  public StackList(T v1, T v2) 
+    : this()
+  {
+    storage = new Array16<T>();
+    Add(v1);
+    Add(v2);
+  }
+
+  public StackList(T v1, T v2, T v3) 
+    : this()
+  {
+    storage = new Array16<T>();
+    Add(v1);
+    Add(v2);
+    Add(v3);
+  }
+
   public void AddRange(IList<T> list)
   {
     for(int i=0; i<list?.Count; ++i)
