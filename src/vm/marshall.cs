@@ -940,9 +940,14 @@ public class MsgPackDataReader : IReader
 
     if(!io.IsArray() && !io.IsMap())
     {
-      //NOTE: if value is a raw string we need to read all of its data
+      //NOTE: if value is raw we need to read all of its data
       if(io.IsRaw())
-        io.ReadRawString();
+      {
+        var buf = ArrayPool<byte>.Shared.Rent((int)io.Length);
+        io.ReadValueRaw(buf, 0, (int)io.Length);
+        ArrayPool<byte>.Shared.Return(buf);
+      }
+
       return;
     }
     
