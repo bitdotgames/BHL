@@ -1432,7 +1432,7 @@ public class TestVM : BHL_TestBase
     bool c = false
     func bool test()
     {
-      return a && b || c && b
+      return a && b || b && c
     }
     ";
 
