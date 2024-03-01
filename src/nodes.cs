@@ -1884,11 +1884,12 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
     this.mode = mode;
   }
 
-  public override void init()
+  public override BHS execute()
   {
     var interp = Interpreter.instance;
-    
-    if(cls_member == null)
+    bool res = true;
+
+    if (cls_member == null)
     {
       var cls = interp.symbols.resolve(scope_ntype) as ClassSymbol;
       if(cls == null)
@@ -1912,7 +1913,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
         if(mode == READ_REF)
         {
           DynVal val;
-          (var_symb as FieldSymbol).getref(ctx, out val);
+          res = (var_symb as FieldSymbol).getref(ctx, out val);
           interp.PushValue(val);
           //NOTE: this can be an operation for the temp. object,
           //      we need to take care of that
@@ -1921,7 +1922,7 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
         else
         {
           var val = DynVal.New();
-          (var_symb as FieldSymbol).getter(ctx, ref val);
+          res = (var_symb as FieldSymbol).getter(ctx, ref val);
           interp.PushValue(val);
           //NOTE: this can be an operation for the temp. object,
           //      we need to take care of that
@@ -1949,12 +1950,14 @@ public class MVarAccessNode : BehaviorTreeTerminalNode
 
       if(var_symb is FieldSymbol)
       {
-        (var_symb as FieldSymbol).setter(ref ctx, val);
+        res = (var_symb as FieldSymbol).setter(ref ctx, val);
         val.RefMod(RefOp.TRY_DEL);
       }
       else
         throw new Exception("Not implemented");
     }
+
+    return res ? BHS.SUCCESS : BHS.FAILURE;
   }
 
   public override string inspect()

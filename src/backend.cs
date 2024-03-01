@@ -28,9 +28,9 @@ public class Interpreter : AST_Visitor
   internal ExecutionFlowState execution_flow_state = ExecutionFlowState.Regular;
 
   public delegate void ClassCreator(ref DynVal res);
-  public delegate void FieldGetter(DynVal v, ref DynVal res);
-  public delegate void FieldSetter(ref DynVal v, DynVal nv);
-  public delegate void FieldRef(DynVal v, out DynVal res);
+  public delegate bool FieldGetter(DynVal v, ref DynVal res);
+  public delegate bool FieldSetter(ref DynVal v, DynVal nv);
+  public delegate bool FieldRef(DynVal v, out DynVal res);
   public delegate BehaviorTreeNode FuncNodeCreator(); 
 
   FastStack<BehaviorTreeInternalNode> node_stack = new FastStack<BehaviorTreeInternalNode>(128);

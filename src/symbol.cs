@@ -318,7 +318,7 @@ abstract public class ArrayTypeSymbol : ClassSymbol
   }
 
   public abstract void CreateArr(ref DynVal v);
-  public abstract void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v);
+  public abstract bool Create_Count(bhl.DynVal ctx, ref bhl.DynVal v);
   public abstract BehaviorTreeNode Create_New();
   public abstract BehaviorTreeNode Create_Add();
   public abstract BehaviorTreeNode Create_At();
@@ -357,7 +357,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     v.SetObj(DynValList.New());
   }
 
-  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
+  public override bool Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
   {
     var lst = ctx.obj as DynValList;
     if(lst == null)
@@ -366,6 +366,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol
     //NOTE: this can be an operation for the temp. array,
     //      we need to try del the array if so
     lst.TryDel();
+    return true;
   }
 
   public override BehaviorTreeNode Create_New()
@@ -429,10 +430,11 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
     v.obj = Creator();
   }
 
-  public override void Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
+  public override bool Create_Count(bhl.DynVal ctx, ref bhl.DynVal v)
   {
     var lst = (IList)ctx.obj;
     v.SetNum(lst.Count);
+    return true;
   }
 
   public override BehaviorTreeNode Create_New()
@@ -513,24 +515,27 @@ public class FieldSymbolAST : FieldSymbol
     this.getref = Getref;
   }
 
-  void Getter(DynVal ctx, ref DynVal v)
+  bool Getter(DynVal ctx, ref DynVal v)
   {
     var m = (DynValDict)ctx.obj;
     v.ValueCopyFrom(m.Get(name));
+    return true;
   }
 
-  void Setter(ref DynVal ctx, DynVal v)
+  bool Setter(ref DynVal ctx, DynVal v)
   {
     var m = (DynValDict)ctx.obj;
     var tmp = v.ValueClone();
     m.Set(name, tmp);
     tmp.RefMod(RefOp.TRY_DEL);
+    return true;
   }
 
-  void Getref(DynVal ctx, out DynVal v)
+  bool Getref(DynVal ctx, out DynVal v)
   {
     var m = (DynValDict)ctx.obj;
     v = m.Get(name);
+    return true;
   }
 }
 
