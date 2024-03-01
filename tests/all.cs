@@ -4047,12 +4047,14 @@ public class BHL_Test
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.r);
+        return true;
       },
       delegate(ref DynVal ctx, DynVal v)
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num; 
         ctx.obj = c;
+        return true;
       }
     ));
     cl.define(new FieldSymbol("g", globs.type("float"),
@@ -4060,12 +4062,14 @@ public class BHL_Test
       {
         var c = (Color)ctx.obj;
         v.SetNum(c.g);
+        return true;
       },
       delegate(ref DynVal ctx, DynVal v)
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num; 
         ctx.obj = c;
+        return true;
       }
     ));
 
@@ -4155,12 +4159,14 @@ public class BHL_Test
         {
           var c = (StringClass)ctx.obj;
           v.str = c.str;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (StringClass)ctx.obj;
           c.str = v._str; 
           ctx.obj = c;
+          return true;
         }
       ));
     }
@@ -4199,6 +4205,7 @@ public class BHL_Test
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           v.num = s.n;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -4206,6 +4213,7 @@ public class BHL_Test
           IntStruct.Decode(ctx, ref s);
           s.n = (int)v.num;
           IntStruct.Encode(ctx, s);
+          return true;
         }
       ));
 
@@ -4215,6 +4223,7 @@ public class BHL_Test
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           v.num = s.n2;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -4222,6 +4231,7 @@ public class BHL_Test
           IntStruct.Decode(ctx, ref s);
           s.n2 = (int)v.num;
           IntStruct.Encode(ctx, s);
+          return true;
         }
       ));
     }
@@ -4250,12 +4260,14 @@ public class BHL_Test
         {
           var c = (MasterStruct)ctx.obj;
           v.SetObj(c.child);
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj; 
           ctx.obj = c;
+          return true;
         }
       ));
 
@@ -4264,12 +4276,14 @@ public class BHL_Test
         {
           var c = (MasterStruct)ctx.obj;
           v.obj = c.child2;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj; 
           ctx.obj = c;
+          return true;
         }
       ));
 
@@ -4278,6 +4292,7 @@ public class BHL_Test
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct);
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -4286,6 +4301,7 @@ public class BHL_Test
           IntStruct.Decode(v, ref s);
           c.child_struct = s;
           ctx.obj = c;
+          return true;
         }
       ));
 
@@ -4294,6 +4310,7 @@ public class BHL_Test
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct2);
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
@@ -4302,6 +4319,7 @@ public class BHL_Test
           IntStruct.Decode(v, ref s);
           c.child_struct2 = s;
           ctx.obj = c;
+          return true;
         }
       ));
 
@@ -4328,12 +4346,14 @@ public class BHL_Test
         {
           var c = (ColorAlpha)ctx.obj;
           v.SetNum(c.a);
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num; 
           ctx.obj = c;
+          return true;
         }
       ));
 
@@ -4407,6 +4427,7 @@ public class BHL_Test
           delegate(bhl.DynVal ctx, ref bhl.DynVal v)
           {
             v.num = ((RefC)ctx.obj).refs;
+            return true;
           },
           //read only property
           null
@@ -4435,12 +4456,14 @@ public class BHL_Test
         {
           var f = (Foo)ctx.obj;
           v.SetNum(f.hey);
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num; 
           ctx.obj = f;
+          return true;
         }
       ));
       cl.define(new FieldSymbol("colors", globs.type("Color[]"),
@@ -4448,12 +4471,14 @@ public class BHL_Test
         {
           var f = (Foo)ctx.obj;
           v.obj = f.colors;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (Foo)ctx.obj;
           f.colors = (List<Color>)v.obj; 
           ctx.obj = f;
+          return true;
         }
       ));
       cl.define(new FieldSymbol("sub_color", globs.type("Color"),
@@ -4461,12 +4486,14 @@ public class BHL_Test
         {
           var f = (Foo)ctx.obj;
           v.obj = f.sub_color;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj; 
           ctx.obj = f;
+          return true;
         }
       ));
     }
@@ -4501,12 +4528,14 @@ public class BHL_Test
           {
             v.SetNil();
           }
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var f = (DynValContainer)ctx.obj;
           f.dv = DynVal.Assign(f.dv, v);
           ctx.obj = f;
+          return true;
         }
       ));
     }
@@ -4535,12 +4564,14 @@ public class BHL_Test
           delegate(DynVal ctx, ref DynVal v) {
             var f = (FooLambda)ctx.obj;
             v.obj = f.script.Count == 0 ? null : ((BaseLambda)(f.script[0])).fct.obj;
+            return true;
           },
           delegate(ref DynVal ctx, DynVal v) {
             var f = (FooLambda)ctx.obj;
             var fctx = (FuncCtx)v.obj;
             if(f.script.Count == 0) f.script.Add(new BaseLambda()); ((BaseLambda)(f.script[0])).fct.obj = fctx;
             ctx.obj = f;
+            return true;
           }
      ));
     }
@@ -5533,12 +5564,14 @@ public class BHL_Test
         {
           var cn = (ColorNested)ctx.obj;
           v.obj = cn.c;
+          return true;
         },
         delegate(ref DynVal ctx, DynVal v)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj;
           ctx.obj = cn;
+          return true;
         }
       ));
     }
@@ -18530,7 +18563,9 @@ public class BHL_Test
 
       cl.define(new FieldSymbol("len", globs.type("float"),
         delegate(DynVal ctx, ref DynVal v)
-        {},
+        {
+          return true;
+        },
         //setter not allowed
         null
       ));
@@ -18547,7 +18582,9 @@ public class BHL_Test
 
       cl.define(new FieldSymbol("position", globs.type("Vec3"),
         delegate(DynVal ctx, ref DynVal v)
-        {},
+        {
+          return true;
+        },
         //setter not allowed
         null
       ));
@@ -18592,6 +18629,62 @@ func Unit FindUnit(Vec3 pos, float radius) {
     if(node == null)
       throw new Exception("???");
     //NodeDump(node);
+  }
+
+  void BindForFailureNullPointer(GlobalScope globs)
+  {
+    {
+      var cl = new ClassBindSymbol("Vec3",
+        delegate(ref DynVal v) 
+        {}
+      );
+
+      globs.define(cl);
+    }
+
+    {
+      var cl = new ClassBindSymbol("Unit",
+        delegate(ref DynVal v) 
+        {}
+      );
+
+      globs.define(cl);
+
+      cl.define(new FieldSymbol("position", globs.type("Vec3"),
+        delegate(DynVal ctx, ref DynVal v)
+        {
+          if ((object)ctx.obj == null)
+            return false;
+
+          return true;
+        },
+        //setter not allowed
+        null
+      ));
+    }
+
+  }
+
+
+  [IsTested()]
+  public void TestFailureNullPointer()
+  {
+    string bhl = @"
+    func test()
+    {
+      Unit unit = null
+      Vec3 pos = unit.position
+    }
+    ";
+
+    var globs = SymbolTable.CreateBuiltins();
+
+    BindForFailureNullPointer(globs);
+
+    var intp = Interpret(bhl, globs);
+    var node = intp.GetFuncCallNode("test");
+
+    AssertEqual(node.execute(), BHS.FAILURE);
   }
 
   [IsTested()]
