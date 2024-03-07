@@ -620,6 +620,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         //NOTE: let's remove duplicated imports
         if(already_imported.Contains(imported_module))
         {
+          AddError(k, "already imported '" + v + "'");
           imports_parsed.Remove(k);
           continue;
         }

@@ -1384,13 +1384,19 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
-        {"env.bhl", file_env},
-        {"test.bhl", file_test},
-      }
+    AssertError<Exception>(
+      delegate() { 
+        MakeVM(new Dictionary<string, string>() {
+            {"env.bhl", file_env},
+            {"test.bhl", file_test},
+          }
+        );
+      },
+     "already imported 'env'",
+      new PlaceAssert(file_test, @"
+    import ""env""
+----^"
+      )
     );
-    vm.LoadModule("test");
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
-    CommonChecks(vm);
   }
 }
