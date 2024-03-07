@@ -1365,4 +1365,32 @@ public class TestImport : BHL_TestBase
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
   }
+
+  [IsTested()]
+  public void TestDoubleImportWithDifferentPathsOfGlobalVar()
+  {
+    string file_env = @"
+      class Env {}
+      Env env = {}
+    ";
+
+    string file_test = @"
+    import ""./env""
+    import ""env""
+
+    func bool test() 
+    {
+      return env != null
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"env.bhl", file_env},
+        {"test.bhl", file_test},
+      }
+    );
+    vm.LoadModule("test");
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
 }

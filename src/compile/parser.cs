@@ -595,17 +595,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, CompiledModule> file2compiled, 
     IncludePath inc_path)
   {
-    if(imports_parsed.Count == 0)
-      return;
+    var already_imported = new HashSet<Module>(); 
 
-    foreach(var kv in imports_parsed)
+    //NOTE: getting a copy of keys since we might modify the dictionary during traversal
+    var keys = new List<bhlParser.MimportContext>(imports_parsed.Keys);
+    foreach(var k in keys)
     {
+      var v = imports_parsed[k];
+
       Module imported_module;
       Namespace imported_ns;
       string file_path;
 
       if(ResolveImportedModule(
-          kv.Value, 
+          v,
           file2proc, 
           file2compiled, 
           out file_path,
@@ -614,6 +617,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           out imported_ns
         ))
       {
+        //NOTE: let's remove duplicated imports
+        if(already_imported.Contains(imported_module))
+        {
+          imports_parsed.Remove(k);
+          continue;
+        }
+        already_imported.Add(imported_module);
+
         ns.PreLink(imported_ns);
       }
     }
