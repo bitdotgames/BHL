@@ -1029,6 +1029,11 @@ public class BHL_TestBase
     return CompileFiles(MakeCompileConf(files, ts_fn, use_cache, max_threads));
   }
 
+  public static Stream CompileFiles(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1, bool clean_dir = true)
+  {
+    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache, max_threads);
+  }
+
   static public Stream CompileFiles(CompileConf conf)
   {
     return CompileFiles(new CompilationExecutor(), conf);

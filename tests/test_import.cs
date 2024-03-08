@@ -154,6 +154,36 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestDoubleImportError()
+  {
+    string file_a = @"
+      func foo() {}
+    ";
+
+    string file_test = @"
+    import ""./a""
+    import ""a""
+
+    func test() {}
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(new Dictionary<string, string>() {
+            {"a.bhl", file_a},
+            {"test.bhl", file_test},
+          }
+        );
+      },
+     "already imported 'a'",
+      new PlaceAssert(file_test, @"
+    import ""a""
+----^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestIncrementalBuildOfChangedFiles()
   {
     string file_unit = @"
@@ -1364,39 +1394,5 @@ public class TestImport : BHL_TestBase
       vm.LoadModule("tests/test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
-  }
-
-  [IsTested()]
-  public void TestDoubleImportWithDifferentPathsOfGlobalVar()
-  {
-    string file_env = @"
-      class Env {}
-      Env env = {}
-    ";
-
-    string file_test = @"
-    import ""./env""
-    import ""env""
-
-    func bool test() 
-    {
-      return env != null
-    }
-    ";
-
-    AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
-            {"env.bhl", file_env},
-            {"test.bhl", file_test},
-          }
-        );
-      },
-     "already imported 'env'",
-      new PlaceAssert(file_test, @"
-    import ""env""
-----^"
-      )
-    );
   }
 }
