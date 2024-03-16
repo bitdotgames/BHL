@@ -6,6 +6,25 @@ using bhl;
 public class TestFiber : BHL_TestBase
 {
   [IsTested()]
+  public void TestResultMustBeReadyOnceFinished()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 6
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    fb.Retain();
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 6);
+    fb.Release();
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
   public void TestStackList3Args()
   {
     string bhl = @"
@@ -15,8 +34,7 @@ public class TestFiber : BHL_TestBase
     }
     ";
 
-    var comp = Compile(bhl);
-    var vm = MakeVM(comp);
+    var vm = MakeVM(bhl);
     int a = 1, b = 2, c = 3;
     var args = new Val[3];
     args[0] = Val.NewNum(vm, a);
@@ -27,7 +45,7 @@ public class TestFiber : BHL_TestBase
     AssertEqual(fb.result.PopRelease().num, 6);
     CommonChecks(vm);
   }
-  
+
   [IsTested()]
   public void TestFiberStopChildren()
   {

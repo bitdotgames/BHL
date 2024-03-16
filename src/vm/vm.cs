@@ -9,7 +9,7 @@ public enum UpvalMode
   COPY   = 1
 }
 
-public class VM : INamedResolver
+public partial class VM : INamedResolver
 {
   //NOTE: why -2? we reserve some space before int.MaxValue so that 
   //      increasing some ip couple of times after it was assigned 
@@ -41,436 +41,6 @@ public class VM : INamedResolver
     internal FixedStack<Region> regions = new FixedStack<Region>(32);
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
     public ValStack stack;
-  }
-
-  public struct FiberRef
-  {
-    int id;
-    Fiber fiber;
-
-    public FiberRef(Fiber fiber)
-    {
-      this.id = (fiber?.id ?? 0);
-      this.fiber = fiber;
-    }
-
-    public Fiber Get()
-    {
-      return (fiber?.id ?? 0) == id ? fiber : null;
-    }
-
-    public void Set(Fiber fiber)
-    {
-      this.id = (fiber?.id ?? 0);
-      this.fiber = fiber;
-    }
-
-    public void Clear()
-    {
-      this.fiber = null;
-    }
-  }
-
-  public class Fiber : ITask
-  {
-    public VM vm;
-
-    internal FiberRef parent;
-    public FiberRef Parent => parent;
-
-    internal List<FiberRef> children = new List<FiberRef>(); 
-
-    public IReadOnlyList<FiberRef> Children => children;
-
-    //NOTE: -1 means it's in released state,
-    //      public only for inspection
-    public int refs;
-
-    internal int id;
-    public int Id => id;
-
-    internal int tick;
-
-    internal ExecState exec = new ExecState();
-
-    public VM.Frame frame0 {
-      get {
-        return exec.frames[0];
-      }
-    }
-    public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
-    
-    public BHS status;
-
-    static public Fiber New(VM vm)
-    {
-      Fiber fb;
-      if(vm.fibers_pool.stack.Count == 0)
-      {
-        ++vm.fibers_pool.miss;
-        fb = new Fiber(vm);
-      }
-      else
-      {
-        ++vm.fibers_pool.hits;
-        fb = vm.fibers_pool.stack.Pop();
-
-        if(fb.refs != -1)
-          throw new Exception("Expected to be released, refs " + fb.refs);
-      }
-
-      fb.refs = 1;
-      fb.parent.Clear();
-      fb.children.Clear();
-
-      //0 index frame used for return values consistency
-      fb.exec.frames.Push(Frame.New(vm));
-
-      return fb;
-    }
-
-    static void Del(Fiber fb)
-    {
-      if(fb.refs != 0)
-        throw new Exception("Freeing invalid object, refs " + fb.refs);
-
-      fb.refs = -1;
-
-      fb.Clear();
-      fb.vm.fibers_pool.stack.Push(fb);
-    }
-
-    //NOTE: use New() instead
-    internal Fiber(VM vm)
-    {
-      this.vm = vm;
-    }
-
-    internal void Clear()
-    {
-      if(exec.coroutine != null)
-      {
-        CoroutinePool.Del(exec.frames.Peek(), exec, exec.coroutine);
-        exec.coroutine = null;
-      }
-
-      //we need to copy 0 index frame returned values 
-      {
-        result.Clear();
-        for(int c=0;c<frame0._stack.Count;++c)
-          result.Push(frame0._stack[c]);
-        //let's clear the frame's stack so that values 
-        //won't be released below
-        frame0._stack.Clear();
-      }
-
-      for(int i=exec.frames.Count;i-- > 0;)
-      {
-        var frm = exec.frames[i];
-        frm.ExitScope(null, exec);
-      }
-
-      //NOTE: we need to release frames only after we actually exited their scopes
-      for(int i=exec.frames.Count;i-- > 0;)
-      {
-        var frm = exec.frames[i];
-        frm.Release();
-      }
-
-      exec.regions.Clear();
-      exec.frames.Clear();
-
-      tick = 0;
-    }
-
-    internal void AddChild(Fiber fb)
-    {
-      fb.parent.Set(this);
-      children.Add(new FiberRef(fb));
-    }
-
-    public void Retain()
-    {
-      if(refs == -1)
-        throw new Exception("Invalid state(-1)");
-      ++refs;
-    }
-
-    public void Release()
-    {
-      if(refs == -1)
-        throw new Exception("Invalid state(-1)");
-      if(refs == 0)
-        throw new Exception("Double free(0)");
-
-      --refs;
-      if(refs == 0)
-        Del(this);
-    }
-
-    public bool IsStopped()
-    {
-      return exec.ip >= STOP_IP;
-    }
-
-    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls, int offset = 0)
-    {
-      for(int i=offset;i<exec.frames.Count;++i)
-        calls.Add(exec.frames[i]);
-    }
-
-    public void GetStackTrace(List<VM.TraceItem> info)
-    {
-      var calls = new List<VM.Frame>();
-      int coroutine_ip = -1; 
-      GetCalls(exec, calls, offset: 1/*let's skip 0 fake frame*/);
-      TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
-
-      for(int i=0;i<calls.Count;++i)
-      {
-        var frm = calls[i];
-
-        var item = new TraceItem(); 
-
-        //NOTE: information about frame ip is taken from the 'next' frame, however 
-        //      for the last frame we have a special case. In this case there's no
-        //      'next' frame and we should consider taking ip from Fiber or an active
-        //      coroutine
-        if(i == calls.Count-1)
-        {
-          item.ip = coroutine_ip == -1 ? frm.fb.exec.ip : coroutine_ip;
-        }
-        else
-        {
-          //NOTE: retrieving last ip for the current Frame which 
-          //      turns out to be return_ip assigned to the next Frame
-          var next = calls[i+1];
-          item.ip = next.return_ip;
-        }
-
-        if(frm.module != null)
-        {
-          var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
-          //NOTE: if symbol is missing it's a lambda
-          if(fsymb == null) 
-            item.file = frm.module.name + ".bhl";
-          else
-            item.file = fsymb._module.name + ".bhl";
-          item.func = fsymb == null ? "?" : fsymb.name;
-          item.line = frm.module.ip2src_line.TryMap(item.ip);
-        }
-        else
-        {
-          item.file = "?";
-          item.func = "?";
-        }
-
-        info.Insert(0, item);
-      }
-    }
-
-    public string GetStackTrace()
-    {
-      var trace = new List<TraceItem>();
-      GetStackTrace(trace);
-      return Error.ToString(trace);
-    }
-
-    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
-    {
-      if(i is SeqBlock si)
-      {
-        GetCalls(si.exec, calls);
-        if(!TryGetTraceInfo(si.exec.coroutine, ref ip, calls))
-          ip = si.exec.ip;
-        return true;
-      }
-      else if(i is ParalBranchBlock bi)
-      {
-        GetCalls(bi.exec, calls);
-        if(!TryGetTraceInfo(bi.exec.coroutine, ref ip, calls))
-          ip = bi.exec.ip;
-        return true;
-      }
-      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
-        return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
-      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
-        return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
-      else
-        return false;
-    }
-
-    bool ITask.Tick()
-    {
-      return vm.Tick(this);
-    }
-
-    void ITask.Stop()
-    {
-      vm.Stop(this);
-    }
-  }
-
-  public class Frame : IDeferSupport
-  {
-    public const int MAX_LOCALS = 64;
-    public const int MAX_STACK = 32;
-    
-    //NOTE: -1 means it's in released state,
-    //      public only for inspection
-    public int refs;
-
-    public VM vm;
-    public Fiber fb;
-    public CompiledModule module;
-
-    public byte[] bytecode;
-    public List<Const> constants;
-    public ValStack locals = new ValStack(MAX_LOCALS);
-    public ValStack _stack = new ValStack(MAX_STACK);
-    public int start_ip;
-    public int return_ip;
-    public Frame origin;
-    public ValStack origin_stack;
-    public List<DeferBlock> defers;
-
-    static public Frame New(VM vm)
-    {
-      Frame frm;
-      if(vm.frames_pool.stack.Count == 0)
-      {
-        ++vm.frames_pool.miss;
-        frm = new Frame(vm);
-      }
-      else
-      {
-        ++vm.frames_pool.hits;
-        frm = vm.frames_pool.stack.Pop();
-
-        if(frm.refs != -1)
-          throw new Exception("Expected to be released, refs " + frm.refs);
-      }
-
-      frm.refs = 1;
-
-      return frm;
-    }
-
-    static void Del(Frame frm)
-    {
-      if(frm.refs != 0)
-        throw new Exception("Freeing invalid object, refs " + frm.refs);
-
-      //Console.WriteLine("DEL " + frm.GetHashCode() + " "/* + Environment.StackTrace*/);
-      frm.refs = -1;
-
-      frm.Clear();
-      frm.vm.frames_pool.stack.Push(frm);
-    }
-
-    //NOTE: use New() instead
-    internal Frame(VM vm)
-    {
-      this.vm = vm;
-    }
-
-    public void Init(Frame origin, ValStack origin_stack, int start_ip)
-    {
-      Init(
-        origin.fb, 
-        origin,
-        origin_stack,
-        origin.module, 
-        origin.constants, 
-        origin.bytecode, 
-        start_ip
-      );
-    }
-
-    public void Init(Fiber fb, Frame origin, ValStack origin_stack, CompiledModule module, int start_ip)
-    {
-      Init(
-        fb, 
-        origin,
-        origin_stack,
-        module, 
-        module.constants, 
-        module.bytecode, 
-        start_ip
-      );
-    }
-
-    internal void Init(Fiber fb, Frame origin, ValStack origin_stack, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
-    {
-      this.fb = fb;
-      this.origin = origin;
-      this.origin_stack = origin_stack;
-      this.module = module;
-      this.constants = constants;
-      this.bytecode = bytecode;
-      this.start_ip = start_ip;
-      this.return_ip = -1;
-    }
-
-    internal void Clear()
-    {
-      for(int i=locals.Count;i-- > 0;)
-      {
-        var val = locals[i];
-        if(val != null)
-          val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      }
-      locals.Clear();
-
-      for(int i=_stack.Count;i-- > 0;)
-      {
-        var val = _stack[i];
-        val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      }
-      _stack.Clear();
-
-      if(defers != null)
-        defers.Clear();
-    }
-
-    public void RegisterDefer(DeferBlock dfb)
-    {
-      if(defers == null)
-        defers = new List<DeferBlock>();
-
-      defers.Add(dfb);
-      //for debug
-      //if(dfb.frm != this)
-      //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + dfb.frm.GetHashCode() + " " + fb.GetStackTrace());
-    }
-
-    public void ExitScope(VM.Frame _, ExecState exec)
-    {
-      DeferBlock.ExitScope(defers, exec);
-    }
-
-    public void Retain()
-    {
-      //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
-
-      if(refs == -1)
-        throw new Exception("Invalid state(-1)");
-      ++refs;
-    }
-
-    public void Release()
-    {
-      //Console.WriteLine("REL " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-
-      if(refs == -1)
-        throw new Exception("Invalid state(-1)");
-      if(refs == 0)
-        throw new Exception("Double free(0)");
-
-      --refs;
-      if(refs == 0)
-        Del(this);
-    }
   }
 
   public class FuncPtr : IValRefcounted
@@ -1341,10 +911,10 @@ public class VM : INamedResolver
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
   {
-    return Start(ptr, curr_frame, curr_stack, args.AsSpan());
+    return Start(ptr, curr_frame, curr_stack, new StackList<Val>(args));
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, ReadOnlySpan<Val> args)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
   {
     var fb = Fiber.New(this);
     Register(fb, curr_frame.fb);
@@ -1356,13 +926,13 @@ public class VM : INamedResolver
       var frame = Frame.New(this);
       frame.Init(fb, curr_frame, curr_stack, null, null, RETURN_BYTES, 0);
 
-      for(int i=args.Length;i-- > 0;)
+      for(int i=args.Count;i-- > 0;)
       {
         var arg = args[i];
         frame._stack.Push(arg);
       }
       //cargs bits
-      frame._stack.Push(Val.NewInt(this, args.Length));
+      frame._stack.Push(Val.NewInt(this, args.Count));
 
       Attach(fb, frame);
       fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
@@ -1376,7 +946,7 @@ public class VM : INamedResolver
     {
       var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
 
-      for(int i=args.Length;i-- > 0;)
+      for(int i=args.Count;i-- > 0;)
       {
         var arg = args[i];
         frame._stack.Push(arg);
@@ -1384,7 +954,7 @@ public class VM : INamedResolver
 
       Attach(fb, frame);
       //cargs bits
-      frame._stack.Push(Val.NewNum(this, args.Length));
+      frame._stack.Push(Val.NewNum(this, args.Count));
     }
 
     return fb;
@@ -1449,6 +1019,8 @@ public class VM : INamedResolver
   {
     if(fb.IsStopped())
       return;
+
+    fb.ExitScopes();
 
     fb.Release();
     //NOTE: we assing Fiber ip to a special value which is just one value after STOP_IP

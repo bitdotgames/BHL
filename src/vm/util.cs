@@ -1004,6 +1004,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     Add(v);
   }
 
+  //convenience special case
   public StackList(T v1, T v2) 
     : this()
   {
@@ -1012,6 +1013,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     Add(v2);
   }
 
+  //convenience special case
   public StackList(T v1, T v2, T v3) 
     : this()
   {
