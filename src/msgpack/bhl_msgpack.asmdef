@@ -1,7 +1,6 @@
 {
-    "name": "bhl_runtime",
+    "name": "bhl_msgpack",
     "references": [
-        "bhl_msgpack"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
