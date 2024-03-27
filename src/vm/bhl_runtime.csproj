@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>bhl_runtime</AssemblyName>
+        <OutputType>Library</OutputType>
+        <RootNamespace>bhl</RootNamespace>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\msgpack\bhl_msgpack.csproj" />
+    </ItemGroup>
+</Project>
+

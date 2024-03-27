@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>bhl_msgpack</AssemblyName>
+        <OutputType>Library</OutputType>
+        <RootNamespace>bhl</RootNamespace>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    </PropertyGroup>
+</Project>
+
