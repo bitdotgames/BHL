@@ -13,3 +13,4 @@ obj
 *.bhc
 
 .idea
+.dotnet
