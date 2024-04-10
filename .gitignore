@@ -11,6 +11,7 @@ obj
 *.mdb
 *.dll*
 *.bhc
+*.meta
 
 .idea
 .dotnet

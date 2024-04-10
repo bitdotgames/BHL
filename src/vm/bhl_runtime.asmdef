@@ -1,5 +1,5 @@
 {
-    "name": "bhl_runtime",
+    "name": "bhl",
     "references": [
         "bhl_msgpack"
     ],
