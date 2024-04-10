@@ -13,7 +13,7 @@ public static class Tasks
   static readonly string[] VM_SRC = new string[] {
     $"{BHL_ROOT}/src/vm/*.cs",
     $"{BHL_ROOT}/src/vm/std/*.cs",
-    $"{BHL_ROOT}/src/msgpack/*.cs",
+    $"{BHL_ROOT}/src/vm/msgpack/*.cs",
   };
   
   [Task(verbose: false)]

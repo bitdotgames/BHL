@@ -10,11 +10,8 @@
   <ItemGroup>
    <Compile Include="..\g\*.cs" />
    <Compile Include="..\vm\*.cs" />
+   <Compile Include="..\vm\msgpack\*.cs" />
    <Compile Include="..\vm\std\*.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\msgpack\bhl_msgpack.csproj" />
   </ItemGroup>
 
   <ItemGroup>
