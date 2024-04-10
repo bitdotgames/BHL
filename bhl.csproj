@@ -7,11 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-   <Compile Include="bhl.cs" />
+    <Compile Include="bhl.cs" />
+    <Compile Include="src\cmd\*.cs" />
+    <Compile Include="src\lsp\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="src\vm\bhl_runtime.csproj" />
+    <Reference Include="Antlr4.Runtime.Standard">
+      <HintPath>deps\Antlr4.Runtime.Standard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="src\compile\bhl_front.csproj" />
   </ItemGroup>
 
