@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+      <AssemblyName>bhl_front</AssemblyName>
+      <OutputType>Library</OutputType>
+      <RootNamespace>bhl</RootNamespace>
+      <TargetFrameworks>netstandard2.1</TargetFrameworks>
+      <DefineConstants>BHL_FRONT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+   <Compile Include="..\g\*.cs" />
+   <Compile Include="..\vm\*.cs" />
+   <Compile Include="..\vm\std\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\msgpack\bhl_msgpack.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Antlr4.Runtime.Standard">
+      <HintPath>..\..\deps\Antlr4.Runtime.Standard.dll</HintPath>
+    </Reference>
+    <Reference Include="lz4">
+      <HintPath>..\..\deps\lz4.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\deps\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
