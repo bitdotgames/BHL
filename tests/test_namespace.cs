@@ -1751,4 +1751,42 @@ public class TestNamespace : BHL_TestBase
       )
     );
    }
+
+  //TODO:
+  //[IsTested()]
+  public void TestImportSeveralNestedNamespaces()
+  {
+    string bhl1 = @"
+    namespace ns1.View {
+      func int Foo() {
+        return 10
+      }
+    }
+
+    namespace ns2.View {
+      func int Bar() {
+        return 110
+      }
+    }
+    ";
+      
+  string bhl2 = @"
+    import ""bhl1""  
+
+    func int test() 
+    {
+      return ns1.View.Foo() + ns2.View.Foo()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2}
+      }
+    );
+
+    vm.LoadModule("bhl2");
+    AssertEqual(110, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }
