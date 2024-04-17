@@ -764,6 +764,39 @@ public class TestNamespace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSubNamespacesMixedWithShortNotationConflict()
+  {
+    string bhl = @"
+    namespace foo.bar.zoo {
+      func bool test()
+      {
+        return true
+      }
+    }
+
+    namespace foo {
+      namespace bar.zoo {
+        func bool test()
+        {
+          return false
+        }
+      }
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "already defined symbol 'test'",
+      new PlaceAssert(bhl, @"
+        func bool test()
+------------------^"
+      )
+    );
+  }
+
+  [IsTested()]
   public void TestStartFuncByPath()
   {
     string bhl = @"
@@ -1752,9 +1785,8 @@ public class TestNamespace : BHL_TestBase
     );
    }
 
-  //TODO:
-  //[IsTested()]
-  public void TestImportSeveralNestedNamespaces()
+  [IsTested()]
+  public void TestImportSeveralNestedNamespacesWithSameLastName()
   {
     string bhl1 = @"
     namespace ns1.View {
@@ -1775,7 +1807,8 @@ public class TestNamespace : BHL_TestBase
 
     func int test() 
     {
-      return ns1.View.Foo() + ns2.View.Foo()
+      return ns1.View.Foo() + 
+        ns2.View.Bar()
     }
     ";
 
@@ -1786,7 +1819,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    AssertEqual(110, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(120, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 }

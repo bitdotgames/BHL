@@ -117,7 +117,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public IScope scope;
 
     public Namespace ns;
-    public int ns_level;
+    public string ns_full_path;
 
     public bhlParser.VarDeclareOptAssignContext gvar_decl_ctx;
     public bhlParser.AssignExpContext gvar_assign_ctx;
@@ -136,11 +136,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     public bhlParser.EnumDeclContext enum_ctx;
 
-    public ParserPass(IScope scope, Namespace ns, int ns_level)
+    public ParserPass(IScope scope, Namespace ns, string ns_full_path)
     {
       this.scope = scope;
       this.ns = ns;
-      this.ns_level = ns_level;
+      this.ns_full_path = ns_full_path;
     }
 
     public ParserPass(IAST ast, IScope scope, ParserRuleContext ctx)
@@ -463,6 +463,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(curr_scope is FuncSymbolScript)
       func_decl_stack.RemoveAt(func_decl_stack.Count-1);
     scopes.Pop();
+  }
+
+  string GetCurrentScopeNamePath()
+  {
+    string path = "";
+    foreach(var scope in scopes)
+      if (scope is INamed named)
+        path += named.GetName() + '.';
+    return path.TrimEnd('.');
   }
 
   void PushAST(AST_Tree ast)
@@ -3830,51 +3839,54 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     string name = ctx?.dotName()?.NAME()?.GetText();
     if(name == null)
       return null;
-
-    //NOTE: taking into account nested namespaces named like 'foo.bar'
-    int nested_level = 0;
-    do 
+    
+    //NOTE: traversing nested namespaces named like 'Foo.Bar'
+    int dot_name_idx = 0;
+    do
     {
-      var ns = FindExistingOrPlannedNamespace(name);
-      if(ns == null)
+      string full_path = (GetCurrentScopeNamePath() + '.' + name).TrimStart('.');
+
+      //NOTE: let's first check if there's such a namespace in
+      //      the current scope (e.g it was defined in bindings)
+      var ns = curr_scope.Resolve(name) as Namespace;
+      if (ns == null)
+        //...otherwise let's check existing namespaces in passes
+        ns = FindNamespaceInPasses(full_path);
+
+      if (ns == null)
         ns = new Namespace(module, name);
       //NOTE: special case for namespace parser pass, we don't
       //      define it mmediately in the current scope but rather
       //      do it later, this way we preserve natural symbols order
       //      as they are declared in the source
-      passes.Add(new ParserPass(curr_scope, ns, scopes.Count));
+      passes.Add(new ParserPass(curr_scope, ns, full_path));
 
       //let's push it so that subsequent passes will have the proper curr_scope
       PushScope(ns);
 
-      if(nested_level >= ctx.dotName().memberAccess().Length)
+      if(dot_name_idx >= ctx.dotName().memberAccess().Length)
         break;
-
-      name = ctx.dotName().memberAccess()[nested_level].NAME().GetText();
-
-      ++nested_level;
-
+      name = ctx.dotName().memberAccess()[dot_name_idx].NAME().GetText();
+      ++dot_name_idx;
+      
     } while(true);
 
     foreach(var decl in ctx.decl())
       ProcessDecl(decl);
 
-    for(int i = 0; i <= nested_level; ++i) 
+    for(int i = 0; i <= dot_name_idx; ++i) 
       PopScope();
 
     return null;
   }
 
-  Namespace FindExistingOrPlannedNamespace(string name)
+  Namespace FindNamespaceInPasses(string full_path)
   {
-    var ns = curr_scope.Resolve(name) as Namespace;
-    if(ns != null)
-      return ns;
-
-    foreach(var p in passes)
-      if(p.ns != null && p.ns_level == scopes.Count && p.ns.name == name)
+    foreach (var p in passes)
+    {
+      if(p.ns != null && p.ns_full_path == full_path)
         return p.ns;
-
+    }
     return null;
   }
 
