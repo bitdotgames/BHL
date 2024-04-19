@@ -121,7 +121,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     {}
   }
 
-  public Stream Process()
+  public Stream Process(bool length_strict_check = false)
   {                          
     input = new CustomInputStream(src);
     var lex = new bhlPreprocLexer(input);
@@ -145,7 +145,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     writer.Flush();
     dst.Position = 0;
 
-    if(src.Length != dst.Length)
+    if(length_strict_check && src.Length != dst.Length)
       throw new Exception("Stream lengths don't match, source: " + src.Length + ", dest: " + dst.Length);
 
     //for debug

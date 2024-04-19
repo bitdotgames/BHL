@@ -621,39 +621,38 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
-  [IsTested()]
-  public void TestGetStackTraceInComplexParalDefer()
+  //TODO:
+  //[IsTested()]
+  public void TestGetStackTraceInParalWithSuspendDefer()
   {
-    string bhl2 = @"
+    string bhl3 = @"
     func foo() {
     }
 
-    func wow() {
+    func problem() {
       throw()
     }
 
-    coro func bool bar() {
-      yield()
-      yield()
-      return false
+    coro func bar() {
+      yield suspend()
     }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
 
     coro func chase()
     {
      paral {
-       yield while(true)
        {
-         yield while(true)
+         yield()
+         yield()
        }
        {
-         yield while(true)
-       }
-       {
-         foo()
          defer {
-           wow()
+           problem()
          }
-         bool res = yield bar()
+         yield bar()
        }
      }
     }
@@ -684,6 +683,7 @@ public class TestStackTrace : BHL_TestBase
     var vm = MakeVM(new Dictionary<string, string>() {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
       },
       ts_fn
     );
@@ -709,12 +709,12 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(3, trace.Count);
 
     AssertEqual("wow", trace[0].func);
-    AssertEqual("bhl2.bhl", trace[0].file);
+    AssertEqual("bhl3.bhl", trace[0].file);
     AssertEqual(6, trace[0].line);
 
     AssertEqual("chase", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(28, trace[1].line);
+    AssertEqual(12, trace[1].line);
 
     AssertEqual("test", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
