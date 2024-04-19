@@ -622,6 +622,106 @@ public class TestStackTrace : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestGetStackTraceInComplexParalDefer()
+  {
+    string bhl2 = @"
+    func foo() {
+    }
+
+    func wow() {
+      throw()
+    }
+
+    coro func bool bar() {
+      yield()
+      yield()
+      return false
+    }
+
+    coro func chase()
+    {
+     paral {
+       yield while(true)
+       {
+         yield while(true)
+       }
+       {
+         yield while(true)
+       }
+       {
+         foo()
+         defer {
+           wow()
+         }
+         bool res = yield bar()
+       }
+     }
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+
+    coro func test() 
+    {
+      yield chase()
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            //emulating null reference
+            frm = null;
+            frm.fb = null;
+            return null;
+          });
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      },
+      ts_fn
+    );
+
+    vm.LoadModule("bhl1");
+
+    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+
+    var fb = vm.Start("test");
+    try
+    {
+      for(int i=0;i<10;++i)
+        vm.Tick();
+    }
+    catch(Exception)
+    {
+      vm.GetStackTrace(info);
+    }
+
+    AssertEqual(1, info.Count);
+
+    var trace = info[fb];
+    AssertEqual(3, trace.Count);
+
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl2.bhl", trace[0].file);
+    AssertEqual(6, trace[0].line);
+
+    AssertEqual("chase", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(28, trace[1].line);
+
+    AssertEqual("test", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(6, trace[2].line);
+  }
+
+  [IsTested()]
   public void TestGetStackTraceInSubParal()
   {
     string bhl3 = @"
