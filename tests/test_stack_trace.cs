@@ -621,9 +621,8 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
-  //TODO:
-  //[IsTested()]
-  public void TestGetStackTraceInParalWithSuspendDefer()
+  [IsTested()]
+  public void TestGetStackTraceInSeqWithSuspendDefer()
   {
     string bhl3 = @"
     func foo() {
@@ -635,6 +634,15 @@ public class TestStackTrace : BHL_TestBase
 
     coro func bar() {
       yield suspend()
+    }
+
+    coro func wow() {
+      {
+         defer {
+           problem()
+         }
+         yield bar()
+      }
     }
     ";
 
@@ -648,12 +656,7 @@ public class TestStackTrace : BHL_TestBase
          yield()
          yield()
        }
-       {
-         defer {
-           problem()
-         }
-         yield bar()
-       }
+       yield wow()
      }
     }
     ";
@@ -706,15 +709,119 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(1, info.Count);
 
     var trace = info[fb];
+    AssertEqual(4, trace.Count);
+
+    AssertEqual("problem", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(6, trace[0].line);
+
+    AssertEqual("wow", trace[1].func);
+    AssertEqual("bhl3.bhl", trace[1].file);
+    AssertEqual(16, trace[1].line);
+
+    AssertEqual("chase", trace[2].func);
+    AssertEqual("bhl2.bhl", trace[2].file);
+    AssertEqual(11, trace[2].line);
+
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(6, trace[3].line);
+  }
+
+  [IsTested()]
+  public void TestGetStackTraceInParalWithSuspendDefer()
+  {
+    string bhl3 = @"
+    func foo() {
+    }
+
+    func problem() {
+      throw()
+    }
+
+    coro func bar() {
+      yield suspend()
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+
+    coro func chase()
+    {
+     paral {
+       {
+         yield()
+         yield()
+       }
+       {
+         defer {
+           problem()
+         }
+         yield bar()
+       }
+     }
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+
+    coro func test() 
+    {
+      yield chase()
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            //emulating null reference
+            frm.fb.GetStackTrace();
+            frm = null;
+            frm.fb = null;
+            return null;
+          });
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      },
+      ts_fn
+    );
+
+    vm.LoadModule("bhl1");
+
+    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+
+    var fb = vm.Start("test");
+    try
+    {
+      for(int i=0;i<10;++i)
+        vm.Tick();
+    }
+    catch(Exception)
+    {
+      vm.GetStackTrace(info);
+    }
+
+    AssertEqual(1, info.Count);
+
+    var trace = info[fb];
     AssertEqual(3, trace.Count);
 
-    AssertEqual("wow", trace[0].func);
+    AssertEqual("problem", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
     AssertEqual(6, trace[0].line);
 
     AssertEqual("chase", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(12, trace[1].line);
+    AssertEqual(13, trace[1].line);
 
     AssertEqual("test", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);

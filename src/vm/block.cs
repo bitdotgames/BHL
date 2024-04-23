@@ -113,22 +113,28 @@ public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 
   public override void Cleanup(VM.Frame frm, VM.ExecState _)
   {
+    ExitScope(frm, exec, defers);
+  }
+
+  public static void ExitScope(VM.Frame frm, VM.ExecState exec, List<DeferBlock> defers)
+  {
     if(exec.coroutine != null)
     {
       CoroutinePool.Del(frm, exec, exec.coroutine);
       exec.coroutine = null;
     }
 
-    //NOTE: we need to cleanup all dangling frames
+    //NOTE: 1. first we exit the scope for all dangling frames
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].ExitScope(null, exec);
 
-    DeferBlock.ExitScope(defers, exec);
-
+    //NOTE: 2. then we release frames only after exiting them
     for(int i=exec.frames.Count;i-- > 0;)
       exec.frames[i].Release();
     exec.frames.Clear();
     exec.regions.Clear();
+
+    DeferBlock.ExitScope(defers, exec);
   }
 
   public void RegisterDefer(DeferBlock dfb)
@@ -185,22 +191,7 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 
   public override void Cleanup(VM.Frame frm, VM.ExecState _)
   {
-    if(exec.coroutine != null)
-    {
-      CoroutinePool.Del(frm, exec, exec.coroutine);
-      exec.coroutine = null;
-    }
-
-    //NOTE: we need to cleanup all dangling frames
-    for(int i=exec.frames.Count;i-- > 0;)
-      exec.frames[i].ExitScope(null, exec);
-
-    DeferBlock.ExitScope(defers, exec);
-
-    for(int i=exec.frames.Count;i-- > 0;)
-      exec.frames[i].Release();
-    exec.frames.Clear();
-    exec.regions.Clear();
+    SeqBlock.ExitScope(frm, exec, defers);
 
     //NOTE: let's clean the local stack
     for(int i=stack.Count;i-- > 0;)
