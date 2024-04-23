@@ -4461,4 +4461,31 @@ public class TestClass : BHL_TestBase
       CommonChecks(vm);
     });
   }
+
+  [IsTested()]
+  public void TestTypoArgWithClassType()
+  {
+    string bhl = @"
+    class Bar {
+    }
+
+    func test1(Bar bar) {
+    }
+
+    func test2(Bar bar) {
+      test1(Bar)
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol usage is not valid",
+      new PlaceAssert(bhl, @"
+      test1(Bar)
+------------^"
+      )
+    );
+  }
 }
