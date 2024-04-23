@@ -4917,7 +4917,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
 
-    ProcBlock(BlockType.PARAL, ctx.block()?.statement());
+    var block = ProcBlock(BlockType.PARAL, ctx.block()?.statement());
+    if(block.children.Count == 0)
+      AddError(ctx, "empty paral blocks are not allowed");
     return null;
   }
 
@@ -4925,7 +4927,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
 
-    ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
+    var block = ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
+    if(block.children.Count == 0)
+      AddError(ctx, "empty paral blocks are not allowed");
     return null;
   }
 

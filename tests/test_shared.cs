@@ -33,6 +33,7 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestParal());
     counter += Run(names, new TestParsing());
     counter += Run(names, new TestPreproc());
     counter += Run(names, new TestFiber());
