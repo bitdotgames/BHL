@@ -23,8 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Mono.Options" Version="6.12.0.148" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>deps\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Options">
+      <HintPath>deps\mono_opts.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
