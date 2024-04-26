@@ -4,7 +4,8 @@ tags
 
 tmp
 obj/
-build
+build/
+bin/
 obj
 *.exe
 *.dylib*
@@ -12,6 +13,7 @@ obj
 *.dll*
 *.bhc
 *.meta
+*.sln.DotSettings.user
 
 .idea
 .dotnet

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>bhl_tests</AssemblyName>
+        <OutputType>Library</OutputType>
+        <RootNamespace>bhl</RootNamespace>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <DefineConstants>BHL_FRONT</DefineConstants>
+    </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\src\compile\bhl_front.csproj" />
+      <ProjectReference Include="..\src\lsp\bhl_lsp.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Antlr4.Runtime.Standard">
+        <HintPath>..\deps\Antlr4.Runtime.Standard.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\deps\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Options">
+        <HintPath>..\deps\mono_opts.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>bhl_lsp</AssemblyName>
+        <OutputType>Library</OutputType>
+        <RootNamespace>bhl</RootNamespace>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    </PropertyGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\compile\bhl_front.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <Reference Include="Antlr4.Runtime.Standard">
+        <HintPath>..\..\deps\Antlr4.Runtime.Standard.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\..\deps\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+</Project>

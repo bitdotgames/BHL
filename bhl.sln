@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bhl_runtime", "src\vm\bhl_r
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bhl_front", "src\compile\bhl_front.csproj", "{23D6A481-A1BA-4F74-A550-3FB0D4B57AAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bhl_tests", "tests\bhl_tests.csproj", "{9BA5CA75-0603-4187-BC3F-5F5D67BD899D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bhl_lsp", "src\lsp\bhl_lsp.csproj", "{E24694B3-084E-4257-BBF5-B46D3BC2ED16}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{23D6A481-A1BA-4F74-A550-3FB0D4B57AAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23D6A481-A1BA-4F74-A550-3FB0D4B57AAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23D6A481-A1BA-4F74-A550-3FB0D4B57AAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BA5CA75-0603-4187-BC3F-5F5D67BD899D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BA5CA75-0603-4187-BC3F-5F5D67BD899D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BA5CA75-0603-4187-BC3F-5F5D67BD899D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BA5CA75-0603-4187-BC3F-5F5D67BD899D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E24694B3-084E-4257-BBF5-B46D3BC2ED16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E24694B3-084E-4257-BBF5-B46D3BC2ED16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E24694B3-084E-4257-BBF5-B46D3BC2ED16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E24694B3-084E-4257-BBF5-B46D3BC2ED16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

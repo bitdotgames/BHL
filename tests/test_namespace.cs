@@ -57,7 +57,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -86,7 +86,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Hey", null);
+      var cl = new ClassSymbolNative(new Origin(), "Hey");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -179,7 +179,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -290,7 +290,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -319,7 +319,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Hey", null);
+      var cl = new ClassSymbolNative(new Origin(), "Hey");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -411,7 +411,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -440,7 +440,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Hey", null);
+      var cl = new ClassSymbolNative(new Origin(), "Hey");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -540,7 +540,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
@@ -566,7 +566,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = new Namespace(m, "foo_sub");
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", null);
+      var cl = new ClassSymbolNative(new Origin(), "Wow");
       foo_sub.Define(cl);
 
       foo.Define(foo_sub);
