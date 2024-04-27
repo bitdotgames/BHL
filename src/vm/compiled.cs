@@ -65,6 +65,8 @@ public class CompiledModule
   public byte[] bytecode;
   //NOTE: normalized module names, not actual import paths
   public List<string> imports;
+  //NOTE: filled during runtime module setup procedure
+  internal List<CompiledModule> _imported_mods;
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;

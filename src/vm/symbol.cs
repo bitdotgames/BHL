@@ -2768,6 +2768,8 @@ public class Indexer<T> where T : INamed, IScopeIndexed
   }
 }
 
+public class FuncIndexer : Indexer<FuncSymbol> {}
+
 public class VarIndexer : Indexer<VariableSymbol> {}
 
 public class NativeFuncIndexer : Indexer<FuncSymbolNative> 

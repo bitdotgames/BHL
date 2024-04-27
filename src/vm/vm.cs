@@ -512,12 +512,20 @@ public partial class VM : INamedResolver
       cm.ns.Link(FindModuleNamespace(imp));
 
     int gvars_offset = cm.module.local_gvars_num;
-    foreach(var imp in cm.imports)
+
+    cm._imported_mods = new List<CompiledModule>(cm.imports.Count);
+    
+    for(int i=0; i<cm.imports.Count; ++i)
     {
-      CompiledModule imp_mod;
+      string imp = cm.imports[i];
+      
+      cm._imported_mods.Add(null);
+      
       //TODO: what about 'native' modules?
-      if(!compiled_mods.TryGetValue(imp, out imp_mod))
+      if(!compiled_mods.TryGetValue(imp, out var imp_mod))
         continue;
+
+      cm._imported_mods[i] = imp_mod;
       
       //NOTE: taking only local imported module's gvars
       for(int g=0;g<imp_mod.module.local_gvars_num;++g)
