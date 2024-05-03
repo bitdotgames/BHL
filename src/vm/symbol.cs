@@ -489,11 +489,17 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
 
   public void Define(Symbol sym) 
   {
-    if(sym is FuncSymbol fs && IsBinaryOp(fs.name))
-      CheckBinaryOpOverload(fs);
+    if(sym is FuncSymbol fs)
+    {
+      if(IsBinaryOp(fs.name))
+        CheckBinaryOpOverload(fs);
+      
+      if(fs is FuncSymbolScript fss)
+        this.GetModule().funcs.Index(fss);
+    }
 
     if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
-      this.GetNamespace().module.nfuncs.Index(fsn);
+      this.GetModule().nfuncs.Index(fsn);
 
     if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -2728,7 +2734,36 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
   }
 }
 
-public class Indexer<T> where T : INamed, IScopeIndexed 
+public class Indexer<T> where T : new()
+{
+  internal List<T> index = new List<T>();
+  
+  public int Count {
+    get {
+      return index.Count;
+    }
+  }
+  public void Index(T sym)
+  {
+    if(index.IndexOf(sym) != -1)
+      return;
+    index.Add(sym);
+  }
+
+  public T this[int i]
+  {
+    get {
+      return index[i];
+    }
+  }
+
+  public int IndexOf(T s)
+  {
+    return index.IndexOf(s);
+  }
+}
+
+public class ScopeIndexer<T> where T : INamed, IScopeIndexed 
 {
   internal List<T> index = new List<T>();
 
@@ -2768,16 +2803,16 @@ public class Indexer<T> where T : INamed, IScopeIndexed
   }
 }
 
-public class FuncIndexer : Indexer<FuncSymbol> {}
+public class FuncModuleIndexer : Indexer<FuncSymbolScript> {}
 
-public class VarIndexer : Indexer<VariableSymbol> {}
+public class VarScopeIndexer : ScopeIndexer<VariableSymbol> {}
 
-public class NativeFuncIndexer : Indexer<FuncSymbolNative> 
+public class NativeFuncScopeIndexer : ScopeIndexer<FuncSymbolNative> 
 {
-  public NativeFuncIndexer()
+  public NativeFuncScopeIndexer()
   {}
 
-  public NativeFuncIndexer(NativeFuncIndexer other)
+  public NativeFuncScopeIndexer(NativeFuncScopeIndexer other)
   {
     index.AddRange(other.index);
   }

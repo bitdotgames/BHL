@@ -394,6 +394,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
     if(sym is FuncSymbolNative fsn)
       module.nfuncs.Index(fsn);
+    else if(sym is FuncSymbolScript fss)
+      module.funcs.Index(fss);
     else if(sym is VariableSymbol vs)
       module.gvars.Index(vs);
 

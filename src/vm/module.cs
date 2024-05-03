@@ -32,13 +32,13 @@ public class Module
 
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
-  public VarIndexer gvars = new VarIndexer();
+  public VarScopeIndexer gvars = new VarScopeIndexer();
   //used for assigning incremental indexes to native funcs,
   //NOTE: currently this indexer is global, while it must be local per module
-  public NativeFuncIndexer nfuncs;
+  public NativeFuncScopeIndexer nfuncs;
   
-  //used for assigning incremental indexes to any local symbols
-  public FuncIndexer funcs = new FuncIndexer();
+  //used for assigning incremental module indexes to funcs
+  public FuncModuleIndexer funcs = new FuncModuleIndexer();
 
   //TODO: probably we need script functions per module indexer, like gvars?
   //setup once the module is loaded to find functions by their ip

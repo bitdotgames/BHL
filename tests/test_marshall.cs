@@ -36,14 +36,15 @@ public class TestMarshall : BHL_TestBase
       ns.Define(Make);
 
       var Foo = new ClassSymbolScript(new Origin(), "Foo");
+      ns.Define(Foo);
       Foo.Define(new FieldSymbolScript(new Origin(), "Int", Types.Int));
       Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(Types.Void), "Hey", 0, 3));
-      ns.Define(Foo);
+      
       var Bar = new ClassSymbolScript(new Origin(), "Bar");
       Bar.SetSuperClassAndInterfaces(Foo);
+      ns.Define(Bar);
       Bar.Define(new FieldSymbolScript(new Origin(), "Float", Types.Float));
       Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
-      ns.Define(Bar);
 
       var Enum = new EnumSymbolScript(new Origin(), "Enum");
       Enum.TryAddItem(null, "Type1", 1);

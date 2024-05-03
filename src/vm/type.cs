@@ -496,7 +496,7 @@ public class Types : INamedResolver
 
   public Namespace ns;
 
-  public NativeFuncIndexer nfunc_index = new NativeFuncIndexer();
+  public NativeFuncScopeIndexer nfunc_index = new NativeFuncScopeIndexer();
 
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
@@ -591,7 +591,7 @@ public class Types : INamedResolver
     return m;
   }
 
-  Types(NativeFuncIndexer nfunc_index, Namespace ns)
+  Types(NativeFuncScopeIndexer nfunc_index, Namespace ns)
   {
     this.nfunc_index = nfunc_index;
     this.ns = ns;
