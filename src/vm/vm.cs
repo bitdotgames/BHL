@@ -1406,7 +1406,7 @@ public partial class VM : INamedResolver
       case Opcodes.GetFuncNativePtr:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        var func_symb = (FuncSymbolNative)types.nfunc_index[func_idx];
+        var func_symb = types.nfunc_index[func_idx];
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb);
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1447,7 +1447,7 @@ public partial class VM : INamedResolver
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
-        var native = (FuncSymbolNative)types.nfunc_index[func_idx];
+        var native = types.nfunc_index[func_idx];
 
         BHS status;
         if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref exec.coroutine))
