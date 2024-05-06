@@ -478,13 +478,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallNative,
-        3/*globs idx*/, 4/*args bits*/
+        3/*global idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallFunc,
-        3/*func name idx*/, 4/*args bits*/
+        2/*imported module idx*/, 3/*module's func idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1204,14 +1204,26 @@ public class ModuleCompiler : AST_Visitor
         if(instr.op == Opcodes.GetLocalPtr)
         {
           Pop();
-          var fsymb = (FuncSymbolScript)ast.symb; 
+          var fsymb = (FuncSymbolScript)ast.symb;
           var call_op = Emit(Opcodes.CallLocal, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
         }
         else if(instr.op == Opcodes.GetFuncPtr)
         {
+          var fsymb = (FuncSymbolScript)ast.symb;
+          var fmod = fsymb.GetModule();
+          int module_idx = fmod.funcs.IndexOf(fsymb);
+          if(module_idx == -1)
+            throw new Exception("Not found function '"+ fsymb.name + "' index in module '" +  fmod.name + "'");
           Pop();
-          Emit(Opcodes.CallFunc, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.CallFunc, new int[] {0 /*patched later*/, module_idx, (int)ast.cargs_bits}, ast.line_num);
+          //imports list is filled later so we need to take that into account
+          PatchLater(call_op, (inst) =>
+          {
+             inst.operands[0] = imports.IndexOf(fmod.name);
+             if (inst.operands[0] == -1)
+               throw new Exception("Not found module '" + fmod.name + "' imported index");
+          });
         }
         else if(instr.op == Opcodes.GetFuncNativePtr)
         {
@@ -1345,11 +1357,11 @@ public class ModuleCompiler : AST_Visitor
       return Emit(Opcodes.GetFuncNativePtr, new int[] { func_symb.scope_idx }, ast.line_num);
     else
     {
-      var fscript = (FuncSymbolScript)func_symb;
-      if(fscript.GetNamespace().module == module)
+      var func_symb_script = (FuncSymbolScript)func_symb;
+      if(func_symb_script.GetModule() == module)
       {
         var get_ptr_op = Emit(Opcodes.GetLocalPtr, new int[] {0 /*patched later*/}, ast.line_num);
-        PatchLater(get_ptr_op, (inst) => inst.operands[0] = fscript.ip_addr);
+        PatchLater(get_ptr_op, (inst) => inst.operands[0] = func_symb_script.ip_addr);
         return get_ptr_op;
       }
       else

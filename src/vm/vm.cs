@@ -513,19 +513,17 @@ public partial class VM : INamedResolver
 
     int gvars_offset = cm.module.local_gvars_num;
 
-    cm._imported_mods = new List<CompiledModule>(cm.imports.Count);
+    cm._imported = new CompiledModule[cm.imports.Count];
     
     for(int i=0; i<cm.imports.Count; ++i)
     {
       string imp = cm.imports[i];
       
-      cm._imported_mods.Add(null);
-      
       //TODO: what about 'native' modules?
       if(!compiled_mods.TryGetValue(imp, out var imp_mod))
         continue;
 
-      cm._imported_mods[i] = imp_mod;
+      cm._imported[i] = imp_mod;
       
       //NOTE: taking only local imported module's gvars
       for(int g=0;g<imp_mod.module.local_gvars_num;++g)
@@ -550,7 +548,9 @@ public partial class VM : INamedResolver
           }
         }
         else if(s is FuncSymbolScript fs && !(fs.scope is InterfaceSymbol))
+        {
           PrepareFuncSymbol(cm, fs);
+        }
       }
     );
   }
@@ -1456,10 +1456,11 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.CallFunc:
       {
-        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
-        var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
+        var func_symb = curr_frame.module._imported[import_idx].module.funcs.index[func_idx];
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, exec.stack, func_symb._module, func_symb.ip_addr);

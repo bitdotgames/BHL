@@ -65,8 +65,9 @@ public class CompiledModule
   public byte[] bytecode;
   //NOTE: normalized module names, not actual import paths
   public List<string> imports;
-  //NOTE: filled during runtime module setup procedure
-  internal List<CompiledModule> _imported_mods;
+  //NOTE: filled during runtime module setup procedure since
+  //      until this moment we don't know about other modules 
+  internal CompiledModule[] _imported;
   public List<Const> constants;
   public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
   public Ip2SrcLine ip2src_line;
@@ -175,6 +176,9 @@ public class CompiledModule
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 
+    //NOTE: symbols are added to indices explicitely. Normally it happens when we define
+    //      symbols in scopes/modules but here we unmarshall symbols from the cache and
+    //      have to restore these indices 'manually'. This looks a bit like code duplication.
     //let's restore required object connections after unmarshalling
     module.ns.ForAllLocalSymbols((s) => 
       {
@@ -182,6 +186,8 @@ public class CompiledModule
           ns.module = module;
         else if(s is VariableSymbol vs && vs.scope is Namespace)
           module.gvars.index.Add(vs);
+        else if(s is FuncSymbolScript fss)
+          module.funcs.index.Add(fss);
       }
     );
 
