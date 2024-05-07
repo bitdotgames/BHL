@@ -601,7 +601,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, ANTLR_Processor> file2proc, 
     //NOTE: can be null, contains already cached compile modules.
     //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, CompiledModule> file2compiled, 
+    Dictionary<string, Module> file2compiled, 
     IncludePath inc_path)
   {
     var already_imported = new HashSet<Module>(); 
@@ -643,7 +643,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   bool ResolveImportedModule(
     string import,
     Dictionary<string, ANTLR_Processor> file2proc, 
-    Dictionary<string, CompiledModule> file2compiled,
+    Dictionary<string, Module> file2compiled,
     out string file_path,
     out Module imported_module,
     out Namespace imported_ns
@@ -668,7 +668,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //let's check if it's a compiled module and
     //try to fetch it from the cache first
     if(file2compiled != null && file2compiled.TryGetValue(file_path, out var cm))
-      imported_module = cm.module;
+      imported_module = cm;
     else if(file2proc.TryGetValue(file_path, out var proc))
       imported_module = proc.module;
     else 
@@ -683,7 +683,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, ANTLR_Processor> file2proc, 
     //NOTE: can be null, contains already cached compile modules.
     //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, CompiledModule> file2compiled, 
+    Dictionary<string, Module> file2compiled, 
     IncludePath inc_path)
   {
     if(imports_parsed.Count == 0)
@@ -817,7 +817,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, ANTLR_Processor> file2proc, 
     //NOTE: can be null, contains already cached compile modules.
     //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, CompiledModule> file2compiled, 
+    Dictionary<string, Module> file2compiled, 
     IncludePath inc_path
   )
   {
@@ -859,27 +859,27 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   static void LinkCompiledImports(
-    Dictionary<string, CompiledModule> file2compiled,
+    Dictionary<string, Module> file2compiled,
     Dictionary<string, ANTLR_Processor> file2proc
   )
   {
     var mod_name2ns = new Dictionary<string, Namespace>(); 
     //we need to try both compiled modules and modules yet to be parsed
     foreach(var kv in file2compiled)
-      mod_name2ns.Add(kv.Value.module.name, kv.Value.module.ns);
+      mod_name2ns.Add(kv.Value.name, kv.Value.ns);
     foreach(var kv in file2proc)
       mod_name2ns.Add(kv.Value.module.name, kv.Value.module.ns);
 
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.module.ns.PreLink(mod_name2ns[import]);
+        kv.Value.ns.PreLink(mod_name2ns[import]);
     }
 
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.module.ns.Link(mod_name2ns[import]);
+        kv.Value.ns.Link(mod_name2ns[import]);
     }
   }
 

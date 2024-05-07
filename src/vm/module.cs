@@ -15,9 +15,12 @@ public class ModulePath
   }
 }
 
-//NOTE: represents a module which can be registered in Types
+//NOTE: represents a module which can be both a compiled one or
+//      the one created in C#
 public class Module
 {
+  public const int MAX_GLOBALS = 128;
+  
   public string name {
     get {
       return path.name;
@@ -29,10 +32,16 @@ public class Module
     }
   }
   public ModulePath path;
+  
+  public Types ts;
+  public Namespace ns;
 
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
   public VarScopeIndexer gvars = new VarScopeIndexer();
+  
+  public FixedStack<Val> gvar_vals = new FixedStack<Val>(MAX_GLOBALS);
+  
   //used for assigning incremental indexes to native funcs,
   //NOTE: currently this indexer is global, while it must be local per module
   public NativeFuncScopeIndexer nfuncs;
@@ -55,9 +64,26 @@ public class Module
       return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
     }
   }
-  public Types ts;
-  public Namespace ns;
 
+  public bool is_compiled
+  {
+    get {
+      return initcode != null || bytecode != null;
+    }
+  }
+
+  //NOTE: below are compiled module parts
+  //normalized module names, not actual import paths
+  public List<string> imports;
+  public byte[] initcode;
+  public byte[] bytecode;
+  //filled during runtime module setup procedure since
+  //until this moment we don't know about other modules 
+  internal Module[] _imported;
+  public List<Const> constants;
+  public Ip2SrcLine ip2src_line;
+  public int init_func_idx = -1;
+  
   public Module(Types ts, ModulePath path)
     : this(ts, path, new Namespace())
   {}
@@ -78,6 +104,130 @@ public class Module
     ns.module = this;
     this.path = path;
     this.ns = ns;
+  }
+
+  public void InitCompiled(
+    int init_func_idx,
+    int total_gvars_num,
+    List<string> imports,
+    List<Const> constants, 
+    byte[] initcode,
+    byte[] bytecode, 
+    Ip2SrcLine ip2src_line
+    )
+  {
+    this.init_func_idx = init_func_idx;
+    this.imports = imports;
+    this.constants = constants;
+    this.initcode = initcode;
+    this.bytecode = bytecode;
+    this.ip2src_line = ip2src_line;
+    gvar_vals.Resize(total_gvars_num);
+  }
+
+  //convenience version for tests
+  public void InitCompiled()
+  {
+    InitCompiled(
+      -1,
+      0,
+      new List<string>(),
+      new List<Const>(),
+      new byte[0],
+      new byte[0],
+      new Ip2SrcLine()
+    );
+  }
+
+  public void InitGlobalVars(VM vm)
+  {
+    //let's init all our own global variables
+    for(int g=0;g<local_gvars_num;++g)
+      gvar_vals[g] = Val.New(vm); 
+  }
+
+  public void ClearGlobalVars()
+  {
+    for(int i=0;i<gvar_vals.Count;++i)
+    {
+      var val = gvar_vals[i];
+      val.Release();
+    }
+    gvar_vals.Clear();
+  }
+  
+  public void Setup(Func<string, Module> name2module)
+  {
+    foreach(var imp in imports)
+      ns.Link(name2module(imp).ns);
+      
+    int gvars_offset = local_gvars_num;
+
+    _imported = new Module[imports.Count];
+    
+    for(int i=0; i<imports.Count; ++i)
+    {
+      //TODO: what about 'native' modules?
+      var imported = name2module(imports[i]);
+      if(imported == null)
+        continue;
+
+      _imported[i] = imported;
+      
+      //NOTE: taking only local imported module's gvars
+      for(int g=0;g<imported.local_gvars_num;++g)
+      {
+        var imp_gvar = imported.gvar_vals[g];
+        imp_gvar.Retain();
+        gvar_vals[gvars_offset] = imp_gvar;
+        ++gvars_offset;
+      }
+    }
+
+    ns.ForAllLocalSymbols(delegate(Symbol s)
+      {
+        if(s is Namespace ns)
+          ns.module = this;
+        else if(s is ClassSymbol cs)
+        {
+          cs.Setup();
+
+          foreach (var kv in cs._vtable)
+          {
+            if (kv.Value is FuncSymbolScript vfs)
+              PrepareFuncSymbol(vfs, name2module);
+          }
+        }
+        else if (s is VariableSymbol vs && vs.scope is Namespace)
+          gvars.index.Add(vs);
+        else if (s is FuncSymbolScript fs)
+          PrepareFuncSymbol(fs, name2module);
+      }
+    );
+  }
+  
+  void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
+  {
+    if(fss.ip_addr == -1)
+      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
+    
+    _ip2func[fss.ip_addr] = fss;
+
+    if(!(fss.scope is InterfaceSymbol))
+    {
+      funcs.index.Add(fss);
+      
+      if(fss._module == null)
+      {
+        var mod_name = fss.GetModule().name;
+        if (!string.IsNullOrEmpty(mod_name))
+        {
+          fss._module = name2module(mod_name);
+          if (fss._module == null)
+            throw new Exception("Module '" + mod_name + "' not found");
+        }
+      }
+    }
   }
 }
 

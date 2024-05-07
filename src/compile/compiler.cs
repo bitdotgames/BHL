@@ -6,9 +6,8 @@ namespace bhl {
 public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
-  CompiledModule compiled;
-
-  Module module;
+  Module result;
+  Module interim;
 
   List<Const> constants = new List<Const>();
   List<string> imports = new List<string>();
@@ -160,9 +159,9 @@ public class ModuleCompiler : AST_Visitor
 
   public ModuleCompiler(ANTLR_Processor.Result fres)
   {
-    module = fres.module;
+    interim = fres.module;
     ast = fres.ast;
-    curr_scope = module.ns;
+    curr_scope = interim.ns;
 
     UseInit();
   }
@@ -170,8 +169,8 @@ public class ModuleCompiler : AST_Visitor
   //NOTE: for testing purposes only
   public ModuleCompiler()
   {
-    module = new Module(new Types());
-    curr_scope = module.ns;
+    interim = new Module(new Types());
+    curr_scope = interim.ns;
 
     UseInit();
   }
@@ -190,9 +189,9 @@ public class ModuleCompiler : AST_Visitor
     return this;
   }
 
-  public CompiledModule Compile()
+  public Module Compile()
   {
-    if(compiled == null)
+    if(result == null)
     {
       //special case for tests where we
       //don't have any AST
@@ -206,10 +205,10 @@ public class ModuleCompiler : AST_Visitor
       Ip2SrcLine ip2src_line;
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
-      compiled = new CompiledModule(
-        module,
+      result = interim;
+      result.InitCompiled(
         init_func_idx,
-        module.gvars.Count,
+        interim.gvars.Count,
         imports,
         constants, 
         init_bytes,
@@ -218,7 +217,7 @@ public class ModuleCompiler : AST_Visitor
       );    
     }
 
-    return compiled;
+    return result;
   }
 
   int GetCodeSize()
@@ -1180,20 +1179,20 @@ public class ModuleCompiler : AST_Visitor
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {module.nfuncs.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {interim.nfuncs.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.GetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {interim.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {module.nfuncs.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {interim.nfuncs.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.SetGVar, new int[] {module.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {interim.gvars.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:
@@ -1358,7 +1357,7 @@ public class ModuleCompiler : AST_Visitor
     else
     {
       var func_symb_script = (FuncSymbolScript)func_symb;
-      if(func_symb_script.GetModule() == module)
+      if(func_symb_script.GetModule() == interim)
       {
         var get_ptr_op = Emit(Opcodes.GetLocalPtr, new int[] {0 /*patched later*/}, ast.line_num);
         PatchLater(get_ptr_op, (inst) => inst.operands[0] = func_symb_script.ip_addr);

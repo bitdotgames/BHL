@@ -42,74 +42,11 @@ public class Ip2SrcLine
   }
 }
 
-public class CompiledModule
+public static class CompiledModule
 {
   const uint HEADER_VERSION = 2;
-  public const int MAX_GLOBALS = 128;
 
-  public Module module;
-
-  public string name {
-    get {
-      return module.name;
-    }
-  }
-
-  public Namespace ns {
-    get {
-      return module.ns;
-    }
-  }
-
-  public byte[] initcode;
-  public byte[] bytecode;
-  //NOTE: normalized module names, not actual import paths
-  public List<string> imports;
-  //NOTE: filled during runtime module setup procedure since
-  //      until this moment we don't know about other modules 
-  internal CompiledModule[] _imported;
-  public List<Const> constants;
-  public FixedStack<Val> gvars = new FixedStack<Val>(MAX_GLOBALS);
-  public Ip2SrcLine ip2src_line;
-  public int init_func_idx = -1;
-
-  public CompiledModule(
-    Module module,
-    int init_func_idx,
-    int total_gvars_num,
-    List<string> imports,
-    List<Const> constants, 
-    byte[] initcode,
-    byte[] bytecode, 
-    Ip2SrcLine ip2src_line
-  )
-  {
-    this.module = module;
-    this.init_func_idx = init_func_idx;
-    this.imports = imports;
-    this.constants = constants;
-    this.initcode = initcode;
-    this.bytecode = bytecode;
-    this.ip2src_line = ip2src_line;
-
-    gvars.Resize(total_gvars_num);
-  }
-  
-  //convenience version for tests
-  public CompiledModule(Module m)
-    : this(
-      m, 
-      -1, 
-      0, 
-      new List<string>(),
-      new List<Const>(),
-      new byte[0],
-      new byte[0],
-      new Ip2SrcLine()
-      )
-  {}
-
-  static public CompiledModule FromStream(
+  static public Module FromStream(
     Types types, 
     Stream src, 
     INamedResolver resolver = null, 
@@ -192,10 +129,8 @@ public class CompiledModule
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
-
-    return new 
-      CompiledModule(
-        module,
+    
+    module.InitCompiled(
         init_func_idx,
         total_gvars_num,
         imports,
@@ -204,77 +139,7 @@ public class CompiledModule
         bytecode, 
         ip2src_line
      );
-  }
-
-  public void Setup(Func<string, CompiledModule> name2module)
-  {
-    int gvars_offset = module.local_gvars_num;
-
-    _imported = new CompiledModule[imports.Count];
-    
-    for(int i=0; i<imports.Count; ++i)
-    {
-      //TODO: what about 'native' modules?
-      var imported_module = name2module(imports[i]);
-      if(imported_module == null)
-        continue;
-
-      _imported[i] = imported_module;
-      
-      //NOTE: taking only local imported module's gvars
-      for(int g=0;g<imported_module.module.local_gvars_num;++g)
-      {
-        var imp_gvar = imported_module.gvars[g];
-        imp_gvar.Retain();
-        gvars[gvars_offset] = imp_gvar;
-        ++gvars_offset;
-      }
-    }
-
-    ns.ForAllLocalSymbols(delegate(Symbol s)
-      {
-        if(s is Namespace ns)
-          ns.module = module;
-        else if(s is ClassSymbol cs)
-        {
-          cs.Setup();
-          
-          foreach(var kv in cs._vtable)
-          {
-            if(kv.Value is FuncSymbolScript vfs)
-              PrepareFuncSymbol(vfs, name2module);
-          }
-        }
-        else if(s is VariableSymbol vs && vs.scope is Namespace)
-          module.gvars.index.Add(vs);
-        else if(s is FuncSymbolScript fs)
-          PrepareFuncSymbol(fs, name2module);
-      }
-    );
-  }
-  
-  void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, CompiledModule> name2module)
-  {
-    if(fss.ip_addr == -1)
-      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
-    
-    module._ip2func[fss.ip_addr] = fss;
-
-    if(!(fss.scope is InterfaceSymbol))
-    {
-      module.funcs.index.Add(fss);
-      
-      if(fss._module == null)
-      {
-        var mod_name = fss.GetModule().name;
-        if (!string.IsNullOrEmpty(mod_name))
-        {
-          fss._module = name2module(mod_name);
-          if (fss._module == null)
-            throw new Exception("Module '" + mod_name + "' not found");
-        }
-      }
-    }
+    return module;
   }
 
   static void ReadConstants(SymbolFactory symb_factory, byte[] constant_bytes, List<Const> constants)
@@ -318,7 +183,7 @@ public class CompiledModule
     }
   }
 
-  static public void ToStream(CompiledModule cm, Stream dst, bool leave_open = false)
+  static public void ToStream(Module module, Stream dst, bool leave_open = false)
   {
     using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8, leave_open))
     {
@@ -326,41 +191,41 @@ public class CompiledModule
       //TODO: introduce header info with offsets to data
       w.Write(HEADER_VERSION);
 
-      w.Write(cm.module.name);
-      w.Write(cm.module.file_path);
+      w.Write(module.name);
+      w.Write(module.file_path);
       
-      w.Write(cm.init_func_idx);
+      w.Write(module.init_func_idx);
 
-      w.Write(cm.imports.Count);
-      foreach(var import in cm.imports)
+      w.Write(module.imports.Count);
+      foreach(var import in module.imports)
         w.Write(import);
 
-      var symb_bytes = marshall.Marshall.Obj2Bytes(cm.module.ns);
+      var symb_bytes = marshall.Marshall.Obj2Bytes(module.ns);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
-      w.Write(cm.initcode == null ? (int)0 : cm.initcode.Length);
-      if(cm.initcode != null)
-        w.Write(cm.initcode, 0, cm.initcode.Length);
+      w.Write(module.initcode == null ? (int)0 : module.initcode.Length);
+      if(module.initcode != null)
+        w.Write(module.initcode, 0, module.initcode.Length);
 
-      w.Write(cm.bytecode == null ? (int)0 : cm.bytecode.Length);
-      if(cm.bytecode != null)
-        w.Write(cm.bytecode, 0, cm.bytecode.Length);
+      w.Write(module.bytecode == null ? (int)0 : module.bytecode.Length);
+      if(module.bytecode != null)
+        w.Write(module.bytecode, 0, module.bytecode.Length);
 
-      var constant_bytes = WriteConstants(cm.constants);
+      var constant_bytes = WriteConstants(module.constants);
       w.Write(constant_bytes.Length);
       if(constant_bytes.Length > 0)
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
-      w.Write(cm.module.gvars.Count);
-      w.Write(cm.module.local_gvars_num);
+      w.Write(module.gvars.Count);
+      w.Write(module.local_gvars_num);
 
       //TODO: add this info only for development builds
-      w.Write(cm.ip2src_line.ips.Count);
-      for(int i=0;i<cm.ip2src_line.ips.Count;++i)
+      w.Write(module.ip2src_line.ips.Count);
+      for(int i=0;i<module.ip2src_line.ips.Count;++i)
       {
-        w.Write(cm.ip2src_line.ips[i]);
-        w.Write(cm.ip2src_line.lines[i]);
+        w.Write(module.ip2src_line.ips[i]);
+        w.Write(module.ip2src_line.lines[i]);
       }
     }
   }
@@ -392,15 +257,15 @@ public class CompiledModule
     return dst.GetBuffer();
   }
 
-  static public void ToFile(CompiledModule cm, string file)
+  static public void ToFile(Module module, string file)
   {
     using(FileStream wfs = new FileStream(file, FileMode.Create, System.IO.FileAccess.Write))
     {
-      ToStream(cm, wfs);
+      ToStream(module, wfs);
     }
   }
 
-  static public CompiledModule FromFile(string file, Types types)
+  static public Module FromFile(string file, Types types)
   {
     using(FileStream rfs = new FileStream(file, FileMode.Open, System.IO.FileAccess.Read))
     {
@@ -409,4 +274,4 @@ public class CompiledModule
   }
 }
 
-} //namespace bhl
+}

@@ -53,7 +53,7 @@ public partial class VM : INamedResolver
 
     public VM vm;
 
-    public CompiledModule module;
+    public Module module;
     public int func_ip;
     public FuncSymbolNative native;
     public FixedStack<Val> upvals = new FixedStack<Val>(Frame.MAX_LOCALS);
@@ -105,7 +105,7 @@ public partial class VM : INamedResolver
       this.native = null;
     }
 
-    public void Init(CompiledModule module, int func_ip)
+    public void Init(Module module, int func_ip)
     {
       this.module = module;
       this.func_ip = func_ip;
@@ -242,12 +242,12 @@ public partial class VM : INamedResolver
   }
 
   //TODO: can we make Module a key instead of a string?
-  Dictionary<string, CompiledModule> compiled_mods = new Dictionary<string, CompiledModule>();
+  Dictionary<string, Module> compiled_mods = new Dictionary<string, Module>();
 
   internal class LoadingModule
   {
     internal string name;
-    internal CompiledModule module;
+    internal Module module;
   }
   List<LoadingModule> loading_modules = new List<LoadingModule>();
 
@@ -256,14 +256,14 @@ public partial class VM : INamedResolver
   //TODO: add support for native funcs?
   public struct FuncAddr
   {
-    public CompiledModule module;
+    public Module module;
     public FuncSymbolScript fs;
     public int ip;
   }
 
   public struct VarAddr
   {
-    public CompiledModule module;
+    public Module module;
     public VariableSymbol vs;
     public Val val;
   }
@@ -297,7 +297,7 @@ public partial class VM : INamedResolver
 
   public struct ModuleSymbol
   {
-    public CompiledModule cm;
+    public Module module;
     public Symbol symbol;
   }
 
@@ -422,25 +422,28 @@ public partial class VM : INamedResolver
   }
 
   //NOTE: this method is public only for testing convenience
-  public void LoadModule(CompiledModule cm)
+  public void LoadModule(Module module)
   {
-    BeginRegistration(cm);
-    FinishRegistration(cm);
+    BeginRegistration(module);
+    FinishRegistration(module);
   }
 
-  //NOTE: this method is public only for testing convenience
-  public CompiledModule FindModule(string module_name)
+  public Module FindModule(string module_name)
   {
-    CompiledModule cm;
-    compiled_mods.TryGetValue(module_name, out cm);
-    return cm;
+    var rm = types.FindRegisteredModule(module_name);
+    if(rm != null)
+      return rm;
+
+    if(compiled_mods.TryGetValue(module_name, out var cm))
+      return cm;
+    return null;
   }
 
   //NOTE: returns false if module is already loaded
   bool TryAddToLoadingList(string module_name)
   {
     //let's check if it's already available
-    if(FindModuleNamespace(module_name) != null)
+    if(FindModule(module_name) != null)
       return false;
 
     //let's check if it's already loading
@@ -475,61 +478,30 @@ public partial class VM : INamedResolver
     TryAddToLoadingList(import_name);
   }
 
-  void BeginRegistration(CompiledModule cm)
+  void BeginRegistration(Module module)
   {
     //NOTE: for simplicity we add it to the modules at once,
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
-    compiled_mods[cm.name] = cm;
-
-    //let's init all our own global variables
-    for(int g=0;g<cm.module.local_gvars_num;++g)
-      cm.gvars[g] = Val.New(this); 
+    compiled_mods[module.name] = module;
+    
+    module.InitGlobalVars(this);
   }
 
-  void FinishRegistration(CompiledModule cm)
+  void FinishRegistration(Module module)
   {
-    SetupModule(cm);
-    ExecInitCode(cm);
-    ExecModuleInitFunc(cm);
-  }
-
-  Namespace FindModuleNamespace(string module_name)
-  {
-    var rm = types.FindRegisteredModule(module_name);
-    if(rm != null)
-      return rm.ns;
-
-    CompiledModule cm;
-    if(compiled_mods.TryGetValue(module_name, out cm))
-      return cm.ns;
-    return null;
-  }
-
-  void SetupModule(CompiledModule cm)
-  {
-    foreach(var imp in cm.imports)
-      cm.ns.Link(FindModuleNamespace(imp));
-
-    cm.Setup(name =>
-    {
-      compiled_mods.TryGetValue(name, out var tmp);
-      return tmp;
-    });
+    module.Setup(name => FindModule(name));
+    
+    ExecInitCode(module);
+    ExecModuleInitFunc(module);
   }
 
   public void UnloadModule(string module_name)
   {
-    CompiledModule m;
-    if(!compiled_mods.TryGetValue(module_name, out m))
+    if(!compiled_mods.TryGetValue(module_name, out var cm))
       return;
 
-    for(int i=0;i<m.gvars.Count;++i)
-    {
-      var val = m.gvars[i];
-      val.Release();
-    }
-    m.gvars.Clear();
+    cm.ClearGlobalVars();
 
     compiled_mods.Remove(module_name);
   }
@@ -543,7 +515,7 @@ public partial class VM : INamedResolver
       UnloadModule(key);
   }
 
-  void ExecInitCode(CompiledModule module)
+  void ExecInitCode(Module module)
   {
     var bytecode = module.initcode;
     if(bytecode == null || bytecode.Length == 0)
@@ -566,7 +538,7 @@ public partial class VM : INamedResolver
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var type = constants[type_idx].itype.Get();
 
-          InitDefaultVal(type, module.gvars[var_idx]);
+          InitDefaultVal(type, module.gvar_vals[var_idx]);
         }
         break;
         //NOTE: operates on global vars
@@ -575,7 +547,7 @@ public partial class VM : INamedResolver
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
 
           var new_val = init_frame._stack.Pop();
-          module.gvars.Assign(this, var_idx, new_val);
+          module.gvar_vals.Assign(this, var_idx, new_val);
           new_val.Release();
         }
         break;
@@ -657,20 +629,20 @@ public partial class VM : INamedResolver
     }
   }
 
-  void ExecModuleInitFunc(CompiledModule cm)
+  void ExecModuleInitFunc(Module module)
   {
-    if(cm.init_func_idx == -1)
+    if(module.init_func_idx == -1)
       return;
     
-    var fs = (FuncSymbolScript)cm.ns.members[cm.init_func_idx];
+    var fs = (FuncSymbolScript)module.ns.members[module.init_func_idx];
     var addr = new FuncAddr() {
-      module = cm,
+      module = module,
       fs = fs,
       ip = fs.ip_addr
     };
     var fb = Start(addr);
     if(Tick(fb))
-      throw new Exception("Module '" + cm.name + "' init function is still running");
+      throw new Exception("Module '" + module.name + "' init function is still running");
   }
 
   public Fiber Start(string func, params Val[] args)
@@ -777,7 +749,7 @@ public partial class VM : INamedResolver
     addr = new VarAddr() {
       module = cm,
       vs = vs,
-      val = cm.gvars[vs.scope_idx]
+      val = cm.gvar_vals[vs.scope_idx]
     };
 
     return true;
@@ -808,7 +780,7 @@ public partial class VM : INamedResolver
     //      the module where the found symbol actually resides?
     var cm = compiled_mods[((Namespace)symb.scope).module.name];
 
-    ms.cm = cm;
+    ms.module = cm;
     ms.symbol = symb;
 
     symbol_spec2module.Add(spec, ms);
@@ -827,10 +799,10 @@ public partial class VM : INamedResolver
     return null;
   }
 
-  static FuncSymbolScript TryMapIp2Func(CompiledModule cm, int ip)
+  static FuncSymbolScript TryMapIp2Func(Module m, int ip)
   {
     FuncSymbolScript fsymb = null;
-    cm.ns.ForAllLocalSymbols(delegate(Symbol s) {
+    m.ns.ForAllLocalSymbols(delegate(Symbol s) {
       if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
         fsymb = ftmp;
     });
@@ -1292,7 +1264,7 @@ public partial class VM : INamedResolver
       {
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
 
-        exec.stack.PushRetain(curr_frame.module.gvars[var_idx]);
+        exec.stack.PushRetain(curr_frame.module.gvar_vals[var_idx]);
       }
       break;
       case Opcodes.SetGVar:
@@ -1300,7 +1272,7 @@ public partial class VM : INamedResolver
         int var_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
 
         var new_val = exec.stack.Pop();
-        curr_frame.module.gvars.Assign(this, var_idx, new_val);
+        curr_frame.module.gvar_vals.Assign(this, var_idx, new_val);
         new_val.Release();
       }
       break;
@@ -1343,7 +1315,7 @@ public partial class VM : INamedResolver
 
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame.module, ip_addr);
-        var func_symb = curr_frame.module.module._ip2func[ip_addr];
+        var func_symb = curr_frame.module._ip2func[ip_addr];
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
@@ -1414,7 +1386,7 @@ public partial class VM : INamedResolver
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
-        var func_symb = curr_frame.module._imported[import_idx].module.funcs.index[func_idx];
+        var func_symb = curr_frame.module._imported[import_idx].funcs.index[func_idx];
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, exec.stack, func_symb._module, func_symb.ip_addr);

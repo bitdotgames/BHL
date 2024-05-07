@@ -591,7 +591,7 @@ public class BHL_TestBase
       ts_fn);
   }
 
-  public static VM MakeVM(CompiledModule orig_cm, Action<Types> ts_fn = null)
+  public static VM MakeVM(bhl.Module orig_cm, Action<Types> ts_fn = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
@@ -669,9 +669,9 @@ public class BHL_TestBase
 
   public class TestImporter : IModuleLoader
   {
-    public Dictionary<string, CompiledModule> mods = new Dictionary<string, CompiledModule>();
+    public Dictionary<string, bhl.Module> mods = new Dictionary<string, bhl.Module>();
 
-    public CompiledModule Load(string name, INamedResolver resolver, System.Action<string, string> on_import)
+    public bhl.Module Load(string name, INamedResolver resolver, System.Action<string, string> on_import)
     {
       return mods[name];
     }
@@ -695,77 +695,77 @@ public class BHL_TestBase
     return files.Count-1;
   }
 
-  public static int ConstIdx(CompiledModule cm, string str)
+  public static int ConstIdx(bhl.Module module, string str)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.STR && cn.str == str)
         return i;
     }
     throw new Exception("Constant not found: " + str);
   }
 
-  public static int ConstIdx(CompiledModule cm, int num)
+  public static int ConstIdx(bhl.Module module, int num)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.INT && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstIdx(CompiledModule cm, double num)
+  public static int ConstIdx(bhl.Module module, double num)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.FLT && cn.num == num)
         return i;
     }
     throw new Exception("Constant not found: " + num);
   }
 
-  public static int ConstIdx(CompiledModule cm, bool v)
+  public static int ConstIdx(bhl.Module module, bool v)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
         return i;
     }
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int ConstIdx(CompiledModule cm, Proxy<INamed> v)
+  public static int ConstIdx(bhl.Module module, Proxy<INamed> v)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.INAMED && cn.inamed.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int ConstIdx(CompiledModule cm, Proxy<IType> v)
+  public static int ConstIdx(bhl.Module module, Proxy<IType> v)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.ITYPE && cn.itype.Equals(v))
         return i;
     }
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int ConstNullIdx(CompiledModule cm)
+  public static int ConstNullIdx(bhl.Module module)
   {
-    for(int i=0;i<cm.constants.Count;++i)
+    for(int i=0;i<module.constants.Count;++i)
     {
-      var cn = cm.constants[i];
+      var cn = module.constants[i];
       if(cn.type == ConstType.NIL)
         return i;
     }
@@ -1040,7 +1040,7 @@ public class BHL_TestBase
     return CompileFiles(new CompilationExecutor(), conf);
   }
 
-  public CompiledModule Compile(
+  public bhl.Module Compile(
     string bhl, 
     Action<Types> ts_fn = null, 
     bool show_ast = false, 
@@ -1190,12 +1190,12 @@ public class BHL_TestBase
     AssertEqual(ca.Compile(), cb.Compile());
   }
 
-  public static void AssertEqual(CompiledModule ca, ModuleCompiler cb)
+  public static void AssertEqual(bhl.Module ca, ModuleCompiler cb)
   {
     AssertEqual(ca, cb.Compile());
   }
 
-  public static void AssertEqual(CompiledModule ca, CompiledModule cb)
+  public static void AssertEqual(bhl.Module ca, bhl.Module cb)
   {
     string cmp;
 
@@ -1217,15 +1217,15 @@ public class BHL_TestBase
     Dump(c.Compile());
   }
 
-  static void Dump(CompiledModule c)
+  static void Dump(bhl.Module module)
   {
-    if(c.initcode?.Length > 0)
+    if(module.initcode?.Length > 0)
     {
       Console.WriteLine("=== INIT ===");
-      Dump(c.initcode);
+      Dump(module.initcode);
     }
     Console.WriteLine("=== CODE ===");
-    Dump(c.bytecode);
+    Dump(module.bytecode);
   }
 
   static void Dump(byte[] bs)

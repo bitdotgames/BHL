@@ -14,7 +14,6 @@ public class TestMarshall : BHL_TestBase
     {
       var ts = new Types();
       var m = new Module(ts);
-      var cm = new CompiledModule(m);
 
       var ns = m.ns;
       ns.Link(ts.ns);
@@ -52,19 +51,19 @@ public class TestMarshall : BHL_TestBase
       Enum.TryAddItem(null, "Type2", 2);
       ns.Define(Enum);
 
-      CompiledModule.ToStream(cm, s, leave_open: true);
+      CompiledModule.ToStream(m, s, leave_open: true);
     }
 
     {
       var ts = new Types();
 
       s.Position = 0;
-      var cm = CompiledModule.FromStream(ts, s);
+      var m = CompiledModule.FromStream(ts, s);
       
       //NOTE: right after un-marshalling module must be setup explicitely
-      cm.Setup(name => null);
+      m.Setup(name => null);
 
-      var ns = cm.ns;
+      var ns = m.ns;
 
       AssertEqual(9 + ts.ns.members.Count, ns.GetSymbolsIterator().Count);
       AssertEqual(9, ns.members.Count);

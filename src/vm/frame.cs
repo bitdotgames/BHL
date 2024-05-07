@@ -16,7 +16,7 @@ public partial class VM : INamedResolver
 
     public VM vm;
     public Fiber fb;
-    public CompiledModule module;
+    public Module module;
 
     public byte[] bytecode;
     public List<Const> constants;
@@ -81,7 +81,7 @@ public partial class VM : INamedResolver
       );
     }
 
-    public void Init(Fiber fb, Frame origin, ValStack origin_stack, CompiledModule module, int start_ip)
+    public void Init(Fiber fb, Frame origin, ValStack origin_stack, Module module, int start_ip)
     {
       Init(
         fb, 
@@ -94,7 +94,7 @@ public partial class VM : INamedResolver
       );
     }
 
-    internal void Init(Fiber fb, Frame origin, ValStack origin_stack, CompiledModule module, List<Const> constants, byte[] bytecode, int start_ip)
+    internal void Init(Fiber fb, Frame origin, ValStack origin_stack, Module module, List<Const> constants, byte[] bytecode, int start_ip)
     {
       this.fb = fb;
       this.origin = origin;

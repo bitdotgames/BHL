@@ -967,25 +967,25 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var cm = vm.FindModule("");
-    AssertTrue(cm.ns.module != null);
-    AssertEqual(cm.ns.members.Count, 1);
+    var m = vm.FindModule("");
+    AssertTrue(m.ns.module != null);
+    AssertEqual(m.ns.members.Count, 1);
 
-    var bar = cm.ns.members[0] as Namespace;
+    var bar = m.ns.members[0] as Namespace;
     AssertTrue(bar != null);
     AssertEqual(bar.name, "bar");
-    AssertTrue(bar.module == cm.ns.module);
+    AssertTrue(bar.module == m.ns.module);
     AssertEqual(bar.members.Count, 2);
 
     var foo = bar.members[1] as Namespace;
     AssertTrue(foo != null);
     AssertEqual(foo.name, "foo");
-    AssertTrue(foo.module == cm.ns.module);
+    AssertTrue(foo.module == m.ns.module);
     AssertEqual(foo.members.Count, 1);
 
-    AssertEqual(cm.module.gvars.Count, 2);
-    AssertEqual(cm.module.gvars[0].name, "A");
-    AssertEqual(cm.module.gvars[1].name, "B");
+    AssertEqual(m.gvars.Count, 2);
+    AssertEqual(m.gvars[0].name, "A");
+    AssertEqual(m.gvars[1].name, "B");
 
     CommonChecks(vm);
   }

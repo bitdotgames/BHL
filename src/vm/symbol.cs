@@ -1857,8 +1857,8 @@ public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13; 
 
-  //cached value of CompiledModule, it's set upon module loading in VM and 
-  internal CompiledModule _module;
+  //cached value of Module, it's set upon module loading in VM and 
+  internal Module _module;
 
   //used for up values resolving during parsing
   internal LocalScope _current_scope;

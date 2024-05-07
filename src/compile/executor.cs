@@ -140,7 +140,7 @@ public class CompilationExecutor
     public FileImports imports_maybe;
     public ANTLR_Parsed parsed;
     //loaded from cache compiled result
-    public CompiledModule compiled;
+    public Module compiled;
   }
 
   public int cache_hits { get; private set; }
@@ -240,7 +240,7 @@ public class CompilationExecutor
 
     //3. create ANTLR processors for non-compiled files
     var file2proc = new Dictionary<string, ANTLR_Processor>(); 
-    var file2compiled = new Dictionary<string, CompiledModule>(); 
+    var file2compiled = new Dictionary<string, Module>(); 
 
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
@@ -736,7 +736,7 @@ public class CompilationExecutor
 
           if(interim.compiled != null)
           {
-            w.file2ns.Add(current_file, interim.compiled.module.ns);
+            w.file2ns.Add(current_file, interim.compiled.ns);
           }
           else
           {
