@@ -13,7 +13,8 @@ public class TestMarshall : BHL_TestBase
     var s = new MemoryStream();
     {
       var ts = new Types();
-      var m = new Module(ts);
+      var m = new Module(ts, "dummy");
+      m.InitCompiled();
 
       var ns = m.ns;
       ns.Link(ts.ns);
@@ -60,7 +61,7 @@ public class TestMarshall : BHL_TestBase
       s.Position = 0;
       var m = CompiledModule.FromStream(ts, s);
       
-      //NOTE: right after un-marshalling module must be setup explicitely
+      //NOTE: right after un-marshalling module must be setup explicitly
       m.Setup(name => null);
 
       var ns = m.ns;

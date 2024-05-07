@@ -167,10 +167,9 @@ public class Module
     
     for(int i=0; i<imports.Count; ++i)
     {
-      //TODO: what about 'native' modules?
       var imported = name2module(imports[i]);
       if(imported == null)
-        continue;
+        throw new Exception("Module '" + imports[i] + "' not found");
 
       _imported[i] = imported;
       
@@ -192,13 +191,13 @@ public class Module
         {
           cs.Setup();
 
-          foreach (var kv in cs._vtable)
+          foreach(var kv in cs._vtable)
           {
-            if (kv.Value is FuncSymbolScript vfs)
+            if(kv.Value is FuncSymbolScript vfs)
               PrepareFuncSymbol(vfs, name2module);
           }
         }
-        else if (s is VariableSymbol vs && vs.scope is Namespace)
+        else if(s is VariableSymbol vs && vs.scope is Namespace)
           gvars.index.Add(vs);
         else if (s is FuncSymbolScript fs)
           PrepareFuncSymbol(fs, name2module);
@@ -220,12 +219,9 @@ public class Module
       if(fss._module == null)
       {
         var mod_name = fss.GetModule().name;
-        if (!string.IsNullOrEmpty(mod_name))
-        {
-          fss._module = name2module(mod_name);
-          if (fss._module == null)
-            throw new Exception("Module '" + mod_name + "' not found");
-        }
+        fss._module = mod_name == name ? this : name2module(mod_name);
+        if(fss._module == null)
+          throw new Exception("Module '" + mod_name + "' not found");
       }
     }
   }
