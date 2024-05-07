@@ -248,34 +248,33 @@ public class CompiledModule
         else if(s is VariableSymbol vs && vs.scope is Namespace)
           module.gvars.index.Add(vs);
         else if(s is FuncSymbolScript fs)
-        {
-          module._ip2func[fs.ip_addr] = fs;
-          
-          if(!(fs.scope is InterfaceSymbol))
-          {
-            module.funcs.index.Add(fs);
-            PrepareFuncSymbol(fs, name2module);
-          }
-        }
+          PrepareFuncSymbol(fs, name2module);
       }
     );
   }
   
-  static void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, CompiledModule> name2module)
+  void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, CompiledModule> name2module)
   {
-    if(fss._module == null)
-    {
-      var mod_name = fss.GetModule().name;
-      if(!string.IsNullOrEmpty(mod_name))
-      {
-        fss._module = name2module(mod_name);
-        if(fss._module == null)
-          throw new Exception("Module '" + mod_name + "' not found");
-      }
-    }
-
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
+    
+    module._ip2func[fss.ip_addr] = fss;
+
+    if(!(fss.scope is InterfaceSymbol))
+    {
+      module.funcs.index.Add(fss);
+      
+      if(fss._module == null)
+      {
+        var mod_name = fss.GetModule().name;
+        if (!string.IsNullOrEmpty(mod_name))
+        {
+          fss._module = name2module(mod_name);
+          if (fss._module == null)
+            throw new Exception("Module '" + mod_name + "' not found");
+        }
+      }
+    }
   }
 
   static void ReadConstants(SymbolFactory symb_factory, byte[] constant_bytes, List<Const> constants)
