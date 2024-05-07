@@ -81,7 +81,7 @@ public class CompiledModule
     List<Const> constants, 
     byte[] initcode,
     byte[] bytecode, 
-    Ip2SrcLine ip2src_line = null
+    Ip2SrcLine ip2src_line
   )
   {
     this.module = module;
@@ -94,6 +94,20 @@ public class CompiledModule
 
     gvars.Resize(total_gvars_num);
   }
+  
+  //convenience version for tests
+  public CompiledModule(Module m)
+    : this(
+      m, 
+      -1, 
+      0, 
+      new List<string>(),
+      new List<Const>(),
+      new byte[0],
+      new byte[0],
+      new Ip2SrcLine()
+      )
+  {}
 
   static public CompiledModule FromStream(
     Types types, 
@@ -176,21 +190,6 @@ public class CompiledModule
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 
-    //NOTE: symbols are added to indices explicitely. Normally it happens when we define
-    //      symbols in scopes/modules but here we unmarshall symbols from the cache and
-    //      have to restore these indices 'manually'. This looks a bit like code duplication.
-    //let's restore required object connections after unmarshalling
-    module.ns.ForAllLocalSymbols((s) => 
-      {
-        if(s is Namespace ns)
-          ns.module = module;
-        else if(s is VariableSymbol vs && vs.scope is Namespace)
-          module.gvars.index.Add(vs);
-        else if(s is FuncSymbolScript fss)
-          module.funcs.index.Add(fss);
-      }
-    );
-
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
 
@@ -205,6 +204,78 @@ public class CompiledModule
         bytecode, 
         ip2src_line
      );
+  }
+
+  public void Setup(Func<string, CompiledModule> name2module)
+  {
+    int gvars_offset = module.local_gvars_num;
+
+    _imported = new CompiledModule[imports.Count];
+    
+    for(int i=0; i<imports.Count; ++i)
+    {
+      //TODO: what about 'native' modules?
+      var imported_module = name2module(imports[i]);
+      if(imported_module == null)
+        continue;
+
+      _imported[i] = imported_module;
+      
+      //NOTE: taking only local imported module's gvars
+      for(int g=0;g<imported_module.module.local_gvars_num;++g)
+      {
+        var imp_gvar = imported_module.gvars[g];
+        imp_gvar.Retain();
+        gvars[gvars_offset] = imp_gvar;
+        ++gvars_offset;
+      }
+    }
+
+    ns.ForAllLocalSymbols(delegate(Symbol s)
+      {
+        if(s is Namespace ns)
+          ns.module = module;
+        else if(s is ClassSymbol cs)
+        {
+          cs.Setup();
+          
+          foreach(var kv in cs._vtable)
+          {
+            if(kv.Value is FuncSymbolScript vfs)
+              PrepareFuncSymbol(vfs, name2module);
+          }
+        }
+        else if(s is VariableSymbol vs && vs.scope is Namespace)
+          module.gvars.index.Add(vs);
+        else if(s is FuncSymbolScript fs)
+        {
+          module._ip2func[fs.ip_addr] = fs;
+          
+          if(!(fs.scope is InterfaceSymbol))
+          {
+            module.funcs.index.Add(fs);
+            PrepareFuncSymbol(fs, name2module);
+          }
+        }
+      }
+    );
+  }
+  
+  static void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, CompiledModule> name2module)
+  {
+    if(fss._module == null)
+    {
+      var mod_name = fss.GetModule().name;
+      if(!string.IsNullOrEmpty(mod_name))
+      {
+        fss._module = name2module(mod_name);
+        if(fss._module == null)
+          throw new Exception("Module '" + mod_name + "' not found");
+      }
+    }
+
+    if(fss.ip_addr == -1)
+      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
   }
 
   static void ReadConstants(SymbolFactory symb_factory, byte[] constant_bytes, List<Const> constants)
@@ -248,9 +319,9 @@ public class CompiledModule
     }
   }
 
-  static public void ToStream(CompiledModule cm, Stream dst)
+  static public void ToStream(CompiledModule cm, Stream dst, bool leave_open = false)
   {
-    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
+    using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8, leave_open))
     {
       //TODO: add better support for version
       //TODO: introduce header info with offsets to data

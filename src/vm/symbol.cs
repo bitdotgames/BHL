@@ -214,13 +214,13 @@ public class VarSymbol : Symbol
   {}
 }
 
-public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsIteratable
+public abstract class InterfaceSymbol : Symbol, IInstantiable, ISymbolsIteratable
 {
   internal SymbolsStorage members;
 
   public TypeSet<InterfaceSymbol> inherits = new TypeSet<InterfaceSymbol>();
 
-  HashSet<IInstanceType> related_types;
+  HashSet<IInstantiable> related_types;
 
   public InterfaceSymbol(Origin origin, string name)
     : base(origin, name)
@@ -275,15 +275,15 @@ public abstract class InterfaceSymbol : Symbol, IScope, IInstanceType, ISymbolsI
     return Resolve(name) as FuncSymbol;
   }
 
-  public HashSet<IInstanceType> GetAllRelatedTypesSet()
+  public HashSet<IInstantiable> GetAllRelatedTypesSet()
   {
     if(related_types == null)
     {
-      related_types = new HashSet<IInstanceType>();
+      related_types = new HashSet<IInstantiable>();
       related_types.Add(this);
       for(int i=0;i<inherits.Count;++i)
       {
-        var ext = (IInstanceType)inherits[i];
+        var ext = (IInstantiable)inherits[i];
         if(!related_types.Contains(ext))
           related_types.UnionWith(ext.GetAllRelatedTypesSet());
       }
@@ -385,7 +385,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
   }
 }
 
-public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsIteratable
+public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
 {
   public ClassSymbol super_class {
     get {
@@ -404,7 +404,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
   internal Dictionary<InterfaceSymbol, List<FuncSymbol>> _itable;
   internal Dictionary<int, FuncSymbol> _vtable;
 
-  HashSet<IInstanceType> related_types;
+  HashSet<IInstantiable> related_types;
 
   //contains only 'local' members without taking into account inheritance
   internal SymbolsStorage members;
@@ -442,7 +442,11 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
       SetImplementedInterfaces(implements);
   }
 
-  public ISymbolsIterator GetSymbolsIterator() { return _all_members; }
+  //NOTE: only once the class is Setup we have valid members iterator
+  public ISymbolsIterator GetSymbolsIterator()
+  {
+    return _all_members;
+  }
 
   public IScope GetFallbackScope() 
   {
@@ -493,7 +497,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
     {
       if(IsBinaryOp(fs.name))
         CheckBinaryOpOverload(fs);
-      
+
       if(fs is FuncSymbolScript fss)
         this.GetModule().funcs.Index(fss);
     }
@@ -683,7 +687,7 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
     //interfaces lookup table
     _itable = new Dictionary<InterfaceSymbol, List<FuncSymbol>>();
 
-    var all = new HashSet<IInstanceType>();
+    var all = new HashSet<IInstantiable>();
     if(super_class != null)
     {
       for(int i=0;i<super_class.implements.Count;++i)
@@ -709,11 +713,11 @@ public abstract class ClassSymbol : Symbol, IScope, IInstanceType, ISymbolsItera
     }
   }
 
-  public HashSet<IInstanceType> GetAllRelatedTypesSet()
+  public HashSet<IInstantiable> GetAllRelatedTypesSet()
   {
     if(related_types == null)
     {
-      related_types = new HashSet<IInstanceType>();
+      related_types = new HashSet<IInstantiable>();
       related_types.Add(this);
       if(super_class != null)
         related_types.UnionWith(super_class.GetAllRelatedTypesSet());

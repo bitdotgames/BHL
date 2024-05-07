@@ -633,7 +633,7 @@ public class Types : INamedResolver
       return false;
     else if(type.Equals(dest_type))
       return true;
-    else if(type is IInstanceType ti && dest_type is IInstanceType di)
+    else if(type is IInstantiable ti && dest_type is IInstantiable di)
     {
       var tset = ti.GetAllRelatedTypesSet();
       var dset = di.GetAllRelatedTypesSet();
@@ -717,7 +717,7 @@ public class Types : INamedResolver
            lhs == Any ||
            (lhs == Types.Int && rhs is EnumSymbol) ||
            (is_subset_of.Contains(new Tuple<IType, IType>(rhs, lhs))) ||
-           (lhs is IInstanceType && rhs == Null) ||
+           (lhs is IInstantiable && rhs == Null) ||
            (lhs is FuncSignature && rhs == Null) || 
            Is(rhs, lhs)
            ;

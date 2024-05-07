@@ -1249,7 +1249,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           );
 
         scope = curr_type as IScope;
-        if(!(scope is IInstanceType) && !(scope is EnumSymbol))
+        if(!(scope is IInstantiable) && !(scope is EnumSymbol))
         {
           AddError(macc, "type doesn't support member access via '.'");
           return false;
@@ -1488,7 +1488,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         {
           var ftype = var_symb.type.Get() as FuncSignature;
 
-          if(!(scope is IInstanceType))
+          if(!(scope is IInstantiable))
           {
             ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
@@ -1506,7 +1506,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstanceType && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? 
+          ast = new AST_Call(scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? 
             EnumCall.MFUNC : EnumCall.FUNC, 
             line, 
             func_symb,

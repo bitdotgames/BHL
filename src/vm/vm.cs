@@ -511,57 +511,11 @@ public partial class VM : INamedResolver
     foreach(var imp in cm.imports)
       cm.ns.Link(FindModuleNamespace(imp));
 
-    int gvars_offset = cm.module.local_gvars_num;
-
-    cm._imported = new CompiledModule[cm.imports.Count];
-    
-    for(int i=0; i<cm.imports.Count; ++i)
+    cm.Setup(name =>
     {
-      string imp = cm.imports[i];
-      
-      //TODO: what about 'native' modules?
-      if(!compiled_mods.TryGetValue(imp, out var imp_mod))
-        continue;
-
-      cm._imported[i] = imp_mod;
-      
-      //NOTE: taking only local imported module's gvars
-      for(int g=0;g<imp_mod.module.local_gvars_num;++g)
-      {
-        var imp_gvar = imp_mod.gvars[g];
-        imp_gvar.Retain();
-        cm.gvars[gvars_offset] = imp_gvar;
-        ++gvars_offset;
-      }
-    }
-
-    cm.ns.SetupSymbols();
-
-    cm.ns.ForAllLocalSymbols(delegate(Symbol s)
-      {
-        if(s is ClassSymbol cs)
-        {
-          foreach(var kv in cs._vtable)
-          {
-            if(kv.Value is FuncSymbolScript vfs)
-              PrepareFuncSymbol(cm, vfs);
-          }
-        }
-        else if(s is FuncSymbolScript fs && !(fs.scope is InterfaceSymbol))
-        {
-          PrepareFuncSymbol(cm, fs);
-        }
-      }
-    );
-  }
-
-  void PrepareFuncSymbol(CompiledModule cm, FuncSymbolScript fss)
-  {
-    if(fss._module == null)
-      fss._module = compiled_mods[fss.GetNamespace().module.name];
-
-    if(fss.ip_addr == -1)
-      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
+      compiled_mods.TryGetValue(name, out var tmp);
+      return tmp;
+    });
   }
 
   public void UnloadModule(string module_name)

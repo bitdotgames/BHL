@@ -33,9 +33,9 @@ public interface ISymbolsIteratable
   ISymbolsIterator GetSymbolsIterator();
 }
 
-public interface IInstanceType : IType, IScope 
+public interface IInstantiable : IType, IScope 
 {
-  HashSet<IInstanceType> GetAllRelatedTypesSet();
+  HashSet<IInstantiable> GetAllRelatedTypesSet();
 }
 
 public class LocalScope : IScope, ISymbolsIteratable
@@ -410,18 +410,6 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref members);
   }
-
-  public void SetupSymbols()
-  {
-    ForAllLocalSymbols((s) => 
-      {
-        if(s is ClassSymbolScript cs)
-          cs.Setup();
-        else if(s is FuncSymbolScript fs && module != null)
-          module._ip2func[fs.ip_addr] = fs;
-      }
-    );
-  }
 }
 
 public static class ScopeExtensions
@@ -625,7 +613,7 @@ public static class ScopeExtensions
 
   public static Symbol ResolveRelatedOnly(this IScope scope, string name)
   {
-    if(scope is IInstanceType iitype)
+    if(scope is IInstantiable iitype)
     {
       var type_set = iitype.GetAllRelatedTypesSet();
       foreach(var item in type_set)
@@ -688,11 +676,11 @@ public static class ScopeExtensions
   {
     if(!(scope is ISymbolsIteratable isi))
       return;
-    
-    var idx = isi.GetSymbolsIterator();
-    for(int i=0;i<idx?.Count;++i)
+
+    var it = isi.GetSymbolsIterator();
+    for(int i=0;i<it.Count;++i)
     {
-      var m = idx[i];
+      var m = it[i];
       cb(m);
       if(m is IScope s)
         s.ForAllSymbols(cb);

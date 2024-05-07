@@ -1256,7 +1256,7 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumCall.MFUNC:
       {
-        var instance_type = ast.symb.scope as IInstanceType;
+        var instance_type = ast.symb.scope as IInstantiable;
         if(instance_type == null)
           throw new Exception("Not instance type: " + ast.symb.name);
 
