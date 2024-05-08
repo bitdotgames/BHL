@@ -227,7 +227,7 @@ public partial class VM : INamedResolver
           else
             item.file = fsymb._module.name + ".bhl";
           item.func = fsymb == null ? "?" : fsymb.name;
-          item.line = frm.module.ip2src_line.TryMap(item.ip);
+          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
         }
         else
         {

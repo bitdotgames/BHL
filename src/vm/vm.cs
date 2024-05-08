@@ -519,11 +519,11 @@ public partial class VM : INamedResolver
 
   void ExecInitCode(Module module)
   {
-    var bytecode = module.initcode;
+    var bytecode = module.compiled.initcode;
     if(bytecode == null || bytecode.Length == 0)
       return;
 
-    var constants = module.constants;
+    var constants = module.compiled.constants;
 
     int ip = 0;
 
@@ -633,10 +633,10 @@ public partial class VM : INamedResolver
 
   void ExecModuleInitFunc(Module module)
   {
-    if(module.init_func_idx == -1)
+    if(module.compiled.init_func_idx == -1)
       return;
     
-    var fs = (FuncSymbolScript)module.ns.members[module.init_func_idx];
+    var fs = (FuncSymbolScript)module.ns.members[module.compiled.init_func_idx];
     var addr = new FuncAddr() {
       module = module,
       fs = fs,

@@ -697,9 +697,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, string str)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.STR && cn.str == str)
         return i;
     }
@@ -708,9 +708,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, int num)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.INT && cn.num == num)
         return i;
     }
@@ -719,9 +719,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, double num)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.FLT && cn.num == num)
         return i;
     }
@@ -730,9 +730,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, bool v)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
         return i;
     }
@@ -741,9 +741,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, Proxy<INamed> v)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.INAMED && cn.inamed.Equals(v))
         return i;
     }
@@ -752,9 +752,9 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, Proxy<IType> v)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.ITYPE && cn.itype.Equals(v))
         return i;
     }
@@ -763,9 +763,9 @@ public class BHL_TestBase
 
   public static int ConstNullIdx(bhl.Module module)
   {
-    for(int i=0;i<module.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Count;++i)
     {
-      var cn = module.constants[i];
+      var cn = module.compiled.constants[i];
       if(cn.type == ConstType.NIL)
         return i;
     }
@@ -1160,7 +1160,7 @@ public class BHL_TestBase
 
   public static void Print(ModuleCompiler c)
   {
-    var bs = c.Compile().bytecode;
+    var bs = c.Compile().compiled.bytecode;
     ModuleCompiler.Definition op = null;
     int op_size = 0;
 
@@ -1200,13 +1200,13 @@ public class BHL_TestBase
   {
     string cmp;
 
-    if(!CompareCode(ca.initcode, cb.initcode, out cmp))
+    if(!CompareCode(ca.compiled.initcode, cb.compiled.initcode, out cmp))
     {
       Console.WriteLine(cmp);
       throw new Exception("Assertion failed: init bytes not equal");
     }
 
-    if(!CompareCode(ca.bytecode, cb.bytecode, out cmp))
+    if(!CompareCode(ca.compiled.bytecode, cb.compiled.bytecode, out cmp))
     {
       Console.WriteLine(cmp);
       throw new Exception("Assertion failed: bytes not equal");
@@ -1220,13 +1220,13 @@ public class BHL_TestBase
 
   static void Dump(bhl.Module module)
   {
-    if(module.initcode?.Length > 0)
+    if(module.compiled?.initcode?.Length > 0)
     {
       Console.WriteLine("=== INIT ===");
-      Dump(module.initcode);
+      Dump(module.compiled.initcode);
     }
     Console.WriteLine("=== CODE ===");
-    Dump(module.bytecode);
+    Dump(module.compiled.bytecode);
   }
 
   static void Dump(byte[] bs)

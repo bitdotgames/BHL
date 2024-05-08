@@ -206,14 +206,16 @@ public class ModuleCompiler : AST_Visitor
       Bake(out init_bytes, out code_bytes, out ip2src_line);
 
       result = interim;
-      result.InitCompiled(
-        init_func_idx,
-        interim.gvar_index.Count,
-        imports,
-        constants, 
-        init_bytes,
-        code_bytes,
-        ip2src_line
+      result.InitWithCompiled(
+        new CompiledModule(
+          init_func_idx,
+          imports, 
+          interim.gvar_index.Count,
+          constants, 
+          init_bytes,
+          code_bytes,
+          ip2src_line
+        )
       );    
     }
 

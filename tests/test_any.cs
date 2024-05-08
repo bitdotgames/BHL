@@ -31,7 +31,7 @@ public class TestAny : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.constants.Count, 1);
+    AssertEqual(c.compiled.constants.Count, 1);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");

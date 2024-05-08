@@ -42,9 +42,50 @@ public class Ip2SrcLine
   }
 }
 
-public static class CompiledModule
+public class CompiledModule
 {
   const uint HEADER_VERSION = 2;
+  
+  public static CompiledModule Empty = new CompiledModule();
+  
+  //normalized imported module names
+  public List<string> imports;
+  public int total_gvars_num;
+  public byte[] initcode;
+  public byte[] bytecode;
+  public List<Const> constants;
+  public Ip2SrcLine ip2src_line;
+  public int init_func_idx = -1;
+
+  public CompiledModule(
+    int init_func_idx,
+    List<string> imports,
+    int total_gvars_num,
+    List<Const> constants,
+    byte[] initcode,
+    byte[] bytecode,
+    Ip2SrcLine ip2src_line)
+  {
+    this.init_func_idx = init_func_idx;
+    this.imports = imports;
+    this.total_gvars_num = total_gvars_num;
+    this.constants = constants;
+    this.initcode = initcode;
+    this.bytecode = bytecode;
+    this.ip2src_line = ip2src_line;
+  }
+  
+  public CompiledModule()
+    : this(
+      -1,
+      new List<string>(),
+      0,
+      new List<Const>(),
+      new byte[0],
+      new byte[0],
+      new Ip2SrcLine()
+    )
+  {}
 
   static public Module FromStream(
     Types types, 
@@ -129,16 +170,19 @@ public static class CompiledModule
 
     if(constants_len > 0)
       ReadConstants(symb_factory, constant_bytes, constants);
-    
-    module.InitCompiled(
+
+    var compiled = new CompiledModule(
         init_func_idx,
-        total_gvars_num,
         imports,
+        total_gvars_num,
         constants, 
         initcode, 
         bytecode, 
         ip2src_line
-     );
+      );
+    
+    module.InitWithCompiled(compiled);
+     
     return module;
   }
 
@@ -194,25 +238,25 @@ public static class CompiledModule
       w.Write(module.name);
       w.Write(module.file_path);
       
-      w.Write(module.init_func_idx);
+      w.Write(module.compiled.init_func_idx);
 
-      w.Write(module.imports.Count);
-      foreach(var import in module.imports)
+      w.Write(module.compiled.imports.Count);
+      foreach(var import in module.compiled.imports)
         w.Write(import);
 
       var symb_bytes = marshall.Marshall.Obj2Bytes(module.ns);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
-      w.Write(module.initcode == null ? (int)0 : module.initcode.Length);
-      if(module.initcode != null)
-        w.Write(module.initcode, 0, module.initcode.Length);
+      w.Write(module.compiled.initcode == null ? (int)0 : module.compiled.initcode.Length);
+      if(module.compiled.initcode != null)
+        w.Write(module.compiled.initcode, 0, module.compiled.initcode.Length);
 
-      w.Write(module.bytecode == null ? (int)0 : module.bytecode.Length);
-      if(module.bytecode != null)
-        w.Write(module.bytecode, 0, module.bytecode.Length);
+      w.Write(module.compiled.bytecode == null ? (int)0 : module.compiled.bytecode.Length);
+      if(module.compiled.bytecode != null)
+        w.Write(module.compiled.bytecode, 0, module.compiled.bytecode.Length);
 
-      var constant_bytes = WriteConstants(module.constants);
+      var constant_bytes = WriteConstants(module.compiled.constants);
       w.Write(constant_bytes.Length);
       if(constant_bytes.Length > 0)
         w.Write(constant_bytes, 0, constant_bytes.Length);
@@ -221,11 +265,11 @@ public static class CompiledModule
       w.Write(module.local_gvars_num);
 
       //TODO: add this info only for development builds
-      w.Write(module.ip2src_line.ips.Count);
-      for(int i=0;i<module.ip2src_line.ips.Count;++i)
+      w.Write(module.compiled.ip2src_line.ips.Count);
+      for(int i=0;i<module.compiled.ip2src_line.ips.Count;++i)
       {
-        w.Write(module.ip2src_line.ips[i]);
-        w.Write(module.ip2src_line.lines[i]);
+        w.Write(module.compiled.ip2src_line.ips[i]);
+        w.Write(module.compiled.ip2src_line.lines[i]);
       }
     }
   }

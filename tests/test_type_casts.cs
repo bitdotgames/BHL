@@ -30,7 +30,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.constants.Count, 2);
+    AssertEqual(c.compiled.constants.Count, 2);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -64,7 +64,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.constants.Count, 2);
+    AssertEqual(c.compiled.constants.Count, 2);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -100,7 +100,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.constants.Count, 3);
+    AssertEqual(c.compiled.constants.Count, 3);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -136,7 +136,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    AssertEqual(c.constants.Count, 3);
+    AssertEqual(c.compiled.constants.Count, 3);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");

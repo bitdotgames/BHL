@@ -88,8 +88,8 @@ public partial class VM : INamedResolver
         origin,
         origin_stack,
         module, 
-        module.constants, 
-        module.bytecode, 
+        module.compiled.constants, 
+        module.compiled.bytecode, 
         start_ip
       );
     }

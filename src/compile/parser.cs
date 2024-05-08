@@ -861,7 +861,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //before linking create local linked namespaces
     foreach(var kv in proc_bundle.file2cached)
     {
-      foreach(string import in kv.Value.imports)
+      foreach(string import in kv.Value.compiled.imports)
         kv.Value.ns.TryMakeLocalLinkedNamespaces(all[import].ns);
     }
 

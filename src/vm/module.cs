@@ -16,7 +16,7 @@ public class ModulePath
 }
 
 //NOTE: represents a module which can be both a compiled one or
-//      the one created in C#
+//      the one registered in C#
 public class Module
 {
   public const int MAX_GLOBALS = 128;
@@ -31,12 +31,17 @@ public class Module
       return path.file_path;
     }
   }
+
+  public bool is_compiled {
+    get {
+      return compiled != CompiledModule.Empty;
+    }
+  }
+  
   public ModulePath path;
   
   public Namespace ns;
 
-  public bool is_native = true;
-  
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
   public VarScopeIndexer gvar_index = new VarScopeIndexer();
@@ -50,10 +55,6 @@ public class Module
   //used for assigning incremental module indexes to funcs
   public FuncModuleIndexer func_index = new FuncModuleIndexer();
 
-  //TODO: probably we need script functions per module indexer, like gvars?
-  //setup once the module is loaded to find functions by their ip
-  internal Dictionary<int, FuncSymbolScript> _ip2func = new Dictionary<int, FuncSymbolScript>();
-
   //if set this mark is the index starting from which 
   //*imported* module variables are stored in gvars
   public int local_gvars_mark = -1;
@@ -65,18 +66,16 @@ public class Module
       return local_gvars_mark == -1 ? gvar_index.Count : local_gvars_mark;
     }
   }
+  
+  //TODO: probably we need script functions per module indexer, like gvars?
+  //setup once the module is loaded to find functions by their ip
+  internal Dictionary<int, FuncSymbolScript> _ip2func = new Dictionary<int, FuncSymbolScript>();
 
-  //NOTE: below are compiled module parts
-  //normalized module names, not actual import paths
-  public List<string> imports;
-  public byte[] initcode;
-  public byte[] bytecode;
   //filled during runtime module setup procedure since
   //until this moment we don't know about other modules 
   internal Module[] _imported;
-  public List<Const> constants;
-  public Ip2SrcLine ip2src_line;
-  public int init_func_idx = -1;
+
+  public CompiledModule compiled = CompiledModule.Empty;
   
   public Module(Types ts, ModulePath path)
     : this(ts, path, new Namespace())
@@ -95,39 +94,10 @@ public class Module
     this.ns = ns;
   }
 
-  public void InitCompiled(
-    int init_func_idx,
-    int total_gvars_num,
-    List<string> imports,
-    List<Const> constants, 
-    byte[] initcode,
-    byte[] bytecode, 
-    Ip2SrcLine ip2src_line
-    )
+  public void InitWithCompiled(CompiledModule compiled)
   {
-    is_native = false;
-    
-    this.init_func_idx = init_func_idx;
-    this.imports = imports;
-    this.constants = constants;
-    this.initcode = initcode;
-    this.bytecode = bytecode;
-    this.ip2src_line = ip2src_line;
-    gvar_vals.Resize(total_gvars_num);
-  }
-
-  //convenience version for tests
-  public void InitCompiled()
-  {
-    InitCompiled(
-      -1,
-      0,
-      new List<string>(),
-      new List<Const>(),
-      new byte[0],
-      new byte[0],
-      new Ip2SrcLine()
-    );
+    this.compiled = compiled;
+    gvar_vals.Resize(compiled.total_gvars_num);
   }
 
   public void InitGlobalVars(VM vm)
@@ -149,16 +119,16 @@ public class Module
   
   public void Setup(Func<string, Module> name2module)
   {
-    foreach(var imp in imports)
+    foreach(var imp in compiled.imports)
       ns.Link(name2module(imp).ns);
       
-    _imported = new Module[imports.Count];
+    _imported = new Module[compiled.imports.Count];
     
-    for(int i = 0; i < imports.Count; ++i)
+    for(int i = 0; i < compiled.imports.Count; ++i)
     {
-      var imported = name2module(imports[i]);
+      var imported = name2module(compiled.imports[i]);
       if(imported == null)
-        throw new Exception("Module '" + imports[i] + "' not found");
+        throw new Exception("Module '" + compiled.imports[i] + "' not found");
 
       _imported[i] = imported;
     }
