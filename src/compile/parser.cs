@@ -608,7 +608,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       var import = raw_imports_parsed[k];
 
-      if(ResolveImportedModule(import, proc_bundle, out var _, out var imported_module))
+      if(ResolveImportedModule(import, proc_bundle, out var imported_module))
       {
         //NOTE: let's remove duplicated imports
         if(already_imported.Contains(imported_module))
@@ -624,26 +624,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  bool ResolveImportedModule(
-    string raw_import,
-    ProcessedBundle proc_bundle,
-    //NOTE: if module is a native one the file_path will be empty
-    out string file_path,
-    out Module module
-  )
+  bool ResolveImportedModule(string raw_import, ProcessedBundle proc_bundle, out Module module)
   {
-    file_path = "";
     module = null;
 
     //let's check if it's a global native module
-    var reg_mod = types.FindRegisteredModule(raw_import);
-    if(reg_mod != null)
+    var native = types.FindRegisteredModule(raw_import);
+    if(native != null)
     {
-      module = reg_mod;
+      module = native;
       return true;
     }
 
-    file_path = imports_maybe.MapToFilePath(raw_import);
+    var file_path = imports_maybe.MapToFilePath(raw_import);
     if(file_path == null || !File.Exists(file_path))
       return false;
 
@@ -660,7 +653,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     foreach(var kv in raw_imports_parsed)
     {
-      if(!ResolveImportedModule(kv.Value, proc_bundle, out var file_path, out var imported_module))
+      if(!ResolveImportedModule(kv.Value, proc_bundle, out var imported_module))
       {
         AddError(kv.Key, "invalid import '" + kv.Value + "'");
         continue;
