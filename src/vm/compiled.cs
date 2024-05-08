@@ -217,7 +217,7 @@ public static class CompiledModule
       if(constant_bytes.Length > 0)
         w.Write(constant_bytes, 0, constant_bytes.Length);
 
-      w.Write(module.gvars.Count);
+      w.Write(module.gvar_index.Count);
       w.Write(module.local_gvars_num);
 
       //TODO: add this info only for development builds

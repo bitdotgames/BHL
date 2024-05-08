@@ -4144,7 +4144,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     for(int m=0;m<pass.class_symb.members.Count;++m)
     {
       if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
-        pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvars.IndexOf(fld)));
+        pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvar_index.IndexOf(fld)));
     }
   }
 

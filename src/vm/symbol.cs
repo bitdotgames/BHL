@@ -499,11 +499,11 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
         CheckBinaryOpOverload(fs);
 
       if(fs is FuncSymbolScript fss)
-        this.GetModule().funcs.Index(fss);
+        this.GetModule().func_index.Index(fss);
     }
 
     if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
-      this.GetModule().nfuncs.Index(fsn);
+      this.GetModule().nfunc_index.Index(fsn);
 
     if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -520,7 +520,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
           stack.Push(res);
           return null;
         });
-        this.GetNamespace().module.nfuncs.Index(static_get);
+        this.GetNamespace().module.nfunc_index.Index(static_get);
 
         var static_set = new FuncSymbolNative(
         new Origin(),
@@ -533,10 +533,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
           val.Release();
           return null;
         });
-        this.GetNamespace().module.nfuncs.Index(static_set);
+        this.GetNamespace().module.nfunc_index.Index(static_set);
       }
       else
-        this.GetNamespace().module.gvars.Index(fld);
+        this.GetNamespace().module.gvar_index.Index(fld);
     }
 
     //NOTE: we don't check if there are any parent symbols with the same name, 

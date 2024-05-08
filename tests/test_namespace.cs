@@ -983,9 +983,9 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(foo.module == m.ns.module);
     AssertEqual(foo.members.Count, 1);
 
-    AssertEqual(m.gvars.Count, 2);
-    AssertEqual(m.gvars[0].name, "A");
-    AssertEqual(m.gvars[1].name, "B");
+    AssertEqual(m.gvar_index.Count, 2);
+    AssertEqual(m.gvar_index[0].name, "A");
+    AssertEqual(m.gvar_index[1].name, "B");
 
     CommonChecks(vm);
   }

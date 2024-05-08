@@ -39,16 +39,16 @@ public class Module
   
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
-  public VarScopeIndexer gvars = new VarScopeIndexer();
+  public VarScopeIndexer gvar_index = new VarScopeIndexer();
   
   public FixedStack<Val> gvar_vals = new FixedStack<Val>(MAX_GLOBALS);
   
   //used for assigning incremental indexes to native funcs,
   //NOTE: currently this indexer is global, while it must be local per module
-  public NativeFuncScopeIndexer nfuncs;
+  public NativeFuncScopeIndexer nfunc_index;
   
   //used for assigning incremental module indexes to funcs
-  public FuncModuleIndexer funcs = new FuncModuleIndexer();
+  public FuncModuleIndexer func_index = new FuncModuleIndexer();
 
   //TODO: probably we need script functions per module indexer, like gvars?
   //setup once the module is loaded to find functions by their ip
@@ -62,7 +62,7 @@ public class Module
   //stored in gvars
   public int local_gvars_num {
     get {
-      return local_gvars_mark == -1 ? gvars.Count : local_gvars_mark;
+      return local_gvars_mark == -1 ? gvar_index.Count : local_gvars_mark;
     }
   }
 
@@ -88,7 +88,7 @@ public class Module
 
   public Module(Types ts, ModulePath path, Namespace ns)
   {
-    nfuncs = ts.nfunc_index;
+    nfunc_index = ts.nfunc_index;
     //let's setup the link
     ns.module = this;
     this.path = path;
@@ -178,7 +178,7 @@ public class Module
           }
         }
         else if(s is VariableSymbol vs && vs.scope is Namespace)
-          gvars.index.Add(vs);
+          gvar_index.index.Add(vs);
         else if (s is FuncSymbolScript fs)
           PrepareFuncSymbol(fs, name2module);
       }
@@ -213,7 +213,7 @@ public class Module
     
     _ip2func[fss.ip_addr] = fss;
 
-    funcs.index.Add(fss);
+    func_index.index.Add(fss);
     
     if(fss._module == null)
     {
@@ -228,11 +228,11 @@ public class Module
   {
     //NOTE: let's add imported global vars to module's global vars index
     if(local_gvars_mark == -1)
-      local_gvars_mark = gvars.Count;
+      local_gvars_mark = gvar_index.Count;
 
     //NOTE: adding directly without indexing
     for(int i=0;i<imported_module.local_gvars_num;++i)
-      gvars.index.Add(imported_module.gvars[i]);
+      gvar_index.index.Add(imported_module.gvar_index[i]);
   }
 }
 

@@ -395,11 +395,11 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is FuncSymbolNative fsn)
-      module.nfuncs.Index(fsn);
+      module.nfunc_index.Index(fsn);
     else if(sym is FuncSymbolScript fss)
-      module.funcs.Index(fss);
+      module.func_index.Index(fss);
     else if(sym is VariableSymbol vs)
-      module.gvars.Index(vs);
+      module.gvar_index.Index(vs);
 
     members.Add(sym);
   }

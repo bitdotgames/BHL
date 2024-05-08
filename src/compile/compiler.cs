@@ -208,7 +208,7 @@ public class ModuleCompiler : AST_Visitor
       result = interim;
       result.InitCompiled(
         init_func_idx,
-        interim.gvars.Count,
+        interim.gvar_index.Count,
         imports,
         constants, 
         init_bytes,
@@ -1179,20 +1179,20 @@ public class ModuleCompiler : AST_Visitor
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {interim.nfuncs.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {interim.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.GetGVar, new int[] {interim.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.GVARW:
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {interim.nfuncs.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {interim.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.SetGVar, new int[] {interim.gvars.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
       }
       break;
       case EnumCall.FUNC:
@@ -1211,7 +1211,7 @@ public class ModuleCompiler : AST_Visitor
         {
           var fsymb = (FuncSymbolScript)ast.symb;
           var fmod = fsymb.GetModule();
-          int module_idx = fmod.funcs.IndexOf(fsymb);
+          int module_idx = fmod.func_index.IndexOf(fsymb);
           if(module_idx == -1)
             throw new Exception("Not found function '"+ fsymb.name + "' index in module '" +  fmod.name + "'");
           Pop();
