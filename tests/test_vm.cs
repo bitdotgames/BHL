@@ -3234,7 +3234,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
     ;
     AssertEqual(c, expected);
@@ -8844,7 +8844,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
     ;
     AssertEqual(c, expected);
@@ -10751,7 +10751,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -11075,7 +11075,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -12438,7 +12438,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);

@@ -503,7 +503,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
     }
 
     if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
-      this.GetModule().nfunc_index.Index(fsn);
+      this.GetModule().global_nfunc_index.Index(fsn);
 
     if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -520,7 +520,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
           stack.Push(res);
           return null;
         });
-        this.GetNamespace().module.nfunc_index.Index(static_get);
+        this.GetNamespace().module.global_nfunc_index.Index(static_get);
 
         var static_set = new FuncSymbolNative(
         new Origin(),
@@ -533,7 +533,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
           val.Release();
           return null;
         });
-        this.GetNamespace().module.nfunc_index.Index(static_set);
+        this.GetNamespace().module.global_nfunc_index.Index(static_set);
       }
       else
         this.GetNamespace().module.gvar_index.Index(fld);

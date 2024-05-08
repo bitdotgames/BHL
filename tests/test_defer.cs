@@ -33,9 +33,9 @@ public class TestDefer : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Block, new int[] { (int)BlockType.DEFER, 12})
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-        .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+        .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { c.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
 

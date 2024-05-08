@@ -45,7 +45,7 @@ public class Module
   
   //used for assigning incremental indexes to native funcs,
   //NOTE: currently this indexer is global, while it must be local per module
-  public NativeFuncScopeIndexer nfunc_index;
+  public NativeFuncScopeIndexer global_nfunc_index;
   
   //used for assigning incremental module indexes to funcs
   public FuncModuleIndexer func_index = new FuncModuleIndexer();
@@ -88,7 +88,7 @@ public class Module
 
   public Module(Types ts, ModulePath path, Namespace ns)
   {
-    nfunc_index = ts.nfunc_index;
+    global_nfunc_index = ts.nfunc_index;
     //let's setup the link
     ns.module = this;
     this.path = path;
