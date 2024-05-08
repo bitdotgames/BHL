@@ -104,7 +104,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   CompileErrors errors;
 
   //NOTE: non-normalized names
-  Dictionary<bhlParser.MimportContext, string> imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
+  Dictionary<bhlParser.MimportContext, string> raw_imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
   //NOTE: module.ns linked with types.ns
   Namespace ns;
@@ -603,10 +603,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var already_imported = new HashSet<Module>(); 
 
     //NOTE: getting a copy of keys since we might modify the dictionary during traversal
-    var keys = new List<bhlParser.MimportContext>(imports_parsed.Keys);
+    var keys = new List<bhlParser.MimportContext>(raw_imports_parsed.Keys);
     foreach(var k in keys)
     {
-      var import = imports_parsed[k];
+      var import = raw_imports_parsed[k];
 
       if(ResolveImportedModule(import, proc_bundle, out var _, out var imported_module))
       {
@@ -614,7 +614,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(already_imported.Contains(imported_module))
         {
           AddError(k, "already imported '" + import + "'");
-          imports_parsed.Remove(k);
+          raw_imports_parsed.Remove(k);
           continue;
         }
         already_imported.Add(imported_module);
@@ -625,7 +625,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   bool ResolveImportedModule(
-    string import,
+    string raw_import,
     ProcessedBundle proc_bundle,
     //NOTE: if module is a native one the file_path will be empty
     out string file_path,
@@ -636,14 +636,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     module = null;
 
     //let's check if it's a global native module
-    var reg_mod = types.FindRegisteredModule(import);
+    var reg_mod = types.FindRegisteredModule(raw_import);
     if(reg_mod != null)
     {
       module = reg_mod;
       return true;
     }
 
-    file_path = imports_maybe.MapToFilePath(import);
+    file_path = imports_maybe.MapToFilePath(raw_import);
     if(file_path == null || !File.Exists(file_path))
       return false;
 
@@ -653,12 +653,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_LinkImports(ProcessedBundle proc_bundle)
   {
-    if(imports_parsed.Count == 0)
+    if(raw_imports_parsed.Count == 0)
       return;
 
     var ast_import = new AST_Import();
 
-    foreach(var kv in imports_parsed)
+    foreach(var kv in raw_imports_parsed)
     {
       if(!ResolveImportedModule(kv.Value, proc_bundle, out var file_path, out var imported_module))
       {
@@ -906,7 +906,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //removing quotes
     name = name.Substring(1, name.Length-2);
 
-    imports_parsed[ctx] = name;
+    raw_imports_parsed[ctx] = name;
   }
 
   void AddPass(ParserRuleContext ctx, IScope scope, IAST ast)
