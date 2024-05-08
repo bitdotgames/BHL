@@ -817,7 +817,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_Outline());
 
-    ProcessCachedModulesImports(proc_bundle);
+    ProcessCachedModules(proc_bundle);
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_PreLinkImports(proc_bundle));
@@ -850,13 +850,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  static void ProcessCachedModulesImports(ProcessedBundle proc_bundle)
+  static void ProcessCachedModules(ProcessedBundle proc_bundle)
   {
     if(proc_bundle.file2cached == null)
       return;
 
     var all = proc_bundle.GroupModulesByName();
       
+    //TODO: find out why exactly this is needed
     //before linking create local linked namespaces
     foreach(var kv in proc_bundle.file2cached)
     {
@@ -864,13 +865,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         kv.Value.ns.TryMakeLocalLinkedNamespaces(all[import].ns);
     }
 
-    //TODO: double check if we really need this
-    //actual linking
     foreach(var kv in proc_bundle.file2cached)
-    {
-      foreach(string import in kv.Value.imports)
-        kv.Value.ns.Link(all[import].ns);
-    }
+      kv.Value.Setup(name => all[name]);
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

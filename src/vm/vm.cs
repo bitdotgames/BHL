@@ -492,6 +492,8 @@ public partial class VM : INamedResolver
   {
     module.Setup(name => FindModule(name));
     
+    module.InitRuntimeGlobalVars();
+    
     ExecInitCode(module);
     ExecModuleInitFunc(module);
   }

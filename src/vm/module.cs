@@ -152,26 +152,15 @@ public class Module
     foreach(var imp in imports)
       ns.Link(name2module(imp).ns);
       
-    int gvars_offset = local_gvars_num;
-
     _imported = new Module[imports.Count];
     
-    for(int i=0; i<imports.Count; ++i)
+    for(int i = 0; i < imports.Count; ++i)
     {
       var imported = name2module(imports[i]);
       if(imported == null)
         throw new Exception("Module '" + imports[i] + "' not found");
 
       _imported[i] = imported;
-      
-      //NOTE: taking only local imported module's gvars
-      for(int g=0;g<imported.local_gvars_num;++g)
-      {
-        var imp_gvar = imported.gvar_vals[g];
-        imp_gvar.Retain();
-        gvar_vals[gvars_offset] = imp_gvar;
-        ++gvars_offset;
-      }
     }
 
     ns.ForAllLocalSymbols(delegate(Symbol s)
@@ -194,6 +183,24 @@ public class Module
           PrepareFuncSymbol(fs, name2module);
       }
     );
+  }
+
+  public void InitRuntimeGlobalVars()
+  {
+    int gvars_offset = local_gvars_num;
+    
+    for(int i = 0; i < _imported.Length; ++i)
+    {
+      var imported = _imported[i];
+      //NOTE: taking only local imported module's gvars
+      for(int g=0;g<imported.local_gvars_num;++g)
+      {
+        var imp_gvar = imported.gvar_vals[g];
+        imp_gvar.Retain();
+        gvar_vals[gvars_offset] = imp_gvar;
+        ++gvars_offset;
+      }
+    }
   }
   
   void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
