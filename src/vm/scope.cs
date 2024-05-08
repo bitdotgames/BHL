@@ -216,6 +216,8 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     }
   }
 
+  //TODO: make it two-phase? With TryMakeLocalLinkedNamespaces as
+  //      a first phase?
   //NOTE: here we link only namespaces named similar but we don't
   //      add symbols from them
   public LinkConflict TryLink(Namespace other)
@@ -261,7 +263,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
     return default(LinkConflict);
   }
 
-  public void PreLink(Namespace other)
+  public void TryMakeLocalLinkedNamespaces(Namespace other)
   {
     for(int i=0;i<other.members.Count;++i)
     {

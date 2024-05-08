@@ -1102,10 +1102,11 @@ public class BHL_TestBase
       Console.WriteLine(proc.parsed);
     }
 
-    ANTLR_Processor.ProcessAll(
+    ANTLR_Processor.ProcessAll(new ANTLR_Processor.ProcessedBundle(
       new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
       null,
       new IncludePath()
+      )
     );
 
     if(show_ast)

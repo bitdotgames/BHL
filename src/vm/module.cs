@@ -33,9 +33,10 @@ public class Module
   }
   public ModulePath path;
   
-  public Types ts;
   public Namespace ns;
 
+  public bool is_native = true;
+  
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
   public VarScopeIndexer gvars = new VarScopeIndexer();
@@ -65,13 +66,6 @@ public class Module
     }
   }
 
-  public bool is_compiled
-  {
-    get {
-      return initcode != null || bytecode != null;
-    }
-  }
-
   //NOTE: below are compiled module parts
   //normalized module names, not actual import paths
   public List<string> imports;
@@ -92,13 +86,8 @@ public class Module
     : this(ts, new ModulePath(name, file_path), new Namespace())
   {}
 
-  public Module(
-    Types ts,
-    ModulePath path,
-    Namespace ns
-  )
+  public Module(Types ts, ModulePath path, Namespace ns)
   {
-    this.ts = ts;
     nfuncs = ts.nfunc_index;
     //let's setup the link
     ns.module = this;
@@ -116,6 +105,8 @@ public class Module
     Ip2SrcLine ip2src_line
     )
   {
+    is_native = false;
+    
     this.init_func_idx = init_func_idx;
     this.imports = imports;
     this.constants = constants;

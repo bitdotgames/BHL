@@ -597,12 +597,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  internal void Phase_PreLinkImports(
-    Dictionary<string, ANTLR_Processor> file2proc, 
-    //NOTE: can be null, contains already cached compile modules.
-    //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, Module> file2compiled, 
-    IncludePath inc_path)
+  internal void Phase_PreLinkImports(ProcessedBundle proc_bundle)
   {
     var already_imported = new HashSet<Module>(); 
 
@@ -610,54 +605,45 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var keys = new List<bhlParser.MimportContext>(imports_parsed.Keys);
     foreach(var k in keys)
     {
-      var v = imports_parsed[k];
-
-      Module imported_module;
-      Namespace imported_ns;
-      string file_path;
+      var import = imports_parsed[k];
 
       if(ResolveImportedModule(
-          v,
-          file2proc, 
-          file2compiled, 
-          out file_path,
-          //in case of global native module this one will be null for now
-          out imported_module, 
-          out imported_ns
+          import,
+          proc_bundle,
+          out var _,
+          out var imported_module
         ))
       {
         //NOTE: let's remove duplicated imports
         if(already_imported.Contains(imported_module))
         {
-          AddError(k, "already imported '" + v + "'");
+          AddError(k, "already imported '" + import + "'");
           imports_parsed.Remove(k);
           continue;
         }
         already_imported.Add(imported_module);
 
-        ns.PreLink(imported_ns);
+        ns.TryMakeLocalLinkedNamespaces(imported_module.ns);
       }
     }
   }
 
   bool ResolveImportedModule(
     string import,
-    Dictionary<string, ANTLR_Processor> file2proc, 
-    Dictionary<string, Module> file2compiled,
+    ProcessedBundle proc_bundle,
+    //NOTE: if module is a native one the file_path will be empty
     out string file_path,
-    out Module imported_module,
-    out Namespace imported_ns
+    out Module module
   )
   {
     file_path = "";
-    imported_module = null;
-    imported_ns = null;
+    module = null;
 
     //let's check if it's a global native module
     var reg_mod = types.FindRegisteredModule(import);
     if(reg_mod != null)
     {
-      imported_ns = reg_mod.ns;
+      module = reg_mod;
       return true;
     }
 
@@ -665,26 +651,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(file_path == null || !File.Exists(file_path))
       return false;
 
-    //let's check if it's a compiled module and
-    //try to fetch it from the cache first
-    if(file2compiled != null && file2compiled.TryGetValue(file_path, out var cm))
-      imported_module = cm;
-    else if(file2proc.TryGetValue(file_path, out var proc))
-      imported_module = proc.module;
-    else 
-      return false;
-
-    imported_ns = imported_module.ns;
-
-    return true;
+    module = proc_bundle.FindModule(file_path);
+    return module != null;
   }
 
-  internal void Phase_LinkImports(
-    Dictionary<string, ANTLR_Processor> file2proc, 
-    //NOTE: can be null, contains already cached compile modules.
-    //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, Module> file2compiled, 
-    IncludePath inc_path)
+  internal void Phase_LinkImports(ProcessedBundle proc_bundle)
   {
     if(imports_parsed.Count == 0)
       return;
@@ -694,24 +665,21 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     foreach(var kv in imports_parsed)
     {
       Module imported_module;
-      Namespace imported_ns;
       string file_path;
 
       if(!ResolveImportedModule(
           kv.Value, 
-          file2proc, 
-          file2compiled, 
+          proc_bundle,
           out file_path,
-          //in case of global native module this one will be null for now
-          out imported_module, 
-          out imported_ns
+          out imported_module
         ))
       {
         AddError(kv.Key, "invalid import '" + kv.Value + "'");
         continue;
       }
 
-      if(imported_module != null)
+      //we are interested only in non-native modules
+      if(!string.IsNullOrEmpty(file_path))
       {
         //protection against self import
         if(imported_module.name == module.name) 
@@ -728,7 +696,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       try
       {
-        ns.Link(imported_ns);
+        ns.Link(imported_module.ns);
       }
       catch(SymbolError se)
       {
@@ -736,8 +704,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         continue;
       }
 
-      if(imported_module != null)
-        ast_import.module_names.Add(inc_path.FilePath2ModuleName(file_path));
+      if(!string.IsNullOrEmpty(file_path))
+        ast_import.module_names.Add(proc_bundle.inc_path.FilePath2ModuleName(file_path));
     }
 
     root_ast.AddChild(ast_import);
@@ -813,36 +781,75 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     result = new Result(module, root_ast, errors);
   }
 
-  static public void ProcessAll(
-    Dictionary<string, ANTLR_Processor> file2proc, 
+  public class ProcessedBundle
+  {
+    public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     //NOTE: can be null, contains already cached compile modules.
     //      an entry present in file2compiled doesn't exist in file2proc
-    Dictionary<string, Module> file2compiled, 
-    IncludePath inc_path
-  )
+    public Dictionary<string, Module> file2cached = new Dictionary<string, Module>();
+    public IncludePath inc_path;
+
+    public ProcessedBundle(IncludePath inc_path)
+    {
+      this.inc_path = inc_path;
+    }
+    
+    public ProcessedBundle(
+      Dictionary<string, ANTLR_Processor> file2proc, 
+      Dictionary<string, Module> file2compiled,
+      IncludePath inc_path
+      )
+    {
+      this.file2proc = file2proc;
+      this.file2cached = file2compiled;
+      this.inc_path = inc_path;
+    }
+
+    public Module FindModule(string file_path)
+    {
+      //let's check if it's a compiled module and
+      //try to fetch it from the cache first
+      if(file2cached != null && file2cached.TryGetValue(file_path, out var cm))
+        return cm;
+      else if(file2proc.TryGetValue(file_path, out var proc))
+        return proc.module;
+      else
+        return null;
+    }
+    
+    public Module GetModule(string file_path)
+    {
+      var m = FindModule(file_path);
+      if(m == null)
+        throw new Exception("No such module found '"+file_path+"'");
+      return m;
+    }
+  }
+
+  static public void ProcessAll(ProcessedBundle proc_bundle)
   {
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_Outline());
 
-    if(file2compiled != null)
-      LinkCompiledImports(file2compiled, file2proc);
+    if(proc_bundle.file2cached != null)
+      ProcessCompiledModulesImports(proc_bundle);
 
-    foreach(var kv in file2proc)
-      WrapError(kv.Value, () => kv.Value.Phase_PreLinkImports(file2proc, file2compiled, inc_path));
+    foreach(var kv in proc_bundle.file2proc)
+      WrapError(kv.Value, () => kv.Value.Phase_PreLinkImports(proc_bundle));
 
-    foreach(var kv in file2proc)
-      WrapError(kv.Value, () => kv.Value.Phase_LinkImports(file2proc, file2compiled, inc_path));
+    foreach(var kv in proc_bundle.file2proc)
+      WrapError(kv.Value, () => kv.Value.Phase_LinkImports(proc_bundle));
 
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
 
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes2());
 
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
 
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_SetResult()); 
   }
 
@@ -858,27 +865,25 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  static void LinkCompiledImports(
-    Dictionary<string, Module> file2compiled,
-    Dictionary<string, ANTLR_Processor> file2proc
-  )
+  static void ProcessCompiledModulesImports(ProcessedBundle proc_bundle)
   {
     var all = new Dictionary<string, Module>(); 
     //we need to try both compiled modules and modules yet to be parsed
-    foreach(var kv in file2compiled)
+    foreach(var kv in proc_bundle.file2cached)
       all.Add(kv.Value.name, kv.Value);
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       all.Add(kv.Value.module.name, kv.Value.module);
 
-    //pre-link first
-    foreach(var kv in file2compiled)
+    //before linking create local linked namespaces
+    foreach(var kv in proc_bundle.file2cached)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.ns.PreLink(all[import].ns);
+        kv.Value.ns.TryMakeLocalLinkedNamespaces(all[import].ns);
     }
 
-    //actual link
-    foreach(var kv in file2compiled)
+    //TODO: double check if we actually need this
+    //actual linking
+    foreach(var kv in proc_bundle.file2cached)
     {
       foreach(string import in kv.Value.imports)
         kv.Value.ns.Link(all[import].ns);

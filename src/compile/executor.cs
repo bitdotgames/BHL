@@ -238,9 +238,9 @@ public class CompilationExecutor
     //2.1 let's collect all interim results collected in parse workers
     var file2interim = new Dictionary<string, InterimResult>();
 
-    //3. create ANTLR processors for non-compiled files
-    var file2proc = new Dictionary<string, ANTLR_Processor>(); 
-    var file2compiled = new Dictionary<string, Module>(); 
+    //3 let's create the processed bundle containing already compiled cached modules
+    //  and the newly processed ones
+    var proc_bundle = new ANTLR_Processor.ProcessedBundle(conf.proj.inc_path);
 
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
@@ -268,10 +268,10 @@ public class CompilationExecutor
             ErrorHandlers.MakeStandard(kv.Key, proc_errs),
             out var preproc_parsed
           );
-          file2proc.Add(kv.Key, proc);
+          proc_bundle.file2proc.Add(kv.Key, proc);
         }
         else
-          file2compiled.Add(kv.Key, kv.Value.compiled);
+          proc_bundle.file2cached.Add(kv.Key, kv.Value.compiled);
 
         file2interim.Add(kv.Key, kv.Value);
       }
@@ -282,11 +282,11 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
     //TODO: it's not multithreaded yet
-    ANTLR_Processor.ProcessAll(file2proc, file2compiled, conf.proj.inc_path);
+    ANTLR_Processor.ProcessAll(proc_bundle);
     sw.Stop();
     conf.logger.Log(2, $"BHL proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
-    foreach(var kv in file2proc)
+    foreach(var kv in proc_bundle.file2proc)
       errors.AddRange(kv.Value.result.errors);
     if(errors.Count > 0)
       return;
@@ -298,7 +298,7 @@ public class CompilationExecutor
       conf.ts, 
       parse_workers, 
       file2interim,
-      file2proc
+      proc_bundle.file2proc
     );
     sw.Stop();
     conf.logger.Log(2, $"BHL compile done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
