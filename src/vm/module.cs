@@ -216,6 +216,17 @@ public class Module
         throw new Exception("Module '" + mod_name + "' not found");
     }
   }
+
+  public void AddImportedGlobalVars(Module imported_module)
+  {
+    //NOTE: let's add imported global vars to module's global vars index
+    if(local_gvars_mark == -1)
+      local_gvars_mark = gvars.Count;
+
+    //NOTE: adding directly without indexing
+    for(int i=0;i<imported_module.local_gvars_num;++i)
+      gvars.index.Add(imported_module.gvars[i]);
+  }
 }
 
 } //namespace bhl
