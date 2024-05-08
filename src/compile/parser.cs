@@ -103,6 +103,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   //NOTE: passed from above
   CompileErrors errors;
 
+  //NOTE: non-normalized names
   Dictionary<bhlParser.MimportContext, string> imports_parsed = new Dictionary<bhlParser.MimportContext, string>();
 
   //NOTE: module.ns linked with types.ns
@@ -607,12 +608,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       var import = imports_parsed[k];
 
-      if(ResolveImportedModule(
-          import,
-          proc_bundle,
-          out var _,
-          out var imported_module
-        ))
+      if(ResolveImportedModule(import, proc_bundle, out var _, out var imported_module))
       {
         //NOTE: let's remove duplicated imports
         if(already_imported.Contains(imported_module))
@@ -664,26 +660,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     foreach(var kv in imports_parsed)
     {
-      if(!ResolveImportedModule(
-          kv.Value, 
-          proc_bundle,
-          out var file_path,
-          out var imported_module
-        ))
+      if(!ResolveImportedModule(kv.Value, proc_bundle, out var file_path, out var imported_module))
       {
         AddError(kv.Key, "invalid import '" + kv.Value + "'");
         continue;
       }
 
-      //non-native modules have proper file path
-      if(!string.IsNullOrEmpty(file_path))
-      {
-        //protection against self import
-        if(imported_module.name == module.name) 
-          continue;
-            
-        module.AddImportedGlobalVars(imported_module);
-      }
+      //protection against self import
+      if(imported_module.name == module.name) 
+        continue;
+          
+      module.AddImportedGlobalVars(imported_module);
 
       try
       {
@@ -695,8 +682,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         continue;
       }
 
-      if(!string.IsNullOrEmpty(file_path))
-        ast_import.module_names.Add(proc_bundle.inc_path.FilePath2ModuleName(file_path));
+      ast_import.module_names.Add(imported_module.name);
     }
 
     root_ast.AddChild(ast_import);
