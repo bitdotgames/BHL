@@ -863,23 +863,25 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Dictionary<string, ANTLR_Processor> file2proc
   )
   {
-    var mod_name2ns = new Dictionary<string, Namespace>(); 
+    var all = new Dictionary<string, Module>(); 
     //we need to try both compiled modules and modules yet to be parsed
     foreach(var kv in file2compiled)
-      mod_name2ns.Add(kv.Value.name, kv.Value.ns);
+      all.Add(kv.Value.name, kv.Value);
     foreach(var kv in file2proc)
-      mod_name2ns.Add(kv.Value.module.name, kv.Value.module.ns);
+      all.Add(kv.Value.module.name, kv.Value.module);
 
+    //pre-link first
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.ns.PreLink(mod_name2ns[import]);
+        kv.Value.ns.PreLink(all[import].ns);
     }
 
+    //actual link
     foreach(var kv in file2compiled)
     {
       foreach(string import in kv.Value.imports)
-        kv.Value.ns.Link(mod_name2ns[import]);
+        kv.Value.ns.Link(all[import].ns);
     }
   }
 

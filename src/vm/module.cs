@@ -207,22 +207,22 @@ public class Module
   
   void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
   {
+    if(fss.scope is InterfaceSymbol)
+      return;
+    
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
     
     _ip2func[fss.ip_addr] = fss;
 
-    if(!(fss.scope is InterfaceSymbol))
+    funcs.index.Add(fss);
+    
+    if(fss._module == null)
     {
-      funcs.index.Add(fss);
-      
+      var mod_name = fss.GetModule().name;
+      fss._module = mod_name == name ? this : name2module(mod_name);
       if(fss._module == null)
-      {
-        var mod_name = fss.GetModule().name;
-        fss._module = mod_name == name ? this : name2module(mod_name);
-        if(fss._module == null)
-          throw new Exception("Module '" + mod_name + "' not found");
-      }
+        throw new Exception("Module '" + mod_name + "' not found");
     }
   }
 }
