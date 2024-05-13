@@ -1311,7 +1311,7 @@ public partial class VM : INamedResolver
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
-      case Opcodes.GetLocalPtr:
+      case Opcodes.GetFuncLocalPtr:
       {
         int ip_addr = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
 
@@ -1323,9 +1323,12 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.GetFuncPtr:
       {
-        int named_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        var func_symb = (FuncSymbolScript)curr_frame.constants[named_idx].inamed.Get();
-
+        int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        
+        var func_mod = curr_frame.module._imported[import_idx];
+        var func_symb = func_mod.func_index.index[func_idx];
+        
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb._module, func_symb.ip_addr);
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));

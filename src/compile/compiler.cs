@@ -452,20 +452,20 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetLocalPtr,
+        Opcodes.GetFuncLocalPtr,
         3/*ip addr*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncPtr,
-        3/*func named idx*/
+        2/*imported module idx*/, 3/*func idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncNativePtr,
-        3/*globs idx*/
+        3/*global native idx*/
       )
     );
     DeclareOpcode(
@@ -1210,7 +1210,7 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         var instr = EmitGetFuncAddr(ast);
         //let's optimize some primitive calls
-        if(instr.op == Opcodes.GetLocalPtr)
+        if(instr.op == Opcodes.GetFuncLocalPtr)
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb;
@@ -1221,9 +1221,6 @@ public class ModuleCompiler : AST_Visitor
         {
           var fsymb = (FuncSymbolScript)ast.symb;
           var fmod = fsymb.GetModule();
-          int module_idx = fmod.func_index.IndexOf(fsymb);
-          if(module_idx == -1)
-            throw new Exception("Not found function '"+ fsymb.name + "' index in module '" +  fmod.name + "'");
           Pop();
           var call_op = Emit(Opcodes.CallFunc, new int[] {-1 /*patched later*/, -1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           //imports list is filled later so we need to take that into account
@@ -1372,14 +1369,24 @@ public class ModuleCompiler : AST_Visitor
       var func_symb_script = (FuncSymbolScript)func_symb;
       if(func_symb_script.GetModule() == interim)
       {
-        var get_ptr_op = Emit(Opcodes.GetLocalPtr, new int[] {0 /*patched later*/}, ast.line_num);
+        var get_ptr_op = Emit(Opcodes.GetFuncLocalPtr, new int[] {-1 /*patched later*/}, ast.line_num);
         PatchLater(get_ptr_op, (inst) => inst.operands[0] = func_symb_script.ip_addr);
         return get_ptr_op;
       }
       else
       {
-        int named_idx = AddConstant((INamed)ast.symb);
-        return Emit(Opcodes.GetFuncPtr, new int[] { named_idx }, ast.line_num);
+        var fmod = func_symb_script.GetModule();
+        int func_idx = fmod.func_index.IndexOf(func_symb_script);
+        if(func_idx == -1)
+          throw new Exception("Not found function '"+ func_symb_script.name + "' index in module '" +  fmod.name + "'");
+        var get_ptr_op = Emit(Opcodes.GetFuncPtr, new int[] { -1 /*patched later*/, func_idx }, ast.line_num);
+        PatchLater(get_ptr_op, (inst) =>
+        {
+          inst.operands[0] = imports.IndexOf(fmod.name);
+          if(inst.operands[0] == -1)
+            throw new Exception("Not found module '" + fmod.name + "' imported index");
+        });
+        return get_ptr_op;
       }
     }
   }

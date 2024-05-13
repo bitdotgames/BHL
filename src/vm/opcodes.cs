@@ -32,7 +32,7 @@ public enum Opcodes
   CallMethodIfaceNative = 29,
   CallMethodVirt        = 30,
   CallFuncPtr           = 31,
-  GetLocalPtr           = 38,
+  GetFuncLocalPtr       = 38,
   GetFuncPtr            = 39,
   GetFuncNativePtr      = 40,
   GetFuncPtrFromVar     = 41,
