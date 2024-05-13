@@ -189,34 +189,44 @@ public class ModuleCompiler : AST_Visitor
     return this;
   }
 
+  public void Compile_VisitAST()
+  {
+    //special case for tests where we
+    //don't have any AST
+    if(ast != null)
+      Visit(ast);
+  }
+
+  public Module Compile_Finish()
+  {
+    int init_func_idx = FindInitFuncIdx();
+
+    byte[] init_bytes;
+    byte[] code_bytes;
+    Ip2SrcLine ip2src_line;
+    GetByteCode(out init_bytes, out code_bytes, out ip2src_line);
+
+    interim.InitWithCompiled(
+      new CompiledModule(
+        init_func_idx,
+        imports, 
+        interim.gvar_index.Count,
+        constants, 
+        init_bytes,
+        code_bytes,
+        ip2src_line
+      )
+    );
+    return interim;
+  }
+
   public Module Compile()
   {
     if(result == null)
     {
-      //special case for tests where we
-      //don't have any AST
-      if(ast != null)
-        Visit(ast);
-
-      int init_func_idx = FindInitFuncIdx();
-
-      byte[] init_bytes;
-      byte[] code_bytes;
-      Ip2SrcLine ip2src_line;
-      Bake(out init_bytes, out code_bytes, out ip2src_line);
-
-      result = interim;
-      result.InitWithCompiled(
-        new CompiledModule(
-          init_func_idx,
-          imports, 
-          interim.gvar_index.Count,
-          constants, 
-          init_bytes,
-          code_bytes,
-          ip2src_line
-        )
-      );    
+      Compile_VisitAST();
+      Compile_PatchInstructions();
+      result = Compile_Finish();
     }
 
     return result;
@@ -803,7 +813,7 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  void PatchInstructions()
+  public void Compile_PatchInstructions()
   {
     for(int i=0;i<patches.Count;++i)
     {
@@ -814,10 +824,8 @@ public class ModuleCompiler : AST_Visitor
     PatchOffsets();
   }
 
-  void Bake(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
+  void GetByteCode(out byte[] init_bytes, out byte[] code_bytes, out Ip2SrcLine ip2src_line)
   {
-    PatchInstructions();
-
     {
       var bytecode = new Bytecode();
       for(int i=0;i<init.Count;++i)
@@ -1206,7 +1214,7 @@ public class ModuleCompiler : AST_Visitor
         {
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb;
-          var call_op = Emit(Opcodes.CallLocal, new int[] {0 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
         }
         else if(instr.op == Opcodes.GetFuncPtr)
@@ -1217,13 +1225,16 @@ public class ModuleCompiler : AST_Visitor
           if(module_idx == -1)
             throw new Exception("Not found function '"+ fsymb.name + "' index in module '" +  fmod.name + "'");
           Pop();
-          var call_op = Emit(Opcodes.CallFunc, new int[] {0 /*patched later*/, module_idx, (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.CallFunc, new int[] {-1 /*patched later*/, -1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           //imports list is filled later so we need to take that into account
           PatchLater(call_op, (inst) =>
           {
              inst.operands[0] = imports.IndexOf(fmod.name);
-             if (inst.operands[0] == -1)
+             if(inst.operands[0] == -1)
                throw new Exception("Not found module '" + fmod.name + "' imported index");
+             inst.operands[1] = fsymb.ip_addr;
+             if(inst.operands[1] == -1)
+               throw new Exception("Not found func '" + fsymb.name + "' ip from module '" + fmod.name + "'");
           });
         }
         else if(instr.op == Opcodes.GetFuncNativePtr)

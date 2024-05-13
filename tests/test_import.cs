@@ -10,6 +10,9 @@ public class TestImport : BHL_TestBase
   {
     string bhl1 = @"
     import ""bhl2""  
+
+    func garbage1() { }
+
     func float bhl1() 
     {
       return bhl2(23)
@@ -18,6 +21,8 @@ public class TestImport : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl3""  
+
+    func garbage2() { }
 
     func float bhl2(float k)
     {
@@ -30,6 +35,8 @@ public class TestImport : BHL_TestBase
     {
       return k
     }
+
+    func garbage3() { }
     ";
 
     CleanTestDir();
@@ -45,14 +52,18 @@ public class TestImport : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.CallFunc, new int[] { 0, 0, 1 })
+      .EmitThen(Opcodes.CallFunc, new int[] { 0, 3, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );
     AssertEqual(loader.Load("bhl2", ts, null), 
       new ModuleCompiler()
       .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -67,6 +78,8 @@ public class TestImport : BHL_TestBase
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.ExitFrame)
     );
 

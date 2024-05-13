@@ -1385,14 +1385,13 @@ public partial class VM : INamedResolver
       case Opcodes.CallFunc:
       {
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         var func_mod = curr_frame.module._imported[import_idx];
-        var func_symb = func_mod.func_index.index[func_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_mod, func_symb.ip_addr);
+        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_mod, func_ip);
         Call(curr_frame, exec, frm, args_bits);
       }
       break;

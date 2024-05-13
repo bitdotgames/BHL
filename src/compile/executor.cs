@@ -140,7 +140,7 @@ public class CompilationExecutor
     public FileImports imports_maybe;
     public ANTLR_Parsed parsed;
     //loaded from cache compiled result
-    public Module compiled;
+    public Module cached;
   }
 
   public int cache_hits { get; private set; }
@@ -251,7 +251,7 @@ public class CompilationExecutor
 
       foreach(var kv in pw.file2interim)
       {
-        if(kv.Value.compiled == null)
+        if(kv.Value.cached == null)
         {
           var file_module = new Module(
             conf.ts,
@@ -271,7 +271,7 @@ public class CompilationExecutor
           proc_bundle.file2proc.Add(kv.Key, proc);
         }
         else
-          proc_bundle.file2cached.Add(kv.Key, kv.Value.compiled);
+          proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
 
         file2interim.Add(kv.Key, kv.Value);
       }
@@ -390,10 +390,12 @@ public class CompilationExecutor
     )
   {
     var compiler_workers = new List<CompilerWorker>();
+    var patch_barrier = new Barrier(parse_workers.Count, (_) => DoPatch(compiler_workers));
 
     foreach(var pw in parse_workers)
     {
       var cw = new CompilerWorker();
+      cw.patch_barrier = patch_barrier;
       cw.conf = pw.conf;
       cw.id = pw.id;
       cw.file2interim = file2interim;
@@ -413,6 +415,30 @@ public class CompilationExecutor
       cw.Join();
 
     return compiler_workers;
+  }
+
+  static void DoPatch(List<CompilerWorker> compiler_workers)
+  {
+    foreach(var w in compiler_workers)
+    {
+      foreach(var kv in w.file2compiler)
+      {
+        try
+        {
+          kv.Value.Compile_PatchInstructions();
+        }
+        catch(Exception e)
+        {
+          if(e is ICompileError ie)
+            w.errors.Add(ie);
+          else
+          {
+            w.conf.logger.Error(e.Message + " " + e.StackTrace);
+            w.errors.Add(new BuildError(kv.Key, e));
+          }
+        }
+      }
+    }
   }
 
   SymbolError CheckUniqueSymbols(List<CompilerWorker> compiler_workers)
@@ -490,10 +516,9 @@ public class CompilationExecutor
 
   SymbolError CheckUniqueSymbols(Namespace ns, CompilerWorker w)
   {
-    foreach(var kv in w.file2ns)
+    foreach(var kv in w.file2module)
     {
-      var file = kv.Key;
-      var file_ns = kv.Value;
+      var file_ns = kv.Value.ns;
       file_ns.UnlinkAll();
 
       var conflict = ns.TryLink(file_ns);
@@ -542,7 +567,7 @@ public class CompilationExecutor
 
       try
       {
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        for(;i<(w.start + w.count);++i)
         {
           var file = w.conf.files[i]; 
           using(var sfs = File.OpenRead(file))
@@ -568,7 +593,7 @@ public class CompilationExecutor
             {
               try
               {
-                interim.compiled = CompiledModule.FromFile(compiled_file, w.conf.ts);
+                interim.cached = CompiledModule.FromFile(compiled_file, w.conf.ts);
                 ++w.cache_hits;
               }
               catch(Exception)
@@ -689,10 +714,11 @@ public class CompilationExecutor
       return imps;
     }
   }
-
+  
   public class CompilerWorker
   {
     public CompileConf conf;
+    public Barrier patch_barrier;
     public int id;
     public Thread th;
     public Types ts;
@@ -702,7 +728,8 @@ public class CompilationExecutor
     public CompileErrors errors = new CompileErrors();
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
-    public Dictionary<string, Namespace> file2ns = new Dictionary<string, Namespace>();
+    public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
+    public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
 
     public void Start()
     {
@@ -727,29 +754,50 @@ public class CompilationExecutor
 
       try
       {
-        int i = w.start;
-        for(int cnt = 0;i<(w.start + w.count);++i,++cnt)
+        //phase 1: visit AST
+        for(int i = w.start;i<(w.start + w.count);++i)
         {
           current_file = w.conf.files[i]; 
 
           var interim = w.file2interim[current_file];
 
-          if(interim.compiled != null)
-          {
-            w.file2ns.Add(current_file, interim.compiled.ns);
-          }
-          else
+          if(interim.cached == null)
           {
             var proc = w.file2proc[current_file];
 
             var proc_result = w.postproc.Patch(proc.result, current_file);
 
             var c  = new ModuleCompiler(proc_result);
-            var cm = c.Compile();
+            w.file2compiler.Add(current_file, c);
+            c.Compile_VisitAST();
+          }
+        }
 
+        w.patch_barrier.SignalAndWait();
+        
+        //phase 2: patch instructions
+        //happens within a barrier
+        
+        //phase 3: write byte code
+        for(int i = w.start;i<(w.start + w.count);++i)
+        {
+          current_file = w.conf.files[i]; 
+
+          var interim = w.file2interim[current_file];
+
+          if(interim.cached != null)
+          {
+            w.file2module.Add(current_file, interim.cached);
+          }
+          else
+          {
+            var c = w.file2compiler[current_file];
+
+            var cm = c.Compile_Finish();
+            
             CompiledModule.ToFile(cm, interim.compiled_file);
 
-            w.file2ns.Add(current_file, proc_result.module.ns);
+            w.file2module.Add(current_file, cm);
           }
         }
       }
