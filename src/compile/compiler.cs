@@ -453,7 +453,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncLocalPtr,
-        3/*ip addr*/
+        3/*func idx*/
       )
     );
     DeclareOpcode(
@@ -1369,9 +1369,11 @@ public class ModuleCompiler : AST_Visitor
       var func_symb_script = (FuncSymbolScript)func_symb;
       if(func_symb_script.GetModule() == interim)
       {
-        var get_ptr_op = Emit(Opcodes.GetFuncLocalPtr, new int[] {-1 /*patched later*/}, ast.line_num);
-        PatchLater(get_ptr_op, (inst) => inst.operands[0] = func_symb_script.ip_addr);
-        return get_ptr_op;
+        var fmod = func_symb_script.GetModule();
+        int func_idx = fmod.func_index.IndexOf(func_symb_script);
+        if(func_idx == -1)
+          throw new Exception("Not found function '"+ func_symb_script.name + "' index in module '" +  fmod.name + "'");
+        return Emit(Opcodes.GetFuncLocalPtr, new int[] { func_idx }, ast.line_num);
       }
       else
       {

@@ -67,10 +67,6 @@ public class Module
     }
   }
   
-  //TODO: probably we need script functions per module indexer, like gvars?
-  //setup once the module is loaded to find functions by their ip
-  internal Dictionary<int, FuncSymbolScript> _ip2func = new Dictionary<int, FuncSymbolScript>();
-
   //filled during runtime module setup procedure since
   //until this moment we don't know about other modules 
   internal Module[] _imported;
@@ -181,8 +177,6 @@ public class Module
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
     
-    _ip2func[fss.ip_addr] = fss;
-
     func_index.index.Add(fss);
     
     if(fss._module == null)
