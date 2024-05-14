@@ -79,6 +79,168 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual("bhl1.bhl", trace[3].file);
     AssertEqual(10, trace[3].line);
   }
+  
+  [IsTested()]
+  public void TestGetStackTraceFromMethod()
+  {
+    string bhl3 = @"
+    class Foo
+    {
+      func float wow(float b)
+      {
+        record_callstack()
+        return b
+      }
+     }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func float bar(float b)
+    {
+      var foo = new Foo;
+      return foo.wow(b)
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float foo(float k)
+    {
+      return bar(k)
+    }
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var trace = new List<VM.TraceItem>();
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            frm.fb.GetStackTrace(trace); 
+            return null;
+          });
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      },
+      ts_fn
+    );
+    vm.LoadModule("bhl1");
+    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 3);
+
+    AssertEqual(4, trace.Count);
+
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(6, trace[0].line);
+
+    AssertEqual("bar", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(6, trace[1].line);
+
+    AssertEqual("foo", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(5, trace[2].line);
+
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(10, trace[3].line);
+  }
+  
+  [IsTested()]
+  public void TestGetStackTraceFromVirtualFunc()
+  {
+    string bhl3 = @"
+    class Base 
+    {
+      virtual func float wow(float b) { return b }
+    }
+    class Foo : Base
+    {
+      override func float wow(float b)
+      {
+        record_callstack()
+        return b
+      }
+     }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    func float bar(float b)
+    {
+      var foo = new Foo;
+      return foo.wow(b)
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    func float foo(float k)
+    {
+      return bar(k)
+    }
+
+    func float test(float k) 
+    {
+      return foo(k)
+    }
+    ";
+
+    var trace = new List<VM.TraceItem>();
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            frm.fb.GetStackTrace(trace); 
+            return null;
+          });
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      },
+      ts_fn
+    );
+    vm.LoadModule("bhl1");
+    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 3);
+
+    AssertEqual(4, trace.Count);
+
+    AssertEqual("wow", trace[0].func);
+    AssertEqual("bhl3.bhl", trace[0].file);
+    AssertEqual(10, trace[0].line);
+
+    AssertEqual("bar", trace[1].func);
+    AssertEqual("bhl2.bhl", trace[1].file);
+    AssertEqual(6, trace[1].line);
+
+    AssertEqual("foo", trace[2].func);
+    AssertEqual("bhl1.bhl", trace[2].file);
+    AssertEqual(5, trace[2].line);
+
+    AssertEqual("test", trace[3].func);
+    AssertEqual("bhl1.bhl", trace[3].file);
+    AssertEqual(10, trace[3].line);
+  }
 
   [IsTested()]
   public void TestGetStackTraceFromFuncAsArg()

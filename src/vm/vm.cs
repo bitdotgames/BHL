@@ -807,6 +807,8 @@ public partial class VM : INamedResolver
     m.ns.ForAllLocalSymbols(delegate(Symbol s) {
       if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
         fsymb = ftmp;
+      else if(s is FuncSymbolVirtual fsv && fsv.GetTopOverride() is FuncSymbolScript fssv && fssv.ip_addr == ip)
+        fsymb = fssv;
     });
     return fsymb;
   }

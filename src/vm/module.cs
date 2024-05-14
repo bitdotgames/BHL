@@ -34,7 +34,7 @@ public class Module
 
   public bool is_compiled {
     get {
-      return compiled != CompiledModule.Empty;
+      return compiled != CompiledModule.None;
     }
   }
   
@@ -71,7 +71,7 @@ public class Module
   //until this moment we don't know about other modules 
   internal Module[] _imported;
 
-  public CompiledModule compiled = CompiledModule.Empty;
+  public CompiledModule compiled = CompiledModule.None;
   
   public Module(Types ts, ModulePath path)
     : this(ts, path, new Namespace())
@@ -134,19 +134,13 @@ public class Module
         if(s is Namespace ns)
           ns.module = this;
         else if(s is ClassSymbol cs)
-        {
           cs.Setup();
-
-          foreach(var kv in cs._vtable)
-          {
-            if(kv.Value is FuncSymbolScript vfs)
-              PrepareFuncSymbol(vfs, name2module);
-          }
-        }
         else if(s is VariableSymbol vs && vs.scope is Namespace)
           gvar_index.index.Add(vs);
-        else if (s is FuncSymbolScript fs)
-          PrepareFuncSymbol(fs, name2module);
+        else if(s is FuncSymbolScript fs)
+          SetupFuncSymbol(fs, name2module);
+        else if(s is FuncSymbolVirtual fssv && fssv.GetTopOverride() is FuncSymbolScript vsf)
+          SetupFuncSymbol(vsf, name2module);
       }
     );
   }
@@ -169,7 +163,7 @@ public class Module
     }
   }
   
-  void PrepareFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
+  void SetupFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
   {
     if(fss.scope is InterfaceSymbol)
       return;

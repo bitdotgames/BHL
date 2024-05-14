@@ -681,7 +681,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
     for(int i=0;i<_all_members.Count;++i)
     {
       if(_all_members[i] is FuncSymbolVirtual fssv)
-        _vtable[i] = fssv.overrides[fssv.overrides.Count-1];
+        _vtable[i] = fssv.GetTopOverride();
     }
 
     //interfaces lookup table
@@ -1953,7 +1953,7 @@ public class FuncSymbolVirtual : FuncSymbol
     throw new NotImplementedException();
   }
 
-  public void AddOverride(ClassSymbol owner, FuncSymbol fs, bool strict = true)
+  public void AddOverride(ClassSymbol owner, FuncSymbol fs)
   {
     //NOTE: we call fs.signature(signature) but not signature.Equals(fs.signature) on purpose,
     //      since we want to allow 'non-coro' functions to be a subset(compatible) of 'coro' ones
@@ -1974,6 +1974,11 @@ public class FuncSymbolVirtual : FuncSymbol
         return overrides[i];
     }
     return null;
+  }
+
+  public FuncSymbol GetTopOverride()
+  {
+    return overrides[overrides.Count-1];
   }
 }
 

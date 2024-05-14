@@ -46,7 +46,7 @@ public class CompiledModule
 {
   const uint HEADER_VERSION = 2;
   
-  public static CompiledModule Empty = new CompiledModule();
+  public static CompiledModule None = new CompiledModule();
   
   //normalized imported module names
   public List<string> imports;
