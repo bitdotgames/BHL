@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -214,7 +215,7 @@ public class VarSymbol : Symbol
   {}
 }
 
-public abstract class InterfaceSymbol : Symbol, IInstantiable, ISymbolsIteratable
+public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 {
   internal SymbolsStorage members;
 
@@ -259,7 +260,8 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, ISymbolsIteratabl
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsIterator GetSymbolsIterator() { return members; }
+  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
   {
@@ -385,7 +387,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
   }
 }
 
-public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
+public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 {
   public ClassSymbol super_class {
     get {
@@ -443,10 +445,8 @@ public abstract class ClassSymbol : Symbol, IInstantiable, ISymbolsIteratable
   }
 
   //NOTE: only once the class is Setup we have valid members iterator
-  public ISymbolsIterator GetSymbolsIterator()
-  {
-    return _all_members;
-  }
+  public IEnumerator<Symbol> GetEnumerator() { return _all_members.GetEnumerator(); }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public IScope GetFallbackScope() 
   {
@@ -1674,7 +1674,7 @@ public enum FuncAttrib : byte
   Static       = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbolsIteratable
+public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, IEnumerable<Symbol>
 {
   FuncSignature _signature;
   public FuncSignature signature {
@@ -1739,7 +1739,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, ISymbo
     members.Add(sym);
   }
 
-  public ISymbolsIterator GetSymbolsIterator() { return members; }
+  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   internal struct EnforceThisScope : IScope
   {
@@ -2412,7 +2413,7 @@ public class ClassSymbolScript : ClassSymbol
   }
 }
 
-public abstract class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
+public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
 {
   internal SymbolsStorage members;
 
@@ -2436,7 +2437,8 @@ public abstract class EnumSymbol : Symbol, IScope, IType, ISymbolsIteratable
     members.Add(sym);
   }
 
-  public ISymbolsIterator GetSymbolsIterator() { return members; }
+  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public EnumItemSymbol FindValue(string name)
   {
@@ -2556,7 +2558,7 @@ public class EnumItemSymbol : Symbol, IType
   }
 }
 
-public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
+public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 {
   IScope scope;
   List<Symbol> list = new List<Symbol>();
@@ -2688,6 +2690,12 @@ public class SymbolsStorage : marshall.IMarshallable, ISymbolsIterator
     for(int i=0;i<o.Count;++i)
       Add(o[i]);
   }
+
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    return list.GetEnumerator();
+  }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
 
 public class TypeSet<T> : marshall.IMarshallable where T : class, IType

@@ -307,19 +307,17 @@ public class TextDocumentSignatureHelpService : IService
 
   static ParameterInformation[] GetSignatureParams(FuncSymbol symb)
   {
-    var en = symb.GetSymbolsIterator();
+    var ps = new List<ParameterInformation>();
 
-    var ps = new ParameterInformation[en.Count];
-
-    for(int i=0;i<en.Count;++i)
+    foreach(var s in symb)
     {
-      ps[i] = new ParameterInformation() {
-        label = (en[i] as VariableSymbol).type.Get() + " " + en[i],
+      ps.Add(new ParameterInformation() {
+        label = (s as VariableSymbol).type.Get() + " " + s,
         documentation = ""
-      };
+      });
     }
 
-    return ps;
+    return ps.ToArray();
   }
 }
 

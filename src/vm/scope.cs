@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -21,24 +22,12 @@ public interface INamedResolver
   INamed ResolveNamedByPath(string path);
 }
 
-public interface ISymbolsIterator
-{
-  int Count { get; }
-  Symbol this[int index] { get; }
-}
-
-public interface ISymbolsIteratable
-{
-  // A read-only symbols accessing interface 
-  ISymbolsIterator GetSymbolsIterator();
-}
-
 public interface IInstantiable : IType, IScope 
 {
   HashSet<IInstantiable> GetAllRelatedTypesSet();
 }
 
-public class LocalScope : IScope, ISymbolsIteratable
+public class LocalScope : IScope, IEnumerable<Symbol>
 {
   bool is_paral;
   int next_idx;
@@ -84,7 +73,8 @@ public class LocalScope : IScope, ISymbolsIteratable
     }
   }
 
-  public ISymbolsIterator GetSymbolsIterator() { return members; }
+  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public Symbol Resolve(string name) 
   {
@@ -129,7 +119,7 @@ public class LocalScope : IScope, ISymbolsIteratable
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIteratable, INamedResolver
+public class Namespace : Symbol, IScope, marshall.IMarshallable, IEnumerable<Symbol>, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -357,24 +347,30 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, ISymbolsIterata
 
   public IScope GetFallbackScope() { return scope; }
 
-  public ISymbolsIterator GetSymbolsIterator() 
-  { 
-    var all = new SymbolsStorage(this);
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    var seen_ns = new HashSet<string>();
+    
     var it = GetIterator();
     while(it.Next())
     {
       for(int i=0;i<it.current.members.Count;++i)
       {
         var m = it.current.members[i];
-        
-        if(m is Namespace && all.Contains(m.name))
-          continue;
-        
-        all.Add(m);
+
+        if(m is Namespace)
+        {
+          if(seen_ns.Contains(m.name)) 
+            continue;
+          seen_ns.Add(m.name);
+        }
+
+        yield return m;
       }
     }
-    return all;
   }
+  
+  IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public Symbol Resolve(string name)
   {
@@ -651,14 +647,12 @@ public static class ScopeExtensions
     else
       str += " {\n";
 
-    if(scope is ISymbolsIteratable isi)
+    if(scope is IEnumerable<Symbol> ies)
     {
-      var idx = isi.GetSymbolsIterator();
-      for(int i=0;i<idx.Count;++i)
+      foreach(var m in ies)
       {
-        var m = idx[i];
         if(scope is FuncSymbol)
-          str += m.name + " : " + ((ITyped)m).GetIType().GetName() + (i < idx.Count-1 ? ", " : "");
+          str += m.name + " : " + ((ITyped)m).GetIType().GetName() + ", ";
         else if(m is IScope s)
           str += s.DumpMembers(level+1) + "\n";
         else if(m is ITyped typed)
@@ -676,13 +670,11 @@ public static class ScopeExtensions
 
   public static void ForAllSymbols(this IScope scope, System.Action<Symbol> cb)
   {
-    if(!(scope is ISymbolsIteratable isi))
+    if(!(scope is IEnumerable<Symbol> ies))
       return;
 
-    var it = isi.GetSymbolsIterator();
-    for(int i=0;i<it.Count;++i)
+    foreach(var m in ies)
     {
-      var m = it[i];
       cb(m);
       if(m is IScope s)
         s.ForAllSymbols(cb);

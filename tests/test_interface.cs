@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using bhl;
 
 public class TestInterface : BHL_TestBase
@@ -117,7 +118,7 @@ public class TestInterface : BHL_TestBase
       AssertTrue(symb != null);
       AssertEqual(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
-      AssertEqual(1, symb.GetSymbolsIterator().Count);
+      AssertEqual(1, symb.Count());
 
       var hey = symb.FindMethod("hey").signature;
       AssertTrue(hey != null);
@@ -140,7 +141,7 @@ public class TestInterface : BHL_TestBase
       var symb = vm.ResolveNamedByPath("Wow") as InterfaceSymbolScript;
       AssertTrue(symb != null);
       AssertEqual(0, symb.inherits.Count);
-      AssertEqual(1, symb.GetSymbolsIterator().Count);
+      AssertEqual(1, symb.Count());
 
       var bar = symb.FindMethod("bar").signature;
       AssertTrue(bar != null);
