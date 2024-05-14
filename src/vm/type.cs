@@ -418,6 +418,10 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
 public class Types : INamedResolver
 {
+  //NOTE: each symbol belongs to a Module but there are also global static symbols,
+  //      for them we have a special static global Module 
+  static public Module Module = new Module(null);
+  
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
   static public IntSymbol Int = new IntSymbol();

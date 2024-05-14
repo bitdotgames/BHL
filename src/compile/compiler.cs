@@ -460,7 +460,8 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncNativePtr,
-        2/*imported module idx*/, 3/*func idx*/
+        //2/*imported module idx*/, 3/*func idx*/
+        3/*func idx*/
       )
     );
     DeclareOpcode(
@@ -1370,8 +1371,14 @@ public class ModuleCompiler : AST_Visitor
     if(func_symb == null)
       throw new Exception("Symbol '" + ast.symb?.name + "' is not a func");
 
-    if(func_symb is FuncSymbolNative)
-      return Emit(Opcodes.GetFuncNativePtr, new int[] { func_symb.scope_idx }, ast.line_num);
+    if(func_symb is FuncSymbolNative func_symb_native)
+    {
+      var fmod = func_symb.GetModule();
+      int func_idx = fmod.nfunc_index.IndexOf(func_symb_native);
+      if(func_idx == -1)
+        throw new Exception("Not found function '"+ func_symb.name + "' index in module '" +  fmod.name + "'");
+      return Emit(Opcodes.GetFuncNativePtr, new int[] { func_idx }, ast.line_num);
+    }
     else
     {
       var func_symb_script = (FuncSymbolScript)func_symb;

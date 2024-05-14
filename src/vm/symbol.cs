@@ -95,6 +95,11 @@ public class StringSymbol : ClassSymbolNative
   {
     return CLASS_ID;
   }
+  
+  public override IScope GetFallbackScope()
+  {
+    return Types.Module.ns;
+  }
 
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
@@ -448,7 +453,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   public IEnumerator<Symbol> GetEnumerator() { return _all_members.GetEnumerator(); }
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-  public IScope GetFallbackScope() 
+  public virtual IScope GetFallbackScope() 
   {
     return this.scope;
   }
@@ -831,17 +836,22 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeral
 {
-  public const uint CLASS_ID = 10; 
-
-  public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
+  public const uint CLASS_ID = 10;
+    
+  public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type)
     : base(origin, item_type)
   {}
-
+    
   //marshall factory version
   public GenericArrayTypeSymbol()
     : base()
   {}
-
+    
+  public override IScope GetFallbackScope()
+  {
+    return Types.Module.ns;
+  }
+    
   static IList<Val> AsList(Val arr)
   {
     var lst = arr.obj as IList<Val>;
@@ -1203,8 +1213,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent
-      );
+      var fn = new FuncSymbolNative(new Origin(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent);
       enumerator_type.Define(fn);
     }
 
@@ -1230,15 +1239,26 @@ public abstract class MapTypeSymbol : ClassSymbol
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeral
 {
   public const uint CLASS_ID = 21; 
-
+  
   public GenericMapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
     : base(origin, key_type, val_type)
   {}
+    
+  public override void Setup()
+  {
+    this.enumerator_type.scope = Types.Module.ns;
+    base.Setup();
+  }
   
   //marshall factory version
   public GenericMapTypeSymbol()
     : base()
   {}
+  
+  public override IScope GetFallbackScope()
+  {
+    return Types.Module.ns;
+  }
 
   static ValMap AsMap(Val arr)
   {
