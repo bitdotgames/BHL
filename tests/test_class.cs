@@ -191,7 +191,7 @@ public class TestClass : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);
@@ -2577,7 +2577,7 @@ public class TestClass : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallNative, new int[] { c.global_nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);

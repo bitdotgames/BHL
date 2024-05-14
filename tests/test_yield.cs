@@ -368,7 +368,7 @@ public class TestYield : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.CallNative, new int[] { ts.nfunc_index.IndexOf("suspend"), 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
       .EmitThen(Opcodes.ExitFrame)
       ;
     AssertEqual(c, expected);

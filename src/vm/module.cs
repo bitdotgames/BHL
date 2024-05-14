@@ -39,21 +39,18 @@ public class Module
   }
   
   public ModulePath path;
-  
+  public Types ts; 
   public Namespace ns;
 
   //used for assigning incremental indexes to module global vars,
   //contains imported variables as well
   public VarScopeIndexer gvar_index = new VarScopeIndexer();
-  
-  public FixedStack<Val> gvar_vals = new FixedStack<Val>(MAX_GLOBALS);
-  
-  //used for assigning incremental indexes to native funcs,
-  //NOTE: currently this indexer is global, while it must be local per module
-  public NativeFuncScopeIndexer global_nfunc_index;
-  
   //used for assigning incremental module indexes to funcs
   public FuncModuleIndexer func_index = new FuncModuleIndexer();
+  //used for assigning incremental module indexes to native funcs
+  public FuncNativeModuleIndexer nfunc_index = new FuncNativeModuleIndexer();
+  
+  public FixedStack<Val> gvar_vals = new FixedStack<Val>(MAX_GLOBALS);
 
   //if set this mark is the index starting from which 
   //*imported* module variables are stored in gvars
@@ -83,7 +80,7 @@ public class Module
 
   public Module(Types ts, ModulePath path, Namespace ns)
   {
-    global_nfunc_index = ts.nfunc_index;
+    this.ts = ts;
     //let's setup the link
     ns.module = this;
     this.path = path;

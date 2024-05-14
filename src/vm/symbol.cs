@@ -500,10 +500,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
       if(fs is FuncSymbolScript fss)
         this.GetModule().func_index.Index(fss);
+      else if(fs is FuncSymbolNative fsn)
+        this.GetModule().nfunc_index.Index(fsn);
     }
-
-    if(sym is FuncSymbolNative fsn && fsn.attribs.HasFlag(FuncAttrib.Static))
-      this.GetModule().global_nfunc_index.Index(fsn);
 
     if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -520,7 +519,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
           stack.Push(res);
           return null;
         });
-        this.GetNamespace().module.global_nfunc_index.Index(static_get);
+        this.GetModule().nfunc_index.Index(static_get);
 
         var static_set = new FuncSymbolNative(
         new Origin(),
@@ -533,10 +532,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
           val.Release();
           return null;
         });
-        this.GetNamespace().module.global_nfunc_index.Index(static_set);
+        this.GetModule().nfunc_index.Index(static_set);
       }
       else
-        this.GetNamespace().module.gvar_index.Index(fld);
+        this.GetModule().gvar_index.Index(fld);
     }
 
     //NOTE: we don't check if there are any parent symbols with the same name, 
@@ -2751,7 +2750,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
   }
 }
 
-public class Indexer<T> where T : new()
+public class SymbolIndexer<T> where T : Symbol
 {
   internal List<T> index = new List<T>();
   
@@ -2777,6 +2776,14 @@ public class Indexer<T> where T : new()
   public int IndexOf(T s)
   {
     return index.IndexOf(s);
+  }
+  
+  public int IndexOf(string name)
+  {
+    for(int i=0;i<index.Count;++i)
+      if(index[i].name == name)
+        return i;
+    return -1;
   }
 }
 
@@ -2820,7 +2827,8 @@ public class ScopeIndexer<T> where T : INamed, IScopeIndexed
   }
 }
 
-public class FuncModuleIndexer : Indexer<FuncSymbolScript> {}
+public class FuncNativeModuleIndexer : SymbolIndexer<FuncSymbolNative> {}
+public class FuncModuleIndexer : SymbolIndexer<FuncSymbolScript> {}
 
 public class VarScopeIndexer : ScopeIndexer<VariableSymbol> {}
 

@@ -1050,7 +1050,7 @@ public class BHL_TestBase
       defines: defines
     );
 
-    var c  = new ModuleCompiler(proc.result);
+    var c = new ModuleCompiler(proc.result);
     var cm = c.Compile();
     if(show_bytes)
       Dump(c);

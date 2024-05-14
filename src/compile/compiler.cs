@@ -460,7 +460,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncNativePtr,
-        3/*global native idx*/
+        2/*imported module idx*/, 3/*func idx*/
       )
     );
     DeclareOpcode(
@@ -1197,7 +1197,7 @@ public class ModuleCompiler : AST_Visitor
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {interim.global_nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {cs.GetModule().nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
           Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
@@ -1207,7 +1207,7 @@ public class ModuleCompiler : AST_Visitor
       {
         //NOTE: native static fields are implemented as native functions
         if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
-          Emit(Opcodes.CallNative, new int[] {interim.global_nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
+          Emit(Opcodes.CallNative, new int[] {interim.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0}, ast.line_num);
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
           Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);

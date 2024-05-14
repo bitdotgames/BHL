@@ -391,7 +391,7 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, IEnumerable<Sym
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
 
     if(sym is FuncSymbolNative fsn)
-      module.global_nfunc_index.Index(fsn);
+      module.nfunc_index.Index(fsn);
     else if(sym is FuncSymbolScript fss)
       module.func_index.Index(fss);
     else if(sym is VariableSymbol vs)

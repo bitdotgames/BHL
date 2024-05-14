@@ -494,9 +494,11 @@ public class Types : INamedResolver
     { new Tuple<IType, IType>(Any,    Any),       Any    },
   };
 
-  public Namespace ns;
-
-  public NativeFuncScopeIndexer nfunc_index = new NativeFuncScopeIndexer();
+  //global built-in module
+  public Module module;
+  public Namespace ns {
+    get { return module.ns;  }
+  }
 
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
@@ -570,8 +572,7 @@ public class Types : INamedResolver
 
   public Types()
   {
-    var m = new Module(this, "");
-    ns = m.ns;
+    module = new Module(this, "");
 
     InitBuiltins();
 
@@ -589,12 +590,6 @@ public class Types : INamedResolver
     Module m;
     modules.TryGetValue(name, out m);
     return m;
-  }
-
-  Types(NativeFuncScopeIndexer nfunc_index, Namespace ns)
-  {
-    this.nfunc_index = nfunc_index;
-    this.ns = ns;
   }
 
   public INamed ResolveNamedByPath(string name)
