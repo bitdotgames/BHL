@@ -1410,8 +1410,7 @@ public partial class VM : INamedResolver
         var self = exec.stack[self_idx];
         exec.stack.RemoveAt(self_idx);
 
-        var class_type = ((ClassSymbolScript)self.type);
-
+        var class_type = (ClassSymbolScript)self.type;
         var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
 
         var frm = Frame.New(this);
@@ -1433,9 +1432,10 @@ public partial class VM : INamedResolver
         var self = exec.stack[self_idx];
 
         var class_type = (ClassSymbol)self.type;
+        var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, exec.stack, (FuncSymbolNative)class_type._all_members[func_idx], args_bits, out status, ref exec.coroutine))
+        if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;
@@ -1508,7 +1508,7 @@ public partial class VM : INamedResolver
         var val_ptr = exec.stack.Pop();
         var ptr = (FuncPtr)val_ptr._obj;
 
-        //checking native call
+        //checking if it's a native call
         if(ptr.native != null)
         {
           BHS status;
