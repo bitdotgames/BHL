@@ -10,8 +10,7 @@ public enum ConstType
   BOOL       = 3,
   STR        = 4,
   NIL        = 5,
-  INAMED     = 6,
-  ITYPE      = 7,
+  ITYPE      = 6,
 }
 
 public class Const : IEquatable<Const>
@@ -22,7 +21,6 @@ public class Const : IEquatable<Const>
   public double num;
   public string str;
   public Proxy<IType> itype;
-  public Proxy<INamed> inamed;
 
   public Const(ConstType type, double num, string str)
   {
@@ -59,12 +57,6 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Const(Proxy<INamed> inamed)
-  {
-    type = ConstType.INAMED;
-    this.inamed = inamed;
-  }
-
   public Const(Proxy<IType> itype)
   {
     type = ConstType.ITYPE;
@@ -83,8 +75,6 @@ public class Const : IEquatable<Const>
       return Val.NewStr(vm, str);
     else if(type == ConstType.NIL)
       return vm.Null;
-    else if(type == ConstType.INAMED)
-      return Val.NewObj(vm, inamed, Types.Any/*TODO: ???*/);
     else if(type == ConstType.ITYPE)
       return Val.NewObj(vm, itype, Types.Any/*TODO: ???*/);
     else
@@ -99,7 +89,6 @@ public class Const : IEquatable<Const>
     return type == o.type && 
            num == o.num && 
            str == o.str &&
-           inamed.Equals(o.inamed) &&
            itype.Equals(o.itype)
            ;
   }

@@ -281,11 +281,6 @@ public class ModuleCompiler : AST_Visitor
     return AddConstant(new Const(str));
   }
 
-  int AddConstant(INamed inamed)
-  {
-    return AddConstant(new Const(new Proxy<INamed>(inamed)));
-  }
-
   int AddConstant(IType itype)
   {
     return AddConstant(new Const(new Proxy<IType>(itype)));

@@ -739,17 +739,6 @@ public class BHL_TestBase
     throw new Exception("Constant not found: " + v);
   }
 
-  public static int ConstIdx(bhl.Module module, Proxy<INamed> v)
-  {
-    for(int i=0;i<module.compiled.constants.Count;++i)
-    {
-      var cn = module.compiled.constants[i];
-      if(cn.type == ConstType.INAMED && cn.inamed.Equals(v))
-        return i;
-    }
-    throw new Exception("Constant not found: " + v);
-  }
-
   public static int ConstIdx(bhl.Module module, Proxy<IType> v)
   {
     for(int i=0;i<module.compiled.constants.Count;++i)

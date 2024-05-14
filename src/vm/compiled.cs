@@ -205,13 +205,6 @@ public class CompiledModule
                 cn_type == ConstType.BOOL ||
                 cn_type == ConstType.NIL)
           cn = new Const(cn_type, r.ReadDouble(), "");
-        else if(cn_type == ConstType.INAMED)
-        {
-          var tp = marshall.Marshall.Stream2Obj<Proxy<INamed>>(src, symb_factory);
-          if(string.IsNullOrEmpty(tp.path))
-            throw new Exception("Missing path");
-          cn = new Const(tp);
-        }
         else if(cn_type == ConstType.ITYPE)
         {
           var tp = marshall.Marshall.Stream2Obj<Proxy<IType>>(src, symb_factory);
@@ -290,8 +283,6 @@ public class CompiledModule
             cn.type == ConstType.BOOL ||
             cn.type == ConstType.NIL)
           w.Write(cn.num);
-        else if(cn.type == ConstType.INAMED)
-          marshall.Marshall.Obj2Stream(cn.inamed, dst);
         else if(cn.type == ConstType.ITYPE)
           marshall.Marshall.Obj2Stream(cn.itype, dst);
         else
