@@ -703,6 +703,7 @@ public class ModuleCompiler : AST_Visitor
 
   void Pop()
   {
+    RemovePatchLater(head[head.Count-1]);
     head.RemoveAt(head.Count-1);
   }
 
@@ -768,6 +769,18 @@ public class ModuleCompiler : AST_Visitor
         inst = inst,
         cb = cb
     });
+  }
+
+  void RemovePatchLater(Instruction inst)
+  {
+    for(int i = patches.Count; i-- > 0;)
+    {
+      if(patches[i].inst == inst)
+      {
+        patches.RemoveAt(i);
+        return;
+      }
+    }
   }
 
   void AddOffsetFromTo(Instruction src, Instruction dst, int operand_idx = 0)
