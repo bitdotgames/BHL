@@ -433,7 +433,13 @@ public class Types : INamedResolver
 
   static public VarSymbol Var = new VarSymbol();
   static public NullSymbol Null = new NullSymbol();
-  static public ClassSymbolNative ClassType = null;
+  static public ClassSymbolNative ClassType = 
+    new ClassSymbolNative(new Origin(), "Type", 
+         delegate(VM.Frame frm, ref Val v, IType type) 
+         { 
+           v.SetObj(null, type);
+         }
+       );
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -508,70 +514,87 @@ public class Types : INamedResolver
 
   static Types()
   {
+    SetupGenericArrayType();
+    SetupGenericMapType();
+    SetupStringSymbol();
+    SetupClassType();
+  }
+  
+  static void SetupGenericArrayType()
+  {
+    Module.ns.Define(Array);
+    Array.Setup();
+  }
+    
+  static void SetupGenericMapType()
+  {
+    Module.ns.Define(Map);
+    Module.ns.Define(Map.enumerator_type);
+    Map.Setup();
+  }
+
+  static void SetupStringSymbol()
+  {
+    Module.ns.Define(String);
+    
     {
-      {
-        var fld = new FieldSymbol(new Origin(), "Count", Int, 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
-          {
-            v.SetInt(ctx.str.Length);
-          },
-          null
-        );
-        String.Define(fld);
-      }
-
-      {
-        var m = new FuncSymbolNative(new Origin(), "At", String,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-          { 
-            int idx = (int)stack.PopRelease().num;
-            string self = stack.PopRelease().str;
-            stack.Push(Val.NewStr(frm.vm, self[idx].ToString()));
-            return null;
-          }, 
-          new FuncArgSymbol("i", Int)
-        );
-        String.Define(m);
-      }
-
-      {
-        var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-          { 
-            string s = stack.PopRelease().str;
-            string self = stack.PopRelease().str;
-            stack.Push(Val.NewInt(frm.vm, self.IndexOf(s)));
-            return null;
-          }, 
-          new FuncArgSymbol("s", String)
-        );
-        String.Define(m);
-      }
-
-      String.Setup();
-    }
-
-    {
-      ClassType = new ClassSymbolNative(new Origin(), "Type", 
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(null, type);
-        }
+      var fld = new FieldSymbol(new Origin(), "Count", Int, 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+        {
+          v.SetInt(ctx.str.Length);
+        },
+        null
       );
-
-      {
-        var fld = new FieldSymbol(new Origin(), "Name", String, 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
-          {
-            var t = (IType)ctx.obj;
-            v.SetStr(t.GetName());
-          },
-          null
-        );
-        ClassType.Define(fld);
-      }
-      ClassType.Setup();
+      String.Define(fld);
     }
+
+    {
+      var m = new FuncSymbolNative(new Origin(), "At", String,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          int idx = (int)stack.PopRelease().num;
+          string self = stack.PopRelease().str;
+          stack.Push(Val.NewStr(frm.vm, self[idx].ToString()));
+          return null;
+        }, 
+        new FuncArgSymbol("i", Int)
+      );
+      String.Define(m);
+    }
+
+    {
+      var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          string s = stack.PopRelease().str;
+          string self = stack.PopRelease().str;
+          stack.Push(Val.NewInt(frm.vm, self.IndexOf(s)));
+          return null;
+        }, 
+        new FuncArgSymbol("s", String)
+      );
+      String.Define(m);
+    }
+
+    String.Setup();
+  }
+  
+  static void SetupClassType()
+  {
+    Module.ns.Define(ClassType);
+  
+    {
+      var fld = new FieldSymbol(new Origin(), "Name", String, 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+        {
+          var t = (IType)ctx.obj;
+          v.SetStr(t.GetName());
+        },
+        null
+      );
+      ClassType.Define(fld);
+    }
+    ClassType.Setup();
   }
 
   public Types()

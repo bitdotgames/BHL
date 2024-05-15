@@ -96,11 +96,6 @@ public class StringSymbol : ClassSymbolNative
     return CLASS_ID;
   }
   
-  public override IScope GetFallbackScope()
-  {
-    return Types.Module.ns;
-  }
-
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
@@ -453,7 +448,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   public IEnumerator<Symbol> GetEnumerator() { return _all_members.GetEnumerator(); }
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-  public virtual IScope GetFallbackScope() 
+  public IScope GetFallbackScope() 
   {
     return this.scope;
   }
@@ -747,12 +742,13 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : base(null, null)
   {}
 
-  public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type)     
+  public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type, bool setup = true)     
     : base(origin, name)
   {
     this.item_type = item_type;
 
-    Setup();
+    if(setup) 
+      Setup();
   }
 
   public override void Setup()
@@ -819,8 +815,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : base(origin, name)
   {}
 
-  public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
-    : this(origin, "[]" + item_type.path, item_type)
+  public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type, bool setup = true) 
+    : this(origin, "[]" + item_type.path, item_type, setup)
   {}
 
   public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
@@ -839,18 +835,13 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
   public const uint CLASS_ID = 10;
     
   public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type)
-    : base(origin, item_type)
+    : base(origin, item_type, false)
   {}
     
   //marshall factory version
   public GenericArrayTypeSymbol()
     : base()
   {}
-    
-  public override IScope GetFallbackScope()
-  {
-    return Types.Module.ns;
-  }
     
   static IList<Val> AsList(Val arr)
   {
@@ -1133,13 +1124,14 @@ public abstract class MapTypeSymbol : ClassSymbol
     : base(null, null)
   {}
 
-  public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+  public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type, bool setup = true)     
     : base(origin, "[" + key_type.path + "]" + val_type.path)
   {
     this.key_type = key_type;
     this.val_type = val_type;
 
-    Setup();
+    if(setup)
+      Setup();
   }
 
   public override void Setup()
@@ -1241,24 +1233,13 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public const uint CLASS_ID = 21; 
   
   public GenericMapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base(origin, key_type, val_type)
+    : base(origin, key_type, val_type, false)
   {}
     
-  public override void Setup()
-  {
-    this.enumerator_type.scope = Types.Module.ns;
-    base.Setup();
-  }
-  
   //marshall factory version
   public GenericMapTypeSymbol()
     : base()
   {}
-  
-  public override IScope GetFallbackScope()
-  {
-    return Types.Module.ns;
-  }
 
   static ValMap AsMap(Val arr)
   {
