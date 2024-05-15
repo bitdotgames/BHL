@@ -345,7 +345,10 @@ public class BHL_TestBase
       ts.ns.Define(fn);
     }
 
-    ts.ns.Define(new ArrayTypeSymbolT<Color>(new Origin(), "ArrayT_Color", ts.T("Color"), delegate() { return new List<Color>(); } ));
+    var arrT_Color = new ArrayTypeSymbolT<Color>(new Origin(), "ArrayT_Color", ts.T("Color"),
+      delegate() { return new List<Color>(); }); 
+    ts.ns.Define(arrT_Color);
+    arrT_Color.Setup();
 
     if(call_setup)
       cl.Setup();

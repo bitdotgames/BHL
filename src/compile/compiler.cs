@@ -1481,7 +1481,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Yield ast)
   {
     //TODO: do we need a separate opcode for that?
-    Emit(Opcodes.CallNative, new int[] {Prelude.YieldFunc.scope_idx, 0}, ast.line_num);
+    Emit(Opcodes.CallBuiltinNative, new int[] {ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0}, ast.line_num);
   }
 
   public override void DoVisit(AST_PopValue ast)

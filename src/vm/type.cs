@@ -418,21 +418,12 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
 public class Types : INamedResolver
 {
-  //NOTE: each symbol belongs to a Module but there are also global static symbols,
-  //      for them we have a special static global Module 
-  static public Module Module = new Module(null);
-  
   static public BoolSymbol Bool = new BoolSymbol();
   static public StringSymbol String = new StringSymbol();
   static public IntSymbol Int = new IntSymbol();
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
-  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), Any);  
-  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), Any, Any);  
-
-  static public VarSymbol Var = new VarSymbol();
-  static public NullSymbol Null = new NullSymbol();
   static public ClassSymbolNative ClassType = 
     new ClassSymbolNative(new Origin(), "Type", 
          delegate(VM.Frame frm, ref Val v, IType type) 
@@ -440,6 +431,12 @@ public class Types : INamedResolver
            v.SetObj(null, type);
          }
        );
+  
+  static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), Any);  
+  static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), Any, Any);  
+
+  static public VarSymbol Var = new VarSymbol();
+  static public NullSymbol Null = new NullSymbol();
 
 #if BHL_FRONT
   static Dictionary<Tuple<IType, IType>, IType> bin_op_res_type = new Dictionary<Tuple<IType, IType>, IType>() 
@@ -504,16 +501,22 @@ public class Types : INamedResolver
     { new Tuple<IType, IType>(Any,    Any),       Any    },
   };
 
-  //global built-in module
+  //global module
   public Module module;
   public Namespace ns {
     get { return module.ns;  }
   }
 
+  //NOTE: each symbol belongs to a Module but there are also global static symbols,
+  //      for them we have a special static global Module 
+  static Module static_module = new Module(null);
+
   Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
   static Types()
   {
+    InitBuiltins();
+    
     SetupGenericArrayType();
     SetupGenericMapType();
     SetupStringSymbol();
@@ -522,20 +525,20 @@ public class Types : INamedResolver
   
   static void SetupGenericArrayType()
   {
-    Module.ns.Define(Array);
+    static_module.ns.Define(Array);
     Array.Setup();
   }
     
   static void SetupGenericMapType()
   {
-    Module.ns.Define(Map);
-    Module.ns.Define(Map.enumerator_type);
+    static_module.ns.Define(Map);
+    static_module.ns.Define(Map.enumerator_type);
     Map.Setup();
   }
 
   static void SetupStringSymbol()
   {
-    Module.ns.Define(String);
+    static_module.ns.Define(String);
     
     {
       var fld = new FieldSymbol(new Origin(), "Count", Int, 
@@ -581,8 +584,8 @@ public class Types : INamedResolver
   
   static void SetupClassType()
   {
-    Module.ns.Define(ClassType);
-  
+    static_module.ns.Define(ClassType);
+    
     {
       var fld = new FieldSymbol(new Origin(), "Name", String, 
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
@@ -600,9 +603,13 @@ public class Types : INamedResolver
   public Types()
   {
     module = new Module(this, "");
+    
+    ns.Link(static_module.ns);
+    //dumb copy of items
+    module.nfunc_index.index.AddRange(static_module.nfunc_index.index);
 
-    InitBuiltins();
-
+    Prelude.Define(this);
+    
     RegisterModule(std.MakeModule(this)); 
     RegisterModule(std.io.MakeModule(this)); 
   }
@@ -624,18 +631,14 @@ public class Types : INamedResolver
     return ns.ResolveSymbolByPath(name);
   }
 
-  void InitBuiltins() 
+  static void InitBuiltins() 
   {
-    ns.Define(Int);
-    ns.Define(Float);
-    ns.Define(Bool);
-    ns.Define(String);
-    ns.Define(Void);
-    ns.Define(Any);
-    ns.Define(Var);
-    ns.Define(ClassType);
-
-    Prelude.Define(this);
+    static_module.ns.Define(Int);
+    static_module.ns.Define(Float);
+    static_module.ns.Define(Bool);
+    static_module.ns.Define(Void);
+    static_module.ns.Define(Any);
+    static_module.ns.Define(Var);
   }
 
   static public bool IsCompoundType(string name)
