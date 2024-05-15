@@ -8,6 +8,11 @@ public class ModuleCompiler : AST_Visitor
   AST_Tree ast;
   Module result;
   Module interim;
+  
+  Types ts
+  {
+    get { return interim.ts;  }
+  }
 
   List<Const> constants = new List<Const>();
   List<string> imports = new List<string>();
@@ -157,10 +162,10 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcodes();
   }
 
-  public ModuleCompiler(ANTLR_Processor.Result fres)
+  public ModuleCompiler(ANTLR_Processor.Result proc_res)
   {
-    interim = fres.module;
-    ast = fres.ast;
+    interim = proc_res.module;
+    ast = proc_res.ast;
     curr_scope = interim.ns;
 
     UseInit();
@@ -460,8 +465,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncNativePtr,
-        //2/*imported module idx*/, 3/*func idx*/
-        3/*func idx*/
+        2/*imported module idx*/, 3/*func idx*/
       )
     );
     DeclareOpcode(
@@ -484,8 +488,14 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallBuiltinNative,
+        3/*func idx*/, 4/*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.CallNative,
-        3/*global idx*/, 4/*args bits*/
+        2/*imported module idx*/, 3/*module's func idx*/, 4/*args bits*/
       )
     );
     DeclareOpcode(
@@ -1246,7 +1256,11 @@ public class ModuleCompiler : AST_Visitor
         else if(instr.op == Opcodes.GetFuncNativePtr)
         {
           Pop();
-          Emit(Opcodes.CallNative, new int[] {instr.operands[0], (int)ast.cargs_bits}, ast.line_num);
+          //let's check if it's a builtin native function
+          if(instr.operands[0] == 0)
+            Emit(Opcodes.CallBuiltinNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
+          else
+            Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
         }
         else
           Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
@@ -1377,7 +1391,23 @@ public class ModuleCompiler : AST_Visitor
       int func_idx = fmod.nfunc_index.IndexOf(func_symb_native);
       if(func_idx == -1)
         throw new Exception("Not found function '"+ func_symb.name + "' index in module '" +  fmod.name + "'");
-      return Emit(Opcodes.GetFuncNativePtr, new int[] { func_idx }, ast.line_num);
+      var get_ptr_op = Emit(Opcodes.GetFuncNativePtr, new int[] { 0/*patched later*/, func_idx }, ast.line_num);
+
+      //NOTE: we need to patch only in case the native function is imported from some module,
+      //      for built-in native functions we don't do that
+      if(fmod != ts.module)
+      {
+        PatchLater(get_ptr_op, (inst) =>
+        {
+          int mod_idx = imports.IndexOf(fmod.name);
+          if(mod_idx == -1)
+            throw new Exception("Not found module '" + fmod.name + "' imported index");
+          //NOTE: using convention where built-in module is always at index 0
+          //      and imported modules are at (mod_idx + 1) 
+          inst.operands[0] = mod_idx + 1;
+        });
+      }
+      return get_ptr_op;
     }
     else
     {

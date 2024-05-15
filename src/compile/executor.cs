@@ -767,7 +767,7 @@ public class CompilationExecutor
 
             var proc_result = w.postproc.Patch(proc.result, current_file);
 
-            var c  = new ModuleCompiler(proc_result);
+            var c = new ModuleCompiler(proc_result);
             w.file2compiler.Add(current_file, c);
             c.Compile_VisitAST();
           }

@@ -1342,7 +1342,9 @@ public partial class VM : INamedResolver
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         
-        var func_mod = curr_frame.module._imported[import_idx];
+        //NOTE: using convention where built-in module is always at index 0
+        //      and imported modules are at (import_idx + 1) 
+        var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
         var nfunc_symb = func_mod.nfunc_index.index[func_idx];
         
         var ptr = FuncPtr.New(this);
@@ -1380,15 +1382,29 @@ public partial class VM : INamedResolver
         Call(curr_frame, exec, frm, args_bits);
       }
       break;
-      case Opcodes.CallNative:
+      case Opcodes.CallBuiltinNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
 
-        var native = types.module.nfunc_index[func_idx];
+        var nfunc_symb = types.module.nfunc_index[func_idx];
 
         BHS status;
-        if(CallNative(curr_frame, exec.stack, native, args_bits, out status, ref exec.coroutine))
+        if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
+          return status;
+      }
+      break;
+      case Opcodes.CallNative:
+      {
+        int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
+        int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+
+        var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
+        var nfunc_symb = func_mod.nfunc_index[func_idx];
+
+        BHS status;
+        if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
           return status;
       }
       break;

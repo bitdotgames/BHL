@@ -3234,7 +3234,7 @@ public class TestVM : BHL_TestBase
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-      .EmitThen(Opcodes.CallNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+      .EmitThen(Opcodes.CallBuiltinNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
       .EmitThen(Opcodes.ExitFrame)
     ;
     AssertEqual(c, expected);
