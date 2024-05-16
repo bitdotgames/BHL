@@ -36,27 +36,27 @@ public static class std
       var io = m.ns.Nest("std").Nest("io");
 
       {
-        var fn = new FuncSymbolNative(new Origin(), "Write", ts.T("void"),
+        var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
             var s = stack.PopRelease().str;
             Console.Write(s);
             return null;
           }, 
-          new FuncArgSymbol("s", ts.T("string"))
+          new FuncArgSymbol("s", Types.String)
         );
         io.Define(fn);
       }
 
       {
-        var fn = new FuncSymbolNative(new Origin(), "WriteLine", ts.T("void"),
+        var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
           { 
             var s = stack.PopRelease().str;
             Console.WriteLine(s);
             return null;
           }, 
-          new FuncArgSymbol("s", ts.T("string"))
+          new FuncArgSymbol("s", Types.String)
         );
         io.Define(fn);
       }

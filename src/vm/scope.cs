@@ -760,14 +760,14 @@ public static class ScopeExtensions
   public static Proxy<IType> TArr(this INamedResolver self, TypeArg tn)
   {
     var arr_type = new GenericArrayTypeSymbol(new Origin(), self.T(tn));
-    arr_type.SetupFrom(Types.Array);
+    arr_type.Setup();
     return self.T(arr_type);
   }
 
   public static Proxy<IType> TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
   {
     var map_type = new GenericMapTypeSymbol(new Origin(), self.T(kt), self.T(vt));
-    map_type.SetupFrom(Types.Map);
+    map_type.Setup();
     return self.T(map_type);
   }
 

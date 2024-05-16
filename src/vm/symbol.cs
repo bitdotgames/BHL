@@ -498,10 +498,14 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       if(IsBinaryOp(fs.name))
         CheckBinaryOpOverload(fs);
 
-      if(fs is FuncSymbolScript fss)
-        this.GetModule().func_index.Index(fss);
-      else if(fs is FuncSymbolNative fsn)
-        this.GetModule().nfunc_index.Index(fsn);
+      //for now indexing at the module level only static methods
+      if(fs.attribs.HasFlag(FuncAttrib.Static))
+      {
+        if(fs is FuncSymbolScript fss)
+          this.GetModule().func_index.Index(fss);
+        else if(fs is FuncSymbolNative fsn)
+          this.GetModule().nfunc_index.Index(fsn);
+      }
     }
     else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
@@ -807,16 +811,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     base.Setup();
   }
 
-  public void SetupFrom(ArrayTypeSymbol arr)
-  {
-    creator = arr.creator;
-    members.UnionWith(arr.members);
-    FuncArrIdx = arr.FuncArrIdx;
-    FuncArrIdxW = arr.FuncArrIdxW;
-    
-    base.Setup();
-  }
-
   public ArrayTypeSymbol(Origin origin, string name)     
     : base(origin, name)
   {}
@@ -972,7 +966,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
       name = "[]" + item_type.path;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
-      SetupFrom(Types.Array);
+      Setup();
     }
   }
 
@@ -1216,17 +1210,6 @@ public abstract class MapTypeSymbol : ClassSymbol
     enumerator_type.Setup();
   }
   
-  public void SetupFrom(MapTypeSymbol map)
-  {
-    creator = map.creator;
-    enumerator_type = map.enumerator_type;
-    members.UnionWith(map.members);
-    FuncMapIdx = map.FuncMapIdx;
-    FuncMapIdxW = map.FuncMapIdxW;
-    
-    base.Setup();
-  }
-
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract void GetEnumerator(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
@@ -1278,7 +1261,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
       name = "[" + key_type.path + "]" + val_type.path;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
-      SetupFrom(Types.Map);
+      Setup();
     }
   }
 

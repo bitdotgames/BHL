@@ -55,7 +55,7 @@ public class TestImport : BHL_TestBase
       .EmitThen(Opcodes.ExitFrame)
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.CallFunc, new int[] { 0, 3, 1 })
+      .EmitThen(Opcodes.Call, new int[] { 0, 3, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );
@@ -67,7 +67,7 @@ public class TestImport : BHL_TestBase
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.CallFunc, new int[] { 0, 0, 1 })
+      .EmitThen(Opcodes.Call, new int[] { 0, 0, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );

@@ -607,12 +607,17 @@ public class Types : INamedResolver
   {
     module = new Module(this, "");
     
-    //NOTE: dumb copy of all items from the static module
-    module.nfunc_index.index.AddRange(static_module.nfunc_index.index);
-    ns.members.UnionWith(static_module.ns.members);
+    CopyFromStaticModule();
 
     RegisterModule(std.MakeModule(this)); 
     RegisterModule(std.io.MakeModule(this)); 
+  }
+
+  void CopyFromStaticModule()
+  {
+    //NOTE: dumb copy of all items from the static module
+    module.nfunc_index.index.AddRange(static_module.nfunc_index.index);
+    ns.members.UnionWith(static_module.ns.members);
   }
 
   public void RegisterModule(Module m)
