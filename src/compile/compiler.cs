@@ -1212,7 +1212,7 @@ public class ModuleCompiler : AST_Visitor
           var cs_mod = cs.GetModule();
           var get_var_op = Emit(Opcodes.CallNative,
             new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0 }, ast.line_num);
-          SetFuncInstructionImportModule(get_var_op, cs_mod);
+          TrySetFuncInstructionImportModule(get_var_op, cs_mod);
         }
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
@@ -1227,7 +1227,7 @@ public class ModuleCompiler : AST_Visitor
           var cs_mod = cs.GetModule();
           var set_var_op = Emit(Opcodes.CallNative,
             new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0 }, ast.line_num);
-          SetFuncInstructionImportModule(set_var_op, cs_mod);
+          TrySetFuncInstructionImportModule(set_var_op, cs_mod);
         }
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
@@ -1399,7 +1399,7 @@ public class ModuleCompiler : AST_Visitor
       if(func_idx == -1)
         throw new Exception("Not found function '"+ func_symb.name + "' index in module '" +  fmod.name + "'");
       var get_ptr_op = Emit(Opcodes.GetFuncNativePtr, new int[] { 0, func_idx }, ast.line_num);
-      SetFuncInstructionImportModule(get_ptr_op, fmod);
+      TrySetFuncInstructionImportModule(get_ptr_op, fmod);
       return get_ptr_op;
     }
     else
@@ -1429,12 +1429,13 @@ public class ModuleCompiler : AST_Visitor
 
   //NOTE: we need to patch only in case the native function is imported from some module,
   //      for built-in native functions we don't do that
-  void SetFuncInstructionImportModule(Instruction inst_op, Module mod)
+  void TrySetFuncInstructionImportModule(Instruction inst_op, Module mod)
   {
     if(inst_op.operands[1] == -1) 
       throw new Exception("Invalid func index for module '" +  mod.name + "'");
     
-    if(mod != ts.module)
+    //if module is not global it must be imported
+    if(ts.IsImported(mod))
     {
       int mod_idx = imports.IndexOf(mod.name);
       if(mod_idx == -1)
@@ -1443,6 +1444,8 @@ public class ModuleCompiler : AST_Visitor
       //      and imported modules are at (mod_idx + 1) 
       inst_op.operands[0] = mod_idx + 1;
     }
+    else
+      inst_op.operands[0] = 0;
   }
 
   public override void DoVisit(AST_Return ast)

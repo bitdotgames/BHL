@@ -37,7 +37,7 @@ public class Module : INamedResolver
       return compiled != CompiledModule.None;
     }
   }
-  
+
   public ModulePath path;
   public Types ts; 
   public Namespace ns;

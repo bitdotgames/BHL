@@ -613,6 +613,11 @@ public class Types : INamedResolver
     RegisterModule(std.io.MakeModule(this)); 
   }
 
+  public bool IsImported(Module m)
+  {
+    return !(static_module == m || module == m);
+  }
+
   void CopyFromStaticModule()
   {
     //NOTE: dumb copy of all items from the static module
