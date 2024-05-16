@@ -503,8 +503,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       else if(fs is FuncSymbolNative fsn)
         this.GetModule().nfunc_index.Index(fsn);
     }
-
-    if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
+    else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
       if(this is ClassSymbolNative)
       {
@@ -808,6 +807,16 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     base.Setup();
   }
 
+  public void SetupFrom(ArrayTypeSymbol arr)
+  {
+    creator = arr.creator;
+    members.UnionWith(arr.members);
+    FuncArrIdx = arr.FuncArrIdx;
+    FuncArrIdxW = arr.FuncArrIdxW;
+    
+    base.Setup();
+  }
+
   public ArrayTypeSymbol(Origin origin, string name)     
     : base(origin, name)
   {}
@@ -963,7 +972,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
       name = "[]" + item_type.path;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
-      Setup();
+      SetupFrom(Types.Array);
     }
   }
 
@@ -1206,6 +1215,17 @@ public abstract class MapTypeSymbol : ClassSymbol
     base.Setup();
     enumerator_type.Setup();
   }
+  
+  public void SetupFrom(MapTypeSymbol map)
+  {
+    creator = map.creator;
+    enumerator_type = map.enumerator_type;
+    members.UnionWith(map.members);
+    FuncMapIdx = map.FuncMapIdx;
+    FuncMapIdxW = map.FuncMapIdxW;
+    
+    base.Setup();
+  }
 
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
@@ -1247,7 +1267,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   {
     return CLASS_ID;
   }
-
+  
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref key_type);
@@ -1258,7 +1278,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
       name = "[" + key_type.path + "]" + val_type.path;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
-      Setup();
+      SetupFrom(Types.Map);
     }
   }
 

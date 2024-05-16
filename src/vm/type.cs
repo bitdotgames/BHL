@@ -604,9 +604,9 @@ public class Types : INamedResolver
   {
     module = new Module(this, "");
     
-    //dumb copy of all items
-    ns.members.UnionWith(static_module.ns.members);
+    //NOTE: dumb copy of all items from the static module
     module.nfunc_index.index.AddRange(static_module.nfunc_index.index);
+    ns.members.UnionWith(static_module.ns.members);
 
     Prelude.Define(this);
     
