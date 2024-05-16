@@ -432,6 +432,7 @@ public class Types : INamedResolver
          }
        );
   
+  //NOTE: these are 'meta' types which serve as templates for concrete parametrized types
   static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), Any);  
   static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), Any, Any);  
 
@@ -521,6 +522,8 @@ public class Types : INamedResolver
     SetupGenericMapType();
     SetupStringSymbol();
     SetupClassType();
+    
+    Prelude.Define(static_module);
   }
   
   static void SetupGenericArrayType()
@@ -608,8 +611,6 @@ public class Types : INamedResolver
     module.nfunc_index.index.AddRange(static_module.nfunc_index.index);
     ns.members.UnionWith(static_module.ns.members);
 
-    Prelude.Define(this);
-    
     RegisterModule(std.MakeModule(this)); 
     RegisterModule(std.io.MakeModule(this)); 
   }

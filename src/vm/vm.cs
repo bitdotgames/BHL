@@ -1382,7 +1382,7 @@ public partial class VM : INamedResolver
         Call(curr_frame, exec, frm, args_bits);
       }
       break;
-      case Opcodes.CallBuiltinNative:
+      case Opcodes.CallGlobNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
@@ -1408,7 +1408,7 @@ public partial class VM : INamedResolver
           return status;
       }
       break;
-      case Opcodes.CallFunc:
+      case Opcodes.Call:
       {
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);

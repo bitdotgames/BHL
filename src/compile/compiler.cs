@@ -488,7 +488,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallBuiltinNative,
+        Opcodes.CallGlobNative,
         3/*func idx*/, 4/*args bits*/
       )
     );
@@ -1258,7 +1258,7 @@ public class ModuleCompiler : AST_Visitor
           Pop();
           //let's check if it's a builtin native function
           if(instr.operands[0] == 0)
-            Emit(Opcodes.CallBuiltinNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
+            Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
           else
             Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
         }
@@ -1481,7 +1481,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Yield ast)
   {
     //TODO: do we need a separate opcode for that?
-    Emit(Opcodes.CallBuiltinNative, new int[] {ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0}, ast.line_num);
+    Emit(Opcodes.CallGlobNative, new int[] {ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0}, ast.line_num);
   }
 
   public override void DoVisit(AST_PopValue ast)

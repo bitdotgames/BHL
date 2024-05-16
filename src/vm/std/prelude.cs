@@ -4,7 +4,7 @@ public static class Prelude
 {
   static public FuncSymbolNative YieldFunc = null;
 
-  public static void Define(Types ts)
+  public static void Define(Module m)
   {
     {
       //NOTE: it's a builtin non-directly available function
@@ -15,7 +15,7 @@ public static class Prelude
         } 
       );
       YieldFunc = fn;
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
 
     {
@@ -26,7 +26,7 @@ public static class Prelude
           return CoroutinePool.New<CoroutineSuspend>(frm.vm);
         } 
       );
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
 
     {
@@ -37,7 +37,7 @@ public static class Prelude
         }, 
         new FuncArgSymbol("ms", Types.Int)
       );
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
 
     //TODO: return an actual Fiber object
@@ -51,9 +51,9 @@ public static class Prelude
           stack.Push(Val.NewNum(frm.vm, id));
           return null;
         }, 
-        new FuncArgSymbol("p", ts.TFunc(true/*is coro*/, "void"))
+        new FuncArgSymbol("p", m.TFunc(true/*is coro*/, "void"))
       );
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
 
     {
@@ -66,18 +66,18 @@ public static class Prelude
         }, 
         new FuncArgSymbol("fid", Types.Int)
       );
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "debugger", ts.T("void"),
+      var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           System.Diagnostics.Debugger.Break();
           return null;
         } 
       );
-      ts.ns.Define(fn);
+      m.ns.Define(fn);
     }
   }
 }

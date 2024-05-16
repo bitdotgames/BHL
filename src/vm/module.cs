@@ -17,7 +17,7 @@ public class ModulePath
 
 //NOTE: represents a module which can be both a compiled one or
 //      the one registered in C#
-public class Module
+public class Module : INamedResolver
 {
   public const int MAX_GLOBALS = 128;
   
@@ -85,6 +85,11 @@ public class Module
     ns.module = this;
     this.path = path;
     this.ns = ns;
+  }
+  
+  public INamed ResolveNamedByPath(string name)
+  {
+    return ns.ResolveSymbolByPath(name);
   }
 
   public void InitWithCompiled(CompiledModule compiled)
