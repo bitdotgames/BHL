@@ -3303,6 +3303,38 @@ public class TestVM : BHL_TestBase
     AssertEqual(1, num);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestSimpleImportedNativeFunc()
+  {
+    string bhl = @"
+    import ""std""
+
+    func test() 
+    {
+      int a
+      std.GetType(a)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 /*args info*/ })
+      .EmitThen(Opcodes.DeclVar, new int[] { 0, ConstIdx(c, Types.Int) })
+      .EmitThen(Opcodes.GetVar, new int[] { 0 })
+      .EmitThen(Opcodes.CallNative, new int[] { 1, 0, 1 })
+      .EmitThen(Opcodes.Pop)
+      .EmitThen(Opcodes.ExitFrame)
+    ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestNativeFuncBindConflict()

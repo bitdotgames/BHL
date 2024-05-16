@@ -678,7 +678,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ast_import.module_names.Add(imported_module.name);
     }
 
-    root_ast.AddChild(ast_import);
+    //let's force it to be the first one
+    root_ast.children.Insert(0, ast_import);
   }
 
   internal void Phase_ParseTypes1()

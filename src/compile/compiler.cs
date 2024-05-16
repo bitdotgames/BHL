@@ -1212,7 +1212,7 @@ public class ModuleCompiler : AST_Visitor
           var cs_mod = cs.GetModule();
           var get_var_op = Emit(Opcodes.CallNative,
             new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0 }, ast.line_num);
-          PatchLaterModuleImportIdx(get_var_op, cs_mod);
+          SetFuncInstructionImportModule(get_var_op, cs_mod);
         }
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
@@ -1227,7 +1227,7 @@ public class ModuleCompiler : AST_Visitor
           var cs_mod = cs.GetModule();
           var set_var_op = Emit(Opcodes.CallNative,
             new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0 }, ast.line_num);
-          PatchLaterModuleImportIdx(set_var_op, cs_mod);
+          SetFuncInstructionImportModule(set_var_op, cs_mod);
         }
         else
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
@@ -1251,13 +1251,10 @@ public class ModuleCompiler : AST_Visitor
           var fsymb = (FuncSymbolScript)ast.symb;
           var fmod = fsymb.GetModule();
           Pop();
-          var call_op = Emit(Opcodes.Call, new int[] {-1 /*patched later*/, -1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           //imports list is filled later so we need to take that into account
           PatchLater(call_op, (inst) =>
           {
-             inst.operands[0] = imports.IndexOf(fmod.name);
-             if(inst.operands[0] == -1)
-               throw new Exception("Not found module '" + fmod.name + "' imported index");
              inst.operands[1] = fsymb.ip_addr;
              if(inst.operands[1] == -1)
                throw new Exception("Not found func '" + fsymb.name + "' ip from module '" + fmod.name + "'");
@@ -1401,8 +1398,8 @@ public class ModuleCompiler : AST_Visitor
       int func_idx = fmod.nfunc_index.IndexOf(func_symb_native);
       if(func_idx == -1)
         throw new Exception("Not found function '"+ func_symb.name + "' index in module '" +  fmod.name + "'");
-      var get_ptr_op = Emit(Opcodes.GetFuncNativePtr, new int[] { 0/*patched later*/, func_idx }, ast.line_num);
-      PatchLaterModuleImportIdx(get_ptr_op, fmod);
+      var get_ptr_op = Emit(Opcodes.GetFuncNativePtr, new int[] { 0, func_idx }, ast.line_num);
+      SetFuncInstructionImportModule(get_ptr_op, fmod);
       return get_ptr_op;
     }
     else
@@ -1422,36 +1419,29 @@ public class ModuleCompiler : AST_Visitor
         int func_idx = fmod.func_index.IndexOf(func_symb_script);
         if(func_idx == -1)
           throw new Exception("Not found function '"+ func_symb_script.name + "' index in module '" +  fmod.name + "'");
-        var get_ptr_op = Emit(Opcodes.GetFuncPtr, new int[] { -1 /*patched later*/, func_idx }, ast.line_num);
-        PatchLater(get_ptr_op, (inst) =>
-        {
-          inst.operands[0] = imports.IndexOf(fmod.name);
-          if(inst.operands[0] == -1)
-            throw new Exception("Not found module '" + fmod.name + "' imported index");
-        });
-        return get_ptr_op;
+        int mod_idx = imports.IndexOf(fmod.name);
+        if(mod_idx == -1)
+          throw new Exception("Not found module '" + fmod.name + "' imported index");
+        return Emit(Opcodes.GetFuncPtr, new int[] { mod_idx, func_idx }, ast.line_num);
       }
     }
   }
 
   //NOTE: we need to patch only in case the native function is imported from some module,
   //      for built-in native functions we don't do that
-  void PatchLaterModuleImportIdx(Instruction inst_op, Module mod)
+  void SetFuncInstructionImportModule(Instruction inst_op, Module mod)
   {
     if(inst_op.operands[1] == -1) 
       throw new Exception("Invalid func index for module '" +  mod.name + "'");
-      
+    
     if(mod != ts.module)
     {
-      PatchLater(inst_op, (inst) =>
-      {
-        int mod_idx = imports.IndexOf(mod.name);
-        if(mod_idx == -1)
-          throw new Exception("Not found module '" + mod.name + "' imported index");
-        //NOTE: using convention where built-in module is always at index 0
-        //      and imported modules are at (mod_idx + 1) 
-        inst.operands[0] = mod_idx + 1;
-      });
+      int mod_idx = imports.IndexOf(mod.name);
+      if(mod_idx == -1)
+        throw new Exception("Not found module '" + mod.name + "' imported index");
+      //NOTE: using convention where built-in module is always at index 0
+      //      and imported modules are at (mod_idx + 1) 
+      inst_op.operands[0] = mod_idx + 1;
     }
   }
 
