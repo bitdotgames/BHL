@@ -1413,6 +1413,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   }
 }
 
+public interface IModuleIndexed
+{
+  //index in a module
+  int module_idx { get; set; }
+}
+
 public interface IScopeIndexed
 {
   //index in an enclosing scope
@@ -1670,7 +1676,8 @@ public enum FuncAttrib : byte
   Static       = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, IEnumerable<Symbol>
+public abstract class FuncSymbol : Symbol, ITyped, IScope, 
+  IScopeIndexed, IModuleIndexed, IEnumerable<Symbol>
 {
   FuncSignature _signature;
   public FuncSignature signature {
@@ -1687,6 +1694,16 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope, IScopeIndexed, IEnume
   internal SymbolsStorage members;
 
   internal FuncSymbolVirtual _virtual;
+
+  int _module_idx = -1;
+  public int module_idx {
+    get {
+      return _module_idx;
+    }
+    set {
+      _module_idx = value;
+    }
+  }
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -2747,7 +2764,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
   }
 }
 
-public class SymbolIndexer<T> where T : Symbol
+public class ModuleIndexer<T> where T : Symbol, IModuleIndexed
 {
   internal List<T> index = new List<T>();
   
@@ -2760,6 +2777,7 @@ public class SymbolIndexer<T> where T : Symbol
   {
     if(index.IndexOf(sym) != -1)
       return;
+    sym.module_idx = index.Count;
     index.Add(sym);
   }
 
@@ -2784,7 +2802,7 @@ public class SymbolIndexer<T> where T : Symbol
   }
 }
 
-public class ScopeIndexer<T> where T : INamed, IScopeIndexed 
+public class ScopeIndexer<T> where T : Symbol, IScopeIndexed 
 {
   internal List<T> index = new List<T>();
 
@@ -2798,7 +2816,8 @@ public class ScopeIndexer<T> where T : INamed, IScopeIndexed
   {
     if(index.IndexOf(sym) != -1)
       return;
-    if(sym.scope_idx == -1)
+    //TODO: do we really need this check?
+    //if(sym.scope_idx == -1)
       sym.scope_idx = index.Count;
     index.Add(sym);
   }
@@ -2824,8 +2843,8 @@ public class ScopeIndexer<T> where T : INamed, IScopeIndexed
   }
 }
 
-public class FuncNativeModuleIndexer : SymbolIndexer<FuncSymbolNative> {}
-public class FuncModuleIndexer : SymbolIndexer<FuncSymbolScript> {}
+public class FuncNativeModuleIndexer : ModuleIndexer<FuncSymbolNative> {}
+public class FuncModuleIndexer : ModuleIndexer<FuncSymbolScript> {}
 
 public class VarScopeIndexer : ScopeIndexer<VariableSymbol> {}
 
