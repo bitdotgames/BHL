@@ -1022,6 +1022,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo { 
+      func garbage() { }
       static func int foo() {
         return 10
       }
@@ -3946,6 +3947,8 @@ public class TestClass : BHL_TestBase
     namespace a {
       class Bar {
         int b
+        func garbage() { }
+
         static func int foo() {
           return 42
         }

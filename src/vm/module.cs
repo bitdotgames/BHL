@@ -173,7 +173,10 @@ public class Module : INamedResolver
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
     
-    func_index.index.Add(fss);
+    //TODO: there's definitely code duplication - we add script functions to index when defining them
+    //      and when setting up the loaded module
+    if(fss.scope is Namespace || fss.attribs.HasFlag(FuncAttrib.Static))
+      func_index.index.Add(fss);
     
     if(fss._module == null)
     {

@@ -1418,7 +1418,7 @@ public class ModuleCompiler : AST_Visitor
         var fmod = func_symb_script.GetModule();
         int func_idx = fmod.func_index.IndexOf(func_symb_script);
         if(func_idx == -1)
-          throw new Exception("Not found function '"+ func_symb_script.name + "' index in module '" +  fmod.name + "'");
+          throw new Exception("Not found function '" + func_symb_script.name + "' index in module '" +  fmod.name + "'");
         int mod_idx = imports.IndexOf(fmod.name);
         if(mod_idx == -1)
           throw new Exception("Not found module '" + fmod.name + "' imported index");
