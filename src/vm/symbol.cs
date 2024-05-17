@@ -498,14 +498,13 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       if(IsBinaryOp(fs.name))
         CheckBinaryOpOverload(fs);
 
-      //for now indexing at the module level only static methods
-      if(fs.attribs.HasFlag(FuncAttrib.Static))
-      {
-        if(fs is FuncSymbolScript fss)
-          this.GetModule().func_index.Index(fss);
-        else if(fs is FuncSymbolNative fsn)
-          this.GetModule().nfunc_index.Index(fsn);
-      }
+      if(fs is FuncSymbolScript fss)
+        this.GetModule().func_index.Index(fss);
+      //NOTE: for now indexing at the module level only static native methods
+      //      due to possible unavailability of module for 'generic classes'
+      //      created on the fly (array, map)
+      else if(fs is FuncSymbolNative fsn && fs.attribs.HasFlag(FuncAttrib.Static))
+        this.GetModule().nfunc_index.Index(fsn);
     }
     else if(sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
     {
