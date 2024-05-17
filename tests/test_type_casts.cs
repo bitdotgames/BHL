@@ -948,34 +948,18 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[IsTested()]
+  [IsTested()]
   public void TestBadCastInRuntime()
   {
     string bhl = @"
-    class Bar 
-    {
-      int bar
-    }
+    class Bar { }
+    class Foo { }
 
-    class Foo : Bar
+    func test() 
     {
-      int foo
-
-      func int getFoo() {
-        return this.foo
-      }
-    }
-
-    func Foo cast(any bar)
-    {
-      return (Foo)bar;
-    }
-
-    func int test() 
-    {
-      Bar b = {bar: 41}
-      return cast(b).getFoo()
+      Bar b = {}
+      any o = b
+      Foo f = (Foo)o
     }
     ";
 

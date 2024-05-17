@@ -3582,7 +3582,8 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new VirtFoo(), type);
-        }
+        },
+        typeof(VirtFoo)
       );
       ts.ns.Define(cl);
 
@@ -3647,7 +3648,8 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new VirtBar(), type);
-        }
+        },
+        typeof(VirtBar)
       );
 
       cl.Define(new FieldSymbol(new Origin(), "new_a", Types.Int,

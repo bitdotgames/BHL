@@ -826,7 +826,8 @@ public class TestInterface : BHL_TestBase
         var ifs = new InterfaceSymbolNative(
             new Origin(),
             "IFoo", 
-            null
+            null,
+            typeof(IFooLocal)
         );
         ts.ns.Define(ifs);
         ifs.Setup();
@@ -837,7 +838,8 @@ public class TestInterface : BHL_TestBase
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
             v.SetObj(new LocalFoo(), type);
-          }
+          },
+          typeof(LocalFoo)
         );
         ts.ns.Define(cl);
 

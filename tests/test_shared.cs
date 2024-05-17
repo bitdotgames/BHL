@@ -250,7 +250,8 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val v, IType type) 
       { 
         v.SetObj(new Color(), type);
-      }
+      },
+      typeof(Color)
     );
 
     ts.ns.Define(cl);
@@ -364,7 +365,8 @@ public class BHL_TestBase
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new ColorAlpha(), type);
-        }
+        },
+        typeof(ColorAlpha)
       );
 
       ts.ns.Define(cl);
