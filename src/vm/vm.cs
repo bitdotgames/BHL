@@ -393,7 +393,10 @@ public partial class VM : INamedResolver
     init_frame = new Frame(this);
 
     null_val = new Val(this);
-    null_val.SetObj(null, Types.Null);
+    //NOTE: we could use Types.Null as a type of this value 
+    //      but for now we don't do that since it allows to
+    //      have more clear runtime errors
+    null_val.SetObj(null, null);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never 
     //      accidentally released when pushed/popped
