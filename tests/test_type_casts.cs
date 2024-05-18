@@ -968,7 +968,7 @@ public class TestTypeCasts : BHL_TestBase
       delegate() { 
         Execute(vm, "test");
       },
-      "Invalid type cast"
+      "Invalid type cast: type 'Bar' can't be cast to 'Foo'"
     );
   }
 

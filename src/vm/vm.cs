@@ -1782,7 +1782,7 @@ public partial class VM : INamedResolver
     else
     {
       if(cast_type is IInstantiable && !Types.Is(val, cast_type))
-        throw new Exception("Invalid type cast");
+        throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
       new_val.ValueCopyFrom(val);
       if(force_type)
         new_val.type = cast_type;

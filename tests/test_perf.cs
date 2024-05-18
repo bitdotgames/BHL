@@ -118,7 +118,7 @@ public class TestPerf : BHL_TestBase
       AssertFalse(vm.Tick());
       stopwatch.Stop();
       AssertEqual(fb.result.PopRelease().num, 610);
-      Console.WriteLine("fib imp ticks: {0}", stopwatch.ElapsedTicks);
+      Console.WriteLine("fib import ticks: {0}", stopwatch.ElapsedTicks);
     }
 
     {
@@ -128,7 +128,7 @@ public class TestPerf : BHL_TestBase
       AssertFalse(vm.Tick());
       stopwatch.Stop();
       AssertEqual(fb.result.PopRelease().num, 610);
-      Console.WriteLine("fib imp ticks2: {0}", stopwatch.ElapsedTicks);
+      Console.WriteLine("fib import ticks2: {0}", stopwatch.ElapsedTicks);
     }
 
     CommonChecks(vm);
