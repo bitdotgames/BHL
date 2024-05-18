@@ -949,6 +949,25 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCastNullToUserType()
+  {
+    string bhl = @"
+    class Foo { }
+
+    func bool test() 
+    {
+      any o = null
+      Foo f = (Foo)o
+      return f == null
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestBadCastInRuntime()
   {
     string bhl = @"

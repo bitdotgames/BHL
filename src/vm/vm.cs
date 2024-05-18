@@ -1776,12 +1776,12 @@ public partial class VM : INamedResolver
     var val = exec.stack.Pop();
 
     if(cast_type == Types.Int)
-      new_val.SetNum((long)val.num);
+      new_val.SetNum((long)val._num);
     else if(cast_type == Types.String && val.type != Types.String)
       new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
     else
     {
-      if(cast_type is IInstantiable && !Types.Is(val, cast_type))
+      if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
       new_val.ValueCopyFrom(val);
       if(force_type)
