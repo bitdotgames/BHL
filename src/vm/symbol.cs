@@ -179,9 +179,10 @@ public class AnySymbol : Symbol, IType
   }
 }
 
-public class NullSymbol : Symbol, IType
+//NOTE: for better 'null ref. error' reports we extend the ClassSymbolScript  
+public class NullSymbol : ClassSymbolScript
 {
-  public const uint CLASS_ID = 7;
+  public new const uint CLASS_ID = 7;
 
   public NullSymbol()
     : base(new Origin(), "null")
