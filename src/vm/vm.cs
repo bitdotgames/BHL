@@ -1397,6 +1397,8 @@ public partial class VM : INamedResolver
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
+        //NOTE: using convention where built-in module is always at index 0
+        //      and imported modules are at (import_idx + 1)
         var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
         var nfunc_symb = func_mod.nfunc_index[func_idx];
 
