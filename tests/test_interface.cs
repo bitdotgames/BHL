@@ -834,7 +834,7 @@ public class TestInterface : BHL_TestBase
       }
 
       {
-        var cl = new ClassSymbolNative(new Origin(), "Foo", new List<TypeProxy<IType>>(){ ts.T("IFoo") },
+        var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
           delegate(VM.Frame frm, ref Val v, IType type) 
           { 
             v.SetObj(new LocalFoo(), type);
@@ -992,7 +992,7 @@ public class TestInterface : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", new List<TypeProxy<IType>>(){ ts.T("INativeFoo") },
+      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", new List<Proxy<IType>>(){ ts.T("INativeFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(new NativeFoo(), type);

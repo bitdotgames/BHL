@@ -17,7 +17,7 @@ public interface IEphemeral : INamed
 {}
 
 // For lazy evaluation of types and forward declarations
-public struct TypeProxy<T> : marshall.IMarshallable, IEquatable<TypeProxy<T>> where T : class, IType
+public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : class, IType
 {
   public T resolved;
   
@@ -31,7 +31,7 @@ public struct TypeProxy<T> : marshall.IMarshallable, IEquatable<TypeProxy<T>> wh
     get { return _path; } 
   }
 
-  public TypeProxy(INamedResolver resolver, string path)
+  public Proxy(INamedResolver resolver, string path)
   {
     if(path.Length == 0)
       throw new Exception("Type path is empty");
@@ -43,7 +43,7 @@ public struct TypeProxy<T> : marshall.IMarshallable, IEquatable<TypeProxy<T>> wh
     _path = path;
   }
 
-  public TypeProxy(T obj)
+  public Proxy(T obj)
   {
     resolver = null;
     this.resolved = obj;
@@ -124,12 +124,12 @@ public struct TypeProxy<T> : marshall.IMarshallable, IEquatable<TypeProxy<T>> wh
 
   public override bool Equals(object o)
   {
-    if(!(o is TypeProxy<T>))
+    if(!(o is Proxy<T>))
       return false;
-    return this.Equals((TypeProxy<T>)o);
+    return this.Equals((Proxy<T>)o);
   }
 
-  public bool Equals(TypeProxy<T> o)
+  public bool Equals(Proxy<T> o)
   {
     if(o.resolver == resolver && o._path == _path)
       return true;
@@ -154,12 +154,12 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public TypeProxy<IType> subj; 
+  public Proxy<IType> subj; 
 
   string name;
   public string GetName() { return name; }
 
-  public RefType(TypeProxy<IType> subj)
+  public RefType(Proxy<IType> subj)
   {
     this.subj = subj;
     name = "ref " + subj.path;
@@ -207,7 +207,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
 
   string name;
 
-  List<TypeProxy<IType>> items = new List<TypeProxy<IType>>();
+  List<Proxy<IType>> items = new List<Proxy<IType>>();
 
   public string GetName() { return name; }
 
@@ -217,7 +217,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
     }
   }
 
-  public TupleType(params TypeProxy<IType>[] items)
+  public TupleType(params Proxy<IType>[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
@@ -228,14 +228,14 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   public TupleType()
   {}
 
-  public TypeProxy<IType> this[int index]
+  public Proxy<IType> this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(TypeProxy<IType> item)
+  public void Add(Proxy<IType> item)
   {
     items.Add(item);
     Update();
@@ -305,9 +305,9 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   //full type name
   string name;
 
-  public TypeProxy<IType> ret_type;
+  public Proxy<IType> ret_type;
   //TODO: include arg names as well since we support named args?
-  public List<TypeProxy<IType>> arg_types = new List<TypeProxy<IType>>();
+  public List<Proxy<IType>> arg_types = new List<Proxy<IType>>();
 
   byte _attribs = 0;
   public FuncSignatureAttrib attribs {
@@ -321,11 +321,11 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public string GetName() { return name; }
 
-  public FuncSignature(TypeProxy<IType> ret_type, params TypeProxy<IType>[] arg_types)
+  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
     : this(0, ret_type, arg_types)
   {}
 
-  public FuncSignature(FuncSignatureAttrib attribs, TypeProxy<IType> ret_type, params TypeProxy<IType>[] arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -334,7 +334,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     Update();
   }
 
-  public FuncSignature(FuncSignatureAttrib attribs, TypeProxy<IType> ret_type, List<TypeProxy<IType>> arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -346,7 +346,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   public FuncSignature()
   {}
 
-  public void AddArg(TypeProxy<IType> arg_type)
+  public void AddArg(Proxy<IType> arg_type)
   {
     arg_types.Add(arg_type);
     Update();

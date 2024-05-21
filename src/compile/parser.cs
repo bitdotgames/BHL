@@ -2040,7 +2040,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     var ret_type = ParseType(ret_ctx);
 
-    var arg_types = new List<TypeProxy<IType>>();
+    var arg_types = new List<Proxy<IType>>();
     if(types_ctx != null)
     {
       for(int i=0;i<types_ctx.refType().Length;++i)
@@ -2066,7 +2066,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(bool is_coro, TypeProxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(bool is_coro, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
   {
     default_args_num = 0;
     var sig = new FuncSignature(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type);
@@ -2074,7 +2074,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       for(int i=0;i<fparams.funcParamDeclare().Length;++i)
       {
-        var tp = new TypeProxy<IType>();
+        var tp = new Proxy<IType>();
 
         var vd = fparams.funcParamDeclare()[i];
         if(vd?.type() == null)
@@ -2111,15 +2111,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return sig;
   }
 
-  FuncSignature ParseFuncSignature(bool is_coro, TypeProxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
+  FuncSignature ParseFuncSignature(bool is_coro, Proxy<IType> ret_type, bhlParser.FuncParamsContext fparams)
   {
     int default_args_num;
     return ParseFuncSignature(is_coro, ret_type, fparams, out default_args_num);
   }
 
-  TypeProxy<IType> ParseType(bhlParser.RetTypeContext parsed)
+  Proxy<IType> ParseType(bhlParser.RetTypeContext parsed)
   {
-    TypeProxy<IType> tp;
+    Proxy<IType> tp;
 
     //convenience special case
     if(parsed == null)
@@ -2140,9 +2140,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return tp;
   }
 
-  TypeProxy<IType> ParseType(bhlParser.TypeContext ctx)
+  Proxy<IType> ParseType(bhlParser.TypeContext ctx)
   {
-    var tp = new TypeProxy<IType>();
+    var tp = new Proxy<IType>();
     if(ctx.nsName() != null)
     {
       LSP_AddSemanticToken(ctx.nsName().dotName().NAME(), SemanticToken.Type);
@@ -3700,7 +3700,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var vd = pass.gvar_decl_ctx.varDeclare();
 
-    pass.gvar_symb = new GlobalVariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new TypeProxy<IType>());
+    pass.gvar_symb = new GlobalVariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new Proxy<IType>());
     pass.gvar_symb.is_local = pass.gvar_decl_ctx.STATIC() != null;
 
     LSP_AddSemanticToken(pass.gvar_decl_ctx.STATIC(), SemanticToken.Keyword);
@@ -3927,7 +3927,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         LSP_AddSemanticToken(vd.NAME(), SemanticToken.Variable, SemanticModifier.Definition);
 
-        var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new TypeProxy<IType>());
+        var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new Proxy<IType>());
 
         for(int f=0;f<fldd.fldAttribs().Length;++f)
         {
@@ -4742,7 +4742,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   AST_Tree ProcDeclVar(
     IScope curr_scope, 
     ITerminalNode name, 
-    TypeProxy<IType> tp, 
+    Proxy<IType> tp, 
     bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery 
     bool is_ref, 
     bool func_arg, 
@@ -4890,7 +4890,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(assign_exp, "void expression type");
         return false;
       }
-      var_symb.type = new TypeProxy<IType>(auto_type); 
+      var_symb.type = new Proxy<IType>(auto_type); 
     }
 
     return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
@@ -5323,7 +5323,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     
       var vod = ctx.foreachExp().varOrDeclare()[0];
       var vd = vod.varDeclare();
-      TypeProxy<IType> iter_type;
+      Proxy<IType> iter_type;
       AST_Tree iter_ast_decl = null;
       VariableSymbol iter_symb = null;
       if(vod.NAME() != null)
@@ -5338,7 +5338,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
       else
       {
-        var vd_type = new TypeProxy<IType>();
+        var vd_type = new Proxy<IType>();
         if(vd.type().GetText() == "var")
         {
           var predicted_arr_type = PredictType(ctx.foreachExp().exp()) as GenericArrayTypeSymbol;
@@ -5447,10 +5447,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       var vod_key = ctx.foreachExp().varOrDeclare()[0];
       var vd_key = vod_key.varDeclare();
-      var vd_key_type = new TypeProxy<IType>();
+      var vd_key_type = new Proxy<IType>();
       var vod_val = ctx.foreachExp().varOrDeclare()[1];
       var vd_val = vod_val.varDeclare();
-      var vd_val_type = new TypeProxy<IType>();
+      var vd_val_type = new Proxy<IType>();
 
       if(vd_key.type().GetText() == "var" || vd_val.type().GetText() == "var")
       {
@@ -5470,7 +5470,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(vd_val.type().GetText() != "var")
         vd_val_type = ParseType(vd_val.type());
 
-      TypeProxy<IType> key_iter_type;
+      Proxy<IType> key_iter_type;
       AST_Tree key_iter_ast_decl = null;
       VariableSymbol key_iter_symb = null;
       if(vod_key.NAME() != null)
@@ -5500,7 +5500,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         key_iter_type = key_iter_symb.type;
       }
 
-      TypeProxy<IType> val_iter_type;
+      Proxy<IType> val_iter_type;
       AST_Tree val_iter_ast_decl = null;
       VariableSymbol val_iter_symb = null;
       if(vod_val.NAME() != null)
