@@ -25,7 +25,7 @@ public enum ModuleBinaryFormat
 
 public interface IModuleLoader
 {
-  Module Load(string module_name, INamedResolver resolver, System.Action<string, string> on_import);
+  Module Load(string module_name, INamedResolver resolver);
 }
 
 public class ModuleLoader : IModuleLoader
@@ -101,8 +101,7 @@ public class ModuleLoader : IModuleLoader
 
   public Module Load(
     string module_name, 
-    INamedResolver resolver, 
-    System.Action<string, string> on_import
+    INamedResolver resolver
   )
   {
     Entry ent;
@@ -119,8 +118,7 @@ public class ModuleLoader : IModuleLoader
     var cm = CompiledModule.FromStream(
       types, 
       mod_stream, 
-      resolver, 
-      on_import
+      resolver
     );
 
     if(res_release)

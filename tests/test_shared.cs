@@ -676,7 +676,7 @@ public class BHL_TestBase
   {
     public Dictionary<string, bhl.Module> mods = new Dictionary<string, bhl.Module>();
 
-    public bhl.Module Load(string name, INamedResolver resolver, System.Action<string, string> on_import)
+    public bhl.Module Load(string name, INamedResolver resolver)
     {
       return mods[name];
     }

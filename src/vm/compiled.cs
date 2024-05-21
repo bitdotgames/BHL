@@ -90,8 +90,7 @@ public class CompiledModule
   static public Module FromStream(
     Types types, 
     Stream src, 
-    INamedResolver resolver = null, 
-    System.Action<string, string> on_import = null
+    INamedResolver resolver = null
   )
   {
     var module = new Module(types);
@@ -156,9 +155,6 @@ public class CompiledModule
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
-
-    foreach(var import in imports)
-      on_import?.Invoke(name, import);
 
     marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), module.ns, symb_factory);
 

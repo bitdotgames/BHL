@@ -456,7 +456,7 @@ public partial class VM : INamedResolver
     loading_modules.Add(lm);
 
     //NOTE: passing self as a type proxies 'resolver'
-    var loaded = loader.Load(module_name, this, OnImport);
+    var loaded = loader.Load(module_name, this);
 
     //if no such a module let's remove it from the loading list
     if(loaded == null)
@@ -465,17 +465,14 @@ public partial class VM : INamedResolver
     }
     else
     {
+      foreach(var imported in loaded.compiled.imports)
+        TryAddToLoadingList(imported);
       lm.module = loaded;
 
       BeginRegistration(loaded);
     }
 
     return true;
-  }
-
-  void OnImport(string origin_module, string import_name)
-  {
-    TryAddToLoadingList(import_name);
   }
 
   void BeginRegistration(Module module)

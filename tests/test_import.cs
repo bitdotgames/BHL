@@ -48,7 +48,7 @@ public class TestImport : BHL_TestBase
     var ts = new Types();
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(loader.Load("bhl1", ts, null), 
+    AssertEqual(loader.Load("bhl1", ts), 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
@@ -59,7 +59,7 @@ public class TestImport : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );
-    AssertEqual(loader.Load("bhl2", ts, null), 
+    AssertEqual(loader.Load("bhl2", ts), 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
@@ -71,7 +71,7 @@ public class TestImport : BHL_TestBase
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );
-    AssertEqual(loader.Load("bhl3", ts, null), 
+    AssertEqual(loader.Load("bhl3", ts), 
       new ModuleCompiler()
       .UseCode()
       .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
