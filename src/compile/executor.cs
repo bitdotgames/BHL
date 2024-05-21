@@ -240,7 +240,7 @@ public class CompilationExecutor
 
     //3 let's create the processed bundle containing already compiled cached modules
     //  and the newly processed ones
-    var proc_bundle = new ANTLR_Processor.ProcessedBundle(conf.proj.inc_path);
+    var proc_bundle = new ANTLR_Processor.ProcessedBundle(conf.ts, conf.proj.inc_path);
 
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)

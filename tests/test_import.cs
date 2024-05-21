@@ -1408,4 +1408,73 @@ public class TestImport : BHL_TestBase
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
     }
   }
+  
+  [IsTested()]
+  public void TestImportFuncPtrs()
+  {
+    string bhl1 = @"
+    import ""bhl2""  
+
+    func int test0() 
+    {
+      return calc(0)
+    }
+
+    func int test1() 
+    {
+      return calc(1)
+    }
+
+    func int test2() 
+    {
+      return calc(2)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""  
+    
+    class Garbage : BaseGarbage {
+      func garbage() { }
+    }
+
+    func int _100() { return 100 }
+
+    func int calc(int i)
+    {
+       []func int() ptrs = [
+          _1,
+          _10,
+          _100
+       ]
+       return ptrs[i]()
+    }
+    ";
+    
+    string bhl3 = @"
+    class BaseGarbage { 
+      func base_garbage() { }
+    }
+
+    func int _1() { return 1 }
+
+    func int _10() { return 10 }
+
+    ";
+
+    var files = new Dictionary<string, string>()
+    {
+      { "bhl1.bhl", bhl1 },
+      { "bhl2.bhl", bhl2 },
+      { "bhl3.bhl", bhl3 },
+    };
+
+    var vm = MakeVM(files);
+
+    vm.LoadModule("bhl1");
+    AssertEqual(1, Execute(vm, "test0").result.PopRelease().num);
+    AssertEqual(10, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(100, Execute(vm, "test2").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 }

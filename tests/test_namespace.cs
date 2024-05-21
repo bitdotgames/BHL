@@ -1421,6 +1421,10 @@ public class TestNamespace : BHL_TestBase
   string bhl2 = @"
     import ""bhl1""  
 
+    class Garbage {
+      func garbage() {}
+    }
+
     func int Foo() {
       return 1
     }

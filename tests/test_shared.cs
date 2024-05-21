@@ -1097,6 +1097,7 @@ public class BHL_TestBase
     }
 
     ANTLR_Processor.ProcessAll(new ANTLR_Processor.ProcessedBundle(
+      ts,
       new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
       null,
       new IncludePath()

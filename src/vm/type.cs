@@ -512,7 +512,7 @@ public class Types : INamedResolver
   //      for them we have a special static global Module 
   static Module static_module = new Module(null);
 
-  Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
+  internal Dictionary<string, Module> modules = new Dictionary<string, Module>(); 
 
   static Types()
   {

@@ -11,8 +11,8 @@ public enum UpvalMode
 
 public partial class VM : INamedResolver
 {
-  //NOTE: why -2? we reserve some space before int.MaxValue so that 
-  //      increasing some ip couple of times after it was assigned 
+  //NOTE: why -2? we reserve some space before int.MaxValue so that
+  //      increasing some ip couple of times after it was assigned
   //      a 'STOP_IP' value won't overflow int.MaxValue
   public const int STOP_IP = int.MaxValue - 2;
 
@@ -20,7 +20,7 @@ public partial class VM : INamedResolver
   {
     public Frame frame;
     public IDeferSupport defer_support;
-    //NOTE: if current ip is not within *inclusive* range of these values 
+    //NOTE: if current ip is not within *inclusive* range of these values
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
@@ -49,7 +49,7 @@ public partial class VM : INamedResolver
     //      public only for quick inspection
     public int _refs;
 
-    public int refs => _refs; 
+    public int refs => _refs;
 
     public VM vm;
 
@@ -187,7 +187,7 @@ public partial class VM : INamedResolver
 
     public override string ToString()
     {
-      return "(FPTR refs:" + _refs + ",upvals:" + upvals.Count + " " + this.GetHashCode() + ")"; 
+      return "(FPTR refs:" + _refs + ",upvals:" + upvals.Count + " " + this.GetHashCode() + ")";
     }
   }
 
@@ -196,7 +196,7 @@ public partial class VM : INamedResolver
     public string file;
     public string func;
     public int line;
-    public int ip; 
+    public int ip;
   }
 
   public class Error : Exception
@@ -327,7 +327,7 @@ public partial class VM : INamedResolver
       for(int i=0;i<num;++i)
       {
         ++miss;
-        var tmp = new Val(vm); 
+        var tmp = new Val(vm);
         stack.Push(tmp);
       }
     }
@@ -342,7 +342,7 @@ public partial class VM : INamedResolver
       for(int i=dvs.Length;i-- > 0;)
       {
         var v = dvs[i];
-        res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n"; 
+        res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n";
       }
 
       if(debug_track.Count > 0)
@@ -354,7 +354,7 @@ public partial class VM : INamedResolver
 
         res += "== dangling:" + dangling.Count + " ==\n";
         foreach(var t in dangling)
-          res += t.v + " (refs:" + t.v._refs + ") " + t.v.GetHashCode() + "\n" + t.stack_trace + "\n<<<<<\n"; 
+          res += t.v + " (refs:" + t.v._refs + ") " + t.v.GetHashCode() + "\n" + t.stack_trace + "\n<<<<<\n";
       }
 
       return res;
@@ -395,7 +395,7 @@ public partial class VM : INamedResolver
     null_val = new Val(this);
     null_val.SetObj(null, Types.Null);
     //NOTE: we don't want to store it in the values pool,
-    //      still we need to retain it so that it's never 
+    //      still we need to retain it so that it's never
     //      accidentally released when pushed/popped
     null_val.Retain();
   }
@@ -484,16 +484,16 @@ public partial class VM : INamedResolver
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
     compiled_mods[module.name] = module;
-    
+
     module.InitGlobalVars(this);
   }
 
   void FinishRegistration(Module module)
   {
     module.Setup(name => FindModule(name));
-    
+
     module.InitRuntimeGlobalVars();
-    
+
     ExecInitCode(module);
     ExecModuleInitFunc(module);
   }
@@ -635,7 +635,7 @@ public partial class VM : INamedResolver
   {
     if(module.compiled.init_func_idx == -1)
       return;
-    
+
     var fs = (FuncSymbolScript)module.ns.members[module.compiled.init_func_idx];
     var addr = new FuncAddr() {
       module = module,
@@ -770,7 +770,7 @@ public partial class VM : INamedResolver
   {
     if(symbol_spec2module.TryGetValue(spec, out ms))
       return LoadModuleSymbolError.Ok;
-    
+
     if(!LoadModule(spec.module))
       return LoadModuleSymbolError.ModuleNotFound;
 
@@ -778,7 +778,7 @@ public partial class VM : INamedResolver
     if(symb == null)
       return LoadModuleSymbolError.SymbolNotFound;
 
-    //TODO: should we actually check if loaded module matches 
+    //TODO: should we actually check if loaded module matches
     //      the module where the found symbol actually resides?
     var cm = compiled_mods[((Namespace)symb.scope).module.name];
 
@@ -934,9 +934,9 @@ public partial class VM : INamedResolver
       {
         fb.GetStackTrace(trace);
       }
-      catch(Exception) 
+      catch(Exception)
       {}
-      throw new Error(trace, e); 
+      throw new Error(trace, e);
     }
   }
 
@@ -1013,7 +1013,7 @@ public partial class VM : INamedResolver
   }
 
   BHS ExecuteOnce(ExecState exec)
-  { 
+  {
     var item = exec.regions.Peek();
 
     var curr_frame = item.frame;
@@ -1220,8 +1220,8 @@ public partial class VM : INamedResolver
         var res = Val.New(this);
         var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
         field_symb.getter(curr_frame, obj, ref res, field_symb);
-        //NOTE: we retain only the payload since we make the copy of the value 
-        //      and the new res already has refs = 1 while payload's refcount 
+        //NOTE: we retain only the payload since we make the copy of the value
+        //      and the new res already has refs = 1 while payload's refcount
         //      is not incremented
         res.RefMod(RefOp.USR_INC);
         exec.stack.Push(res);
@@ -1293,7 +1293,7 @@ public partial class VM : INamedResolver
       case Opcodes.Return:
       {
         //NOTE: we jump to ExitFrame opcode of the last function in the module
-        //TODO: probably we should jump to our 'local' frame ExitCode so that 
+        //TODO: probably we should jump to our 'local' frame ExitCode so that
         //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
@@ -1302,13 +1302,13 @@ public partial class VM : INamedResolver
       {
         int ret_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
 
-        int stack_offset = exec.stack.Count; 
+        int stack_offset = exec.stack.Count;
         for(int i=0;i<ret_num;++i)
           curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
         //NOTE: we jump to ExitFrame opcode of the last function in the module
-        //TODO: probably we should jump to our 'local' frame ExitCode so that 
+        //TODO: probably we should jump to our 'local' frame ExitCode so that
         //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
@@ -1316,7 +1316,7 @@ public partial class VM : INamedResolver
       case Opcodes.GetFuncLocalPtr:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        
+
         var func_symb = curr_frame.module.func_index.index[func_idx];
 
         var ptr = FuncPtr.New(this);
@@ -1328,10 +1328,10 @@ public partial class VM : INamedResolver
       {
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        
+
         var func_mod = curr_frame.module._imported[import_idx];
         var func_symb = func_mod.func_index.index[func_idx];
-        
+
         var ptr = FuncPtr.New(this);
         ptr.Init(func_symb._module, func_symb.ip_addr);
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
@@ -1341,12 +1341,12 @@ public partial class VM : INamedResolver
       {
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        
+
         //NOTE: using convention where built-in module is always at index 0
-        //      and imported modules are at (import_idx + 1) 
+        //      and imported modules are at (import_idx + 1)
         var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
         var nfunc_symb = func_mod.nfunc_index.index[func_idx];
-        
+
         var ptr = FuncPtr.New(this);
         ptr.Init(nfunc_symb);
         exec.stack.Push(Val.NewObj(this, ptr, nfunc_symb.signature));
@@ -1363,10 +1363,10 @@ public partial class VM : INamedResolver
       case Opcodes.LastArgToTop:
       {
         //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
-        //      so that it fullfills Opcode.Call requirements 
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
-        int arg_idx = exec.stack.Count - args_num - 1; 
+        //      so that it fullfills Opcode.Call requirements
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+        int arg_idx = exec.stack.Count - args_num - 1;
         var arg = exec.stack[arg_idx];
         exec.stack.RemoveAt(arg_idx);
         exec.stack.Push(arg);
@@ -1374,8 +1374,8 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.CallLocal:
       {
-        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip); 
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        int func_ip = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, exec.stack, func_ip);
@@ -1385,7 +1385,7 @@ public partial class VM : INamedResolver
       case Opcodes.CallGlobNative:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         var nfunc_symb = types.module.nfunc_index[func_idx];
 
@@ -1398,7 +1398,7 @@ public partial class VM : INamedResolver
       {
         int import_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
         var nfunc_symb = func_mod.nfunc_index[func_idx];
@@ -1424,10 +1424,10 @@ public partial class VM : INamedResolver
       case Opcodes.CallMethod:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         //TODO: use a simpler schema where 'self' is passed on the top
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         int self_idx = exec.stack.Count - args_num - 1;
         var self = exec.stack[self_idx];
         exec.stack.RemoveAt(self_idx);
@@ -1447,9 +1447,9 @@ public partial class VM : INamedResolver
       case Opcodes.CallMethodNative:
       {
         int func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         int self_idx = exec.stack.Count - args_num - 1;
         var self = exec.stack[self_idx];
 
@@ -1464,10 +1464,10 @@ public partial class VM : INamedResolver
       case Opcodes.CallMethodVirt:
       {
         int virt_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         //TODO: use a simpler schema where 'self' is passed on the top
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         int self_idx = exec.stack.Count - args_num - 1;
         var self = exec.stack[self_idx];
         exec.stack.RemoveAt(self_idx);
@@ -1488,15 +1488,15 @@ public partial class VM : INamedResolver
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         //TODO: use a simpler schema where 'self' is passed on the top
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         int self_idx = exec.stack.Count - args_num - 1;
         var self = exec.stack[self_idx];
         exec.stack.RemoveAt(self_idx);
 
-        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get();
         var class_type = (ClassSymbol)self.type;
         var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
@@ -1513,9 +1513,9 @@ public partial class VM : INamedResolver
       {
         int iface_func_idx = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         int iface_type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
-        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get(); 
+        var iface_symb = (InterfaceSymbol)curr_frame.constants[iface_type_idx].itype.Get();
         var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
         BHS status;
@@ -1525,7 +1525,7 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.CallFuncPtr:
       {
-        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip); 
+        uint args_bits = Bytecode.Decode32(curr_frame.bytecode, ref exec.ip);
 
         var val_ptr = exec.stack.Pop();
         var ptr = (FuncPtr)val_ptr._obj;
@@ -1550,16 +1550,16 @@ public partial class VM : INamedResolver
       case Opcodes.InitFrame:
       {
         int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
-        var args_bits = exec.stack.Pop(); 
+        var args_bits = exec.stack.Pop();
         curr_frame.locals.Resize(local_vars_num);
         //NOTE: we need to store arg info bits locally so that
-        //      this information will be available to func 
+        //      this information will be available to func
         //      args related opcodes
         curr_frame.locals[local_vars_num-1] = args_bits;
       }
       break;
       case Opcodes.Lambda:
-      {             
+      {
         short offset = (short)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
         var ptr = FuncPtr.New(this);
         ptr.Init(curr_frame, exec.ip+1);
@@ -1634,7 +1634,7 @@ public partial class VM : INamedResolver
       {
         byte def_arg_idx = (byte)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         int jump_pos = (int)Bytecode.Decode16(curr_frame.bytecode, ref exec.ip);
-        uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num; 
+        uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num;
         var args_info = new FuncArgsInfo(args_bits);
         //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
         //NOTE: if default argument is not used we need to jump out of default argument calculation code
@@ -1648,7 +1648,7 @@ public partial class VM : INamedResolver
         if(new_coroutine != null)
         {
           //NOTE: since there's a new coroutine we want to skip ip incrementing
-          //      which happens below and proceed right to the execution of 
+          //      which happens below and proceed right to the execution of
           //      the new coroutine
           exec.coroutine = new_coroutine;
           return BHS.SUCCESS;
@@ -1679,7 +1679,7 @@ public partial class VM : INamedResolver
 
   internal void InitDefaultVal(IType type, Val v)
   {
-    //TODO: make type responsible for default initialization 
+    //TODO: make type responsible for default initialization
     //      of the value
     if(type == Types.Int)
       v.SetNum(0);
@@ -1695,7 +1695,7 @@ public partial class VM : INamedResolver
 
   void Call(Frame curr_frame, ExecState exec, Frame new_frame, uint args_bits)
   {
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK); 
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
     for(int i = 0; i < args_num; ++i)
       new_frame._stack.Push(exec.stack.Pop());
     new_frame._stack.Push(Val.NewInt(this, args_bits));
@@ -1706,7 +1706,7 @@ public partial class VM : INamedResolver
     exec.frames.Push(new_frame);
     exec.regions.Push(new Region(new_frame, new_frame));
     //since ip will be incremented below we decrement it intentionally here
-    exec.ip = new_frame.start_ip - 1; 
+    exec.ip = new_frame.start_ip - 1;
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
@@ -1718,21 +1718,21 @@ public partial class VM : INamedResolver
     if(new_coroutine != null)
     {
       //NOTE: since there's a new coroutine we want to skip ip incrementing
-      //      which happens below and proceed right to the execution of 
+      //      which happens below and proceed right to the execution of
       //      the new coroutine
       coroutine = new_coroutine;
       return true;
     }
     else if(status != BHS.SUCCESS)
       return true;
-    else 
+    else
       return false;
   }
 
   static BHS ExecuteCoroutine(Frame curr_frame, ExecState exec)
   {
     var status = BHS.SUCCESS;
-    //NOTE: optimistically stepping forward so that for simple  
+    //NOTE: optimistically stepping forward so that for simple
     //      bindings you won't forget to do it
     ++exec.ip;
     exec.coroutine.Tick(curr_frame, exec, ref status);
@@ -1748,7 +1748,7 @@ public partial class VM : INamedResolver
       exec.coroutine = null;
 
       //NOTE: we jump to ExitFrame opcode of the last function in the module
-      //TODO: probably we should jump to our 'local' frame ExitCode so that 
+      //TODO: probably we should jump to our 'local' frame ExitCode so that
       //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
       exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       exec.regions.Pop();
@@ -1823,7 +1823,7 @@ public partial class VM : INamedResolver
     if(cls == null)
       throw new Exception("Not a class symbol: " + type);
 
-    var val = Val.New(this); 
+    var val = Val.New(this);
     cls.creator(curr_frame, ref val, cls);
     stack.Push(val);
   }
@@ -1860,7 +1860,7 @@ public partial class VM : INamedResolver
       paral.Init(ip + 1, ip + size);
       return paral;
     }
-    else if(type == BlockType.PARAL_ALL) 
+    else if(type == BlockType.PARAL_ALL)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
@@ -1885,7 +1885,7 @@ public partial class VM : INamedResolver
     var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, exec, out block_size, defer_support);
 
     //Console.WriteLine("BLOCK CORO " + block_coro?.GetType().Name + " " + block_coro?.GetHashCode());
-    if(block_coro is IBranchyCoroutine bi) 
+    if(block_coro is IBranchyCoroutine bi)
     {
       int tmp_ip = exec.ip;
       while(tmp_ip < (exec.ip + block_size))
@@ -1905,7 +1905,7 @@ public partial class VM : INamedResolver
         }
       }
     }
-    return block_coro; 
+    return block_coro;
   }
 
   public bool Tick()

@@ -758,19 +758,23 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: can be null, contains already cached compile modules.
     //      an entry present in file2compiled doesn't exist in file2proc
     public Dictionary<string, Module> file2cached = new Dictionary<string, Module>();
+    public Types types;
     public IncludePath inc_path;
 
-    public ProcessedBundle(IncludePath inc_path)
+    public ProcessedBundle(Types types, IncludePath inc_path)
     {
+      this.types = types;
       this.inc_path = inc_path;
     }
     
     public ProcessedBundle(
+      Types types,
       Dictionary<string, ANTLR_Processor> file2proc, 
       Dictionary<string, Module> file2compiled,
       IncludePath inc_path
       )
     {
+      this.types = types;
       this.file2proc = file2proc;
       this.file2cached = file2compiled;
       this.inc_path = inc_path;
@@ -799,6 +803,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public Dictionary<string, Module> GroupModulesByName()
     {
       var all = new Dictionary<string, Module>();
+
+      foreach(var kv in types.modules)
+        all.Add(kv.Key, kv.Value);
 
       if(file2cached != null)
       {
@@ -859,7 +866,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var all = proc_bundle.GroupModulesByName();
       
     //TODO: find out why exactly this is needed
-    //before linking create local linked namespaces
+    //before actual linking create local linked namespaces
     foreach(var kv in proc_bundle.file2cached)
     {
       foreach(string import in kv.Value.compiled.imports)

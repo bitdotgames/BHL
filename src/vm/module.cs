@@ -20,7 +20,7 @@ public class ModulePath
 public class Module : INamedResolver
 {
   public const int MAX_GLOBALS = 128;
-  
+
   public string name {
     get {
       return path.name;
@@ -39,7 +39,7 @@ public class Module : INamedResolver
   }
 
   public ModulePath path;
-  public Types ts; 
+  public Types ts;
   public Namespace ns;
 
   //used for assigning incremental indexes to module global vars,
@@ -49,27 +49,27 @@ public class Module : INamedResolver
   public FuncModuleIndexer func_index = new FuncModuleIndexer();
   //used for assigning incremental module indexes to native funcs
   public FuncNativeModuleIndexer nfunc_index = new FuncNativeModuleIndexer();
-  
+
   public FixedStack<Val> gvar_vals = new FixedStack<Val>(MAX_GLOBALS);
 
-  //if set this mark is the index starting from which 
+  //if set this mark is the index starting from which
   //*imported* module variables are stored in gvars
   public int local_gvars_mark = -1;
 
-  //an amount of *local* to this module global variables 
+  //an amount of *local* to this module global variables
   //stored in gvars
   public int local_gvars_num {
     get {
       return local_gvars_mark == -1 ? gvar_index.Count : local_gvars_mark;
     }
   }
-  
+
   //filled during runtime module setup procedure since
-  //until this moment we don't know about other modules 
+  //until this moment we don't know about other modules
   internal Module[] _imported;
 
   public CompiledModule compiled = CompiledModule.None;
-  
+
   public Module(Types ts, ModulePath path)
     : this(ts, path, new Namespace())
   {}
@@ -86,7 +86,7 @@ public class Module : INamedResolver
     this.path = path;
     this.ns = ns;
   }
-  
+
   public INamed ResolveNamedByPath(string name)
   {
     return ns.ResolveSymbolByPath(name);
@@ -102,7 +102,7 @@ public class Module : INamedResolver
   {
     //let's init all our own global variables
     for(int g=0;g<local_gvars_num;++g)
-      gvar_vals[g] = Val.New(vm); 
+      gvar_vals[g] = Val.New(vm);
   }
 
   public void ClearGlobalVars()
@@ -114,14 +114,14 @@ public class Module : INamedResolver
     }
     gvar_vals.Clear();
   }
-  
+
   public void Setup(Func<string, Module> name2module)
   {
     foreach(var imp in compiled.imports)
       ns.Link(name2module(imp).ns);
-      
+
     _imported = new Module[compiled.imports.Count];
-    
+
     for(int i = 0; i < compiled.imports.Count; ++i)
     {
       var imported = name2module(compiled.imports[i]);
@@ -150,7 +150,7 @@ public class Module : INamedResolver
   public void InitRuntimeGlobalVars()
   {
     int gvars_offset = local_gvars_num;
-    
+
     for(int i = 0; i < _imported.Length; ++i)
     {
       var imported = _imported[i];
@@ -164,23 +164,25 @@ public class Module : INamedResolver
       }
     }
   }
-  
+
   void SetupFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
   {
     if(fss.scope is InterfaceSymbol)
       return;
-    
+
     if(fss.ip_addr == -1)
       throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
-    
-    //TODO: there's definitely questionable code duplication - we add script functions
-    //      to index when defining them and when setting up the loaded module here
-    func_index.index.Add(fss);
-    
+
     if(fss._module == null)
     {
       var mod_name = fss.GetModule().name;
       fss._module = mod_name == name ? this : name2module(mod_name);
+
+      //TODO: there's definitely questionable code duplication - we add script functions
+      //      to index when defining them and when setting up the loaded module here
+      if(fss._module == this)
+        func_index.index.Add(fss);
+
       if(fss._module == null)
         throw new Exception("Module '" + mod_name + "' not found");
     }
