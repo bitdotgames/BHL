@@ -219,4 +219,70 @@ public class TestPerf : BHL_TestBase
 
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestFibonacciInterfaceImported()
+  {
+    string fib1 = @"
+    interface IFib 
+    {
+      func int fib(int x, IFib f)
+    }
+
+    class Fib : IFib
+    {
+      func int fib(int x, IFib f)
+      {
+        if(x == 0) {
+          return 0
+        } else {
+          if(x == 1) {
+            return 1
+          } else {
+            return f.fib(x - 1, this) + f.fib(x - 2, this)
+          }
+        }
+      }
+    }
+    ";
+
+    string test = @"
+    import ""fib1""
+
+    func int test() 
+    {
+      IFib f = new Fib
+      int x = 15 
+      return f.fib(x, f)
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"fib1.bhl", fib1},
+        {"test.bhl", test},
+      }
+    );
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      vm.LoadModule("test");
+      var fb = vm.Start("test");
+      AssertFalse(vm.Tick());
+      stopwatch.Stop();
+      AssertEqual(fb.result.PopRelease().num, 610);
+      Console.WriteLine("fib interface imported ticks: {0}", stopwatch.ElapsedTicks);
+    }
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      vm.LoadModule("test");
+      var fb = vm.Start("test");
+      AssertFalse(vm.Tick());
+      stopwatch.Stop();
+      AssertEqual(fb.result.PopRelease().num, 610);
+      Console.WriteLine("fib interface imported ticks2: {0}", stopwatch.ElapsedTicks);
+    }
+
+    CommonChecks(vm);
+  }
 }
