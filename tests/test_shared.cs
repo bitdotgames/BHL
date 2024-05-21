@@ -624,12 +624,12 @@ public class BHL_TestBase
     return files;
   }
 
-  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false)
+  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, CompilationExecutor executor = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache));
+    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache: use_cache, executor: executor));
     var vm = new VM(ts, loader);
     return vm;
   }
@@ -1019,19 +1019,22 @@ public class BHL_TestBase
     return ms;
   }
 
-  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1)
+  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1, CompilationExecutor executor = null)
   {
-    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache, max_threads));
+    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads), executor: executor);
   }
 
-  public static Stream CompileFiles(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1, bool clean_dir = true)
+  public static Stream CompileFiles(
+    Dictionary<string, string> file2src, Action<Types> ts_fn = null, 
+    bool use_cache = false, int max_threads = 1, 
+    bool clean_dir = true, CompilationExecutor executor = null)
   {
-    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache, max_threads);
+    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache: use_cache, max_threads: max_threads, executor: executor);
   }
 
-  static public Stream CompileFiles(CompileConf conf)
+  static public Stream CompileFiles(CompileConf conf, CompilationExecutor executor = null)
   {
-    return CompileFiles(new CompilationExecutor(), conf);
+    return CompileFiles(executor ?? new CompilationExecutor(), conf);
   }
 
   public bhl.Module Compile(

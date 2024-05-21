@@ -1516,8 +1516,11 @@ public class TestImport : BHL_TestBase
 
     {
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
-      var vm = MakeVM(files, use_cache: true);
+      var executor = new CompilationExecutor();
+      var vm = MakeVM(files, use_cache: true, executor: executor);
       vm.LoadModule("bhl2");
+      AssertEqual(1, executor.cache_hits);
+      AssertEqual(1, executor.cache_miss);
       AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
     }
