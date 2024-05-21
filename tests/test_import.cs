@@ -1477,4 +1477,49 @@ public class TestImport : BHL_TestBase
     AssertEqual(100, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestImportNativeModulesFromCachedModule()
+  {
+    string bhl1 = @"
+    import ""std""  
+    
+    class Foo { }
+
+    func string GetFooName() {
+      var foo = new Foo
+      return std.GetType(foo).Name
+    }
+    ";
+    
+    string bhl2 = @"
+    import ""bhl1""  
+    
+    func string test() {
+      return GetFooName()
+    }
+    ";
+
+    
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        { "bhl1.bhl", bhl1 },
+        { "bhl2.bhl", bhl2 },
+      });
+
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("bhl2");
+      AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+
+    {
+      System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+      var vm = MakeVM(files, use_cache: true);
+      vm.LoadModule("bhl2");
+      AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
+      CommonChecks(vm);
+    }
+  }
 }

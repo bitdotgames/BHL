@@ -139,7 +139,7 @@ public class CompilationExecutor
     public string compiled_file;
     public FileImports imports_maybe;
     public ANTLR_Parsed parsed;
-    //loaded from cache compiled result
+    //if not null, it's a compiled cache result
     public Module cached;
   }
 

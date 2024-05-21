@@ -770,13 +770,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public ProcessedBundle(
       Types types,
       Dictionary<string, ANTLR_Processor> file2proc, 
-      Dictionary<string, Module> file2compiled,
+      Dictionary<string, Module> file2cached,
       IncludePath inc_path
       )
     {
       this.types = types;
       this.file2proc = file2proc;
-      this.file2cached = file2compiled;
+      this.file2cached = file2cached;
       this.inc_path = inc_path;
     }
 
@@ -804,6 +804,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       var all = new Dictionary<string, Module>();
 
+      //NOTE: adding globally registered modules
       foreach(var kv in types.modules)
         all.Add(kv.Key, kv.Value);
 
