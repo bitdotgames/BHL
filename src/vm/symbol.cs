@@ -53,9 +53,9 @@ public class IntSymbol : Symbol, IType
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(IntSymbol s)
+  public static implicit operator TypeProxy<IType>(IntSymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -77,9 +77,9 @@ public class BoolSymbol : Symbol, IType
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(BoolSymbol s)
+  public static implicit operator TypeProxy<IType>(BoolSymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -101,9 +101,9 @@ public class StringSymbol : ClassSymbolNative
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(StringSymbol s)
+  public static implicit operator TypeProxy<IType>(StringSymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -125,9 +125,9 @@ public class FloatSymbol : Symbol, IType
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(FloatSymbol s)
+  public static implicit operator TypeProxy<IType>(FloatSymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -149,9 +149,9 @@ public class VoidSymbol : Symbol, IType
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(VoidSymbol s)
+  public static implicit operator TypeProxy<IType>(VoidSymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -173,9 +173,9 @@ public class AnySymbol : Symbol, IType
   {}
 
   //for convenience
-  public static implicit operator Proxy<IType>(AnySymbol s)
+  public static implicit operator TypeProxy<IType>(AnySymbol s)
   {
-    return new Proxy<IType>(s);
+    return new TypeProxy<IType>(s);
   }
 }
 
@@ -323,14 +323,14 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
 public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 {
-  IList<Proxy<IType>> proxy_inherits;
+  IList<TypeProxy<IType>> proxy_inherits;
   FuncSymbol[] funcs;
   System.Type native_type;
 
   public InterfaceSymbolNative(
     Origin origin,
     string name, 
-    IList<Proxy<IType>> proxy_inherits,
+    IList<TypeProxy<IType>> proxy_inherits,
     params FuncSymbol[] funcs
   )
     : base(origin, name)
@@ -342,7 +342,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
   public InterfaceSymbolNative(
     Origin origin,
     string name, 
-    IList<Proxy<IType>> proxy_inherits,
+    IList<TypeProxy<IType>> proxy_inherits,
     System.Type native_type,
     params FuncSymbol[] funcs
   )
@@ -396,7 +396,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     }
   }
 
-  internal Proxy<ClassSymbol> _super_class;
+  internal TypeProxy<ClassSymbol> _super_class;
 
   public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
@@ -439,7 +439,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   public void SetSuperClassAndInterfaces(ClassSymbol super_class, IList<InterfaceSymbol> implements = null)
   {
     if(super_class != null)
-      _super_class = new Proxy<ClassSymbol>(super_class);
+      _super_class = new TypeProxy<ClassSymbol>(super_class);
 
     if(implements != null && implements.Count > 0)
       SetImplementedInterfaces(implements);
@@ -738,14 +738,14 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   internal FuncSymbolNative FuncArrIdx;
   internal FuncSymbolNative FuncArrIdxW;
 
-  public Proxy<IType> item_type;
+  public TypeProxy<IType> item_type;
 
   //marshall factory version
   public ArrayTypeSymbol()     
     : base(null, null)
   {}
 
-  public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type)     
+  public ArrayTypeSymbol(Origin origin, string name, TypeProxy<IType> item_type)     
     : base(origin, name)
   {
     this.item_type = item_type;
@@ -815,7 +815,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : base(origin, name)
   {}
 
-  public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
+  public ArrayTypeSymbol(Origin origin, TypeProxy<IType> item_type) 
     : this(origin, "[]" + item_type.path, item_type)
   {}
 
@@ -834,7 +834,7 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
 {
   public const uint CLASS_ID = 10;
     
-  public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type)
+  public GenericArrayTypeSymbol(Origin origin, TypeProxy<IType> item_type)
     : base(origin, item_type)
   {}
     
@@ -997,13 +997,13 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
   public delegate IList<T> CreatorCb();
   public static CreatorCb Creator;
 
-  public ArrayTypeSymbolT(Origin origin, string name, Proxy<IType> item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Origin origin, string name, TypeProxy<IType> item_type, CreatorCb creator) 
     : base(origin, name, item_type)
   {
     Creator = creator;
   }
 
-  public ArrayTypeSymbolT(Origin origin, Proxy<IType> item_type, CreatorCb creator) 
+  public ArrayTypeSymbolT(Origin origin, TypeProxy<IType> item_type, CreatorCb creator) 
     : base(origin, "[]" + item_type.path, item_type)
   {}
 
@@ -1114,8 +1114,8 @@ public abstract class MapTypeSymbol : ClassSymbol
   internal FuncSymbolNative FuncMapIdx;
   internal FuncSymbolNative FuncMapIdxW;
 
-  public Proxy<IType> key_type;
-  public Proxy<IType> val_type;
+  public TypeProxy<IType> key_type;
+  public TypeProxy<IType> val_type;
 
   public ClassSymbol enumerator_type = new ClassSymbolNative(new Origin(), "Enumerator");
 
@@ -1124,7 +1124,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     : base(null, null)
   {}
 
-  public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+  public MapTypeSymbol(Origin origin, TypeProxy<IType> key_type, TypeProxy<IType> val_type)     
     : base(origin, "[" + key_type.path + "]" + val_type.path)
   {
     this.key_type = key_type;
@@ -1174,7 +1174,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative(new Origin(), "TryGet", new TypeProxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -1182,7 +1182,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var vs = new FieldSymbol(new Origin(), "$Enumerator", new Proxy<IType>(enumerator_type), GetEnumerator, null);
+      var vs = new FieldSymbol(new Origin(), "$Enumerator", new TypeProxy<IType>(enumerator_type), GetEnumerator, null);
       this.Define(vs);
     }
 
@@ -1202,7 +1202,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent);
+      var fn = new FuncSymbolNative(new Origin(), "Current", new TypeProxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent);
       enumerator_type.Define(fn);
     }
 
@@ -1229,7 +1229,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 {
   public const uint CLASS_ID = 21; 
   
-  public GenericMapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+  public GenericMapTypeSymbol(Origin origin, TypeProxy<IType> key_type, TypeProxy<IType> val_type)     
     : base(origin, key_type, val_type)
   {}
     
@@ -1435,7 +1435,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 {
   public const uint CLASS_ID = 8;
 
-  public Proxy<IType> type;
+  public TypeProxy<IType> type;
 
   int _scope_idx = -1;
   public int scope_idx {
@@ -1453,7 +1453,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   internal VariableSymbol _upvalue;
 #endif
 
-  public VariableSymbol(Origin origin, string name, Proxy<IType> type) 
+  public VariableSymbol(Origin origin, string name, TypeProxy<IType> type) 
     : base(origin, name) 
   {
     this.type = type;
@@ -1500,13 +1500,13 @@ public class GlobalVariableSymbol : VariableSymbol
 
   public bool is_local;
 
-  public GlobalVariableSymbol(Origin origin, string name, Proxy<IType> type) 
+  public GlobalVariableSymbol(Origin origin, string name, TypeProxy<IType> type) 
     : base(origin, name, type) 
   {}
   
   //marshall factory version
   public GlobalVariableSymbol()
-    : base(null, "", new Proxy<IType>())
+    : base(null, "", new TypeProxy<IType>())
   {}
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1528,7 +1528,7 @@ public class FuncArgSymbol : VariableSymbol
 
   public bool is_ref;
 
-  public FuncArgSymbol(Origin origin, string name, Proxy<IType> type, bool is_ref = false)
+  public FuncArgSymbol(Origin origin, string name, TypeProxy<IType> type, bool is_ref = false)
     : base(origin, name, type)
   {
     this.is_ref = is_ref;
@@ -1536,13 +1536,13 @@ public class FuncArgSymbol : VariableSymbol
 
   //convenience version where we don't care about exact origin (e.g native
   //func bindings)
-  public FuncArgSymbol(string name, Proxy<IType> type, bool is_ref = false)
+  public FuncArgSymbol(string name, TypeProxy<IType> type, bool is_ref = false)
     : this(new Origin(), name, type, is_ref)
   {}
 
   //marshall factory version
   public FuncArgSymbol()
-    : this(null, "", new Proxy<IType>())
+    : this(null, "", new TypeProxy<IType>())
   {}
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1585,12 +1585,12 @@ public class FieldSymbol : VariableSymbol
     }
   }
 
-  public FieldSymbol(Origin origin, string name, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+  public FieldSymbol(Origin origin, string name, TypeProxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : this(origin, name, 0, type, getter, setter, getref)
   {
   }
 
-  public FieldSymbol(Origin origin, string name, FieldAttrib attribs, Proxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
+  public FieldSymbol(Origin origin, string name, FieldAttrib attribs, TypeProxy<IType> type, FieldGetter getter = null, FieldSetter setter = null, FieldRef getref = null) 
     : base(origin, name, type)
   {
     this.attribs = attribs;
@@ -1612,7 +1612,7 @@ public class FieldSymbolScript : FieldSymbol
 {
   new public const uint CLASS_ID = 9;
 
-  public FieldSymbolScript(Origin origin, string name, Proxy<IType> type) 
+  public FieldSymbolScript(Origin origin, string name, TypeProxy<IType> type) 
     : base(origin, name, type, null, null, null)
   {
     this.getter = Getter;
@@ -1621,7 +1621,7 @@ public class FieldSymbolScript : FieldSymbol
   }
   //marshall factory version
   public FieldSymbolScript()
-    : this(null, "", new Proxy<IType>())
+    : this(null, "", new TypeProxy<IType>())
   {}
 
   void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
@@ -1903,7 +1903,7 @@ public class FuncSymbolScript : FuncSymbol
 
   public void ReserveThisArgument(ClassSymbolScript class_scope)
   {
-    var this_symb = new FuncArgSymbol("this", new Proxy<IType>(class_scope));
+    var this_symb = new FuncArgSymbol("this", new TypeProxy<IType>(class_scope));
     Define(this_symb);
   }
 
@@ -1939,7 +1939,7 @@ public class FuncSymbolVirtual : FuncSymbol
   protected int default_args_num;
 
   public List<FuncSymbol> overrides = new List<FuncSymbol>();
-  public List<Proxy<ClassSymbol>> owners = new List<Proxy<ClassSymbol>>(); 
+  public List<TypeProxy<ClassSymbol>> owners = new List<TypeProxy<ClassSymbol>>(); 
 
   public FuncSymbolVirtual(Origin origin, string name, FuncSignature signature, int default_args_num = 0)
     : base(origin, name, signature)
@@ -1977,7 +1977,7 @@ public class FuncSymbolVirtual : FuncSymbol
 
     fs._virtual = this;
 
-    owners.Add(new Proxy<ClassSymbol>(owner));
+    owners.Add(new TypeProxy<ClassSymbol>(owner));
     overrides.Add(fs);
   }
 
@@ -2185,7 +2185,7 @@ public class FuncSymbolNative : FuncSymbol
   public FuncSymbolNative(
     Origin cinfo,
     string name, 
-    Proxy<IType> ret_type, 
+    TypeProxy<IType> ret_type, 
     Cb cb,
     params FuncArgSymbol[] args
   ) 
@@ -2195,7 +2195,7 @@ public class FuncSymbolNative : FuncSymbol
   public FuncSymbolNative(
     Origin cinfo,
     string name, 
-    Proxy<IType> ret_type, 
+    TypeProxy<IType> ret_type, 
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
@@ -2207,7 +2207,7 @@ public class FuncSymbolNative : FuncSymbol
     Origin origin,
     string name, 
     FuncAttrib attribs,
-    Proxy<IType> ret_type, 
+    TypeProxy<IType> ret_type, 
     int default_args_num,
     Cb cb,
     params FuncArgSymbol[] args
@@ -2257,8 +2257,8 @@ public interface INativeType
 public class ClassSymbolNative : ClassSymbol, INativeType
 {
   //NOTE: during Setup() routine will be resolved
-  Proxy<IType> tmp_super_class;
-  IList<Proxy<IType>> tmp_implements;
+  TypeProxy<IType> tmp_super_class;
+  IList<TypeProxy<IType>> tmp_implements;
 
   System.Type native_type;
 
@@ -2268,23 +2268,23 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     VM.ClassCreator creator = null,
     System.Type native_type = null
   )
-    : this(origin, name, new Proxy<IType>(), null, creator, native_type)
+    : this(origin, name, new TypeProxy<IType>(), null, creator, native_type)
   {}
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
-    IList<Proxy<IType>> proxy_implements,
+    IList<TypeProxy<IType>> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null
   )
-    : this(origin, name, new Proxy<IType>(), proxy_implements, creator, native_type)
+    : this(origin, name, new TypeProxy<IType>(), proxy_implements, creator, native_type)
   {}
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
-    Proxy<IType> proxy_super_class,
+    TypeProxy<IType> proxy_super_class,
     VM.ClassCreator creator = null,
     System.Type native_type = null
   )
@@ -2294,8 +2294,8 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public ClassSymbolNative(
     Origin origin,
     string name, 
-    Proxy<IType> proxy_super_class,
-    IList<Proxy<IType>> proxy_implements,
+    TypeProxy<IType> proxy_super_class,
+    IList<TypeProxy<IType>> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null
   )
@@ -2715,7 +2715,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
-  List<Proxy<T>> list = new List<Proxy<T>>();
+  List<TypeProxy<T>> list = new List<TypeProxy<T>>();
 
   public int Count
   {
@@ -2740,10 +2740,10 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 
   public bool Add(T t)
   {
-    return Add(new Proxy<T>(t));
+    return Add(new TypeProxy<T>(t));
   }
 
-  public bool Add(Proxy<T> tp)
+  public bool Add(TypeProxy<T> tp)
   {
     foreach(var item in list)
     {

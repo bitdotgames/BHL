@@ -20,7 +20,7 @@ public class Const : IEquatable<Const>
   public ConstType type;
   public double num;
   public string str;
-  public Proxy<IType> itype;
+  public TypeProxy<IType> itype;
 
   public Const(ConstType type, double num, string str)
   {
@@ -57,7 +57,7 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Const(Proxy<IType> itype)
+  public Const(TypeProxy<IType> itype)
   {
     type = ConstType.ITYPE;
     this.itype = itype;

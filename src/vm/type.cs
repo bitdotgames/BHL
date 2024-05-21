@@ -17,11 +17,11 @@ public interface IEphemeral : INamed
 {}
 
 // For lazy evaluation of types and forward declarations
-public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : class, INamed
+public struct TypeProxy<T> : marshall.IMarshallable, IEquatable<TypeProxy<T>> where T : class, IType
 {
-  public T named;
-
-  //TODO: we need to serialize/unserialize the original resolver
+  public T resolved;
+  
+  //TODO: do we need to serialize/unserialize the original resolver?
   public INamedResolver resolver;
 
   //NOTE: for symbols it's a full absolute path from the very top namespace
@@ -31,7 +31,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     get { return _path; } 
   }
 
-  public Proxy(INamedResolver resolver, string path)
+  public TypeProxy(INamedResolver resolver, string path)
   {
     if(path.Length == 0)
       throw new Exception("Type path is empty");
@@ -39,45 +39,51 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
       throw new Exception("Type spec contains illegal characters: '" + path + "'");
     
     this.resolver = resolver;
-    named = default(T);
+    resolved = default(T);
     _path = path;
   }
 
-  public Proxy(T named)
+  public TypeProxy(T obj)
   {
     resolver = null;
-    this.named = named;
-    _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
+    this.resolved = obj;
+    _path = GetNormalizedPath(obj);
   }
 
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(_path) && 
-           named == null;
+           resolved == null;
   }
 
   public void Clear()
   {
     _path = null;
-    named = null;
+    resolved = null;
   }
 
   public T Get()
   {
-    if(named != null)
-      return named;
+    if(resolved != null)
+      return resolved;
 
     if(string.IsNullOrEmpty(_path))
       return default(T);
 
-    named = resolver.ResolveNamedByPath(_path) as T;
+    resolved = resolver.ResolveNamedByPath(_path) as T;
+    //TODO: some smelly code below - after resolving we re-write the original path
+    //      with the normalized one, this is useful for cases when comparing proxies
+    //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
+    if(resolved != null)
+      _path = GetNormalizedPath(resolved);
 
-    //TODO: some controversary code below - when resolving a symbol,
-    //      forcing its full path to re-write the original path
-    if(named != null)
-      _path = (named is Symbol sym) ? sym.GetFullPath() : named.GetName();
+    return resolved;
+  }
 
-    return named;
+  static string GetNormalizedPath(IType obj)
+  {
+    //for symbols full path is used
+    return (obj is Symbol sym) ? sym.GetFullPath() : obj.GetName();
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -108,7 +114,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
     marshall.Marshall.SyncGeneric(ctx, ref mg);
     if(ctx.is_read)
-      named = (T)mg;
+      resolved = (T)mg;
   }
 
   public override string ToString() 
@@ -118,18 +124,18 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
   public override bool Equals(object o)
   {
-    if(!(o is Proxy<T>))
+    if(!(o is TypeProxy<T>))
       return false;
-    return this.Equals((Proxy<T>)o);
+    return this.Equals((TypeProxy<T>)o);
   }
 
-  public bool Equals(Proxy<T> o)
+  public bool Equals(TypeProxy<T> o)
   {
     if(o.resolver == resolver && o._path == _path)
       return true;
 
-    if(o.named != null && named != null)
-      return o.named.Equals(named);
+    if(o.resolved != null && resolved != null)
+      return o.resolved.Equals(resolved);
      
     var r = Get();
     if(r != null)
@@ -148,12 +154,12 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public Proxy<IType> subj; 
+  public TypeProxy<IType> subj; 
 
   string name;
   public string GetName() { return name; }
 
-  public RefType(Proxy<IType> subj)
+  public RefType(TypeProxy<IType> subj)
   {
     this.subj = subj;
     name = "ref " + subj.path;
@@ -201,7 +207,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
 
   string name;
 
-  List<Proxy<IType>> items = new List<Proxy<IType>>();
+  List<TypeProxy<IType>> items = new List<TypeProxy<IType>>();
 
   public string GetName() { return name; }
 
@@ -211,7 +217,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
     }
   }
 
-  public TupleType(params Proxy<IType>[] items)
+  public TupleType(params TypeProxy<IType>[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
@@ -222,14 +228,14 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   public TupleType()
   {}
 
-  public Proxy<IType> this[int index]
+  public TypeProxy<IType> this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(Proxy<IType> item)
+  public void Add(TypeProxy<IType> item)
   {
     items.Add(item);
     Update();
@@ -299,9 +305,9 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   //full type name
   string name;
 
-  public Proxy<IType> ret_type;
+  public TypeProxy<IType> ret_type;
   //TODO: include arg names as well since we support named args?
-  public List<Proxy<IType>> arg_types = new List<Proxy<IType>>();
+  public List<TypeProxy<IType>> arg_types = new List<TypeProxy<IType>>();
 
   byte _attribs = 0;
   public FuncSignatureAttrib attribs {
@@ -315,11 +321,11 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
 
   public string GetName() { return name; }
 
-  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(TypeProxy<IType> ret_type, params TypeProxy<IType>[] arg_types)
     : this(0, ret_type, arg_types)
   {}
 
-  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, TypeProxy<IType> ret_type, params TypeProxy<IType>[] arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -328,7 +334,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
     Update();
   }
 
-  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, TypeProxy<IType> ret_type, List<TypeProxy<IType>> arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -340,7 +346,7 @@ public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<Fu
   public FuncSignature()
   {}
 
-  public void AddArg(Proxy<IType> arg_type)
+  public void AddArg(TypeProxy<IType> arg_type)
   {
     arg_types.Add(arg_type);
     Update();

@@ -203,7 +203,7 @@ public class CompiledModule
           cn = new Const(cn_type, r.ReadDouble(), "");
         else if(cn_type == ConstType.ITYPE)
         {
-          var tp = marshall.Marshall.Stream2Obj<Proxy<IType>>(src, symb_factory);
+          var tp = marshall.Marshall.Stream2Obj<TypeProxy<IType>>(src, symb_factory);
           if(string.IsNullOrEmpty(tp.path))
             throw new Exception("Missing path");
           cn = new Const(tp);

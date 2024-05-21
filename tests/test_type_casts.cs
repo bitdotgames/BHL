@@ -758,7 +758,7 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
+      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<TypeProxy<IType>>(){ ts.T("IFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null/*dummy*/, type);
@@ -796,7 +796,7 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<Proxy<IType>>(){ ts.T("IWow") },
+      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<TypeProxy<IType>>(){ ts.T("IWow") },
         native_type: typeof(NativeWow),
         creator: delegate(VM.Frame frm, ref Val v, IType type) 
         { 
