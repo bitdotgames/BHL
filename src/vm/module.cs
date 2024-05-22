@@ -31,6 +31,12 @@ public class Module : INamedResolver
       return path.file_path;
     }
   }
+  
+  public List<string> imports {
+    get {
+      return compiled.imports;
+    }
+  }
 
   public bool is_compiled {
     get {
