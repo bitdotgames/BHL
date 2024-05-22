@@ -1525,4 +1525,54 @@ public class TestImport : BHL_TestBase
       CommonChecks(vm);
     }
   }
+  
+  [IsTested()]
+  public void TestImportInheritedClassFromCachedModule()
+  {
+    string bhl1 = @"
+    class Base { 
+     func int Do() { return 10 }
+    }
+    ";
+    
+    string bhl2 = @"
+    import ""bhl1""  
+
+    class Foo : Base { }
+    ";
+    
+    string bhl3 = @"
+    import ""bhl2""  
+
+    func int test() {
+      var foo = new Foo
+      return foo.Do()
+    }
+
+    ";
+
+    
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        { "bhl1.bhl", bhl1 },
+        { "bhl2.bhl", bhl2 },
+        { "bhl3.bhl", bhl3 },
+      });
+
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("bhl3");
+      AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+
+    {
+      System.IO.File.SetLastWriteTimeUtc(files[2], DateTime.UtcNow.AddSeconds(1));
+      var executor = new CompilationExecutor();
+      var vm = MakeVM(files, use_cache: true, executor: executor);
+      vm.LoadModule("bhl3");
+      AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
 }

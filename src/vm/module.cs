@@ -121,22 +121,25 @@ public class Module : INamedResolver
     gvar_vals.Clear();
   }
 
-  public void Setup(Func<string, Module> name2module)
+  public void Setup(Func<string, Module> import2module)
   {
-    foreach(var imp in compiled.imports)
-      ns.Link(name2module(imp).ns);
-
     _imported = new Module[compiled.imports.Count];
 
     for(int i = 0; i < compiled.imports.Count; ++i)
     {
-      var imported = name2module(compiled.imports[i]);
+      var imported = import2module(compiled.imports[i]);
       if(imported == null)
         throw new Exception("Module '" + compiled.imports[i] + "' not found");
 
       _imported[i] = imported;
     }
 
+    foreach(var imp in compiled.imports)
+      ns.Link(import2module(imp).ns);
+    
+    //NOTE: currently local symbols might include symbols located in different modules (
+    //      other than our namespace), e.g with the base class members located in a different
+    //      module. This must be taken into account.
     ns.ForAllLocalSymbols(delegate(Symbol s)
       {
         if(s is Namespace ns)
@@ -146,9 +149,9 @@ public class Module : INamedResolver
         else if(s is VariableSymbol vs && vs.scope is Namespace)
           gvar_index.index.Add(vs);
         else if(s is FuncSymbolScript fs)
-          SetupFuncSymbol(fs, name2module);
+          SetupFuncSymbol(fs);
         else if(s is FuncSymbolVirtual fssv && fssv.GetTopOverride() is FuncSymbolScript vsf)
-          SetupFuncSymbol(vsf, name2module);
+          SetupFuncSymbol(vsf);
       }
     );
   }
@@ -171,27 +174,28 @@ public class Module : INamedResolver
     }
   }
 
-  void SetupFuncSymbol(FuncSymbolScript fss, Func<string, Module> name2module)
+  void SetupFuncSymbol(FuncSymbolScript fss)
   {
+    //NOTE: the func symbol might be from another module (e.g in case of class inheritance with the base class
+    //      located in a different module). Here we check if module was already set and if so ignore the symbol
+    if(fss._module != null)
+      return;
+
     if(fss.scope is InterfaceSymbol)
       return;
 
+    var mod_name = fss.GetModule().name;
+    if(mod_name != name)
+      throw new Exception("Func  '" + fss.GetFullPath() + "' doesn't belong to our module '" + name + "', got '" + mod_name + "'");  
+    
     if(fss.ip_addr == -1)
-      throw new Exception("Func ip_addr is not set: " + fss.GetFullPath());
+      throw new Exception("Func " + fss.GetFullPath() + " ip_addr is not set, module '" + name + "'");
+    
+    fss._module = this;
 
-    if(fss._module == null)
-    {
-      var mod_name = fss.GetModule().name;
-      fss._module = mod_name == name ? this : name2module(mod_name);
-
-      //TODO: there's definitely questionable code duplication - we add script functions
-      //      to index when defining them and when setting up the loaded module here
-      if(fss._module == this)
-        func_index.index.Add(fss);
-
-      if(fss._module == null)
-        throw new Exception("Module '" + mod_name + "' not found");
-    }
+    //TODO: there's definitely questionable code duplication - we add script functions
+    //      to index when defining them and when setting up the loaded module here
+    func_index.index.Add(fss);
   }
 
   public void AddImportedGlobalVars(Module imported_module)
