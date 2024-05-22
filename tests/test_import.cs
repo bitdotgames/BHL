@@ -1530,6 +1530,8 @@ public class TestImport : BHL_TestBase
   public void TestImportInheritedClassFromCachedModule()
   {
     string bhl1 = @"
+    import ""interim"" //we'll force this class change
+
     class Base { 
      func int Do() { return 10 }
     }
@@ -1541,6 +1543,10 @@ public class TestImport : BHL_TestBase
     class Foo : Base { }
     ";
     
+    string interim = @"
+    func interim() {}
+    ";
+    
     string bhl3 = @"
     import ""bhl2""  
 
@@ -1548,7 +1554,6 @@ public class TestImport : BHL_TestBase
       var foo = new Foo
       return foo.Do()
     }
-
     ";
 
     
@@ -1557,6 +1562,7 @@ public class TestImport : BHL_TestBase
         { "bhl1.bhl", bhl1 },
         { "bhl2.bhl", bhl2 },
         { "bhl3.bhl", bhl3 },
+        { "interim.bhl", interim },
       });
 
     {
@@ -1567,7 +1573,8 @@ public class TestImport : BHL_TestBase
     }
 
     {
-      System.IO.File.SetLastWriteTimeUtc(files[2], DateTime.UtcNow.AddSeconds(1));
+      //let's 'touch' the interim file
+      System.IO.File.SetLastWriteTimeUtc(files[3], DateTime.UtcNow.AddSeconds(1));
       var executor = new CompilationExecutor();
       var vm = MakeVM(files, use_cache: true, executor: executor);
       vm.LoadModule("bhl3");

@@ -181,20 +181,25 @@ public class Module : INamedResolver
     if(fss._module != null)
       return;
 
+    //interface methods are skipped
     if(fss.scope is InterfaceSymbol)
       return;
 
-    var mod_name = fss.GetModule().name;
-    if(mod_name != name)
-      throw new Exception("Func  '" + fss.GetFullPath() + "' doesn't belong to our module '" + name + "', got '" + mod_name + "'");  
+    //NOTE: let's ignore not 'our' functions, e.g methods from other base classes located in other modules.
+    //      This is especially important for cases when the cached module is being setup during the compilation,
+    //      while the module which actually contains the func symbol is not yet parsed and the function is not
+    //      assigned ip_addr yet
+    if(fss.GetModule().name != name)
+      return;
     
     if(fss.ip_addr == -1)
       throw new Exception("Func " + fss.GetFullPath() + " ip_addr is not set, module '" + name + "'");
     
+    //for faster runtime module lookups we cache it here
     fss._module = this;
 
     //TODO: there's definitely questionable code duplication - we add script functions
-    //      to index when defining them and when setting up the loaded module here
+    //      to index when defining them in the scope them and here, when setting up the module
     func_index.index.Add(fss);
   }
 

@@ -1330,7 +1330,7 @@ public partial class VM : INamedResolver
         var func_symb = func_mod.func_index.index[func_idx];
 
         var ptr = FuncPtr.New(this);
-        ptr.Init(func_symb._module, func_symb.ip_addr);
+        ptr.Init(func_mod, func_symb.ip_addr);
         exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
       }
       break;
