@@ -430,7 +430,7 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
-  static public ClassSymbolNative ClassType = 
+  static public ClassSymbolNative Type = 
     new ClassSymbolNative(new Origin(), "Type", 
          delegate(VM.Frame frm, ref Val v, IType type) 
          { 
@@ -438,7 +438,8 @@ public class Types : INamedResolver
          }
        );
   
-  //NOTE: these are 'meta' types which serve as templates for concrete parametrized types
+  //NOTE: These are types which are parametrized with Any types. They are mostly used when
+  //      it's required to set a type of a generic ValList
   static public GenericArrayTypeSymbol Array = new GenericArrayTypeSymbol(new Origin(), Any);  
   static public GenericMapTypeSymbol Map = new GenericMapTypeSymbol(new Origin(), Any, Any);  
 
@@ -593,7 +594,7 @@ public class Types : INamedResolver
   
   static void SetupClassType()
   {
-    static_module.ns.Define(ClassType);
+    static_module.ns.Define(Type);
     
     {
       var fld = new FieldSymbol(new Origin(), "Name", String, 
@@ -604,9 +605,9 @@ public class Types : INamedResolver
         },
         null
       );
-      ClassType.Define(fld);
+      Type.Define(fld);
     }
-    ClassType.Setup();
+    Type.Setup();
   }
 
   public Types()

@@ -2564,7 +2564,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var tp = ParseType(ctx.type());
 
-    Annotate(ctx).eval_type = Types.ClassType;
+    Annotate(ctx).eval_type = Types.Type;
 
     PeekAST().AddChild(new AST_Typeof(tp.Get()));
 

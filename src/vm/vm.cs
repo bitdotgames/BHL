@@ -1073,7 +1073,7 @@ public partial class VM : INamedResolver
         int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
         var type = curr_frame.constants[type_idx].itype.Get();
 
-        exec.stack.Push(Val.NewObj(this, type, Types.ClassType));
+        exec.stack.Push(Val.NewObj(this, type, Types.Type));
       }
       break;
       case Opcodes.Inc:

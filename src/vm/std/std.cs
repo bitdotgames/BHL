@@ -11,11 +11,11 @@ public static class std
     var std = m.ns.Nest("std");
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.ClassType),
+      var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var o = stack.Pop();
-          stack.Push(Val.NewObj(frm.vm, o.type, Types.ClassType));
+          stack.Push(Val.NewObj(frm.vm, o.type, Types.Type));
           o.Release();
           return null;
         }, 
