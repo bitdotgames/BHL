@@ -11051,7 +11051,7 @@ public class TestVM : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNullPassedAsNewNil()
+  public void TestNullPassedFromAbove()
   {
     string bhl = @"
       
@@ -11073,7 +11073,7 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", Val.NewObj(vm, null, Types.Any));
+    Execute(vm, "test", vm.Null);
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
