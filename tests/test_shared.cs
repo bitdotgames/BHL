@@ -33,6 +33,8 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestArrays());
+    counter += Run(names, new TestMaps());
     counter += Run(names, new TestParal());
     counter += Run(names, new TestParsing());
     counter += Run(names, new TestPreproc());
@@ -53,7 +55,6 @@ public class BHL_TestRunner
     counter += Run(names, new TestNamespace());
     counter += Run(names, new TestImplicit());
     counter += Run(names, new TestStackTrace());
-    counter += Run(names, new TestMaps());
     counter += Run(names, new TestStd());
     counter += Run(names, new TestErrors());
     counter += Run(names, new TestMarshall());
