@@ -12,11 +12,23 @@ public interface INamed
 public interface IType : INamed
 {}
 
-// Denotes named entities which are created 'on the fly'
-public interface IEphemeral : INamed
+// Denotes types which are created 'on the fly'
+public interface IEphemeralType : IType
 {}
 
+// Used for proxied types
+public interface IProxyType : IType
+{
+  IType GetResultType();
+}
+
+public interface IInstantiable : IType, IScope 
+{
+  HashSet<IInstantiable> GetAllRelatedTypesSet();
+}
+
 // For lazy evaluation of types and forward declarations
+//TODO: Should rather be named ProxyType, named as is for BC though 
 public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : class, IType
 {
   public T resolved;
@@ -103,7 +115,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
         //NOTE: we want to marshall only those types which are not
         //      defined elsewhere otherwise we just want to keep
         //      string reference at them
-        if(resolved is IEphemeral)
+        if(resolved is IEphemeralType)
         {
           mg = resolved as marshall.IMarshallableGeneric;
           if(mg == null)
@@ -150,7 +162,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   }
 }
 
-public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>, IEphemeral
+public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
@@ -201,7 +213,7 @@ public class RefType : IType, marshall.IMarshallableGeneric, IEquatable<RefType>
   }
 }
 
-public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleType>, IEphemeral
+public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<TupleType>
 {
   public const uint CLASS_ID = 16;
 
@@ -298,7 +310,7 @@ public class TupleType : IType, marshall.IMarshallableGeneric, IEquatable<TupleT
   }
 }
 
-public class FuncSignature : IType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>, IEphemeral
+public class FuncSignature : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>
 {
   public const uint CLASS_ID = 14; 
 

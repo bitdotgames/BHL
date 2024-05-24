@@ -22,11 +22,6 @@ public interface INamedResolver
   INamed ResolveNamedByPath(string path);
 }
 
-public interface IInstantiable : IType, IScope 
-{
-  HashSet<IInstantiable> GetAllRelatedTypesSet();
-}
-
 public class LocalScope : IScope, IEnumerable<Symbol>
 {
   bool is_paral;
