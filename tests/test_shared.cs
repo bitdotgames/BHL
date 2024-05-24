@@ -33,6 +33,7 @@ public class BHL_TestRunner
 
     counter += Run(names, new TestNodes());
     counter += Run(names, new TestVM());
+    counter += Run(names, new TestNull());
     counter += Run(names, new TestArrays());
     counter += Run(names, new TestMaps());
     counter += Run(names, new TestParal());
@@ -192,7 +193,7 @@ public class BHL_TestBase
   //TODO: make it a set?
   internal int sub_test_idx_filter;
 
-  public void BindMin(Types ts)
+  protected void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
@@ -205,6 +206,88 @@ public class BHL_TestBase
         new FuncArgSymbol("b", ts.T("float"))
     );
     ts.ns.Define(fn);
+  }
+  
+  public struct IntStruct
+  {
+    public int n;
+
+    public static void Decode(Val v, ref IntStruct dst)
+    {
+      dst.n = (int)v._num;
+    }
+
+    public static void Encode(Val v, IntStruct src, IType type)
+    {
+      v.type = type;
+      v._num = src.n;
+    }
+  }
+
+  protected void BindIntStruct(Types ts)
+  {
+    {
+      var cl = new ClassSymbolNative(new Origin(), "IntStruct",
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          var s = new IntStruct();
+          IntStruct.Encode(v, s, type);
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol(new Origin(), "n", Types.Int,
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          v.num = s.n;
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var s = new IntStruct();
+          IntStruct.Decode(ctx, ref s);
+          s.n = (int)v.num;
+          IntStruct.Encode(ctx, s, ctx.type);
+        }
+      ));
+      cl.Setup();
+    }
+  }
+  
+  public class StringClass
+  {
+    public string str;
+  }
+
+  protected void BindStringClass(Types ts)
+  {
+    {
+      var cl = new ClassSymbolNative(new Origin(), "StringClass",
+        delegate(VM.Frame frm, ref Val v, IType type) 
+        { 
+          v.SetObj(new StringClass(), type);
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol(new Origin(), "str", ts.T("string"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var c = (StringClass)ctx.obj;
+          v.str = c.str;
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var c = (StringClass)ctx.obj;
+          c.str = v.str; 
+          ctx.SetObj(c, ctx.type);
+        }
+      ));
+      cl.Setup();
+    }
   }
 
   public void BindFail(Types ts)
