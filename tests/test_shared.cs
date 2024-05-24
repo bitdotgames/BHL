@@ -36,6 +36,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestNull());
     counter += Run(names, new TestArrays());
     counter += Run(names, new TestMaps());
+    counter += Run(names, new TestOperatorOverload());
     counter += Run(names, new TestParal());
     counter += Run(names, new TestParsing());
     counter += Run(names, new TestPreproc());
