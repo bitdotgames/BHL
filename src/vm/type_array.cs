@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -26,30 +27,30 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     if(item_type.IsEmpty())
       throw new Exception("Invalid item type");
 
-    this.creator = CreateArr;
+    this.creator = BindCreateArr;
 
     //NOTE: must be first member of the class
     {
-      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, BindAdd,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "RemoveAt", Types.Void, RemoveAt,
+      var fn = new FuncSymbolNative(new Origin(), "RemoveAt", Types.Void, BindRemoveAt,
         new FuncArgSymbol("idx", Types.Int)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, BindClear);
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Insert", Types.Void, Insert,
+      var fn = new FuncSymbolNative(new Origin(), "Insert", Types.Void, BindInsert,
         new FuncArgSymbol("idx", Types.Int),
         new FuncArgSymbol("o", item_type)
       );
@@ -57,12 +58,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     }
 
     {
-      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, GetCount, null);
+      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, BindCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "IndexOf", Types.Int, IndexOf,
+      var fn = new FuncSymbolNative(new Origin(), "IndexOf", Types.Int, BindIndexOf,
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
@@ -70,12 +71,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      FuncArrIdx = new FuncSymbolNative(new Origin(), "$ArrIdx", item_type, ArrIdx);
+      FuncArrIdx = new FuncSymbolNative(new Origin(), "$ArrIdx", item_type, BindArrIdx);
     }
 
     {
       //hidden system method not available directly
-      FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, ArrIdxW);
+      FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, BindArrIdxW);
     }
 
     base.Setup();
@@ -89,15 +90,112 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : this(origin, "[]" + item_type.path, item_type)
   {}
 
-  public abstract void CreateArr(VM.Frame frame, ref Val v, IType type);
-  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract Coroutine Add(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine IndexOf(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  void BindCreateArr(VM.Frame frame, ref Val v, IType type)
+  {
+    ArrCreate(frame.vm, ref v);
+  }
+  
+  void BindCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    v.SetNum(ArrCount(ctx));
+  }
+
+  Coroutine BindAdd(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var arr = stack.Pop();
+
+    ArrAdd(arr, val);
+    
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  //NOTE: follows special Opcodes.ArrIdx conventions
+  Coroutine BindArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
+
+    var res = ArrGetAt(arr, idx);
+      
+    stack.Push(res);
+    arr.Release();
+    return null;
+  }
+  
+  //NOTE: follows special Opcodes.ArrIdxW conventions
+  Coroutine BindArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
+    var val = stack.Pop();
+
+    ArrSetAt(arr, idx, val);
+    
+    val.Release();
+    arr.Release();
+    return null;
+  }
+
+  Coroutine BindRemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    int idx = (int)stack.PopRelease().num;
+    var arr = stack.Pop();
+    
+    ArrRemoveAt(arr, idx);
+    
+    arr.Release();
+    return null;
+  }
+
+  Coroutine BindIndexOf(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var arr = stack.Pop();
+
+    int idx = ArrIndexOf(arr, val);
+    
+    val.Release();
+    arr.Release();
+    stack.Push(Val.NewInt(frame.vm, idx));
+    return null;
+  }
+
+  Coroutine BindClear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var arr = stack.Pop();
+    
+    ArrClear(arr);
+    
+    arr.Release();
+    return null;
+  }
+
+  Coroutine BindInsert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var idx = stack.Pop();
+    var arr = stack.Pop();
+
+    ArrInsert(arr, (int)idx._num, val);
+    
+    arr.Release();
+    idx.Release();
+    val.Release();
+    return null;
+  }
+  
+  public abstract void ArrCreate(VM vm, ref Val arr);
+  public abstract int ArrCount(Val arr);
+  public abstract void ArrAdd(Val arr, Val val);
+  public abstract Val ArrGetAt(Val arr, int idx);
+  public abstract void ArrSetAt(Val arr, int idx, Val val);
+  public abstract void ArrRemoveAt(Val arr, int idx);
+  public abstract int ArrIndexOf(Val arr, Val val);
+  public abstract void ArrClear(Val arr);
+  public abstract void ArrInsert(Val arr, int idx, Val val);
 }
 
 public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeralType
@@ -117,36 +215,28 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
   {
     var lst = arr.obj as IList<Val>;
     if(lst == null)
-      throw new Exception("Not a ValList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+      throw new Exception("Not a IList<Val>: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
     return lst;
   }
 
-  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
+  public override void ArrCreate(VM vm, ref Val arr)
   {
-    v.SetObj(ValList.New(frm.vm), type);
+    arr.SetObj(ValList.New(vm), this);
   }
 
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  public override int ArrCount(Val arr)
   {
-    var lst = AsList(ctx);
-    v.SetNum(lst.Count);
+    return AsList(arr).Count;
   }
   
-  public override Coroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override void ArrAdd(Val arr, Val val)
   {
-    var val = stack.Pop();
-    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.Add(val);
-    val.Release();
-    arr.Release();
-    return null;
   }
 
-  public override Coroutine IndexOf(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override int ArrIndexOf(Val arr, Val val)
   {
-    var val = stack.Pop();
-    var arr = stack.Pop();
     var lst = AsList(arr);
 
     int idx = -1;
@@ -159,67 +249,39 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
       }
     }
 
-    val.Release();
-    arr.Release();
-    stack.Push(Val.NewInt(frm.vm, idx));
-    return null;
+    return idx;
   }
 
-  //NOTE: follows special Opcodes.ArrIdx conventions
-  public override Coroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override Val ArrGetAt(Val arr, int idx)
   {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
     var lst = AsList(arr);
-    var res = lst[idx]; 
-    stack.PushRetain(res);
-    arr.Release();
-    return null;
+    var res = lst[idx];
+    res.Retain();
+    return res;
   }
 
-  //NOTE: follows special Opcodes.ArrIdxW conventions
-  public override Coroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override void ArrSetAt(Val arr, int idx, Val val)
   {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var val = stack.Pop();
     var lst = AsList(arr);
     lst[idx] = val;
-    val.Release();
-    arr.Release();
-    return null;
   }
 
-  public override Coroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override void ArrRemoveAt(Val arr, int idx)
   {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.RemoveAt(idx); 
-    arr.Release();
-    return null;
   }
 
-  public override Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override void ArrClear(Val arr)
   {
-    var arr = stack.Pop();
     var lst = AsList(arr);
     lst.Clear();
-    arr.Release();
-    return null;
   }
   
-  public override Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  public override void ArrInsert(Val arr, int idx, Val val)
   {
-    var val = stack.Pop();
-    var idx = stack.Pop();
-    var arr = stack.Pop();
     var lst = AsList(arr);
-    lst.Insert((int)idx.num, val);
-    idx.Release();
-    val.Release();
-    arr.Release();
-    return null;
+    lst.Insert(idx, val);
   }
 
   public override uint ClassId()
@@ -262,112 +324,58 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
   }
 }
 
-public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
+public abstract class GenericNativeListSymbol : ArrayTypeSymbol, IEphemeralType
 {
-  public delegate IList<T> CreatorCb();
-  public static CreatorCb Creator;
-
-  public ArrayTypeSymbolT(Origin origin, string name, Proxy<IType> item_type, CreatorCb creator) 
+  public GenericNativeListSymbol(
+    Origin origin, string name, Proxy<IType> item_type)
     : base(origin, name, item_type)
-  {
-    Creator = creator;
-  }
-
-  public ArrayTypeSymbolT(Origin origin, Proxy<IType> item_type, CreatorCb creator) 
-    : base(origin, "[]" + item_type.path, item_type)
+  {}
+  
+  //marshall factory version
+  public GenericNativeListSymbol()
+    : base()
   {}
 
-  public override void CreateArr(VM.Frame frm, ref Val v, IType type)
+  protected override HashSet<IInstantiable> CollectAllRelatedTypesSet()
   {
-    v.SetObj(Creator(), type);
-  }
-
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-  {
-    v.SetNum(((IList<T>)ctx.obj).Count);
-  }
-  
-  public override Coroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = stack.Pop();
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    lst.Add((T)val.obj);
-    val.Release();
-    arr.Release();
-    return null;
-  }
-
-  public override Coroutine IndexOf(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = stack.Pop();
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    int idx = lst.IndexOf((T)val.obj);
-    val.Release();
-    arr.Release();
-    stack.Push(Val.NewInt(frm.vm, idx));
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.ArrIdx conventions
-  public override Coroutine ArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    var res = Val.NewObj(frame.vm, lst[idx], item_type.Get());
-    stack.Push(res);
-    arr.Release();
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.ArrIdxW conventions
-  public override Coroutine ArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var val = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    lst[idx] = (T)val.obj;
-    val.Release();
-    arr.Release();
-    return null;
-  }
-
-  public override Coroutine RemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    lst.RemoveAt(idx); 
-    arr.Release();
-    return null;
-  }
-
-  public override Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    lst.Clear();
-    arr.Release();
-    return null;
+    var related_types = new HashSet<IInstantiable>();
+    related_types.Add(this);
+    var arr_type = new GenericArrayTypeSymbol(new Origin(), item_type);
+    arr_type.Setup();
+    related_types.Add(arr_type);
+    return related_types;
   }
   
-  public override Coroutine Insert(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  static IList AsIList(Val arr)
   {
-    var val = stack.Pop();
-    var idx = stack.Pop();
-    var arr = stack.Pop();
-    var lst = (IList<T>)arr.obj;
-    lst.Insert((int)idx.num, (T)val.obj); 
-    arr.Release();
-    idx.Release();
-    val.Release();
-    return null;
+    var lst = arr.obj as IList;
+    if(lst == null)
+      throw new Exception("Not a IList: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
+    return lst;
   }
 
+  public abstract IList CreateList();
+
+  public override void ArrCreate(VM vm, ref Val arr)
+  {
+    arr.SetObj(CreateList(), this);
+  }
+
+  public override int ArrCount(Val arr)
+  {
+    return AsIList(arr).Count;
+  }
+
+  public override void ArrRemoveAt(Val arr, int idx)
+  {
+    AsIList(arr).RemoveAt(idx);
+  }
+
+  public override void ArrClear(Val arr)
+  {
+    AsIList(arr).Clear();
+  }
+  
   public override uint ClassId()
   {
     throw new NotImplementedException();
@@ -375,7 +383,6 @@ public class ArrayTypeSymbolT<T> : ArrayTypeSymbol where T : new()
 
   public override void Sync(marshall.SyncContext ctx)
   {
-    throw new NotImplementedException();
   }
 }
 

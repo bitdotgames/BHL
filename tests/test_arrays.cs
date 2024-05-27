@@ -1,4 +1,5 @@
-using System;           
+using System;
+using System.Collections;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
@@ -709,4 +710,69 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
+  public class NativeIntList : GenericNativeListSymbol
+  {
+    public NativeIntList(Origin origin, string name)
+      : base(origin, name, Types.Int)
+    {}
+    
+    public override IList CreateList()
+    {
+      return new List<int>();
+    }
+    
+    public override void ArrAdd(Val arr, Val val)
+    {
+      var lst = (List<int>)arr._obj;
+      lst.Add((int)val._num);
+    }
+    
+    public override void ArrInsert(Val arr, int idx, Val val)
+    {
+      var lst = (List<int>)arr._obj;
+      lst.Insert(idx, (int)val._num);
+    }
+
+    public override Val ArrGetAt(Val arr, int idx)
+    {
+      var lst = (List<int>)arr._obj;
+      return Val.NewInt(arr.vm, lst[idx]);
+    }
+
+    public override void ArrSetAt(Val arr, int idx, Val val)
+    {
+      var lst = (List<int>)arr._obj;
+      lst[idx] = (int)val._num;
+    }
+
+    public override int ArrIndexOf(Val arr, Val val)
+    {
+      var lst = (List<int>)arr._obj;
+      return lst.IndexOf((int)val._num);
+    }
+  }
+
+  [IsTested()]
+  public void TestNativeList()
+  {
+    string bhl = @"
+    func test() 
+    {
+      []int ns = new List_int
+      ns.Add(100)
+      ns.RemoveAt(0)
+      ns.Add(200)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var ArrayInts = new NativeIntList(new Origin(), "List_int"); 
+      ArrayInts.Setup();
+      ts.ns.Define(ArrayInts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
 }

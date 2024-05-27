@@ -16,12 +16,6 @@ public interface IType : INamed
 public interface IEphemeralType : IType
 {}
 
-// Used for proxied types
-public interface IProxyType : IType
-{
-  IType GetResultType();
-}
-
 public interface IInstantiable : IType, IScope 
 {
   HashSet<IInstantiable> GetAllRelatedTypesSet();
@@ -104,29 +98,6 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
       resolver = ((SymbolFactory)ctx.factory).resolver;
 
     marshall.Marshall.Sync(ctx, ref _path);
-
-    marshall.IMarshallableGeneric mg = null;
-    if(!string.IsNullOrEmpty(_path))
-    {
-      if(!ctx.is_read)
-      {   
-        var resolved = Get();
-
-        //NOTE: we want to marshall only those types which are not
-        //      defined elsewhere otherwise we just want to keep
-        //      string reference at them
-        if(resolved is IEphemeralType)
-        {
-          mg = resolved as marshall.IMarshallableGeneric;
-          if(mg == null)
-            throw new Exception("Type is not marshallable: " + (resolved != null ? resolved.GetType().Name + " " : "<null> ") + _path);
-        }
-      }
-    }
-
-    marshall.Marshall.SyncGeneric(ctx, ref mg);
-    if(ctx.is_read)
-      resolved = (T)mg;
   }
 
   public override string ToString() 

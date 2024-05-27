@@ -718,16 +718,20 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   public HashSet<IInstantiable> GetAllRelatedTypesSet()
   {
     if(related_types == null)
+      related_types = CollectAllRelatedTypesSet();
+    return related_types;
+  }
+
+  protected virtual HashSet<IInstantiable> CollectAllRelatedTypesSet()
+  {
+    var related_types = new HashSet<IInstantiable>();
+    related_types.Add(this);
+    if(super_class != null)
+      related_types.UnionWith(super_class.GetAllRelatedTypesSet());
+    for(int i=0;i<implements.Count;++i)
     {
-      related_types = new HashSet<IInstantiable>();
-      related_types.Add(this);
-      if(super_class != null)
-        related_types.UnionWith(super_class.GetAllRelatedTypesSet());
-      for(int i=0;i<implements.Count;++i)
-      {
-        if(!related_types.Contains(implements[i]))
-          related_types.UnionWith(implements[i].GetAllRelatedTypesSet());
-      }
+      if(!related_types.Contains(implements[i]))
+        related_types.UnionWith(implements[i].GetAllRelatedTypesSet());
     }
     return related_types;
   }
