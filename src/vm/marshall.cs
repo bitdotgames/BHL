@@ -59,7 +59,8 @@ public struct SyncContext
       is_read = true,
       reader = reader,
       writer = null,
-      factory = factory
+      factory = factory,
+      ephemerals = new List<IMarshallableGeneric>()
     };
     return ctx;
   }
@@ -70,7 +71,8 @@ public struct SyncContext
       is_read = false,
       reader = null,
       writer = writer,
-      factory = factory
+      factory = factory,
+      ephemerals = new List<IMarshallableGeneric>()
     };
     return ctx;
   }
@@ -520,15 +522,14 @@ public static class Marshall
   {
     var reader = new MsgPackDataReader(s);
     var ctx = SyncContext.NewReader(reader, f); 
+    SyncGeneric(ctx, ctx.ephemerals);
     Sync(ctx, ref obj);
   }
 
   static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
   {
-    var reader = new MsgPackDataReader(s);
     var obj = new T();
-    var ctx = SyncContext.NewReader(reader, f); 
-    Sync(ctx, ref obj);
+    Stream2Obj(s, obj);
     return obj;
   }
 
@@ -544,25 +545,23 @@ public static class Marshall
     var writer = new MsgPackDataWriter(dst);
     var ctx = SyncContext.NewWriter(writer);
     
-    Sync(ctx, ref obj);
+    var dst_eph = new MemoryStream();
+    var writer_eph = new MsgPackDataWriter(dst_eph);
+    var ctx_eph = SyncContext.NewWriter(writer_eph);
     
-    long obj_pos = dst.Length;
-
-    int count = ctx.ephemerals.Count;
-    Sync(ctx, ref count);
-    foreach(var eph in ctx.ephemerals)
-    {
-      var tmp = eph;
-      SyncGeneric(ctx, ref tmp);
-    }
+    Sync(ctx, ref obj);
+    SyncGeneric(ctx_eph, ctx.ephemerals);
     
     //NOTE: putting ephemerals first, probably this operation can be more optimal,
-    //      since we just need to swap two memory blocks
-    var bytes = dst.GetBuffer();
-    var swap_mem = new MemoryStream(bytes, (int)obj_pos, (int)dst.Length - (int)obj_pos);
-    swap_mem.Write(bytes, 0, (int)obj_pos);
+    //      since we just need to swap two memory blocks, or we can store the offset
+    //      to ephemerals in the header
+    var mem = new MemoryStream((int)dst_eph.Position + (int)dst.Position);
+    dst_eph.Position = 0;
+    dst_eph.CopyTo(mem);
+    dst.Position = 0;
+    dst.CopyTo(mem);
 
-    return swap_mem.GetBuffer();
+    return mem.GetBuffer();
   }
 
   static public void Obj2File<T>(T obj, string file) where T : IMarshallable

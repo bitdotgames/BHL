@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using bhl.marshall;
 
 namespace bhl {
 
@@ -97,9 +98,15 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
 
-    var tmp = Get();
-    if(tmp is IEphemeralType eph)
+    bool is_ephemeral = false;
+    if(!ctx.is_read)
+      is_ephemeral = Get() is IEphemeralType;
+    
+    marshall.Marshall.Sync(ctx, ref is_ephemeral);
+    
+    if(is_ephemeral)
     {
+      var eph = ctx.is_read ? null : Get() as IEphemeralType;
       marshall.Marshall.SyncEphemeral(ctx, ref eph);
       if(ctx.is_read)
         resolved = (T)eph;
