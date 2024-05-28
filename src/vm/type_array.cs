@@ -331,11 +331,6 @@ public abstract class GenericNativeListSymbol : ArrayTypeSymbol, IEphemeralType
     : base(origin, name, item_type)
   {}
   
-  //marshall factory version
-  public GenericNativeListSymbol()
-    : base()
-  {}
-
   protected override HashSet<IInstantiable> CollectAllRelatedTypesSet()
   {
     var related_types = new HashSet<IInstantiable>();
@@ -383,6 +378,59 @@ public abstract class GenericNativeListSymbol : ArrayTypeSymbol, IEphemeralType
 
   public override void Sync(marshall.SyncContext ctx)
   {
+  }
+}
+
+public class NativeListType<T> : GenericNativeListSymbol
+{
+  Func<Val, T> bhl2val;
+  Func<VM, T, Val> val2bhl;
+
+  public NativeListType(
+    Origin origin, string name, 
+    Func<Val, T> bhl2val,
+    Func<VM, T, Val> val2bhl,
+    Proxy<IType> item_type
+    )
+    : base(origin, name, item_type)
+  {
+    this.bhl2val = bhl2val;
+    this.val2bhl = val2bhl;
+  }
+  
+  public override IList CreateList()
+  {
+    return new List<T>();
+  }
+  
+  public override void ArrAdd(Val arr, Val val)
+  {
+    var lst = (List<T>)arr._obj;
+    lst.Add(bhl2val(val));
+  }
+  
+  public override void ArrInsert(Val arr, int idx, Val val)
+  {
+    var lst = (List<T>)arr._obj;
+    lst.Insert(idx, bhl2val(val));
+  }
+
+  public override Val ArrGetAt(Val arr, int idx)
+  {
+    var lst = (List<T>)arr._obj;
+    return val2bhl(arr.vm, lst[idx]);
+  }
+
+  public override void ArrSetAt(Val arr, int idx, Val val)
+  {
+    var lst = (List<T>)arr._obj;
+    lst[idx] = bhl2val(val);
+  }
+
+  public override int ArrIndexOf(Val arr, Val val)
+  {
+    var lst = (List<T>)arr._obj;
+    return lst.IndexOf(bhl2val(val));
   }
 }
 

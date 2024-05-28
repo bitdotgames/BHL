@@ -710,48 +710,6 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public class NativeIntList : GenericNativeListSymbol
-  {
-    public NativeIntList(Origin origin, string name)
-      : base(origin, name, Types.Int)
-    {}
-    
-    public override IList CreateList()
-    {
-      return new List<int>();
-    }
-    
-    public override void ArrAdd(Val arr, Val val)
-    {
-      var lst = (List<int>)arr._obj;
-      lst.Add((int)val._num);
-    }
-    
-    public override void ArrInsert(Val arr, int idx, Val val)
-    {
-      var lst = (List<int>)arr._obj;
-      lst.Insert(idx, (int)val._num);
-    }
-
-    public override Val ArrGetAt(Val arr, int idx)
-    {
-      var lst = (List<int>)arr._obj;
-      return Val.NewInt(arr.vm, lst[idx]);
-    }
-
-    public override void ArrSetAt(Val arr, int idx, Val val)
-    {
-      var lst = (List<int>)arr._obj;
-      lst[idx] = (int)val._num;
-    }
-
-    public override int ArrIndexOf(Val arr, Val val)
-    {
-      var lst = (List<int>)arr._obj;
-      return lst.IndexOf((int)val._num);
-    }
-  }
-
   [IsTested()]
   public void TestNativeList()
   {
@@ -766,7 +724,13 @@ public class TestArrays : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      var ArrayInts = new NativeIntList(new Origin(), "List_int"); 
+      var ArrayInts = new NativeListType<int>(
+        new Origin(), 
+        "List_int",
+        (v) => (int)v._num,
+        (_vm, n) => Val.NewInt(_vm, n),
+        Types.Int
+        ); 
       ArrayInts.Setup();
       ts.ns.Define(ArrayInts);
     });
