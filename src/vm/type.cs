@@ -197,6 +197,11 @@ public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable
   {
     return name.GetHashCode();
   }
+  
+  public override string ToString()
+  {
+    return name;
+  }
 }
 
 public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<TupleType>
