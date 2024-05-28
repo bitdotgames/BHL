@@ -711,7 +711,7 @@ public class TestArrays : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNativeList()
+  public void TestNativeListInheritance()
   {
     string bhl = @"
     func test() 
@@ -724,7 +724,7 @@ public class TestArrays : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      var ArrayInts = new NativeListType<int>(
+      var ArrayInts = new NativeListSymbol<int>(
         new Origin(), 
         "List_int",
         (v) => (int)v._num,
@@ -738,5 +738,49 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestNativeListEquality()
+  {
+    var ArrayInts1 = new NativeListSymbol<int>(
+      new Origin(), 
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, n) => Val.NewInt(_vm, n),
+      Types.Int
+      ); 
+    ArrayInts1.Setup();
+    
+    var ArrayInts2 = new NativeListSymbol<int>(
+      new Origin(), 
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, n) => Val.NewInt(_vm, n),
+      Types.Int
+      ); 
+    ArrayInts2.Setup();
+    
+    AssertTrue(ArrayInts1.Equals(ArrayInts2));
+
+  }
+  
+  [IsTested()]
+  public void TestGenericArrayEquality()
+  {
+    var ArrayInts1 = new GenericArrayTypeSymbol(
+      new Origin(), 
+      Types.Int
+      ); 
+    ArrayInts1.Setup();
+    
+    var ArrayInts2 = new GenericArrayTypeSymbol(
+      new Origin(), 
+      Types.Int
+      ); 
+    ArrayInts2.Setup();
+    
+    AssertTrue(ArrayInts1.Equals(ArrayInts2));
+
   }
 }

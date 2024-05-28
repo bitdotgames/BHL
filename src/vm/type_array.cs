@@ -198,7 +198,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   public abstract void ArrInsert(Val arr, int idx, Val val);
 }
 
-public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeralType
+public class GenericArrayTypeSymbol : 
+  ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeralType
 {
   public const uint CLASS_ID = 10;
     
@@ -324,13 +325,15 @@ public class GenericArrayTypeSymbol : ArrayTypeSymbol, IEquatable<GenericArrayTy
   }
 }
 
-public abstract class GenericNativeListSymbol : ArrayTypeSymbol, IEphemeralType
+public abstract class GenericNativeArraySymbol : 
+  ArrayTypeSymbol, IEphemeralType, IEquatable<GenericNativeArraySymbol>
 {
-  public GenericNativeListSymbol(
+  public GenericNativeArraySymbol(
     Origin origin, string name, Proxy<IType> item_type)
     : base(origin, name, item_type)
   {}
   
+  //NOTE: making it sort of 'inherit' from the base GenericArrayTypeSymbol
   protected override HashSet<IInstantiable> CollectAllRelatedTypesSet()
   {
     var related_types = new HashSet<IInstantiable>();
@@ -379,23 +382,44 @@ public abstract class GenericNativeListSymbol : ArrayTypeSymbol, IEphemeralType
   public override void Sync(marshall.SyncContext ctx)
   {
   }
+  
+  public override bool Equals(object o)
+  {
+    if(!(o is GenericNativeArraySymbol))
+      return false;
+    return this.Equals((GenericNativeArraySymbol)o);
+  }
+
+  public bool Equals(GenericNativeArraySymbol o)
+  {
+    if(ReferenceEquals(o, null))
+      return false;
+    if(ReferenceEquals(this, o))
+      return true;
+    return item_type.Equals(o.item_type);
+  }
+
+  public override int GetHashCode()
+  {
+    return name.GetHashCode();
+  }
 }
 
-public class NativeListType<T> : GenericNativeListSymbol
+public class NativeListSymbol<T> : GenericNativeArraySymbol
 {
-  Func<Val, T> bhl2val;
-  Func<VM, T, Val> val2bhl;
+  Func<Val, T> val2native;
+  Func<VM, T, Val> native2val;
 
-  public NativeListType(
+  public NativeListSymbol(
     Origin origin, string name, 
-    Func<Val, T> bhl2val,
-    Func<VM, T, Val> val2bhl,
+    Func<Val, T> val2native,
+    Func<VM, T, Val> native2val,
     Proxy<IType> item_type
     )
     : base(origin, name, item_type)
   {
-    this.bhl2val = bhl2val;
-    this.val2bhl = val2bhl;
+    this.val2native = val2native;
+    this.native2val = native2val;
   }
   
   public override IList CreateList()
@@ -406,31 +430,31 @@ public class NativeListType<T> : GenericNativeListSymbol
   public override void ArrAdd(Val arr, Val val)
   {
     var lst = (List<T>)arr._obj;
-    lst.Add(bhl2val(val));
+    lst.Add(val2native(val));
   }
   
   public override void ArrInsert(Val arr, int idx, Val val)
   {
     var lst = (List<T>)arr._obj;
-    lst.Insert(idx, bhl2val(val));
+    lst.Insert(idx, val2native(val));
   }
 
   public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = (List<T>)arr._obj;
-    return val2bhl(arr.vm, lst[idx]);
+    return native2val(arr.vm, lst[idx]);
   }
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
     var lst = (List<T>)arr._obj;
-    lst[idx] = bhl2val(val);
+    lst[idx] = val2native(val);
   }
 
   public override int ArrIndexOf(Val arr, Val val)
   {
     var lst = (List<T>)arr._obj;
-    return lst.IndexOf(bhl2val(val));
+    return lst.IndexOf(val2native(val));
   }
 }
 
