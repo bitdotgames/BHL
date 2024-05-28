@@ -761,8 +761,17 @@ public class TestArrays : BHL_TestBase
       ); 
     ArrayInts2.Setup();
     
+    var ArrayString = new NativeListSymbol<string>(
+      new Origin(), 
+      "List_string",
+      (v) => v.str,
+      (_vm, n) => Val.NewStr(_vm, n),
+      Types.String
+      ); 
+    ArrayString.Setup();
+    
     AssertTrue(ArrayInts1.Equals(ArrayInts2));
-
+    AssertFalse(ArrayString.Equals(ArrayInts1));
   }
   
   [IsTested()]
@@ -780,7 +789,14 @@ public class TestArrays : BHL_TestBase
       ); 
     ArrayInts2.Setup();
     
+    var ArrayString = new GenericArrayTypeSymbol(
+      new Origin(), 
+      Types.String
+      ); 
+    ArrayString.Setup();
+    
     AssertTrue(ArrayInts1.Equals(ArrayInts2));
+    AssertFalse(ArrayString.Equals(ArrayInts1));
 
   }
 }

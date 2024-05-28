@@ -15,7 +15,6 @@ public class TestMarshall : BHL_TestBase
     {
       var ts = new Types();
       var m = new Module(ts, "dummy");
-      m.InitWithCompiled(new CompiledModule());
 
       var ns = m.ns;
       ns.Link(ts.ns);

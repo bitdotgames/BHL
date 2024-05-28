@@ -97,7 +97,15 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(ctx.is_read)
       resolver = ((SymbolFactory)ctx.factory).resolver;
 
-    marshall.Marshall.Sync(ctx, ref _path);
+    var tmp = Get();
+    if(tmp is IEphemeralType eph)
+    {
+      marshall.Marshall.SyncEphemeral(ctx, ref eph);
+      if(ctx.is_read)
+        resolved = (T)eph;
+    }
+    else
+      marshall.Marshall.Sync(ctx, ref _path);
   }
 
   public override string ToString() 

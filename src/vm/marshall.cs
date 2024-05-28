@@ -39,6 +39,19 @@ public struct SyncContext
   public IReader reader;
   public IWriter writer;
   public IFactory factory;
+  public List<IMarshallableGeneric> ephemerals;
+
+  public int AddEphemeral(IMarshallableGeneric v)
+  {
+    for(int i = 0; i < ephemerals.Count; ++i)
+    {
+      if(ephemerals[i].Equals(v))
+        return i;
+    }
+
+    ephemerals.Add(v);
+    return ephemerals.Count - 1;
+  }
 
   public static SyncContext NewReader(IReader reader, IFactory factory = null)
   {
@@ -464,6 +477,21 @@ public static class Marshall
     EndArray(ctx, v);
   }
 
+  static public void SyncEphemeral(SyncContext ctx, ref IEphemeralType v)
+  {
+    if(ctx.is_read)
+    {
+      int idx = 0; 
+      ctx.reader.ReadI32(ref idx);
+      v = (IEphemeralType)ctx.ephemerals[idx];
+    }
+    else
+    {
+      int idx = ctx.AddEphemeral((IMarshallableGeneric)v);
+      ctx.writer.WriteI32(idx);
+    }
+  }
+
   static public void Sync<T>(SyncContext ctx, ref T v) where T : IMarshallable
   {
     if(ctx.is_read)
@@ -514,8 +542,27 @@ public static class Marshall
   {
     var dst = new MemoryStream();
     var writer = new MsgPackDataWriter(dst);
-    Sync(SyncContext.NewWriter(writer), ref obj);
-    return dst.GetBuffer();
+    var ctx = SyncContext.NewWriter(writer);
+    
+    Sync(ctx, ref obj);
+    
+    long obj_pos = dst.Length;
+
+    int count = ctx.ephemerals.Count;
+    Sync(ctx, ref count);
+    foreach(var eph in ctx.ephemerals)
+    {
+      var tmp = eph;
+      SyncGeneric(ctx, ref tmp);
+    }
+    
+    //NOTE: putting ephemerals first, probably this operation can be more optimal,
+    //      since we just need to swap two memory blocks
+    var bytes = dst.GetBuffer();
+    var swap_mem = new MemoryStream(bytes, (int)obj_pos, (int)dst.Length - (int)obj_pos);
+    swap_mem.Write(bytes, 0, (int)obj_pos);
+
+    return swap_mem.GetBuffer();
   }
 
   static public void Obj2File<T>(T obj, string file) where T : IMarshallable
