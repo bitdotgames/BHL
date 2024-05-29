@@ -90,7 +90,7 @@ public class TestInterface : BHL_TestBase
     AssertEqual(Types.String, bar.arg_types[0].Get());
     var tuple = (TupleType)bar.ret_type.Get();
     AssertEqual(2, tuple.Count);
-    AssertEqual("Bar", tuple[0].path);
+    AssertEqual("Bar", tuple[0].ToString());
     AssertEqual(Types.Int, tuple[1].Get());
   }
 
@@ -133,7 +133,7 @@ public class TestInterface : BHL_TestBase
       AssertEqual(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
       AssertEqual(2, tuple.Count);
-      AssertEqual("Bar", tuple[0].path);
+      AssertEqual("Bar", tuple[0].ToString());
       AssertEqual(Types.Int, tuple[1].Get());
     }
 
@@ -149,7 +149,7 @@ public class TestInterface : BHL_TestBase
       AssertEqual(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
       AssertEqual(2, tuple.Count);
-      AssertEqual("Bar", tuple[0].path);
+      AssertEqual("Bar", tuple[0].ToString());
       AssertEqual(Types.Int, tuple[1].Get());
     }
   }

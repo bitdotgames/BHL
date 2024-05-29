@@ -366,7 +366,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
       {
         var iface = pi.Get() as InterfaceSymbol;
         if(iface == null) 
-          throw new Exception("Inherited interface not found" + pi.path);
+          throw new Exception("Inherited interface not found" + pi);
 
         inherits.Add(iface);
       }
@@ -813,7 +813,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 
   public override string ToString()
   {
-    return type.path + " " + name;
+    return type + " " + name;
   }
 }
 
@@ -1174,7 +1174,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   public override string ToString()
   {
     string buf = 
-      "func " + signature.ret_type.path + " " + name +"("; 
+      "func " + signature.ret_type + " " + name +"("; 
     if(signature.attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
     for(int i=0;i<signature.arg_types.Count;++i)
@@ -1183,7 +1183,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
         buf += ",";
       if(signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == signature.arg_types.Count-1)
         buf += "...";
-      buf += signature.arg_types[i].path + " " + members[i].name;
+      buf += signature.arg_types[i] + " " + members[i].name;
     }
     buf += ")";
 
@@ -1651,7 +1651,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     {
       super_class = curr_class.tmp_super_class.Get() as ClassSymbol;
       if(super_class == null)
-        throw new Exception("Parent class is not found: " + curr_class.tmp_super_class.path);
+        throw new Exception("Parent class is not found: " + curr_class.tmp_super_class);
 
       //let's reset tmp member once it's resolved
       curr_class.tmp_super_class.Clear();
@@ -1665,7 +1665,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
       {
         var iface = pi.Get() as InterfaceSymbol;
         if(iface == null) 
-          throw new Exception("Implemented interface not found: " + pi.path);
+          throw new Exception("Implemented interface not found: " + pi);
         implements.Add(iface);
       }
 
@@ -2053,7 +2053,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
       var tp = list[index];
       var s = tp.Get();
       if(s == null)
-        throw new Exception("Type not found: " + tp.path);
+        throw new Exception("Type not found: " + tp);
       return s;
     }
   }

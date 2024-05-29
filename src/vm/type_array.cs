@@ -87,7 +87,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {}
 
   public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
-    : this(origin, "[]" + item_type.path, item_type)
+    : this(origin, "[]" + item_type, item_type)
   {}
 
   void BindCreateArr(VM.Frame frame, ref Val v, IType type)
@@ -296,7 +296,7 @@ public class GenericArrayTypeSymbol :
 
     if(ctx.is_read)
     {
-      name = "[]" + item_type.path;
+      name = "[]" + item_type;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
       Setup();

@@ -99,7 +99,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Test.name, "Test");
       AssertFalse(Test.attribs.HasFlag(FuncAttrib.Coro));
       AssertEqual(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).path, Test.signature.GetName());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).ToString(), Test.signature.ToString());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(2, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);

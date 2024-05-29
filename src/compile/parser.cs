@@ -1941,7 +1941,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(i == ca_len)
       {
         var next_arg = FindNextCallArg(cargs, prev_ca);
-        AddError(next_arg, "missing argument of type '" + arg_type_ref.path + "'");
+        AddError(next_arg, "missing argument of type '" + arg_type_ref + "'");
         PopAST();
         return;
       }
@@ -2135,7 +2135,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       tp = ParseType(parsed.type()[0]);
 
     if(tp.Get() == null)
-      AddError(parsed, "type '" + tp.path + "' not found");
+      AddError(parsed, "type '" + tp + "' not found");
 
     return tp;
   }
@@ -2162,7 +2162,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       if(tp.Get() == null)
       {
-        AddError(ctx, "type '" + tp.path + "' not found");
+        AddError(ctx, "type '" + tp + "' not found");
         return tp;
       }
       tp = curr_scope.R().TArr(tp);
@@ -2171,13 +2171,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       if(tp.Get() == null)
       {
-        AddError(ctx, "type '" + tp.path + "' not found");
+        AddError(ctx, "type '" + tp + "' not found");
         return tp;
       }
       var ktp = curr_scope.R().T(ctx.mapType().nsName().GetText());
       if(ktp.Get() == null)
       {
-        AddError(ctx, "type '" + ktp.path + "' not found");
+        AddError(ctx, "type '" + ktp + "' not found");
         return tp;
       }
       tp = curr_scope.R().TMap(ktp, tp);
@@ -2185,7 +2185,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(tp.Get() == null)
     {
-      AddError(ctx, "type '" + tp.path + "' not found");
+      AddError(ctx, "type '" + tp + "' not found");
       return tp;
     }
 
@@ -2431,7 +2431,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var orig_type = arr_type.item_type.Get();
       if(orig_type == null)
       {
-        AddError(ctx,  "type '" + arr_type.item_type.path + "' not found");
+        AddError(ctx,  "type '" + arr_type.item_type + "' not found");
         return null;
       }
       PushJsonType(orig_type);
@@ -2460,13 +2460,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var key_type = map_type.key_type.Get();
       if(key_type == null)
       {
-        AddError(ctx,  "type '" + map_type.key_type.path + "' not found");
+        AddError(ctx,  "type '" + map_type.key_type + "' not found");
         return null;
       }
       var val_type = map_type.val_type.Get();
       if(val_type == null)
       {
-        AddError(ctx,  "type '" + map_type.val_type.path + "' not found");
+        AddError(ctx,  "type '" + map_type.val_type + "' not found");
         return null;
       }
       var ast = new AST_JsonMap(curr_type, ctx.Start.Line);

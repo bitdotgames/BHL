@@ -53,8 +53,10 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   public Proxy(T obj)
   {
     resolver = null;
-    this.resolved = obj;
-    _path = GetNormalizedPath(obj);
+    resolved = default(T);
+    _path = null;
+    
+    SetResolved(obj);
   }
 
   public bool IsEmpty()
@@ -77,14 +79,19 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(string.IsNullOrEmpty(_path))
       return default(T);
 
-    resolved = resolver.ResolveNamedByPath(_path) as T;
+    SetResolved(resolver.ResolveNamedByPath(_path) as T);
+
+    return resolved;
+  }
+
+  void SetResolved(T resolved)
+  {
+    this.resolved = resolved;
     //TODO: some smelly code below - after resolving we re-write the original path
     //      with the normalized one, this is useful for cases when comparing proxies
     //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
     if(resolved != null)
       _path = GetNormalizedPath(resolved);
-
-    return resolved;
   }
 
   static string GetNormalizedPath(IType obj)
@@ -109,7 +116,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
       var eph = ctx.is_read ? null : Get() as IEphemeralType;
       marshall.Marshall.SyncEphemeral(ctx, ref eph);
       if(ctx.is_read)
-        resolved = (T)eph;
+        SetResolved((T)eph);
     }
     else
       marshall.Marshall.Sync(ctx, ref _path);
@@ -160,7 +167,7 @@ public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable
   public RefType(Proxy<IType> subj)
   {
     this.subj = subj;
-    name = "ref " + subj.path;
+    Update();
   }
 
   //marshall factory version
@@ -172,9 +179,16 @@ public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable
     return CLASS_ID;
   }
 
+  void Update()
+  {
+    name = "ref " + subj;
+  }
+
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref subj);
+    if(ctx.is_read)
+      Update();
   }
 
   public override bool Equals(object o)
@@ -251,7 +265,7 @@ public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatab
     {
       if(i > 0)
         tmp += ",";
-      tmp += items[i].path;
+      tmp += items[i];
     }
 
     name = tmp;
@@ -358,7 +372,7 @@ public class FuncSignature : IEphemeralType, marshall.IMarshallableGeneric, IEqu
   void Update()
   {
     string buf = 
-      "func " + ret_type.path + "("; 
+      "func " + ret_type + "("; 
     if(attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
     for(int i=0;i<arg_types.Count;++i)
@@ -367,7 +381,7 @@ public class FuncSignature : IEphemeralType, marshall.IMarshallableGeneric, IEqu
         buf += ",";
       if(attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == arg_types.Count-1)
         buf += "...";
-      buf += arg_types[i].path;
+      buf += arg_types[i];
     }
     buf += ")";
 

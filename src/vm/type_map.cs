@@ -18,7 +18,7 @@ public abstract class MapTypeSymbol : ClassSymbol
   {}
 
   public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
-    : base(origin, "[" + key_type.path + "]" + val_type.path)
+    : base(origin, "[" + key_type + "]" + val_type)
   {
     this.key_type = key_type;
     this.val_type = val_type;
@@ -151,7 +151,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
     if(ctx.is_read)
     {
-      name = "[" + key_type.path + "]" + val_type.path;
+      name = "[" + key_type + "]" + val_type;
 
       //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
       Setup();
