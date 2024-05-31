@@ -20,6 +20,7 @@ public partial class VM : INamedResolver
 
     public byte[] bytecode;
     public List<Const> constants;
+    public List<Proxy<IType>> type_refs;
     public ValStack locals = new ValStack(MAX_LOCALS);
     public ValStack _stack = new ValStack(MAX_STACK);
     public int start_ip;
@@ -76,12 +77,16 @@ public partial class VM : INamedResolver
         origin_stack,
         origin.module, 
         origin.constants, 
+        origin.type_refs,
         origin.bytecode, 
         start_ip
       );
     }
 
-    public void Init(Fiber fb, Frame origin, ValStack origin_stack, Module module, int start_ip)
+    public void Init(
+      Fiber fb, Frame origin, 
+      ValStack origin_stack, Module module, int start_ip
+      )
     {
       Init(
         fb, 
@@ -89,18 +94,28 @@ public partial class VM : INamedResolver
         origin_stack,
         module, 
         module.compiled.constants, 
+        module.compiled.type_refs, 
         module.compiled.bytecode, 
         start_ip
       );
     }
 
-    internal void Init(Fiber fb, Frame origin, ValStack origin_stack, Module module, List<Const> constants, byte[] bytecode, int start_ip)
+    internal void Init(
+      Fiber fb, 
+      Frame origin, 
+      ValStack origin_stack, 
+      Module module, 
+      List<Const> constants, 
+      List<Proxy<IType>> type_refs,
+      byte[] bytecode, 
+      int start_ip)
     {
       this.fb = fb;
       this.origin = origin;
       this.origin_stack = origin_stack;
       this.module = module;
       this.constants = constants;
+      this.type_refs = type_refs;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;

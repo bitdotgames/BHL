@@ -187,6 +187,11 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
   
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    item_type.IndexTypeRefs(ctx);
+  }
+  
   public abstract void ArrCreate(VM vm, ref Val arr);
   public abstract int ArrCount(Val arr);
   public abstract void ArrAdd(Val arr, Val val);
@@ -292,7 +297,7 @@ public class GenericArrayTypeSymbol :
 
   public override void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, ref item_type);
+    marshall.Marshall.SyncRef(ctx, ref item_type);
 
     if(ctx.is_read)
     {
@@ -379,9 +384,10 @@ public abstract class GenericNativeArraySymbol :
     throw new NotImplementedException();
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
-  {
-  }
+  {}
   
   public override bool Equals(object o)
   {

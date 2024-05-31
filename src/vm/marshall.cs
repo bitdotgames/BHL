@@ -39,19 +39,7 @@ public struct SyncContext
   public IReader reader;
   public IWriter writer;
   public IFactory factory;
-  public List<IMarshallableGeneric> ephemerals;
-
-  public int AddEphemeral(IMarshallableGeneric v)
-  {
-    for(int i = 0; i < ephemerals.Count; ++i)
-    {
-      if(ephemerals[i].Equals(v))
-        return i;
-    }
-
-    ephemerals.Add(v);
-    return ephemerals.Count - 1;
-  }
+  public TypeRefIndex refs;
 
   public static SyncContext NewReader(IReader reader, IFactory factory = null)
   {
@@ -60,7 +48,7 @@ public struct SyncContext
       reader = reader,
       writer = null,
       factory = factory,
-      ephemerals = new List<IMarshallableGeneric>()
+      refs = new TypeRefIndex()
     };
     return ctx;
   }
@@ -72,14 +60,16 @@ public struct SyncContext
       reader = null,
       writer = writer,
       factory = factory,
-      ephemerals = new List<IMarshallableGeneric>()
+      refs = new TypeRefIndex()
+      
     };
     return ctx;
   }
 }
 
-public interface IMarshallable 
+public interface IMarshallable
 {
+  void IndexTypeRefs(SyncContext ctx);
   void Sync(SyncContext ctx);
 }
 
@@ -425,7 +415,7 @@ public static class Marshall
     }
     EndArray(ctx, v);
   }
-
+  
   //TODO: make it private and deduce by IMarshallableGeneric interface
   static public void SyncGeneric(SyncContext ctx, ref IMarshallableGeneric v)
   {
@@ -464,8 +454,8 @@ public static class Marshall
       ctx.writer.EndContainer();
     }
   }
-
-  //TODO: make it private and deduce by IMarshallableGeneric interface
+  
+  //TODO: make it private and deduce by IMarshallableGeneric interface?
   static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallableGeneric
   {
     int size = BeginArray(ctx, v);
@@ -479,28 +469,13 @@ public static class Marshall
     EndArray(ctx, v);
   }
 
-  static public void SyncEphemeral(SyncContext ctx, ref IEphemeralType v)
-  {
-    if(ctx.is_read)
-    {
-      int idx = 0; 
-      ctx.reader.ReadI32(ref idx);
-      v = (IEphemeralType)ctx.ephemerals[idx];
-    }
-    else
-    {
-      int idx = ctx.AddEphemeral((IMarshallableGeneric)v);
-      ctx.writer.WriteI32(idx);
-    }
-  }
-
   static public void Sync<T>(SyncContext ctx, ref T v) where T : IMarshallable
   {
     if(ctx.is_read)
     {
       ctx.reader.BeginContainer();
       v.Sync(ctx);
-      ctx.reader.EndContainer();  
+      ctx.reader.EndContainer();
     }
     else
     {
@@ -508,6 +483,50 @@ public static class Marshall
       v.Sync(ctx);
       ctx.writer.EndContainer();
     }
+  }
+  
+  static public void SyncRef<T>(SyncContext ctx, ref Proxy<T> v) where T : class, IType
+  {
+    if(ctx.is_read)
+    {
+      int idx = 0; 
+      ctx.reader.ReadI32(ref idx);
+      var tmp = ctx.refs.Get(idx);
+      v = new Proxy<T>();
+      v.SetGeneric(tmp);
+    }
+    else
+    {
+      var tmp = v.GetGeneric();
+      int idx = ctx.refs.Get(tmp);
+      ctx.writer.WriteI32(idx);
+    }
+  }
+  
+  static public void SyncRefs(SyncContext ctx, List<Proxy<IType>> v)
+  {
+    int size = BeginArray(ctx, v);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? new Proxy<IType>() : v[i];
+      SyncRef(ctx, ref tmp);
+      if(ctx.is_read)
+        v.Add(tmp);
+    }
+    EndArray(ctx, v);
+  }
+  
+  static public void Sync(SyncContext ctx, TypeRefIndex v)
+  {
+    int size = BeginArray(ctx, v.refs);
+    for(int i = 0; i < size; ++i)
+    {
+      var tmp = ctx.is_read ? new Proxy<IType>() : v.refs[i];
+      Sync(ctx, ref tmp);
+      if(ctx.is_read) 
+        v.refs.Add(tmp);
+    }
+    EndArray(ctx, v.refs);
   }
 
   static public T File2Obj<T>(string file, IFactory f = null) where T : IMarshallable, new()
@@ -522,8 +541,10 @@ public static class Marshall
   {
     var reader = new MsgPackDataReader(s);
     var ctx = SyncContext.NewReader(reader, f); 
-    SyncGeneric(ctx, ctx.ephemerals);
+    ctx.reader.BeginContainer();
+    Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);
+    ctx.reader.EndContainer();
   }
 
   static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
@@ -545,23 +566,13 @@ public static class Marshall
     var writer = new MsgPackDataWriter(dst);
     var ctx = SyncContext.NewWriter(writer);
     
-    var dst_eph = new MemoryStream();
-    var writer_eph = new MsgPackDataWriter(dst_eph);
-    var ctx_eph = SyncContext.NewWriter(writer_eph);
-    
+    obj.IndexTypeRefs(ctx);
+    ctx.writer.BeginContainer(2);
+    Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);
-    SyncGeneric(ctx_eph, ctx.ephemerals);
-    
-    //NOTE: putting ephemerals first, probably this operation can be more optimal,
-    //      since we just need to swap two memory blocks, or we can store the offset
-    //      to ephemerals in the header
-    var mem = new MemoryStream((int)dst_eph.Position + (int)dst.Position);
-    dst_eph.Position = 0;
-    dst_eph.CopyTo(mem);
-    dst.Position = 0;
-    dst.CopyTo(mem);
+    ctx.writer.EndContainer();
 
-    return mem.GetBuffer();
+    return dst.GetBuffer();
   }
 
   static public void Obj2File<T>(T obj, string file) where T : IMarshallable
@@ -573,7 +584,7 @@ public static class Marshall
   }
 }
 
-public class MsgPackDataWriter : IWriter 
+public class MsgPackDataWriter : IWriter
 {
   bhl.MsgPack.MsgPackWriter io;
   Stack<int> space = new Stack<int>();

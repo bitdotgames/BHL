@@ -10,7 +10,6 @@ public enum ConstType
   BOOL       = 3,
   STR        = 4,
   NIL        = 5,
-  ITYPE      = 6,
 }
 
 public class Const : IEquatable<Const>
@@ -20,7 +19,6 @@ public class Const : IEquatable<Const>
   public ConstType type;
   public double num;
   public string str;
-  public Proxy<IType> itype;
 
   public Const(ConstType type, double num, string str)
   {
@@ -57,12 +55,6 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Const(Proxy<IType> itype)
-  {
-    type = ConstType.ITYPE;
-    this.itype = itype;
-  }
-
   public Val ToVal(VM vm)
   {
     if(type == ConstType.INT)
@@ -75,8 +67,6 @@ public class Const : IEquatable<Const>
       return Val.NewStr(vm, str);
     else if(type == ConstType.NIL)
       return vm.Null;
-    else if(type == ConstType.ITYPE)
-      return Val.NewObj(vm, itype, Types.Any/*TODO: ???*/);
     else
       throw new Exception("Bad type");
   }
@@ -88,8 +78,7 @@ public class Const : IEquatable<Const>
 
     return type == o.type && 
            num == o.num && 
-           str == o.str &&
-           itype.Equals(o.itype)
+           str == o.str
            ;
   }
 }

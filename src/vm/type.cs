@@ -14,7 +14,7 @@ public interface IType : INamed
 {}
 
 // Denotes types which are created 'on the fly'
-public interface IEphemeralType : IType
+public interface IEphemeralType : IType, IMarshallableGeneric
 {}
 
 public interface IInstantiable : IType, IScope 
@@ -23,8 +23,8 @@ public interface IInstantiable : IType, IScope
 }
 
 // For lazy evaluation of types and forward declarations
-//TODO: Should rather be named ProxyType, named as is for BC though 
-public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : class, IType
+//TODO: Should rather be named ProxyType, named 'as is' for BC though 
+public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IType
 {
   public T resolved;
   
@@ -32,11 +32,7 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
   public INamedResolver resolver;
 
   //NOTE: for symbols it's a full absolute path from the very top namespace
-  string _path;
-  public string path 
-  { 
-    get { return _path; } 
-  }
+  public string path; 
 
   public Proxy(INamedResolver resolver, string path)
   {
@@ -47,27 +43,43 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     
     this.resolver = resolver;
     resolved = default(T);
-    _path = path;
+    this.path = path;
   }
 
   public Proxy(T obj)
   {
     resolver = null;
     resolved = default(T);
-    _path = null;
+    path = null;
     
     SetResolved(obj);
   }
 
+  public Proxy<IType> GetGeneric()
+  {
+    var tmp = new Proxy<IType>();
+    tmp.resolved = resolved;
+    tmp.resolver = resolver;
+    tmp.path = path;
+    return tmp;
+  }
+
+  public void SetGeneric(Proxy<IType> tmp)
+  {
+    path = tmp.path;
+    resolved = (T)tmp.resolved;
+    resolver = tmp.resolver;
+  }
+
   public bool IsEmpty()
   {
-    return string.IsNullOrEmpty(_path) && 
+    return string.IsNullOrEmpty(path) && 
            resolved == null;
   }
 
   public void Clear()
   {
-    _path = null;
+    path = null;
     resolved = null;
   }
 
@@ -76,10 +88,10 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     if(resolved != null)
       return resolved;
 
-    if(string.IsNullOrEmpty(_path))
+    if(string.IsNullOrEmpty(path))
       return default(T);
 
-    SetResolved(resolver.ResolveNamedByPath(_path) as T);
+    SetResolved(resolver.ResolveNamedByPath(path) as T);
 
     return resolved;
   }
@@ -91,13 +103,22 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     //      with the normalized one, this is useful for cases when comparing proxies
     //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
     if(resolved != null)
-      _path = GetNormalizedPath(resolved);
+      path = GetNormalizedPath(resolved);
   }
 
   static string GetNormalizedPath(IType obj)
   {
     //for symbols full path is used
     return (obj is Symbol sym) ? sym.GetFullPath() : obj.GetName();
+  }
+
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    //let's index deeper types first 
+    if(Get() is marshall.IMarshallable im)
+      im.IndexTypeRefs(ctx);
+    
+    ctx.refs.Add(GetGeneric());
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -113,18 +134,18 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
     
     if(is_ephemeral)
     {
-      var eph = ctx.is_read ? null : Get() as IEphemeralType;
-      marshall.Marshall.SyncEphemeral(ctx, ref eph);
+      var eph = ctx.is_read ? null : Get() as IMarshallableGeneric;
+      marshall.Marshall.SyncGeneric(ctx, ref eph);
       if(ctx.is_read)
         SetResolved((T)eph);
     }
     else
-      marshall.Marshall.Sync(ctx, ref _path);
+      marshall.Marshall.Sync(ctx, ref path);
   }
 
   public override string ToString() 
   {
-    return _path;
+    return path;
   }
 
   public override bool Equals(object o)
@@ -136,26 +157,27 @@ public struct Proxy<T> : marshall.IMarshallable, IEquatable<Proxy<T>> where T : 
 
   public bool Equals(Proxy<T> o)
   {
-    if(o.resolver == resolver && o._path == _path)
+    if(o.resolver == resolver && o.path == path)
       return true;
 
     if(o.resolved != null && resolved != null)
       return o.resolved.Equals(resolved);
      
-    var r = Get();
-    if(r != null)
-      return r.Equals(o.Get());
-    else
-      return null == o.Get();
+    Get();
+    
+    if(resolved != null)
+      return resolved.Equals(o.Get());
+    else //null check
+      return null == o.Get() && o.resolver == resolver;
   }
 
   public override int GetHashCode()
   {
-    return _path.GetHashCode();
+    return path.GetHashCode();
   }
 }
 
-public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<RefType>
+public class RefType : IEphemeralType, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
@@ -184,9 +206,14 @@ public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable
     name = "ref " + subj;
   }
 
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    subj.IndexTypeRefs(ctx);
+  }
+  
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, ref subj);
+    marshall.Marshall.SyncRef(ctx, ref subj);
     if(ctx.is_read)
       Update();
   }
@@ -218,7 +245,7 @@ public class RefType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable
   }
 }
 
-public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<TupleType>
+public class TupleType : IEphemeralType, IEquatable<TupleType>
 {
   public const uint CLASS_ID = 16;
 
@@ -276,9 +303,15 @@ public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatab
     return CLASS_ID;
   }
 
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    foreach(var item in items)
+      item.IndexTypeRefs(ctx);
+  }
+  
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, items);
+    marshall.Marshall.SyncRefs(ctx, items);
     if(ctx.is_read)
       Update();
   }
@@ -315,7 +348,7 @@ public class TupleType : IEphemeralType, marshall.IMarshallableGeneric, IEquatab
   }
 }
 
-public class FuncSignature : IEphemeralType, marshall.IMarshallableGeneric, IEquatable<FuncSignature>
+public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 {
   public const uint CLASS_ID = 14; 
 
@@ -393,11 +426,18 @@ public class FuncSignature : IEphemeralType, marshall.IMarshallableGeneric, IEqu
     return CLASS_ID;
   }
 
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    ret_type.IndexTypeRefs(ctx);
+    foreach(var arg_type in arg_types)
+      arg_type.IndexTypeRefs(ctx);
+  }
+
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref _attribs);
-    marshall.Marshall.Sync(ctx, ref ret_type);
-    marshall.Marshall.Sync(ctx, arg_types);
+    marshall.Marshall.SyncRef(ctx, ref ret_type);
+    marshall.Marshall.SyncRefs(ctx, arg_types);
     if(ctx.is_read)
       Update();
   }

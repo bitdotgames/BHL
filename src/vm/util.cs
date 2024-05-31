@@ -311,6 +311,9 @@ public class FileImports : marshall.IMarshallable
     import_paths.Clear();
     file_paths.Clear();
   }
+  
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
 
   public void Sync(marshall.SyncContext ctx) 
   {

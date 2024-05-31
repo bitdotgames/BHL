@@ -32,6 +32,7 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
 
   public abstract uint ClassId();
 
+  public abstract void IndexTypeRefs(marshall.SyncContext ctx);
   public abstract void Sync(marshall.SyncContext ctx);
 }
 
@@ -49,6 +50,8 @@ public class IntSymbol : Symbol, IType
   }
   
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -73,6 +76,8 @@ public class BoolSymbol : Symbol, IType
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -97,6 +102,8 @@ public class StringSymbol : ClassSymbolNative
   }
   
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -121,6 +128,8 @@ public class FloatSymbol : Symbol, IType
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -145,6 +154,8 @@ public class VoidSymbol : Symbol, IType
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -169,6 +180,8 @@ public class AnySymbol : Symbol, IType
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -194,6 +207,8 @@ public class NullSymbol : ClassSymbolScript
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 }
@@ -212,6 +227,8 @@ public class VarSymbol : Symbol
   }
 
   //contains no data
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
   public override void Sync(marshall.SyncContext ctx)
   {}
 }
@@ -313,6 +330,14 @@ public class InterfaceSymbolScript : InterfaceSymbol
     return CLASS_ID;
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    inherits.IndexTypeRefs(ctx);
+    foreach(var m in members)
+      m.IndexTypeRefs(ctx);
+    
+  }
+  
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
@@ -382,6 +407,12 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
     throw new NotImplementedException();
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    foreach(var i in proxy_inherits)
+      i.IndexTypeRefs(ctx);
+  }
+  
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -804,10 +835,15 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     return CLASS_ID;
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    type.IndexTypeRefs(ctx);
+  }
+
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref type);
+    marshall.Marshall.SyncRef(ctx, ref type);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 
@@ -1160,6 +1196,13 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
       return idx;
     int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
     return idx - this_offset;
+  }
+
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    _signature.IndexTypeRefs(ctx);
+    foreach(var m in members)
+      m.IndexTypeRefs(ctx);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1684,6 +1727,9 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     throw new NotImplementedException();
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
+  
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -1741,10 +1787,18 @@ public class ClassSymbolScript : ClassSymbol
     return CLASS_ID;
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    _super_class.IndexTypeRefs(ctx);
+    foreach(var m in members)
+      m.IndexTypeRefs(ctx);
+    implements.IndexTypeRefs(ctx);
+  }
+
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref _super_class);
+    marshall.Marshall.SyncRef(ctx, ref _super_class);
     marshall.Marshall.Sync(ctx, ref members);
     marshall.Marshall.Sync(ctx, ref implements); 
   }
@@ -1787,6 +1841,10 @@ public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
     throw new NotImplementedException();
   }
 
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+  }
+  
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -1887,6 +1945,9 @@ public class EnumItemSymbol : Symbol, IType
   {
     return CLASS_ID;
   }
+  
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {}
 
   public override void Sync(marshall.SyncContext ctx)
   {
@@ -2007,6 +2068,12 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
     name2idx.Clear();
   }
 
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    foreach(var item in list)
+      item.IndexTypeRefs(ctx);
+  }
+
   public void Sync(marshall.SyncContext ctx) 
   {
     marshall.Marshall.SyncGeneric(ctx, list);
@@ -2038,7 +2105,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
-  List<Proxy<T>> list = new List<Proxy<T>>();
+  List<Proxy<IType>> list = new List<Proxy<IType>>();
 
   public int Count
   {
@@ -2051,7 +2118,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
   {
     get {
       var tp = list[index];
-      var s = tp.Get();
+      var s = (T)tp.Get();
       if(s == null)
         throw new Exception("Type not found: " + tp);
       return s;
@@ -2063,10 +2130,10 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 
   public bool Add(T t)
   {
-    return Add(new Proxy<T>(t));
+    return Add(new Proxy<IType>(t));
   }
 
-  public bool Add(Proxy<T> tp)
+  public bool Add(Proxy<IType> tp)
   {
     foreach(var item in list)
     {
@@ -2082,9 +2149,59 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
     list.Clear();
   }
 
+  public void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    foreach(var item in list)
+      item.IndexTypeRefs(ctx);
+  }
+
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.Sync(ctx, list);
+    marshall.Marshall.SyncRefs(ctx, list);
+  }
+}
+
+public class TypeRefIndex
+{
+  internal List<Proxy<IType>> refs = new List<Proxy<IType>>();
+
+  public int Count {
+    get {
+      return refs.Count;
+    }
+  }
+  
+  public int Add(Proxy<IType> v)
+  {
+    int idx = Find(v);
+    if(idx != -1)
+      return idx;
+
+    refs.Add(v);
+    return refs.Count - 1;
+  }
+
+  public int Find(Proxy<IType> v)
+  {
+    for(int i = 0; i < refs.Count; ++i)
+    {
+      if(refs[i].Equals(v))
+        return i;
+    }
+    return -1;
+  }
+
+  public int Get(Proxy<IType> v)
+  {
+    int idx = Find(v);
+    if(idx == -1)
+      throw new Exception("Not found index for type '" + v + "'");
+    return idx;
+  }
+
+  public Proxy<IType> Get(int idx)
+  {
+    return refs[idx];
   }
 }
 

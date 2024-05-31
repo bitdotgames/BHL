@@ -15,6 +15,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   List<Const> constants = new List<Const>();
+  List<IType> type_refs = new List<IType>();
   List<string> imports = new List<string>();
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
@@ -281,14 +282,21 @@ public class ModuleCompiler : AST_Visitor
     return constants.Count-1;
   }
 
+  int AddTypeRef(IType new_itype)
+  {
+    for(int i = 0 ; i < type_refs.Count; ++i)
+    {
+      var itype = type_refs[i];
+      if(itype.Equals(new_itype))
+        return i;
+    }
+    type_refs.Add(new_itype);
+    return type_refs.Count-1;
+  }
+
   int AddConstant(string str)
   {
     return AddConstant(new Const(str));
-  }
-
-  int AddConstant(IType itype)
-  {
-    return AddConstant(new Const(new Proxy<IType>(itype)));
   }
 
   static void DeclareOpcodes()
@@ -1142,7 +1150,7 @@ public class ModuleCompiler : AST_Visitor
     if(CastCanBeOmitted(ast.type, ast.hint_exp_type))
       return;
 
-    Emit(Opcodes.TypeCast, new int[] { AddConstant(ast.type), ast.force_type ? 1 : 0 }, ast.line_num);
+    Emit(Opcodes.TypeCast, new int[] { AddTypeRef(ast.type), ast.force_type ? 1 : 0 }, ast.line_num);
   }
 
   static bool CastCanBeOmitted(IType cast_type, IType exp_type)
@@ -1160,23 +1168,23 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_TypeAs ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeAs, new int[] { AddConstant(ast.type), ast.force_type ? 1 : 0 }, ast.line_num);
+    Emit(Opcodes.TypeAs, new int[] { AddTypeRef(ast.type), ast.force_type ? 1 : 0 }, ast.line_num);
   }
 
   public override void DoVisit(AST_TypeIs ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.TypeIs, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.TypeIs, new int[] { AddTypeRef(ast.type) }, ast.line_num);
   }
 
   public override void DoVisit(AST_Typeof ast)
   {
-    Emit(Opcodes.Typeof, new int[] { AddConstant(ast.type) });
+    Emit(Opcodes.Typeof, new int[] { AddTypeRef(ast.type) });
   }
 
   public override void DoVisit(AST_New ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
     VisitChildren(ast);
   }
 
@@ -1306,9 +1314,9 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         
         if(instance_type is InterfaceSymbolScript)
-          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits}, ast.line_num);
         else if(instance_type is InterfaceSymbolNative)
-          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddConstant(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits}, ast.line_num);
         else
         {
           if(mfunc is FuncSymbolScript)
@@ -1622,7 +1630,7 @@ public class ModuleCompiler : AST_Visitor
 
     if(!ast.is_func_arg)
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type) });
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
     }
     //check if it's not a module scope var (global)
     else if(func_decls.Count > 0)
@@ -1634,13 +1642,13 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddConstant(ast.type)});
+      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type)});
     }
   }
 
   public override void DoVisit(bhl.AST_JsonObj ast)
   {
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
     VisitChildren(ast);
   }
 
@@ -1650,7 +1658,7 @@ public class ModuleCompiler : AST_Visitor
     if(arr_symb == null)
       throw new Exception("Could not find class binding: " + ast.type.GetName());
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {
@@ -1679,7 +1687,7 @@ public class ModuleCompiler : AST_Visitor
     if(map_symb == null)
       throw new Exception("Could not find class binding: " + ast.type.GetName());
 
-    Emit(Opcodes.New, new int[] { AddConstant(ast.type) }, ast.line_num);
+    Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
 
     for(int i=0;i<ast.children.Count;++i)
     {

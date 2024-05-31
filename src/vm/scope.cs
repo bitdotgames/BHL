@@ -114,7 +114,8 @@ public class LocalScope : IScope, IEnumerable<Symbol>
   public IScope GetFallbackScope() { return fallback; }
 }
 
-public class Namespace : Symbol, IScope, marshall.IMarshallable, IEnumerable<Symbol>, INamedResolver
+public class Namespace : Symbol, IScope, 
+  marshall.IMarshallable, IEnumerable<Symbol>, INamedResolver
 {
   public const uint CLASS_ID = 20;
 
@@ -393,6 +394,12 @@ public class Namespace : Symbol, IScope, marshall.IMarshallable, IEnumerable<Sym
       module.gvar_index.Index(vs);
 
     members.Add(sym);
+  }
+  
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    foreach(var m in members)
+      m.IndexTypeRefs(ctx);
   }
 
   public override void Sync(marshall.SyncContext ctx) 

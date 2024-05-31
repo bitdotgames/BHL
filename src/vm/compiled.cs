@@ -54,6 +54,7 @@ public class CompiledModule
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
+  public List<Proxy<IType>> type_refs;
   public Ip2SrcLine ip2src_line;
   public int init_func_idx = -1;
 
@@ -156,7 +157,11 @@ public class CompiledModule
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
 
-    marshall.Marshall.Stream2Obj(new MemoryStream(symb_bytes), module.ns, symb_factory);
+    marshall.Marshall.Stream2Obj(
+      new MemoryStream(symb_bytes), 
+      module.ns, 
+      symb_factory
+      );
 
     //NOTE: we link native namespace after our own namespace was loaded,
     //      this way we make sure namespace members are properly linked
@@ -201,13 +206,6 @@ public class CompiledModule
                 cn_type == ConstType.BOOL ||
                 cn_type == ConstType.NIL)
           cn = new Const(cn_type, r.ReadDouble(), "");
-        else if(cn_type == ConstType.ITYPE)
-        {
-          var tp = marshall.Marshall.Stream2Obj<Proxy<IType>>(src, symb_factory);
-          if(string.IsNullOrEmpty(tp.path))
-            throw new Exception("Missing path");
-          cn = new Const(tp);
-        }
         else
           throw new Exception("Unknown type: " + cn_type);
 
@@ -279,8 +277,6 @@ public class CompiledModule
             cn.type == ConstType.BOOL ||
             cn.type == ConstType.NIL)
           w.Write(cn.num);
-        else if(cn.type == ConstType.ITYPE)
-          marshall.Marshall.Obj2Stream(cn.itype, dst);
         else
           throw new Exception("Unknown type: " + cn.type);
       }

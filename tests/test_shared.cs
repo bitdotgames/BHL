@@ -831,13 +831,10 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, Proxy<IType> v)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
-    {
-      var cn = module.compiled.constants[i];
-      if(cn.type == ConstType.ITYPE && cn.itype.Equals(v))
-        return i;
-    }
-    throw new Exception("Constant not found: " + v);
+    int i = module.compiled.type_refs.IndexOf(v);
+    if(i == -1)
+      throw new Exception("Constant not found: " + v);
+    return i;
   }
 
   public static int ConstNullIdx(bhl.Module module)

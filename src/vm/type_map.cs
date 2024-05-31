@@ -103,6 +103,12 @@ public abstract class MapTypeSymbol : ClassSymbol
     enumerator_type.Setup();
   }
   
+  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  {
+    key_type.IndexTypeRefs(ctx);
+    val_type.IndexTypeRefs(ctx);
+  }
+  
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
   public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
   public abstract void GetEnumerator(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
@@ -146,8 +152,8 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   
   public override void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.Sync(ctx, ref key_type);
-    marshall.Marshall.Sync(ctx, ref val_type);
+    marshall.Marshall.SyncRef(ctx, ref key_type);
+    marshall.Marshall.SyncRef(ctx, ref val_type);
 
     if(ctx.is_read)
     {
