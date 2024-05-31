@@ -285,7 +285,7 @@ public class ModuleCompiler : AST_Visitor
 
   int AddTypeRef(IType itype)
   {
-    var tp = new Proxy<IType>(itype);
+    var tp = new ProxyType(itype);
     tp.IndexTypeRefs(type_refs);
     return type_refs.Get(tp);
   }

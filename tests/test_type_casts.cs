@@ -153,7 +153,6 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastFloatToStr()
   {
     string bhl = @"
-      
     func string test(float k) 
     {
       return (string)k
@@ -762,7 +761,7 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<Proxy<IType>>(){ ts.T("IFoo") },
+      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<ProxyType>(){ ts.T("IFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
           v.SetObj(null/*dummy*/, type);
@@ -800,7 +799,7 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<Proxy<IType>>(){ ts.T("IWow") },
+      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>(){ ts.T("IWow") },
         native_type: typeof(NativeWow),
         creator: delegate(VM.Frame frm, ref Val v, IType type) 
         { 

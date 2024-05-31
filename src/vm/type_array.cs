@@ -9,14 +9,14 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   internal FuncSymbolNative FuncArrIdx;
   internal FuncSymbolNative FuncArrIdxW;
 
-  public Proxy<IType> item_type;
+  public ProxyType item_type;
 
   //marshall factory version
   public ArrayTypeSymbol()     
     : base(null, null)
   {}
 
-  public ArrayTypeSymbol(Origin origin, string name, Proxy<IType> item_type)     
+  public ArrayTypeSymbol(Origin origin, string name, ProxyType item_type)     
     : base(origin, name)
   {
     this.item_type = item_type;
@@ -86,7 +86,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     : base(origin, name)
   {}
 
-  public ArrayTypeSymbol(Origin origin, Proxy<IType> item_type) 
+  public ArrayTypeSymbol(Origin origin, ProxyType item_type) 
     : this(origin, "[]" + item_type, item_type)
   {}
 
@@ -208,7 +208,7 @@ public class GenericArrayTypeSymbol :
 {
   public const uint CLASS_ID = 10;
   
-  public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type)
+  public GenericArrayTypeSymbol(Origin origin, ProxyType item_type)
     : base(origin, item_type)
   {}
     
@@ -336,7 +336,7 @@ public abstract class GenericNativeArrayTypeSymbol :
   public const uint CLASS_ID = 24;
   
   public GenericNativeArrayTypeSymbol(
-    Origin origin, string name, Proxy<IType> item_type)
+    Origin origin, string name, ProxyType item_type)
     : base(origin, name, item_type)
   {}
   
@@ -416,13 +416,13 @@ public abstract class GenericNativeArrayTypeSymbol :
 public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
 {
   Func<Val, T> val2native;
-  Func<VM, Proxy<IType>, T, Val> native2val;
+  Func<VM, ProxyType, T, Val> native2val;
 
   public NativeListTypeSymbol(
     Origin origin, string name, 
     Func<Val, T> val2native,
-    Func<VM, Proxy<IType>, T, Val> native2val,
-    Proxy<IType> item_type
+    Func<VM, ProxyType, T, Val> native2val,
+    ProxyType item_type
     )
     : base(origin, name, item_type)
   {

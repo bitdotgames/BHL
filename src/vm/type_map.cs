@@ -7,8 +7,8 @@ public abstract class MapTypeSymbol : ClassSymbol
   internal FuncSymbolNative FuncMapIdx;
   internal FuncSymbolNative FuncMapIdxW;
 
-  public Proxy<IType> key_type;
-  public Proxy<IType> val_type;
+  public ProxyType key_type;
+  public ProxyType val_type;
 
   public ClassSymbol enumerator_type = new ClassSymbolNative(new Origin(), "Enumerator");
 
@@ -17,7 +17,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     : base(null, null)
   {}
 
-  public MapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+  public MapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)     
     : base(origin, "[" + key_type + "]" + val_type)
   {
     this.key_type = key_type;
@@ -67,7 +67,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "TryGet", new Proxy<IType>(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative(new Origin(), "TryGet", new ProxyType(new TupleType(Types.Bool, val_type)), TryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -75,7 +75,7 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var vs = new FieldSymbol(new Origin(), "$Enumerator", new Proxy<IType>(enumerator_type), GetEnumerator, null);
+      var vs = new FieldSymbol(new Origin(), "$Enumerator", new ProxyType(enumerator_type), GetEnumerator, null);
       this.Define(vs);
     }
 
@@ -95,7 +95,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Current", new Proxy<IType>(new TupleType(key_type, val_type)), EnumeratorCurrent);
+      var fn = new FuncSymbolNative(new Origin(), "Current", new ProxyType(new TupleType(key_type, val_type)), EnumeratorCurrent);
       enumerator_type.Define(fn);
     }
 
@@ -128,7 +128,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 {
   public const uint CLASS_ID = 21; 
   
-  public GenericMapTypeSymbol(Origin origin, Proxy<IType> key_type, Proxy<IType> val_type)     
+  public GenericMapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)     
     : base(origin, key_type, val_type)
   {}
     

@@ -23,18 +23,16 @@ public interface IInstantiable : IType, IScope
 }
 
 // For lazy evaluation of types and forward declarations
-//TODO: Should rather be named ProxyType, named 'as is' for BC though 
-public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IType
+public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 {
-  public T resolved;
+  public IType resolved;
   
-  //TODO: do we need to serialize/unserialize the original resolver?
   public INamedResolver resolver;
 
   //NOTE: for symbols it's a full absolute path from the very top namespace
   public string path; 
 
-  public Proxy(INamedResolver resolver, string path)
+  public ProxyType(INamedResolver resolver, string path)
   {
     if(path.Length == 0)
       throw new Exception("Type path is empty");
@@ -42,35 +40,19 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
       throw new Exception("Type spec contains illegal characters: '" + path + "'");
     
     this.resolver = resolver;
-    resolved = default(T);
+    resolved = null;
     this.path = path;
   }
 
-  public Proxy(T obj)
+  public ProxyType(IType obj)
   {
     resolver = null;
-    resolved = default(T);
+    resolved = null;
     path = null;
     
     SetResolved(obj);
   }
-
-  public Proxy<IType> GetGeneric()
-  {
-    var tmp = new Proxy<IType>();
-    tmp.resolved = resolved;
-    tmp.resolver = resolver;
-    tmp.path = path;
-    return tmp;
-  }
-
-  public void SetGeneric(Proxy<IType> tmp)
-  {
-    path = tmp.path;
-    resolved = (T)tmp.resolved;
-    resolver = tmp.resolver;
-  }
-
+  
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(path) && 
@@ -83,20 +65,25 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
     resolved = null;
   }
 
-  public T Get()
+  public IType Get()
   {
     if(resolved != null)
       return resolved;
 
     if(string.IsNullOrEmpty(path))
-      return default(T);
+      return null;
 
-    SetResolved(resolver.ResolveNamedByPath(path) as T);
+    SetResolved((IType)resolver.ResolveNamedByPath(path));
 
     return resolved;
   }
 
-  void SetResolved(T resolved)
+  public T Get<T>() where T : IType
+  {
+    return (T)Get();
+  }
+
+  void SetResolved(IType resolved)
   {
     this.resolved = resolved;
     //TODO: some smelly code below - after resolving we re-write the original path
@@ -122,7 +109,7 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
     if(r is marshall.IMarshallable im)
       im.IndexTypeRefs(refs);
 
-    refs.Add(GetGeneric());
+    refs.Add(this);
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -141,7 +128,7 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
       var eph = ctx.is_read ? null : Get() as IMarshallableGeneric;
       marshall.Marshall.SyncGeneric(ctx, ref eph);
       if(ctx.is_read)
-        SetResolved((T)eph);
+        SetResolved((IType)eph);
     }
     else
       marshall.Marshall.Sync(ctx, ref path);
@@ -154,12 +141,12 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
 
   public override bool Equals(object o)
   {
-    if(!(o is Proxy<T>))
+    if(!(o is ProxyType))
       return false;
-    return this.Equals((Proxy<T>)o);
+    return this.Equals((ProxyType)o);
   }
 
-  public bool Equals(Proxy<T> o)
+  public bool Equals(ProxyType o)
   {
     if(o.resolver == resolver && o.path == path)
       return true;
@@ -185,12 +172,12 @@ public class RefType : IEphemeralType, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public Proxy<IType> subj; 
+  public ProxyType subj; 
 
   string name;
   public string GetName() { return name; }
 
-  public RefType(Proxy<IType> subj)
+  public RefType(ProxyType subj)
   {
     this.subj = subj;
     Update();
@@ -255,7 +242,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
 
   string name;
 
-  List<Proxy<IType>> items = new List<Proxy<IType>>();
+  List<ProxyType> items = new List<ProxyType>();
 
   public string GetName() { return name; }
 
@@ -265,7 +252,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
     }
   }
 
-  public TupleType(params Proxy<IType>[] items)
+  public TupleType(params ProxyType[] items)
   {
     foreach(var item in items)
       this.items.Add(item);
@@ -276,14 +263,14 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
   public TupleType()
   {}
 
-  public Proxy<IType> this[int index]
+  public ProxyType this[int index]
   {
     get { 
       return items[index]; 
     }
   }
 
-  public void Add(Proxy<IType> item)
+  public void Add(ProxyType item)
   {
     items.Add(item);
     Update();
@@ -359,9 +346,9 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   //full type name
   string name;
 
-  public Proxy<IType> ret_type;
+  public ProxyType ret_type;
   //TODO: include arg names as well since we support named args?
-  public List<Proxy<IType>> arg_types = new List<Proxy<IType>>();
+  public List<ProxyType> arg_types = new List<ProxyType>();
 
   byte _attribs = 0;
   public FuncSignatureAttrib attribs {
@@ -375,11 +362,11 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 
   public string GetName() { return name; }
 
-  public FuncSignature(Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(ProxyType ret_type, params ProxyType[] arg_types)
     : this(0, ret_type, arg_types)
   {}
 
-  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, params Proxy<IType>[] arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, ProxyType ret_type, params ProxyType[] arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -388,7 +375,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     Update();
   }
 
-  public FuncSignature(FuncSignatureAttrib attribs, Proxy<IType> ret_type, List<Proxy<IType>> arg_types)
+  public FuncSignature(FuncSignatureAttrib attribs, ProxyType ret_type, List<ProxyType> arg_types)
   {
     this.attribs = attribs;
     this.ret_type = ret_type;
@@ -400,7 +387,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   public FuncSignature()
   {}
 
-  public void AddArg(Proxy<IType> arg_type)
+  public void AddArg(ProxyType arg_type)
   {
     arg_types.Add(arg_type);
     Update();

@@ -20,7 +20,7 @@ public partial class VM : INamedResolver
 
     public byte[] bytecode;
     public List<Const> constants;
-    public List<Proxy<IType>> type_refs;
+    public List<ProxyType> type_refs;
     public ValStack locals = new ValStack(MAX_LOCALS);
     public ValStack _stack = new ValStack(MAX_STACK);
     public int start_ip;
@@ -106,7 +106,7 @@ public partial class VM : INamedResolver
       ValStack origin_stack, 
       Module module, 
       List<Const> constants, 
-      List<Proxy<IType>> type_refs,
+      List<ProxyType> type_refs,
       byte[] bytecode, 
       int start_ip)
     {

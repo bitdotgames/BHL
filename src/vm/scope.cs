@@ -686,14 +686,14 @@ public static class ScopeExtensions
   public struct TypeArg
   {
     public string name;
-    public Proxy<IType> tp;
+    public ProxyType tp;
 
     public static implicit operator TypeArg(string name)
     {
       return new TypeArg(name);
     }
 
-    public static implicit operator TypeArg(Proxy<IType> tp)
+    public static implicit operator TypeArg(ProxyType tp)
     {
       return new TypeArg(tp);
     }
@@ -726,27 +726,27 @@ public static class ScopeExtensions
     public TypeArg(string name)
     {
       this.name = name;
-      this.tp = default(Proxy<IType>);
+      this.tp = default(ProxyType);
     }
 
-    public TypeArg(Proxy<IType> tp)
+    public TypeArg(ProxyType tp)
     {
       this.name = null;
       this.tp = tp;
     }
   }
 
-  public static Proxy<IType> T(this INamedResolver self, IType t)
+  public static ProxyType T(this INamedResolver self, IType t)
   {
-    return new Proxy<IType>(t);
+    return new ProxyType(t);
   }
 
-  public static Proxy<IType> T(this INamedResolver self, string name)
+  public static ProxyType T(this INamedResolver self, string name)
   {
-    return new Proxy<IType>(self, name);
+    return new ProxyType(self, name);
   }
 
-  public static Proxy<IType> T(this INamedResolver self, TypeArg tn)
+  public static ProxyType T(this INamedResolver self, TypeArg tn)
   {
     if(!tn.tp.IsEmpty())
       return tn.tp;
@@ -754,31 +754,31 @@ public static class ScopeExtensions
       return self.T(tn.name);
   }
 
-  public static Proxy<IType> TRef(this INamedResolver self, TypeArg tn)
+  public static ProxyType TRef(this INamedResolver self, TypeArg tn)
   {           
     return self.T(new RefType(self.T(tn)));
   }
 
-  public static Proxy<IType> TArr(this INamedResolver self, TypeArg tn)
+  public static ProxyType TArr(this INamedResolver self, TypeArg tn)
   {
     var arr_type = new GenericArrayTypeSymbol(new Origin(), self.T(tn));
     arr_type.Setup();
     return self.T(arr_type);
   }
 
-  public static Proxy<IType> TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
+  public static ProxyType TMap(this INamedResolver self, TypeArg kt, TypeArg vt)
   {
     var map_type = new GenericMapTypeSymbol(new Origin(), self.T(kt), self.T(vt));
     map_type.Setup();
     return self.T(map_type);
   }
 
-  public static Proxy<IType> TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)
+  public static ProxyType TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     return self.TFunc(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type, arg_types);
   }
 
-  public static Proxy<IType> TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type, params TypeArg[] arg_types)
+  public static ProxyType TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     var sig = new FuncSignature(attribs, self.T(ret_type));
     foreach(var arg_type in arg_types)
@@ -786,12 +786,12 @@ public static class ScopeExtensions
     return self.T(sig);
   }
 
-  public static Proxy<IType> TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
+  public static ProxyType TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
   {           
     return self.TFunc(false, ret_type, arg_types);
   }
 
-  public static Proxy<IType> T(this INamedResolver self, TypeArg tn, params TypeArg[] types)
+  public static ProxyType T(this INamedResolver self, TypeArg tn, params TypeArg[] types)
   {
     var tuple = new TupleType();
     tuple.Add(self.T(tn));

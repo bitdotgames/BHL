@@ -485,30 +485,27 @@ public static class Marshall
     }
   }
   
-  static public void SyncRef<T>(SyncContext ctx, ref Proxy<T> v) where T : class, IType
+  static public void SyncRef(SyncContext ctx, ref ProxyType v)
   {
     if(ctx.is_read)
     {
       int idx = 0; 
       ctx.reader.ReadI32(ref idx);
-      var tmp = ctx.refs.Get(idx);
-      v = new Proxy<T>();
-      v.SetGeneric(tmp);
+      v = ctx.refs.Get(idx);
     }
     else
     {
-      var tmp = v.GetGeneric();
-      int idx = ctx.refs.Get(tmp);
+      int idx = ctx.refs.Get(v);
       ctx.writer.WriteI32(idx);
     }
   }
   
-  static public void SyncRefs(SyncContext ctx, List<Proxy<IType>> v)
+  static public void SyncRefs(SyncContext ctx, List<ProxyType> v)
   {
     int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = ctx.is_read ? new Proxy<IType>() : v[i];
+      var tmp = ctx.is_read ? new ProxyType() : v[i];
       SyncRef(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
@@ -521,7 +518,7 @@ public static class Marshall
     int size = BeginArray(ctx, v.all);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = ctx.is_read ? new Proxy<IType>() : v.all[i];
+      var tmp = ctx.is_read ? new ProxyType() : v.all[i];
       Sync(ctx, ref tmp);
       if(ctx.is_read) 
         v.all.Add(tmp);
