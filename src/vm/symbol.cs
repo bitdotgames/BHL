@@ -2165,10 +2165,20 @@ public class TypeRefIndex
 {
   internal List<Proxy<IType>> all = new List<Proxy<IType>>();
 
+  HashSet<IType> seen = new HashSet<IType>();
+
   public int Count {
     get {
       return all.Count;
     }
+  }
+
+  public bool RecursionGuard(IType type)
+  {
+    if(seen.Contains(type))
+      return true;
+    seen.Add(type);
+    return false;
   }
   
   public int Add(Proxy<IType> v)

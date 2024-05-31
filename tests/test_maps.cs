@@ -16,7 +16,7 @@ public class TestMaps : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseInit()
-      .EmitThen(Opcodes.New, new int[] { ConstIdx(c, c.ns.TMap("string", "int")) }) 
+      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TMap("string", "int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
     ;
 

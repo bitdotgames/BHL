@@ -114,8 +114,12 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
 
   public void IndexTypeRefs(TypeRefIndex refs)
   {
+    var r = Get();
+    if(refs.RecursionGuard(r))
+      return;
+    
     //let's index 'deeper' types first 
-    if(Get() is marshall.IMarshallable im)
+    if(r is marshall.IMarshallable im)
       im.IndexTypeRefs(refs);
 
     refs.Add(GetGeneric());
