@@ -409,8 +409,11 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    foreach(var i in proxy_inherits)
-      i.IndexTypeRefs(refs);
+    if(proxy_inherits != null)
+    {
+      foreach(var i in proxy_inherits)
+        i.IndexTypeRefs(refs);
+    }
   }
   
   public override void Sync(marshall.SyncContext ctx)
