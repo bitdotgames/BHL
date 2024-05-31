@@ -54,7 +54,7 @@ public class CompiledModule
   public byte[] initcode;
   public byte[] bytecode;
   public List<Const> constants;
-  public List<Proxy<IType>> type_refs;
+  public TypeRefIndex type_refs;
   public Ip2SrcLine ip2src_line;
   public int init_func_idx = -1;
 
@@ -63,6 +63,7 @@ public class CompiledModule
     List<string> imports,
     int total_gvars_num,
     List<Const> constants,
+    TypeRefIndex type_refs,
     byte[] initcode,
     byte[] bytecode,
     Ip2SrcLine ip2src_line)
@@ -71,6 +72,7 @@ public class CompiledModule
     this.imports = imports;
     this.total_gvars_num = total_gvars_num;
     this.constants = constants;
+    this.type_refs = type_refs;
     this.initcode = initcode;
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
@@ -82,6 +84,7 @@ public class CompiledModule
       new List<string>(),
       0,
       new List<Const>(),
+      new TypeRefIndex(),
       new byte[0],
       new byte[0],
       new Ip2SrcLine()
@@ -112,6 +115,7 @@ public class CompiledModule
     int local_gvars_num = 0;
     byte[] constant_bytes = null;
     var constants = new List<Const>();
+    var type_refs = new TypeRefIndex();
     byte[] symb_bytes = null;
     byte[] initcode = null;
     byte[] bytecode = null;
@@ -160,7 +164,8 @@ public class CompiledModule
     marshall.Marshall.Stream2Obj(
       new MemoryStream(symb_bytes), 
       module.ns, 
-      symb_factory
+      symb_factory,
+      type_refs
       );
 
     //NOTE: we link native namespace after our own namespace was loaded,
@@ -177,6 +182,7 @@ public class CompiledModule
         imports,
         total_gvars_num,
         constants, 
+        type_refs,
         initcode, 
         bytecode, 
         ip2src_line
@@ -231,7 +237,7 @@ public class CompiledModule
       foreach(var import in module.compiled.imports)
         w.Write(import);
 
-      var symb_bytes = marshall.Marshall.Obj2Bytes(module.ns);
+      var symb_bytes = marshall.Marshall.Obj2Bytes(module.ns, module.compiled.type_refs);
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 

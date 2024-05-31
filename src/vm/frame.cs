@@ -94,7 +94,7 @@ public partial class VM : INamedResolver
         origin_stack,
         module, 
         module.compiled.constants, 
-        module.compiled.type_refs, 
+        module.compiled.type_refs.all, 
         module.compiled.bytecode, 
         start_ip
       );

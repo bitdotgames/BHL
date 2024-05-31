@@ -521,7 +521,7 @@ public partial class VM : INamedResolver
       return;
 
     var constants = module.compiled.constants;
-    var type_refs = module.compiled.type_refs;
+    var type_refs = module.compiled.type_refs.all;
 
     int ip = 0;
 

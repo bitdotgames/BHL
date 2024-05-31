@@ -15,7 +15,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   List<Const> constants = new List<Const>();
-  List<IType> type_refs = new List<IType>();
+  TypeRefIndex type_refs = new TypeRefIndex();
   List<string> imports = new List<string>();
   List<Instruction> init = new List<Instruction>();
   List<Instruction> code = new List<Instruction>();
@@ -218,6 +218,7 @@ public class ModuleCompiler : AST_Visitor
         imports, 
         interim.gvar_index.Count,
         constants, 
+        type_refs,
         init_bytes,
         code_bytes,
         ip2src_line
@@ -284,14 +285,7 @@ public class ModuleCompiler : AST_Visitor
 
   int AddTypeRef(IType new_itype)
   {
-    for(int i = 0 ; i < type_refs.Count; ++i)
-    {
-      var itype = type_refs[i];
-      if(itype.Equals(new_itype))
-        return i;
-    }
-    type_refs.Add(new_itype);
-    return type_refs.Count-1;
+    return type_refs.Add(new Proxy<IType>(new_itype));
   }
 
   int AddConstant(string str)

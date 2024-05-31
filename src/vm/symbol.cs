@@ -2163,11 +2163,11 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 
 public class TypeRefIndex
 {
-  internal List<Proxy<IType>> refs = new List<Proxy<IType>>();
+  internal List<Proxy<IType>> all = new List<Proxy<IType>>();
 
   public int Count {
     get {
-      return refs.Count;
+      return all.Count;
     }
   }
   
@@ -2177,15 +2177,15 @@ public class TypeRefIndex
     if(idx != -1)
       return idx;
 
-    refs.Add(v);
-    return refs.Count - 1;
+    all.Add(v);
+    return all.Count - 1;
   }
 
   public int Find(Proxy<IType> v)
   {
-    for(int i = 0; i < refs.Count; ++i)
+    for(int i = 0; i < all.Count; ++i)
     {
-      if(refs[i].Equals(v))
+      if(all[i].Equals(v))
         return i;
     }
     return -1;
@@ -2201,7 +2201,7 @@ public class TypeRefIndex
 
   public Proxy<IType> Get(int idx)
   {
-    return refs[idx];
+    return all[idx];
   }
 }
 

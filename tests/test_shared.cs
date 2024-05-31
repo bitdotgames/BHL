@@ -831,10 +831,7 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, Proxy<IType> v)
   {
-    int i = module.compiled.type_refs.IndexOf(v);
-    if(i == -1)
-      throw new Exception("Constant not found: " + v);
-    return i;
+    return module.compiled.type_refs.Get(v);
   }
 
   public static int ConstNullIdx(bhl.Module module)

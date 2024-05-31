@@ -41,26 +41,26 @@ public struct SyncContext
   public IFactory factory;
   public TypeRefIndex refs;
 
-  public static SyncContext NewReader(IReader reader, IFactory factory = null)
+  public static SyncContext NewReader(IReader reader, IFactory factory = null, TypeRefIndex refs = null)
   {
     var ctx = new SyncContext() {
       is_read = true,
       reader = reader,
       writer = null,
       factory = factory,
-      refs = new TypeRefIndex()
+      refs = refs ?? new TypeRefIndex()
     };
     return ctx;
   }
 
-  public static SyncContext NewWriter(IWriter writer, IFactory factory = null)
+  public static SyncContext NewWriter(IWriter writer, IFactory factory = null, TypeRefIndex refs = null)
   {
     var ctx = new SyncContext() {
       is_read = false,
       reader = null,
       writer = writer,
       factory = factory,
-      refs = new TypeRefIndex()
+      refs = refs ?? new TypeRefIndex()
       
     };
     return ctx;
@@ -518,15 +518,15 @@ public static class Marshall
   
   static public void Sync(SyncContext ctx, TypeRefIndex v)
   {
-    int size = BeginArray(ctx, v.refs);
+    int size = BeginArray(ctx, v.all);
     for(int i = 0; i < size; ++i)
     {
-      var tmp = ctx.is_read ? new Proxy<IType>() : v.refs[i];
+      var tmp = ctx.is_read ? new Proxy<IType>() : v.all[i];
       Sync(ctx, ref tmp);
       if(ctx.is_read) 
-        v.refs.Add(tmp);
+        v.all.Add(tmp);
     }
-    EndArray(ctx, v.refs);
+    EndArray(ctx, v.all);
   }
 
   static public T File2Obj<T>(string file, IFactory f = null) where T : IMarshallable, new()
@@ -537,20 +537,20 @@ public static class Marshall
     }
   }
 
-  static public void Stream2Obj<T>(Stream s, T obj, IFactory f = null) where T : IMarshallable
+  static public void Stream2Obj<T>(Stream s, T obj, IFactory f = null, TypeRefIndex refs = null) where T : IMarshallable
   {
     var reader = new MsgPackDataReader(s);
-    var ctx = SyncContext.NewReader(reader, f); 
+    var ctx = SyncContext.NewReader(reader, f, refs); 
     ctx.reader.BeginContainer();
     Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);
     ctx.reader.EndContainer();
   }
 
-  static public T Stream2Obj<T>(Stream s, IFactory f = null) where T : IMarshallable, new()
+  static public T Stream2Obj<T>(Stream s, IFactory f = null, TypeRefIndex refs = null) where T : IMarshallable, new()
   {
     var obj = new T();
-    Stream2Obj(s, obj);
+    Stream2Obj(s, obj, f, refs);
     return obj;
   }
 
@@ -560,11 +560,11 @@ public static class Marshall
     Sync(SyncContext.NewWriter(writer), ref obj);
   }
 
-  static public byte[] Obj2Bytes<T>(T obj) where T : IMarshallable
+  static public byte[] Obj2Bytes<T>(T obj, TypeRefIndex refs = null) where T : IMarshallable
   {
     var dst = new MemoryStream();
     var writer = new MsgPackDataWriter(dst);
-    var ctx = SyncContext.NewWriter(writer);
+    var ctx = SyncContext.NewWriter(writer, null, refs);
     
     obj.IndexTypeRefs(ctx);
     ctx.writer.BeginContainer(2);
