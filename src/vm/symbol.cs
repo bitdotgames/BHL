@@ -2139,11 +2139,8 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 
   public bool Add(ProxyType tp)
   {
-    foreach(var item in list)
-    {
-      if(item.Equals(tp))
-        return false;
-    }
+    if(list.IndexOf(tp) != -1)
+      return false;
     list.Add(tp);
     return true;
   }
@@ -2169,6 +2166,7 @@ public class TypeRefIndex
 {
   internal List<ProxyType> all = new List<ProxyType>();
 
+  //TODO: should not really be here?
   HashSet<IType> seen = new HashSet<IType>();
 
   public int Count {
@@ -2197,12 +2195,7 @@ public class TypeRefIndex
 
   public int Find(ProxyType v)
   {
-    for(int i = 0; i < all.Count; ++i)
-    {
-      if(all[i].Equals(v))
-        return i;
-    }
-    return -1;
+    return all.IndexOf(v);
   }
 
   public int Get(ProxyType v)
