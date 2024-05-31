@@ -28,7 +28,7 @@ public class TestClass : BHL_TestBase
         .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
         .EmitThen(Opcodes.SetVar, new int[] { 0 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
-        .EmitThen(Opcodes.Constant, new int[] { 1 })
+        .EmitThen(Opcodes.Constant, new int[] { 0 })
         .EmitThen(Opcodes.NotEqual)
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.ExitFrame)
