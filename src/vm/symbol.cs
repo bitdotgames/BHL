@@ -32,7 +32,7 @@ public abstract class Symbol : INamed, marshall.IMarshallableGeneric
 
   public abstract uint ClassId();
 
-  public abstract void IndexTypeRefs(marshall.SyncContext ctx);
+  public abstract void IndexTypeRefs(TypeRefIndex refs);
   public abstract void Sync(marshall.SyncContext ctx);
 }
 
@@ -49,9 +49,9 @@ public class IntSymbol : Symbol, IType
     return CLASS_ID;
   }
   
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -75,9 +75,9 @@ public class BoolSymbol : Symbol, IType
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -101,9 +101,9 @@ public class StringSymbol : ClassSymbolNative
     return CLASS_ID;
   }
   
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -127,9 +127,9 @@ public class FloatSymbol : Symbol, IType
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -153,9 +153,9 @@ public class VoidSymbol : Symbol, IType
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -179,9 +179,9 @@ public class AnySymbol : Symbol, IType
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 
@@ -206,9 +206,9 @@ public class NullSymbol : ClassSymbolScript
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 }
@@ -226,9 +226,9 @@ public class VarSymbol : Symbol
     return CLASS_ID;
   }
 
-  //contains no data
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
+  //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {}
 }
@@ -330,11 +330,11 @@ public class InterfaceSymbolScript : InterfaceSymbol
     return CLASS_ID;
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    inherits.IndexTypeRefs(ctx);
+    inherits.IndexTypeRefs(refs);
     foreach(var m in members)
-      m.IndexTypeRefs(ctx);
+      m.IndexTypeRefs(refs);
     
   }
   
@@ -407,10 +407,10 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
     throw new NotImplementedException();
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
     foreach(var i in proxy_inherits)
-      i.IndexTypeRefs(ctx);
+      i.IndexTypeRefs(refs);
   }
   
   public override void Sync(marshall.SyncContext ctx)
@@ -835,9 +835,9 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
     return CLASS_ID;
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    type.IndexTypeRefs(ctx);
+    type.IndexTypeRefs(refs);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1198,11 +1198,11 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     return idx - this_offset;
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    _signature.IndexTypeRefs(ctx);
+    _signature.IndexTypeRefs(refs);
     foreach(var m in members)
-      m.IndexTypeRefs(ctx);
+      m.IndexTypeRefs(refs);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1727,7 +1727,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     throw new NotImplementedException();
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
   
   public override void Sync(marshall.SyncContext ctx)
@@ -1787,12 +1787,12 @@ public class ClassSymbolScript : ClassSymbol
     return CLASS_ID;
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    _super_class.IndexTypeRefs(ctx);
+    _super_class.IndexTypeRefs(refs);
     foreach(var m in members)
-      m.IndexTypeRefs(ctx);
-    implements.IndexTypeRefs(ctx);
+      m.IndexTypeRefs(refs);
+    implements.IndexTypeRefs(refs);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1841,7 +1841,7 @@ public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
     throw new NotImplementedException();
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
   }
   
@@ -1946,7 +1946,7 @@ public class EnumItemSymbol : Symbol, IType
     return CLASS_ID;
   }
   
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
 
   public override void Sync(marshall.SyncContext ctx)
@@ -2068,10 +2068,10 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
     name2idx.Clear();
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
     foreach(var item in list)
-      item.IndexTypeRefs(ctx);
+      item.IndexTypeRefs(refs);
   }
 
   public void Sync(marshall.SyncContext ctx) 
@@ -2149,10 +2149,10 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
     list.Clear();
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
     foreach(var item in list)
-      item.IndexTypeRefs(ctx);
+      item.IndexTypeRefs(refs);
   }
 
   public void Sync(marshall.SyncContext ctx) 
@@ -2336,6 +2336,8 @@ public class SymbolFactory : marshall.IFactory
       case FieldSymbolScript.CLASS_ID:
         return new FieldSymbolScript(); 
       case GenericArrayTypeSymbol.CLASS_ID:
+        return new GenericArrayTypeSymbol(); 
+      case GenericNativeArrayTypeSymbol.CLASS_ID:
         return new GenericArrayTypeSymbol(); 
       case GenericMapTypeSymbol.CLASS_ID:
         return new GenericMapTypeSymbol(); 

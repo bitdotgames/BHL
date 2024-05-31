@@ -283,9 +283,11 @@ public class ModuleCompiler : AST_Visitor
     return constants.Count-1;
   }
 
-  int AddTypeRef(IType new_itype)
+  int AddTypeRef(IType itype)
   {
-    return type_refs.Add(new Proxy<IType>(new_itype));
+    var tp = new Proxy<IType>(itype);
+    tp.IndexTypeRefs(type_refs);
+    return type_refs.Get(tp);
   }
 
   int AddConstant(string str)

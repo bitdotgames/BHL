@@ -396,10 +396,10 @@ public class Namespace : Symbol, IScope,
     members.Add(sym);
   }
   
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
     foreach(var m in members)
-      m.IndexTypeRefs(ctx);
+      m.IndexTypeRefs(refs);
   }
 
   public override void Sync(marshall.SyncContext ctx) 

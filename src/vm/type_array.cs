@@ -187,9 +187,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
   
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    item_type.IndexTypeRefs(ctx);
+    item_type.IndexTypeRefs(refs);
   }
   
   public abstract void ArrCreate(VM vm, ref Val arr);
@@ -207,7 +207,7 @@ public class GenericArrayTypeSymbol :
   ArrayTypeSymbol, IEquatable<GenericArrayTypeSymbol>, IEphemeralType
 {
   public const uint CLASS_ID = 10;
-    
+  
   public GenericArrayTypeSymbol(Origin origin, Proxy<IType> item_type)
     : base(origin, item_type)
   {}
@@ -330,10 +330,12 @@ public class GenericArrayTypeSymbol :
   }
 }
 
-public abstract class GenericNativeArraySymbol : 
-  ArrayTypeSymbol, IEphemeralType, IEquatable<GenericNativeArraySymbol>
+public abstract class GenericNativeArrayTypeSymbol : 
+  ArrayTypeSymbol, IEquatable<GenericNativeArrayTypeSymbol>
 {
-  public GenericNativeArraySymbol(
+  public const uint CLASS_ID = 24;
+  
+  public GenericNativeArrayTypeSymbol(
     Origin origin, string name, Proxy<IType> item_type)
     : base(origin, name, item_type)
   {}
@@ -384,19 +386,19 @@ public abstract class GenericNativeArraySymbol :
     throw new NotImplementedException();
   }
 
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {}
   public override void Sync(marshall.SyncContext ctx)
   {}
   
   public override bool Equals(object o)
   {
-    if(!(o is GenericNativeArraySymbol))
+    if(!(o is GenericNativeArrayTypeSymbol))
       return false;
-    return this.Equals((GenericNativeArraySymbol)o);
+    return this.Equals((GenericNativeArrayTypeSymbol)o);
   }
 
-  public bool Equals(GenericNativeArraySymbol o)
+  public bool Equals(GenericNativeArrayTypeSymbol o)
   {
     if(ReferenceEquals(o, null))
       return false;
@@ -411,15 +413,15 @@ public abstract class GenericNativeArraySymbol :
   }
 }
 
-public class NativeListSymbol<T> : GenericNativeArraySymbol
+public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
 {
   Func<Val, T> val2native;
-  Func<VM, T, Val> native2val;
+  Func<VM, Proxy<IType>, T, Val> native2val;
 
-  public NativeListSymbol(
+  public NativeListTypeSymbol(
     Origin origin, string name, 
     Func<Val, T> val2native,
-    Func<VM, T, Val> native2val,
+    Func<VM, Proxy<IType>, T, Val> native2val,
     Proxy<IType> item_type
     )
     : base(origin, name, item_type)
@@ -448,7 +450,7 @@ public class NativeListSymbol<T> : GenericNativeArraySymbol
   public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = (List<T>)arr._obj;
-    return native2val(arr.vm, lst[idx]);
+    return native2val(arr.vm, item_type, lst[idx]);
   }
 
   public override void ArrSetAt(Val arr, int idx, Val val)
@@ -461,6 +463,11 @@ public class NativeListSymbol<T> : GenericNativeArraySymbol
   {
     var lst = (List<T>)arr._obj;
     return lst.IndexOf(val2native(val));
+  }
+  
+  public override uint ClassId()
+  {
+    throw new NotImplementedException();
   }
 }
 

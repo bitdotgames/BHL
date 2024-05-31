@@ -103,10 +103,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     enumerator_type.Setup();
   }
   
-  public override void IndexTypeRefs(marshall.SyncContext ctx)
+  public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    key_type.IndexTypeRefs(ctx);
-    val_type.IndexTypeRefs(ctx);
+    key_type.IndexTypeRefs(refs);
+    val_type.IndexTypeRefs(refs);
   }
   
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);

@@ -112,13 +112,13 @@ public struct Proxy<T> : IMarshallable, IEquatable<Proxy<T>> where T : class, IT
     return (obj is Symbol sym) ? sym.GetFullPath() : obj.GetName();
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
-    //let's index deeper types first 
+    //let's index 'deeper' types first 
     if(Get() is marshall.IMarshallable im)
-      im.IndexTypeRefs(ctx);
-    
-    ctx.refs.Add(GetGeneric());
+      im.IndexTypeRefs(refs);
+
+    refs.Add(GetGeneric());
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -206,9 +206,9 @@ public class RefType : IEphemeralType, IEquatable<RefType>
     name = "ref " + subj;
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
-    subj.IndexTypeRefs(ctx);
+    subj.IndexTypeRefs(refs);
   }
   
   public void Sync(marshall.SyncContext ctx)
@@ -303,10 +303,10 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
     return CLASS_ID;
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
     foreach(var item in items)
-      item.IndexTypeRefs(ctx);
+      item.IndexTypeRefs(refs);
   }
   
   public void Sync(marshall.SyncContext ctx)
@@ -426,11 +426,11 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     return CLASS_ID;
   }
 
-  public void IndexTypeRefs(marshall.SyncContext ctx)
+  public void IndexTypeRefs(TypeRefIndex refs)
   {
-    ret_type.IndexTypeRefs(ctx);
+    ret_type.IndexTypeRefs(refs);
     foreach(var arg_type in arg_types)
-      arg_type.IndexTypeRefs(ctx);
+      arg_type.IndexTypeRefs(refs);
   }
 
   public void Sync(marshall.SyncContext ctx)

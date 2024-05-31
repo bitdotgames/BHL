@@ -724,11 +724,11 @@ public class TestArrays : BHL_TestBase
     ";
 
     var ts_fn = new Action<Types>((ts) => {
-      var ArrayInts = new NativeListSymbol<int>(
+      var ArrayInts = new NativeListTypeSymbol<int>(
         new Origin(), 
         "List_int",
         (v) => (int)v._num,
-        (_vm, n) => Val.NewInt(_vm, n),
+        (_vm, itype, n) => Val.NewInt(_vm, n),
         Types.Int
         ); 
       ArrayInts.Setup();
@@ -743,29 +743,29 @@ public class TestArrays : BHL_TestBase
   [IsTested()]
   public void TestNativeListEquality()
   {
-    var ArrayInts1 = new NativeListSymbol<int>(
+    var ArrayInts1 = new NativeListTypeSymbol<int>(
       new Origin(), 
       "List_int",
       (v) => (int)v._num,
-      (_vm, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => Val.NewInt(_vm, n),
       Types.Int
       ); 
     ArrayInts1.Setup();
     
-    var ArrayInts2 = new NativeListSymbol<int>(
+    var ArrayInts2 = new NativeListTypeSymbol<int>(
       new Origin(), 
       "List_int",
       (v) => (int)v._num,
-      (_vm, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => Val.NewInt(_vm, n),
       Types.Int
       ); 
     ArrayInts2.Setup();
     
-    var ArrayString = new NativeListSymbol<string>(
+    var ArrayString = new NativeListTypeSymbol<string>(
       new Origin(), 
       "List_string",
       (v) => v.str,
-      (_vm, n) => Val.NewStr(_vm, n),
+      (_vm, itype, n) => Val.NewStr(_vm, n),
       Types.String
       ); 
     ArrayString.Setup();
