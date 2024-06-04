@@ -755,25 +755,31 @@ public class CompilationExecutor
       try
       {
         //phase 1: visit AST
-        for(int i = w.start;i<(w.start + w.count);++i)
+        try
         {
-          current_file = w.conf.files[i]; 
-
-          var interim = w.file2interim[current_file];
-
-          if(interim.cached == null)
+          for(int i = w.start;i<(w.start + w.count);++i)
           {
-            var proc = w.file2proc[current_file];
+            current_file = w.conf.files[i]; 
 
-            var proc_result = w.postproc.Patch(proc.result, current_file);
+            var interim = w.file2interim[current_file];
 
-            var c = new ModuleCompiler(proc_result);
-            w.file2compiler.Add(current_file, c);
-            c.Compile_VisitAST();
+            if(interim.cached == null)
+            {
+              var proc = w.file2proc[current_file];
+
+              var proc_result = w.postproc.Patch(proc.result, current_file);
+              w.errors.AddRange(proc_result.errors);
+
+              var c = new ModuleCompiler(proc_result);
+              w.file2compiler.Add(current_file, c);
+              c.Compile_VisitAST();
+            }
           }
         }
-
-        w.patch_barrier.SignalAndWait();
+        finally
+        {
+          w.patch_barrier.SignalAndWait();
+        }
         
         //phase 2: patch instructions
         //happens within a barrier
