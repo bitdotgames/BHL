@@ -105,8 +105,8 @@ public abstract class MapTypeSymbol : ClassSymbol
   
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    key_type.IndexTypeRefs(refs);
-    val_type.IndexTypeRefs(refs);
+    refs.Index(key_type);
+    refs.Index(val_type);
   }
   
   public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);

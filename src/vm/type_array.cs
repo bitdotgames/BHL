@@ -189,7 +189,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    item_type.IndexTypeRefs(refs);
+    refs.Index(item_type);
   }
   
   public abstract void ArrCreate(VM vm, ref Val arr);

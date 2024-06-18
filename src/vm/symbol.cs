@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using bhl.marshall;
 
 namespace bhl {
 
-public abstract class Symbol : INamed, marshall.IMarshallableGeneric 
+public abstract class Symbol : INamed, ITypeRefIndexable, marshall.IMarshallableGeneric 
 {
   public string name;
 
@@ -332,10 +333,8 @@ public class InterfaceSymbolScript : InterfaceSymbol
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    inherits.IndexTypeRefs(refs);
-    foreach(var m in members)
-      m.IndexTypeRefs(refs);
-    
+    refs.Index(inherits.list);
+    refs.Index(members.list);
   }
   
   public override void Sync(marshall.SyncContext ctx)
@@ -410,10 +409,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
     if(proxy_inherits != null)
-    {
-      foreach(var i in proxy_inherits)
-        i.IndexTypeRefs(refs);
-    }
+      refs.Index(proxy_inherits);
   }
   
   public override void Sync(marshall.SyncContext ctx)
@@ -841,7 +837,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    type.IndexTypeRefs(refs);
+    refs.Index(type);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1204,9 +1200,8 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    _signature.IndexTypeRefs(refs);
-    foreach(var m in members)
-      m.IndexTypeRefs(refs);
+    refs.Index(_signature);
+    refs.Index(members.list);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1793,10 +1788,9 @@ public class ClassSymbolScript : ClassSymbol
 
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    _super_class.IndexTypeRefs(refs);
-    foreach(var m in members)
-      m.IndexTypeRefs(refs);
-    implements.IndexTypeRefs(refs);
+    refs.Index(_super_class);
+    refs.Index(members.list);
+    refs.Index(implements.list);
   }
 
   public override void Sync(marshall.SyncContext ctx)
@@ -1963,7 +1957,7 @@ public class EnumItemSymbol : Symbol, IType
 public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 {
   IScope scope;
-  List<Symbol> list = new List<Symbol>();
+  internal List<Symbol> list = new List<Symbol>();
   //NOTE: used for lookup by name
   Dictionary<string, int> name2idx = new Dictionary<string, int>();
 
@@ -2072,12 +2066,6 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
     name2idx.Clear();
   }
 
-  public void IndexTypeRefs(TypeRefIndex refs)
-  {
-    foreach(var item in list)
-      item.IndexTypeRefs(refs);
-  }
-
   public void Sync(marshall.SyncContext ctx) 
   {
     marshall.Marshall.SyncGeneric(ctx, list);
@@ -2109,7 +2097,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
-  List<ProxyType> list = new List<ProxyType>();
+  internal List<ProxyType> list = new List<ProxyType>();
 
   public int Count
   {
@@ -2150,12 +2138,6 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
     list.Clear();
   }
 
-  public void IndexTypeRefs(TypeRefIndex refs)
-  {
-    foreach(var item in list)
-      item.IndexTypeRefs(refs);
-  }
-
   public void Sync(marshall.SyncContext ctx) 
   {
     marshall.Marshall.SyncRefs(ctx, list);
@@ -2165,9 +2147,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 public class TypeRefIndex
 {
   internal List<ProxyType> all = new List<ProxyType>();
-
-  //TODO: should not really be here?
-  HashSet<IType> seen = new HashSet<IType>();
+  HashSet<ProxyType> seen = new HashSet<ProxyType>();
 
   public int Count {
     get {
@@ -2175,22 +2155,41 @@ public class TypeRefIndex
     }
   }
 
-  public bool RecursionGuard(IType type)
+  public void Index(ProxyType v)
   {
-    if(seen.Contains(type))
-      return true;
-    seen.Add(type);
-    return false;
-  }
-  
-  public int Add(ProxyType v)
-  {
-    int idx = Find(v);
-    if(idx != -1)
-      return idx;
+    if(seen.Contains(v))
+      return;
+    seen.Add(v);
+    
+    if(v.Get() is ITypeRefIndexable itr)
+      itr.IndexTypeRefs(this);
 
     all.Add(v);
-    return all.Count - 1;
+  }
+
+  public void Index(IType v)
+  {
+    Index(new ProxyType(v));
+  }
+
+  public void Index(Symbol s)
+  {
+    if(s is IType itype)
+      Index(itype);
+    else if(s is ITypeRefIndexable itr)
+      itr.IndexTypeRefs(this);
+  }
+  
+  public void Index(IList<ProxyType> vs)
+  {
+    foreach(var v in vs)
+      Index(v);
+  }
+  
+  public void Index(IList<Symbol> vs)
+  {
+    foreach(var v in vs)
+      Index(v);
   }
 
   public int Find(ProxyType v)

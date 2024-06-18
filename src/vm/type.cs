@@ -13,8 +13,13 @@ public interface INamed
 public interface IType : INamed
 {}
 
+public interface ITypeRefIndexable
+{
+  void IndexTypeRefs(TypeRefIndex refs);
+}
+
 // Denotes types which are created 'on the fly'
-public interface IEphemeralType : IType, IMarshallableGeneric
+public interface IEphemeralType : IType, ITypeRefIndexable, IMarshallableGeneric
 {}
 
 public interface IInstantiable : IType, IScope 
@@ -78,11 +83,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     return resolved;
   }
 
-  public T Get<T>() where T : IType
-  {
-    return (T)Get();
-  }
-
   void SetResolved(IType resolved)
   {
     this.resolved = resolved;
@@ -97,19 +97,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     //for symbols full path is used
     return (obj is Symbol sym) ? sym.GetFullPath() : obj.GetName();
-  }
-
-  public void IndexTypeRefs(TypeRefIndex refs)
-  {
-    var r = Get();
-    if(refs.RecursionGuard(r))
-      return;
-    
-    //let's index 'deeper' types first 
-    if(r is marshall.IMarshallable im)
-      im.IndexTypeRefs(refs);
-
-    refs.Add(this);
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -148,12 +135,13 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public bool Equals(ProxyType o)
   {
-    if(o.resolver == resolver && o.path == path)
-      return true;
-
     if(o.resolved != null && resolved != null)
       return o.resolved.Equals(resolved);
+    
+    if(o.resolver == resolver && o.path == path)
+      return true;
      
+    //let's resolve the type
     Get();
     
     if(resolved != null)
@@ -164,7 +152,9 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public override int GetHashCode()
   {
-    return path.GetHashCode();
+    return resolved != null ? 
+      resolved.GetHashCode() : 
+      path?.GetHashCode() ?? 0;
   }
 }
 
@@ -199,7 +189,7 @@ public class RefType : IEphemeralType, IEquatable<RefType>
 
   public void IndexTypeRefs(TypeRefIndex refs)
   {
-    subj.IndexTypeRefs(refs);
+    refs.Index(subj);
   }
   
   public void Sync(marshall.SyncContext ctx)
@@ -296,8 +286,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
 
   public void IndexTypeRefs(TypeRefIndex refs)
   {
-    foreach(var item in items)
-      item.IndexTypeRefs(refs);
+    refs.Index(items);
   }
   
   public void Sync(marshall.SyncContext ctx)
@@ -419,9 +408,8 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 
   public void IndexTypeRefs(TypeRefIndex refs)
   {
-    ret_type.IndexTypeRefs(refs);
-    foreach(var arg_type in arg_types)
-      arg_type.IndexTypeRefs(refs);
+    refs.Index(ret_type);
+    refs.Index(arg_types);
   }
 
   public void Sync(marshall.SyncContext ctx)

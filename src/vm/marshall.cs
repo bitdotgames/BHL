@@ -69,7 +69,6 @@ public struct SyncContext
 
 public interface IMarshallable
 {
-  void IndexTypeRefs(TypeRefIndex refs);
   void Sync(SyncContext ctx);
 }
 
@@ -562,8 +561,10 @@ public static class Marshall
     var dst = new MemoryStream();
     var writer = new MsgPackDataWriter(dst);
     var ctx = SyncContext.NewWriter(writer, null, refs);
+
+    if(obj is ITypeRefIndexable itr)
+      itr.IndexTypeRefs(ctx.refs);
     
-    obj.IndexTypeRefs(ctx.refs);
     ctx.writer.BeginContainer(2);
     Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);

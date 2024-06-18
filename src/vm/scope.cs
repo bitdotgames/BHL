@@ -398,8 +398,7 @@ public class Namespace : Symbol, IScope,
   
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
-    foreach(var m in members)
-      m.IndexTypeRefs(refs);
+    refs.Index(members.list);
   }
 
   public override void Sync(marshall.SyncContext ctx) 
