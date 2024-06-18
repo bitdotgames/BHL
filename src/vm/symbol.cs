@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using bhl.marshall;
 
 namespace bhl {
 
@@ -2155,16 +2154,22 @@ public class TypeRefIndex
     }
   }
 
+  void TryAdd(ProxyType v)
+  {
+    if(FindIndex(v) == -1)
+      all.Add(v);
+  }
+
   public void Index(ProxyType v)
   {
     if(seen.Contains(v))
       return;
     seen.Add(v);
-    
+      
     if(v.Get() is ITypeRefIndexable itr)
       itr.IndexTypeRefs(this);
-
-    all.Add(v);
+    
+    TryAdd(v);
   }
 
   public void Index(IType v)
@@ -2192,14 +2197,14 @@ public class TypeRefIndex
       Index(v);
   }
 
-  public int Find(ProxyType v)
+  public int FindIndex(ProxyType v)
   {
     return all.IndexOf(v);
   }
 
-  public int Get(ProxyType v)
+  public int GetIndex(ProxyType v)
   {
-    int idx = Find(v);
+    int idx = FindIndex(v);
     if(idx == -1)
       throw new Exception("Not found index for type '" + v + "'");
     return idx;

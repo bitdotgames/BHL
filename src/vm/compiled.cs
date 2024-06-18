@@ -237,7 +237,15 @@ public class CompiledModule
       foreach(var import in module.compiled.imports)
         w.Write(import);
 
-      var symb_bytes = marshall.Marshall.Obj2Bytes(module.ns, module.compiled.type_refs);
+      var symb_bytes = marshall.Marshall.Obj2Bytes(
+        module.ns, 
+        module.compiled.type_refs);
+      
+      //for debug
+      //Console.WriteLine("==== module: " + module.name + ", refs: " + module.compiled.type_refs.Count);
+      //for(int t=0;t<module.compiled.type_refs.all.Count;++t)
+      //  Console.WriteLine("TYPE PROXY #" + t + " " + module.compiled.type_refs.all[t]);
+      
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 

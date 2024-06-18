@@ -27,6 +27,7 @@ public class TestVM : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
+    AssertEqual(c.compiled.type_refs.Count, 2);
     AssertEqual(c.compiled.constants.Count, 1);
 
     var vm = MakeVM(c);

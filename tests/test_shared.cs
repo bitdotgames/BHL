@@ -836,7 +836,7 @@ public class BHL_TestBase
 
   public static int TypeIdx(bhl.Module module, ProxyType v)
   {
-    return module.compiled.type_refs.Get(v);
+    return module.compiled.type_refs.GetIndex(v);
   }
 
   public static int ConstNullIdx(bhl.Module module)

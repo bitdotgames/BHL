@@ -490,11 +490,12 @@ public static class Marshall
     {
       int idx = 0; 
       ctx.reader.ReadI32(ref idx);
-      v = ctx.refs.Get(idx);
+      //lazy version
+      v = new ProxyType(idx, ctx.refs);
     }
     else
     {
-      int idx = ctx.refs.Get(v);
+      int idx = ctx.refs.GetIndex(v);
       ctx.writer.WriteI32(idx);
     }
   }
@@ -562,9 +563,6 @@ public static class Marshall
     var writer = new MsgPackDataWriter(dst);
     var ctx = SyncContext.NewWriter(writer, null, refs);
 
-    if(obj is ITypeRefIndexable itr)
-      itr.IndexTypeRefs(ctx.refs);
-    
     ctx.writer.BeginContainer(2);
     Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);

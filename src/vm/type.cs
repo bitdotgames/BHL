@@ -33,9 +33,11 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   public IType resolved;
   
   public INamedResolver resolver;
-
   //NOTE: for symbols it's a full absolute path from the very top namespace
-  public string path; 
+  public string path;
+
+  internal int refs_index;
+  internal TypeRefIndex refs;
 
   public ProxyType(INamedResolver resolver, string path)
   {
@@ -45,22 +47,42 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       throw new Exception("Type spec contains illegal characters: '" + path + "'");
     
     this.resolver = resolver;
-    resolved = null;
     this.path = path;
+    
+    resolved = null;
+
+    refs_index = -1;
+    refs = null;
   }
 
   public ProxyType(IType obj)
   {
     resolver = null;
-    resolved = null;
     path = null;
+    
+    resolved = null;
+    
+    refs_index = -1;
+    refs = null;
     
     SetResolved(obj);
   }
-  
+
+  public ProxyType(int idx, TypeRefIndex refs)
+  {
+    resolver = null;
+    path = null;
+
+    resolved = null;
+
+    refs_index = idx;
+    this.refs = refs;
+  }
+
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(path) && 
+           refs == null &&
            resolved == null;
   }
 
@@ -68,6 +90,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     path = null;
     resolved = null;
+    refs = null;
   }
 
   public IType Get()
@@ -75,10 +98,10 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     if(resolved != null)
       return resolved;
 
-    if(string.IsNullOrEmpty(path))
-      return null;
-
-    SetResolved((IType)resolver.ResolveNamedByPath(path));
+    if(refs != null)
+      SetResolved(refs.Get(refs_index).Get());
+    else if(!string.IsNullOrEmpty(path))
+      SetResolved((IType)resolver.ResolveNamedByPath(path));
 
     return resolved;
   }
@@ -121,8 +144,10 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       marshall.Marshall.Sync(ctx, ref path);
   }
 
-  public override string ToString() 
+  public override string ToString()
   {
+    if(resolved == null && refs != null)
+      Get();
     return path;
   }
 
@@ -135,26 +160,31 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public bool Equals(ProxyType o)
   {
-    if(o.resolved != null && resolved != null)
+    if(resolved != null && o.resolved != null)
       return o.resolved.Equals(resolved);
-    
-    if(o.resolver == resolver && o.path == path)
+    else if(resolver != null && o.resolver == resolver && o.path == path)
+      return true;
+    else if(refs != null && o.refs == refs && o.refs_index == refs_index)
       return true;
      
-    //let's resolve the type
+    //OK nothing worked, let's resolve the type
     Get();
-    
+
     if(resolved != null)
       return resolved.Equals(o.Get());
     else //null check
-      return null == o.Get() && o.resolver == resolver;
+      return null == o.Get();
   }
 
   public override int GetHashCode()
   {
-    return resolved != null ? 
-      resolved.GetHashCode() : 
-      path?.GetHashCode() ?? 0;
+    if(resolved != null)
+      return resolved.GetHashCode();
+
+    if(refs != null)
+      return refs_index.GetHashCode();
+    
+    return path?.GetHashCode() ?? 0;
   }
 }
 
