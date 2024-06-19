@@ -716,13 +716,18 @@ public class TestArrays : BHL_TestBase
     string bhl = @"
     func test() 
     {
-      []int ns = new List_int
+      var lst = new List_int
+      []int ns = lst
       ns.Add(100)
       ns.RemoveAt(0)
       ns.Add(200)
+      ns.Add(300)
+
+      trace((string)ns[0] + "";"" + lst.At(1))
     }
     ";
 
+    var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => {
       var ArrayInts = new NativeListTypeSymbol<int>(
         new Origin(), 
@@ -733,10 +738,13 @@ public class TestArrays : BHL_TestBase
         ); 
       ArrayInts.Setup();
       ts.ns.Define(ArrayInts);
+      
+      BindTrace(ts, log);
     });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
+    AssertEqual(log.ToString(), "200;300");
     CommonChecks(vm);
   }
 

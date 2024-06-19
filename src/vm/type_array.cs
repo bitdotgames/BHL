@@ -22,13 +22,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     this.item_type = item_type;
   }
 
-  public override void Setup()
+  protected virtual void DefineMembers()
   {
-    if(item_type.IsEmpty())
-      throw new Exception("Invalid item type");
-
-    this.creator = BindCreateArr;
-
     //NOTE: must be first member of the class
     {
       var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, BindAdd,
@@ -78,6 +73,16 @@ public abstract class ArrayTypeSymbol : ClassSymbol
       //hidden system method not available directly
       FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, BindArrIdxW);
     }
+  }
+
+  public override void Setup()
+  {
+    if(item_type.IsEmpty())
+      throw new Exception("Invalid item type");
+
+    this.creator = BindCreateArr;
+
+    DefineMembers();
 
     base.Setup();
   }
@@ -428,6 +433,30 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
   {
     this.val2native = val2native;
     this.native2val = native2val;
+  }
+  
+  protected override void DefineMembers()
+  {
+    base.DefineMembers();
+    
+    {
+      var fn = new FuncSymbolNative(new Origin(), "At", item_type,
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      {
+        int idx = (int)stack.PopRelease().num;
+        var arr = stack.Pop();
+
+        var res = ArrGetAt(arr, idx);
+        
+        stack.Push(res);
+        
+        arr.Release();
+        return null;
+      },
+      new FuncArgSymbol("idx", Types.Int)
+      );
+      Define(fn);
+    }
   }
   
   public override IList CreateList()
