@@ -39,7 +39,9 @@ public struct SyncContext
   public IReader reader;
   public IWriter writer;
   public IFactory factory;
-  public TypeRefIndex refs;
+  public TypeRefIndex type_refs;
+  public IReader type_refs_reader;
+  public List<int> type_refs_offsets;
 
   public static SyncContext NewReader(IReader reader, IFactory factory = null, TypeRefIndex refs = null)
   {
@@ -48,7 +50,7 @@ public struct SyncContext
       reader = reader,
       writer = null,
       factory = factory,
-      refs = refs ?? new TypeRefIndex()
+      type_refs = refs ?? new TypeRefIndex()
     };
     return ctx;
   }
@@ -60,7 +62,7 @@ public struct SyncContext
       reader = null,
       writer = writer,
       factory = factory,
-      refs = refs ?? new TypeRefIndex()
+      type_refs = refs ?? new TypeRefIndex()
       
     };
     return ctx;
@@ -72,11 +74,6 @@ public interface IMarshallable
   void Sync(SyncContext ctx);
 }
 
-public interface IFixedStruct
-{
-  int GetFieldsNum();
-}
-
 public interface IMarshallableGeneric : IMarshallable 
 {
   uint ClassId();
@@ -84,6 +81,8 @@ public interface IMarshallableGeneric : IMarshallable
 
 public interface IReader 
 {
+  Stream Stream { get; }
+  
   void ReadI8(ref sbyte v);
   void ReadU8(ref byte v);
   void ReadI16(ref short v);
@@ -104,6 +103,8 @@ public interface IReader
 
 public interface IWriter 
 {
+  Stream Stream { get; }
+  
   void WriteI8(sbyte v);
   void WriteU8(byte v);
   void WriteI16(short v);
@@ -442,7 +443,7 @@ public static class Marshall
     }
     else
     {
-      int fields_num = v == null ? 0 : (v is IFixedStruct fs ? fs.GetFieldsNum() : -1);
+      int fields_num = v == null ? 0 : -1/*unspecified*/;
        //class id
       if(fields_num != -1)
         ++fields_num;
@@ -478,10 +479,32 @@ public static class Marshall
     }
     else
     {
-      ctx.writer.BeginContainer(v is IFixedStruct fs ? fs.GetFieldsNum() : -1);
+      ctx.writer.BeginContainer(-1/*unspecified amount of fields*/);
       v.Sync(ctx);
       ctx.writer.EndContainer();
     }
+  }
+
+  static public ProxyType ReadRefAt(SyncContext ctx, int idx)
+  {
+     if(!ctx.type_refs.IsValid(idx))
+     {
+       //let's make a temporary specialized copy of the sync ctx
+       var ctx_tmp = ctx;
+       ctx_tmp.reader = ctx.type_refs_reader; 
+       
+       var old_pos = ctx_tmp.reader.Stream.Position;
+       ctx_tmp.reader.Stream.Position = ctx.type_refs_offsets[idx];
+       
+       var tmp = new ProxyType();
+       Sync(ctx_tmp, ref tmp);
+
+       ctx_tmp.reader.Stream.Position = old_pos;
+
+       ctx.type_refs.SetAt(idx, tmp);
+     }
+
+     return ctx.type_refs.Get(idx);
   }
   
   static public void SyncRef(SyncContext ctx, ref ProxyType v)
@@ -490,12 +513,11 @@ public static class Marshall
     {
       int idx = 0; 
       ctx.reader.ReadI32(ref idx);
-      //lazy version
-      v = new ProxyType(idx, ctx.refs);
+      v = ReadRefAt(ctx, idx);
     }
     else
     {
-      int idx = ctx.refs.GetIndex(v);
+      int idx = ctx.type_refs.GetIndex(v);
       ctx.writer.WriteI32(idx);
     }
   }
@@ -512,19 +534,6 @@ public static class Marshall
     }
     EndArray(ctx, v);
   }
-  
-  static public void Sync(SyncContext ctx, TypeRefIndex v)
-  {
-    int size = BeginArray(ctx, v.all);
-    for(int i = 0; i < size; ++i)
-    {
-      var tmp = ctx.is_read ? new ProxyType() : v.all[i];
-      Sync(ctx, ref tmp);
-      if(ctx.is_read) 
-        v.all.Add(tmp);
-    }
-    EndArray(ctx, v.all);
-  }
 
   static public T File2Obj<T>(string file, IFactory f = null) where T : IMarshallable, new()
   {
@@ -538,10 +547,7 @@ public static class Marshall
   {
     var reader = new MsgPackDataReader(s);
     var ctx = SyncContext.NewReader(reader, f, refs); 
-    ctx.reader.BeginContainer();
-    Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);
-    ctx.reader.EndContainer();
   }
 
   static public T Stream2Obj<T>(Stream s, IFactory f = null, TypeRefIndex refs = null) where T : IMarshallable, new()
@@ -557,17 +563,42 @@ public static class Marshall
     Sync(SyncContext.NewWriter(writer), ref obj);
   }
 
+  public static byte[] WriteTypeRefs(TypeRefIndex refs, out List<int> refs_offsets)
+  {
+    refs_offsets = new List<int>();
+    
+    var dst = new MemoryStream();
+    var writer = new MsgPackDataWriter(dst);
+    
+    var ctx = SyncContext.NewWriter(writer, null, refs);
+    
+    BeginArray(ctx, refs.all);
+    for(int i = 0; i < refs.all.Count; ++i)
+    {
+      var tmp = refs.all[i];
+      refs_offsets.Add((int)dst.Position);
+      Sync(ctx, ref tmp);
+    }
+    EndArray(ctx, refs.all);
+    
+    return dst.GetBuffer();
+  }
+
+  public static void ReadTypeRefs(SyncContext ctx)
+  {
+    for(int i = 0; i < ctx.type_refs_offsets.Count; ++i)
+    {
+      if(!ctx.type_refs.IsValid(i))
+        ctx.type_refs.SetAt(i, ReadRefAt(ctx, i));
+    }
+  }
+
   static public byte[] Obj2Bytes<T>(T obj, TypeRefIndex refs = null) where T : IMarshallable
   {
     var dst = new MemoryStream();
     var writer = new MsgPackDataWriter(dst);
     var ctx = SyncContext.NewWriter(writer, null, refs);
-
-    ctx.writer.BeginContainer(2);
-    Sync(ctx, ctx.refs);
     Sync(ctx, ref obj);
-    ctx.writer.EndContainer();
-
     return dst.GetBuffer();
   }
 
@@ -582,8 +613,11 @@ public static class Marshall
 
 public class MsgPackDataWriter : IWriter
 {
+  Stream stream;
   bhl.MsgPack.MsgPackWriter io;
   Stack<int> space = new Stack<int>();
+
+  public Stream Stream => stream;
 
   public MsgPackDataWriter(Stream stream) 
   {
@@ -592,6 +626,7 @@ public class MsgPackDataWriter : IWriter
 
   public void Reset(Stream stream)
   {
+    this.stream = stream;
     io = new bhl.MsgPack.MsgPackWriter(stream);
     space.Clear();
     space.Push(1);
@@ -723,6 +758,8 @@ public class MsgPackDataReader : IReader
 {
   Stream stream;
   bhl.MsgPack.MsgPackReader io;
+  
+  public Stream Stream => stream;
 
   struct StructPos
   {
@@ -1048,6 +1085,8 @@ public class MsgPackDataReader : IReader
     {
       var ap = structs_pos.Pop();
       ap.curr++;
+      //for debug
+      //Console.WriteLine(new String('>', structs_pos.Count) + " CURSOR " + ap.curr + " /" + ap.max + " level: " + structs_pos.Count);
       structs_pos.Push(ap);
     }
   }

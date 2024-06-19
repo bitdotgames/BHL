@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using bhl.marshall;
 
 namespace bhl {
 
@@ -116,6 +117,8 @@ public class CompiledModule
     byte[] constant_bytes = null;
     var constants = new List<Const>();
     var type_refs = new TypeRefIndex();
+    List<int> type_refs_offsets = new List<int>();
+    byte[] type_refs_bytes = null;
     byte[] symb_bytes = null;
     byte[] initcode = null;
     byte[] bytecode = null;
@@ -137,6 +140,13 @@ public class CompiledModule
       int imports_len = r.ReadInt32();
       for(int i=0;i<imports_len;++i)
         imports.Add(r.ReadString());
+
+      int type_refs_offsets_len = r.ReadInt32();
+      for(int i=0;i<type_refs_offsets_len;++i)
+        type_refs_offsets.Add(r.ReadInt32());
+
+      int type_refs_len = r.ReadInt32();
+      type_refs_bytes = r.ReadBytes(type_refs_len);
 
       int symb_len = r.ReadInt32();
       symb_bytes = r.ReadBytes(symb_len);
@@ -161,12 +171,18 @@ public class CompiledModule
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
 
-    marshall.Marshall.Stream2Obj(
-      new MemoryStream(symb_bytes), 
-      module.ns, 
-      symb_factory,
-      type_refs
-      );
+    //NOTE: due to specifics of type refs storage sync context is initialized 
+    //      with neccessary data related to type refs 'lazy loading'
+    var reader = new MsgPackDataReader(new MemoryStream(symb_bytes));
+    var ctx = SyncContext.NewReader(reader);
+    ctx.factory = symb_factory;
+    ctx.type_refs = type_refs;
+    ctx.type_refs_reader = new MsgPackDataReader(new MemoryStream(type_refs_bytes));
+    ctx.type_refs_offsets = type_refs_offsets;
+
+    marshall.Marshall.ReadTypeRefs(ctx);
+    
+    marshall.Marshall.Sync(ctx, ref module.ns);
 
     //NOTE: we link native namespace after our own namespace was loaded,
     //      this way we make sure namespace members are properly linked
@@ -236,15 +252,26 @@ public class CompiledModule
       w.Write(module.compiled.imports.Count);
       foreach(var import in module.compiled.imports)
         w.Write(import);
-
-      var symb_bytes = marshall.Marshall.Obj2Bytes(
-        module.ns, 
-        module.compiled.type_refs);
+      
+      module.compiled.type_refs.Index(module.ns);
       
       //for debug
       //Console.WriteLine("==== module: " + module.name + ", refs: " + module.compiled.type_refs.Count);
       //for(int t=0;t<module.compiled.type_refs.all.Count;++t)
-      //  Console.WriteLine("TYPE PROXY #" + t + " " + module.compiled.type_refs.all[t]);
+      //  Console.WriteLine("TYPE REF #" + t + " " + module.compiled.type_refs.all[t]);
+
+      var type_ref_bytes = 
+        marshall.Marshall.WriteTypeRefs(module.compiled.type_refs, out var type_ref_offsets);
+      w.Write(type_ref_offsets.Count);
+      foreach(int offset in type_ref_offsets)
+        w.Write(offset);
+      w.Write(type_ref_bytes.Length);
+      w.Write(type_ref_bytes, 0, type_ref_bytes.Length);
+
+      var symb_bytes = marshall.Marshall.Obj2Bytes(
+        module.ns, 
+        module.compiled.type_refs
+      );
       
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
@@ -274,7 +301,7 @@ public class CompiledModule
       }
     }
   }
-
+  
   static byte[] WriteConstants(List<Const> constants)
   {
     var dst = new MemoryStream();

@@ -1130,7 +1130,7 @@ public class BHL_TestBase
     HashSet<string> defines = null
     )
   {
-    Types ts = new Types();
+    var ts = new Types();
     ts_fn?.Invoke(ts);
 
     var proc = Parse(

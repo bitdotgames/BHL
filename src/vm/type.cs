@@ -36,9 +36,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   //NOTE: for symbols it's a full absolute path from the very top namespace
   public string path;
 
-  internal int refs_index;
-  internal TypeRefIndex refs;
-
   public ProxyType(INamedResolver resolver, string path)
   {
     if(path.Length == 0)
@@ -50,9 +47,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     this.path = path;
     
     resolved = null;
-
-    refs_index = -1;
-    refs = null;
   }
 
   public ProxyType(IType obj)
@@ -62,35 +56,25 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     
     resolved = null;
     
-    refs_index = -1;
-    refs = null;
-    
     SetResolved(obj);
-  }
-
-  public ProxyType(int idx, TypeRefIndex refs)
-  {
-    resolver = null;
-    path = null;
-
-    resolved = null;
-
-    refs_index = idx;
-    this.refs = refs;
   }
 
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(path) && 
-           refs == null &&
            resolved == null;
+  }
+
+  public bool IsNull()
+  {
+    return resolved == null && 
+           resolver == null && path == null;
   }
 
   public void Clear()
   {
     path = null;
     resolved = null;
-    refs = null;
   }
 
   public IType Get()
@@ -98,9 +82,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     if(resolved != null)
       return resolved;
 
-    if(refs != null)
-      SetResolved(refs.Get(refs_index).Get());
-    else if(!string.IsNullOrEmpty(path))
+    if(!string.IsNullOrEmpty(path))
       SetResolved((IType)resolver.ResolveNamedByPath(path));
 
     return resolved;
@@ -146,7 +128,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public override string ToString()
   {
-    if(resolved == null && refs != null)
+    if(string.IsNullOrEmpty(path))
       Get();
     return path;
   }
@@ -164,8 +146,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       return o.resolved.Equals(resolved);
     else if(resolver != null && o.resolver == resolver && o.path == path)
       return true;
-    else if(refs != null && o.refs == refs && o.refs_index == refs_index)
-      return true;
      
     //OK nothing worked, let's resolve the type
     Get();
@@ -180,9 +160,6 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     if(resolved != null)
       return resolved.GetHashCode();
-
-    if(refs != null)
-      return refs_index.GetHashCode();
     
     return path?.GetHashCode() ?? 0;
   }

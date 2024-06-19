@@ -2206,13 +2206,27 @@ public class TypeRefIndex
   {
     int idx = FindIndex(v);
     if(idx == -1)
-      throw new Exception("Not found index for type '" + v + "'");
+      throw new Exception("Not found index for type '" + v + "', total entries " + all.Count);
     return idx;
   }
 
   public ProxyType Get(int idx)
   {
     return all[idx];
+  }
+
+  public void SetAt(int idx, ProxyType v)
+  {
+    //let's fill the gap if any
+    for(int i=all.Count-1; i <= idx; ++i)
+      all.Add(new ProxyType());
+        
+    all[idx] = v;
+  }
+
+  public bool IsValid(int idx)
+  {
+    return idx >= 0 && idx < all.Count && !all[idx].IsNull();
   }
 }
 

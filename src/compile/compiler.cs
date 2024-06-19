@@ -212,8 +212,6 @@ public class ModuleCompiler : AST_Visitor
     Ip2SrcLine ip2src_line;
     GetByteCode(out init_bytes, out code_bytes, out ip2src_line);
 
-    type_refs.Index(interim.ns);
-
     interim.InitWithCompiled(
       new CompiledModule(
         init_func_idx,
