@@ -466,31 +466,31 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
   
   public override void ArrAdd(Val arr, Val val)
   {
-    var lst = (List<T>)arr._obj;
+    var lst = (IList<T>)arr._obj;
     lst.Add(val2native(val));
   }
   
   public override void ArrInsert(Val arr, int idx, Val val)
   {
-    var lst = (List<T>)arr._obj;
+    var lst = (IList<T>)arr._obj;
     lst.Insert(idx, val2native(val));
   }
 
   public override Val ArrGetAt(Val arr, int idx)
   {
-    var lst = (List<T>)arr._obj;
+    var lst = (IList<T>)arr._obj;
     return native2val(arr.vm, item_type, lst[idx]);
   }
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
-    var lst = (List<T>)arr._obj;
+    var lst = (IList<T>)arr._obj;
     lst[idx] = val2native(val);
   }
 
   public override int ArrIndexOf(Val arr, Val val)
   {
-    var lst = (List<T>)arr._obj;
+    var lst = (IList<T>)arr._obj;
     return lst.IndexOf(val2native(val));
   }
   
