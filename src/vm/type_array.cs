@@ -104,33 +104,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  //NOTE: follows special Opcodes.ArrIdx conventions
-  Coroutine BindArrIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-
-    var res = ArrGetAt(arr, idx);
-      
-    stack.Push(res);
-    arr.Release();
-    return null;
-  }
-  
-  //NOTE: follows special Opcodes.ArrIdxW conventions
-  Coroutine BindArrIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
-    var val = stack.Pop();
-
-    ArrSetAt(arr, idx, val);
-    
-    val.Release();
-    arr.Release();
-    return null;
-  }
-
   Coroutine BindRemoveAt(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)stack.PopRelease().num;

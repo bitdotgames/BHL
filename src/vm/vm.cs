@@ -1133,16 +1133,31 @@ public partial class VM : INamedResolver
       {
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((MapTypeSymbol)self.type);
-        var status = BHS.SUCCESS;
-        class_type.FuncMapIdx.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+        
+        var key = exec.stack.Pop();
+        var map = exec.stack.Pop();
+        
+        class_type.MapTryGet(map, key, out var res);
+        
+        exec.stack.PushRetain(res);
+        key.Release();
+        map.Release();
       }
       break;
       case Opcodes.MapIdxW:
       {
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((MapTypeSymbol)self.type);
-        var status = BHS.SUCCESS;
-        class_type.FuncMapIdxW.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+        
+        var key = exec.stack.Pop();
+        var map = exec.stack.Pop();
+        var val = exec.stack.Pop();
+        
+        class_type.MapSet(map, key, val);
+        
+        key.Release();
+        val.Release();
+        map.Release();
       }
       break;
       case Opcodes.MapAddInplace:

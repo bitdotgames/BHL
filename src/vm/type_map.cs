@@ -1,12 +1,11 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace bhl {
 
 public abstract class MapTypeSymbol : ClassSymbol
 {
-  internal FuncSymbolNative FuncMapIdx;
-  internal FuncSymbolNative FuncMapIdxW;
-
   public ProxyType key_type;
   public ProxyType val_type;
 
@@ -31,11 +30,19 @@ public abstract class MapTypeSymbol : ClassSymbol
     if(val_type.IsEmpty())
       throw new Exception("Invalid value type");
 
-    this.creator = CreateMap;
+    this.creator = BindCreateMap;
 
-    //NOTE: must be first member of the class
+    DefineMembers();
+
+    base.Setup();
+    enumerator_type.Setup();
+  }
+
+  protected virtual void DefineMembers()
+  {
+    //NOTE: must be the first member of the class
     {
-      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, Add,
+      var fn = new FuncSymbolNative(new Origin(), "Add", Types.Void, BindAdd,
         new FuncArgSymbol("key", key_type),
         new FuncArgSymbol("val", val_type)
       );
@@ -43,31 +50,31 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Remove", Types.Void, Remove,
+      var fn = new FuncSymbolNative(new Origin(), "Remove", Types.Void, BindRemove,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, Clear);
+      var fn = new FuncSymbolNative(new Origin(), "Clear", Types.Void, BindClear);
       this.Define(fn);
     }
 
     {
-      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, GetCount, null);
+      var vs = new FieldSymbol(new Origin(), "Count", Types.Int, BindGetCount, null);
       this.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Contains", Types.Bool, Contains,
+      var fn = new FuncSymbolNative(new Origin(), "Contains", Types.Bool, BindContains,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "TryGet", new ProxyType(new TupleType(Types.Bool, val_type)), TryGet,
+      var fn = new FuncSymbolNative(new Origin(), "TryGet", new ProxyType(new TupleType(Types.Bool, val_type)), BindTryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -75,32 +82,19 @@ public abstract class MapTypeSymbol : ClassSymbol
 
     {
       //hidden system method not available directly
-      var vs = new FieldSymbol(new Origin(), "$Enumerator", new ProxyType(enumerator_type), GetEnumerator, null);
+      var vs = new FieldSymbol(new Origin(), "$Enumerator", new ProxyType(enumerator_type), BindGetEnumerator, null);
       this.Define(vs);
     }
 
     {
-      //hidden system method not available directly
-      FuncMapIdx = new FuncSymbolNative(new Origin(), "$MapIdx", val_type, MapIdx);
-    }
-
-    {
-      //hidden system method not available directly
-      FuncMapIdxW = new FuncSymbolNative(new Origin(), "$MapIdxW", Types.Void, MapIdxW);
-    }
-
-    {
-      var vs = new FieldSymbol(new Origin(), "Next", Types.Bool, EnumeratorNext, null);
+      var vs = new FieldSymbol(new Origin(), "Next", Types.Bool, BindEnumeratorNext, null);
       enumerator_type.Define(vs);
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Current", new ProxyType(new TupleType(key_type, val_type)), EnumeratorCurrent);
+      var fn = new FuncSymbolNative(new Origin(), "Current", new ProxyType(new TupleType(key_type, val_type)), BindEnumeratorCurrent);
       enumerator_type.Define(fn);
     }
-
-    base.Setup();
-    enumerator_type.Setup();
   }
   
   public override void IndexTypeRefs(TypeRefIndex refs)
@@ -109,29 +103,114 @@ public abstract class MapTypeSymbol : ClassSymbol
     refs.Index(val_type);
   }
   
-  public abstract void CreateMap(VM.Frame frame, ref Val v, IType type);
-  public abstract void GetCount(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract void GetEnumerator(VM.Frame frame, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract Coroutine Add(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine MapIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine MapIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine Remove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine Contains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine TryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-  public abstract Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
-
-  public abstract void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld);
-  public abstract Coroutine EnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  void BindCreateMap(VM.Frame frm, ref Val v, IType type)
+  {
+    MapCreate(frm.vm, ref v);
+  }
   
-  //TODO: migrate to more convenient accessors like for arrays
-  //public abstract void MapCreate(VM vm, ref Val map);
-  //public abstract int MapCount(Val map);
-  //public abstract void MapAdd(Val map, Val key, Val val);
-  //public abstract Val MapTryGet(Val map, Val key);
-  //public abstract Val MapSet(Val map, Val key, Val val);
-  //public abstract void MapRemove(Val map, Val key);
-  //public abstract bool MapContainsKey(Val map, Val key);
-  //public abstract void MapClear(Val map);
+  void BindGetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    v.SetNum(MapCount(ctx));
+  }
+  
+  Coroutine BindAdd(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var val = stack.Pop();
+    var key = stack.Pop();
+    var map = stack.Pop();
+    
+    MapSet(map, key, val);
+    
+    key.Release();
+    val.Release();
+    map.Release();
+    return null;
+  }
+  
+  Coroutine BindContains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = stack.Pop();
+    var map = stack.Pop();
+
+    bool yes = MapContainsKey(map, key);
+    
+    key.Release();
+    map.Release();
+    stack.Push(Val.NewBool(frame.vm, yes));
+    return null;
+  }
+  
+  Coroutine BindTryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = stack.Pop();
+    var map = stack.Pop();
+
+    bool yes = MapTryGet(map, key, out var val);
+    
+    key.Release();
+    map.Release();
+    if(yes)
+      stack.PushRetain(val);
+    else
+      stack.Push(Val.New(frame.vm)); /*just dummy value*/
+    stack.Push(Val.NewBool(frame.vm, yes));
+    return null;
+  }
+  
+  Coroutine BindRemove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var key = stack.Pop();
+    var map = stack.Pop();
+    
+    MapRemove(map, key);
+    
+    key.Release();
+    map.Release();
+    return null;
+  }
+  
+  Coroutine BindClear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var map = stack.Pop();
+
+    MapClear(map);
+    
+    map.Release();
+    return null;
+  }
+  
+  void BindGetEnumerator(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    v.SetObj(MapGetEnumerator(ctx), enumerator_type);
+  }
+  
+  void BindEnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  {
+    v.SetBool(MapEnumeratorNext(ctx));
+  }
+
+  Coroutine BindEnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  {
+    var en = stack.Pop();
+    
+    MapEnumeratorCurrent(en, out var key, out var val);
+    
+    stack.PushRetain(val);
+    stack.PushRetain(key);
+    en.Release();
+    return null;
+  }
+
+  public abstract void MapCreate(VM vm, ref Val map);
+  public abstract int MapCount(Val map);
+  public abstract bool MapTryGet(Val map, Val key, out Val val);
+  public abstract void MapSet(Val map, Val key, Val val);
+  public abstract void MapRemove(Val map, Val key);
+  public abstract bool MapContainsKey(Val map, Val key);
+  public abstract void MapClear(Val map);
+  public abstract IEnumerator MapGetEnumerator(Val map);
+  public abstract bool MapEnumeratorNext(Val en);
+  public abstract void MapEnumeratorCurrent(Val en, out Val key, out Val val);
 }
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeralType
@@ -147,12 +226,69 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     : base()
   {}
   
-  static ValMap AsMap(Val arr)
+  static IDictionary<Val,Val> AsDictionary(Val map)
   {
-    var map = arr.obj as ValMap;
-    if(map == null)
-      throw new Exception("Not a ValMap: " + (arr.obj != null ? arr.obj.GetType().Name : ""+arr));
-    return map;
+    var dict = map.obj as IDictionary<Val,Val>;
+    if(dict == null)
+      throw new Exception("Not a IDictionary<Val,Val>: " + (map.obj != null ? map.obj.GetType().Name : ""+map));
+    return dict;
+  }
+  
+  public override void MapCreate(VM vm, ref Val map)
+  {
+    map.SetObj(ValMap.New(vm), this);
+  }
+  
+  public override int MapCount(Val map)
+  {
+    return AsDictionary(map).Count;
+  }
+
+  public override IEnumerator MapGetEnumerator(Val map)
+  {
+    return ((IEnumerable)AsDictionary(map)).GetEnumerator();
+  }
+  
+  public override bool MapEnumeratorNext(Val en)
+  {
+    return ((IEnumerator)en._obj).MoveNext();
+  }
+  
+  public override void MapEnumeratorCurrent(Val en, out Val key, out Val val)
+  {
+    var _en = (ValMap.Enumerator)en._obj;
+    key = (Val)_en.Key; 
+    val = (Val)_en.Value; 
+  }
+  
+  public override bool MapTryGet(Val map, Val key, out Val val)
+  {
+    var dict = AsDictionary(map);
+    return dict.TryGetValue(key, out val);
+  }
+  
+  public override void MapSet(Val map, Val key, Val val)
+  {
+    var dict = AsDictionary(map);
+    dict[key] = val;
+  }
+  
+  public override void MapRemove(Val map, Val key)
+  {
+    var dict = AsDictionary(map);
+    dict.Remove(key);
+  }
+  
+  public override bool MapContainsKey(Val map, Val key)
+  {
+    var dict = AsDictionary(map);
+    return dict.ContainsKey(key);
+  }
+  
+  public override void MapClear(Val map)
+  {
+    var dict = AsDictionary(map);
+    dict.Clear();
   }
 
   public override uint ClassId()
@@ -194,132 +330,6 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override int GetHashCode()
   {
     return name.GetHashCode();
-  }
-
-  public override void CreateMap(VM.Frame frm, ref Val v, IType type)
-  {
-    v.SetObj(ValMap.New(frm.vm), type);
-  }
-
-  public override void GetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-  {
-    var m = AsMap(ctx);
-    v.SetNum(m.Count);
-  }
-
-  public override void GetEnumerator(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-  {
-    var m = AsMap(ctx);
-    v.SetObj(new ValMap.Enumerator(m), enumerator_type);
-  }
-
-  public override Coroutine Add(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var val = stack.Pop();
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var map = AsMap(v);
-    //TODO: maybe we should rather user C# Dictionary.Add(k, v)?
-    map[key] = val;
-    key.Release();
-    val.Release();
-    v.Release();
-    return null;
-  }
-
-  public override Coroutine Remove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var map = AsMap(v);
-    map.Remove(key);
-    key.Release();
-    v.Release();
-    return null;
-  }
-
-  public override Coroutine Contains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var map = AsMap(v);
-    bool yes = map.ContainsKey(key);
-    key.Release();
-    v.Release();
-    stack.Push(Val.NewBool(frame.vm, yes));
-    return null;
-  }
-
-  public override Coroutine TryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var map = AsMap(v);
-    Val val;
-    bool yes = map.TryGetValue(key, out val);
-    key.Release();
-    v.Release();
-    if(yes)
-      stack.PushRetain(val);
-    else
-      stack.Push(Val.New(frame.vm)); /*just dummy value*/
-    stack.Push(Val.NewBool(frame.vm, yes));
-    return null;
-  }
-
-  public override Coroutine Clear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var v = stack.Pop();
-    var map = AsMap(v);
-    map.Clear();
-    v.Release();
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.MapIdx conventions
-  public override Coroutine MapIdx(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var map = AsMap(v);
-    var res = map[key]; 
-    stack.PushRetain(res);
-    key.Release();
-    v.Release();
-    return null;
-  }
-
-  //NOTE: follows special Opcodes.MapIdxW conventions
-  public override Coroutine MapIdxW(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var key = stack.Pop();
-    var v = stack.Pop();
-    var val = stack.Pop();
-    var map = AsMap(v);
-    map[key] = val;
-    key.Release();
-    val.Release();
-    v.Release();
-    return null;
-  }
-
-  public override void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-  {
-    var en = (ValMap.Enumerator)ctx._obj;
-    bool ok = en.MoveNext();
-    v.SetBool(ok);
-  }
-
-  public override Coroutine EnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-  {
-    var v = stack.Pop();
-    var en = (ValMap.Enumerator)v._obj;
-    var key = (Val)en.Key; 
-    var val = (Val)en.Value; 
-    stack.PushRetain(val);
-    stack.PushRetain(key);
-    v.Release();
-    return null;
   }
 }
 
