@@ -1093,16 +1093,29 @@ public partial class VM : INamedResolver
       {
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
-        var status = BHS.SUCCESS;
-        class_type.FuncArrIdx.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+        
+        int idx = (int)exec.stack.PopRelease().num;
+        var arr = exec.stack.Pop();
+        
+        var res = class_type.ArrGetAt(arr, idx);
+        
+        exec.stack.Push(res);
+        arr.Release();
       }
       break;
       case Opcodes.ArrIdxW:
       {
         var self = exec.stack[exec.stack.Count - 2];
         var class_type = ((ArrayTypeSymbol)self.type);
-        var status = BHS.SUCCESS;
-        class_type.FuncArrIdxW.cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+        
+        int idx = (int)exec.stack.PopRelease().num;
+        var arr = exec.stack.Pop();
+        var val = exec.stack.Pop();
+
+        class_type.ArrSetAt(arr, idx, val);
+        
+        val.Release();
+        arr.Release();
       }
       break;
       case Opcodes.ArrAddInplace:

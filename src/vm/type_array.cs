@@ -6,9 +6,6 @@ namespace bhl {
 
 public abstract class ArrayTypeSymbol : ClassSymbol
 {
-  internal FuncSymbolNative FuncArrIdx;
-  internal FuncSymbolNative FuncArrIdxW;
-
   public ProxyType item_type;
 
   //marshall factory version
@@ -62,16 +59,6 @@ public abstract class ArrayTypeSymbol : ClassSymbol
         new FuncArgSymbol("o", item_type)
       );
       this.Define(fn);
-    }
-
-    {
-      //hidden system method not available directly
-      FuncArrIdx = new FuncSymbolNative(new Origin(), "$ArrIdx", item_type, BindArrIdx);
-    }
-
-    {
-      //hidden system method not available directly
-      FuncArrIdxW = new FuncSymbolNative(new Origin(), "$ArrIdxW", Types.Void, BindArrIdxW);
     }
   }
 
