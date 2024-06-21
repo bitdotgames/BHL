@@ -122,6 +122,16 @@ public abstract class MapTypeSymbol : ClassSymbol
 
   public abstract void EnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld);
   public abstract Coroutine EnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+  
+  //TODO: migrate to more convenient accessors like for arrays
+  //public abstract void MapCreate(VM vm, ref Val map);
+  //public abstract int MapCount(Val map);
+  //public abstract void MapAdd(Val map, Val key, Val val);
+  //public abstract Val MapTryGet(Val map, Val key);
+  //public abstract Val MapSet(Val map, Val key, Val val);
+  //public abstract void MapRemove(Val map, Val key);
+  //public abstract bool MapContainsKey(Val map, Val key);
+  //public abstract void MapClear(Val map);
 }
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeralType

@@ -1124,6 +1124,7 @@ public partial class VM : INamedResolver
         self.Retain();
         var class_type = ((ArrayTypeSymbol)self.type);
         var status = BHS.SUCCESS;
+        //NOTE: Add must be at 0 index
         ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
         exec.stack.Push(self);
       }
@@ -1150,6 +1151,7 @@ public partial class VM : INamedResolver
         self.Retain();
         var class_type = ((MapTypeSymbol)self.type);
         var status = BHS.SUCCESS;
+        //NOTE: Add must be at 0 index
         ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
         exec.stack.Push(self);
       }
