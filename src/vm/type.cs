@@ -83,7 +83,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       return resolved;
 
     if(!string.IsNullOrEmpty(path))
-      SetResolved((IType)resolver.ResolveNamedByPath(path));
+      SetResolved(resolver.ResolveNamedByPath(path) as IType);
 
     return resolved;
   }
