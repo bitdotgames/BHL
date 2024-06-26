@@ -553,7 +553,7 @@ public class CompilationExecutor
     {
       var th = new Thread(DoWork);
       this.th = th;
-      this.th.Start(this);
+      this.th.Start();
     }
 
     public void Join()
@@ -561,25 +561,23 @@ public class CompilationExecutor
       th.Join();
     }
 
-    public static void DoWork(object data)
+    void DoWork()
     {
       var sw = new Stopwatch();
       sw.Start();
 
-      var w = (ParseWorker)data;
+      string self_bin_file = conf.self_file;
 
-      string self_bin_file = w.conf.self_file;
-
-      int i = w.start;
+      int i = start;
 
       try
       {
-        for(;i<(w.start + w.count);++i)
+        for(;i<(start + count);++i)
         {
-          var file = w.conf.files[i]; 
+          var file = conf.files[i]; 
           using(var sfs = File.OpenRead(file))
           {
-            var imports_maybe = w.GetImports(file, sfs);
+            var imports_maybe = GetImports(file, sfs);
             var deps = new List<string>(imports_maybe.file_paths);
             deps.Add(file);
 
@@ -587,63 +585,63 @@ public class CompilationExecutor
             if(self_bin_file.Length > 0)
               deps.Add(self_bin_file);
 
-            var compiled_file = GetCompiledCacheFile(w.conf.proj.tmp_dir, file);
+            var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, file);
 
             var interim = new InterimResult();
-            interim.module_path = new ModulePath(w.conf.proj.inc_path.FilePath2ModuleName(file), file);
+            interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(file), file);
             interim.imports_maybe = imports_maybe;
             interim.compiled_file = compiled_file;
 
-            bool use_cache = w.conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
+            bool use_cache = conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
 
             if(use_cache)
             {
               try
               {
-                interim.cached = CompiledModule.FromFile(compiled_file, w.conf.ts);
-                ++w.cache_hits;
+                interim.cached = CompiledModule.FromFile(compiled_file, conf.ts);
+                ++cache_hits;
               }
               catch(Exception)
               {
                 use_cache = false;
-                ++w.cache_errs;
+                ++cache_errs;
               }
             }
 
             if(!use_cache)
             {
-              var err_handlers = ErrorHandlers.MakeStandard(file, w.errors);
+              var err_handlers = ErrorHandlers.MakeStandard(file, errors);
               var parser = ANTLR_Processor.Stream2Parser(
-                new Module(w.conf.ts, interim.module_path), 
-                w.errors,
+                new Module(conf.ts, interim.module_path), 
+                errors,
                 err_handlers,
                 sfs, 
-                defines: new HashSet<string>(w.conf.proj.defines),
+                defines: new HashSet<string>(conf.proj.defines),
                 preproc_parsed: out var preproc_parsed
               );
               //NOTE: parsing happens here 
               interim.parsed = new ANTLR_Parsed(parser, parser.program());
 
-              ++w.cache_miss;
+              ++cache_miss;
             }
 
-            w.file2interim[file] = interim;
+            file2interim[file] = interim;
           }
         }
       }
       catch(Exception e)
       {
         if(e is ICompileError ie)
-          w.errors.Add(ie);
+          errors.Add(ie);
         else
         {
-          w.conf.logger.Error(e.Message + " " + e.StackTrace);
-          w.errors.Add(new BuildError(w.conf.files[i], e));
+          conf.logger.Error(e.Message + " " + e.StackTrace);
+          errors.Add(new BuildError(conf.files[i], e));
         }
       }
 
       sw.Stop();
-      w.conf.logger.Log(1, $"BHL parser {w.id} done(hit/miss/err:{w.cache_hits}/{w.cache_miss}/{w.cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      conf.logger.Log(1, $"BHL parser {id} done(hit/miss/err:{cache_hits}/{cache_miss}/{cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -742,7 +740,7 @@ public class CompilationExecutor
     {
       var th = new Thread(DoWork);
       this.th = th;
-      this.th.Start(this);
+      this.th.Start();
     }
 
     public void Join()
@@ -750,12 +748,10 @@ public class CompilationExecutor
       th.Join();
     }
 
-    public static void DoWork(object data)
+    void DoWork()
     {
       var sw = new Stopwatch();
       sw.Start();
-
-      var w = (CompilerWorker)data;
 
       string current_file = "";
 
@@ -764,23 +760,23 @@ public class CompilationExecutor
         //phase 1: visit AST
         try
         {
-          for(int i = w.start;i<(w.start + w.count);++i)
+          for(int i = start;i<(start + count);++i)
           {
-            current_file = w.conf.files[i]; 
+            current_file = conf.files[i]; 
 
-            var interim = w.file2interim[current_file];
+            var interim = file2interim[current_file];
 
             if(interim.cached == null)
             {
-              var proc = w.file2proc[current_file];
+              var proc = file2proc[current_file];
               //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
-              if(!w.HasAnyRelatedErrors(proc))
+              if(!HasAnyRelatedErrors(proc))
               {
-                var proc_result = w.postproc.Patch(proc.result, current_file);
-                w.errors.AddRange(proc_result.errors);
+                var proc_result = postproc.Patch(proc.result, current_file);
+                errors.AddRange(proc_result.errors);
 
                 var c = new ModuleCompiler(proc_result);
-                w.file2compiler.Add(current_file, c);
+                file2compiler.Add(current_file, c);
                 c.Compile_VisitAST();
               }
             }
@@ -790,30 +786,30 @@ public class CompilationExecutor
         {
           //phase 2: patch instructions
           //happens within a barrier
-          w.patch_barrier.SignalAndWait();
+          patch_barrier.SignalAndWait();
         }
         
         //phase 3: write byte code
-        for(int i = w.start;i<(w.start + w.count);++i)
+        for(int i = start;i<(start + count);++i)
         {
-          current_file = w.conf.files[i]; 
+          current_file = conf.files[i]; 
 
-          var interim = w.file2interim[current_file];
+          var interim = file2interim[current_file];
 
           if(interim.cached != null)
           {
-            w.file2module.Add(current_file, interim.cached);
+            file2module.Add(current_file, interim.cached);
           }
           else
           {
             //NOTE: in case of parse/process errors compiler won't be present,
             //      we should check for this situation
-            if(w.file2compiler.TryGetValue(current_file, out var c))
+            if(file2compiler.TryGetValue(current_file, out var c))
             {
               var cm = c.Compile_Finish();
 
               CompiledModule.ToFile(cm, interim.compiled_file);
-              w.file2module.Add(current_file, cm);
+              file2module.Add(current_file, cm);
             }
           }
         }
@@ -821,16 +817,16 @@ public class CompilationExecutor
       catch(Exception e)
       {
         if(e is ICompileError ie)
-          w.errors.Add(ie);
+          errors.Add(ie);
         else
         {
-          w.conf.logger.Error(e.Message + " " + e.StackTrace);
-          w.errors.Add(new BuildError(current_file, e));
+          conf.logger.Error(e.Message + " " + e.StackTrace);
+          errors.Add(new BuildError(current_file, e));
         }
       }
 
       sw.Stop();
-      w.conf.logger.Log(1, $"BHL compiler {w.id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      conf.logger.Log(1, $"BHL compiler {id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     public bool HasAnyRelatedErrors(ANTLR_Processor proc, HashSet<ANTLR_Processor> seen = null)
