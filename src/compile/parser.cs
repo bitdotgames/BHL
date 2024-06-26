@@ -98,7 +98,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public Module module { get; private set; }
 
-  public FileImports imports_maybe { get; private set; } 
+  public FileImports imports_maybe { get; private set; }
+
+  public List<Module> imports { get; private set; } = new List<Module>();
 
   //NOTE: passed from above
   CompileErrors errors;
@@ -675,6 +677,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         continue;
       }
 
+      imports.Add(imported_module);
       ast_import.module_names.Add(imported_module.name);
     }
 

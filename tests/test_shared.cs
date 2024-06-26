@@ -1143,10 +1143,10 @@ public class BHL_TestBase
     );
 
     var c = new ModuleCompiler(proc.result);
-    var cm = c.Compile();
+    var result = c.Compile();
     if(show_bytes)
       Dump(c);
-    return cm;
+    return result;
   }
 
   public ANTLR_Processor Parse(

@@ -6,8 +6,8 @@ namespace bhl {
 public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
-  Module result;
   Module interim;
+  Module result;
   
   Types ts
   {
@@ -1261,7 +1261,7 @@ public class ModuleCompiler : AST_Visitor
           {
              inst.operands[1] = fsymb.ip_addr;
              if(inst.operands[1] == -1)
-               throw new Exception("Not found func '" + fsymb.name + "' ip from module '" + fmod.name + "'");
+               throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
           });
         }
         else if(instr.op == Opcodes.GetFuncNativePtr)

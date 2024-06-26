@@ -281,16 +281,15 @@ public class CompilationExecutor
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
-    //TODO: it's not multithreaded yet
+    //   NOTE: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(proc_bundle);
     sw.Stop();
     conf.logger.Log(2, $"BHL proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
+    //NOTE: let's add processors errors to the all errors but continue execution
     foreach(var kv in proc_bundle.file2proc)
       errors.AddRange(kv.Value.result.errors);
-    if(errors.Count > 0)
-      return;
-    
+
     //5. compile to bytecode 
     sw = Stopwatch.StartNew();
     var compiler_workers = StartAndWaitCompilerWorkers(
@@ -421,6 +420,8 @@ public class CompilationExecutor
   {
     foreach(var w in compiler_workers)
     {
+      var failed_files = new List<string>();
+      
       foreach(var kv in w.file2compiler)
       {
         try
@@ -429,6 +430,8 @@ public class CompilationExecutor
         }
         catch(Exception e)
         {
+          failed_files.Add(kv.Key);
+          
           if(e is ICompileError ie)
             w.errors.Add(ie);
           else
@@ -438,6 +441,10 @@ public class CompilationExecutor
           }
         }
       }
+
+      //NOTE: let's remove failed compilers from further processing
+      foreach(var failed_file in failed_files)
+        w.file2compiler.Remove(failed_file);
     }
   }
 
@@ -766,23 +773,25 @@ public class CompilationExecutor
             if(interim.cached == null)
             {
               var proc = w.file2proc[current_file];
+              //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
+              if(!w.HasAnyRelatedErrors(proc))
+              {
+                var proc_result = w.postproc.Patch(proc.result, current_file);
+                w.errors.AddRange(proc_result.errors);
 
-              var proc_result = w.postproc.Patch(proc.result, current_file);
-              w.errors.AddRange(proc_result.errors);
-
-              var c = new ModuleCompiler(proc_result);
-              w.file2compiler.Add(current_file, c);
-              c.Compile_VisitAST();
+                var c = new ModuleCompiler(proc_result);
+                w.file2compiler.Add(current_file, c);
+                c.Compile_VisitAST();
+              }
             }
           }
         }
         finally
         {
+          //phase 2: patch instructions
+          //happens within a barrier
           w.patch_barrier.SignalAndWait();
         }
-        
-        //phase 2: patch instructions
-        //happens within a barrier
         
         //phase 3: write byte code
         for(int i = w.start;i<(w.start + w.count);++i)
@@ -797,13 +806,15 @@ public class CompilationExecutor
           }
           else
           {
-            var c = w.file2compiler[current_file];
+            //NOTE: in case of parse/process errors compiler won't be present,
+            //      we should check for this situation
+            if(w.file2compiler.TryGetValue(current_file, out var c))
+            {
+              var cm = c.Compile_Finish();
 
-            var cm = c.Compile_Finish();
-            
-            CompiledModule.ToFile(cm, interim.compiled_file);
-
-            w.file2module.Add(current_file, cm);
+              CompiledModule.ToFile(cm, interim.compiled_file);
+              w.file2module.Add(current_file, cm);
+            }
           }
         }
       }
@@ -820,6 +831,34 @@ public class CompilationExecutor
 
       sw.Stop();
       w.conf.logger.Log(1, $"BHL compiler {w.id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    }
+
+    public bool HasAnyRelatedErrors(ANTLR_Processor proc, HashSet<ANTLR_Processor> seen = null)
+    {
+      if(seen == null)
+        seen = new HashSet<ANTLR_Processor>();
+      seen.Add(proc);
+      
+      if(proc.result.errors.Count > 0)
+        return true;
+      
+      foreach(var proc_import in proc.imports)
+      {
+        //for C# modules file_path is empty
+        if(string.IsNullOrEmpty(proc_import.file_path))
+          continue;
+
+        //if there's no such a processor for file then file is already compiled
+        if(!file2proc.TryGetValue(proc_import.file_path, out var import_proc))
+          continue;
+
+        if(seen.Contains(import_proc))
+          continue;
+        
+        if(HasAnyRelatedErrors(import_proc, seen))
+          return true;
+      }
+      return false;
     }
   }
 
