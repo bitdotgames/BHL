@@ -66,6 +66,9 @@ public class CompileCmd : ICmd
       Usage(e.Message);
     }
 
+    if(Environment.GetEnvironmentVariable("BHL_VERBOSE") != null)
+      int.TryParse(Environment.GetEnvironmentVariable("BHL_VERBOSE"), out proj.verbosity);
+    
     var logger = new Logger(proj.verbosity, new ConsoleLogger()); 
 
     files.AddRange(extra);

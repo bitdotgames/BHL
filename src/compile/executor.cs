@@ -165,7 +165,7 @@ public class CompilationExecutor
 
     sw.Stop();
 
-    conf.logger.Log(1, $"BHL build done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     if(errors.Count > 0)
     {
@@ -227,10 +227,16 @@ public class CompilationExecutor
 
     //2. wait for the completion of parse workers
     foreach(var pw in parse_workers)
+    {
       pw.Join();
+      
+      cache_hits += pw.cache_hits;
+      cache_miss += pw.cache_miss;
+      cache_errs += pw.cache_errs;
+    }
 
     sw.Stop();
-    conf.logger.Log(2, $"BHL parse done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL parse({parse_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -245,10 +251,6 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     foreach(var pw in parse_workers)
     {
-      cache_hits += pw.cache_hits;
-      cache_miss += pw.cache_miss;
-      cache_errs += pw.cache_errs;
-
       foreach(var kv in pw.file2interim)
       {
         if(kv.Value.cached == null)
@@ -284,7 +286,7 @@ public class CompilationExecutor
     //   NOTE: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(proc_bundle);
     sw.Stop();
-    conf.logger.Log(2, $"BHL proc all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL proc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     //NOTE: let's add processors errors to the all errors but continue execution
     foreach(var kv in proc_bundle.file2proc)
@@ -300,7 +302,7 @@ public class CompilationExecutor
       proc_bundle.file2proc
     );
     sw.Stop();
-    conf.logger.Log(2, $"BHL compile done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL compile({compiler_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -549,9 +551,12 @@ public class CompilationExecutor
     public int cache_miss;
     public int cache_errs;
     string current_file;
+    Stopwatch sw = new Stopwatch();
 
     public void Start()
     {
+      sw.Start();
+
       var th = new Thread(DoWork);
       this.th = th;
       this.th.Start();
@@ -564,9 +569,6 @@ public class CompilationExecutor
 
     void DoWork()
     {
-      var sw = new Stopwatch();
-      sw.Start();
-
       try
       {
         for(int i = start;i<(start + count);++i)
@@ -584,7 +586,7 @@ public class CompilationExecutor
       }
 
       sw.Stop();
-      conf.logger.Log(1, $"BHL parser {id} done(hit/miss/err:{cache_hits}/{cache_miss}/{cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      conf.logger.Log(2, $"BHL parser {id} done(hit/miss/err:{cache_hits}/{cache_miss}/{cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     void Process_At(int i)
@@ -737,9 +739,12 @@ public class CompilationExecutor
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
     string current_file;
+    Stopwatch sw = new Stopwatch();
 
     public void Start()
     {
+      sw.Start();
+      
       var th = new Thread(DoWork);
       this.th = th;
       this.th.Start();
@@ -752,9 +757,6 @@ public class CompilationExecutor
 
     void DoWork()
     {
-      var sw = new Stopwatch();
-      sw.Start();
-
       try
       {
         //phase 1: visit AST
@@ -786,7 +788,7 @@ public class CompilationExecutor
       }
 
       sw.Stop();
-      conf.logger.Log(1, $"BHL compiler {id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      conf.logger.Log(2, $"BHL compiler {id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     void ProcessAST_At(int i)
