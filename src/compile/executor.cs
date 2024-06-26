@@ -380,7 +380,7 @@ public class CompilationExecutor
     return parse_workers;
   }
 
-  static List<CompilerWorker> StartAndWaitCompilerWorkers(
+  static List<ProcAndCompileWorker> StartAndWaitCompilerWorkers(
     CompileConf conf, 
     Types ts, 
     List<ParseWorker> parse_workers, 
@@ -388,12 +388,12 @@ public class CompilationExecutor
     Dictionary<string, ANTLR_Processor> file2proc
     )
   {
-    var compiler_workers = new List<CompilerWorker>();
+    var compiler_workers = new List<ProcAndCompileWorker>();
     var patch_barrier = new Barrier(parse_workers.Count, (_) => DoPatch(compiler_workers));
 
     foreach(var pw in parse_workers)
     {
-      var cw = new CompilerWorker();
+      var cw = new ProcAndCompileWorker();
       cw.patch_barrier = patch_barrier;
       cw.conf = pw.conf;
       cw.id = pw.id;
@@ -416,7 +416,7 @@ public class CompilationExecutor
     return compiler_workers;
   }
 
-  static void DoPatch(List<CompilerWorker> compiler_workers)
+  static void DoPatch(List<ProcAndCompileWorker> compiler_workers)
   {
     foreach(var w in compiler_workers)
     {
@@ -448,7 +448,7 @@ public class CompilationExecutor
     }
   }
 
-  SymbolError CheckUniqueSymbols(List<CompilerWorker> compiler_workers)
+  SymbolError CheckUniqueSymbols(List<ProcAndCompileWorker> compiler_workers)
   {
     //used as a global namespace for unique symbols check
     var ns = new Namespace();
@@ -461,7 +461,7 @@ public class CompilationExecutor
     return null;
   }
 
-  void WriteCompilationResultToFile(CompileConf conf, List<CompilerWorker> compiler_workers, string file_path)
+  void WriteCompilationResultToFile(CompileConf conf, List<ProcAndCompileWorker> compiler_workers, string file_path)
   {
     using(FileStream dfs = new FileStream(file_path, FileMode.Create, System.IO.FileAccess.Write))
     {
@@ -521,7 +521,7 @@ public class CompilationExecutor
     return lz4_bytes;
   }
 
-  SymbolError CheckUniqueSymbols(Namespace ns, CompilerWorker w)
+  SymbolError CheckUniqueSymbols(Namespace ns, ProcAndCompileWorker w)
   {
     foreach(var kv in w.file2module)
     {
@@ -548,6 +548,7 @@ public class CompilationExecutor
     public int cache_hits;
     public int cache_miss;
     public int cache_errs;
+    string current_file;
 
     public void Start()
     {
@@ -566,68 +567,10 @@ public class CompilationExecutor
       var sw = new Stopwatch();
       sw.Start();
 
-      string self_bin_file = conf.self_file;
-
-      int i = start;
-
       try
       {
-        for(;i<(start + count);++i)
-        {
-          var file = conf.files[i]; 
-          using(var sfs = File.OpenRead(file))
-          {
-            var imports_maybe = GetImports(file, sfs);
-            var deps = new List<string>(imports_maybe.file_paths);
-            deps.Add(file);
-
-            //NOTE: adding self binary as a dep
-            if(self_bin_file.Length > 0)
-              deps.Add(self_bin_file);
-
-            var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, file);
-
-            var interim = new InterimResult();
-            interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(file), file);
-            interim.imports_maybe = imports_maybe;
-            interim.compiled_file = compiled_file;
-
-            bool use_cache = conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
-
-            if(use_cache)
-            {
-              try
-              {
-                interim.cached = CompiledModule.FromFile(compiled_file, conf.ts);
-                ++cache_hits;
-              }
-              catch(Exception)
-              {
-                use_cache = false;
-                ++cache_errs;
-              }
-            }
-
-            if(!use_cache)
-            {
-              var err_handlers = ErrorHandlers.MakeStandard(file, errors);
-              var parser = ANTLR_Processor.Stream2Parser(
-                new Module(conf.ts, interim.module_path), 
-                errors,
-                err_handlers,
-                sfs, 
-                defines: new HashSet<string>(conf.proj.defines),
-                preproc_parsed: out var preproc_parsed
-              );
-              //NOTE: parsing happens here 
-              interim.parsed = new ANTLR_Parsed(parser, parser.program());
-
-              ++cache_miss;
-            }
-
-            file2interim[file] = interim;
-          }
-        }
+        for(int i = start;i<(start + count);++i)
+          Process_At(i);
       }
       catch(Exception e)
       {
@@ -636,12 +579,70 @@ public class CompilationExecutor
         else
         {
           conf.logger.Error(e.Message + " " + e.StackTrace);
-          errors.Add(new BuildError(conf.files[i], e));
+          errors.Add(new BuildError(current_file, e));
         }
       }
 
       sw.Stop();
       conf.logger.Log(1, $"BHL parser {id} done(hit/miss/err:{cache_hits}/{cache_miss}/{cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    }
+
+    void Process_At(int i)
+    {
+      current_file = conf.files[i]; 
+      
+      using(var sfs = File.OpenRead(current_file))
+      {
+        var imports_maybe = GetImports(current_file, sfs);
+        var deps = new List<string>(imports_maybe.file_paths);
+        deps.Add(current_file);
+
+        //NOTE: adding self binary as a dep
+        if(conf.self_file.Length > 0)
+          deps.Add(conf.self_file);
+
+        var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, current_file);
+
+        var interim = new InterimResult();
+        interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
+        interim.imports_maybe = imports_maybe;
+        interim.compiled_file = compiled_file;
+
+        bool use_cache = conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
+
+        if(use_cache)
+        {
+          try
+          {
+            interim.cached = CompiledModule.FromFile(compiled_file, conf.ts);
+            ++cache_hits;
+          }
+          catch(Exception)
+          {
+            use_cache = false;
+            ++cache_errs;
+          }
+        }
+
+        if(!use_cache)
+        {
+          var err_handlers = ErrorHandlers.MakeStandard(current_file, errors);
+          var parser = ANTLR_Processor.Stream2Parser(
+            new Module(conf.ts, interim.module_path), 
+            errors,
+            err_handlers,
+            sfs, 
+            defines: new HashSet<string>(conf.proj.defines),
+            preproc_parsed: out var preproc_parsed
+          );
+          //NOTE: parsing happens here 
+          interim.parsed = new ANTLR_Parsed(parser, parser.program());
+
+          ++cache_miss;
+        }
+
+        file2interim[current_file] = interim;
+      }
     }
 
     FileImports GetImports(string file, FileStream fsf)
@@ -720,7 +721,7 @@ public class CompilationExecutor
     }
   }
   
-  public class CompilerWorker
+  public class ProcAndCompileWorker
   {
     public CompileConf conf;
     public Barrier patch_barrier;
@@ -735,6 +736,7 @@ public class CompilationExecutor
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
+    string current_file;
 
     public void Start()
     {
@@ -753,34 +755,13 @@ public class CompilationExecutor
       var sw = new Stopwatch();
       sw.Start();
 
-      string current_file = "";
-
       try
       {
         //phase 1: visit AST
         try
         {
           for(int i = start;i<(start + count);++i)
-          {
-            current_file = conf.files[i]; 
-
-            var interim = file2interim[current_file];
-
-            if(interim.cached == null)
-            {
-              var proc = file2proc[current_file];
-              //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
-              if(!HasAnyRelatedErrors(proc))
-              {
-                var proc_result = postproc.Patch(proc.result, current_file);
-                errors.AddRange(proc_result.errors);
-
-                var c = new ModuleCompiler(proc_result);
-                file2compiler.Add(current_file, c);
-                c.Compile_VisitAST();
-              }
-            }
-          }
+            ProcessAST_At(i);
         }
         finally
         {
@@ -791,28 +772,7 @@ public class CompilationExecutor
         
         //phase 3: write byte code
         for(int i = start;i<(start + count);++i)
-        {
-          current_file = conf.files[i]; 
-
-          var interim = file2interim[current_file];
-
-          if(interim.cached != null)
-          {
-            file2module.Add(current_file, interim.cached);
-          }
-          else
-          {
-            //NOTE: in case of parse/process errors compiler won't be present,
-            //      we should check for this situation
-            if(file2compiler.TryGetValue(current_file, out var c))
-            {
-              var cm = c.Compile_Finish();
-
-              CompiledModule.ToFile(cm, interim.compiled_file);
-              file2module.Add(current_file, cm);
-            }
-          }
-        }
+          WriteByteCode_At(i);
       }
       catch(Exception e)
       {
@@ -827,6 +787,52 @@ public class CompilationExecutor
 
       sw.Stop();
       conf.logger.Log(1, $"BHL compiler {id} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    }
+
+    void ProcessAST_At(int i)
+    {
+      current_file = conf.files[i]; 
+
+      var interim = file2interim[current_file];
+
+      if(interim.cached == null)
+      {
+        var proc = file2proc[current_file];
+        //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
+        if(!HasAnyRelatedErrors(proc))
+        {
+          var proc_result = postproc.Patch(proc.result, current_file);
+          errors.AddRange(proc_result.errors);
+
+          var c = new ModuleCompiler(proc_result);
+          file2compiler.Add(current_file, c);
+          c.Compile_VisitAST();
+        }
+      }
+    }
+
+    void WriteByteCode_At(int i)
+    {
+      current_file = conf.files[i]; 
+
+      var interim = file2interim[current_file];
+
+      if(interim.cached != null)
+      {
+        file2module.Add(current_file, interim.cached);
+      }
+      else
+      {
+        //NOTE: in case of parse/process errors compiler won't be present,
+        //      we should check for this situation
+        if(file2compiler.TryGetValue(current_file, out var c))
+        {
+          var cm = c.Compile_Finish();
+
+          CompiledModule.ToFile(cm, interim.compiled_file);
+          file2module.Add(current_file, cm);
+        }
+      }
     }
 
     public bool HasAnyRelatedErrors(ANTLR_Processor proc, HashSet<ANTLR_Processor> seen = null)
