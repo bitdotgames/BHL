@@ -27,9 +27,9 @@ public class TestMarshall : BHL_TestBase
 
       ns.Define(new VariableSymbol(new Origin(), "hey", ns.TMap(Types.String, Types.Int)));
 
-      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), ns.TRef(Types.Int), Types.String), "Test", 1, 155);
-      Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
+      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("s", Types.String));
+      Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       ns.Define(Test);
 
       var Make = new FuncSymbolScript(new Origin(), new FuncSignature(FuncSignatureAttrib.Coro, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
@@ -99,18 +99,18 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Test.name, "Test");
       AssertFalse(Test.attribs.HasFlag(FuncAttrib.Coro));
       AssertEqual(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), ns.TRef(Types.Int), Types.String).ToString(), Test.signature.ToString());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(), Test.signature.ToString());
       AssertEqual(1, Test.default_args_num);
       AssertEqual(2, Test.local_vars_num);
       AssertEqual(155, Test.ip_addr);
       AssertEqual(4, Test.scope_idx);
       AssertEqual(2, Test.GetTotalArgsNum());
-      AssertEqual("a", Test.GetArg(0).name);
-      AssertTrue(Test.GetArg(0).is_ref);
-      AssertEqual(Types.Int, Test.GetArg(0).type.Get());
-      AssertEqual("s", Test.GetArg(1).name);
-      AssertFalse(Test.GetArg(1).is_ref);
-      AssertEqual(Types.String, Test.GetArg(1).type.Get());
+      AssertEqual("s", Test.GetArg(0).name);
+      AssertFalse(Test.GetArg(0).is_ref);
+      AssertEqual(Types.String, Test.GetArg(0).type.Get());
+      AssertEqual("a", Test.GetArg(1).name);
+      AssertTrue(Test.GetArg(1).is_ref);
+      AssertEqual(Types.Int, Test.GetArg(1).type.Get());
 
       var Make = (FuncSymbolScript)ns.Resolve("Make");
       AssertEqual(Make.name, "Make");
@@ -175,6 +175,58 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).owner, Enum);
       AssertEqual(Enum.Resolve("Type2").scope, Enum);
       AssertEqual(((EnumItemSymbol)Enum.Resolve("Type2")).val, 2);
+    }
+  }
+  
+  [IsTested()]
+  public void TestSerializeModuleSymbolsTypeEdgeCase()
+  {
+    var s = new MemoryStream();
+    {
+      var ts = new Types();
+      var m = new Module(ts, "dummy");
+
+      var ns = m.ns;
+      ns.Link(ts.ns);
+
+      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
+      Test.Define(new FuncArgSymbol("s", Types.String));
+      Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
+      ns.Define(Test);
+
+      CompiledModule.ToStream(m, s, leave_open: true);
+    }
+
+    {
+      var ts = new Types();
+
+      s.Position = 0;
+      var m = CompiledModule.FromStream(ts, s);
+      
+      //NOTE: right after un-marshalling module must be setup explicitly
+      m.Setup(name => null);
+
+      var ns = m.ns;
+
+      AssertEqual(1 + ts.ns.members.Count, ns.Count());
+      AssertEqual(1, ns.members.Count);
+
+      var Test = (FuncSymbolScript)ns.Resolve("Test");
+      AssertEqual(Test.name, "Test");
+      AssertFalse(Test.attribs.HasFlag(FuncAttrib.Coro));
+      AssertEqual(Test.scope, ns);
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(), Test.signature.ToString());
+      AssertEqual(1, Test.default_args_num);
+      AssertEqual(2, Test.local_vars_num);
+      AssertEqual(155, Test.ip_addr);
+      AssertEqual(0, Test.scope_idx);
+      AssertEqual(2, Test.GetTotalArgsNum());
+      AssertEqual("s", Test.GetArg(0).name);
+      AssertFalse(Test.GetArg(0).is_ref);
+      AssertEqual(Types.String, Test.GetArg(0).type.Get());
+      AssertEqual("a", Test.GetArg(1).name);
+      AssertTrue(Test.GetArg(1).is_ref);
+      AssertEqual(Types.Int, Test.GetArg(1).type.Get());
     }
   }
 }

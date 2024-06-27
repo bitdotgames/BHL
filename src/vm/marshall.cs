@@ -795,9 +795,6 @@ public class MsgPackDataReader : IReader
 
   void Next()
   {
-    if(!SpaceIsValid())
-      throw new Error(ErrorCode.INVALID_POS);
-
     if(!io.Read()) 
       throw new Error(ErrorCode.IO_READ);
     
@@ -992,9 +989,6 @@ public class MsgPackDataReader : IReader
 
   public int BeginContainer() 
   {
-    if(!SpaceIsValid())
-      throw new Error(ErrorCode.INVALID_POS);
-
     if(!io.Read()) 
       throw new Error(ErrorCode.IO_READ);
 
@@ -1071,12 +1065,6 @@ public class MsgPackDataReader : IReader
     if(ap.max == -1)
       return -1;
     return ap.max - ap.curr - 1;
-  }
-
-  bool SpaceIsValid()
-  {
-    int left = SpaceLeft(); 
-    return left == -1 || left  >= 0;
   }
 
   void MoveSpaceCursor()
