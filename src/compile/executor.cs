@@ -240,7 +240,7 @@ public class CompilationExecutor
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
-
+          
     //2.1 let's collect all interim results collected in parse workers
     var file2interim = new Dictionary<string, InterimResult>();
 
@@ -253,7 +253,9 @@ public class CompilationExecutor
     {
       foreach(var kv in pw.file2interim)
       {
-        if(kv.Value.cached == null)
+        if(kv.Value.cached == null && 
+           //NOTE: no need to process a file if it contains parsing errors
+           !errors.FileHasAnyErrors(kv.Key))
         {
           var file_module = new Module(
             conf.ts,
@@ -272,7 +274,7 @@ public class CompilationExecutor
           );
           proc_bundle.file2proc.Add(kv.Key, proc);
         }
-        else
+        else if(kv.Value.cached != null)
           proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
 
         file2interim.Add(kv.Key, kv.Value);
@@ -542,7 +544,6 @@ public class CompilationExecutor
     public CompileConf conf;
     public int id;
     public Thread th;
-    public string self_file;
     public int start;
     public int count;
     public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
@@ -572,7 +573,7 @@ public class CompilationExecutor
       try
       {
         for(int i = start;i<(start + count);++i)
-          Process_At(i);
+          Parse_At(i);
       }
       catch(Exception e)
       {
@@ -589,7 +590,7 @@ public class CompilationExecutor
       conf.logger.Log(2, $"BHL parser {id} done(hit/miss/err:{cache_hits}/{cache_miss}/{cache_errs}, {Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
-    void Process_At(int i)
+    void Parse_At(int i)
     {
       current_file = conf.files[i]; 
       
@@ -643,7 +644,6 @@ public class CompilationExecutor
           interim.parsed = new ANTLR_Parsed(parser, parser.program());
           //sw.Stop();
           //conf.logger.Log(1, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
-
           ++cache_miss;
         }
 
@@ -803,9 +803,9 @@ public class CompilationExecutor
 
       if(interim.cached == null)
       {
-        var proc = file2proc[current_file];
         //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
-        if(!HasAnyRelatedErrors(proc))
+        if(file2proc.TryGetValue(current_file, out var proc) && 
+           !HasAnyRelatedErrors(proc))
         {
           var proc_result = postproc.Patch(proc.result, current_file);
           errors.AddRange(proc_result.errors);
@@ -841,12 +841,13 @@ public class CompilationExecutor
       }
     }
 
-    public bool HasAnyRelatedErrors(ANTLR_Processor proc, HashSet<ANTLR_Processor> seen = null)
+    bool HasAnyRelatedErrors(ANTLR_Processor proc, HashSet<ANTLR_Processor> seen = null)
     {
       if(seen == null)
         seen = new HashSet<ANTLR_Processor>();
       seen.Add(proc);
-      
+
+      //let's check processor related errors
       if(proc.result.errors.Count > 0)
         return true;
       

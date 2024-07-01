@@ -27,6 +27,14 @@ public class CompileErrors : List<ICompileError>
     return str;
   }
 
+  public bool FileHasAnyErrors(string file)
+  {
+    foreach(var item in this)
+      if(item.file == file)
+        return true;
+    return false;
+  }
+
   public void Dump()
   {
     Console.WriteLine(this);
