@@ -107,7 +107,7 @@ fragment ExponentPart
   ;
 
 fragment EscapeSequence
-  : '\\' [abfnrtvz"'\\] //" let's keep text editor happy
+  : '\\' [nrt"'\\] //" let's keep text editor happy
   | '\\' '\r'? '\n'
   ;
 

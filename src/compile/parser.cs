@@ -3272,6 +3272,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
     ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
+    //replacing extra quotes
+    ast.sval = ast.sval.Replace("\\\"", "\"");
     //adding convenience support for newlines and tabs
     ast.sval = ast.sval.Replace("\\n", "\n");
     ast.sval = ast.sval.Replace("\\\n", "\\n");

@@ -93,4 +93,194 @@ public class TestStrings : BHL_TestBase
     });
   }
 
+  [IsTested()]
+  public void TestStringConcat()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""Hello "" + ""world !""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("Hello world !", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLine()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\n""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\n", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLine2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\n\n""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\n\n", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\n", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n\n""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\n\n", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrNewLineEscape3()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\n\\n""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\n\\n", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTab()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\t""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\t", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTab2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\t\t""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\t\t", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\t", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape2()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t\t""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\t\t", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrTabEscape3()
+  {
+    string bhl = @"
+    func string test() 
+    {
+      return ""bar\\t\\t""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("bar\\t\\t", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStrQuoteEscape()
+  {
+    string bhl = "func string test() { return \"My name is \\\"Bar\\\", hello\" }";
+
+    var vm = MakeVM(bhl);
+    AssertEqual("My name is \"Bar\", hello", Execute(vm, "test").result.PopRelease().str);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestStrConcat()
+  {
+    string bhl = @"
+    func string test(int k) 
+    {
+      return (string)k + (string)(k*2)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().str;
+    AssertEqual(res, "36");
+    CommonChecks(vm);
+  }
 }

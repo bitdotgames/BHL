@@ -638,7 +638,11 @@ public class CompilationExecutor
             preproc_parsed: out var preproc_parsed
           );
           //NOTE: parsing happens here 
+          //for parsing time debug
+          //var sw = Stopwatch.StartNew();
           interim.parsed = new ANTLR_Parsed(parser, parser.program());
+          //sw.Stop();
+          //conf.logger.Log(1, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
           ++cache_miss;
         }
