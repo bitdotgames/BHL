@@ -640,10 +640,10 @@ public class CompilationExecutor
           );
           //NOTE: parsing happens here 
           //for parsing time debug
-          //var sw = Stopwatch.StartNew();
+          var sw = Stopwatch.StartNew();
           interim.parsed = new ANTLR_Parsed(parser, parser.program());
-          //sw.Stop();
-          //conf.logger.Log(1, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+          sw.Stop();
+          conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
           ++cache_miss;
         }
 

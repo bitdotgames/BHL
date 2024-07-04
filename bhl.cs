@@ -155,6 +155,25 @@ public static class Tasks
       args
     );
   }
+  
+  [Task(deps: "build_front_dll", verbose: false)]
+  public static void bench(Taskman tm, string[] args)
+  {
+    BuildAndRunDllCmd(
+      tm,
+      "bench",
+      new string[] {
+        $"{BHL_ROOT}/src/cmd/bench.cs",
+        $"{BHL_ROOT}/src/cmd/cmd.cs",
+        $"{BHL_ROOT}/build/bhl_front.dll", 
+        $"{BHL_ROOT}/deps/mono_opts.dll",
+        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
+        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
+      },
+      "",
+      args
+    );
+  }
 
   [Task()]
   public static void set_env_BHL_TEST(Taskman tm, string[] args)
