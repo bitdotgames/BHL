@@ -5346,7 +5346,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         var vd_type = new ProxyType();
         if(vd.type().GetText() == "var")
         {
-          var predicted_arr_type = PredictType(ctx.foreachExp().exp()) as GenericArrayTypeSymbol;
+          var predicted_arr_type = PredictType(ctx.foreachExp().exp()) as ArrayTypeSymbol;
           if(predicted_arr_type == null)
           {
             AddError(ctx.foreachExp().exp(), "expression is not of array type");
@@ -5459,7 +5459,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       if(vd_key.type().GetText() == "var" || vd_val.type().GetText() == "var")
       {
-        var predicted_map_type = PredictType(ctx.foreachExp().exp()) as GenericMapTypeSymbol;
+        var predicted_map_type = PredictType(ctx.foreachExp().exp()) as MapTypeSymbol;
         if(predicted_map_type == null)
         {
           AddError(ctx.foreachExp().exp(), "expression is not of map type");

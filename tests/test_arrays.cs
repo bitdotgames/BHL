@@ -754,6 +754,42 @@ public class TestArrays : BHL_TestBase
     string bhl = @"
     func test() 
     {
+      var ns = new List_int
+      ns.Add(100)
+      ns.Add(200)
+      foreach(var n in ns) {
+        trace((string)n + "";"")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      var ArrayInts = new NativeListTypeSymbol<int>(
+        new Origin(), 
+        "List_int",
+        (v) => (int)v._num,
+        (_vm, itype, n) => Val.NewInt(_vm, n),
+        Types.Int
+        ); 
+      ArrayInts.Setup();
+      ts.ns.Define(ArrayInts);
+
+      BindTrace(ts, log);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "100;200;");
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestNativeListProxyForeachAsGenericType()
+  {
+    string bhl = @"
+    func test() 
+    {
       []int ns = new List_int
       ns.Add(100)
       ns.Add(200)
