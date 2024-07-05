@@ -10,40 +10,80 @@ namespace bhl
     
 public class BenchCmd : ICmd
 {
+  public static void Usage(string msg = "")
+  {
+    Console.WriteLine("Usage:");
+    Console.WriteLine("bhl bench [-n=<iterations count>] [--defines=FOO,BAR]file1 file2 ..fileN");
+    Console.WriteLine(msg);
+    Environment.Exit(1);
+  }
+  
   public void Run(string[] args)
   {
     if (args.Length == 0)
       throw new Exception("No arguments");
-    
-    var file = args[0];
-    var src = new MemoryStream(File.ReadAllBytes(file));
 
-    for (int i = 0; i < 5; ++i)
+    int iterations = 1;
+    var defines = new HashSet<string>();
+    
+    var opts = new OptionSet() {
+      { "defines=", "comma delimetered defines",
+        v =>
+        {
+          foreach (var d in v.Split(","))
+            defines.Add(d);
+        } },
+      { "n=", "number of bench iterations",
+        v =>
+        {
+          iterations = int.Parse(v);
+        } },
+     };
+    
+    var files = new List<string>();
+    try
     {
-      Console.WriteLine($"=== BHL bench {file} attempt: {i+1} ===");
-      var module = new Module(null, "dummy", file);
-      
-      var sw = Stopwatch.StartNew();
-      var preproc = new ANTLR_Preprocessor(
-        module, 
-        new CompileErrors(),
-        null,
-        src, 
-        new HashSet<string>() {"SERVER"}
-      );
-      
-      var preproced = preproc.Process();
-      Console.WriteLine($"BHL preproc file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
-      
-      var lex = new bhlLexer(new AntlrInputStream(preproced));
-      var tokens = new CommonTokenStream(lex);
-    
-      var parser = new bhlParser(tokens);
-
-      sw = Stopwatch.StartNew();
-      parser.program();
-      Console.WriteLine($"BHL parse file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+      files = opts.Parse(args);
     }
+    catch(OptionException e)
+    {
+      Usage(e.Message);
+    }
+
+    foreach (var file in files)
+      BenchFile(file, iterations, defines);
+  }
+
+  static void BenchFile(string file, int iterations, HashSet<string> defines)
+  {
+    Console.WriteLine($"=== BHL bench {file} ===");
+     var src = new MemoryStream(File.ReadAllBytes(file));
+     for (int i = 0; i < iterations; ++i)
+     {
+       Console.WriteLine($"== Iteration: {i + 1} ==");
+       var module = new Module(null, "dummy", file);
+
+       var sw = Stopwatch.StartNew();
+       var preproc = new ANTLR_Preprocessor(
+         module,
+         new CompileErrors(),
+         null,
+         src,
+         defines
+       );
+
+       var preproced = preproc.Process();
+       Console.WriteLine($"BHL preproc file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+
+       var lex = new bhlLexer(new AntlrInputStream(preproced));
+       var tokens = new CommonTokenStream(lex);
+
+       var parser = new bhlParser(tokens);
+
+       sw = Stopwatch.StartNew();
+       parser.program();
+       Console.WriteLine($"BHL parse file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+     }
   }
 }
 
