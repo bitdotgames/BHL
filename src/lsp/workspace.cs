@@ -86,7 +86,8 @@ public class Workspace
       stream, 
       //TODO: pass actual defines
       defines: null,
-      preproc_parsed: out var _
+      preproc_parsed: out var _,
+      tokens: out var __
     );
 
     //NOTE: ANTLR parsing happens here 
@@ -99,7 +100,7 @@ public class Workspace
       ts, 
       errors, 
       err_handlers,
-      preproc_parsed: out var __
+      preproc_parsed: out var ___
     );
 
     return proc;

@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
+using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
 namespace bhl {
@@ -264,7 +266,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ErrorHandlers err_handlers,
       Stream src, 
       HashSet<string> defines,
-      out ANTLR_Parsed preproc_parsed 
+      out ANTLR_Parsed preproc_parsed,
+      out CommonTokenStream tokens
     )
   {
     src = ANTLR_Preprocessor.ProcessStream(
@@ -276,7 +279,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       out preproc_parsed
     );
 
-    var tokens = Stream2Tokens(src, err_handlers);
+    tokens = Stream2Tokens(src, err_handlers);
 
     var p = new bhlParser(tokens);
 
@@ -337,7 +340,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     HashSet<string> defines = null
     )
   {
-    var p = Stream2Parser(module, errors, err_handlers, src, defines, out preproc_parsed);
+    var p = Stream2Parser(
+      module, errors, err_handlers, 
+      src, defines, out preproc_parsed, out var _
+      );
 
     //NOTE: parsing happens here 
     var parsed = new ANTLR_Parsed(p, p.program());
@@ -349,6 +355,31 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ts, 
       errors
     );
+  }
+
+  public static bhlParser.ProgramContext ParseFastWithFallback(CommonTokenStream tokens, bhlParser parser)
+  {
+    var err_listeners = parser.ErrorListeners;
+    var err_handler = parser.ErrorHandler;
+    
+    parser.Interpreter.PredictionMode = PredictionMode.SLL;
+    parser.RemoveErrorListeners();
+    parser.ErrorHandler = new BailErrorStrategy();
+
+    try
+    {
+      return parser.program();
+    }
+    catch(ParseCanceledException)
+    {
+      tokens.Reset();
+      parser.Reset();
+      foreach(var el in err_listeners)
+        parser.AddErrorListener(el);
+      parser.ErrorHandler = err_handler;
+      parser.Interpreter.PredictionMode = PredictionMode.LL;
+      return parser.program();
+    }
   }
 
   public ANTLR_Processor(
@@ -2920,7 +2951,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           ErrorHandlers.MakeStandard("", new CompileErrors()),
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
           defines: null,
-          preproc_parsed: out var _
+          preproc_parsed: out var _,
+          tokens: out var __
         ).exp();
       }
       return _one_literal_exp;

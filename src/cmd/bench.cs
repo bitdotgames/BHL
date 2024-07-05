@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
 using Mono.Options;
 
 namespace bhl
@@ -14,7 +15,7 @@ public class BenchCmd : ICmd
   public static void Usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl bench [-n=<iterations count>] [--defines=FOO,BAR]file1 file2 ..fileN");
+    Console.WriteLine("bhl bench [--profile] [--fast] [-n=<iterations count>] [--defines=FOO,BAR]file1 file2 ..fileN");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -27,6 +28,7 @@ public class BenchCmd : ICmd
     int iterations = 1;
     var defines = new HashSet<string>();
     bool profile = false;
+    bool fast = false;
     
     var opts = new OptionSet() {
       { "defines=", "comma delimetered defines",
@@ -42,6 +44,8 @@ public class BenchCmd : ICmd
         } },
       { "p|profile", "profile parser",
         v => profile = v != null },
+      { "fast", "fast parsing strategy",
+        v => fast = v != null },
      };
     
     var files = new List<string>();
@@ -55,10 +59,16 @@ public class BenchCmd : ICmd
     }
 
     foreach (var file in files)
-      BenchFile(file, iterations, defines, profile);
+      BenchFile(file, iterations, defines, profile, fast);
   }
 
-  static void BenchFile(string file, int iterations, HashSet<string> defines, bool profile)
+  static void BenchFile(
+    string file, 
+    int iterations, 
+    HashSet<string> defines, 
+    bool profile,
+    bool fast
+    )
   {
     Console.WriteLine($"=== BHL bench {file} ===");
      
@@ -99,7 +109,14 @@ public class BenchCmd : ICmd
        var lex = new bhlLexer(new AntlrInputStream(preprocd));
        var tokens = new CommonTokenStream(lex);
        var parser = new bhlParser(tokens);
-       
+
+       if(fast)
+       {
+         parser.Interpreter.PredictionMode = PredictionMode.SLL;
+         parser.RemoveErrorListeners();
+         parser.ErrorHandler = new BailErrorStrategy();
+       }
+
        if(profile)
          parser.Profile = true;
 

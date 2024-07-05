@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
+using Antlr4.Runtime;
 using Newtonsoft.Json;
 
 namespace bhl {
@@ -236,7 +237,7 @@ public class CompilationExecutor
     }
 
     sw.Stop();
-    conf.logger.Log(1, $"BHL parse({parse_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL parse(workers: {parse_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
     foreach(var pw in parse_workers)
       errors.AddRange(pw.errors);
@@ -304,7 +305,7 @@ public class CompilationExecutor
       proc_bundle.file2proc
     );
     sw.Stop();
-    conf.logger.Log(1, $"BHL compile({compiler_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL compile(workers: {compiler_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     foreach(var cw in compiler_workers)
       errors.AddRange(cw.errors);
@@ -636,14 +637,15 @@ public class CompilationExecutor
             err_handlers,
             sfs, 
             defines: new HashSet<string>(conf.proj.defines),
-            preproc_parsed: out var preproc_parsed
+            preproc_parsed: out var preproc_parsed,
+            tokens: out var tokens
           );
           //NOTE: parsing happens here 
           //for parsing time debug
-          var sw = Stopwatch.StartNew();
-          interim.parsed = new ANTLR_Parsed(parser, parser.program());
-          sw.Stop();
-          conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+          //var sw = Stopwatch.StartNew();
+          interim.parsed = new ANTLR_Parsed(parser, ANTLR_Processor.ParseFastWithFallback(tokens, parser));
+          //sw.Stop();
+          //conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
           ++cache_miss;
         }
 
