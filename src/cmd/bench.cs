@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Antlr4.Runtime;
 using Mono.Options;
 
@@ -25,6 +26,7 @@ public class BenchCmd : ICmd
 
     int iterations = 1;
     var defines = new HashSet<string>();
+    bool profile = false;
     
     var opts = new OptionSet() {
       { "defines=", "comma delimetered defines",
@@ -38,6 +40,8 @@ public class BenchCmd : ICmd
         {
           iterations = int.Parse(v);
         } },
+      { "p|profile", "profile parser",
+        v => profile = v != null },
      };
     
     var files = new List<string>();
@@ -51,10 +55,10 @@ public class BenchCmd : ICmd
     }
 
     foreach (var file in files)
-      BenchFile(file, iterations, defines);
+      BenchFile(file, iterations, defines, profile);
   }
 
-  static void BenchFile(string file, int iterations, HashSet<string> defines)
+  static void BenchFile(string file, int iterations, HashSet<string> defines, bool profile)
   {
     Console.WriteLine($"=== BHL bench {file} ===");
      
@@ -95,11 +99,38 @@ public class BenchCmd : ICmd
        var lex = new bhlLexer(new AntlrInputStream(preprocd));
        var tokens = new CommonTokenStream(lex);
        var parser = new bhlParser(tokens);
+       
+       if(profile)
+         parser.Profile = true;
 
        sw = Stopwatch.StartNew();
        parser.program();
        Console.WriteLine($"Parser ({sw.ElapsedMilliseconds} ms)");
+       
+       if(profile)
+         DumpParserProfile(parser);
      }
+  }
+
+  static void DumpParserProfile(Parser parser)
+  {
+    Console.WriteLine("== Parser profiler dump");
+    foreach(var info in parser.ParseInfo.getDecisionInfo())
+    {
+      var ds = parser.Atn.GetDecisionState(info.decision);
+      var rule = parser.RuleNames[ds.ruleIndex];
+      if(info.timeInPrediction > 0)
+      {
+        Console.WriteLine("RULE " + rule +
+                          " timeInPrediction: " + info.timeInPrediction +
+                          " invocations: " + info.invocations +
+                          " SLL_TL: " + info.SLL_TotalLook +
+                          " SLL_ML: " + info.SLL_MaxLook +
+                          " ambigs: " + info.ambiguities.Count +
+                          " errs: " + info.errors.Count
+                          );
+      }
+    }
   }
 }
 
