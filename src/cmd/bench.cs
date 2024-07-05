@@ -57,12 +57,14 @@ public class BenchCmd : ICmd
   static void BenchFile(string file, int iterations, HashSet<string> defines)
   {
     Console.WriteLine($"=== BHL bench {file} ===");
-     var src = new MemoryStream(File.ReadAllBytes(file));
+     
      for (int i = 0; i < iterations; ++i)
      {
        Console.WriteLine($"== Iteration: {i + 1} ==");
        var module = new Module(null, "dummy", file);
-
+       
+       var src = new MemoryStream(File.ReadAllBytes(file));
+       
        var sw = Stopwatch.StartNew();
        var preproc = new ANTLR_Preprocessor(
          module,
@@ -71,18 +73,16 @@ public class BenchCmd : ICmd
          src,
          defines
        );
+       var preprocd = preproc.Process();
+       Console.WriteLine($"Preprocessing ({sw.ElapsedMilliseconds} ms)");
 
-       var preproced = preproc.Process();
-       Console.WriteLine($"BHL preproc file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
-
-       var lex = new bhlLexer(new AntlrInputStream(preproced));
+       var lex = new bhlLexer(new AntlrInputStream(preprocd));
        var tokens = new CommonTokenStream(lex);
-
        var parser = new bhlParser(tokens);
 
        sw = Stopwatch.StartNew();
        parser.program();
-       Console.WriteLine($"BHL parse file done ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
+       Console.WriteLine($"Parsing ({sw.ElapsedMilliseconds} ms)");
      }
   }
 }
