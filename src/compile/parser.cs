@@ -359,8 +359,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public static bhlParser.ProgramContext ParseFastWithFallback(CommonTokenStream tokens, bhlParser parser)
   {
-    var err_listeners = parser.ErrorListeners;
-    var err_handler = parser.ErrorHandler;
+    var orig_mode = parser.Interpreter.PredictionMode; 
+    var orig_err_listeners = parser.ErrorListeners;
+    var orig_err_handler = parser.ErrorHandler;
     
     parser.Interpreter.PredictionMode = PredictionMode.SLL;
     parser.RemoveErrorListeners();
@@ -374,10 +375,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       tokens.Reset();
       parser.Reset();
-      foreach(var el in err_listeners)
+      foreach(var el in orig_err_listeners)
         parser.AddErrorListener(el);
-      parser.ErrorHandler = err_handler;
-      parser.Interpreter.PredictionMode = PredictionMode.LL;
+      parser.ErrorHandler = orig_err_handler;
+      parser.Interpreter.PredictionMode = orig_mode;
       return parser.program();
     }
   }
