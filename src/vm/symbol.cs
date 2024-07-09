@@ -1176,7 +1176,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public FuncArgSymbol TryGetArg(int idx)
   {
-    idx = idx + ((scope is ClassSymbolScript) ? 1 : 0);
+    idx += GetThisArgOffset();
     if(idx < 0 || idx >= members.Count) 
       return null;
     return (FuncArgSymbol)members[idx];
@@ -1184,8 +1184,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public FuncArgSymbol GetArg(int idx)
   {
-    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
-    return (FuncArgSymbol)members[this_offset + idx];
+    return (FuncArgSymbol)members[GetThisArgOffset() + idx];
   }
 
   public int FindArgIdx(string name)
@@ -1193,8 +1192,13 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     int idx = members.IndexOf(name);
     if(idx == -1)
       return idx;
-    int this_offset = (scope is ClassSymbolScript) ? 1 : 0;
-    return idx - this_offset;
+    return idx - GetThisArgOffset();
+  }
+
+  int GetThisArgOffset()
+  {
+    return (scope is ClassSymbolScript && !attribs.HasFlag(FuncAttrib.Static)) 
+      ? 1 : 0;
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)

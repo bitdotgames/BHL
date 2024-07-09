@@ -3915,6 +3915,28 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestSimpleStaticMethodWithArg()
+  {
+    string bhl = @"
+    class Whatever {}
+    class Bar {
+      static func int foo(Whatever w) {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      return Bar.foo(new Whatever)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSimpleStaticMethodMixed()
   {
     string bhl = @"

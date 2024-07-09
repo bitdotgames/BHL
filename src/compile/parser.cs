@@ -4101,7 +4101,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           ParseType(fd.retType()), 
           fd.funcParams()
         );
-
+        
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);
 
