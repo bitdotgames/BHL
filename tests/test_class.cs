@@ -3915,24 +3915,23 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSimpleStaticMethodWithArg()
+  public void TestSimpleStaticMethodWithArgs()
   {
     string bhl = @"
-    class Whatever {}
     class Bar {
-      static func int foo(Whatever w) {
-        return 42
+      static func int foo(int a, int b) {
+        return 42 + a + b
       }
     }
 
     func int test() 
     {
-      return Bar.foo(new Whatever)
+      return Bar.foo(10, 100)
     }
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    AssertEqual(42 + 10 + 100, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
