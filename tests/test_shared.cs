@@ -52,6 +52,7 @@ public class BHL_TestRunner
     counter += Run(names, new TestImport());
     counter += Run(names, new TestVariadic());
     counter += Run(names, new TestClass());
+    counter += Run(names, new TestInitializer());
     counter += Run(names, new TestInterface());
     counter += Run(names, new TestTypeCasts());
     counter += Run(names, new TestNamespace());
@@ -225,7 +226,7 @@ public class BHL_TestBase
     }
   }
 
-  protected void BindIntStruct(Types ts)
+  public void BindIntStruct(Types ts)
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
@@ -262,7 +263,7 @@ public class BHL_TestBase
     public string str;
   }
 
-  protected void BindStringClass(Types ts)
+  public void BindStringClass(Types ts)
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "StringClass",
@@ -492,6 +493,96 @@ public class BHL_TestBase
       }
     }
   }
+  
+ public struct MasterStruct
+ {
+   public StringClass child;
+   public StringClass child2;
+   public IntStruct child_struct;
+   public IntStruct child_struct2;
+ }
+
+ public void BindMasterStruct(Types ts)
+ {
+   BindStringClass(ts);
+   BindIntStruct(ts);
+
+   {
+     var cl = new ClassSymbolNative(new Origin(), "MasterStruct",
+       delegate(VM.Frame frm, ref Val v, IType type) 
+       { 
+         var o = new MasterStruct();
+         o.child = new StringClass();
+         o.child2 = new StringClass();
+         v.SetObj(o, type);
+       }
+     );
+
+     ts.ns.Define(cl);
+
+     cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
+       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         v.SetObj(c.child, fld.type.Get());
+       },
+       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         c.child = (StringClass)v._obj; 
+         ctx.SetObj(c, ctx.type);
+       }
+     ));
+
+     cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
+       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         v.SetObj(c.child2, fld.type.Get());
+       },
+       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         c.child2 = (StringClass)v.obj; 
+         ctx.SetObj(c, ctx.type);
+       }
+     ));
+
+     cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
+       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         IntStruct.Encode(v, c.child_struct, fld.type.Get());
+       },
+       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         IntStruct s = new IntStruct();
+         IntStruct.Decode(v, ref s);
+         c.child_struct = s;
+         ctx.SetObj(c, ctx.type);
+       }
+     ));
+
+     cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
+       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         IntStruct.Encode(v, c.child_struct2, fld.type.Get());
+       },
+       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+       {
+         var c = (MasterStruct)ctx.obj;
+         IntStruct s = new IntStruct();
+         IntStruct.Decode(v, ref s);
+         c.child_struct2 = s;
+         ctx.SetObj(c, ctx.type);
+       }
+     ));
+     cl.Setup();
+
+   }
+ }
 
   public class Foo
   {

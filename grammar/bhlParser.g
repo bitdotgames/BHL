@@ -84,7 +84,7 @@ ternaryIfExp
   ;
 
 newExp
-  : NEW type
+  : NEW type ({this.notLineTerminator()}? (jsonObject | jsonArray))?
   ;
 
 foreachExp
@@ -350,8 +350,8 @@ string
   ;
 
 jsonObject
-  :   newExp? OPEN_BRACE jsonPair (COMMA jsonPair)* CLOSE_BRACE
-  |   newExp? jsonEmptyObj
+  :   OPEN_BRACE jsonPair (COMMA jsonPair)* CLOSE_BRACE
+  |   jsonEmptyObj
   ;
 
 jsonEmptyObj

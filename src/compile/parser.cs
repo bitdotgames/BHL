@@ -2395,14 +2395,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitJsonObject(bhlParser.JsonObjectContext ctx)
   {
-    var new_exp = ctx.newExp();
-
-    if(new_exp != null)
-    {
-      var tp = ParseType(new_exp.type());
-      PushJsonType(tp.Get());
-    }
-
     var curr_type = PeekJsonType();
 
     if(curr_type == null)
@@ -2438,9 +2430,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       TryVisit(pair);
     }
     PopAST();
-
-    if(new_exp != null)
-      PopJsonType();
 
     PeekAST().AddChild(ast);
     return null;
@@ -2691,8 +2680,23 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(ctx.newExp().type().nsName() != null)
      LSP_SetSymbol(ctx.newExp().type().nsName().dotName(), cl as Symbol);
 
-    var ast = new AST_New(cl, ctx.Start.Line);
-    PeekAST().AddChild(ast);
+    if (ctx.newExp().jsonObject() != null)
+    {
+      PushJsonType(cl);
+      TryVisit(ctx.newExp().jsonObject());
+      PopJsonType();
+    }
+    else if (ctx.newExp().jsonArray() != null)
+    {
+      PushJsonType(cl);
+      TryVisit(ctx.newExp().jsonArray());
+      PopJsonType();
+    }
+    else
+    {
+      var ast = new AST_New(cl, ctx.Start.Line);
+      PeekAST().AddChild(ast);
+    }
 
     return null;
   }
