@@ -296,6 +296,33 @@ public class TestInitializer : BHL_TestBase
     AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestJsonReturnObjectNewLine()
+  {
+    string bhl = @"
+
+    func Color make()
+    {
+      return new Color 
+        {r: 42}
+    }
+      
+    func float test() 
+    {
+      Color c = make()
+      return c.r
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestJsonExplicitNoSuchClass()
@@ -745,6 +772,23 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayInitializer()
   {
     string bhl = @"
+    func int test() 
+    {
+      var ins = new []int [1, 10, 100]
+
+      return ins[0] + ins[1] + ins[2]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestComplexJsonArrayInitializer()
+  {
+    string bhl = @"
       
     func float test() 
     {
@@ -761,6 +805,28 @@ public class TestInitializer : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     AssertEqual(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestJsonArrayNewLineNotAllowed()
+  {
+    string bhl = @"
+      
+    func []int test() 
+    {
+      return new []int 
+       [1, 2]
+    }
+    ";
+
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "no viable alternative at input",
+      new PlaceAssert(bhl, @"
+       [1, 2]
+-------^"
+      )
+    );
   }
 
   [IsTested()]

@@ -80,6 +80,11 @@ public abstract class bhlParserBase : Parser
   {
     return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACE;
   }
+  
+  protected bool closeBracket()
+  {
+    return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACKET;
+  }
 
   /// <summary>
   /// Returns true if on the current index of the parser's

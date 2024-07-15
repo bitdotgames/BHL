@@ -88,7 +88,7 @@ newExp
   //      currently it's done this way to resolve the following ambiguity:
   //      var tmp = new Foo <--- need 'notLineTerminator' predicate to remove 'new Foo []' ambiguity
   //      []int a = [] 
-  : NEW type (jsonObject | {this.notLineTerminator()}? jsonArray)?
+  : NEW type (jsonObject | ({this.notLineTerminator()}? jsonArray))?
   ;
 
 foreachExp

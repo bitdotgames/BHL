@@ -1972,10 +1972,12 @@ public partial class bhlParser : bhlParserBase {
 				break;
 			case 2:
 				{
+				{
 				State = 312;
 				if (!(this.notLineTerminator())) throw new FailedPredicateException(this, "this.notLineTerminator()");
 				State = 313;
 				jsonArray();
+				}
 				}
 				break;
 			}
