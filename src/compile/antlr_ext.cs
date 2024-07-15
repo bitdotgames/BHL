@@ -1,3 +1,4 @@
+using System;
 using Antlr4.Runtime;
 using System.IO;
 using static bhlParser;
@@ -129,5 +130,29 @@ public abstract class bhlParserBase : Parser
   protected bool notLineTerminator()
   {
     return !this.lineTerminator();
+  }
+  
+  protected bool whiteSpace()
+  {
+    //NOTE: CurrentToken contains prefetched new token, we need  
+    //      to 'look back' and get from input stream the previous
+    //      token from the hidden channel
+
+    // Get the token ahead of the current index.
+    int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
+    IToken token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
+    
+    if(token.Channel != Lexer.Hidden)
+    {
+      // We're only interested in tokens on the Hidden channel.
+      return false;
+    }
+
+    return token.Type == WS;
+  }
+  
+  protected bool notWhiteSpace()
+  {
+    return !this.whiteSpace();
   }
 }

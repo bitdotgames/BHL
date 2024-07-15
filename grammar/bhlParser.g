@@ -84,7 +84,11 @@ ternaryIfExp
   ;
 
 newExp
-  : NEW type ({this.notLineTerminator()}? (jsonObject | jsonArray))?
+  //TODO: notice a quick hack for jsonArray initializer to force it start on the same line as 'new' operator,
+  //      currently it's done this way to resolve the following ambiguity:
+  //      var tmp = new Foo <--- need 'notLineTerminator' predicate to remove 'new Foo []' ambiguity
+  //      []int a = [] 
+  : NEW type (jsonObject | {this.notLineTerminator()}? jsonArray)?
   ;
 
 foreachExp
