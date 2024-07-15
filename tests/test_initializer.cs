@@ -1091,5 +1091,22 @@ public class TestInitializer : BHL_TestBase
     AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestJsonMapInitializer()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      var ins = new [string]int [[""a"", 1], [""b"", 10], [""c"", 100]]
+
+      return ins[""a""] + ins[""b""] + ins[""c""]
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(111, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
 
 }
