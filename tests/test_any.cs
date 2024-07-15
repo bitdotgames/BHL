@@ -76,7 +76,6 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [IsTested()]
   public void TestCastClassToAny()
   {
@@ -100,6 +99,24 @@ public class TestAny : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     AssertEqual(res, 202);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestDynamicArrayOfAny()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      var ans = new []any [ ""hey"", 1, new []any[10, ""bar""], 200 ]
+      return (int)ans[3] == 200
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var res = Execute(vm, "test").result.PopRelease().bval;
+    AssertTrue(res);
     CommonChecks(vm);
   }
 }
