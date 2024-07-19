@@ -3992,7 +3992,7 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestSimpleStaticMethodCallsAnotherStaticMethodWithoutPrefix()
+  public void TestStaticMethodCallsAnotherStaticMethodWithoutPrefix()
   {
     string bhl = @"
     class Bar {
@@ -4008,6 +4008,32 @@ public class TestClass : BHL_TestBase
     func int test() 
     {
       return Bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestMethodCallsStaticMethodWithoutPrefix()
+  {
+    string bhl = @"
+    class Bar {
+      func int foo() {
+        return bar()
+      }
+
+      static func int bar() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      var bar = new Bar
+      return bar.foo()
     }
     ";
 

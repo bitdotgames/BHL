@@ -1114,44 +1114,11 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-  internal struct EnforceThisScope : IScope
+  internal struct EnforceThisForInstanceMembersScope : IScope
   {
     ClassSymbol cs;
 
-    internal EnforceThisScope(ClassSymbolScript cs)
-    {
-      this.cs = cs;
-    }
-
-    public Symbol Resolve(string name)
-    {
-      var symb = cs.Resolve(name);
-
-      //NOTE: let's force members to be prefixed with 'this'
-      if(symb is VariableSymbol)
-        return null;
-      else if(symb is FuncSymbol)
-        return null;
-
-      return symb;
-    }
-
-    public void Define(Symbol sym)
-    {
-      throw new NotImplementedException();
-    }
-
-    public IScope GetFallbackScope()
-    {
-      return cs.scope;
-    }
-  }
-  
-  internal struct EnforceClassStaticScope : IScope
-  {
-    ClassSymbol cs;
-
-    internal EnforceClassStaticScope(ClassSymbolScript cs)
+    internal EnforceThisForInstanceMembersScope(ClassSymbolScript cs)
     {
       this.cs = cs;
     }
@@ -1160,7 +1127,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     {
       var symb = cs.Resolve(name);
       
-      //NOTE: let's ignore instance members when resolving from within the static method
+      //NOTE: instance members must be called via 'this'
       if(symb is VariableSymbol vs && vs.scope is ClassSymbol && !vs.IsStatic())
         return null;
       else if (symb is FuncSymbol fs && fs.scope is ClassSymbol && !fs.IsStatic())
@@ -1186,12 +1153,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
     if(scope is ClassSymbolScript cs)
-    {
-      if(!attribs.HasFlag(FuncAttrib.Static))
-        return new EnforceThisScope(cs);
-      else
-        return new EnforceClassStaticScope(cs);
-    }
+      return new EnforceThisForInstanceMembersScope(cs);
     else
       return this.scope; 
   }
