@@ -92,6 +92,33 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestCallFreeFuncFromMethodWithSameName()
+  {
+    string bhl = @"
+
+    func int Calc(int i) {
+      return i
+    }
+
+    class Foo {
+      func int Calc() {
+        return Calc(10)
+      }
+    }
+      
+    func int test() 
+    {
+      Foo f = {}
+      return f.Calc()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestSeveralEmptyUserClasses()
   {
     string bhl = @"
