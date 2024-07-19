@@ -94,26 +94,76 @@ public class TestClass : BHL_TestBase
   [IsTested()]
   public void TestCallFreeFuncFromMethodWithSameName()
   {
-    string bhl = @"
-
+    string bhl1 = @"
     func int Calc(int i) {
       return i
     }
+    ";
+      
+    string bhl2 = @"
+    import ""bhl1""  
 
-    class Foo {
-      func int Calc() {
-        return Calc(10)
+    namespace bar {
+      class Foo {
+        func int Calc() {
+          return Calc(10)
+        }
       }
     }
       
     func int test() 
     {
-      Foo f = {}
+      bar.Foo f = {}
       return f.Calc()
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+
+    vm.LoadModule("bhl2");
+
+    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestCallFreeFuncFromStaticMethodWithSameName()
+  {
+    string bhl1 = @"
+    func int Calc(int i) {
+      return i
+    }
+    ";
+      
+    string bhl2 = @"
+    import ""bhl1""  
+
+    namespace bar {
+      class Foo {
+        static func int Calc() {
+          return ..Calc(10) //explicit global free func call
+        }
+      }
+    }
+      
+    func int test() 
+    {
+      return bar.Foo.Calc()
+    }
+    ";
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+      }
+    );
+
+    vm.LoadModule("bhl2");
+
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -3933,6 +3983,60 @@ public class TestClass : BHL_TestBase
     func int test() 
     {
       return Bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestSimpleStaticMethodCallsAnotherStaticMethodWithoutPrefix()
+  {
+    string bhl = @"
+    class Bar {
+      static func int foo() {
+        return bar()
+      }
+
+      static func int bar() {
+        return 42
+      }
+    }
+
+    func int test() 
+    {
+      return Bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
+  public void TestStaticMethodCallsSimilarWithMethodFreeFunc()
+  {
+    string bhl = @"
+    func int Calc(int n) {
+      return n
+    }
+
+    class Bar {
+      static func int Doer() {
+        return Calc(42) //won't lookup instance Calc() method
+      }
+
+      func int Calc() {
+        return Calc(10) //just some garbage
+      }
+    }
+
+    func int test() 
+    {
+      return Bar.Doer()
     }
     ";
 

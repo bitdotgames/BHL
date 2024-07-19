@@ -1146,14 +1146,52 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
       return cs.scope;
     }
   }
+  
+  internal struct EnforceClassStaticScope : IScope
+  {
+    ClassSymbol cs;
+
+    internal EnforceClassStaticScope(ClassSymbolScript cs)
+    {
+      this.cs = cs;
+    }
+
+    public Symbol Resolve(string name)
+    {
+      var symb = cs.Resolve(name);
+      
+      //NOTE: let's ignore instance members when resolving from within the static method
+      if(symb is VariableSymbol vs && vs.scope is ClassSymbol && !vs.IsStatic())
+        return null;
+      else if (symb is FuncSymbol fs && fs.scope is ClassSymbol && !fs.IsStatic())
+        return null;
+
+      return symb;
+    }
+
+    public void Define(Symbol sym)
+    {
+      throw new NotImplementedException();
+    }
+
+    public IScope GetFallbackScope()
+    {
+      return cs.scope;
+    }
+  }
 
   public IScope GetFallbackScope() 
   { 
     //NOTE: If declared as a class method we force the fallback
     //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
-    if(!attribs.HasFlag(FuncAttrib.Static) && scope is ClassSymbolScript cs)
-      return new EnforceThisScope(cs);
+    if(scope is ClassSymbolScript cs)
+    {
+      if(!attribs.HasFlag(FuncAttrib.Static))
+        return new EnforceThisScope(cs);
+      else
+        return new EnforceClassStaticScope(cs);
+    }
     else
       return this.scope; 
   }
