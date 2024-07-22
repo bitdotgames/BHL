@@ -1813,6 +1813,31 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestStaticMethodCallsStaticFieldWithoutPrefix()
+  {
+    string bhl = @"
+    class Bar {
+      static int b
+
+      static func int foo() {
+        return b
+      }
+
+    }
+
+    func int test() 
+    {
+      Bar.b = 42
+      return Bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
