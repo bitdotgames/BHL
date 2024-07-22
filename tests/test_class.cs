@@ -1787,6 +1787,32 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestMethodCallsStaticFieldWithoutPrefix()
+  {
+    string bhl = @"
+    class Bar {
+      static int b
+
+      func int foo() {
+        return b
+      }
+
+    }
+
+    func int test() 
+    {
+      Bar.b = 42
+      var bar = new Bar
+      return bar.foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(42, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
