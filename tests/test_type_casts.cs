@@ -640,8 +640,12 @@ public class TestTypeCasts : BHL_TestBase
     AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  public interface INativeFoo
+  {}
 
-  public class NativeFoo {
+  public class NativeFoo : INativeFoo
+  {
     public int foo = 10;
   }
   public class NativeBar : NativeFoo 
@@ -738,12 +742,6 @@ public class TestTypeCasts : BHL_TestBase
     });
   }
   
-  public interface IFoo
-  {}
-
-  public class Foo : IFoo
-  {}
-
   [IsTested()]
   public void TestIsForClassImplementingNativeInterface()
   {
@@ -759,7 +757,7 @@ public class TestTypeCasts : BHL_TestBase
           new Origin(),
           "IFoo", 
           null,
-          typeof(IFoo)
+          typeof(INativeFoo)
       );
       ts.ns.Define(ifs);
       ifs.Setup();
@@ -770,9 +768,9 @@ public class TestTypeCasts : BHL_TestBase
         new List<ProxyType>(){ ts.T("IFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.SetObj(new Foo(), type);
+          v.SetObj(new NativeFoo(), type);
         },
-        typeof(Foo)
+        typeof(NativeFoo)
       );
       ts.ns.Define(cl);
       cl.Setup();

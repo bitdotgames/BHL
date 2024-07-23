@@ -1635,14 +1635,20 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   IList<ProxyType> tmp_implements;
 
   System.Type native_type;
+  Func<Val, object> native_object_getter;
 
   public ClassSymbolNative(
     Origin origin,
     string name, 
     VM.ClassCreator creator = null,
-    System.Type native_type = null
+    System.Type native_type = null,
+    Func<Val, object> native_object_getter = null
   )
-    : this(origin, name, new ProxyType(), null, creator, native_type)
+    : this(
+      origin, name, 
+      new ProxyType(), null, 
+      creator, 
+      native_type, native_object_getter)
   {}
 
   public ClassSymbolNative(
@@ -1650,9 +1656,14 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     string name, 
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
-    System.Type native_type = null
+    System.Type native_type = null,
+    Func<Val, object> native_object_getter = null
   )
-    : this(origin, name, new ProxyType(), proxy_implements, creator, native_type)
+    : this(
+      origin, name, 
+      new ProxyType(), proxy_implements, 
+      creator, 
+      native_type, native_object_getter)
   {}
 
   public ClassSymbolNative(
@@ -1660,9 +1671,13 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     string name, 
     ProxyType proxy_super_class,
     VM.ClassCreator creator = null,
-    System.Type native_type = null
+    System.Type native_type = null,
+    Func<Val, object> native_object_getter = null
   )
-    : this(origin, name, proxy_super_class, null, creator, native_type)
+    : this(origin, name, 
+      proxy_super_class, null, 
+      creator, 
+      native_type, native_object_getter)
   {}
 
   public ClassSymbolNative(
@@ -1671,13 +1686,15 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     ProxyType proxy_super_class,
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
-    System.Type native_type = null
+    System.Type native_type = null,
+    Func<Val, object> native_object_getter = null
   )
     : base(origin, name, creator)
   {
     this.tmp_super_class = proxy_super_class;
     this.tmp_implements = proxy_implements;
     this.native_type = native_type;
+    this.native_object_getter = native_object_getter;
   }
 
   public System.Type GetNativeType()
@@ -1685,9 +1702,9 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     return native_type;
   }
 
-  public virtual object GetNativeObject(Val v)
+  public object GetNativeObject(Val v)
   {
-    return v?._obj;
+    return native_object_getter?.Invoke(v) ?? v?._obj;
   }
 
   public override void Setup()
