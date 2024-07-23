@@ -737,6 +737,12 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     });
   }
+  
+  public interface IFoo
+  {}
+
+  public class Foo : IFoo
+  {}
 
   [IsTested()]
   public void TestIsForClassImplementingNativeInterface()
@@ -752,16 +758,21 @@ public class TestTypeCasts : BHL_TestBase
       var ifs = new InterfaceSymbolNative(
           new Origin(),
           "IFoo", 
-          null
+          null,
+          typeof(IFoo)
       );
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Foo", new List<ProxyType>(){ ts.T("IFoo") },
+      var cl = new ClassSymbolNative(
+        new Origin(), 
+        "Foo", 
+        new List<ProxyType>(){ ts.T("IFoo") },
         delegate(VM.Frame frm, ref Val v, IType type) 
         { 
-          v.SetObj(null/*dummy*/, type);
-        }
+          v.SetObj(new Foo(), type);
+        },
+        typeof(Foo)
       );
       ts.ns.Define(cl);
       cl.Setup();

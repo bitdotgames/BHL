@@ -378,7 +378,12 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
   {
     return native_type;
   }
-  
+
+  public object GetNativeObject(Val v)
+  {
+    return v?._obj;
+  }
+
   public void Setup()
   {
     List<InterfaceSymbol> inherits = null;
@@ -984,13 +989,13 @@ public class FieldSymbolScript : FieldSymbol
 
   void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx.obj;
+    var m = (IList<Val>)ctx._obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
   void Setter(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx.obj;
+    var m = (IList<Val>)ctx._obj;
     var curr = m[scope_idx];
     for(int i=0;i<curr._refs;++i)
     {
@@ -1002,7 +1007,7 @@ public class FieldSymbolScript : FieldSymbol
 
   void Getref(VM.Frame frm, Val ctx, out Val v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx.obj;
+    var m = (IList<Val>)ctx._obj;
     v = m[scope_idx];
   }
 
@@ -1620,6 +1625,7 @@ public class FuncSymbolNative : FuncSymbol
 public interface INativeType
 {
   System.Type GetNativeType();
+  object GetNativeObject(Val v);
 }
 
 public class ClassSymbolNative : ClassSymbol, INativeType
@@ -1677,6 +1683,11 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public System.Type GetNativeType()
   {
     return native_type;
+  }
+
+  public virtual object GetNativeObject(Val v)
+  {
+    return v?._obj;
   }
 
   public override void Setup()
@@ -1917,6 +1928,12 @@ public class EnumSymbolNative : EnumSymbol, INativeType
   public System.Type GetNativeType()
   {
     return native_type;
+  }
+
+  public object GetNativeObject(Val v)
+  {
+    //TODO: is it valid?
+    return v?._num;
   }
 }
 

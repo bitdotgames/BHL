@@ -643,7 +643,7 @@ public class Types : INamedResolver
       var fld = new FieldSymbol(new Origin(), "Name", String, 
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
         {
-          var t = (IType)ctx.obj;
+          var t = (IType)ctx._obj;
           v.SetStr(t.GetName());
         },
         null
@@ -730,12 +730,23 @@ public class Types : INamedResolver
       return false;
   }
 
-  static public bool Is(Val v, IType dest_type) 
+  static public bool Is(Val val, IType dest_type) 
   {
-    if(v?.obj != null && dest_type is INativeType ndi)
-      return ndi.GetNativeType().IsAssignableFrom(v.obj.GetType());
+    if(dest_type is INativeType dest_intype)
+    {
+      if(val?.type is INativeType val_intype)
+      {
+        var dest_ntype = dest_intype.GetNativeType();
+        var nobj = val_intype.GetNativeObject(val);
+        return dest_ntype?.IsAssignableFrom(
+          nobj?.GetType() ?? val_intype.GetNativeType()
+          ) ?? false;
+      }
+      else
+        return false;
+    }
     else
-      return Is(v?.type, dest_type);
+      return Is(val?.type, dest_type);
   }
 
   static public bool CheckCast(IType dest_type, IType from_type) 
