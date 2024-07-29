@@ -3556,8 +3556,9 @@ public class TestClass : BHL_TestBase
       int b
 
       coro virtual func int getA() {
+        var tmp = this.a
         yield()
-        return this.a
+        return tmp
       }
 
       func int getB() {
@@ -3569,9 +3570,10 @@ public class TestClass : BHL_TestBase
       int new_a
 
       coro override func int getA() {
+        var tmp = this.new_a
         yield()
         yield()
-        return this.new_a
+        return tmp
       }
     }
 
