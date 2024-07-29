@@ -3547,6 +3547,81 @@ public class TestClass : BHL_TestBase
   }
 
   [IsTested()]
+  public void TestVirtualCoroutineSupport()
+  {
+    string bhl = @"
+    class Foo {
+      
+      int a
+      int b
+
+      coro virtual func int getA() {
+        yield()
+        return this.a
+      }
+
+      func int getB() {
+        return this.b
+      }
+    }
+
+    class Bar : Foo {
+      int new_a
+
+      coro override func int getA() {
+        yield()
+        yield()
+        return this.new_a
+      }
+    }
+
+    coro func int test1()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return yield b.getA() + b.getB()
+    }
+
+    coro func int test2()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      //NOTE: Bar.getA() will be called anyway!
+      return yield ((Foo)b).getA() + b.getB()
+    }
+
+    coro func int foo_caller(Foo f)
+    {
+      return yield f.getA();
+    }
+
+    coro func int bar_caller(Bar b)
+    {
+      return yield b.getA();
+    }
+
+    coro func int test3()
+    {
+      Bar b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return yield foo_caller(b) + yield bar_caller(b)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+    AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
+    AssertEqual(200, Execute(vm, "test3").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [IsTested()]
   public void TestInvalidFuncAttrubutes()
   {
     string bhl = @"
