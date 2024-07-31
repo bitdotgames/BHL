@@ -1409,6 +1409,7 @@ public class ModuleCompiler : AST_Visitor
     else
     {
       var func_symb_script = (FuncSymbolScript)func_symb;
+      //check if it's a local function
       if(func_symb_script.GetModule() == interim)
       {
         var fmod = func_symb_script.GetModule();

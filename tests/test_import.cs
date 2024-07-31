@@ -1582,4 +1582,55 @@ public class TestImport : BHL_TestBase
       CommonChecks(vm);
     }
   }
+
+  [IsTested()]
+  public void TestNotFoundFuncSymbol()
+  {
+    string file_foo = @"
+      namespace foo {
+        func Foo() {}
+      }
+    ";                                                                                                              
+
+    string file_bar = @"
+    import ""/foo""
+
+    namespace foo {
+      func Dummy() {}
+    }
+
+    func what() {
+      foo.Foo()
+    }
+    ";
+
+    string file_test = @"
+    import ""/bar""
+
+    func test() {
+      foo.Foo()
+    }
+    ";
+
+    var conf = MakeCompileConf(
+      MakeFiles(new Dictionary<string, string>() {
+        {"foo.bhl", file_foo},
+        {"bar.bhl", file_bar},
+        {"test.bhl", file_test},
+       }), 
+      use_cache: false, 
+      max_threads: 1);
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(conf);
+      },
+    "symbol 'Foo' not resolved",
+    new PlaceAssert(file_test, @"
+      foo.Foo()
+----------^"
+      )
+    );
+
+  }
 }
