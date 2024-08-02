@@ -1584,23 +1584,18 @@ public class TestImport : BHL_TestBase
   }
 
   [IsTested()]
-  public void TestNotFoundFuncSymbol()
+  public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug()
   {
     string file_foo = @"
-      namespace foo {
+      namespace root.foo {
         func Foo() {}
       }
     ";                                                                                                              
-
     string file_bar = @"
     import ""/foo""
 
-    namespace foo {
-      func Dummy() {}
-    }
-
-    func what() {
-      foo.Foo()
+    namespace root.bar {
+      func Bar() {}
     }
     ";
 
@@ -1608,15 +1603,73 @@ public class TestImport : BHL_TestBase
     import ""/bar""
 
     func test() {
-      foo.Foo()
+      root.foo.Foo()
     }
     ";
 
     var conf = MakeCompileConf(
       MakeFiles(new Dictionary<string, string>() {
-        {"foo.bhl", file_foo},
-        {"bar.bhl", file_bar},
         {"test.bhl", file_test},
+        {"bar.bhl", file_bar},
+        {"foo.bhl", file_foo},
+       }), 
+      use_cache: false, 
+      max_threads: 1);
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(conf);
+      },
+    "symbol 'foo' not resolved",
+    new PlaceAssert(file_test, @"
+      root.foo.Foo()
+-----------^"
+      )
+    );
+
+    conf.proj.use_cache = true;
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(conf);
+      },
+    "symbol 'foo' not resolved",
+    new PlaceAssert(file_test, @"
+      root.foo.Foo()
+-----------^"
+      )
+    );
+  }
+
+  [IsTested()]
+  public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug2()
+  {
+    string file_foo = @"
+      namespace root.foo {
+        func Foo() {}
+      }
+    ";                                                                                                              
+    string file_bar = @"
+    import ""/foo""
+
+    namespace root.foo {
+      func Bar() {}
+    }
+    ";
+
+    string file_test = @"
+    import ""/bar""
+
+    func test() {
+      root.foo.Foo()
+    }
+    ";
+
+    var conf = MakeCompileConf(
+      MakeFiles(new Dictionary<string, string>() {
+        {"test.bhl", file_test},
+        {"bar.bhl", file_bar},
+        {"foo.bhl", file_foo},
        }), 
       use_cache: false, 
       max_threads: 1);
@@ -1627,8 +1680,21 @@ public class TestImport : BHL_TestBase
       },
     "symbol 'Foo' not resolved",
     new PlaceAssert(file_test, @"
-      foo.Foo()
-----------^"
+      root.foo.Foo()
+---------------^"
+      )
+    );
+
+    conf.proj.use_cache = true;
+
+    AssertError<Exception>(
+      delegate() { 
+        CompileFiles(conf);
+      },
+    "symbol 'Foo' not resolved",
+    new PlaceAssert(file_test, @"
+      root.foo.Foo()
+---------------^"
       )
     );
 
