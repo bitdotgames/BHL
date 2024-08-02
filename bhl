@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#NOTE: to run bhl binary with debugger attached set BHL_DEBUG=1 env. variable
+#NOTE: to run bhl tests with debugger attached set BHL_TDEBUG=1 env. variable
+
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
