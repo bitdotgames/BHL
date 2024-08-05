@@ -184,9 +184,7 @@ public class CompiledModule
     
     marshall.Marshall.Sync(ctx, ref module.ns);
 
-    //NOTE: we link native namespace after our own namespace was loaded,
-    //      this way we make sure namespace members are properly linked
-    //      and there are no duplicates
+    //NOTE: we link(import) the global native namespace once the module was loaded
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 

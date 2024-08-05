@@ -46,6 +46,7 @@ public class Module : INamedResolver
 
   public ModulePath path;
   public Types ts;
+  
   public Namespace ns;
 
   //used for assigning incremental indexes to module global vars,

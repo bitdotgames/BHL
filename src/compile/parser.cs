@@ -632,28 +632,45 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  internal void Phase_PreLinkImports(ProcessedBundle proc_bundle)
+  internal void Phase_LinkImports1(ProcessedBundle proc_bundle)
   {
     var already_imported = new HashSet<Module>(); 
 
     //NOTE: getting a copy of keys since we might modify the dictionary during traversal
     var keys = new List<bhlParser.MimportContext>(raw_imports_parsed.Keys);
-    foreach(var k in keys)
+    foreach (var k in keys)
     {
       var import = raw_imports_parsed[k];
 
-      if(ResolveImportedModule(import, proc_bundle, out var imported_module))
-      {
-        //NOTE: let's remove duplicated imports
-        if(already_imported.Contains(imported_module))
-        {
-          AddError(k, "already imported '" + import + "'");
-          raw_imports_parsed.Remove(k);
-          continue;
-        }
-        already_imported.Add(imported_module);
+      if(!ResolveImportedModule(import, proc_bundle, out var imported_module))
+        continue;
 
-        ns.TryMakeLocalLinkedNamespaces(imported_module.ns);
+      //protection against self import
+      if(imported_module.name == module.name)
+      {
+        raw_imports_parsed.Remove(k);
+        continue;
+      }
+
+      //NOTE: let's remove duplicated imports
+      if(already_imported.Contains(imported_module))
+      {
+        AddError(k, "already imported '" + import + "'");
+        raw_imports_parsed.Remove(k);
+        continue;
+      }
+
+      already_imported.Add(imported_module);
+
+      try
+      {
+        //TODO: should this be in this phase?
+        module.ns.Link(imported_module.ns);
+      }
+      catch (SymbolError se)
+      {
+        errors.Add(se);
+        continue;
       }
     }
   }
@@ -678,7 +695,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return module != null;
   }
 
-  internal void Phase_LinkImports(ProcessedBundle proc_bundle)
+  internal void Phase_LinkImports2(ProcessedBundle proc_bundle)
   {
     if(raw_imports_parsed.Count == 0)
       return;
@@ -693,21 +710,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         continue;
       }
 
-      //protection against self import
-      if(imported_module.name == module.name) 
-        continue;
-          
       module.AddImportedGlobalVars(imported_module);
-
-      try
-      {
-        ns.Link(imported_module.ns);
-      }
-      catch(SymbolError se)
-      {
-        errors.Add(se);
-        continue;
-      }
 
       imports.Add(imported_module);
       ast_import.module_names.Add(imported_module.name);
@@ -864,10 +867,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ProcessCachedModules(proc_bundle);
 
     foreach(var kv in proc_bundle.file2proc)
-      WrapError(kv.Value, () => kv.Value.Phase_PreLinkImports(proc_bundle));
+      WrapError(kv.Value, () => kv.Value.Phase_LinkImports1(proc_bundle));
 
     foreach(var kv in proc_bundle.file2proc)
-      WrapError(kv.Value, () => kv.Value.Phase_LinkImports(proc_bundle));
+      WrapError(kv.Value, () => kv.Value.Phase_LinkImports2(proc_bundle));
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
@@ -901,12 +904,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var all = proc_bundle.GroupModulesByName();
       
-    //TODO: find out why exactly this is needed
-    //before actual linking create local linked namespaces
     foreach(var kv in proc_bundle.file2cached)
     {
       foreach(string import in kv.Value.compiled.imports)
-        kv.Value.ns.TryMakeLocalLinkedNamespaces(all[import].ns);
+        kv.Value.ns.Link(all[import].ns);
     }
 
     foreach(var kv in proc_bundle.file2cached)
@@ -2220,7 +2221,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(tp.Get() == null)
     {
-      AddError(ctx, "type '" + tp + "' not found");
+      AddError(ctx, "type '" + tp + "' not found1");
       return tp;
     }
 
@@ -3886,12 +3887,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       //NOTE: let's first check if there's such a namespace in
       //      the current scope (e.g it was defined in bindings)
       var ns = curr_scope.Resolve(name) as Namespace;
-      if (ns == null)
+      if(ns == null)
         //...otherwise let's check existing namespaces in passes
         ns = FindNamespaceInPasses(full_path);
 
-      if (ns == null)
+      var lns = ns as LinkedNamespace;
+      if(ns == null || lns != null)
+      {
         ns = new Namespace(module, name);
+        //NOTE: if it's already a linked namespace let's create the namespace
+        //      and add it to links
+        if(lns != null)
+          ns.links.Add(lns);
+      }
+
       //NOTE: special case for namespace parser pass, we don't
       //      define it mmediately in the current scope but rather
       //      do it later, this way we preserve natural symbols order

@@ -640,7 +640,8 @@ public class CompilationExecutor
             preproc_parsed: out var preproc_parsed,
             tokens: out var tokens
           );
-          //NOTE: parsing happens here 
+          //NOTE: ANTLR parsing happens here 
+          //NOTE: *parsing* is not processing which happens later
           //for parsing time debug
           //var sw = Stopwatch.StartNew();
           interim.parsed = new ANTLR_Parsed(parser, ANTLR_Processor.ParseFastWithFallback(tokens, parser));

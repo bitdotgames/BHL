@@ -1993,7 +1993,7 @@ public class EnumItemSymbol : Symbol, IType
 
 public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 {
-  IScope scope;
+  internal IScope scope;
   internal List<Symbol> list = new List<Symbol>();
   //NOTE: used for lookup by name
   Dictionary<string, int> name2idx = new Dictionary<string, int>();

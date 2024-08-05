@@ -121,8 +121,8 @@ public class Namespace : Symbol, IScope,
 
   public Module module;
 
-  internal List<Namespace> links = new List<Namespace>();
-
+  internal List<LinkedNamespace> links = new List<LinkedNamespace>();
+  
   public SymbolsStorage members;
 
   public override uint ClassId()
@@ -202,39 +202,30 @@ public class Namespace : Symbol, IScope,
     }
   }
 
-  //TODO: make it two-phase? With TryMakeLocalLinkedNamespaces as
-  //      a first phase?
-  //NOTE: here we link only namespaces named similar but we don't
-  //      add symbols from them
   public LinkConflict TryLink(Namespace other)
   {
-    if(links.Contains(other))
+    if(IsLinked(other))
       return default(LinkConflict);
-
+    
     for(int i=0;i<other.members.Count;++i)
     {
       var other_symb = other.members[i];
 
       var this_symb = Resolve(other_symb.name);
-
+      
       if(other_symb is Namespace other_ns)
       {
         if(this_symb is Namespace this_ns)
         {
-          var conflict = this_ns.TryLink(other_ns);
-          if(!conflict.Ok)
-            return conflict;
+          if(!(this_symb is LinkedNamespace))
+          {
+            var conflict = this_ns.TryLink(other_ns);
+            if (!conflict.Ok)
+              return conflict;
+          }
         }
         else if(this_symb != null)
           return new LinkConflict(this_symb, other_symb);
-        else
-        {
-          //NOTE: let's create a local version of the linked namespace
-          //      which is linked to the original one
-          var ns = new Namespace(other_ns.module, other_ns.name);
-          ns.links.Add(other_ns);
-          members.Add(ns);
-        }
       }
       else if(this_symb != null)
       {
@@ -244,52 +235,43 @@ public class Namespace : Symbol, IScope,
       }
     }
 
-    links.Add(other);
+    links.Add(new LinkedNamespace(other));
 
     return default(LinkConflict);
   }
 
-  public void TryMakeLocalLinkedNamespaces(Namespace other)
+  public bool IsLinked(Namespace other)
   {
-    for(int i=0;i<other.members.Count;++i)
-    {
-      var other_symb = other.members[i];
-
-      var this_symb = Resolve(other_symb.name);
-
-      if(other_symb is Namespace other_ns)
-      {
-        if(this_symb == null)
-        {
-          //NOTE: let's create a local version of the linked namespace
-          //      which is linked to the original one
-          var ns = new Namespace(other_ns.module, other_ns.name);
-          ns.links.Add(other_ns);
-          members.Add(ns);
-        }
-      }
-    }
+    return FindLinkIndex(other) != -1;
   }
 
+  int FindLinkIndex(Namespace other)
+  {
+    for(int i = 0; i < links.Count; ++i)
+    {
+      if(links[i].orig == other)
+        return i;
+    }
+    return -1;
+  }
+  
   public void Unlink(Namespace other)
   {
+    int link_idx = FindLinkIndex(other);
+    if(link_idx == -1)
+      return;
+    
     for(int i=0;i<other.members.Count;++i)
     {
-      var other_symb = other.members[i];
-
-      if(other_symb is Namespace other_ns)
+      if(other.members[i] is Namespace other_ns)
       {
-        var this_symb = members.Find(other_symb.name);
+        var this_symb = members.Find(other_ns.name);
         if(this_symb is Namespace this_ns)
-        {
           this_ns.Unlink(other_ns);
-          if(this_ns.scope == this && this_ns.members.Count == 0)
-            members.RemoveAt(members.IndexOf(this_ns));
-        }
       }
     }
 
-    links.Remove(other);
+    links.RemoveAt(link_idx);
   }
 
   public void UnlinkAll()
@@ -368,23 +350,27 @@ public class Namespace : Symbol, IScope,
   
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-  public Symbol Resolve(string name)
+  public virtual Symbol Resolve(string name)
   {
-    var it = GetIterator();
-    while(it.Next())
+    var s = members.Find(name);
+    if(s != null)
+      return s;
+    
+    foreach(var lnk in links)
     {
-      var s = it.current.members.Find(name);
-
+      s = lnk.Resolve(name);
       if(s != null)
         return s;
     }
     return null;
   }
-
-  public void Define(Symbol sym) 
+    
+  public virtual void Define(Symbol sym)
   {
-    if(Resolve(sym.name) != null)
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+    var tmp = Resolve(sym.name); 
+    //NOTE: allow namespace coexist with linked namespace
+    if(tmp != null && !(tmp is LinkedNamespace) && !(sym is Namespace))
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
 
     if(sym is FuncSymbolNative fsn)
       module.nfunc_index.Index(fsn);
@@ -403,11 +389,40 @@ public class Namespace : Symbol, IScope,
 
   public override void Sync(marshall.SyncContext ctx) 
   {
-    //NOTE: module and links are not persisted since it's assumed 
-    //      they are restored by the more high level code
-    
+    //NOTE: module is not persisted since it's assumed 
+    //      it's restored by the more high level code
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref members);
+  }
+}
+
+public class LinkedNamespace : Namespace
+{
+  internal Namespace orig;
+
+  public LinkedNamespace(Namespace orig)
+    : base(orig.module, orig.name)
+  {
+    this.orig = orig;
+  }
+
+  public override Symbol Resolve(string name)
+  {
+    var tmp = orig.members.Find(name);
+    if(tmp is Namespace ns)
+      return new LinkedNamespace(ns);
+    else
+      return tmp;
+  }
+
+  public override void Define(Symbol sym)
+  {
+    throw new InvalidOperationException();
+  }
+
+  public override string ToString()
+  {
+    return name + " ->";
   }
 }
 
@@ -506,6 +521,11 @@ public static class ScopeExtensions
         scope = scope.GetFallbackScope();
     }
     return name;
+  }
+  
+  public static IScope GetRootScope(this Symbol sym)
+  {
+    return sym.scope?.GetRootScope();
   }
 
   public static IScope GetRootScope(this IScope scope)
