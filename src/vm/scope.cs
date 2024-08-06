@@ -122,7 +122,8 @@ public class Namespace : Symbol, IScope,
 
   public Module module;
 
-  internal List<LinkedNamespace> links = new List<LinkedNamespace>();
+  internal List<Namespace> links = new List<Namespace>();
+  internal int linkness = 0;
   
   public SymbolsStorage members;
 
@@ -146,6 +147,14 @@ public class Namespace : Symbol, IScope,
   public Namespace()
     : this(null, "")
   {}
+
+  public override string ToString()
+  {
+    if(linkness == 0)
+      return name;
+    else
+      return name + " " + linkness;
+  }
 
   public INamed ResolveNamedByPath(string path)
   {
@@ -203,7 +212,14 @@ public class Namespace : Symbol, IScope,
     }
   }
 
+  //TODO: shouldn't we rather link 'modules'?
   public LinkConflict TryLink(Namespace other)
+  {
+    var res = _TryLink(other.module, other);
+    return res;
+  }
+  
+  LinkConflict _TryLink(Module top_module, Namespace other)
   {
     if(IsLinked(other))
       return default(LinkConflict);
@@ -212,13 +228,13 @@ public class Namespace : Symbol, IScope,
     {
       var other_symb = other.members[i];
 
-      var this_symb = Resolve(other_symb.name);
+      var this_symb = _Resolve(other_symb.name);
       
       if(other_symb is Namespace other_ns)
       {
         if(this_symb is Namespace this_ns)
         {
-          var conflict = this_ns.TryLink(other_ns);
+          var conflict = this_ns._TryLink(top_module, other_ns);
           if(!conflict.Ok)
             return conflict;
         }
@@ -228,7 +244,8 @@ public class Namespace : Symbol, IScope,
         {
           //NOTE: let's create a local version of non-existing namespace
           var ns = new Namespace(module, other_ns.name);
-          ns.Link(other_ns);
+          ns.linkness += (other_ns.linkness + 1);
+          ns._TryLink(top_module, other_ns);
           members.Add(ns);
         }
       }
@@ -240,7 +257,7 @@ public class Namespace : Symbol, IScope,
       }
     }
 
-    links.Add(new LinkedNamespace(other));
+    links.Add(other);
 
     return default(LinkConflict);
   }
@@ -252,39 +269,21 @@ public class Namespace : Symbol, IScope,
 
   int FindLinkIdx(Namespace other)
   {
-    for(int i = 0; i < links.Count; ++i)
-      if(links[i].orig == other)
-        return i;
-    return -1;
+    return links.IndexOf(other);
   }
 
-  public void Unlink(Namespace other)
+  public Namespace UnlinkAll()
   {
-    int link_idx = FindLinkIdx(other);
-    if(link_idx == -1)
-      return;
+    var clean = new Namespace(module, name);
     
-    for(int i=0;i<other.members.Count;++i)
-    {
-      if(other.members[i] is Namespace other_ns)
-      {
-        var this_symb = members.Find(other_ns.name);
-        if(this_symb is Namespace this_ns)
-          this_ns.Unlink(other_ns);
-      }
-    }
-
-    links.RemoveAt(link_idx);
-  }
-
-  public void UnlinkAll()
-  {
     for(int i=0;i<members.Count;++i)
     {
-      if(members[i] is Namespace ns)
-        ns.UnlinkAll();
+      var s = members[i];
+      if(!(s is Namespace) || (s is Namespace ns && ns.linkness == 0))
+        clean.members.Add(s);
     }
-    links.Clear();
+
+    return clean;
   }
 
   //NOTE: iterator is used for convenience since we need
@@ -330,23 +329,26 @@ public class Namespace : Symbol, IScope,
 
   public IEnumerator<Symbol> GetEnumerator()
   {
-    var seen_ns = new HashSet<string>();
+    var seen_names = new HashSet<string>();
     
-    var it = GetIterator();
-    while(it.Next())
+    foreach(var s in members)
     {
-      for(int i=0;i<it.current.members.Count;++i)
+      if(!(s is Namespace) || (s is Namespace ns && ns.linkness <= 1))
       {
-        var m = it.current.members[i];
+        seen_names.Add(s.name);
+        yield return s;
+      }
+    }
 
-        if(m is Namespace)
-        {
-          if(seen_ns.Contains(m.name)) 
-            continue;
-          seen_ns.Add(m.name);
-        }
-
-        yield return m;
+    foreach(var lnk in links)
+    {
+      foreach(var s in lnk.members)
+      {
+        if(seen_names.Contains(s.name))
+          continue;
+        
+        if(!(s is Namespace) || (s is Namespace ns && ns.linkness < 1))
+          yield return s;
       }
     }
   }
@@ -357,11 +359,32 @@ public class Namespace : Symbol, IScope,
   {
     var s = members.Find(name);
     if(s != null)
-      return s;
+    {
+      if(!(s is Namespace) || (s is Namespace ns && ns.linkness <= 1))
+        return s;
+    }
 
     foreach(var lnk in links)
     {
-      s = lnk.orig.members.Find(name);
+      s = lnk.members.Find(name);
+      if(s != null)
+      {
+        if(!(s is Namespace) || (s is Namespace ns && ns.linkness < 1))
+          return s;
+      }
+    }
+
+    return null;
+  }
+
+  Symbol _Resolve(string name)
+  {
+    var s = members.Find(name);
+    if(s != null)
+      return s;
+    foreach (var lnk in links)
+    {
+      s = lnk.members.Find(name);
       if(s != null)
         return s;
     }
@@ -371,9 +394,7 @@ public class Namespace : Symbol, IScope,
     
   public virtual void Define(Symbol sym)
   {
-    var tmp = Resolve(sym.name); 
-    //NOTE: allow namespace coexist with linked namespace
-    if(tmp != null && !(tmp is LinkedNamespace) && !(sym is Namespace))
+    if(Resolve(sym.name) != null)
       throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
 
     if(sym is FuncSymbolNative fsn)
@@ -383,6 +404,8 @@ public class Namespace : Symbol, IScope,
     else if(sym is VariableSymbol vs)
       module.gvar_index.Index(vs);
 
+    if(linkness > 0)
+      linkness = 0;
     members.Add(sym);
   }
   
@@ -397,41 +420,7 @@ public class Namespace : Symbol, IScope,
     //      it's restored by the more high level code
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref members);
-  }
-}
-
-public class LinkedNamespace : Namespace
-{
-  internal Namespace orig;
-
-  public LinkedNamespace(Namespace orig)
-    : base(orig.module, orig.name)
-  {
-    this.orig = orig;
-  }
-
-  public override Symbol Resolve(string name)
-  {
-    var s = _Resolve(name);
-    if(s is Namespace ns)
-      return new LinkedNamespace(ns);
-    else
-      return s;
-  }
-
-  Symbol _Resolve(string name)
-  {
-    return orig.members.Find(name);
-  }
-
-  public override void Define(Symbol sym)
-  {
-    throw new InvalidOperationException();
-  }
-
-  public override string ToString()
-  {
-    return name + " ->";
+    marshall.Marshall.Sync(ctx, ref linkness);
   }
 }
 

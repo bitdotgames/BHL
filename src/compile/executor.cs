@@ -530,8 +530,7 @@ public class CompilationExecutor
   {
     foreach(var kv in w.file2module)
     {
-      var file_ns = kv.Value.ns;
-      file_ns.UnlinkAll();
+      var file_ns = kv.Value.ns.UnlinkAll();
 
       var conflict = ns.TryLink(file_ns);
       if(!conflict.Ok && !conflict.other.IsLocal() && !conflict.local.IsLocal())

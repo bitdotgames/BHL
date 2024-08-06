@@ -103,21 +103,18 @@ public class TestNamespace : BHL_TestBase
     /*
     {
       foo {
+        [foo]
         foo_sub {
-          [links: { 
-            class Wow {}
-           }
-          ]
+         [foo_sub { Wow {} }]
 
           class Hey {}
         }
       }
 
-      wow {
-      }
-
       bar {
       }
+      
+      [ns1 { wow { } }]
     }
     */
     {
@@ -127,8 +124,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
-      //not taking into accounted linked ns
-      AssertEqual(1, foo_sub.Count());
+      AssertEqual(2, foo_sub.Count());
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
@@ -223,16 +219,17 @@ public class TestNamespace : BHL_TestBase
 
     /*
     {
-      links: [ { wow {} } ]
-
       foo {
+        [foo]
         foo_sub {
-          links: [ { Wow {} } ]
+         [foo_sub: { Wow ()}]
         }
       }
 
       bar {
       }
+      
+      [ ns1 { wow {} } ]
     }
     */
     {
@@ -242,7 +239,7 @@ public class TestNamespace : BHL_TestBase
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       AssertTrue(foo_sub != null);
-      AssertEqual(0, foo_sub.Count());
+      AssertEqual(1, foo_sub.Count());
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       AssertTrue(cl_wow != null);
@@ -467,6 +464,19 @@ public class TestNamespace : BHL_TestBase
     }
 
     ns2.Link(ns1);
+    /*
+    {
+      class Bar { }
+      
+      * foo {
+        [->foo]
+        * sub1 {
+           [->sub1]
+        }
+      }
+     [->ns1]
+    }
+    */
 
     /*
     import "ns2" 
@@ -474,6 +484,17 @@ public class TestNamespace : BHL_TestBase
     var ns3 = new Namespace(m);
 
     ns3.Link(ns2);
+    /*
+    {
+     ** foo {
+       [-> *foo]
+       ** sub1 {
+        [-> *sub1]
+       }
+     }
+     [->ns2]
+    }
+    */
 
     AssertTrue(ns3.ResolveNamedByPath("foo") == null);
     AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
@@ -541,136 +562,11 @@ public class TestNamespace : BHL_TestBase
 
     ns3.Link(ns2);
 
-    AssertTrue(ns3.ResolveNamedByPath("foo") == null);
-    AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
-    AssertTrue(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
-    AssertEqual("Bar", ns3.ResolveNamedByPath("Bar").GetName());
+    AssertEqual("foo", ns3.ResolveNamedByPath("foo").GetName());
     AssertEqual("Hey", ns3.ResolveNamedByPath("foo.Hey").GetName());
-  }
-
-  [IsTested()]
-  public void TestUnlink()
-  {
-    /*
-    {
-      foo {
-        foo_sub {
-          class Wow {}
-        }
-      }
-
-      wow {
-      }
-    }
-    */
-    var m = new Module(new Types());
-
-    var ns1 = new Namespace(m);
-    {
-      var foo = new Namespace(m, "foo");
-
-      var foo_sub = new Namespace(m, "foo_sub");
-
-      var cl = new ClassSymbolNative(new Origin(), "Wow");
-      foo_sub.Define(cl);
-
-      foo.Define(foo_sub);
-
-      ns1.Define(foo);
-
-      var wow = new Namespace(m, "wow");
-      ns1.Define(wow);
-    }
-
-    /*
-    {
-      foo {
-        foo_sub {
-          class Hey {}
-        }
-      }
-
-      bar {
-      }
-    }
-    */
-    var ns2 = new Namespace(m);
-    {
-      var foo = new Namespace(m, "foo");
-
-      var foo_sub = new Namespace(m, "foo_sub");
-
-      var cl = new ClassSymbolNative(new Origin(), "Hey");
-      foo_sub.Define(cl);
-
-      foo.Define(foo_sub);
-
-      ns2.Define(foo);
-
-      var bar = new Namespace(m, "bar");
-      ns2.Define(bar);
-    }
-
-    ns2.Link(ns1);
-
-    /*
-    {
-      foo {
-        foo_sub {
-          class Wow {}
-
-          class Hey {}
-        }
-      }
-
-      wow {
-      }
-
-      bar {
-      }
-    }
-    */
-
-    ns2.Unlink(ns1);
-
-    /*
-    {
-      foo {
-        foo_sub {
-          class Hey {}
-        }
-      }
-
-      wow { // it stays as an empty 'artifact'
-      }
-      
-      bar {
-      }
-    }
-    */
-
-    {
-      var foo = ns2.Resolve("foo") as Namespace;
-      AssertTrue(foo != null);
-      AssertEqual(1, foo.Count());
-
-      var foo_sub = foo.Resolve("foo_sub") as Namespace;
-      AssertTrue(foo_sub != null);
-      AssertEqual(1, foo_sub.Count());
-
-      var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
-      AssertTrue(cl_wow == null);
-
-      var cl_hey = foo_sub.Resolve("Hey") as ClassSymbol;
-      AssertTrue(cl_hey != null);
-
-      var bar = ns2.Resolve("bar") as Namespace;
-      AssertTrue(bar != null);
-
-      var wow = ns2.Resolve("wow") as Namespace;
-      AssertTrue(wow != null);
-      AssertEqual(0, wow.Count());
-    }
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
+    AssertEqual("Bar", ns3.ResolveNamedByPath("Bar").GetName());
   }
 
   [IsTested()]
