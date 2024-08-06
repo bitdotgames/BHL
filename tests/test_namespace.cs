@@ -283,13 +283,13 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var m = new Module(new Types());
+    var m1 = new Module(new Types(), "1");
 
-    var ns1 = new Namespace(m);
+    var ns1 = new Namespace(m1);
     {
-      var foo = new Namespace(m, "foo");
+      var foo = new Namespace(m1, "foo");
 
-      var sub1 = new Namespace(m, "sub1");
+      var sub1 = new Namespace(m1, "sub1");
 
       var cl = new ClassSymbolNative(new Origin(), "Wow");
       sub1.Define(cl);
@@ -308,11 +308,12 @@ public class TestNamespace : BHL_TestBase
       }
     }
     */
-    var ns2 = new Namespace(m);
+    var m2 = new Module(new Types(), "2");
+    var ns2 = new Namespace(m2);
     {
-      var foo = new Namespace(m, "foo");
+      var foo = new Namespace(m2, "foo");
 
-      var sub2 = new Namespace(m, "sub2");
+      var sub2 = new Namespace(m2, "sub2");
 
       var cl = new ClassSymbolNative(new Origin(), "Hey");
       sub2.Define(cl);
@@ -322,16 +323,16 @@ public class TestNamespace : BHL_TestBase
       ns2.Define(foo);
     }
 
-
-    var ns3 = new Namespace(m);
+    var m3 = new Module(new Types(), "3");
+    var ns3 = new Namespace(m3);
     ns3.Link(ns2);
     ns3.Link(ns1);
     
     AssertEqual("foo", ns3.ResolveNamedByPath("foo").GetName());
-    AssertEqual("sub1", ns3.ResolveNamedByPath("foo.sub1").GetName());
     AssertEqual("sub2", ns3.ResolveNamedByPath("foo.sub2").GetName());
-    AssertEqual("Wow", ns3.ResolveNamedByPath("foo.foo1.Wow").GetName());
-    AssertEqual("Hey", ns3.ResolveNamedByPath("foo.foo2.Hey").GetName());
+    AssertEqual("sub1", ns3.ResolveNamedByPath("foo.sub1").GetName());
+    AssertEqual("Wow", ns3.ResolveNamedByPath("foo.sub1.Wow").GetName());
+    AssertEqual("Hey", ns3.ResolveNamedByPath("foo.sub2.Hey").GetName());
   }
 
   [IsTested()]
@@ -389,18 +390,6 @@ public class TestNamespace : BHL_TestBase
     }
 
     ns2.Link(ns1);
-    /*
-    import "ns1" 
-    {
-      foo {
-        [links: { sub1 { class Foo { } } } ]
-
-        sub2 {
-          class Bar { }
-        }
-      }
-    }
-    */
     
     AssertEqual("Foo", ns2.ResolveNamedByPath("foo.sub1.Foo").GetName());
     AssertEqual("Bar", ns2.ResolveNamedByPath("foo.sub2.Bar").GetName());
@@ -430,26 +419,133 @@ public class TestNamespace : BHL_TestBase
     }
 
     ns3.Link(ns2);
-    /*
-    {
-      foo {
-        [links: 
-          { 
-            [links: .. ] <-- we MUST not take these into account
-            sub2 { class Bar } 
-          }
-        ]
-
-        sub3 {
-          class Wow { }
-        }
-      }
-    }
-    */
 
     AssertEqual("Wow", ns3.ResolveNamedByPath("foo.sub3.Wow").GetName());
     AssertEqual("Bar", ns3.ResolveNamedByPath("foo.sub2.Bar").GetName());
     AssertTrue(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
+  }
+  
+  [IsTested()]
+  public void TestLinkNamespaceWithOtherLinkedNamespace2()
+  {
+    /*
+    {
+      foo {
+        sub1 {
+          class Foo { }
+        }
+      }
+    }
+    */
+    var m = new Module(new Types());
+
+    var ns1 = new Namespace(m);
+    {
+      var foo = new Namespace(m, "foo");
+
+      var sub1 = new Namespace(m, "sub1");
+
+      var cl = new ClassSymbolNative(new Origin(), "Foo");
+      sub1.Define(cl);
+
+      foo.Define(sub1);
+
+      ns1.Define(foo);
+    }
+
+    /*
+    import "ns1" 
+    {
+      class Bar { }
+    }
+    */
+    var ns2 = new Namespace(m);
+    {
+      var cl = new ClassSymbolNative(new Origin(), "Bar");
+
+      ns2.Define(cl);
+    }
+
+    ns2.Link(ns1);
+
+    /*
+    import "ns2" 
+    */
+    var ns3 = new Namespace(m);
+
+    ns3.Link(ns2);
+
+    AssertTrue(ns3.ResolveNamedByPath("foo") == null);
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
+    AssertEqual("Bar", ns3.ResolveNamedByPath("Bar").GetName());
+  }
+  
+  [IsTested()]
+  public void TestLinkNamespaceWithOtherLinkedNamespace3()
+  {
+    /*
+    {
+      foo {
+        sub1 {
+          class Foo { }
+        }
+      }
+    }
+    */
+    var m = new Module(new Types());
+
+    var ns1 = new Namespace(m);
+    {
+      var foo = new Namespace(m, "foo");
+
+      var sub1 = new Namespace(m, "sub1");
+
+      var cl = new ClassSymbolNative(new Origin(), "Foo");
+      sub1.Define(cl);
+
+      foo.Define(sub1);
+
+      ns1.Define(foo);
+    }
+
+    /*
+    import "ns1" 
+    {
+      class Bar { }
+      
+      foo {
+        class Hey { }
+      }
+    }
+    */
+    var ns2 = new Namespace(m);
+    {
+      var cl = new ClassSymbolNative(new Origin(), "Bar");
+
+      ns2.Define(cl);
+      
+      var foo = new Namespace(m, "foo");
+      var cl2 = new ClassSymbolNative(new Origin(), "Hey");
+      foo.Define(cl2);
+      
+      ns2.Define(foo);
+    }
+
+    ns2.Link(ns1);
+
+    /*
+    import "ns2" 
+    */
+    var ns3 = new Namespace(m);
+
+    ns3.Link(ns2);
+
+    AssertTrue(ns3.ResolveNamedByPath("foo") == null);
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
+    AssertTrue(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
+    AssertEqual("Bar", ns3.ResolveNamedByPath("Bar").GetName());
+    AssertEqual("Hey", ns3.ResolveNamedByPath("foo.Hey").GetName());
   }
 
   [IsTested()]
@@ -545,6 +641,9 @@ public class TestNamespace : BHL_TestBase
         }
       }
 
+      wow { // it stays as an empty 'artifact'
+      }
+      
       bar {
       }
     }
@@ -569,7 +668,8 @@ public class TestNamespace : BHL_TestBase
       AssertTrue(bar != null);
 
       var wow = ns2.Resolve("wow") as Namespace;
-      AssertTrue(wow == null);
+      AssertTrue(wow != null);
+      AssertEqual(0, wow.Count());
     }
   }
 

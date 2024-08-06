@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace bhl {
 
@@ -217,15 +218,19 @@ public class Namespace : Symbol, IScope,
       {
         if(this_symb is Namespace this_ns)
         {
-          if(!(this_symb is LinkedNamespace))
-          {
-            var conflict = this_ns.TryLink(other_ns);
-            if (!conflict.Ok)
-              return conflict;
-          }
+          var conflict = this_ns.TryLink(other_ns);
+          if(!conflict.Ok)
+            return conflict;
         }
         else if(this_symb != null)
           return new LinkConflict(this_symb, other_symb);
+        else
+        {
+          //NOTE: let's create a local version of non-existing namespace
+          var ns = new Namespace(module, other_ns.name);
+          ns.Link(other_ns);
+          members.Add(ns);
+        }
       }
       else if(this_symb != null)
       {
@@ -242,22 +247,20 @@ public class Namespace : Symbol, IScope,
 
   public bool IsLinked(Namespace other)
   {
-    return FindLinkIndex(other) != -1;
+    return FindLinkIdx(other) != -1;
   }
 
-  int FindLinkIndex(Namespace other)
+  int FindLinkIdx(Namespace other)
   {
     for(int i = 0; i < links.Count; ++i)
-    {
       if(links[i].orig == other)
         return i;
-    }
     return -1;
   }
-  
+
   public void Unlink(Namespace other)
   {
-    int link_idx = FindLinkIndex(other);
+    int link_idx = FindLinkIdx(other);
     if(link_idx == -1)
       return;
     
@@ -355,13 +358,14 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
       return s;
-    
+
     foreach(var lnk in links)
     {
-      s = lnk.Resolve(name);
+      s = lnk.orig.members.Find(name);
       if(s != null)
         return s;
     }
+
     return null;
   }
     
@@ -408,11 +412,16 @@ public class LinkedNamespace : Namespace
 
   public override Symbol Resolve(string name)
   {
-    var tmp = orig.members.Find(name);
-    if(tmp is Namespace ns)
+    var s = _Resolve(name);
+    if(s is Namespace ns)
       return new LinkedNamespace(ns);
     else
-      return tmp;
+      return s;
+  }
+
+  Symbol _Resolve(string name)
+  {
+    return orig.members.Find(name);
   }
 
   public override void Define(Symbol sym)

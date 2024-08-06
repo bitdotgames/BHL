@@ -3891,15 +3891,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         //...otherwise let's check existing namespaces in passes
         ns = FindNamespaceInPasses(full_path);
 
-      var lns = ns as LinkedNamespace;
-      if(ns == null || lns != null)
-      {
+      if(ns == null)
         ns = new Namespace(module, name);
-        //NOTE: if it's already a linked namespace let's create the namespace
-        //      and add it to links
-        if(lns != null)
-          ns.links.Add(lns);
-      }
 
       //NOTE: special case for namespace parser pass, we don't
       //      define it mmediately in the current scope but rather
