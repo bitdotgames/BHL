@@ -123,7 +123,11 @@ public class Namespace : Symbol, IScope,
   public Module module;
 
   internal List<Namespace> links = new List<Namespace>();
-  internal int linkness = 0;
+  //NOTE: paramater which reflects 'how deeply' the namespace was linked from other namespaces,
+  //      it's reset to 0 once we add any real members to namespace. 'Deeply linked' namespaces
+  //      are ignored during Resolve(..) which means the namespace was locally added from another
+  //      imported module which in its turn also imported it.
+  internal int indirectness = 0;
   
   public SymbolsStorage members;
 
@@ -150,10 +154,10 @@ public class Namespace : Symbol, IScope,
 
   public override string ToString()
   {
-    if(linkness == 0)
+    if(indirectness == 0)
       return name;
     else
-      return name + " " + linkness;
+      return name + " -> " + indirectness;
   }
 
   public INamed ResolveNamedByPath(string path)
@@ -212,14 +216,7 @@ public class Namespace : Symbol, IScope,
     }
   }
 
-  //TODO: shouldn't we rather link 'modules'?
   public LinkConflict TryLink(Namespace other)
-  {
-    var res = _TryLink(other.module, other);
-    return res;
-  }
-  
-  LinkConflict _TryLink(Module top_module, Namespace other)
   {
     if(IsLinked(other))
       return default(LinkConflict);
@@ -234,7 +231,7 @@ public class Namespace : Symbol, IScope,
       {
         if(this_symb is Namespace this_ns)
         {
-          var conflict = this_ns._TryLink(top_module, other_ns);
+          var conflict = this_ns.TryLink(other_ns);
           if(!conflict.Ok)
             return conflict;
         }
@@ -244,8 +241,9 @@ public class Namespace : Symbol, IScope,
         {
           //NOTE: let's create a local version of non-existing namespace
           var ns = new Namespace(module, other_ns.name);
-          ns.linkness += (other_ns.linkness + 1);
-          ns._TryLink(top_module, other_ns);
+          //...increasing local indirectness as well (it will be reset once any real members added)
+          ns.indirectness += (other_ns.indirectness + 1);
+          ns.TryLink(other_ns);
           members.Add(ns);
         }
       }
@@ -279,7 +277,7 @@ public class Namespace : Symbol, IScope,
     for(int i=0;i<members.Count;++i)
     {
       var s = members[i];
-      if(!(s is Namespace) || (s is Namespace ns && ns.linkness == 0))
+      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
         clean.members.Add(s);
     }
 
@@ -333,7 +331,7 @@ public class Namespace : Symbol, IScope,
     
     foreach(var s in members)
     {
-      if(!(s is Namespace) || (s is Namespace ns && ns.linkness <= 1))
+      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness <= 1))
       {
         seen_names.Add(s.name);
         yield return s;
@@ -347,7 +345,7 @@ public class Namespace : Symbol, IScope,
         if(seen_names.Contains(s.name))
           continue;
         
-        if(!(s is Namespace) || (s is Namespace ns && ns.linkness < 1))
+        if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
           yield return s;
       }
     }
@@ -360,7 +358,7 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
     {
-      if(!(s is Namespace) || (s is Namespace ns && ns.linkness <= 1))
+      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness <= 1))
         return s;
     }
 
@@ -369,7 +367,7 @@ public class Namespace : Symbol, IScope,
       s = lnk.members.Find(name);
       if(s != null)
       {
-        if(!(s is Namespace) || (s is Namespace ns && ns.linkness < 1))
+        if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
           return s;
       }
     }
@@ -404,8 +402,9 @@ public class Namespace : Symbol, IScope,
     else if(sym is VariableSymbol vs)
       module.gvar_index.Index(vs);
 
-    if(linkness > 0)
-      linkness = 0;
+    //let's reset 'indirectness', it's now considered a 'real' namespace
+    indirectness = 0;
+    
     members.Add(sym);
   }
   
@@ -420,7 +419,7 @@ public class Namespace : Symbol, IScope,
     //      it's restored by the more high level code
     marshall.Marshall.Sync(ctx, ref name);
     marshall.Marshall.Sync(ctx, ref members);
-    marshall.Marshall.Sync(ctx, ref linkness);
+    marshall.Marshall.Sync(ctx, ref indirectness);
   }
 }
 
