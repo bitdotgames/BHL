@@ -212,7 +212,7 @@ public class Namespace : Symbol, IScope,
     if(s != null)
     {
       //NOTE: allowing only namespaces which have indirectness <= 1
-      //      (any real members or directly imported namespace)
+      //      (with any real members or directly imported ones)
       var ns = s as Namespace; 
       if(ns == null || ns.indirectness <= 1)
         return s;
@@ -237,7 +237,7 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
       return s;
-    foreach (var lnk in links)
+    foreach(var lnk in links)
     {
       s = lnk.members.Find(name);
       if(s != null)
