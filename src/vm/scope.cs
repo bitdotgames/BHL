@@ -241,7 +241,9 @@ public class Namespace : Symbol, IScope,
         {
           //NOTE: let's create a local version of non-existing namespace
           var ns = new Namespace(module, other_ns.name);
-          //...increasing local indirectness as well (it will be reset once any real members added)
+          //NOTE: increasing indirectness, taking into account 'other ns'
+          //      indirectness as well
+          //      (indirectnes will be reset once any real members added)
           ns.indirectness += (other_ns.indirectness + 1);
           ns.TryLink(other_ns);
           members.Add(ns);
@@ -355,8 +357,8 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
     {
-      //NOTE: allowing only namespaces which have any real members (indirectness == 0)
-      //      or were added indirectly only once
+      //NOTE: allowing only namespaces which have indirectness <= 1
+      //      (any real members or directly imported namespace)
       var ns = s as Namespace; 
       if(ns == null || ns.indirectness <= 1)
         return s;
