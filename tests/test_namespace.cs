@@ -652,6 +652,75 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(ns3.ResolveNamedByPath("foo.sub1") == null);
     AssertEqual("Bar", ns3.ResolveNamedByPath("Bar").GetName());
   }
+  
+  [IsTested()]
+  public void TestLinkNamespaceWithOtherLinkedNamespace4()
+  {
+    /*
+    {
+      foo {
+        sub1 {
+          class Foo { }
+        }
+      }
+    }
+    */
+    var m = new Module(new Types());
+
+    var ns1 = new Namespace(m);
+    {
+      var foo = new Namespace(m, "foo");
+
+      var sub1 = new Namespace(m, "sub1");
+
+      var cl = new ClassSymbolNative(new Origin(), "Foo");
+      sub1.Define(cl);
+
+      foo.Define(sub1);
+
+      ns1.Define(foo);
+    }
+
+    /*
+    import "ns1" 
+    {
+      class Bar { }
+    }
+    */
+    var ns2 = new Namespace(m);
+    {
+      var cl = new ClassSymbolNative(new Origin(), "Bar");
+
+      ns2.Define(cl);
+    }
+
+    ns2.Link(ns1);
+    
+    /*
+    import "ns2" 
+    {
+    }
+    */
+    var ns3 = new Namespace(m);
+    
+    ns3.Link(ns2);
+
+    /*
+    import "ns2" 
+    import "ns3" 
+    import "ns1" 
+    */
+    var ns4 = new Namespace(m);
+
+    ns4.Link(ns2);
+    ns4.Link(ns3);
+    ns4.Link(ns1);
+
+    AssertEqual("foo", ns4.ResolveNamedByPath("foo").GetName());
+    AssertEqual("sub1", ns4.ResolveNamedByPath("foo.sub1").GetName());
+    AssertEqual("Foo", ns4.ResolveNamedByPath("foo.sub1.Foo").GetName());
+    AssertEqual("Bar", ns4.ResolveNamedByPath("Bar").GetName());
+  }
 
   [IsTested()]
   public void TestLinkConflict()

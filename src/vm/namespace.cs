@@ -123,6 +123,8 @@ public class Namespace : Symbol, IScope,
           var conflict = this_ns.TryLink(other_ns);
           if(!conflict.Ok)
             return conflict;
+          if(other_ns.indirectness < this_ns.indirectness)
+            this_ns.indirectness = other_ns.indirectness + 1;
         }
         else if(this_symb != null)
           return new LinkConflict(this_symb, other_symb);
