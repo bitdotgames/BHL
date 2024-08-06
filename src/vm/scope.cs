@@ -262,12 +262,7 @@ public class Namespace : Symbol, IScope,
 
   public bool IsLinked(Namespace other)
   {
-    return FindLinkIdx(other) != -1;
-  }
-
-  int FindLinkIdx(Namespace other)
-  {
-    return links.IndexOf(other);
+    return other == this || links.IndexOf(other) != -1;
   }
 
   public Namespace UnlinkAll()
@@ -331,7 +326,8 @@ public class Namespace : Symbol, IScope,
     
     foreach(var s in members)
     {
-      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness <= 1))
+      var ns = s as Namespace; 
+      if(ns == null || ns.indirectness <= 1)
       {
         seen_names.Add(s.name);
         yield return s;
@@ -345,7 +341,8 @@ public class Namespace : Symbol, IScope,
         if(seen_names.Contains(s.name))
           continue;
         
-        if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
+        var ns = s as Namespace; 
+        if(ns == null || ns.indirectness == 0)
           yield return s;
       }
     }
@@ -358,7 +355,10 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
     {
-      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness <= 1))
+      //NOTE: allowing only namespaces which have any real members (indirectness == 0)
+      //      or were added indirectly only once
+      var ns = s as Namespace; 
+      if(ns == null || ns.indirectness <= 1)
         return s;
     }
 
@@ -367,7 +367,8 @@ public class Namespace : Symbol, IScope,
       s = lnk.members.Find(name);
       if(s != null)
       {
-        if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
+        var ns = s as Namespace; 
+        if(ns == null || ns.indirectness == 0)
           return s;
       }
     }
