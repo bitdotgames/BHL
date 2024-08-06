@@ -557,4 +557,4 @@ public class InvertNode : BehaviorTreeDecoratorNode
   }
 }
 
-} //namespace bhl
+}

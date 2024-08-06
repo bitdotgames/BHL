@@ -1080,4 +1080,4 @@ public class MsgPackDataReader : IReader
   }
 }
 
-} // namespace bhl
+}

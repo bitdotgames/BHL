@@ -333,4 +333,4 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   }
 }
 
-} //namespace bhl
+}

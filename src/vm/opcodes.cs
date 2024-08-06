@@ -76,4 +76,4 @@ public enum Opcodes
   MapAddInplace         = 93,  //TODO: used for json alike array initialization,   
 }
 
-} //namespace bhl
+}

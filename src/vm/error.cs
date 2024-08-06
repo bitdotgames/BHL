@@ -121,4 +121,4 @@ public class SymbolError : Exception
   }
 }
 
-} //namespace bhl
+}

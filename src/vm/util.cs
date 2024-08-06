@@ -1276,4 +1276,4 @@ public struct Array16<T>
   }
 }
 
-} //namespace bhl
+}

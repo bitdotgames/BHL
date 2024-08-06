@@ -979,4 +979,4 @@ public class Types : INamedResolver
 }
 
 
-} //namespace bhl
+}

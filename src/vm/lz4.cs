@@ -598,4 +598,4 @@ public class Lz4DecoderStream : Stream
   #endregion
 }
 
-} //namespace bhl
+}

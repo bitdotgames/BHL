@@ -216,4 +216,4 @@ public class Module : INamedResolver
   }
 }
 
-} //namespace bhl
+}

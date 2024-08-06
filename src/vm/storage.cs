@@ -790,4 +790,4 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   }
 }
 
-} //namespace bhl
+}

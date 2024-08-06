@@ -185,4 +185,4 @@ public class ModuleLoader : IModuleLoader
   }
 }
 
-} //namespace bhl
+}

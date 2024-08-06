@@ -2439,4 +2439,4 @@ public static class SymbolExtensions
   }
 }
 
-} //namespace bhl
+}

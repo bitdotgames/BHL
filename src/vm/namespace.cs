@@ -278,4 +278,4 @@ public class Namespace : Symbol, IScope,
   }
 }
 
-} //namespace bhl
+}

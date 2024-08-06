@@ -509,4 +509,4 @@ public static class ScopeExtensions
   }
 }
 
-} //namespace bhl
+}
