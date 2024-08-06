@@ -281,49 +281,12 @@ public class Namespace : Symbol, IScope,
     return clean;
   }
 
-  //NOTE: iterator is used for convenience since we need
-  //      to iterate ourself and all other linked namespaces
-  public struct Iterator
-  {
-    Namespace owner;
-    int c;
-
-    public Namespace current;
-
-    public Iterator(Namespace owner)
-    {
-      this.owner = owner;
-      c = -1;
-      current = null;
-    }
-
-    public bool Next()
-    {
-      //special case for itself
-      if(c == -1)
-      {
-        current = owner;
-        ++c;
-        return true;
-      }
-
-      if(c == owner.links.Count)
-        return false;
-      current = owner.links[c];
-      ++c;
-      return true;
-    }
-  }
-
-  Iterator GetIterator()
-  {
-    return new Iterator(this);
-  }
-
   public IScope GetFallbackScope() { return scope; }
 
   public IEnumerator<Symbol> GetEnumerator()
   {
+    //TODO: this is to remove any duplicated symbols
+    //      (like symbols in linked namespaces)
     var seen_names = new HashSet<string>();
     
     foreach(var s in members)
