@@ -272,11 +272,21 @@ public class Namespace : Symbol, IScope,
 
   public override void Sync(marshall.SyncContext ctx) 
   {
-    //NOTE: module is not persisted since it's assumed 
-    //      it's restored by the more high level code
+    //NOTE: persisting only essential data since other pieces
+    //      will be restored (e.g module setup, during imports, etc)
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref members);
-    marshall.Marshall.Sync(ctx, ref indirectness);
+    var _members = GetMembersForSync(ctx);
+    marshall.Marshall.Sync(ctx, ref _members);
+  }
+
+  SymbolsStorage GetMembersForSync(marshall.SyncContext ctx)
+  {
+    //NOTE: when writing members we don't really need to persist indirect namespaces,
+    //      since they will be re-built anyway when importing dependent modules
+    if(!ctx.is_read)
+      return UnlinkAll().members;
+    else
+      return members;
   }
 }
 
