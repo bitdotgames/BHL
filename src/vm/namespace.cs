@@ -153,7 +153,7 @@ public class Namespace : Symbol, IScope,
     return default(LinkConflict);
   }
 
-  public bool IsLinked(Namespace other)
+  bool IsLinked(Namespace other)
   {
     return other == this || links.IndexOf(other) != -1;
   }
@@ -165,7 +165,8 @@ public class Namespace : Symbol, IScope,
     for(int i=0;i<members.Count;++i)
     {
       var s = members[i];
-      if(!(s is Namespace) || (s is Namespace ns && ns.indirectness == 0))
+      var ns = s as Namespace; 
+      if(ns == null || ns.indirectness == 0)
         clean.members.Add(s);
     }
 
@@ -237,6 +238,7 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
       return s;
+    
     foreach(var lnk in links)
     {
       s = lnk.members.Find(name);
@@ -259,7 +261,7 @@ public class Namespace : Symbol, IScope,
     else if(sym is VariableSymbol vs)
       module.gvar_index.Index(vs);
 
-    //let's reset 'indirectness', it's now considered a 'real' namespace
+    //NOTE: let's reset 'indirectness', it's now considered a 'real' namespace
     indirectness = 0;
     
     members.Add(sym);
@@ -275,18 +277,12 @@ public class Namespace : Symbol, IScope,
     //NOTE: persisting only essential data since other pieces
     //      will be restored (e.g module setup, during imports, etc)
     marshall.Marshall.Sync(ctx, ref name);
-    var _members = GetMembersForSync(ctx);
+    var _members = members;
+    //NOTE: there's no need to persist members of indirect namespace
+    if(!ctx.is_read && indirectness > 0)
+      _members = new SymbolsStorage(this);
     marshall.Marshall.Sync(ctx, ref _members);
-  }
-
-  SymbolsStorage GetMembersForSync(marshall.SyncContext ctx)
-  {
-    //NOTE: when writing members we don't really need to persist indirect namespaces,
-    //      since they will be re-built anyway when importing dependent modules
-    if(!ctx.is_read)
-      return UnlinkAll().members;
-    else
-      return members;
+    marshall.Marshall.Sync(ctx, ref indirectness);
   }
 }
 
