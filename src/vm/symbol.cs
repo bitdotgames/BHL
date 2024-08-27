@@ -481,7 +481,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   }
 
   //NOTE: only once the class is Setup we have valid members iterator
-  public IEnumerator<Symbol> GetEnumerator() { return _all_members.GetEnumerator(); }
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    return _all_members.GetEnumerator(); 
+  }
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public IScope GetFallbackScope() 
@@ -665,12 +668,17 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
   void DoSetupMembers(ClassSymbol curr_class)
   {
-    if(curr_class.super_class != null)
-      DoSetupMembers(curr_class.super_class);
+    var super_class = curr_class.super_class;
+    if(super_class != null)
+      DoSetupMembers(super_class);
 
     for(int i=0;i<curr_class.members.Count;++i)
     {
       var sym = curr_class.members[i];
+      
+      //for debug
+      //if(sym is ITyped typed && typed.GetIType() == null) 
+      //  throw new SymbolError(sym, "type for member '"+sym.name+"' was not resolved in class '"+name+"'");
 
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
@@ -682,7 +690,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         if(fss.attribs.HasFlag(FuncAttrib.Virtual))
         {
           if(fss.default_args_num > 0)
-            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
+            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments in class '"+name+"'");
 
           var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
@@ -691,11 +699,11 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         else if(fss.attribs.HasFlag(FuncAttrib.Override))
         {
           if(fss.default_args_num > 0)
-            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments");
+            throw new SymbolError(sym, "virtual methods are not allowed to have default arguments in class '"+name+"'");
 
           var vsym = _all_members.Find(sym.name) as FuncSymbolVirtual;
           if(vsym == null)
-            throw new SymbolError(sym, "no base virtual method to override");
+            throw new SymbolError(sym, "no base virtual method to override in class '"+name+"'");
 
           vsym.AddOverride(curr_class, fss); 
         }
@@ -847,7 +855,7 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.SyncRef(ctx, ref type);
+    marshall.Marshall.SyncTypeRef(ctx, ref type);
     marshall.Marshall.Sync(ctx, ref _scope_idx);
   }
 
@@ -1050,13 +1058,16 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     }
     set {
       _signature = value;
-
+      //NOTE: a bit ugly, we set func attributes once the signature changes
       _signature.attribs.SetFuncAttrib(ref _attribs);
     }
   }
 
   internal SymbolsStorage members;
 
+  //NOTE: if the function is owned (one of overrides) by virtual function this attribute
+  //      will point to the virtual function. This is convenient during opcode emitting
+  //      phase
   internal FuncSymbolVirtual _virtual;
 
   int _module_idx = -1;
@@ -1346,7 +1357,7 @@ public class FuncSymbolVirtual : FuncSymbol
     //NOTE: we call fs.signature(signature) but not signature.Equals(fs.signature) on purpose,
     //      since we want to allow 'non-coro' functions to be a subset(compatible) of 'coro' ones
     if(!fs.signature.Equals(signature))
-      throw new SymbolError(fs, "virtual method signature doesn't match the base one: '" + signature + "' and  '" + fs.signature + "'");
+      throw new SymbolError(fs, "virtual method signatures don't match, base: '" + signature + "', override: '" + fs.signature + "'");
 
     fs._virtual = this;
 
@@ -1827,7 +1838,7 @@ public class ClassSymbolScript : ClassSymbol
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.SyncRef(ctx, ref _super_class);
+    marshall.Marshall.SyncTypeRef(ctx, ref _super_class);
     marshall.Marshall.Sync(ctx, ref members);
     marshall.Marshall.Sync(ctx, ref implements); 
   }
@@ -2177,7 +2188,7 @@ public class TypeSet<T> : marshall.IMarshallable where T : class, IType
 
   public void Sync(marshall.SyncContext ctx) 
   {
-    marshall.Marshall.SyncRefs(ctx, list);
+    marshall.Marshall.SyncTypeRefs(ctx, list);
   }
 }
 

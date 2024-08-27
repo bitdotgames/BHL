@@ -262,7 +262,7 @@ public class GenericArrayTypeSymbol :
 
   public override void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.SyncRef(ctx, ref item_type);
+    marshall.Marshall.SyncTypeRef(ctx, ref item_type);
 
     if(ctx.is_read)
     {

@@ -485,7 +485,7 @@ public static class Marshall
     }
   }
 
-  static public ProxyType ReadRefAt(SyncContext ctx, int idx)
+  static public ProxyType ReadTypeRefAt(SyncContext ctx, int idx)
   {
      if(!ctx.type_refs.IsValid(idx))
      {
@@ -507,13 +507,13 @@ public static class Marshall
      return ctx.type_refs.Get(idx);
   }
   
-  static public void SyncRef(SyncContext ctx, ref ProxyType v)
+  static public void SyncTypeRef(SyncContext ctx, ref ProxyType v)
   {
     if(ctx.is_read)
     {
       int idx = 0; 
       ctx.reader.ReadI32(ref idx);
-      v = ReadRefAt(ctx, idx);
+      v = ReadTypeRefAt(ctx, idx);
     }
     else
     {
@@ -522,13 +522,13 @@ public static class Marshall
     }
   }
   
-  static public void SyncRefs(SyncContext ctx, List<ProxyType> v)
+  static public void SyncTypeRefs(SyncContext ctx, List<ProxyType> v)
   {
     int size = BeginArray(ctx, v);
     for(int i = 0; i < size; ++i)
     {
       var tmp = ctx.is_read ? new ProxyType() : v[i];
-      SyncRef(ctx, ref tmp);
+      SyncTypeRef(ctx, ref tmp);
       if(ctx.is_read)
         v.Add(tmp);
     }
@@ -589,7 +589,7 @@ public static class Marshall
     for(int i = 0; i < ctx.type_refs_offsets.Count; ++i)
     {
       if(!ctx.type_refs.IsValid(i))
-        ctx.type_refs.SetAt(i, ReadRefAt(ctx, i));
+        ctx.type_refs.SetAt(i, ReadTypeRefAt(ctx, i));
     }
   }
 

@@ -138,21 +138,18 @@ public class Module : INamedResolver
     foreach(var imp in compiled.imports)
       ns.Link(import2module(imp).ns);
     
-    //NOTE: currently local symbols might include symbols located in different modules (
-    //      other than our namespace), e.g with the base class members located in a different
-    //      module. This must be taken into account.
     ns.ForAllLocalSymbols(delegate(Symbol s)
       {
-        if(s is Namespace ns)
-          ns.module = this;
-        else if(s is ClassSymbol cs)
-          cs.Setup();
-        else if(s is VariableSymbol vs && vs.scope is Namespace)
-          gvar_index.index.Add(vs);
-        else if(s is FuncSymbolScript fs)
+        if(s is FuncSymbolScript fs)
           SetupFuncSymbol(fs);
         else if(s is FuncSymbolVirtual fssv && fssv.GetTopOverride() is FuncSymbolScript vsf)
           SetupFuncSymbol(vsf);
+        else if(s is VariableSymbol vs && vs.scope is Namespace)
+          gvar_index.index.Add(vs);
+        else if(s is ClassSymbol cs)
+          cs.Setup();
+        else if(s is Namespace sns)
+          sns.module = this;
       }
     );
   }
@@ -178,7 +175,7 @@ public class Module : INamedResolver
   void SetupFuncSymbol(FuncSymbolScript fss)
   {
     //NOTE: the func symbol might be from another module (e.g in case of class inheritance with the base class
-    //      located in a different module). Here we check if module was already set and if so ignore the symbol
+    //      located in a different module). Here we check if module was already set up and if so ignore the symbol
     if(fss._module != null)
       return;
 
@@ -190,13 +187,13 @@ public class Module : INamedResolver
     //      This is especially important for cases when the cached module is being setup during the compilation,
     //      while the module which actually contains the func symbol is not yet parsed and the function is not
     //      assigned ip_addr yet
-    if(fss.GetModule().name != name)
+    if(fss.GetModule()?.name != name)
       return;
     
     if(fss.ip_addr == -1)
       throw new Exception("Func " + fss.GetFullPath() + " ip_addr is not set, module '" + name + "'");
     
-    //for faster runtime module lookups we cache it here
+    //for faster runtime module lookups we cache it here and also it serves as a guard the symbol was setup
     fss._module = this;
 
     //TODO: there's definitely questionable code duplication - we add script functions

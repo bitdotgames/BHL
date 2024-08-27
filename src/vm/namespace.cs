@@ -59,9 +59,17 @@ public class Namespace : Symbol, IScope,
     for(int m=0;m<members.Count;++m)
     {
       var member = members[m];
-      cb(member);
-      if(member is Namespace ns)
-        ns.ForAllLocalSymbols(cb);
+      var ns = member as Namespace;
+      
+      //NOTE: taking into consideration only 'direct' namespaces
+      if(ns == null || ns.indirectness == 0)
+        cb(member);
+      
+      if(ns != null)
+      {
+        if(ns.indirectness == 0)
+          ns.ForAllLocalSymbols(cb);
+      }
       else if(member is IScope s)
         s.ForAllSymbols(cb);
     }
@@ -262,6 +270,7 @@ public class Namespace : Symbol, IScope,
       module.gvar_index.Index(vs);
 
     //NOTE: let's reset 'indirectness', it's now considered a 'real' namespace
+    //      since it now contains real symbols
     indirectness = 0;
     
     members.Add(sym);

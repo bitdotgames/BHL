@@ -3,7 +3,6 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
-using Antlr4.Runtime;
 using Newtonsoft.Json;
 
 namespace bhl {
@@ -134,16 +133,6 @@ public class CompilationExecutor
   const byte COMPILE_FMT = 2;
   const uint FILE_VERSION = 1;
 
-  public struct InterimResult
-  {
-    public ModulePath module_path;
-    public string compiled_file;
-    public FileImports imports_maybe;
-    public ANTLR_Parsed parsed;
-    //if not null, it's a compiled cache result
-    public Module cached;
-  }
-
   public int cache_hits { get; private set; }
   public int cache_miss { get; private set; }
   public int cache_errs { get; private set; }
@@ -230,63 +219,29 @@ public class CompilationExecutor
     foreach(var pw in parse_workers)
     {
       pw.Join();
-      
+
       cache_hits += pw.cache_hits;
       cache_miss += pw.cache_miss;
       cache_errs += pw.cache_errs;
+      
+      errors.AddRange(pw.errors);
     }
 
     sw.Stop();
     conf.logger.Log(1, $"BHL parse(workers: {parse_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     
-    foreach(var pw in parse_workers)
-      errors.AddRange(pw.errors);
-          
-    //2.1 let's collect all interim results collected in parse workers
-    var file2interim = new Dictionary<string, InterimResult>();
+    sw = Stopwatch.StartNew();
 
     //3 let's create the processed bundle containing already compiled cached modules
     //  and the newly processed ones
-    var proc_bundle = new ANTLR_Processor.ProcessedBundle(conf.ts, conf.proj.inc_path);
-
-    sw = Stopwatch.StartNew();
-    foreach(var pw in parse_workers)
-    {
-      foreach(var kv in pw.file2interim)
-      {
-        if(kv.Value.cached == null && 
-           //NOTE: no need to process a file if it contains parsing errors
-           !errors.FileHasAnyErrors(kv.Key))
-        {
-          var file_module = new Module(
-            conf.ts,
-            conf.proj.inc_path.FilePath2ModuleName(kv.Key), 
-            kv.Key
-          );
-          var proc_errs = new CompileErrors();
-          var proc = ANTLR_Processor.MakeProcessor(
-            file_module, 
-            kv.Value.imports_maybe, 
-            kv.Value.parsed, 
-            conf.ts, 
-            proc_errs,
-            ErrorHandlers.MakeStandard(kv.Key, proc_errs),
-            out var preproc_parsed
-          );
-          proc_bundle.file2proc.Add(kv.Key, proc);
-        }
-        else if(kv.Value.cached != null)
-          proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
-
-        file2interim.Add(kv.Key, kv.Value);
-      }
-    }
+    var proc_bundle = MakeProcessedBundle(conf, parse_workers, errors);
+    
     sw.Stop();
-    conf.logger.Log(2, $"BHL proc make done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(2, $"BHL bundling done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
-    //   NOTE: it's not multithreaded yet
+    //TODO: it's not multithreaded yet
     ANTLR_Processor.ProcessAll(proc_bundle);
     sw.Stop();
     conf.logger.Log(1, $"BHL proc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
@@ -299,10 +254,8 @@ public class CompilationExecutor
     sw = Stopwatch.StartNew();
     var compiler_workers = StartAndWaitCompilerWorkers(
       conf, 
-      conf.ts, 
       parse_workers, 
-      file2interim,
-      proc_bundle.file2proc
+      proc_bundle
     );
     sw.Stop();
     conf.logger.Log(1, $"BHL compile(workers: {compiler_workers.Count}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
@@ -334,6 +287,76 @@ public class CompilationExecutor
     conf.postproc.Tally();
     sw.Stop();
     conf.logger.Log(2, $"BHL postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+  }
+
+  static ANTLR_Processor MakeProcessor(CompileConf conf, string file, ProcessedBundle.InterimResult interim)
+  {
+     var file_module = new Module(
+       conf.ts,
+       conf.proj.inc_path.FilePath2ModuleName(file), 
+       file
+     );
+     var proc_errs = new CompileErrors();
+     var proc = ANTLR_Processor.MakeProcessor(
+       file_module, 
+       interim.imports_maybe, 
+       interim.parsed, 
+       conf.ts, 
+       proc_errs,
+       ErrorHandlers.MakeStandard(file, proc_errs),
+       out var _
+     );
+     return proc;
+  }
+
+  ProcessedBundle MakeProcessedBundle(
+    CompileConf conf, 
+    List<ParseWorker> parse_workers,
+    CompileErrors errors
+    )
+  {
+    var proc_bundle = new ProcessedBundle(conf.ts, conf.proj.inc_path);
+
+    //1. let's merge all interim results
+    foreach(var pw in parse_workers)
+    {
+      foreach (var kv in pw.file2interim)
+        proc_bundle.file2interim.Add(kv.Key, kv.Value);
+    }
+
+    //2. let's create collections for files to be processed and used from cache
+    foreach(var kv in proc_bundle.file2interim)
+    {
+      if(kv.Value.cached == null && 
+         //NOTE: no need to process a file if it contains parsing errors
+         !errors.FileHasAnyErrors(kv.Key))
+        proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
+      else if(kv.Value.cached != null)
+      {
+        if(ValidateInterimCache(proc_bundle, kv.Value))
+          proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
+        else
+          proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
+      }
+    }
+
+    return proc_bundle;
+  }
+
+  bool ValidateInterimCache(ProcessedBundle proc_bundle, ProcessedBundle.InterimResult interim)
+  {
+    foreach(var file_path in interim.imports_maybe.file_paths)
+    {
+      if(proc_bundle.file2interim.TryGetValue(file_path, out var tmp_interim) && 
+         tmp_interim.cached == null)
+      {
+        cache_hits--;
+        cache_miss++;
+        interim.cached = null;
+        return false;
+      }
+    }
+    return true;
   }
 
   static bool CheckModuleNamesCollision(CompileConf conf, CompileErrors errors)
@@ -387,10 +410,8 @@ public class CompilationExecutor
 
   static List<ProcAndCompileWorker> StartAndWaitCompilerWorkers(
     CompileConf conf, 
-    Types ts, 
     List<ParseWorker> parse_workers, 
-    Dictionary<string, InterimResult> file2interim,
-    Dictionary<string, ANTLR_Processor> file2proc
+    ProcessedBundle proc_bundle
     )
   {
     var compiler_workers = new List<ProcAndCompileWorker>();
@@ -402,9 +423,9 @@ public class CompilationExecutor
       cw.patch_barrier = patch_barrier;
       cw.conf = pw.conf;
       cw.id = pw.id;
-      cw.file2interim = file2interim;
-      cw.file2proc = file2proc;
-      cw.ts = ts;
+      cw.file2interim = proc_bundle.file2interim;
+      cw.file2proc = proc_bundle.file2proc;
+      cw.ts = conf.ts;
       cw.start = pw.start;
       cw.count = pw.count;
       cw.postproc = conf.postproc;
@@ -546,7 +567,7 @@ public class CompilationExecutor
     public Thread th;
     public int start;
     public int count;
-    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+    public Dictionary<string, ProcessedBundle.InterimResult> file2interim = new Dictionary<string, ProcessedBundle.InterimResult>();
     public CompileErrors errors = new CompileErrors();
     public int cache_hits;
     public int cache_miss;
@@ -606,7 +627,7 @@ public class CompilationExecutor
 
         var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, current_file);
 
-        var interim = new InterimResult();
+        var interim = new ProcessedBundle.InterimResult();
         interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
         interim.imports_maybe = imports_maybe;
         interim.compiled_file = compiled_file;
@@ -740,7 +761,7 @@ public class CompilationExecutor
     public int count;
     public IFrontPostProcessor postproc;
     public CompileErrors errors = new CompileErrors();
-    public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+    public Dictionary<string, ProcessedBundle.InterimResult> file2interim = new Dictionary<string, ProcessedBundle.InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();

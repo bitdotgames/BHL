@@ -55,7 +55,7 @@ public class Workspace
 
     //TODO: use compiled cache if needed
     ANTLR_Processor.ProcessAll(
-      new ANTLR_Processor.ProcessedBundle(
+      new ProcessedBundle(
       ts, uri2proc, null, conf.inc_path)
       );
 
@@ -157,7 +157,7 @@ public class Workspace
     uri2proc[document.uri.path] = proc;
 
     ANTLR_Processor.ProcessAll(
-      new ANTLR_Processor.ProcessedBundle(ts, uri2proc, null, conf.inc_path)
+      new ProcessedBundle(ts, uri2proc, null, conf.inc_path)
       );
 
     CheckDiagnostics();

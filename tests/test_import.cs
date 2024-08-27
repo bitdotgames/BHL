@@ -481,8 +481,8 @@ public class TestImport : BHL_TestBase
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       AssertEqual(Execute(vm, "test").result.PopRelease().num, 23);
-      AssertEqual(exec.cache_hits, 1);
-      AssertEqual(exec.cache_miss, 1+1);
+      AssertEqual(exec.cache_hits, 0);
+      AssertEqual(exec.cache_miss, 3);
       AssertEqual(exec.cache_errs, 0);
     }
   }

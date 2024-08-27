@@ -3187,7 +3187,7 @@ public class TestClass : BHL_TestBase
         delegate() { 
           Compile(bhl);
         },
-        "signature doesn't match the base one",
+        "virtual method signatures don't match, base",
         new PlaceAssert(bhl, @"
         override func float getA() {
 --------^"
@@ -3424,6 +3424,204 @@ public class TestClass : BHL_TestBase
     AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
     AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestImportedClassVirtualMethodsSupportFromCachedModule()
+  {
+    string bhl_1 = @"
+    namespace Unit.Traits {
+      class Trait {
+        
+        int b
+        int a
+
+        func int DummyGarbage0() {
+          return 42
+        }
+
+        coro virtual func int getA() {
+          yield()
+          return this.a
+        }
+
+        func int getB() {
+          return this.b
+        }
+      }
+    }
+  ";
+
+  string garbage = @"
+    class Interim { }
+  ";
+
+  string bhl_2 = @"
+    import ""bhl_1""  
+
+    namespace Unit.Pilot {
+      class Trait : Unit.Traits.Trait {
+        int new_a
+
+        func DummyGarbage2() {}
+
+        coro override func int getA() {
+          yield()
+          return this.new_a
+        }
+
+        func DummyGarbage20() {}
+      }
+    }
+
+    coro func int test1()
+    {
+      Unit.Pilot.Trait b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return yield b.getA() + b.getB()
+    }
+
+    coro func int test2()
+    {
+      Unit.Pilot.Trait b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      //NOTE: Bar.getA() will called anyway
+      return yield ((Unit.Traits.Trait)b).getA() + b.getB()
+    }
+    ";
+
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        { "bhl_2.bhl", bhl_2 },
+        { "garbage.bhl", garbage },
+        { "bhl_1.bhl", bhl_1 },
+      });
+    
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("bhl_2");
+      AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+      AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+    
+    {
+      //NOTE: 'touching' garbage file so that any compilation actually occurs.
+      //       This garbage file is not included by any of modules in question.
+      //       Modules are loaded from the cache and we check the fact the cached modules
+      //       are loaded properly disregarding their order of load
+      System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
+      var vm = MakeVM(conf);
+      vm.LoadModule("bhl_2");
+      AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+      AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+  }
+  
+  [IsTested()]
+  public void TestImportedClassVirtualMethodsSupportFromCachedModule2()
+  {
+    string bhl_1 = @"
+    import ""interim""
+
+    namespace Unit.Traits {
+      class Trait {
+        
+        int b
+        int a
+
+        func int DummyGarbage0() {
+          return 42
+        }
+
+        coro virtual func int getA() {
+          yield()
+          return this.a
+        }
+
+        func int getB() {
+          return this.b
+        }
+      }
+    }
+  ";
+
+  string interim = @"
+    class Interim { }
+  ";
+
+  string bhl_2 = @"
+    import ""bhl_1""  
+
+    namespace Unit.Pilot {
+      class Trait : Unit.Traits.Trait {
+        int new_a
+
+        func DummyGarbage2() {}
+
+        coro override func int getA() {
+          yield()
+          return this.new_a
+        }
+
+        func DummyGarbage20() {}
+      }
+    }
+
+    coro func int test1()
+    {
+      Unit.Pilot.Trait b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      return yield b.getA() + b.getB()
+    }
+
+    coro func int test2()
+    {
+      Unit.Pilot.Trait b = {}
+      b.a = 1
+      b.b = 10
+      b.new_a = 100
+      //NOTE: Bar.getA() will called anyway
+      return yield ((Unit.Traits.Trait)b).getA() + b.getB()
+    }
+    ";
+
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        { "bhl_2.bhl", bhl_2 },
+        { "interim.bhl", interim },
+        { "bhl_1.bhl", bhl_1 },
+      });
+    
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("bhl_2");
+      AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+      AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+    
+    {
+      //NOTE: 'touching' interim file
+      System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
+      var exec = new CompilationExecutor();
+      var vm = MakeVM(conf, exec: exec);
+      vm.LoadModule("bhl_2");
+      AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
+      AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
+      AssertEqual(0, exec.cache_hits);
+      AssertEqual(3, exec.cache_miss);
+      CommonChecks(vm);
+    }
   }
 
   [IsTested()]

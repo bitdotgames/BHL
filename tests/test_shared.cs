@@ -805,6 +805,18 @@ public class BHL_TestBase
     return files;
   }
 
+  public static VM MakeVM(CompileConf conf, Action<Types> ts_fn = null, CompilationExecutor exec = null)
+  {
+    Types ts = new Types();
+    ts_fn?.Invoke(ts);
+
+    var stream = CompileFiles(exec ?? new CompilationExecutor(), conf);
+
+    var loader = new ModuleLoader(ts, stream);
+    var vm = new VM(ts, loader);
+    return vm;
+  }
+
   public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, CompilationExecutor executor = null)
   {
     Types ts = new Types();
@@ -1274,7 +1286,7 @@ public class BHL_TestBase
       Console.WriteLine(proc.parsed);
     }
 
-    ANTLR_Processor.ProcessAll(new ANTLR_Processor.ProcessedBundle(
+    ANTLR_Processor.ProcessAll(new ProcessedBundle(
       ts,
       new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
       null,

@@ -310,7 +310,7 @@ public class TestYield : BHL_TestBase
       delegate() { 
         Compile(bhl);
       },
-      "'func int()' and  'coro func int()'",
+      "base: 'func int()', override: 'coro func int()'",
       new PlaceAssert(bhl, @"
       coro override func int Doer() {
 ------^"

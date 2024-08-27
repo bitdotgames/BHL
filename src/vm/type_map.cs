@@ -298,8 +298,8 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   
   public override void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.SyncRef(ctx, ref key_type);
-    marshall.Marshall.SyncRef(ctx, ref val_type);
+    marshall.Marshall.SyncTypeRef(ctx, ref key_type);
+    marshall.Marshall.SyncTypeRef(ctx, ref val_type);
 
     if(ctx.is_read)
     {

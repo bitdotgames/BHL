@@ -201,7 +201,7 @@ public class RefType : IEphemeralType, IEquatable<RefType>
   
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.SyncRef(ctx, ref subj);
+    marshall.Marshall.SyncTypeRef(ctx, ref subj);
     if(ctx.is_read)
       Update();
   }
@@ -298,7 +298,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
   
   public void Sync(marshall.SyncContext ctx)
   {
-    marshall.Marshall.SyncRefs(ctx, items);
+    marshall.Marshall.SyncTypeRefs(ctx, items);
     if(ctx.is_read)
       Update();
   }
@@ -422,8 +422,8 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref _attribs);
-    marshall.Marshall.SyncRef(ctx, ref ret_type);
-    marshall.Marshall.SyncRefs(ctx, arg_types);
+    marshall.Marshall.SyncTypeRef(ctx, ref ret_type);
+    marshall.Marshall.SyncTypeRefs(ctx, arg_types);
     if(ctx.is_read)
       Update();
   }
