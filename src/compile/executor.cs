@@ -320,14 +320,14 @@ public class CompilationExecutor
     //1. let's merge all interim results
     foreach(var pw in parse_workers)
     {
-      foreach (var kv in pw.file2interim)
+      foreach(var kv in pw.file2interim)
         proc_bundle.file2interim.Add(kv.Key, kv.Value);
     }
 
     //2. let's create collections for files to be processed and used from cache
     foreach(var kv in proc_bundle.file2interim)
     {
-      if(kv.Value.cached == null && 
+      if(kv.Value.cached == null &&
          //NOTE: no need to process a file if it contains parsing errors
          !errors.FileHasAnyErrors(kv.Key))
         proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
@@ -345,14 +345,16 @@ public class CompilationExecutor
 
   bool ValidateInterimCache(ProcessedBundle proc_bundle, ProcessedBundle.InterimResult interim)
   {
-    foreach(var file_path in interim.imports_maybe.file_paths)
+    foreach(var import_file in interim.imports_maybe.file_paths)
     {
-      if(proc_bundle.file2interim.TryGetValue(file_path, out var tmp_interim) && 
-         tmp_interim.cached == null)
+      if(proc_bundle.file2interim.TryGetValue(import_file, out var imported_interim) && 
+         imported_interim.cached == null)
       {
         cache_hits--;
         cache_miss++;
+
         interim.cached = null;
+        
         return false;
       }
     }
@@ -651,20 +653,21 @@ public class CompilationExecutor
         if(!use_cache)
         {
           var err_handlers = ErrorHandlers.MakeStandard(current_file, errors);
-          var parser = ANTLR_Processor.Stream2Parser(
-            new Module(conf.ts, interim.module_path), 
-            errors,
-            err_handlers,
-            sfs, 
-            defines: new HashSet<string>(conf.proj.defines),
-            preproc_parsed: out var preproc_parsed,
-            tokens: out var tokens
-          );
-          //NOTE: ANTLR parsing happens here 
-          //NOTE: *parsing* is not processing which happens later
+          
           //for parsing time debug
           //var sw = Stopwatch.StartNew();
-          interim.parsed = new ANTLR_Parsed(parser, ANTLR_Processor.ParseFastWithFallback(tokens, parser));
+
+          //NOTE: ANTLR parsing happens here 
+          //NOTE: *parsing* is not processing which happens later
+          interim.parsed = ANTLR_Processor.Parse(
+            new Module(conf.ts, interim.module_path), 
+            sfs, 
+            errors,
+            err_handlers,
+            defines: new HashSet<string>(conf.proj.defines),
+            preproc_parsed: out var preproc_parsed
+          );
+          
           //sw.Stop();
           //conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
           ++cache_miss;

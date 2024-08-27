@@ -371,7 +371,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   public static ANTLR_Processor MakeProcessor(
     Module module, 
     FileImports imports_maybe, 
-    ANTLR_Parsed parsed/*can be null*/, 
+    //if null the module will be parsed
+    ANTLR_Parsed parsed, 
     Types ts, 
     CompileErrors errors,
     ErrorHandlers err_handlers,
@@ -409,6 +410,25 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
+  public static ANTLR_Parsed Parse(
+    Module module, 
+    Stream src, 
+    CompileErrors errors,
+    ErrorHandlers err_handlers,
+    HashSet<string> defines, //can be null
+    out ANTLR_Parsed preproc_parsed
+    )
+  {
+    var parser = Stream2Parser(
+      module, errors, err_handlers, 
+      src, defines, out preproc_parsed, out var tokens
+      );
+
+    //NOTE: parsing happens here 
+    var parsed = new ANTLR_Parsed(parser, ParseFastWithFallback(tokens, parser));
+    return parsed;
+  }
+
   public static ANTLR_Processor MakeProcessor(
     Module module, 
     FileImports imports_maybe, 
@@ -420,13 +440,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     HashSet<string> defines = null
     )
   {
-    var p = Stream2Parser(
-      module, errors, err_handlers, 
-      src, defines, out preproc_parsed, out var _
-      );
-
-    //NOTE: parsing happens here 
-    var parsed = new ANTLR_Parsed(p, p.program());
+    var parsed = Parse(
+      module, 
+      src, 
+      errors, 
+      err_handlers, 
+      defines, 
+      out preproc_parsed
+    );
 
     return new ANTLR_Processor(
       parsed, 
