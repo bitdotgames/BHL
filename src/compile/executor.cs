@@ -155,7 +155,7 @@ public class CompilationExecutor
 
     sw.Stop();
 
-    conf.logger.Log(1, $"BHL all done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL all done(hits/miss: {cache_hits}/{cache_miss}) ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     if(errors.Count > 0)
     {
