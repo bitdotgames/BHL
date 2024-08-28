@@ -87,8 +87,9 @@ public class Workspace
       tokens: out var __
     );
 
-    //NOTE: ANTLR parsing happens here 
-    var parsed = new ANTLR_Parsed(parser, parser.program());
+    //NOTE: ANTLR parsing happens here when accessing the parse tree
+    var parse_tree = parser.program(); 
+    var parsed = new ANTLR_Parsed(parser, parse_tree);
 
     var proc = new ANTLR_Processor(
       parsed, 
