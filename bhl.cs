@@ -17,6 +17,7 @@ public static class Tasks
     $"{BHL_ROOT}/src/vm/symbol/*.cs",
     $"{BHL_ROOT}/src/vm/std/*.cs",
     $"{BHL_ROOT}/src/vm/util/*.cs",
+    $"{BHL_ROOT}/src/vm/marshall/*.cs",
     $"{BHL_ROOT}/src/vm/msgpack/*.cs",
   };
   
