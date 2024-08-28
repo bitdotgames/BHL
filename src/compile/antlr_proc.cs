@@ -386,28 +386,24 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       using(var sfs = File.OpenRead(module.file_path))
       {
-        return MakeProcessor(
+        parsed = Parse(
           module, 
-          imports_maybe, 
           sfs, 
-          ts, 
           errors,
           err_handlers,
-          out preproc_parsed,
-          defines
+          defines,
+          out preproc_parsed
         );
       }
     }
-    else 
-    {
-      return new ANTLR_Processor(
-        parsed, 
-        module, 
-        imports_maybe, 
-        ts,
-        errors
-      );
-    }
+   
+    return new ANTLR_Processor(
+      parsed, 
+      module, 
+      imports_maybe, 
+      ts,
+      errors
+    );
   }
 
   public static ANTLR_Parsed Parse(
@@ -429,7 +425,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return parsed;
   }
 
-  public static ANTLR_Processor MakeProcessor(
+  public static ANTLR_Processor ParseAndMakeProcessor(
     Module module, 
     FileImports imports_maybe, 
     Stream src, 

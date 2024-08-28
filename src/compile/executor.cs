@@ -237,7 +237,7 @@ public class CompilationExecutor
     var proc_bundle = MakeProcessedBundle(conf, parse_workers, errors);
     
     sw.Stop();
-    conf.logger.Log(2, $"BHL bundling done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1, $"BHL bundle done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
 
     sw = Stopwatch.StartNew();
     //4. wait for ANTLR processors execution
@@ -296,7 +296,9 @@ public class CompilationExecutor
        conf.proj.inc_path.FilePath2ModuleName(file), 
        file
      );
+     
      var proc_errs = new CompileErrors();
+     
      var proc = ANTLR_Processor.MakeProcessor(
        file_module, 
        interim.imports_maybe, 
@@ -328,15 +330,28 @@ public class CompilationExecutor
     foreach(var kv in proc_bundle.file2interim)
     {
       if(kv.Value.cached == null &&
-         //NOTE: no need to process a file if it contains parsing errors
-         !errors.FileHasAnyErrors(kv.Key))
+          //NOTE: no need to process a file if it contains parsing errors
+          !errors.FileHasAnyErrors(kv.Key))
+      {
         proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
+      }
       else if(kv.Value.cached != null)
       {
         if(ValidateInterimCache(proc_bundle, kv.Value))
+        {
           proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
+        }
         else
-          proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
+        {
+          var proc = MakeProcessor(conf, kv.Key, kv.Value);
+          proc_bundle.file2proc.Add(kv.Key, proc);
+
+          kv.Value.parsed = proc.parsed;
+          kv.Value.cached = null;
+          
+          cache_hits--;
+          cache_miss++;
+        }
       }
     }
 
@@ -350,11 +365,6 @@ public class CompilationExecutor
       if(proc_bundle.file2interim.TryGetValue(import_file, out var imported_interim) && 
          imported_interim.cached == null)
       {
-        cache_hits--;
-        cache_miss++;
-
-        interim.cached = null;
-        
         return false;
       }
     }

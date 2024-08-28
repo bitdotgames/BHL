@@ -1263,7 +1263,7 @@ public class BHL_TestBase
   {
     var mdl = new bhl.Module(ts, "");
     var errors = new CompileErrors();
-    var proc = ANTLR_Processor.MakeProcessor(
+    var proc = ANTLR_Processor.ParseAndMakeProcessor(
       mdl, 
       new FileImports(), 
       bhl.ToStream(), 
