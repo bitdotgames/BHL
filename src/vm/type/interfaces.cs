@@ -3,12 +3,6 @@ using bhl.marshall;
 
 namespace bhl {
   
-// Denotes any named entity which can be located by this name
-public interface INamed
-{
-  string GetName();
-}
-
 public interface IType : INamed
 {}
 
