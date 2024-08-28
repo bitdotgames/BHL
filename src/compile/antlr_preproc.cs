@@ -11,8 +11,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   Module module;
 
   //NOTE: passed from above
-  CompileErrors errors;
-  ErrorHandlers err_handlers;
+  CompileErrorsHub err_hub;
 
   Stream src;
   CustomInputStream input;
@@ -46,8 +45,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public static Stream ProcessStream(
     Module module, 
-    CompileErrors errors,
-    ErrorHandlers err_handlers,
+    CompileErrorsHub err_hub,
     Stream src, 
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
@@ -64,8 +62,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     
     var preproc = new ANTLR_Preprocessor(
       module, 
-      errors, 
-      err_handlers, 
+      err_hub,
       src, 
       defines
     );
@@ -99,15 +96,13 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   public ANTLR_Preprocessor(
     Module module, 
-    CompileErrors errors, 
-    ErrorHandlers err_handlers,
+    CompileErrorsHub err_hub,
     Stream src, 
     HashSet<string> defines
   )
   {
     this.module = module;
-    this.errors = errors;
-    this.err_handlers = err_handlers;
+    this.err_hub = err_hub;
     this.src = src;
     this.defines = defines;
   }
@@ -128,7 +123,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     tokens = new CommonTokenStream(lex);
     var parser = new bhlPreprocParser(tokens);
 
-    err_handlers?.AttachToParser(parser);
+    err_hub.handlers?.AttachToParser(parser);
 
     dst = new MemoryStream();
     dst.Capacity = (int)src.Length;
@@ -291,7 +286,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   void AddError(IParseTree place, string msg) 
   {
-    errors.Add(new ParseError(module, place, tokens, msg));
+    err_hub.errors.Add(new ParseError(module, place, tokens, msg));
   }
 }
 

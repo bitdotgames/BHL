@@ -342,9 +342,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public static bhlParser Stream2Parser(
       Module module,
-      CompileErrors errors,
-      ErrorHandlers err_handlers,
+      CompileErrorsHub err_hub,
       Stream src, 
+      //can be null
       HashSet<string> defines,
       out ANTLR_Parsed preproc_parsed,
       out CommonTokenStream tokens
@@ -352,26 +352,24 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     src = ANTLR_Preprocessor.ProcessStream(
       module, 
-      errors, 
-      err_handlers, 
+      err_hub,
       src, 
       defines,
       out preproc_parsed
     );
 
-    tokens = Stream2Tokens(src, err_handlers);
+    tokens = Stream2Tokens(src, err_hub.handlers);
 
     var p = new bhlParser(tokens);
 
-    err_handlers?.AttachToParser(p);
+    err_hub.handlers?.AttachToParser(p);
 
     return p;
   }
 
   public static ANTLR_Parsed Parse(
     Module module,
-    CompileErrors errors,
-    ErrorHandlers err_handlers,
+    CompileErrorsHub err_hub,
     //can be null
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
@@ -382,8 +380,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return Parse(
         module, 
         sfs, 
-        errors,
-        err_handlers,
+        err_hub,
         defines,
         preproc_parsed: out preproc_parsed
       );
@@ -393,15 +390,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   public static ANTLR_Parsed Parse(
     Module module, 
     Stream src, 
-    CompileErrors errors,
-    ErrorHandlers err_handlers,
-    HashSet<string> defines, //can be null
+    CompileErrorsHub err_hub,
+    //can be null
+    HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
     )
   {
     var parser = Stream2Parser(
-      module, errors, err_handlers, 
-      src, defines, out preproc_parsed, out var tokens
+      module, 
+      err_hub,
+      src, 
+      defines, 
+      out preproc_parsed, 
+      out var tokens
       );
 
     //NOTE: parsing happens here 
@@ -414,17 +415,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     FileImports imports_maybe, 
     Stream src, 
     Types ts, 
-    CompileErrors errors,
-    ErrorHandlers err_handlers,
-    out ANTLR_Parsed preproc_parsed,
-    HashSet<string> defines = null
+    CompileErrorsHub err_hub,
+    //can be null
+    HashSet<string> defines,
+    out ANTLR_Parsed preproc_parsed
     )
   {
     var parsed = Parse(
       module, 
       src, 
-      errors, 
-      err_handlers, 
+      err_hub,
       defines, 
       out preproc_parsed
     );
@@ -434,7 +434,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       module, 
       imports_maybe, 
       ts, 
-      errors
+      err_hub.errors
     );
   }
 
@@ -2965,8 +2965,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       {
         _one_literal_exp = Stream2Parser(
           new Module(types), 
-          null,
-          ErrorHandlers.MakeStandard("", new CompileErrors()),
+          CompileErrorsHub.MakeEmpty(),
           new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
           defines: null,
           preproc_parsed: out var _,

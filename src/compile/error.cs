@@ -154,6 +154,44 @@ public class ErrorHandlers
   }
 }
 
+public class CompileErrorsHub
+{
+  public CompileErrors errors;
+  public ErrorHandlers handlers;
+
+  public CompileErrorsHub(CompileErrors errors, ErrorHandlers handlers)
+  {
+    this.errors = errors;
+    this.handlers = handlers;
+  }
+
+  public static CompileErrorsHub MakeEmpty()
+  {
+    var errs = new CompileErrors();
+    return new CompileErrorsHub(
+      errs,
+      ErrorHandlers.MakeStandard("", errs)
+    );
+  }
+
+  public static CompileErrorsHub MakeStandard(string file)
+  {
+     var errs = new CompileErrors();
+     return new CompileErrorsHub(
+        errs,
+        ErrorHandlers.MakeStandard(file, errs)
+     );
+  }
+
+  public static CompileErrorsHub MakeStandard(string file, CompileErrors errs)
+  {
+     return new CompileErrorsHub(
+        errs,
+        ErrorHandlers.MakeStandard(file, errs)
+     );
+  }
+}
+
 public class ErrorLexerListener : IAntlrErrorListener<int>
 {
   CompileErrors errors;

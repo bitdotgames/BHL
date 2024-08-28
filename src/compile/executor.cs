@@ -300,15 +300,13 @@ public class CompilationExecutor
        file
      );
      
-     var proc_errs = new CompileErrors();
-     var err_handlers = ErrorHandlers.MakeStandard(file, proc_errs);
+     var err_hub = CompileErrorsHub.MakeStandard(file);
      
      var parsed = interim.parsed;
      if(parsed == null)
        parsed = ANTLR_Processor.Parse(
          file_module,
-         proc_errs,
-         err_handlers,
+         err_hub,
          new HashSet<string>(conf.proj.defines),
          out var _
        );
@@ -318,7 +316,7 @@ public class CompilationExecutor
        file_module, 
        interim.imports_maybe, 
        conf.ts, 
-       proc_errs
+       err_hub.errors
      );
      return proc;
   }
@@ -680,8 +678,7 @@ public class CompilationExecutor
           interim.parsed = ANTLR_Processor.Parse(
             new Module(conf.ts, interim.module_path), 
             sfs, 
-            errors,
-            ErrorHandlers.MakeStandard(current_file, errors),
+            CompileErrorsHub.MakeStandard(current_file, errors),
             defines: new HashSet<string>(conf.proj.defines),
             preproc_parsed: out var _
           );

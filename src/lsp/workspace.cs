@@ -74,15 +74,12 @@ public class Workspace
     var imports = CompilationExecutor.ParseWorker.ParseMaybeImports(conf.inc_path, file, stream);
     var module = new bhl.Module(ts, conf.inc_path.FilePath2ModuleName(file), file);
 
-    var errors = new CompileErrors();
-
     //TODO: use different error handlers?
-    var err_handlers = ErrorHandlers.MakeStandard(file, errors);
+    var err_hub = CompileErrorsHub.MakeStandard(file);
 
     var parser = ANTLR_Processor.Stream2Parser(
       module, 
-      errors,
-      err_handlers,
+      err_hub,
       stream, 
       //TODO: pass actual defines
       defines: null,
@@ -98,7 +95,7 @@ public class Workspace
       module, 
       imports, 
       ts, 
-      errors
+      err_hub.errors
     );
 
     return proc;
