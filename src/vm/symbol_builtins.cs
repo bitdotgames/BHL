@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 
 namespace bhl {
   
@@ -181,15 +181,13 @@ public class NullSymbol : ClassSymbolScript
 
 public class VarSymbol : Symbol
 {
-  public const uint CLASS_ID = 8;
-
   public VarSymbol()
     : base(new Origin(), "var")
   {}
 
   public override uint ClassId()
   {
-    return CLASS_ID;
+    throw new NotImplementedException();
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
