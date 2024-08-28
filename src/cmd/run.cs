@@ -62,8 +62,8 @@ public class RunCmd : ICmd
     conf.logger = new Logger(1, new ConsoleLogger());
     conf.proj = proj;
     conf.ts = new Types();
-    conf.self_file = Util.GetSelfFile();
-    conf.files = Util.NormalizeFilePaths(files);
+    conf.self_file = BuildUtils.GetSelfFile();
+    conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = new EmptyUserBindings();
     conf.postproc = new EmptyPostProcessor();
 

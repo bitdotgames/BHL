@@ -122,7 +122,7 @@ public class CompileCmd : ICmd
     conf.logger = logger;
     conf.args = string.Join(";", args);
     conf.self_file = GetSelfFile();
-    conf.files = Util.NormalizeFilePaths(files);
+    conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = bindings;
     conf.postproc = postproc;
 
