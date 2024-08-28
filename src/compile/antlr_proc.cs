@@ -5973,4 +5973,4 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 }
 
-} //namespace bhl
+}

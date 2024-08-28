@@ -290,4 +290,4 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   }
 }
 
-} //namespace bhl
+}

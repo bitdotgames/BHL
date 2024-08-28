@@ -1714,4 +1714,4 @@ public class ModuleCompiler : AST_Visitor
   }
 }
 
-} //namespace bhl
+}

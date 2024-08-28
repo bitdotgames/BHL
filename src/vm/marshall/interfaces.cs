@@ -59,4 +59,5 @@ public interface IWriter
   void BeginContainer(int len); 
   void EndContainer(); 
 }
+
 }
