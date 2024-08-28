@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace bhl {
 
@@ -483,7 +484,8 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   //NOTE: only once the class is Setup we have valid members iterator
   public IEnumerator<Symbol> GetEnumerator()
   {
-    return _all_members.GetEnumerator(); 
+    return _all_members?.GetEnumerator() ?? 
+           Enumerable.Empty<Symbol>().GetEnumerator(); 
   }
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -676,7 +678,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     {
       var sym = curr_class.members[i];
       
-      //for debug
+      //for weird problems assert
       //if(sym is ITyped typed && typed.GetIType() == null) 
       //  throw new SymbolError(sym, "type for member '"+sym.name+"' was not resolved in class '"+name+"'");
 
