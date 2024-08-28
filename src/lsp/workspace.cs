@@ -71,7 +71,7 @@ public class Workspace
 
   ANTLR_Processor ParseFile(Types ts, string file, Stream stream)
   {
-    var imports = CompilationExecutor.ParseWorker.ParseImports(conf.inc_path, file, stream);
+    var imports = CompilationExecutor.ParseWorker.ParseMaybeImports(conf.inc_path, file, stream);
     var module = new bhl.Module(ts, conf.inc_path.FilePath2ModuleName(file), file);
 
     var errors = new CompileErrors();
@@ -93,14 +93,12 @@ public class Workspace
     //NOTE: ANTLR parsing happens here 
     var parsed = new ANTLR_Parsed(parser, parser.program());
 
-    var proc = ANTLR_Processor.MakeProcessor(
+    var proc = new ANTLR_Processor(
+      parsed, 
       module, 
       imports, 
-      parsed, 
       ts, 
-      errors, 
-      err_handlers,
-      preproc_parsed: out var ___
+      errors
     );
 
     return proc;

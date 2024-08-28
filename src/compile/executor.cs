@@ -289,7 +289,10 @@ public class CompilationExecutor
     conf.logger.Log(2, $"BHL postproc done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
   }
 
-  static ANTLR_Processor MakeProcessor(CompileConf conf, string file, ProcessedBundle.InterimResult interim)
+  static ANTLR_Processor ParseIfNeededAndMakeProcessor(
+    CompileConf conf, 
+    string file, 
+    ProcessedBundle.InterimResult interim)
   {
      var file_module = new Module(
        conf.ts,
@@ -298,15 +301,24 @@ public class CompilationExecutor
      );
      
      var proc_errs = new CompileErrors();
+     var err_handlers = ErrorHandlers.MakeStandard(file, proc_errs);
      
-     var proc = ANTLR_Processor.MakeProcessor(
+     var parsed = interim.parsed;
+     if(parsed == null)
+       parsed = ANTLR_Processor.Parse(
+         file_module,
+         proc_errs,
+         err_handlers,
+         new HashSet<string>(conf.proj.defines),
+         out var _
+       );
+     
+     var proc = new ANTLR_Processor(
+       parsed,
        file_module, 
        interim.imports_maybe, 
-       interim.parsed, 
        conf.ts, 
-       proc_errs,
-       ErrorHandlers.MakeStandard(file, proc_errs),
-       out var _
+       proc_errs
      );
      return proc;
   }
@@ -333,7 +345,7 @@ public class CompilationExecutor
           //NOTE: no need to process a file if it contains parsing errors
           !errors.FileHasAnyErrors(kv.Key))
       {
-        proc_bundle.file2proc.Add(kv.Key, MakeProcessor(conf, kv.Key, kv.Value));
+        proc_bundle.file2proc.Add(kv.Key, ParseIfNeededAndMakeProcessor(conf, kv.Key, kv.Value));
       }
       else if(kv.Value.cached != null)
       {
@@ -343,7 +355,7 @@ public class CompilationExecutor
         }
         else
         {
-          var proc = MakeProcessor(conf, kv.Key, kv.Value);
+          var proc = ParseIfNeededAndMakeProcessor(conf, kv.Key, kv.Value);
           proc_bundle.file2proc.Add(kv.Key, proc);
 
           kv.Value.parsed = proc.parsed;
@@ -629,7 +641,7 @@ public class CompilationExecutor
       
       using(var sfs = File.OpenRead(current_file))
       {
-        var imports_maybe = GetImports(current_file, sfs);
+        var imports_maybe = GetMaybeImports(current_file, sfs);
         var deps = new List<string>(imports_maybe.file_paths);
         deps.Add(current_file);
 
@@ -662,20 +674,16 @@ public class CompilationExecutor
 
         if(!use_cache)
         {
-          var err_handlers = ErrorHandlers.MakeStandard(current_file, errors);
-          
           //for parsing time debug
           //var sw = Stopwatch.StartNew();
 
-          //NOTE: ANTLR parsing happens here 
-          //NOTE: *parsing* is not processing which happens later
           interim.parsed = ANTLR_Processor.Parse(
             new Module(conf.ts, interim.module_path), 
             sfs, 
             errors,
-            err_handlers,
+            ErrorHandlers.MakeStandard(current_file, errors),
             defines: new HashSet<string>(conf.proj.defines),
-            preproc_parsed: out var preproc_parsed
+            preproc_parsed: out var _
           );
           
           //sw.Stop();
@@ -687,12 +695,12 @@ public class CompilationExecutor
       }
     }
 
-    FileImports GetImports(string file, FileStream fsf)
+    FileImports GetMaybeImports(string file, FileStream fsf)
     {
       var imports = TryReadImportsCache(file);
       if(imports == null)
       {
-        imports = ParseImports(conf.proj.inc_path, file, fsf);
+        imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
         WriteImportsCache(file, imports);
       }
       return imports;
@@ -723,7 +731,7 @@ public class CompilationExecutor
 
     //TODO: this one doesn't take into account commented imports!
     //      use ANTLR lightweight parser for that?...
-    public static FileImports ParseImports(IncludePath inc_path, string file, Stream stream)
+    public static FileImports ParseMaybeImports(IncludePath inc_path, string file, Stream stream)
     {
       var imps = new FileImports();
 
