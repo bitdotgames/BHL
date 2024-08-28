@@ -226,7 +226,7 @@ public class Uri
 
   public Uri(string path)
   {
-    this.path = Util.NormalizeFilePath(path);
+    this.path = BuildUtils.NormalizeFilePath(path);
   }
 
   public static Uri Decode(string path)

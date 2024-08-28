@@ -65,11 +65,13 @@ public class ModuleLoader : IModuleLoader
 
     byte file_format = 0;
     reader.ReadU8(ref file_format);
-    Util.Verify(file_format == COMPILE_FMT);
+    if(file_format != COMPILE_FMT)
+      throw new Exception("Bad file format");
 
     uint file_version = 0;
     reader.ReadU32(ref file_version);
-    Util.Verify(file_version == 1);
+    if(file_version != 1)
+      throw new Exception("Bad file version");
 
     int num_entries = 0;
     reader.ReadI32(ref num_entries);
@@ -87,7 +89,7 @@ public class ModuleLoader : IModuleLoader
       ent.format = (ModuleBinaryFormat)format;
       ent.stream_pos = source.Position;
       if(name2entry.ContainsKey(name))
-        Util.Verify(false, "Key already exists: " + name);
+        throw new Exception("Key already exists: " + name);
       name2entry.Add(name, ent);
 
       //skipping binary blob

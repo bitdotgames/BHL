@@ -40,6 +40,86 @@ public class FuncArgSymbol : VariableSymbol
   }
 }
 
+public struct FuncArgsInfo
+{
+  //NOTE: 6 bits are used for a total number of args passed (max 63), 
+  //      26 bits are reserved for default args set bits (max 26 default args)
+  public const int ARGS_NUM_BITS = 6;
+  public const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
+  public const int MAX_ARGS = (int)ARGS_NUM_MASK;
+  public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+
+  public uint bits;
+
+  public FuncArgsInfo(uint bits)
+  {
+    this.bits = bits;
+  }
+
+  public int CountArgs()
+  {
+    return (int)(bits & ARGS_NUM_MASK);
+  }
+
+  public bool HasDefaultUsedArgs()
+  {              
+    return (bits & ~ARGS_NUM_MASK) > 0;
+  }
+
+  public int CountRequiredArgs()
+  {
+    return CountArgs() - CountUsedDefaultArgs();
+  }
+
+  public int CountUsedDefaultArgs()
+  {
+    int c = 0;
+    for(int i=0;i<MAX_DEFAULT_ARGS;++i)
+      if(IsDefaultArgUsed(i))
+        ++c;
+    return c;
+  }
+
+  public bool SetArgsNum(int num)
+  {
+    if(num > MAX_ARGS)
+      return false;
+    bits = (bits & ~ARGS_NUM_MASK) | (uint)num;
+    return true;
+  }
+
+  public bool IncArgsNum()
+  {
+    uint num = bits & ARGS_NUM_MASK; 
+    ++num;
+    if(num > MAX_ARGS)
+      return false;
+    bits = (bits & ~ARGS_NUM_MASK) | num;
+    return true;
+  }
+
+  //NOTE: idx starts from 0, it's the idx of the default argument *within* default arguments,
+  //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }  
+  //           b is 0 default arg idx, c is 1 
+  public bool UseDefaultArg(int idx, bool flag)
+  {
+    if(idx >= MAX_DEFAULT_ARGS)
+      return false;
+    uint mask = 1u << (idx + ARGS_NUM_BITS); 
+    if(flag)
+      bits |= mask;
+    else
+      bits &= ~mask;
+    return true;
+  }
+
+  //NOTE: idx starts from 0
+  public bool IsDefaultArgUsed(int idx)
+  {
+    return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;
+  }
+}
+
 [System.Flags]
 public enum FuncSignatureAttrib : byte
 {

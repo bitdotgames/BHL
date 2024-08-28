@@ -59,9 +59,9 @@ public class ProjectConf
   string NormalizePath(string file_path)
   {
     if(Path.IsPathRooted(file_path))
-      return Util.NormalizeFilePath(file_path);
+      return BuildUtils.NormalizeFilePath(file_path);
     else if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
-      return Util.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
+      return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
     return file_path;
   }
 
@@ -199,7 +199,7 @@ public class CompilationExecutor
 
     if(conf.proj.use_cache && 
        !args_changed && 
-       !Util.NeedToRegen(conf.proj.result_file, conf.files)
+       !BuildUtils.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
       conf.logger.Log(1, "BHL no stale files detected");
@@ -654,7 +654,7 @@ public class CompilationExecutor
         interim.imports_maybe = imports_maybe;
         interim.compiled_file = compiled_file;
 
-        bool use_cache = conf.proj.use_cache && !Util.NeedToRegen(compiled_file, deps);
+        bool use_cache = conf.proj.use_cache && !BuildUtils.NeedToRegen(compiled_file, deps);
 
         if(use_cache)
         {
@@ -707,7 +707,7 @@ public class CompilationExecutor
     {
       var cache_imports_file = GetImportsCacheFile(conf.proj.tmp_dir, file);
 
-      if(Util.NeedToRegen(cache_imports_file, file))
+      if(BuildUtils.NeedToRegen(cache_imports_file, file))
         return null;
 
       try

@@ -43,7 +43,7 @@ public class Workspace
       var files = Directory.GetFiles(src_dir, "*.bhl", SearchOption.AllDirectories);
       foreach(var file in files)
       {
-        string norm_file = Util.NormalizeFilePath(file);
+        string norm_file = BuildUtils.NormalizeFilePath(file);
 
         using(var sfs = File.OpenRead(norm_file))
         {
