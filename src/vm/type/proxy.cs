@@ -141,6 +141,56 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     return path?.GetHashCode() ?? 0;
   }
 }
+
+public class TypeSet<T> : marshall.IMarshallable where T : class, IType
+{
+  //TODO: since TypeProxy implements custom Equals we could use HashSet here
+  internal List<ProxyType> list = new List<ProxyType>();
+
+  public int Count
+  {
+    get {
+      return list.Count;
+    }
+  }
+
+  public T this[int index]
+  {
+    get {
+      var tp = list[index];
+      var s = (T)tp.Get();
+      if(s == null)
+        throw new Exception("Type not found: " + tp);
+      return s;
+    }
+  }
+
+  public TypeSet()
+  {}
+
+  public bool Add(T t)
+  {
+    return Add(new ProxyType(t));
+  }
+
+  public bool Add(ProxyType tp)
+  {
+    if(list.IndexOf(tp) != -1)
+      return false;
+    list.Add(tp);
+    return true;
+  }
+
+  public void Clear()
+  {
+    list.Clear();
+  }
+
+  public void Sync(marshall.SyncContext ctx) 
+  {
+    marshall.Marshall.SyncTypeRefs(ctx, list);
+  }
+}
     
 public class TypeRefIndex
 {
