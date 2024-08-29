@@ -796,19 +796,35 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_Outline());
 
-    ProcessCachedModules(proc_bundle);
+    var name2module = proc_bundle.GroupModulesByName();
+    
+    SetupCachedModules(
+      name2module, 
+      proc_bundle, 
+      Module.SetupFlags.Namespaces | 
+      Module.SetupFlags.Imports | 
+      Module.SetupFlags.Funcs |
+      Module.SetupFlags.Gvars
+      );
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_LinkImports1(proc_bundle));
-
+    
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_LinkImports2(proc_bundle));
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
-
+    
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes2());
+    
+    //NOTE: we may setup cached module classes only when processed classes
+    //      are also setup
+    SetupCachedModules(
+      name2module, 
+      proc_bundle, 
+      Module.SetupFlags.Classes);
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
@@ -829,21 +845,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  static void ProcessCachedModules(ProjectCompilationStateBundle proc_bundle)
+  static void SetupCachedModules(
+    Dictionary<string, Module> name2module, 
+    ProjectCompilationStateBundle proc_bundle,
+    Module.SetupFlags flags
+    )
   {
     if(proc_bundle.file2cached == null)
       return;
 
-    var all = proc_bundle.GroupModulesByName();
-
     foreach(var kv in proc_bundle.file2cached)
-    {
-      foreach(string import in kv.Value.compiled.imports)
-        kv.Value.ns.Link(all[import].ns);
-    }
-
-    foreach(var kv in proc_bundle.file2cached)
-      kv.Value.Setup(name => all[name]);
+      kv.Value.Setup(name => name2module[name], flags);
   }
 
   public override object VisitProgram(bhlParser.ProgramContext ctx)

@@ -3618,8 +3618,8 @@ public class TestClass : BHL_TestBase
       vm.LoadModule("bhl_2");
       AssertEqual(110, Execute(vm, "test1").result.PopRelease().num);
       AssertEqual(110, Execute(vm, "test2").result.PopRelease().num);
-      AssertEqual(0, exec.cache_hits);
-      AssertEqual(3, exec.cache_miss);
+      AssertEqual(1, exec.cache_hits);
+      AssertEqual(2, exec.cache_miss);
       CommonChecks(vm);
     }
   }

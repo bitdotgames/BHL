@@ -239,7 +239,7 @@ public class CompilationExecutor
       }
       else if(kv.Value.cached != null)
       {
-        if(ValidateInterimCache(proc_bundle, kv.Value))
+        if(ValidateParseCache(proc_bundle, kv.Value))
         {
           proc_bundle.file2cached.Add(kv.Key, kv.Value.cached);
         }
@@ -260,16 +260,8 @@ public class CompilationExecutor
     return proc_bundle;
   }
 
-  bool ValidateInterimCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimParseResult interim)
+  bool ValidateParseCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimParseResult interim)
   {
-    foreach(var import_file in interim.imports_maybe.file_paths)
-    {
-      if(proc_bundle.file2parsed.TryGetValue(import_file, out var imported_interim) && 
-         imported_interim.cached == null)
-      {
-        return false;
-      }
-    }
     return true;
   }
 

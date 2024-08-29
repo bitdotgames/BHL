@@ -122,33 +122,47 @@ public class Module : INamedResolver
     gvar_vals.Clear();
   }
 
-  public void Setup(Func<string, Module> import2module)
+  [System.Flags]
+  public enum SetupFlags
   {
-    _imported = new Module[compiled.imports.Count];
+    All        = 255,
+    Imports    = 1,
+    Funcs      = 2,
+    Gvars      = 4,
+    Classes    = 8,
+    Namespaces = 16,
+  }
 
-    for(int i = 0; i < compiled.imports.Count; ++i)
+  public void Setup(Func<string, Module> import2module, SetupFlags flags = SetupFlags.All)
+  {
+    if(flags.HasFlag(SetupFlags.Imports))
     {
-      var imported = import2module(compiled.imports[i]);
-      if(imported == null)
-        throw new Exception("Module '" + compiled.imports[i] + "' not found");
+      _imported = new Module[compiled.imports.Count];
 
-      _imported[i] = imported;
+      for(int i = 0; i < compiled.imports.Count; ++i)
+      {
+        var imported = import2module(compiled.imports[i]);
+        if (imported == null)
+          throw new Exception("Module '" + compiled.imports[i] + "' not found");
+
+        _imported[i] = imported;
+      }
+
+      foreach(var imp in compiled.imports)
+        ns.Link(import2module(imp).ns);
     }
 
-    foreach(var imp in compiled.imports)
-      ns.Link(import2module(imp).ns);
-    
     ns.ForAllLocalSymbols(delegate(Symbol s)
       {
-        if(s is FuncSymbolScript fs)
+        if(flags.HasFlag(SetupFlags.Funcs) && s is FuncSymbolScript fs)
           SetupFuncSymbol(fs);
-        else if(s is FuncSymbolVirtual fssv && fssv.GetTopOverride() is FuncSymbolScript vsf)
+        else if(flags.HasFlag(SetupFlags.Funcs) && s is FuncSymbolVirtual fssv && fssv.GetTopOverride() is FuncSymbolScript vsf)
           SetupFuncSymbol(vsf);
-        else if(s is VariableSymbol vs && vs.scope is Namespace)
+        else if(flags.HasFlag(SetupFlags.Gvars) && s is VariableSymbol vs && vs.scope is Namespace)
           gvar_index.index.Add(vs);
-        else if(s is ClassSymbol cs)
+        else if(flags.HasFlag(SetupFlags.Classes) && s is ClassSymbol cs)
           cs.Setup();
-        else if(s is Namespace sns)
+        else if(flags.HasFlag(SetupFlags.Namespaces) && s is Namespace sns)
           sns.module = this;
       }
     );
