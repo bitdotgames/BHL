@@ -1284,13 +1284,10 @@ public class BHL_TestBase
       Console.WriteLine(proc.parsed);
     }
 
-    ANTLR_Processor.ProcessAll(new ProcessedBundle(
-      ts,
-      new Dictionary<string, ANTLR_Processor>() {{"", proc}}, 
-      null,
-      new IncludePath()
-      )
-    );
+    var proc_bundle = new ProjectCompilationStateBundle(ts);
+    proc_bundle.file2proc = new Dictionary<string, ANTLR_Processor>() { { "", proc } };
+    proc_bundle.file2cached = null;
+    ANTLR_Processor.ProcessAll(proc_bundle);
 
     if(show_ast)
       AST_Dumper.Dump(proc.result.ast);

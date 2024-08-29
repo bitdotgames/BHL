@@ -54,86 +54,6 @@ public class ANTLR_Parsed
   }
 }
 
-public class ProcessedBundle
-{
-  public class InterimResult
-  {
-    public ModulePath module_path;
-    public string compiled_file;
-    public FileImports imports_maybe;
-    public ANTLR_Parsed parsed;
-    //if not null, it's a compiled cache result
-    public Module cached;
-  }
-
-  public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
-  public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
-  //NOTE: can be null, contains already cached compile modules.
-  //      an entry present in file2compiled doesn't exist in file2proc
-  public Dictionary<string, Module> file2cached = new Dictionary<string, Module>();
-  public Types types;
-  public IncludePath inc_path;
-
-  public ProcessedBundle(Types types, IncludePath inc_path)
-  {
-    this.types = types;
-    this.inc_path = inc_path;
-  }
-  
-  public ProcessedBundle(
-    Types types,
-    Dictionary<string, ANTLR_Processor> file2proc, 
-    Dictionary<string, Module> file2cached,
-    IncludePath inc_path
-    )
-  {
-    this.types = types;
-    this.file2proc = file2proc;
-    this.file2cached = file2cached;
-    this.inc_path = inc_path;
-  }
-
-  public Module FindModule(string file_path)
-  {
-    //let's check if it's a compiled module and
-    //try to fetch it from the cache first
-    if(file2cached != null && file2cached.TryGetValue(file_path, out var cm))
-      return cm;
-    else if(file2proc.TryGetValue(file_path, out var proc))
-      return proc.module;
-    else
-      return null;
-  }
-  
-  public Module GetModule(string file_path)
-  {
-    var m = FindModule(file_path);
-    if(m == null)
-      throw new Exception("No such module found '"+file_path+"'");
-    return m;
-  }
-
-  public Dictionary<string, Module> GroupModulesByName()
-  {
-    var all = new Dictionary<string, Module>();
-
-    //NOTE: adding globally registered modules
-    foreach(var kv in types.modules)
-      all.Add(kv.Key, kv.Value);
-
-    if(file2cached != null)
-    {
-      foreach(var kv in file2cached)
-        all.Add(kv.Value.name, kv.Value);
-    }
-
-    foreach(var kv in file2proc)
-      all.Add(kv.Value.module.name, kv.Value.module);
-    
-    return all;
-  }
-}
-
 public class AnnotatedParseTree
 {
   public IParseTree tree;
@@ -713,7 +633,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  internal void Phase_LinkImports1(ProcessedBundle proc_bundle)
+  internal void Phase_LinkImports1(ProjectCompilationStateBundle proc_bundle)
   {
     var already_imported = new HashSet<Module>(); 
 
@@ -756,7 +676,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  bool ResolveImportedModule(string raw_import, ProcessedBundle proc_bundle, out Module module)
+  bool ResolveImportedModule(string raw_import, ProjectCompilationStateBundle proc_bundle, out Module module)
   {
     module = null;
 
@@ -776,7 +696,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return module != null;
   }
 
-  internal void Phase_LinkImports2(ProcessedBundle proc_bundle)
+  internal void Phase_LinkImports2(ProjectCompilationStateBundle proc_bundle)
   {
     if(raw_imports_parsed.Count == 0)
       return;
@@ -871,7 +791,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     result = new Result(module, root_ast, errors);
   }
 
-  static public void ProcessAll(ProcessedBundle proc_bundle)
+  static public void ProcessAll(ProjectCompilationStateBundle proc_bundle)
   {
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_Outline());
@@ -909,7 +829,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
   }
 
-  static void ProcessCachedModules(ProcessedBundle proc_bundle)
+  static void ProcessCachedModules(ProjectCompilationStateBundle proc_bundle)
   {
     if(proc_bundle.file2cached == null)
       return;

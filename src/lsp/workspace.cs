@@ -53,11 +53,12 @@ public class Workspace
       }
     }
 
+    var proc_bundle = new ProjectCompilationStateBundle(ts);
+    proc_bundle.file2proc = uri2proc;
     //TODO: use compiled cache if needed
-    ANTLR_Processor.ProcessAll(
-      new ProcessedBundle(
-      ts, uri2proc, null, conf.inc_path)
-      );
+    proc_bundle.file2cached = null;
+    
+    ANTLR_Processor.ProcessAll(proc_bundle);
 
     CheckDiagnostics();
 
@@ -152,9 +153,12 @@ public class Workspace
 
     uri2proc[document.uri.path] = proc;
 
-    ANTLR_Processor.ProcessAll(
-      new ProcessedBundle(ts, uri2proc, null, conf.inc_path)
-      );
+    var proc_bundle = new ProjectCompilationStateBundle(ts);
+    proc_bundle.file2proc = uri2proc;
+    //TODO: use compiled cache if needed
+    proc_bundle.file2cached = null;
+    
+    ANTLR_Processor.ProcessAll(proc_bundle);
 
     CheckDiagnostics();
 

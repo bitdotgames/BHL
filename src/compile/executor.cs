@@ -3,118 +3,10 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics;
-using Newtonsoft.Json;
 
 namespace bhl {
 
 using marshall;
-
-public class ProjectConf
-{
-  const string FILE_NAME = "bhl.proj";
-
-  public static ProjectConf ReadFromFile(string file_path)
-  {
-    var proj = JsonConvert.DeserializeObject<ProjectConf>(File.ReadAllText(file_path));
-    proj.proj_file = file_path;
-    proj.Setup();
-    return proj;
-  }
-
-  public static ProjectConf TryReadFromDir(string dir_path)
-  {
-    string proj_file = dir_path + "/" + FILE_NAME; 
-    if(!File.Exists(proj_file))
-      return null;
-    return ReadFromFile(proj_file);
-  }
-
-  [JsonIgnore]
-  public string proj_file = "";
-
-  public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
-
-  public List<string> inc_dirs = new List<string>();
-  [JsonIgnore]
-  public IncludePath inc_path = new IncludePath();
-
-  public List<string> src_dirs = new List<string>();
-
-  public List<string> defines = new List<string>();
-
-  public string result_file = "";
-  public string tmp_dir = "";
-  public string error_file = "";
-  public bool use_cache = true;
-  public int verbosity = 1;
-  public int max_threads = 1;
-  public bool deterministic = false;
-
-  public List<string> bindings_sources = new List<string>();
-  public string bindings_dll = "";
-
-  public List<string> postproc_sources = new List<string>();
-  public string postproc_dll = "";
-
-  string NormalizePath(string file_path)
-  {
-    if(Path.IsPathRooted(file_path))
-      return BuildUtils.NormalizeFilePath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
-      return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
-    return file_path;
-  }
-
-  public void Setup()
-  {
-    for(int i=0;i<inc_dirs.Count;++i)
-    {
-      inc_dirs[i] = NormalizePath(inc_dirs[i]);
-      inc_path.Add(inc_dirs[i]);
-    }
-
-    for(int i=0;i<src_dirs.Count;++i)
-    {
-      src_dirs[i] = NormalizePath(src_dirs[i]);
-      if(inc_dirs.Count == 0)
-        inc_path.Add(src_dirs[i]);
-    }
-
-    for(int i=0;i<bindings_sources.Count;++i)
-      bindings_sources[i] = NormalizePath(bindings_sources[i]);
-    bindings_dll = NormalizePath(bindings_dll);
-
-    for(int i=0;i<postproc_sources.Count;++i)
-      postproc_sources[i] = NormalizePath(postproc_sources[i]);
-    postproc_dll = NormalizePath(postproc_dll);
-
-    result_file = NormalizePath(result_file);
-    tmp_dir = NormalizePath(tmp_dir);
-    error_file = NormalizePath(error_file);
-  }
-
-  public IUserBindings LoadBindings()
-  {
-    if(string.IsNullOrEmpty(bindings_dll))
-      return new EmptyUserBindings();
-
-    var userbindings_assembly = System.Reflection.Assembly.LoadFrom(bindings_dll);
-    var userbindings_class = userbindings_assembly.GetTypes()[0];
-    var bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-    return bindings;
-  }
-
-  public IFrontPostProcessor LoadPostprocessor()
-  {
-    if(string.IsNullOrEmpty(postproc_dll))
-      return new EmptyPostProcessor();
-
-    var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll);
-    var postproc_class = postproc_assembly.GetTypes()[0];
-    var postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
-    return postproc;
-  }
-}
 
 public class CompileConf
 {
@@ -234,7 +126,7 @@ public class CompilationExecutor
 
     //3 let's create the processed bundle containing already compiled cached modules
     //  and the newly processed ones
-    var proc_bundle = MakeProcessedBundle(conf, parse_workers, errors);
+    var proc_bundle = MakeStateBundle(conf, parse_workers, errors);
     
     sw.Stop();
     conf.logger.Log(1, $"BHL bundle done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
@@ -292,7 +184,7 @@ public class CompilationExecutor
   static ANTLR_Processor ParseIfNeededAndMakeProcessor(
     CompileConf conf, 
     string file, 
-    ProcessedBundle.InterimResult interim)
+    ProjectCompilationStateBundle.InterimResult interim)
   {
      var file_module = new Module(
        conf.ts,
@@ -321,13 +213,13 @@ public class CompilationExecutor
      return proc;
   }
 
-  ProcessedBundle MakeProcessedBundle(
+  ProjectCompilationStateBundle MakeStateBundle(
     CompileConf conf, 
     List<ParseWorker> parse_workers,
     CompileErrors errors
     )
   {
-    var proc_bundle = new ProcessedBundle(conf.ts, conf.proj.inc_path);
+    var proc_bundle = new ProjectCompilationStateBundle(conf.ts);
 
     //1. let's merge all interim results
     foreach(var pw in parse_workers)
@@ -368,7 +260,7 @@ public class CompilationExecutor
     return proc_bundle;
   }
 
-  bool ValidateInterimCache(ProcessedBundle proc_bundle, ProcessedBundle.InterimResult interim)
+  bool ValidateInterimCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimResult interim)
   {
     foreach(var import_file in interim.imports_maybe.file_paths)
     {
@@ -433,7 +325,7 @@ public class CompilationExecutor
   static List<ProcAndCompileWorker> StartAndWaitCompilerWorkers(
     CompileConf conf, 
     List<ParseWorker> parse_workers, 
-    ProcessedBundle proc_bundle
+    ProjectCompilationStateBundle proc_bundle
     )
   {
     var compiler_workers = new List<ProcAndCompileWorker>();
@@ -589,7 +481,7 @@ public class CompilationExecutor
     public Thread th;
     public int start;
     public int count;
-    public Dictionary<string, ProcessedBundle.InterimResult> file2interim = new Dictionary<string, ProcessedBundle.InterimResult>();
+    public Dictionary<string, ProjectCompilationStateBundle.InterimResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimResult>();
     public CompileErrors errors = new CompileErrors();
     public int cache_hits;
     public int cache_miss;
@@ -649,7 +541,7 @@ public class CompilationExecutor
 
         var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, current_file);
 
-        var interim = new ProcessedBundle.InterimResult();
+        var interim = new ProjectCompilationStateBundle.InterimResult();
         interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
         interim.imports_maybe = imports_maybe;
         interim.compiled_file = compiled_file;
@@ -779,7 +671,7 @@ public class CompilationExecutor
     public int count;
     public IFrontPostProcessor postproc;
     public CompileErrors errors = new CompileErrors();
-    public Dictionary<string, ProcessedBundle.InterimResult> file2interim = new Dictionary<string, ProcessedBundle.InterimResult>();
+    public Dictionary<string, ProjectCompilationStateBundle.InterimResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
@@ -948,19 +840,6 @@ public class CompilationExecutor
       }
     );
   }
-}
-
-public interface IFrontPostProcessor
-{
-  //NOTE: returns patched result
-  ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file);
-  void Tally();
-}
-
-public class EmptyPostProcessor : IFrontPostProcessor 
-{
-  public ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file) { return fres; }
-  public void Tally() {}
 }
 
 }

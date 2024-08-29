@@ -72,7 +72,7 @@ public class BenchCmd : ICmd
   {
     Console.WriteLine($"=== BHL bench {file} ===");
      
-     for (int i = 0; i < iterations; ++i)
+     for(int i = 0; i < iterations; ++i)
      {
        Console.WriteLine($"== Iteration: {i + 1} ==");
        var module = new Module(null, "dummy", file);
