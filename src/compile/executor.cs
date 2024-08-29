@@ -184,7 +184,7 @@ public class CompilationExecutor
   static ANTLR_Processor ParseIfNeededAndMakeProcessor(
     CompileConf conf, 
     string file, 
-    ProjectCompilationStateBundle.InterimResult interim)
+    ProjectCompilationStateBundle.InterimParseResult interim)
   {
      var file_module = new Module(
        conf.ts,
@@ -225,11 +225,11 @@ public class CompilationExecutor
     foreach(var pw in parse_workers)
     {
       foreach(var kv in pw.file2interim)
-        proc_bundle.file2interim.Add(kv.Key, kv.Value);
+        proc_bundle.file2parsed.Add(kv.Key, kv.Value);
     }
 
     //2. let's create collections for files to be processed and used from cache
-    foreach(var kv in proc_bundle.file2interim)
+    foreach(var kv in proc_bundle.file2parsed)
     {
       if(kv.Value.cached == null &&
           //NOTE: no need to process a file if it contains parsing errors
@@ -260,11 +260,11 @@ public class CompilationExecutor
     return proc_bundle;
   }
 
-  bool ValidateInterimCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimResult interim)
+  bool ValidateInterimCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimParseResult interim)
   {
     foreach(var import_file in interim.imports_maybe.file_paths)
     {
-      if(proc_bundle.file2interim.TryGetValue(import_file, out var imported_interim) && 
+      if(proc_bundle.file2parsed.TryGetValue(import_file, out var imported_interim) && 
          imported_interim.cached == null)
       {
         return false;
@@ -337,7 +337,7 @@ public class CompilationExecutor
       cw.patch_barrier = patch_barrier;
       cw.conf = pw.conf;
       cw.id = pw.id;
-      cw.file2interim = proc_bundle.file2interim;
+      cw.file2interim = proc_bundle.file2parsed;
       cw.file2proc = proc_bundle.file2proc;
       cw.ts = conf.ts;
       cw.start = pw.start;
@@ -481,7 +481,7 @@ public class CompilationExecutor
     public Thread th;
     public int start;
     public int count;
-    public Dictionary<string, ProjectCompilationStateBundle.InterimResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimResult>();
+    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
     public CompileErrors errors = new CompileErrors();
     public int cache_hits;
     public int cache_miss;
@@ -541,7 +541,7 @@ public class CompilationExecutor
 
         var compiled_file = GetCompiledCacheFile(conf.proj.tmp_dir, current_file);
 
-        var interim = new ProjectCompilationStateBundle.InterimResult();
+        var interim = new ProjectCompilationStateBundle.InterimParseResult();
         interim.module_path = new ModulePath(conf.proj.inc_path.FilePath2ModuleName(current_file), current_file);
         interim.imports_maybe = imports_maybe;
         interim.compiled_file = compiled_file;
@@ -671,7 +671,7 @@ public class CompilationExecutor
     public int count;
     public IFrontPostProcessor postproc;
     public CompileErrors errors = new CompileErrors();
-    public Dictionary<string, ProjectCompilationStateBundle.InterimResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimResult>();
+    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();

@@ -5,22 +5,23 @@ namespace bhl {
     
 public class ProjectCompilationStateBundle
 {
-  public class InterimResult
+  public class InterimParseResult
   {
     public ModulePath module_path;
     public string compiled_file;
     public FileImports imports_maybe;
     public ANTLR_Parsed parsed;
-    //if not null, it's a compiled cache result
+    //NOTE: if not null, it's a compiled module cached result
     public Module cached;
   }
 
   public Types types;
   
-  public Dictionary<string, InterimResult> file2interim = new Dictionary<string, InterimResult>();
+  public Dictionary<string, InterimParseResult> file2parsed = new Dictionary<string, InterimParseResult>();
+  
   public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
   //NOTE: can be null, contains already cached compile modules.
-  //      an entry present in file2compiled doesn't exist in file2proc
+  //      An entry present in file2compiled *doesn't exist* in file2proc
   public Dictionary<string, Module> file2cached = new Dictionary<string, Module>();
 
   public ProjectCompilationStateBundle(Types types)
