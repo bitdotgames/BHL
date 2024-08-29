@@ -91,8 +91,7 @@ public class BenchCmd : ICmd
        sw = Stopwatch.StartNew();
        var preproc = new ANTLR_Preprocessor(
          module,
-         new CompileErrors(),
-         null,
+         CompileErrorsHub.MakeEmpty(), 
          src,
          defines
        );

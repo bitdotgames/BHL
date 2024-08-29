@@ -10,8 +10,7 @@
   <ItemGroup>
    <Compile Include="..\g\*.cs" />
    <Compile Include="..\vm\*.cs" />
-   <Compile Include="..\vm\msgpack\*.cs" />
-   <Compile Include="..\vm\std\*.cs" />
+   <Compile Include="..\vm\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

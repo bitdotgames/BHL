@@ -465,7 +465,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
+      var cl = new ClassSymbolNative(new Origin(), "Foo");
 
       ts.ns.Define(cl);
 
@@ -497,7 +497,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
+      var cl = new ClassSymbolNative(new Origin(), "Foo");
 
       ts.ns.Define(cl);
 
@@ -2808,7 +2808,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) => {
       {
-        var cl = new ClassSymbolNative(new Origin(), "Foo", null, null);
+        var cl = new ClassSymbolNative(new Origin(), "Foo");
         ts.ns.Define(cl);
 
         cl.Define(new FieldSymbol(new Origin(), "sub", ts.T("Bar"),
@@ -4772,7 +4772,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) =>
     {
-      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null, null);
+      var cl = new ClassSymbolNative(new Origin(), "NativeFoo");
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "static_bar", FieldAttrib.Static, ts.T("int"), 
