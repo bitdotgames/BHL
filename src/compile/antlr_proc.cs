@@ -803,7 +803,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       proc_bundle, 
       Module.SetupFlags.Namespaces | 
       Module.SetupFlags.Imports | 
-      Module.SetupFlags.Funcs |
       Module.SetupFlags.Gvars
       );
 
@@ -824,7 +823,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     SetupCachedModules(
       name2module, 
       proc_bundle, 
-      Module.SetupFlags.Classes);
+      Module.SetupFlags.Funcs |
+      Module.SetupFlags.Classes
+      );
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
