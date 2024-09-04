@@ -3623,6 +3623,59 @@ public class TestClass : BHL_TestBase
       CommonChecks(vm);
     }
   }
+  
+  [IsTested()]
+  public void TestImportedClassStaticMethodsSupportFromCachedModule()
+  {
+    string bhl_1 = @"
+    namespace Unit.Traits {
+      class Trait {
+        
+        func int DummyGarbage0() {
+          return 42
+        }
+
+        static func int GetB() {
+          return 10
+        }
+      }
+    }
+  ";
+
+  string bhl_2 = @"
+    import ""bhl_1""  
+
+    func int test()
+    {
+      return Unit.Traits.Trait.GetB() 
+    }
+    ";
+
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        { "bhl_2.bhl", bhl_2 },
+        { "bhl_1.bhl", bhl_1 },
+      });
+    
+    {
+      var vm = MakeVM(files);
+      vm.LoadModule("bhl_2");
+      AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+      CommonChecks(vm);
+    }
+    
+    {
+      System.IO.File.SetLastWriteTimeUtc(files[0], DateTime.UtcNow.AddSeconds(1));
+      var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
+      var exec = new CompilationExecutor();
+      var vm = MakeVM(conf, exec: exec);
+      vm.LoadModule("bhl_2");
+      AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+      AssertEqual(1, exec.cache_hits);
+      AssertEqual(1, exec.cache_miss);
+      CommonChecks(vm);
+    }
+  }
 
   [IsTested()]
   public void TestImportedClassVirtualMethodsSupportFromRootNamespace()
