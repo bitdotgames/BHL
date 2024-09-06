@@ -280,6 +280,247 @@ public partial class VM : INamedResolver
       vm.Stop(this);
     }
   }
+  
+  int fibers_ids = 0;
+  List<Fiber> fibers = new List<Fiber>();
+  public Fiber last_fiber = null;
+
+  public delegate void OnNewFiberCb(Fiber fb);
+  public event OnNewFiberCb OnNewFiber;
+  
+  public Fiber Start(string func, params Val[] args)
+  {
+    return Start(func, 0, args);
+  }
+
+  public Fiber Start(string func, FuncArgsInfo args_info, params Val[] args)
+  {
+    return Start(func, args_info.bits, args);
+  }
+
+  public Fiber Start(string func, uint cargs_bits, params Val[] args)
+  {
+    return Start(func, cargs_bits, new StackList<Val>(args));
+  }
+
+  public Fiber Start(string func, StackList<Val> args)
+  {
+    return Start(func, 0, args);
+  }
+
+  public Fiber Start(string func, FuncArgsInfo args_info, StackList<Val> args)
+  {
+    return Start(func, args_info.bits, args);
+  }
+
+  public Fiber Start(string func, uint cargs_bits, StackList<Val> args)
+  {
+    if(!TryFindFuncAddr(func, out var addr))
+      return null;
+
+    return Start(addr, cargs_bits, args);
+  }
+
+  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
+  {
+    return Start(addr, cargs_bits, new StackList<Val>(args));
+  }
+
+  public Fiber Start(FuncAddr addr, StackList<Val> args)
+  {
+    return Start(addr, 0, args);
+  }
+
+  public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
+  {
+    var fb = Fiber.New(this);
+    Register(fb);
+
+    var frame = Frame.New(this);
+    frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, addr.ip);
+
+    for (int i = args.Count; i-- > 0;)
+    {
+      var arg = args[i];
+      frame._stack.Push(arg);
+    }
+    //cargs bits
+    frame._stack.Push(Val.NewInt(this, cargs_bits));
+
+    Attach(fb, frame);
+
+    return fb;
+  }
+  
+  //NOTE: adding special bytecode which makes the fake Frame to exit
+  //      after executing the coroutine
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
+
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
+  {
+    var fb = Fiber.New(this);
+    Register(fb, curr_frame.fb);
+
+    //checking native call
+    if(ptr.native != null)
+    {
+      //let's create a fake frame for a native call
+      var frame = Frame.New(this);
+      frame.Init(fb, curr_frame, curr_stack, null, null, null, RETURN_BYTES, 0);
+      Attach(fb, frame);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(fb.exec.coroutine != null)
+        --fb.exec.ip;
+    }
+    else
+    {
+      var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
+      Attach(fb, frame);
+      //cargs bits
+      frame._stack.Push(Val.NewNum(this, 0));
+    }
+
+    return fb;
+  }
+
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
+  {
+    return Start(ptr, curr_frame, curr_stack, new StackList<Val>(args));
+  }
+
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
+  {
+    var fb = Fiber.New(this);
+    Register(fb, curr_frame.fb);
+
+    //checking native call
+    if(ptr.native != null)
+    {
+      //let's create a fake frame for a native call
+      var frame = Frame.New(this);
+      frame.Init(fb, curr_frame, curr_stack, null, null, null, RETURN_BYTES, 0);
+
+      for(int i=args.Count;i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+      //cargs bits
+      frame._stack.Push(Val.NewInt(this, args.Count));
+
+      Attach(fb, frame);
+      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(fb.exec.coroutine != null)
+        --fb.exec.ip;
+    }
+    else
+    {
+      var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
+
+      for(int i=args.Count;i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+
+      Attach(fb, frame);
+      //cargs bits
+      frame._stack.Push(Val.NewNum(this, args.Count));
+    }
+
+    return fb;
+  }
+
+  public void Detach(Fiber fb)
+  {
+    fibers.Remove(fb);
+  }
+
+  void Attach(Fiber fb, Frame frm)
+  {
+    frm.fb = fb;
+    fb.exec.ip = frm.start_ip;
+    fb.exec.frames.Push(frm);
+    fb.exec.regions.Push(new Region(frm, frm));
+    fb.exec.stack = frm._stack;
+  }
+
+  void Register(Fiber fb, Fiber parent = null)
+  {
+    fb.id = ++fibers_ids;
+    fibers.Add(fb);
+    parent?.AddChild(fb);
+
+    OnNewFiber?.Invoke(fb);
+  }
+
+  public void Stop(Fiber fb)
+  {
+    try
+    {
+      _Stop(fb);
+    }
+    catch(Exception e)
+    {
+      var trace = new List<VM.TraceItem>();
+      try
+      {
+        fb.GetStackTrace(trace);
+      }
+      catch(Exception)
+      {}
+      throw new Error(trace, e);
+    }
+  }
+
+  public void StopChildren(Fiber fb)
+  {
+    foreach(var child_ref in fb.children)
+    {
+      var child = child_ref.Get();
+      if(child != null)
+      {
+        StopChildren(child);
+        _Stop(child);
+      }
+    }
+  }
+
+  internal void _Stop(Fiber fb)
+  {
+    if(fb.IsStopped())
+      return;
+
+    fb.ExitScopes();
+
+    fb.Release();
+    //NOTE: we assing Fiber ip to a special value which is just one value after STOP_IP
+    //      this way Fiber breaks its current Frame execution loop.
+    fb.exec.ip = STOP_IP + 1;
+  }
+
+  public void Stop(int fid)
+  {
+    var fb = FindFiber(fid);
+    if(fb == null)
+      return;
+    Stop(fb);
+  }
+
+  public Fiber FindFiber(int fid)
+  {
+    for(int i=0;i<fibers.Count;++i)
+      if(fibers[i].id == fid)
+        return fibers[i];
+    return null;
+  }
+
 }
 
 }
