@@ -6,6 +6,24 @@ using bhl;
 public class TestFiber : BHL_TestBase
 {
   [IsTested()]
+  public void TestFuncAddr()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+    AssertEqual("test", fb.FuncAddr.symbol.name);
+    AssertFalse(vm.Tick());
+    AssertEqual(fb.result.PopRelease().num, 10);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
   public void TestResultMustBeReadyOnceFinished()
   {
     string bhl = @"
@@ -670,6 +688,10 @@ public class TestFiber : BHL_TestBase
 
       var cs = ScriptMgr.instance.active;
       AssertEqual(1, cs.Count); 
+      
+      //let's check func addresses, however since it's a lambda, there's no
+      //actual func symbol and we simply check if instruction pointer is valid
+      AssertTrue(cs[0].FuncAddr.ip > 0);
     }
 
     {
@@ -823,6 +845,62 @@ public class TestFiber : BHL_TestBase
     AssertEqual("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
+    AssertTrue(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestStartCoroFuncPtrManyTimesInScriptMgr()
+  {
+    string bhl = @"
+    coro func say_here()
+    {
+      yield()
+      trace(""HERE;"")
+    }
+
+    func test() 
+    {
+      StartScriptInMgr(
+        script: say_here,
+        spawns : 2
+      )
+    }
+    ";
+
+    var log = new StringBuilder();
+
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+
+    {
+      AssertFalse(vm.Tick());
+      ScriptMgr.instance.Tick();
+
+      var cs = ScriptMgr.instance.active;
+      AssertEqual(2, cs.Count);
+      AssertEqual("say_here", cs[0].FuncAddr.symbol.name);
+      AssertEqual("say_here", cs[1].FuncAddr.symbol.name);
+    }
+
+    {
+      AssertFalse(vm.Tick());
+      ScriptMgr.instance.Tick();
+      
+      AssertEqual("HERE;HERE;", log.ToString());
+      
+      var cs = ScriptMgr.instance.active;
+      AssertEqual(0, cs.Count);
+    }
+
     AssertTrue(!ScriptMgr.instance.Busy);
 
     vm.Stop();

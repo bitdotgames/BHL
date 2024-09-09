@@ -356,10 +356,6 @@ public partial class VM : INamedResolver
     return fb;
   }
   
-  //NOTE: adding special bytecode which makes the fake Frame to exit
-  //      after executing the coroutine
-  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
-
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>());
@@ -369,6 +365,10 @@ public partial class VM : INamedResolver
   {
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>(args));
   }
+
+  //NOTE: adding special bytecode which makes the fake Frame to exit
+  //      after executing the coroutine
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
   {
