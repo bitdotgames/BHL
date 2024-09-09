@@ -7797,6 +7797,28 @@ public class TestVM : BHL_TestBase
     }
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestFindFuncAddr()
+  {
+    string bhl = @"
+    func test()
+    {
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    {
+      AssertTrue(vm.TryFindFuncAddr("test", out var addr));
+      AssertEqual("test", addr.symbol.name);
+    }
+    {
+      AssertTrue(vm.TryFindFuncAddr("start", out var addr));
+      AssertEqual("start", addr.symbol.name);
+    }
+
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestDetachFiber()

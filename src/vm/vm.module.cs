@@ -5,13 +5,13 @@ namespace bhl {
     
 public partial class VM : INamedResolver
 {
-  //TODO: can we make Module a key instead of a string?
-  Dictionary<string, Module> compiled_mods = new Dictionary<string, Module>();
+  //NOTE: key is a Module's name
+  Dictionary<string, Module> registered_modules = new Dictionary<string, Module>();
 
   internal class LoadingModule
   {
     internal string name;
-    internal Module module;
+    internal Module loaded;
   }
   List<LoadingModule> loading_modules = new List<LoadingModule>();
   
@@ -47,7 +47,7 @@ public partial class VM : INamedResolver
 
     //NOTE: registering modules in reverse order
     for(int i=loading_modules.Count;i-- > 0;)
-      FinishRegistration(loading_modules[i].module);
+      FinishRegistration(loading_modules[i].loaded);
     loading_modules.Clear();
 
     return true;
@@ -66,7 +66,7 @@ public partial class VM : INamedResolver
     if(rm != null)
       return rm;
 
-    if(compiled_mods.TryGetValue(module_name, out var cm))
+    if(registered_modules.TryGetValue(module_name, out var cm))
       return cm;
     return null;
   }
@@ -99,7 +99,7 @@ public partial class VM : INamedResolver
     {
       foreach(var imported in loaded.compiled.imports)
         TryAddToLoadingList(imported);
-      lm.module = loaded;
+      lm.loaded = loaded;
 
       BeginRegistration(loaded);
     }
@@ -112,7 +112,7 @@ public partial class VM : INamedResolver
     //NOTE: for simplicity we add it to the modules at once,
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
-    compiled_mods[module.name] = module;
+    registered_modules[module.name] = module;
 
     module.InitGlobalVars(this);
   }
@@ -129,18 +129,18 @@ public partial class VM : INamedResolver
 
   public void UnloadModule(string module_name)
   {
-    if(!compiled_mods.TryGetValue(module_name, out var cm))
+    if(!registered_modules.TryGetValue(module_name, out var cm))
       return;
 
     cm.ClearGlobalVars();
 
-    compiled_mods.Remove(module_name);
+    registered_modules.Remove(module_name);
   }
 
   public void UnloadModules()
   {
     var keys = new List<string>();
-    foreach(var kv in compiled_mods)
+    foreach(var kv in registered_modules)
       keys.Add(kv.Key);
     foreach(string key in keys)
       UnloadModule(key);
@@ -160,7 +160,7 @@ public partial class VM : INamedResolver
 
     //TODO: should we actually check if loaded module matches
     //      the module where the found symbol actually resides?
-    var cm = compiled_mods[((Namespace)symb.scope).module.name];
+    var cm = registered_modules[((Namespace)symb.scope).module.name];
 
     ms.module = cm;
     ms.symbol = symb;

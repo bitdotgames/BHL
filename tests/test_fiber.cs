@@ -691,7 +691,7 @@ public class TestFiber : BHL_TestBase
       
       //let's check func addresses, however since it's a lambda, there's no
       //actual func symbol and we simply check if instruction pointer is valid
-      AssertTrue(cs[0].FuncAddr.ip > 0);
+      AssertTrue(cs[0].FuncAddr.ip > -1);
     }
 
     {

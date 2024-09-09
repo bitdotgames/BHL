@@ -334,6 +334,10 @@ public partial class VM : INamedResolver
     return Start(addr, 0, args);
   }
 
+  //NOTE: adding special bytecode which makes the fake Frame to exit
+  //      after executing the coroutine
+  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
+
   public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {
     var fb = Fiber.New(this);
@@ -341,17 +345,38 @@ public partial class VM : INamedResolver
     Register(fb);
 
     var frame = Frame.New(this);
-    frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, addr.ip);
-
-    for (int i = args.Count; i-- > 0;)
+      
+    //checking native call
+    if(addr.fsn != null)
     {
-      var arg = args[i];
-      frame._stack.Push(arg);
-    }
-    //cargs bits
-    frame._stack.Push(Val.NewInt(this, cargs_bits));
+      frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, null, null, RETURN_BYTES, 0);
 
-    Attach(fb, frame);
+      for(int i=args.Count;i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+      //cargs bits
+      frame._stack.Push(Val.NewInt(this, args.Count));
+
+      Attach(fb, frame);
+      fb.exec.coroutine = addr.fsn.cb(fb.frame0, fb.frame0._stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
+    }
+    else
+    {
+      frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, addr.ip);
+
+      for(int i = args.Count; i-- > 0;)
+      {
+        var arg = args[i];
+        frame._stack.Push(arg);
+      }
+
+      //cargs bits
+      frame._stack.Push(Val.NewInt(this, cargs_bits));
+
+      Attach(fb, frame);
+    }
 
     return fb;
   }
@@ -365,10 +390,6 @@ public partial class VM : INamedResolver
   {
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>(args));
   }
-
-  //NOTE: adding special bytecode which makes the fake Frame to exit
-  //      after executing the coroutine
-  static byte[] RETURN_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
   {

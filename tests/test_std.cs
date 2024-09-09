@@ -1,8 +1,5 @@
 using System;           
 using System.IO;
-using System.Collections.Generic;
-using System.Text;
-using bhl;
 
 public class TestStd : BHL_TestBase
 {

@@ -1276,8 +1276,9 @@ public class TestNamespace : BHL_TestBase
   {
     var ts_fn = new Action<Types>((ts) => {
       {
-        var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("void"),
+        var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
             delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+              stack.Push(Val.NewInt(frm.vm, 1)); 
               return null;
             }
         );
@@ -1302,7 +1303,7 @@ public class TestNamespace : BHL_TestBase
 
     var cm = vm.FindModule("test");
     AssertEqual(cm.ns.Resolve("bar").name, "bar");
-    Execute(vm, "bar.wow");
+    AssertEqual(1, Execute(vm, "bar.wow").result.PopRelease().num);
     CommonChecks(vm);
   }
 

@@ -37,6 +37,7 @@ public partial class VM : INamedResolver
   public struct FuncAddr
   {
     public Module module;
+    
     public FuncSymbolScript fs;
     public int ip;
 
@@ -120,16 +121,20 @@ public partial class VM : INamedResolver
   {
     addr = default(FuncAddr);
 
-    var fs = ResolveNamedByPath(path) as FuncSymbolScript;
+    var fs = ResolveNamedByPath(path) as FuncSymbol;
     if(fs == null)
       return false;
-
-    var cm = compiled_mods[((Namespace)fs.scope).module.name];
-
+    
+    var fss = fs as FuncSymbolScript;
+    registered_modules.TryGetValue(((Namespace)fs.scope).module.name, out var module);
+    
     addr = new FuncAddr() {
-      module = cm,
-      fs = fs,
-      ip = fs.ip_addr
+      module = module,
+      
+      fs = fss,
+      ip = fss?.ip_addr ?? -1,
+      
+      fsn = fss != null ? null : fs as FuncSymbolNative,
     };
 
     return true;
@@ -151,7 +156,7 @@ public partial class VM : INamedResolver
     if(vs == null)
       return false;
 
-    var cm = compiled_mods[((Namespace)vs.scope).module.name];
+    var cm = registered_modules[((Namespace)vs.scope).module.name];
 
     addr = new VarAddr() {
       module = cm,
@@ -164,7 +169,7 @@ public partial class VM : INamedResolver
 
   public INamed ResolveNamedByPath(string path)
   {
-    foreach(var kv in compiled_mods)
+    foreach(var kv in registered_modules)
     {
       var s = kv.Value.ns.ResolveSymbolByPath(path);
       if(s != null)
