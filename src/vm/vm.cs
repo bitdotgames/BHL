@@ -34,12 +34,35 @@ public partial class VM : INamedResolver
     }
   }
 
-  //TODO: add support for native funcs?
   public struct FuncAddr
   {
     public Module module;
     public FuncSymbolScript fs;
     public int ip;
+
+    public FuncSymbolNative fsn;
+
+    FuncSymbol _symbol;
+    public FuncSymbol symbol
+    {
+      get {
+        if(_symbol == null)
+          _symbol = FindSymbol();
+        return _symbol;
+      }
+    } 
+    
+    public FuncSymbol FindSymbol()
+    {
+      if(fs != null)
+        return fs;
+      else if(fsn != null)
+        return fsn;
+      else if(module != null)
+        return module.TryMapIp2Func(ip);
+
+      return null;
+    }
   }
 
   public struct VarAddr
@@ -148,18 +171,6 @@ public partial class VM : INamedResolver
         return s;
     }
     return null;
-  }
-
-  static FuncSymbolScript TryMapIp2Func(Module m, int ip)
-  {
-    FuncSymbolScript fsymb = null;
-    m.ns.ForAllLocalSymbols(delegate(Symbol s) {
-      if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
-        fsymb = ftmp;
-      else if(s is FuncSymbolVirtual fsv && fsv.GetTopOverride() is FuncSymbolScript fssv && fssv.ip_addr == ip)
-        fsymb = fssv;
-    });
-    return fsymb;
   }
 
   public void Stop()

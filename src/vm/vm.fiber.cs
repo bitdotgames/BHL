@@ -37,6 +37,9 @@ public partial class VM : INamedResolver
   {
     public VM vm;
 
+    internal FuncAddr func_addr;
+    public FuncAddr FuncAddr => func_addr;
+    
     internal FiberRef parent;
     public FiberRef Parent => parent;
 
@@ -220,7 +223,7 @@ public partial class VM : INamedResolver
 
         if(frm.module != null)
         {
-          var fsymb = TryMapIp2Func(frm.module, calls[i].start_ip);
+          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
           //NOTE: if symbol is missing it's a lambda
           if(fsymb == null) 
             item.file = frm.module.name + ".bhl";
@@ -334,6 +337,7 @@ public partial class VM : INamedResolver
   public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {
     var fb = Fiber.New(this);
+    fb.func_addr = addr;
     Register(fb);
 
     var frame = Frame.New(this);
@@ -358,32 +362,7 @@ public partial class VM : INamedResolver
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
-    var fb = Fiber.New(this);
-    Register(fb, curr_frame.fb);
-
-    //checking native call
-    if(ptr.native != null)
-    {
-      //let's create a fake frame for a native call
-      var frame = Frame.New(this);
-      frame.Init(fb, curr_frame, curr_stack, null, null, null, RETURN_BYTES, 0);
-      Attach(fb, frame);
-      fb.exec.coroutine = ptr.native.cb(curr_frame, curr_stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
-      //NOTE: before executing a coroutine VM will increment ip optimistically
-      //      but we need it to remain at the same position so that it points at
-      //      the fake return opcode
-      if(fb.exec.coroutine != null)
-        --fb.exec.ip;
-    }
-    else
-    {
-      var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
-      Attach(fb, frame);
-      //cargs bits
-      frame._stack.Push(Val.NewNum(this, 0));
-    }
-
-    return fb;
+    return Start(ptr, curr_frame, curr_stack, new StackList<Val>());
   }
 
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
@@ -394,6 +373,7 @@ public partial class VM : INamedResolver
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
   {
     var fb = Fiber.New(this);
+    fb.func_addr = ptr.func_addr;
     Register(fb, curr_frame.fb);
 
     //checking native call
