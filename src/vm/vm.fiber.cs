@@ -354,12 +354,14 @@ public partial class VM : INamedResolver
       for(int i=args.Count;i-- > 0;)
       {
         var arg = args[i];
-        frame._stack.Push(arg);
+        //NOTE: pushing onto frame0 stack
+        fb.frame0._stack.Push(arg);
       }
       //cargs bits
       frame._stack.Push(Val.NewInt(this, args.Count));
 
       Attach(fb, frame);
+      
       fb.exec.coroutine = addr.fsn.cb(fb.frame0, fb.frame0._stack, new FuncArgsInfo(0)/*cargs bits*/, ref fb.status);
     }
     else

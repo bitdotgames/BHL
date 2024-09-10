@@ -106,6 +106,33 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
+  
+  [IsTested()]
+  public void TestExecuteNativeFunc()
+  {
+    string bhl = @"
+    func dummy() 
+    {}
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var n = stack.PopRelease().num;
+            stack.Push(Val.NewInt(frm.vm, n * 2));
+            return null;
+          }, 
+          new FuncArgSymbol("n", Types.Int)
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
+    AssertEqual(num, 20);
+    CommonChecks(vm);
+  }
 
   [IsTested()]
   public void TestStartNativeFunc()
