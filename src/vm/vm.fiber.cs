@@ -337,7 +337,7 @@ public partial class VM : INamedResolver
   //NOTE: adding special bytecode which makes the fake Frame to exit
   //      after executing the coroutine
   static byte[] EXIT_NATIVE_FIBER_BYTES = 
-    new byte[] {(byte)Opcodes.ReturnAllVals, (byte)Opcodes.ExitFrame};
+    new byte[] {(byte)Opcodes.PopReturnVals, (byte)Opcodes.ExitFrame};
 
   public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {

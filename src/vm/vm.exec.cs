@@ -399,7 +399,7 @@ public partial class VM : INamedResolver
         exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
       }
       break;
-      case Opcodes.ReturnAllVals:
+      case Opcodes.PopReturnVals:
       {
         for(int i=0;i<exec.stack.Count;++i)
           curr_frame.origin_stack.Push(exec.stack[i]);
