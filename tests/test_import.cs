@@ -51,20 +51,20 @@ public class TestImport : BHL_TestBase
     AssertEqual(loader.Load("bhl1", ts), 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ , 1 /*exit offset*/})
       .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 17 /*exit offset*/ })
       .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 3, 1 })
+      .EmitThen(Opcodes.Call, new int[] { 0, 6, 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
     );
     AssertEqual(loader.Load("bhl2", ts), 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/ })
       .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 17 /*exit offset*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Call, new int[] { 0, 0, 1 })
@@ -74,12 +74,12 @@ public class TestImport : BHL_TestBase
     AssertEqual(loader.Load("bhl3", ts), 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 7 /*exit offset*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/ })
       .EmitThen(Opcodes.ExitFrame)
     );
 

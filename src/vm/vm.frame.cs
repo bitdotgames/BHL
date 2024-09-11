@@ -24,6 +24,7 @@ public partial class VM : INamedResolver
     public ValStack locals = new ValStack(MAX_LOCALS);
     public ValStack _stack = new ValStack(MAX_STACK);
     public int start_ip;
+    public int exit_ip;
     public int return_ip;
     public Frame origin;
     public ValStack origin_stack;

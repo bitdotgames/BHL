@@ -20,7 +20,7 @@ public class TestAny : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 16 /*exit offset*/})
       .EmitThen(Opcodes.Constant, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })

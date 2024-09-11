@@ -15,8 +15,6 @@ public partial class VM : INamedResolver
   //      a 'STOP_IP' value won't overflow int.MaxValue
   public const int STOP_IP = int.MaxValue - 2;
 
-  public const int EXIT_OFFSET = 2;
-  
   public delegate void ClassCreator(VM.Frame frm, ref Val res, IType type);
   
   public struct Region
@@ -378,10 +376,7 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.Return:
       {
-        //NOTE: we jump to ExitFrame opcode of the last function in the module
-        //TODO: probably we should jump to our 'local' frame ExitCode so that
-        //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
-        exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
+        exec.ip = curr_frame.exit_ip - 1;
       }
       break;
       case Opcodes.ReturnVal:
@@ -393,10 +388,7 @@ public partial class VM : INamedResolver
           curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
-        //NOTE: we jump to ExitFrame opcode of the last function in the module
-        //TODO: probably we should jump to our 'local' frame ExitCode so that
-        //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
-        exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
+        exec.ip = curr_frame.exit_ip - 1;
       }
       break;
       case Opcodes.PopReturnVals:
@@ -645,6 +637,8 @@ public partial class VM : INamedResolver
       case Opcodes.InitFrame:
       {
         int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int frame_end_offset = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        curr_frame.exit_ip = exec.ip + frame_end_offset;
         var args_bits = exec.stack.Pop();
         curr_frame.locals.Resize(local_vars_num);
         //NOTE: we need to store arg info bits locally so that
@@ -1102,10 +1096,7 @@ public partial class VM : INamedResolver
       CoroutinePool.Del(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
-      //NOTE: we jump to ExitFrame opcode of the last function in the module
-      //TODO: probably we should jump to our 'local' frame ExitCode so that
-      //      we don't have to fetch a way too far slot in the memory (it might affect performance?)
-      exec.ip = curr_frame.bytecode.Length - EXIT_OFFSET;
+      exec.ip = curr_frame.exit_ip - 1;
       exec.regions.Pop();
 
       return status;
