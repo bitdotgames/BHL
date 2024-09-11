@@ -391,13 +391,6 @@ public partial class VM : INamedResolver
         exec.ip = curr_frame.exit_ip - 1;
       }
       break;
-      case Opcodes.PopReturnVals:
-      {
-        for(int i=0;i<exec.stack.Count;++i)
-          curr_frame.origin_stack.Push(exec.stack[i]);
-        exec.stack.head = 0;
-      }
-      break;
       case Opcodes.GetFuncLocalPtr:
       {
         int func_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
