@@ -108,7 +108,7 @@ public class TestFiber : BHL_TestBase
   }
   
   [IsTested()]
-  public void TestExecuteNativeFunc()
+  public void TestDirectExecuteNativeFunc()
   {
     string bhl = @"
     func dummy() 
@@ -131,6 +131,75 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
     AssertEqual(num, 20);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestDirectExecuteNativeFuncWithDefaultArgsPassed()
+  {
+    string bhl = @"
+    func dummy() 
+    {}
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
+          def_args_num: 1,
+          cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
+            stack.Push(Val.NewInt(frm.vm, n * 2));
+            return null;
+          }, 
+          args: new FuncArgSymbol("n", Types.Int)
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var num = Execute(vm, "mult2",Val.NewInt(vm, 10)).result.PopRelease().num;
+    AssertEqual(num, 20);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestDirectExecuteNativeFuncWithDefaultArgsNotPassed()
+  {
+    string bhl = @"
+    func dummy() 
+    {}
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
+          def_args_num: 1,
+          cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
+            stack.Push(Val.NewInt(frm.vm, n * 2));
+            return null;
+          }, 
+          args: new FuncArgSymbol("n", Types.Int)
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var num = Execute(vm, "mult2").result.PopRelease().num;
+    AssertEqual(num, 2);
+    CommonChecks(vm);
+  }
+  
+  [IsTested()]
+  public void TestDirectExecuteNativeCoro()
+  {
+    string bhl = @"
+    func dummy() 
+    {}
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "wait", Val.NewInt(vm, 0));
     CommonChecks(vm);
   }
 

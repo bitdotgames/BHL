@@ -834,7 +834,7 @@ public class BHL_TestBase
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
-    return Execute(vm, fn_name, 0, args);
+    return Execute(vm, fn_name, new FuncArgsInfo(args?.Length ?? 0), args);
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params Val[] args)

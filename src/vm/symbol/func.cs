@@ -55,6 +55,20 @@ public struct FuncArgsInfo
   {
     this.bits = bits;
   }
+  
+  public FuncArgsInfo(int num_args)
+  {
+    bits = 0;
+    
+    if(!SetArgsNum(num_args))
+      throw new Exception("Not supported amount of arguments: " + num_args);
+  }
+  
+  public static uint GetBits(int num_args)
+  {
+    var info = new FuncArgsInfo(num_args);
+    return info.bits;
+  }
 
   public int CountArgs()
   {
@@ -82,7 +96,7 @@ public struct FuncArgsInfo
 
   public bool SetArgsNum(int num)
   {
-    if(num > MAX_ARGS)
+    if(num < 0 || num > MAX_ARGS)
       return false;
     bits = (bits & ~ARGS_NUM_MASK) | (uint)num;
     return true;

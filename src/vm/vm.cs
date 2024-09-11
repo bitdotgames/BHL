@@ -43,6 +43,13 @@ public partial class VM : INamedResolver
 
     public FuncSymbolNative fsn;
 
+    public bool is_native
+    {
+      get {
+        return fsn != null;
+      }
+    }
+
     FuncSymbol _symbol;
     public FuncSymbol symbol
     {

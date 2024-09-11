@@ -1,3 +1,5 @@
+using System;
+
 namespace bhl {
 
 public static class Prelude
@@ -115,9 +117,11 @@ class CoroutineWait : Coroutine
 
   public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
-
     if(end_stamp == -1)
-      end_stamp = System.Environment.TickCount + (int)exec.stack.PopRelease()._num; 
+    {
+      int ms = (int)exec.stack.PopRelease()._num;
+      end_stamp = System.Environment.TickCount + ms;
+    }
 
     if(end_stamp > System.Environment.TickCount)
       status = BHS.RUNNING;
