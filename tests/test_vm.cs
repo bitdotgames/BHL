@@ -18,8 +18,8 @@ public class TestVM : BHL_TestBase
       var expected = 
         new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/})
-        .EmitThen(Opcodes.ExitFrame)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -39,8 +39,8 @@ public class TestVM : BHL_TestBase
       var expected = 
         new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/})
-        .EmitThen(Opcodes.ExitFrame)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -61,8 +61,8 @@ public class TestVM : BHL_TestBase
       var expected = 
         new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/})
-        .EmitThen(Opcodes.ExitFrame)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -83,8 +83,8 @@ public class TestVM : BHL_TestBase
       var expected = 
         new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 1 /*exit offset*/})
-        .EmitThen(Opcodes.ExitFrame)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -110,10 +110,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -171,10 +171,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -202,10 +202,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -233,11 +233,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 8 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.UnaryNot)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -265,11 +265,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 8 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
       .EmitThen(Opcodes.UnaryNot)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -297,10 +297,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hello") })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -560,11 +560,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 10 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -591,12 +591,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 11 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -647,11 +647,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 11 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 300) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 2 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -815,16 +815,16 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 11 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 2 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/, 13 /*exit offset*/})
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.SetVar, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1354,13 +1354,13 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 15 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
       .EmitThen(Opcodes.JumpPeekZ, new int[] { 5 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.And)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1388,13 +1388,13 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 15 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, false) })
       .EmitThen(Opcodes.JumpPeekNZ, new int[] { 5 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.Or)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1440,12 +1440,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.BitAnd)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1473,12 +1473,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
       .EmitThen(Opcodes.BitOr)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1506,12 +1506,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .EmitThen(Opcodes.Mod)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1539,12 +1539,12 @@ public class TestVM : BHL_TestBase
     var expected =
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2.7) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .EmitThen(Opcodes.Mod)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1680,14 +1680,14 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 14 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1826,11 +1826,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 10 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1859,11 +1859,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 10 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1892,11 +1892,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 10 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("string"))})
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1925,11 +1925,11 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 10 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("bool")) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1979,13 +1979,13 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.UnaryNeg)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2013,12 +2013,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2046,12 +2046,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.Sub)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2371,12 +2371,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2614,14 +2614,14 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 17 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 30) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Mul)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2866,14 +2866,14 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 11 /*exit offset*/ })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -3029,10 +3029,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 13 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
       .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
 
@@ -3119,12 +3119,12 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 /*args info*/, 19 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 /*args info*/})
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, Types.Int) })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.CallNative, new int[] { 1, 0, 1 })
       .EmitThen(Opcodes.Pop)
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
 
@@ -3290,7 +3290,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 29 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -3301,7 +3301,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -3362,7 +3362,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 38 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
@@ -3376,7 +3376,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -3423,7 +3423,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 81 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -3452,7 +3452,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -3901,7 +3901,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 33 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__while__//
@@ -3917,7 +3917,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -3996,7 +3996,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 46 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__while__//
@@ -4017,7 +4017,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -4113,7 +4113,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 33 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__while__//
@@ -4129,7 +4129,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -4207,7 +4207,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 46 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__while__//
@@ -4228,7 +4228,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -4404,7 +4404,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1/*args info*/, 46 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1/*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__for__//
@@ -4426,7 +4426,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -4840,7 +4840,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/, 87 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 3 + 2/*hidden vars*/ + 1/*cargs*/})
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) }) 
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -4873,7 +4873,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Jump, new int[] { -30 })
       .EmitThen(Opcodes.GetVar, new int[] { 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
     ;
 
     AssertEqual(c, expected);
@@ -5392,7 +5392,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/, 49 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__for__//
@@ -5415,7 +5415,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -5474,7 +5474,7 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/, 49 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       //__for__//
@@ -5497,7 +5497,7 @@ public class TestVM : BHL_TestBase
       //__//
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -5684,23 +5684,23 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/ })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 31 /*exit offset*/ })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.JumpZ, new int[] { 13 })
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Jump, new int[] { 10 })
-      .EmitThen(Opcodes.CallLocal, new int[] { 12, 0 })
+      .EmitThen(Opcodes.CallLocal, new int[] { 9, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -5741,15 +5741,15 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/ })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 36 /*exit offset*/ })
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.GT)
@@ -5757,9 +5757,9 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
       .EmitThen(Opcodes.Jump, new int[] { 10 })
-      .EmitThen(Opcodes.CallLocal, new int[] { 12, 0 })
+      .EmitThen(Opcodes.CallLocal, new int[] { 9, 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -6535,7 +6535,7 @@ public class TestVM : BHL_TestBase
       new ModuleCompiler()
       .UseCode()
       //foo
-      .EmitThen(Opcodes.InitFrame, new int[] { 3+1/*args info*/, 38 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 3+1/*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.DefArg, new int[] { 0, 9 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -6551,16 +6551,16 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetVar, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       //test
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 24 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 130 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -6958,20 +6958,20 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgRef, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 17 /*exit offset*/})
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -7447,14 +7447,14 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.ArgRef, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ExitFrame)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 47 /*exit offset*/})
+      .EmitThen(Opcodes.Return)
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) }) 
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Wow")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
@@ -7469,7 +7469,7 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -7988,10 +7988,10 @@ public class TestVM : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 13 /*exit offset*/ })
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
       .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
     ;
     AssertEqual(c, expected);
 
@@ -10580,10 +10580,10 @@ public class TestVM : BHL_TestBase
       .UseInit()
       .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -10613,12 +10613,12 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 15 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
       .EmitThen(Opcodes.SetGVar, new int[] { 0 })
       .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -10648,10 +10648,10 @@ public class TestVM : BHL_TestBase
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
       .EmitThen(Opcodes.GetGVar, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 

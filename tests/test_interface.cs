@@ -466,14 +466,14 @@ public class TestInterface : BHL_TestBase
       var expected = 
         new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1+1/*this*/+1/*args info*/, 12 /*exit offset*/})
+        .EmitThen(Opcodes.InitFrame, new int[] { 1+1/*this*/+1/*args info*/ })
         .EmitThen(Opcodes.ArgVar, new int[] { 1 })
         .EmitThen(Opcodes.GetVar, new int[] { 1 })
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
         .EmitThen(Opcodes.Add)
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-        .EmitThen(Opcodes.ExitFrame)
-        .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/, 29 /*exit offset*/})
+        .EmitThen(Opcodes.Return)
+        .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/ })
         .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
         .EmitThen(Opcodes.SetVar, new int[] { 0 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -482,7 +482,7 @@ public class TestInterface : BHL_TestBase
         .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
         .EmitThen(Opcodes.CallMethodIface, new int[] { 0, TypeIdx(c, c.ns.T("IFoo")), 1 })
         .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-        .EmitThen(Opcodes.ExitFrame)
+        .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 

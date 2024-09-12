@@ -334,9 +334,6 @@ public partial class VM : INamedResolver
     return Start(addr, FuncArgsInfo.GetBits(args.Count), args);
   }
 
-  //NOTE: we need to provide opcodes for proper native fiber cleanup
-  static byte[] NATIVE_FIBER_EXIT_BYTES = new byte[] {(byte)Opcodes.ExitFrame};
-
   public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {
     var fb = Fiber.New(this);
@@ -350,7 +347,7 @@ public partial class VM : INamedResolver
     {
       var frame0 = fb.frame0;
       
-      frame.Init(fb, frame0, frame0._stack, addr.module, null, null, NATIVE_FIBER_EXIT_BYTES, 0);
+      frame.Init(fb, frame0, frame0._stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       for(int i=args.Count;i-- > 0;)
       {
@@ -411,7 +408,7 @@ public partial class VM : INamedResolver
     {
       //let's create a fake frame for a native call
       var frame = Frame.New(this);
-      frame.Init(fb, curr_frame, curr_stack, null, null, null, NATIVE_FIBER_EXIT_BYTES, 0);
+      frame.Init(fb, curr_frame, curr_stack, null, null, null, null, VM.EXIT_FRAME_IP);
 
       for(int i=args.Count;i-- > 0;)
       {

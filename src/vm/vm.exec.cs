@@ -14,6 +14,7 @@ public partial class VM : INamedResolver
   //      increasing some ip couple of times after it was assigned
   //      a 'STOP_IP' value won't overflow int.MaxValue
   public const int STOP_IP = int.MaxValue - 2;
+  public const int EXIT_FRAME_IP = STOP_IP - 1;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res, IType type);
   
@@ -83,6 +84,19 @@ public partial class VM : INamedResolver
     if(exec.ip < item.min_ip || exec.ip > item.max_ip)
     {
       exec.regions.Pop();
+      return BHS.SUCCESS;
+    }
+
+    if(exec.ip == EXIT_FRAME_IP)
+    {
+      exec.ip = curr_frame.return_ip;
+      exec.stack = curr_frame.origin_stack;
+      curr_frame.ExitScope(null, exec);
+      curr_frame.Release();
+      exec.frames.Pop();
+      exec.regions.Pop();
+      
+      ++exec.ip;
       return BHS.SUCCESS;
     }
 
@@ -364,19 +378,11 @@ public partial class VM : INamedResolver
         new_val.Release();
       }
       break;
-      case Opcodes.ExitFrame:
-      {
-        exec.ip = curr_frame.return_ip;
-        exec.stack = curr_frame.origin_stack;
-        curr_frame.ExitScope(null, exec);
-        curr_frame.Release();
-        exec.frames.Pop();
-        exec.regions.Pop();
-      }
+      case Opcodes.Nop:
       break;
       case Opcodes.Return:
       {
-        exec.ip = curr_frame.exit_ip - 1;
+        exec.ip = EXIT_FRAME_IP - 1;
       }
       break;
       case Opcodes.ReturnVal:
@@ -388,7 +394,7 @@ public partial class VM : INamedResolver
           curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
-        exec.ip = curr_frame.exit_ip - 1;
+        exec.ip = EXIT_FRAME_IP - 1;
       }
       break;
       case Opcodes.GetFuncLocalPtr:
@@ -630,8 +636,6 @@ public partial class VM : INamedResolver
       case Opcodes.InitFrame:
       {
         int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
-        int frame_end_offset = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        curr_frame.exit_ip = exec.ip + frame_end_offset;
         var args_bits = exec.stack.Pop();
         curr_frame.locals.Resize(local_vars_num);
         //NOTE: we need to store arg info bits locally so that
@@ -1089,7 +1093,7 @@ public partial class VM : INamedResolver
       CoroutinePool.Del(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
-      exec.ip = curr_frame.exit_ip - 1;
+      exec.ip = EXIT_FRAME_IP - 1;
       exec.regions.Pop();
 
       return status;

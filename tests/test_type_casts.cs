@@ -22,11 +22,11 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
       .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("int")), 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -56,11 +56,11 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 12 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
       .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 1 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -90,13 +90,13 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 17 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
       .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -126,13 +126,13 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 17 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
       .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -486,13 +486,13 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/, 15 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.SetVar, new int[] { 0 })
       .EmitThen(Opcodes.GetVar, new int[] { 0 })
       .EmitThen(Opcodes.TypeIs, new int[] { TypeIdx(c, ts.T("int")) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -601,7 +601,7 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/, 26 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -610,7 +610,7 @@ public class TestTypeCasts : BHL_TestBase
       .EmitThen(Opcodes.TypeAs, new int[] { TypeIdx(c, c.ns.T("Foo")), 0 })
       .EmitThen(Opcodes.GetAttr, new int[] { 0 })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1932,10 +1932,10 @@ public class TestTypeCasts : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/, 7 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
       .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 

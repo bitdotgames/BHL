@@ -559,18 +559,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.InitFrame,
-        1/*total local vars*/, 3/*offset to end of frame*/
+        1/*total local vars*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Block,
         1/*type*/, 2/*len*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ExitFrame
       )
     );
     DeclareOpcode(
@@ -582,6 +577,11 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.ReturnVal,
         1/*returned amount*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Nop
       )
     );
     DeclareOpcode(
@@ -910,14 +910,13 @@ public class ModuleCompiler : AST_Visitor
 
     fsymb.ip_addr = GetCodeSize();
 
-    var init_op = Emit(Opcodes.InitFrame, 
-      new int[] { fsymb.local_vars_num + 1/*cargs bits*/, 0/*patched later*/}, 
+    Emit(Opcodes.InitFrame, 
+      new int[] { fsymb.local_vars_num + 1/*cargs bits*/ }, 
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
 
-    Emit(Opcodes.ExitFrame);
-    AddOffsetFromTo(init_op, Peek(), 1);
+    Emit(Opcodes.Return, null, ast.last_line_num);
 
     func_decls.Pop();
 
@@ -928,13 +927,12 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    var init_op = Emit(Opcodes.InitFrame, 
-      new int[] { ast.local_vars_num + 1/*cargs bits*/, 0/*patched later*/},
+    Emit(Opcodes.InitFrame, 
+      new int[] { ast.local_vars_num + 1/*cargs bits*/ },
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
-    Emit(Opcodes.ExitFrame, null, ast.last_line_num);
-    AddOffsetFromTo(init_op, Peek(), 1);
+    Emit(Opcodes.Return, null, ast.last_line_num);
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)

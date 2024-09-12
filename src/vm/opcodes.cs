@@ -15,7 +15,6 @@ public enum Opcodes
   SetGVar               = 10,
   GetGVar               = 11,
   InitFrame             = 12,
-  ExitFrame             = 13,
   Return                = 14,
   ReturnVal             = 15,
   Jump                  = 16,
@@ -74,6 +73,8 @@ public enum Opcodes
   MapIdx                = 91,
   MapIdxW               = 92,
   MapAddInplace         = 93,  //TODO: used for json alike array initialization,   
+  
+  Nop                   = 99,
 }
 
 }

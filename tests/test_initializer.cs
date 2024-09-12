@@ -33,7 +33,7 @@ public class TestInitializer : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/, 73 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
       .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
@@ -57,7 +57,7 @@ public class TestInitializer : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -378,7 +378,7 @@ public class TestInitializer : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/, 87 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Foo")) }) 
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T( "Foo")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -408,7 +408,7 @@ public class TestInitializer : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1051,7 +1051,7 @@ public class TestInitializer : BHL_TestBase
     var expected = 
       new ModuleCompiler()
       .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/, 87 /*exit offset*/})
+      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Bar")) }) 
       .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) }) 
       .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1081,7 +1081,7 @@ public class TestInitializer : BHL_TestBase
       .EmitThen(Opcodes.GetAttr, new int[] { 2 })
       .EmitThen(Opcodes.Add)
       .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.ExitFrame)
+      .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 

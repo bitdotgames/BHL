@@ -25,11 +25,29 @@ public partial class VM : INamedResolver
       this.trace = trace;
     }
 
-    static public string ToString(List<TraceItem> trace)
+    public enum TraceFormat
+    {
+      Verbose = 1,
+      Compact = 2
+    }
+
+    static public string ToString(List<TraceItem> trace, TraceFormat format = TraceFormat.Verbose)
     {
       string s = "\n";
       foreach(var t in trace)
-        s += "at " + t.func + "(..) +" + t.ip + " in " + t.file + ":" + t.line + "\n";
+      {
+        switch(format)
+        {
+          case TraceFormat.Compact:
+            s += "at " + t.func + "(..) in " + t.file + ":" + t.line + "\n";
+            break;
+          case TraceFormat.Verbose:
+          default:
+            s += "at " + t.func + "(..) +" + t.ip + " in " + t.file + ":" + t.line + "\n";
+            break; 
+        }
+      }
+
       return s;
     }
   }
