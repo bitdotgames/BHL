@@ -17,9 +17,12 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+    - uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
     # Runs a single command using the runners shell
     - name: Run all tests
-      run: ./bhl test
+      run: cd tests && dotnet test
     - name: Run example
       run: cd example && ./run.sh
   test_win:
@@ -31,7 +34,9 @@ jobs:
    - uses: actions/checkout@v2
    - name: Install mono
      run: choco install mono
+   - name: Install dotnet
+     run: choco install dotnet
    - name: Setup env
      run: echo "C:\Program Files\Mono\bin\" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
    - name: Run all tests
-     run: ./bhl test
+     run: cd tests && dotnet test
