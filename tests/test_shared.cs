@@ -5,7 +5,7 @@ using System.IO;
 using System.Text;
 using Mono.Options;
 using bhl;
-using Antlr4.Runtime.Tree;
+using Xunit;
 
 public class IsTestedAttribute : Attribute
 {
@@ -1003,38 +1003,32 @@ public class BHL_TestBase
 
   public static void AssertEqual<T>(T a, T b) where T : class
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
   
   public static void AssertEqual(float a, float b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertEqual(double a, double b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertEqual(uint a, uint b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertEqual(ulong a, ulong b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertEqual(BHS a, BHS b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertContains(string haystack, string needle)
@@ -1045,26 +1039,22 @@ public class BHL_TestBase
 
   public static void AssertEqual(string a, string b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed:\n" + a + "\n====\n" + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertEqual(int a, int b)
   {
-    if(!(a == b))
-      throw new Exception("Assertion failed: " + a + " != " + b);
+    Assert.Equal(a, b);
   }
 
   public static void AssertTrue(bool cond, string msg = "")
   {
-    if(!cond)
-      throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
+    Assert.True(cond, msg);
   }
 
   public static void AssertFalse(bool cond, string msg = "")
   {
-    if(cond)
-      throw new Exception("Assertion failed" + (msg.Length > 0 ? (": " + msg) : ""));
+    Assert.False(cond, msg);
   }
 
   public void AssertError<T>(Action action, string msg, PlaceAssert place_assert = null) where T : Exception
@@ -1085,7 +1075,7 @@ public class BHL_TestBase
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
     if(err == null)
-      AssertTrue(false, "No error happened, expected: " + msg);
+      Assert.True(false, "No error happened, expected: " + msg);
 
     //TODO: in case of multi errors we consider only the first one,
     //      probably it should be more flexible
@@ -1095,22 +1085,22 @@ public class BHL_TestBase
     }
 
     var idx = err.ToString().IndexOf(msg);
-    AssertTrue(idx != -1, "Error message is: " + err);
+    Assert.True(idx != -1, "Error message is: " + err);
 
     if(place_assert != null)
     {
       if(place_assert.err_type != null && err.GetType() != place_assert.err_type)
-        AssertTrue(false, "Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
+        Assert.True(false, "Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
 
       if(err is ICompileError cerr)
       {
         string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.range);
         if(place_err.Trim('\r','\n') != place_assert.expect.Trim('\r','\n'))
           Console.WriteLine(err.StackTrace);
-        AssertEqual(place_err.Trim('\r','\n'), place_assert.expect.Trim('\r','\n'));
+        Assert.Equal(place_err.Trim('\r','\n'), place_assert.expect.Trim('\r','\n'));
       }
       else
-        AssertTrue(false, "No ICompileError occured, got " + err?.GetType().Name); 
+        Assert.True(false, "No ICompileError occured, got " + err?.GetType().Name); 
     }
   }
 
@@ -1365,28 +1355,6 @@ public class BHL_TestBase
     AssertEqual(ca.Compile(), cb.Compile());
   }
   
-  public static void AssertEqualX(bhl.Module ca, ModuleCompiler cb)
-  {
-    AssertEqualX(ca, cb.Compile());
-  }
-  
-  public static void AssertEqualX(bhl.Module ca, bhl.Module cb)
-  {
-    string cmp;
-
-    if(!CompareCode(ca.compiled.initcode, cb.compiled.initcode, out cmp))
-    {
-      Console.WriteLine(cmp);
-      throw new Exception("Assertion failed: init bytes not equal");
-    }
-
-    if(!CompareCode(ca.compiled.bytecode, cb.compiled.bytecode, out cmp))
-    {
-      Console.WriteLine(cmp);
-      throw new Exception("Assertion failed: bytes not equal");
-    }
-  }
-
   public static void AssertEqual(bhl.Module ca, ModuleCompiler cb)
   {
     AssertEqual(ca, cb.Compile());

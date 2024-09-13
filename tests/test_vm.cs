@@ -2,42 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
-
-#if XUNIT 
 using Xunit;
-
-public class TestVMX : BHL_TestBase
-{
-  [Fact]
-  public void TestEmptyFunc()
-  {
-    {
-      string bhl = @"
-      func test() {}
-      ";
-
-      var c = Compile(bhl);
-
-      var expected = 
-        new ModuleCompiler()
-        .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-        .EmitThen(Opcodes.Return)
-        ;
-      AssertEqualX(c, expected);
-
-      var vm = MakeVM(c);
-      vm.Start("test");
-      Xunit.Assert.False(vm.Tick());
-      CommonChecks(vm);
-    }
-  }
-}
-#endif
 
 public class TestVM : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestEmptyFunc()
   {
     {
@@ -127,7 +96,7 @@ public class TestVM : BHL_TestBase
     }
   }
     
-  [IsTested()]
+  [Fact]
   public void TestReturnNumConstant()
   {
     string bhl = @"
@@ -158,7 +127,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNumberPrecision()
   {
     DoTestReturnNum(bhlnum: "100", expected_num: 100);
@@ -188,7 +157,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnTrueBoolConstant()
   {
     string bhl = @"
@@ -219,7 +188,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnFalseBoolConstant()
   {
     string bhl = @"
@@ -250,7 +219,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnTrueNegated()
   {
     string bhl = @"
@@ -282,7 +251,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnFalseNegated()
   {
     string bhl = @"
@@ -314,7 +283,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnStringConstant()
   {
     string bhl = @"
@@ -345,7 +314,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindFunctionWithDefaultArgs()
   {
     string bhl = @"
@@ -382,7 +351,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindFunctionWithDefaultArgs2()
   {
     string bhl = @"
@@ -424,7 +393,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindFunctionWithDefaultArgs3()
   {
     string bhl = @"
@@ -459,7 +428,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindFunctionWithDefaultArgsOmittingSome()
   {
     string bhl = @"
@@ -496,7 +465,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFailureBeforeReturn()
   {
     string bhl = @"
@@ -525,7 +494,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFailureInNativeFunction()
   {
     string bhl = @"
@@ -555,7 +524,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralReturns()
   {
     string bhl = @"
@@ -574,7 +543,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnDefaultVar()
   {
     string bhl = @"
@@ -607,7 +576,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnVar()
   {
     string bhl = @"
@@ -639,7 +608,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnVoid()
   {
     string bhl = @"
@@ -663,7 +632,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiReturn()
   {
     string bhl = @"
@@ -696,7 +665,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiReturnVarsAssign()
   {
     string bhl = @"
@@ -719,7 +688,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiReturnVarAssign2()
   {
     string bhl = @"
@@ -745,7 +714,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleVarAssignObjectAttr()
   {
     string bhl = @"
@@ -775,7 +744,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleVarAssignArrItem()
   {
     string bhl = @"
@@ -800,7 +769,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleVarAssignArrItem2()
   {
     string bhl = @"
@@ -829,7 +798,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiReturnBug()
   {
     string bhl = @"
@@ -865,7 +834,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleVarAssignNoSuchSymbol()
   {
     string bhl = @"
@@ -894,7 +863,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVariablDeclMissingAssignFromFuncCall()
   {
     SubTest(() => {
@@ -938,7 +907,7 @@ public class TestVM : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleNotEnough()
   {
     string bhl = @"
@@ -966,7 +935,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleTooMany()
   {
     string bhl = @"
@@ -994,7 +963,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnNotAllPathsReturnValue()
   {
     string bhl = @"
@@ -1021,7 +990,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnNotFoundInLambda()
   {
     string bhl = @"
@@ -1045,7 +1014,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleInFuncBadCast()
   {
     string bhl = @"
@@ -1068,7 +1037,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleBadCast()
   {
     string bhl = @"
@@ -1096,7 +1065,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleFromBindings()
   {
     string bhl = @"
@@ -1128,7 +1097,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultiple3()
   {
     string bhl = @"
@@ -1147,7 +1116,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultiple4FromBindings()
   {
     string bhl = @"
@@ -1184,7 +1153,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarValueIsUselessStatement()
   {
     string bhl = @"
@@ -1209,7 +1178,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrReturnNonConsumed()
   {
     string bhl = @"
@@ -1229,7 +1198,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrUselessStatement()
   {
     string bhl = @"
@@ -1253,7 +1222,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrArrReturnNonConsumed()
   {
     string bhl = @"
@@ -1273,7 +1242,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAttributeUselessStatement()
   {
     string bhl = @"
@@ -1302,7 +1271,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnNonConsumed()
   {
     string bhl = @"
@@ -1324,7 +1293,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnNonConsumedInParal()
   {
     string bhl = @"
@@ -1349,7 +1318,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleNonConsumed()
   {
     string bhl = @"
@@ -1371,7 +1340,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLogicalAnd()
   {
     string bhl = @"
@@ -1405,7 +1374,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLogicalOr()
   {
     string bhl = @"
@@ -1439,7 +1408,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLogicalAndHasPriorityOverOr()
   {
     string bhl = @"
@@ -1457,7 +1426,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBitAnd()
   {
     string bhl = @"
@@ -1490,7 +1459,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBitOr()
   {
     string bhl = @"
@@ -1523,7 +1492,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMod()
   {
     string bhl = @"
@@ -1556,7 +1525,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestModDouble()
   {
     string bhl = @"
@@ -1590,7 +1559,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyParenExpression()
   {
     string bhl = @"
@@ -1613,7 +1582,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleExpression()
   {
     string bhl = @"
@@ -1629,7 +1598,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSemicolonStatementSeparator()
   {
     string bhl = @"
@@ -1646,7 +1615,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDanglingBrackets()
   {
     string bhl = @"
@@ -1669,7 +1638,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDanglingBrackets2()
   {
     string bhl = @"
@@ -1696,7 +1665,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWriteReadVar()
   {
     string bhl = @"
@@ -1732,7 +1701,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalVariables()
   {
     string bhl = @"
@@ -1755,7 +1724,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalVarHiding()
   {
     string bhl = @"
@@ -1781,7 +1750,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalVarConflictsWithFunc()
   {
     string bhl = @"
@@ -1816,7 +1785,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarSelfDecl()
   {
     string bhl = @"
@@ -1840,7 +1809,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeclVarIntWithoutValue()
   {
     string bhl = @"
@@ -1873,7 +1842,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeclVarFloatWithoutValue()
   {
     string bhl = @"
@@ -1906,7 +1875,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeclVarStringWithoutValue()
   {
     string bhl = @"
@@ -1939,7 +1908,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeclVarBoolWithoutValue()
   {
     string bhl = @"
@@ -1972,7 +1941,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAssignVars()
   {
     string bhl = @"
@@ -1995,7 +1964,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUnaryNegVar()
   {
     string bhl = @"
@@ -2030,7 +1999,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAdd()
   {
     string bhl = @"
@@ -2063,7 +2032,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubtract()
   {
     string bhl = @"
@@ -2096,7 +2065,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDivision()
   {
     string bhl = @"
@@ -2113,7 +2082,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiply()
   {
     string bhl = @"
@@ -2130,7 +2099,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGT()
   {
     string bhl = @"
@@ -2147,7 +2116,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotGT()
   {
     string bhl = @"
@@ -2164,7 +2133,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLT()
   {
     string bhl = @"
@@ -2181,7 +2150,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotLT()
   {
     string bhl = @"
@@ -2198,7 +2167,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGTE()
   {
     string bhl = @"
@@ -2215,7 +2184,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGTE2()
   {
     string bhl = @"
@@ -2232,7 +2201,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLTE()
   {
     string bhl = @"
@@ -2249,7 +2218,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLTE2()
   {
     string bhl = @"
@@ -2266,7 +2235,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEqNumber()
   {
     string bhl = @"
@@ -2283,7 +2252,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEqString()
   {
     string bhl = @"
@@ -2300,7 +2269,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotEqNum()
   {
     string bhl = @"
@@ -2317,7 +2286,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotEqString()
   {
     string bhl = @"
@@ -2334,7 +2303,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotEqString2()
   {
     string bhl = @"
@@ -2351,7 +2320,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestConstantWithBigIndex()
   {
     string bhl = @"
@@ -2388,7 +2357,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAddSameConstants()
   {
     string bhl = @"
@@ -2421,7 +2390,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpAddAssign()
   {
     string bhl = @"
@@ -2439,7 +2408,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpSubAssign()
   {
     string bhl = @"
@@ -2458,7 +2427,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpMulAssign()
   {
     string bhl = @"
@@ -2477,7 +2446,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpDivAssign()
   {
     string bhl = @"
@@ -2496,7 +2465,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpAddAssignString()
   {
     string bhl = @"
@@ -2515,7 +2484,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpAddAssignStringNotCompatible()
   {
     string bhl = @"
@@ -2539,7 +2508,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpSubAssignStringNotAllowed()
   {
     string bhl = @"
@@ -2563,7 +2532,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpMulAssignStringNotAllowed()
   {
     string bhl = @"
@@ -2587,7 +2556,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpDivAssignStringNotAllowed()
   {
     string bhl = @"
@@ -2611,7 +2580,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPostOpAssignExpCompatibleTypes()
   {
     string bhl = @"
@@ -2631,7 +2600,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParenthesisExpression()
   {
     string bhl = @"
@@ -2666,7 +2635,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalScopeVarHiding()
   {
     string bhl = @"
@@ -2692,7 +2661,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalScopeVarHidingInSubSubScope()
   {
     string bhl = @"
@@ -2722,7 +2691,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalScopeVarOverridesGlobalVar()
   {
     string bhl = @"
@@ -2740,7 +2709,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalScopeForVars()
   {
     string bhl = @"
@@ -2775,7 +2744,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalScopeForVarsInParal()
   {
     string bhl = @"
@@ -2815,7 +2784,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarDeclMustBeInUpperScope()
   {
     string bhl = @"
@@ -2844,7 +2813,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarDeclMustBeInUpperScope2()
   {
     string bhl = @"
@@ -2879,7 +2848,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleFuncCall()
   {
     string bhl = @"
@@ -2918,7 +2887,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotAllowedAssignAFuncCall()
   {
     {
@@ -2987,7 +2956,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleSubFuncsReturn()
   {
     string bhl = @"
@@ -3013,7 +2982,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDeclOrderIsIrrelevant()
   {
     string bhl = @"
@@ -3040,7 +3009,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNativeFunc()
   {
     string bhl = @"
@@ -3075,7 +3044,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNativeFuncReturnValue()
   {
     string bhl = @"
@@ -3101,7 +3070,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNativeFuncWithSeveralArgs()
   {
     string bhl = @"
@@ -3133,7 +3102,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestSimpleImportedNativeFunc()
   {
     string bhl = @"
@@ -3165,7 +3134,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeFuncBindConflict()
   {
     string bhl = @"
@@ -3191,7 +3160,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRecursion()
   {
     string bhl = @"
@@ -3216,7 +3185,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncAlreadyDeclaredArg()
   {
     string bhl = @"
@@ -3233,7 +3202,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtr()
   {
     string bhl = @"
@@ -3255,7 +3224,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrWithArgs()
   {
     string bhl = @"
@@ -3277,7 +3246,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeFuncPtrWithArgs()
   {
     string bhl = @"
@@ -3300,7 +3269,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfCondition()
   {
     string bhl = @"
@@ -3346,7 +3315,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyIfBody()
   {
     string bhl = @"
@@ -3368,7 +3337,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElseCondition()
   {
     string bhl = @"
@@ -3421,7 +3390,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiIfElseCondition()
   {
     string bhl = @"
@@ -3497,7 +3466,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyElseBody()
   {
     string bhl = @"
@@ -3520,7 +3489,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfFalseComplexCondition()
   {
     string bhl = @"
@@ -3543,7 +3512,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElseIf()
   {
     string bhl = @"
@@ -3571,7 +3540,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElseIfComplexCondition()
   {
     string bhl = @"
@@ -3599,7 +3568,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElse()
   {
     string bhl = @"
@@ -3625,7 +3594,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElseIfElse()
   {
     string bhl = @"
@@ -3654,7 +3623,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnAfterIf()
   {
     string bhl = @"
@@ -3675,7 +3644,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnAfterElseIf()
   {
     string bhl = @"
@@ -3702,7 +3671,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnAfterElseIf2()
   {
     string bhl = @"
@@ -3728,7 +3697,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingVoidReturn()
   {
     string bhl = @"
@@ -3752,7 +3721,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMatchingReturnInElse()
   {
     string bhl = @"
@@ -3775,7 +3744,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnInWhile()
   {
     {
@@ -3812,7 +3781,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnInDoWhile()
   {
     {
@@ -3849,7 +3818,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonMatchingReturnInFor()
   {
     {
@@ -3884,7 +3853,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfWithMultipleReturns()
   {
     string bhl = @"
@@ -3911,7 +3880,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileWithCondition()
   {
     string bhl = @"
@@ -3962,7 +3931,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyWhileBody()
   {
     string bhl = @"
@@ -3983,7 +3952,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileComplexCondition()
   {
     string bhl = @"
@@ -4003,7 +3972,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBreakInWhile()
   {
     string bhl = @"
@@ -4060,7 +4029,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueInWhile()
   {
     string bhl = @"
@@ -4088,7 +4057,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileFailure()
   {
     string bhl = @"
@@ -4122,7 +4091,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoWhileWithCondition()
   {
     string bhl = @"
@@ -4174,7 +4143,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDoWhileFeature()
   {
     string bhl = @"
@@ -4194,7 +4163,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoWhileComplexCondition()
   {
     string bhl = @"
@@ -4214,7 +4183,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBreakInDoWhile()
   {
     string bhl = @"
@@ -4271,7 +4240,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueInDoWhile()
   {
     string bhl = @"
@@ -4299,7 +4268,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarInInfiniteLoop()
   {
     string bhl = @"
@@ -4344,7 +4313,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoWhileFailure()
   {
     string bhl = @"
@@ -4378,7 +4347,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStackInInfiniteLoop()
   {
     string bhl = @"
@@ -4414,7 +4383,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForLoop()
   {
     string bhl = @"
@@ -4471,7 +4440,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralForLoops()
   {
     string bhl = @"
@@ -4503,7 +4472,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForLoopLocalScope()
   {
     string bhl = @"
@@ -4531,7 +4500,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralForLoopsLocalScope()
   {
     string bhl = @"
@@ -4563,7 +4532,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForMultiExpression()
   {
     string bhl = @"
@@ -4587,7 +4556,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForReverse()
   {
     string bhl = @"
@@ -4611,7 +4580,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForUseExternalVar()
   {
     string bhl = @"
@@ -4635,7 +4604,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestForNested()
   {
     string bhl = @"
@@ -4661,7 +4630,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForInParal()
   {
     string bhl = @"
@@ -4693,7 +4662,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForBadPreSection()
   {
     string bhl = @"
@@ -4718,7 +4687,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForEmptyPreSection()
   {
     string bhl = @"
@@ -4743,7 +4712,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForEmptyPostSection()
   {
     string bhl = @"
@@ -4769,7 +4738,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForBadPostSection()
   {
     string bhl = @"
@@ -4793,7 +4762,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForCondIsRequired()
   {
     string bhl = @"
@@ -4817,7 +4786,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForNonBoolCond()
   {
     string bhl = @"
@@ -4846,7 +4815,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachLoop()
   {
     string bhl = @"
@@ -4917,7 +4886,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachTraceItems()
   {
     string bhl = @"
@@ -4942,7 +4911,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachLocalScope()
   {
     string bhl = @"
@@ -4971,7 +4940,7 @@ public class TestVM : BHL_TestBase
   }
 
 
-  [IsTested()]
+  [Fact]
   public void TestForeachForNativeArrayBinding()
   {
     string bhl = @"
@@ -4997,7 +4966,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachUseExternalIteratorVar()
   {
     string bhl = @"
@@ -5023,7 +4992,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachWithInPlaceArr()
   {
     string bhl = @"
@@ -5047,7 +5016,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachWithReturnedArr()
   {
     string bhl = @"
@@ -5076,7 +5045,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachInParal()
   {
     string bhl = @"
@@ -5108,7 +5077,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralForeachInParalAll()
   {
     string bhl = @"
@@ -5139,7 +5108,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachBreak()
   {
     string bhl = @"
@@ -5166,7 +5135,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachSeveral()
   {
     string bhl = @"
@@ -5195,7 +5164,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachNested()
   {
     string bhl = @"
@@ -5222,7 +5191,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachNested2()
   {
     string bhl = @"
@@ -5248,7 +5217,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachIteratorVarBadType()
   {
     string bhl = @"
@@ -5272,7 +5241,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachArrBadType()
   {
     string bhl = @"
@@ -5301,7 +5270,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachExternalIteratorVarBadType()
   {
     string bhl = @"
@@ -5326,7 +5295,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachRedeclareError()
   {
     string bhl = @"
@@ -5351,7 +5320,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachBadSyntax()
   {
     string bhl = @"
@@ -5375,7 +5344,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachBadSyntaxInNamespace()
   {
     string bhl = @"
@@ -5401,7 +5370,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBreakInForLoop()
   {
     string bhl = @"
@@ -5460,7 +5429,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadBreak()
   {
     string bhl = @"
@@ -5483,7 +5452,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueInForLoop()
   {
     string bhl = @"
@@ -5540,7 +5509,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBreakInForeachLoop()
   {
     string bhl = @"
@@ -5571,7 +5540,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInfiniteLoopBreak()
   {
     string bhl = @"
@@ -5594,7 +5563,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestBreakFromNestedSequences()
   {
     string bhl = @"
@@ -5626,7 +5595,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueInForeachLoop()
   {
     string bhl = @"
@@ -5657,7 +5626,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueFromNestedSequences()
   {
     string bhl = @"
@@ -5689,7 +5658,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBooleanInCondition()
   {
     string bhl = @"
@@ -5743,7 +5712,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncCallInCondition()
   {
     string bhl = @"
@@ -5802,7 +5771,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiFuncCall()
   {
     string bhl = @"
@@ -5827,7 +5796,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStringArgFunctionCall()
   {
     string bhl = @"
@@ -5850,7 +5819,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDefaultFuncOtherFunc()
   {
     SubTest(() => {
@@ -5896,7 +5865,7 @@ public class TestVM : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDefaultFuncLambdaFunc()
   {
     string bhl = @"
@@ -5915,7 +5884,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtr()
   {
     string bhl = @"
@@ -5943,7 +5912,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrSeveralTimes()
   {
     string bhl = @"
@@ -5971,7 +5940,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrSeveralTimes2()
   {
     string bhl = @"
@@ -5996,7 +5965,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrSeveralTimes3()
   {
     string bhl = @"
@@ -6022,7 +5991,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrSeveralTimes4()
   {
     string bhl = @"
@@ -6054,7 +6023,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrSeveralTimes5()
   {
     string bhl = @"
@@ -6076,7 +6045,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayOfComplexFuncPtrs()
   {
     string bhl = @"
@@ -6107,7 +6076,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnComplexFuncPtr()
   {
     string bhl = @"
@@ -6128,7 +6097,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnAndCallComplexFuncPtr()
   {
     string bhl = @"
@@ -6148,7 +6117,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrPassRef()
   {
     string bhl = @"
@@ -6178,7 +6147,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrLambda()
   {
     string bhl = @"
@@ -6205,7 +6174,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrLambdaInALoop()
   {
     string bhl = @"
@@ -6237,7 +6206,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrIncompatibleRetType()
   {
     string bhl = @"
@@ -6261,7 +6230,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrArgTypeCheck()
   {
     string bhl = @"
@@ -6285,7 +6254,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgTypeCheck()
   {
     string bhl = @"
@@ -6310,7 +6279,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgRefTypeCheck()
   {
     string bhl = @"
@@ -6336,7 +6305,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgRefTypeCheck2()
   {
     string bhl = @"
@@ -6362,7 +6331,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrPassConflictingRef()
   {
     string bhl = @"
@@ -6405,7 +6374,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgNotEnoughArgsCheck()
   {
     string bhl = @"
@@ -6430,7 +6399,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgNotEnoughArgsCheck2()
   {
     string bhl = @"
@@ -6455,7 +6424,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexFuncPtrCallArgTooManyArgsCheck()
   {
     string bhl = @"
@@ -6480,7 +6449,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrWithDeclPassedAsArg()
   {
     string bhl = @"
@@ -6513,7 +6482,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrForNativeFunc()
   {
     string bhl = @"
@@ -6545,7 +6514,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultArg()
   {
     string bhl = @"
@@ -6603,7 +6572,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncManyDefaultArgs()
   {
     string bhl = @"
@@ -6629,7 +6598,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncTooManyDefaultArgs()
   {
     string bhl = @"
@@ -6661,7 +6630,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncNotEnoughArgs()
   {
     string bhl = @"
@@ -6689,7 +6658,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPassingExtraNamedArgs()
   {
     string bhl = @"
@@ -6717,7 +6686,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncNotEnoughArgsWithDefaultArgs()
   {
     string bhl = @"
@@ -6745,7 +6714,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultArgIgnored()
   {
     string bhl = @"
@@ -6767,7 +6736,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultArgMixed()
   {
     string bhl = @"
@@ -6789,7 +6758,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultArgIsFunc()
   {
     string bhl = @"
@@ -6816,7 +6785,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultArgIsFunc2()
   {
     string bhl = @"
@@ -6843,7 +6812,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncMissingReturnArgument()
   {
     string bhl = @"
@@ -6865,7 +6834,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncMissingDefaultArgument()
   {
     string bhl = @"
@@ -6893,7 +6862,7 @@ public class TestVM : BHL_TestBase
     );
   }
   
-  [IsTested()]
+  [Fact]
   public void TestFuncExtraArgumentMatchesLocalVariable()
   {
     string bhl = @"
@@ -6922,7 +6891,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncSeveralDefaultArgsMixed()
   {
     string bhl = @"
@@ -6944,7 +6913,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncArgPassedByValue()
   {
     string bhl = @"
@@ -6968,7 +6937,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRef()
   {
     string bhl = @"
@@ -7013,7 +6982,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefNonAssignedValue()
   {
     string bhl = @"
@@ -7037,7 +7006,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefAlreadyDefinedError()
   {
     string bhl = @"
@@ -7066,7 +7035,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefAssignToNonRef()
   {
     string bhl = @"
@@ -7090,7 +7059,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefNested()
   {
     string bhl = @"
@@ -7119,7 +7088,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefMixed()
   {
     string bhl = @"
@@ -7142,7 +7111,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefInUserBinding()
   {
     string bhl = @"
@@ -7180,7 +7149,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefNamedArg()
   {
     string bhl = @"
@@ -7203,7 +7172,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefAndThenReturn()
   {
     string bhl = @"
@@ -7226,7 +7195,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefsAllowedInFuncArgsOnly()
   {
     string bhl = @"
@@ -7249,7 +7218,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefDefaultArgsNotAllowed()
   {
     string bhl = @"
@@ -7271,7 +7240,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefNullValue()
   {
     string bhl = @"
@@ -7305,7 +7274,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefLiteralNotAllowed()
   {
     string bhl = @"
@@ -7332,7 +7301,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefClassField()
   {
     string bhl = @"
@@ -7362,7 +7331,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefArrayItem()
   {
     string bhl = @"
@@ -7387,7 +7356,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefArrayObj()
   {
     string bhl = @"
@@ -7417,7 +7386,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefTmpClassField()
   {
     string bhl = @"
@@ -7445,7 +7414,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefClassFieldNested()
   {
     string bhl = @"
@@ -7511,7 +7480,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrByRef()
   {
     string bhl = @"
@@ -7544,7 +7513,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefClassFieldFuncPtr()
   {
     string bhl = @"
@@ -7584,7 +7553,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassByRefNativeClassFieldNotSupported()
   {
     string bhl = @"
@@ -7619,7 +7588,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncReplacesArrayValueByRef()
   {
     string bhl = @"
@@ -7649,7 +7618,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncReplacesArrayValueByRef2()
   {
     string bhl = @"
@@ -7673,7 +7642,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncReplacesArrayValueByRef3()
   {
     string bhl = @"
@@ -7698,7 +7667,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArrayToFunctionByValue()
   {
     string bhl = @"
@@ -7724,7 +7693,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncReplacesFuncPtrByRef()
   {
     string bhl = @"
@@ -7753,7 +7722,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncReplacesFuncPtrByRef2()
   {
     string bhl = @"
@@ -7782,7 +7751,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncSeveralDefaultArgsOmittingSome()
   {
     string bhl = @"
@@ -7804,7 +7773,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartFiberByFuncAddr()
   {
     string bhl = @"
@@ -7830,7 +7799,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestFindFuncAddr()
   {
     string bhl = @"
@@ -7852,7 +7821,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDetachFiber()
   {
     string bhl = @"
@@ -7876,7 +7845,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDetachAndTickSeveralFibers()
   {
     string bhl = @"
@@ -7913,7 +7882,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFiberFuncDefaultArg()
   {
     string bhl = @"
@@ -7932,7 +7901,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassNamedValue()
   {
     string bhl = @"
@@ -7954,7 +7923,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassSeveralNamedValues()
   {
     string bhl = @"
@@ -7976,7 +7945,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncDefaultNamedArg()
   {
     string bhl = @"
@@ -7999,7 +7968,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
@@ -8035,7 +8004,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeqSuccess()
   {
     string bhl = @"
@@ -8070,7 +8039,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeqFailure()
   {
     string bhl = @"
@@ -8108,7 +8077,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeqReturn()
   {
     string bhl = @"
@@ -8130,7 +8099,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedSeqReturn()
   {
     string bhl = @"
@@ -8163,7 +8132,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackUserBindInBinOp()
   {
     string bhl = @"
@@ -8206,7 +8175,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsStackOnFailure()
   {
     string bhl = @"
@@ -8236,7 +8205,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForSubFailure()
   {
     string bhl = @"
@@ -8273,7 +8242,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForNativeBind()
   {
     string bhl = @"
@@ -8311,7 +8280,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForYield()
   {
     string bhl = @"
@@ -8340,7 +8309,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForYieldInWhile()
   {
     string bhl = @"
@@ -8374,7 +8343,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackClassPtr()
   {
     string bhl = @"
@@ -8412,7 +8381,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncThisArgOnStackForMethod()
   {
     string bhl = @"
@@ -8440,7 +8409,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncStackInExpressionForYield()
   {
     string bhl = @"
@@ -8469,7 +8438,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForFuncPtrPassedAsArg()
   {
     string bhl = @"
@@ -8519,7 +8488,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForFuncPtr()
   {
     string bhl = @"
@@ -8556,7 +8525,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncArgsOnStackForLambda()
   {
     string bhl = @"
@@ -8591,7 +8560,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanArgsStackInParal()
   {
     string bhl = @"
@@ -8647,7 +8616,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanFuncPtrArgsStackInParal()
   {
     string bhl = @"
@@ -8704,7 +8673,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCleanArgsStackInParalForLambda()
   {
     string bhl = @"
@@ -8763,7 +8732,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParal()
   {
     string bhl = @"
@@ -8809,7 +8778,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveFuncStackInParal()
   {
     string bhl = @"
@@ -8861,7 +8830,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalWithPtrCall()
   {
     string bhl = @"
@@ -8904,7 +8873,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalWithMemberPtrCall()
   {
     string bhl = @"
@@ -8952,7 +8921,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalWithLambdaCall()
   {
     string bhl = @"
@@ -8998,7 +8967,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalAll()
   {
     string bhl = @"
@@ -9071,7 +9040,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalWithMethods()
   {
     string bhl = @"
@@ -9138,7 +9107,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugWithParalInWhile()
   {
     string bhl = @"
@@ -9174,7 +9143,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOperatorTernaryIfIncompatibleTypes()
   {
     string bhl1 = @"
@@ -9214,7 +9183,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOperatorTernaryIf()
   {
     string bhl = @"
@@ -9278,7 +9247,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOperatorPostfixIncrementCall()
   {
     string bhl = @"
@@ -9327,7 +9296,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadOperatorPostfixIncrementCall()
   {
     string bhl1 = @"
@@ -9526,7 +9495,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadOperatorPostfixDecrementCall()
   {
     string bhl1 = @"
@@ -9675,7 +9644,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOperatorPostfixDecrementCall()
   {
     string bhl = @"
@@ -9719,7 +9688,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugReturnTypeInsteadOfValue()
   {
     {
@@ -9818,7 +9787,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugEarlyReturnBeforeVarDecl()
   {
     {
@@ -9877,7 +9846,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileEmptyArrLoop()
   {
     string bhl = @"
@@ -9905,7 +9874,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileArrLoop()
   {
     string bhl = @"
@@ -9933,7 +9902,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedWhileArrLoopWithVarDecls()
   {
     string bhl = @"
@@ -9966,7 +9935,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileCounterOnTheTop()
   {
     string bhl = @"
@@ -9992,7 +9961,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileFalse()
   {
     string bhl = @"
@@ -10018,7 +9987,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOrShortCircuit()
   {
     string bhl = @"
@@ -10047,7 +10016,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAndShortCircuit()
   {
     string bhl = @"
@@ -10076,7 +10045,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAndShortCircuitWithBoolNot()
   {
     string bhl = @"
@@ -10105,7 +10074,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAndShortCircuitWithBoolNotForClassMembers()
   {
     string bhl = @"
@@ -10141,7 +10110,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOrShortCircuitWithBoolNotForClassMembers()
   {
     string bhl = @"
@@ -10177,7 +10146,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChainCall()
   {
     string bhl = @"
@@ -10205,7 +10174,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChainCall2()
   {
     string bhl = @"
@@ -10233,7 +10202,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChainCall3()
   {
     string bhl = @"
@@ -10261,7 +10230,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChainCall4()
   {
     string bhl = @"
@@ -10289,7 +10258,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChainCall5()
   {
     string bhl = @"
@@ -10330,7 +10299,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassCallMethod()
   {
     string bhl = @"
@@ -10354,7 +10323,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUsingBultinTypeAsFunc()
   {
     string bhl = @"
@@ -10382,7 +10351,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArgToFiber()
   {
     string bhl = @"
@@ -10405,7 +10374,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArgsToFiber()
   {
     string bhl = @"
@@ -10422,7 +10391,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArgsToFiber2()
   {
     string bhl = @"
@@ -10439,7 +10408,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartSeveralFibers()
   {
     string bhl = @"
@@ -10464,7 +10433,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFrameCache()
   {
     string bhl = @"
@@ -10505,7 +10474,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRegisterModule()
   {
     string bhl = @"
@@ -10523,7 +10492,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLoadModuleTwice()
   {
     string bhl1 = @"
@@ -10568,7 +10537,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLoadNonExistingModule()
   {
     string bhl1 = @"
@@ -10591,7 +10560,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleGlobalVariableDecl()
   {
     string bhl = @"
@@ -10624,7 +10593,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableWriteRead()
   {
     string bhl = @"
@@ -10659,7 +10628,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableAssignConst()
   {
     string bhl = @"
@@ -10692,7 +10661,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableAssignNegativeNumber()
   {
     string bhl = @"
@@ -10710,7 +10679,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableAssignAndReadObject()
   {
     string bhl = @"
@@ -10732,7 +10701,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableAssignAndReadArray()
   {
     string bhl = @"
@@ -10753,7 +10722,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableWrite()
   {
     string bhl = @"
@@ -10780,7 +10749,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableAlreadyDeclared()
   {
     string bhl = @"
@@ -10806,7 +10775,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableSelfAssignError()
   {
     string bhl = @"
@@ -10826,7 +10795,7 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVariableFuncCallsNotAllowed()
   {
     {
@@ -10877,7 +10846,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalVariableHasPriorityOverGlobalOne()
   {
     string bhl = @"
@@ -10900,7 +10869,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobalVarInLambda()
   {
     string bhl = @"
@@ -10925,7 +10894,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSetGlobalFromOutside()
   {
     SubTest(() => {
@@ -11054,7 +11023,7 @@ public class TestVM : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWeirdMix()
   {
     string bhl = @"
@@ -11101,7 +11070,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFixedStack()
   {
     //Push/PopFast
@@ -11198,7 +11167,7 @@ public class TestVM : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestValListOwnership()
   {
     var vm = new VM();
@@ -11252,7 +11221,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnValListFromNativeFunc()
   {
     string bhl = @"
@@ -11302,7 +11271,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestValListGetEnumerator()
   {
     var vm = new VM();
@@ -11327,7 +11296,7 @@ public class TestVM : BHL_TestBase
     AssertEqual(2, c);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountSimple()
   {
     string bhl = @"
@@ -11349,7 +11318,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountReturnResult()
   {
     string bhl = @"
@@ -11371,7 +11340,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountAssignSame()
   {
     string bhl = @"
@@ -11395,7 +11364,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountAssignSelf()
   {
     string bhl = @"
@@ -11418,7 +11387,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountAssignOverwrite()
   {
     string bhl = @"
@@ -11442,7 +11411,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountSeveral()
   {
     string bhl = @"
@@ -11465,7 +11434,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountInLambda()
   {
     string bhl = @"
@@ -11497,7 +11466,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountInArray()
   {
     string bhl = @"
@@ -11520,7 +11489,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountSeveralInArrayAccess()
   {
     string bhl = @"
@@ -11545,7 +11514,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountReturn()
   {
     string bhl = @"
@@ -11574,7 +11543,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountPass()
   {
     string bhl = @"
@@ -11603,7 +11572,7 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRefCountReturnPass()
   {
     string bhl = @"
