@@ -1,10 +1,11 @@
 using System;           
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestMaps : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleDeclare()
   {
     string bhl = @"
@@ -23,7 +24,7 @@ public class TestMaps : BHL_TestBase
     AssertEqual(c, expected);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCanBeNull()
   {
     {
@@ -51,7 +52,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCountEmpty()
   {
     string bhl = @"
@@ -68,7 +69,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleReadWrite()
   {
     string bhl = @"
@@ -86,7 +87,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleInitWithJson()
   {
     {
@@ -135,7 +136,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestComplexInitWithJson()
   {
     string bhl = @"
@@ -156,7 +157,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInitErrorsWithJson()
   {
     {
@@ -245,7 +246,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCountSeveral()
   {
     string bhl = @"
@@ -264,7 +265,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWriteAtTheSameKey()
   {
     string bhl = @"
@@ -283,7 +284,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRemoveNonExisting()
   {
     string bhl = @"
@@ -301,7 +302,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRemove()
   {
     string bhl = @"
@@ -321,7 +322,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestClear()
   {
     string bhl = @"
@@ -341,7 +342,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContains()
   {
     {
@@ -427,7 +428,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTryGetNoValue()
   {
     {
@@ -470,7 +471,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTryGetOk()
   {
     string bhl = @"
@@ -493,7 +494,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTryGetInSubCall()
   {
     string bhl = @"
@@ -519,7 +520,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleForeach()
   {
     string bhl = @"
@@ -543,7 +544,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachChecks()
   {
     {
@@ -613,7 +614,7 @@ public class TestMaps : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarInMap()
   {
     string bhl = @"
@@ -645,7 +646,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEnumInMap()
   {
     string bhl = @"
@@ -676,7 +677,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixMapsAndLists()
   {
     string bhl = @"
@@ -758,7 +759,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestValueIsClonedOnceStoredInMap()
   {
     string bhl = @"
@@ -796,7 +797,7 @@ public class TestMaps : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonExistingClass()
   {
     {

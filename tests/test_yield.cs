@@ -1,9 +1,10 @@
 using System;
 using bhl;
+using Xunit;
 
 public class TestYield : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestFuncWithYieldMustBeCoro()
   {
     string bhl = @"
@@ -24,7 +25,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyCoroFuncNotAllowed()
   {
     {
@@ -106,7 +107,7 @@ public class TestYield : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBasicYield()
   {
     string bhl = @"
@@ -123,7 +124,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMethodYield()
   {
     string bhl = @"
@@ -146,7 +147,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMethodBaseYield()
   {
     string bhl = @"
@@ -175,7 +176,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceYield()
   {
     string bhl = @"
@@ -202,7 +203,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceImplentingCoroAsRegularMethod()
   {
     string bhl = @"
@@ -227,7 +228,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceImplentingCoro()
   {
     string bhl = @"
@@ -252,7 +253,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceParentOverride()
   {
     string bhl = @"
@@ -284,7 +285,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceParentOverrideError()
   {
     string bhl = @"
@@ -318,7 +319,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceParentSyncOverrideCoroIsOk()
   {
     string bhl = @"
@@ -350,7 +351,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSuspend()
   {
     string bhl = @"
@@ -381,7 +382,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCoroFuncMustBeCalledWithYield()
   {
     string bhl = @"
@@ -402,7 +403,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCoroMethodMustBeCalledWithYield()
   {
     string bhl = @"
@@ -430,7 +431,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCoroInChainCallIsNotAllowed()
   {
     {
@@ -501,7 +502,7 @@ public class TestYield : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestYieldSeveralTimesAndReturnValue()
   {
     string bhl = @"
@@ -523,7 +524,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestYieldInParal()
   {
     string bhl = @"
@@ -553,7 +554,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncWithYieldWhileMustByCoro()
   {
     string bhl = @"
@@ -574,7 +575,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestYieldWhileInParal()
   {
     string bhl = @"
@@ -607,7 +608,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralYieldWhilesInParal()
   {
     string bhl = @"
@@ -634,7 +635,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestYieldWhileBugInParal()
   {
     string bhl = @"
@@ -663,7 +664,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncWithYieldFuncCallMustByCoro()
   {
     string bhl = @"
@@ -684,7 +685,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrIsSubsetOfCoroPtr()
   {
     string bhl = @"
@@ -701,7 +702,7 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOnlyCoroFuncCanBeYielded()
   {
     string bhl = @"
@@ -724,7 +725,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOnlyCoroPtrCanBeYielded()
   {
     string bhl = @"
@@ -746,7 +747,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCoroFuncPtrIsNotSubsetOfFuncPtr()
   {
     string bhl = @"
@@ -771,7 +772,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestYieldIsForbiddenInDefer()
   {
     {
@@ -841,7 +842,7 @@ public class TestYield : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallNonExistingFunc()
   {
     string bhl = @"
@@ -863,7 +864,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallNonExistingFuncInParal()
   {
     string bhl = @"
@@ -887,7 +888,7 @@ public class TestYield : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWait()
   {
     string bhl = @"

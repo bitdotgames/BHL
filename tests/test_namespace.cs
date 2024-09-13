@@ -4,10 +4,11 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using bhl;
+using Xunit;
 
 public class TestNamespace : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleLink()
   {
     var m = new Module(new Types());
@@ -46,7 +47,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedLink()
   {
     /*
@@ -186,7 +187,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLinkSeveralSimilarNamespaces()
   {
     /*
@@ -314,7 +315,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestMultipleLink()
   {
     /*
@@ -397,7 +398,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestMultipleLink2()
   {
     /*
@@ -512,7 +513,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace()
   {
     /*
@@ -626,7 +627,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace2()
   {
     /*
@@ -725,7 +726,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace3()
   {
     /*
@@ -813,7 +814,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace4()
   {
     /*
@@ -906,7 +907,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLinkConflict()
   {
     /*
@@ -968,7 +969,7 @@ public class TestNamespace : BHL_TestBase
 
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleDecl()
   {
     string bhl = @"
@@ -1000,7 +1001,7 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(foo.Resolve("test") is FuncSymbol);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPartialDecls()
   {
     string bhl = @"
@@ -1040,7 +1041,7 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(bar.Resolve("test") is FuncSymbol);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubNamespaces()
   {
     string bhl = @"
@@ -1096,7 +1097,7 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(bar.Resolve("foo") is Namespace);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubNamespacesShortNotation()
   {
     string bhl = @"
@@ -1152,7 +1153,7 @@ public class TestNamespace : BHL_TestBase
     AssertTrue(bar.Resolve("foo") is Namespace);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubNamespacesMixedWithShortNotationConflict()
   {
     string bhl = @"
@@ -1185,7 +1186,7 @@ public class TestNamespace : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartFuncByPath()
   {
     string bhl = @"
@@ -1209,7 +1210,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyNamespace()
   {
     string bhl = @"
@@ -1225,7 +1226,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallFuncByPath()
   {
     {
@@ -1271,7 +1272,7 @@ public class TestNamespace : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixNativeAndUserland()
   {
     var ts_fn = new Action<Types>((ts) => {
@@ -1307,7 +1308,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixNativeAndUserlandWithCall()
   {
     var ts_fn = new Action<Types>((ts) => {
@@ -1345,7 +1346,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNamespaceAndGlobalVarsFromCompiledModule()
   {
     string bhl = @"
@@ -1382,7 +1383,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   //NOTE: this is quite contraversary
-  [IsTested()]
+  [Fact]
   public void TestPreferLocalVersion()
   {
     string bhl = @"
@@ -1404,7 +1405,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEnum()
   {
     string bhl = @"
@@ -1430,7 +1431,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEnumImported()
   {
     string bhl1 = @"
@@ -1478,7 +1479,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCompilationBugIBarNotFound()
   {
     string bhl = @"
@@ -1507,7 +1508,7 @@ public class TestNamespace : BHL_TestBase
     Compile(bhl);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugPostAssignOperators()
   {
     string bhl = @"
@@ -1528,7 +1529,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugPostIncrement()
   {
     string bhl = @"
@@ -1549,7 +1550,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallGlobalVersion()
   {
     string bhl = @"
@@ -1571,7 +1572,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClasses()
   {
     string bhl = @"
@@ -1605,7 +1606,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedClass()
   {
     string bhl = @"
@@ -1632,7 +1633,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterface()
   {
     string bhl = @"
@@ -1664,7 +1665,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNamespaceVisibilityInLambda()
   {
     string bhl = @"
@@ -1692,7 +1693,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNamespaceVisibilityInLambdaFuncArg()
   {
     string bhl = @"
@@ -1727,7 +1728,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUserFunc()
   {
     string bhl1 = @"
@@ -1762,7 +1763,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserFuncPtr()
   {
     string bhl = @"
@@ -1793,7 +1794,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUserFuncPtr()
   {
     string bhl1 = @"
@@ -1838,7 +1839,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUserClass()
   {
     string bhl1 = @"
@@ -1870,7 +1871,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportAndLocalVisibility()
   {
     string bhl1 = @"
@@ -1912,7 +1913,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportAndRelativeLocalVisibility()
   {
     string bhl1 = @"
@@ -1955,7 +1956,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUserInterface()
   {
     string bhl1 = @"
@@ -1993,7 +1994,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportGlobalObjectVar()
   {
     string bhl1 = @"
@@ -2030,7 +2031,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportSymbolsConflict()
   {
     string bhl1 = @"
@@ -2064,7 +2065,7 @@ public class TestNamespace : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportedSymbolsInGlobalNamespace()
   {
     string bhl1 = @"
@@ -2112,7 +2113,7 @@ public class TestNamespace : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompatibleTypes()
   {
     string bhl = @"
@@ -2146,7 +2147,7 @@ public class TestNamespace : BHL_TestBase
     );
    }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompatibleTypesArrays()
   {
     string bhl = @"
@@ -2180,7 +2181,7 @@ public class TestNamespace : BHL_TestBase
     );
    }
 
-  [IsTested()]
+  [Fact]
   public void TestImportSeveralNestedNamespacesWithSameLastName()
   {
     string bhl1 = @"

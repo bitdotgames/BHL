@@ -3,10 +3,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestStrings : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestCount()
   {
     string bhl = @"
@@ -20,7 +21,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAt()
   {
     string bhl = @"
@@ -34,7 +35,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTraverseString()
   {
     string bhl = @"
@@ -52,7 +53,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIndexOf()
   {
     SubTest(() => {
@@ -93,7 +94,7 @@ public class TestStrings : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStringConcat()
   {
     string bhl = @"
@@ -108,7 +109,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrNewLine()
   {
     string bhl = @"
@@ -123,7 +124,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrNewLine2()
   {
     string bhl = @"
@@ -138,7 +139,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrNewLineEscape()
   {
     string bhl = @"
@@ -153,7 +154,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrNewLineEscape2()
   {
     string bhl = @"
@@ -168,7 +169,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrNewLineEscape3()
   {
     string bhl = @"
@@ -183,7 +184,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrTab()
   {
     string bhl = @"
@@ -198,7 +199,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrTab2()
   {
     string bhl = @"
@@ -213,7 +214,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrTabEscape()
   {
     string bhl = @"
@@ -228,7 +229,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrTabEscape2()
   {
     string bhl = @"
@@ -243,7 +244,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrTabEscape3()
   {
     string bhl = @"
@@ -258,7 +259,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrQuoteEscape()
   {
     string bhl = "func string test() { return \"My name is \\\"Bar\\\", hello\" }";
@@ -268,7 +269,7 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestStrConcat()
   {
     string bhl = @"

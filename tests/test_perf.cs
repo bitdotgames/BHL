@@ -4,10 +4,11 @@ using System.Text;
 using System.Collections.Generic;
 using bhl;
 using bhl.marshall;
+using Xunit;
 
 public class TestPerf : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestFibonacci()
   {
     string bhl = @"
@@ -57,7 +58,7 @@ public class TestPerf : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFibonacciImported()
   {
     string fib1 = @"
@@ -134,7 +135,7 @@ public class TestPerf : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestFibonacciMethodImported()
   {
     string fib1 = @"
@@ -220,7 +221,7 @@ public class TestPerf : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestFibonacciInterfaceImported()
   {
     string fib1 = @"

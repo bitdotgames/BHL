@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestNodes : BHL_TestBase
 {
@@ -51,7 +52,7 @@ public class TestNodes : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNodeSequenceSuccess()
   {
     var t1 = new TestNode();
@@ -100,7 +101,7 @@ public class TestNodes : BHL_TestBase
     AssertEqual(t2.defers, 1);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNodeSequenceStop()
   {
     var t1 = new TestNode();
@@ -146,7 +147,7 @@ public class TestNodes : BHL_TestBase
     AssertEqual(t2.defers, 1);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDecoratorNode()
   {
     var t = new TestNode();
@@ -201,7 +202,7 @@ public class TestNodes : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRunNodeWithSuccess()
   {
     var t = new TestNode();
@@ -231,7 +232,7 @@ public class TestNodes : BHL_TestBase
     AssertEqual(t.last_status, BHS.SUCCESS);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRunNodeWithFailure()
   {
     var t = new TestNode();
@@ -261,7 +262,7 @@ public class TestNodes : BHL_TestBase
     AssertEqual(t.last_status, BHS.FAILURE);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStopNode()
   {
     var t = new TestNode();

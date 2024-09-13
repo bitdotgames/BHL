@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestLambda : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestLambdaUselessStatement()
   {
     string bhl = @"
@@ -29,7 +30,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallInplace()
   {
     string bhl = @"
@@ -77,7 +78,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallLambdaInPlaceArray()
   {
     string bhl = @"
@@ -98,7 +99,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallLambdaInPlaceInvalid()
   {
     string bhl = @"
@@ -120,7 +121,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallLambdaInPlaceInvalid2()
   {
     string bhl = @"
@@ -143,7 +144,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallInFalseCondition()
   {
     string bhl = @"
@@ -169,7 +170,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallInTrueCondition()
   {
     string bhl = @"
@@ -195,7 +196,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallFromSubFunc()
   {
     string bhl = @"
@@ -222,7 +223,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallAsVar()
   {
     string bhl = @"
@@ -245,7 +246,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallAsVarSeveralTimes()
   {
     string bhl = @"
@@ -268,7 +269,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallAsVarWithArgs()
   {
     string bhl = @"
@@ -288,7 +289,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCantHaveArgsWithDefaultValues()
   {
     string bhl = @"
@@ -312,7 +313,7 @@ public class TestLambda : BHL_TestBase
   }
   
   
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallAsVarInFalseCondition()
   {
     string bhl = @"
@@ -339,7 +340,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCallAsVarInTrueCondition()
   {
     string bhl = @"
@@ -366,7 +367,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCapturesVar()
   {
     string bhl = @"
@@ -415,7 +416,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCapturesSeveralVars()
   {
     string bhl = @"
@@ -475,7 +476,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubLambdaCapturesVar()
   {
     string bhl = @"
@@ -538,7 +539,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaChangesVar()
   {
     string bhl = @"
@@ -565,7 +566,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaDoesntChangeCopiedVar()
   {
     string bhl = @"
@@ -592,7 +593,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaChangesSeveralVars()
   {
     string bhl = @"
@@ -622,7 +623,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaNestedNoCalls()
   {
     string bhl = @"
@@ -645,7 +646,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCapturesNested()
   {
     string bhl = @"
@@ -677,7 +678,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaSelfCallAndBindValues()
   {
     string bhl = @"
@@ -700,7 +701,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaSelfCallAndBindValues2()
   {
     string bhl = @"
@@ -731,7 +732,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
@@ -749,7 +750,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleLambdaIncompatibleTypes()
   {
     string bhl = @"
@@ -773,7 +774,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleLambdaIncompatibleTypes2()
   {
     string bhl = @"
@@ -797,7 +798,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnMultipleLambdaViaVars()
   {
     string bhl = @"
@@ -817,7 +818,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrReturningArrLambda()
   {
     string bhl = @"
@@ -842,7 +843,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrReturningArrOfArrLambda()
   {
     string bhl = @"
@@ -868,7 +869,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncPtrSeveralLambdaRunning()
   {
     string bhl = @"
@@ -899,7 +900,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaPassAsVar()
   {
     string bhl = @"
@@ -932,7 +933,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaVarSeveralTimes()
   {
     string bhl = @"
@@ -961,7 +962,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaCaptureVarsHiding()
   {
     string bhl = @"
@@ -998,7 +999,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaLocalVarsConflict()
   {
     string bhl = @"
@@ -1027,7 +1028,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartSeveralLambdas()
   {
     string bhl = @"
@@ -1064,7 +1065,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaSeveralTimes()
   {
     string bhl = @"
@@ -1091,7 +1092,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaCaptureVars()
   {
     string bhl = @"
@@ -1120,7 +1121,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaCaptureVarsNested()
   {
     string bhl = @"
@@ -1155,7 +1156,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaCaptureVarsNested2()
   {
     string bhl = @"
@@ -1195,7 +1196,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaCaptureVars2()
   {
     string bhl = @"
@@ -1249,7 +1250,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyCaptureNotAllowed()
   {
     string bhl = @"
@@ -1272,7 +1273,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCaptureNonExisting()
   {
     string bhl = @"
@@ -1295,7 +1296,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCaptureAlreadyExists()
   {
     string bhl = @"
@@ -1319,7 +1320,7 @@ public class TestLambda : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaCaptureCopyOfLoopVars()
   {
     string bhl = @"
@@ -1345,7 +1346,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCaptureMixCopyAndStrong()
   {
     string bhl = @"
@@ -1391,7 +1392,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaUsesValueByRef()
   {
     string bhl = @"
@@ -1415,7 +1416,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaUsesArrayByRef()
   {
     string bhl = @"
@@ -1439,7 +1440,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaReplacesArrayValueByRef()
   {
     string bhl = @"
@@ -1466,7 +1467,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaReplacesArrayValueByRef2()
   {
     string bhl = @"
@@ -1493,7 +1494,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaReplacesFuncPtrByRef()
   {
     string bhl = @"
@@ -1520,7 +1521,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaReplacesFuncPtrByRef2()
   {
     string bhl = @"
@@ -1547,7 +1548,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaVariableShadowing()
   {
     string bhl = @"

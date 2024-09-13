@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestLocal : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleFunc()
   {
     string bhl = @"
@@ -24,7 +25,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleFuncClash()
   {
     string bhl = @"
@@ -51,7 +52,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalFuncNotImported()
   {
     string file_a = @"
@@ -85,7 +86,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalNamespaceFuncNotImported()
   {
     string file_a = @"
@@ -121,7 +122,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalFuncDontClash()
   {
     string file_a = @"
@@ -151,7 +152,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalFuncPtrDontClash()
   {
     string file_a = @"
@@ -180,7 +181,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalFuncDontClashInDifferentNamespaces()
   {
     string file_a = @"
@@ -214,7 +215,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleFuncClashWithOtherGlobalFunc()
   {
     string file_a = @"
@@ -243,7 +244,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleVar()
   {
     string bhl = @"
@@ -260,7 +261,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleVarsClash()
   {
     string bhl = @"
@@ -280,7 +281,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleVarNotImported()
   {
     string file_a = @"
@@ -314,7 +315,7 @@ public class TestLocal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleVarsDontClash()
   {
     string file_a = @"
@@ -342,7 +343,7 @@ public class TestLocal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLocalModuleVarClashWithOtherGlobalVar()
   {
     string file_a = @"

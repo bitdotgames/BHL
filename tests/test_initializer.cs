@@ -1,10 +1,11 @@
 using System;
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestInitializer : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestJsonInitForUserClass()
   {
     string bhl = @"
@@ -68,7 +69,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonEmptyCtor()
   {
     string bhl = @"
@@ -88,7 +89,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonPartialCtor()
   {
     string bhl = @"
@@ -108,7 +109,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonFullCtor()
   {
     string bhl = @"
@@ -128,7 +129,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonCtorNotExpectedMember()
   {
     string bhl = @"
@@ -154,7 +155,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonCtorBadType()
   {
     string bhl = @"
@@ -180,7 +181,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonExplicitEmptyClass()
   {
     string bhl = @"
@@ -201,7 +202,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonExplicitClass()
   {
     string bhl = @"
@@ -222,7 +223,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonExplicitSubClass()
   {
     string bhl = @"
@@ -244,7 +245,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonExplicitSubClassNotCompatible()
   {
     string bhl = @"
@@ -271,7 +272,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonReturnObject()
   {
     string bhl = @"
@@ -297,7 +298,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestJsonReturnObjectNewLine()
   {
     string bhl = @"
@@ -324,7 +325,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonExplicitNoSuchClass()
   {
     string bhl = @"
@@ -347,7 +348,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrInitForUserClass()
   {
     string bhl = @"
@@ -419,7 +420,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrInitForUserClassMultiple()
   {
     string bhl = @"
@@ -450,7 +451,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonEmptyArrCtor()
   {
     string bhl = @"
@@ -466,7 +467,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrCtor()
   {
     string bhl = @"
@@ -482,7 +483,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrComplexCtor()
   {
     string bhl = @"
@@ -502,7 +503,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonDefaultEmptyArg()
   {
     string bhl = @"
@@ -526,7 +527,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonDefaultEmptyArgWithOtherDefaultArgs()
   {
     string bhl = @"
@@ -550,7 +551,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonDefaultArgWithOtherDefaultArgs()
   {
     string bhl = @"
@@ -574,7 +575,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonDefaultArgIncompatibleType()
   {
     string bhl = @"
@@ -605,7 +606,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArgTypeMismatch()
   {
     string bhl = @"
@@ -632,7 +633,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonDefaultArg()
   {
     string bhl = @"
@@ -656,7 +657,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrDefaultArg()
   {
     string bhl = @"
@@ -680,7 +681,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrEmptyDefaultArg()
   {
     string bhl = @"
@@ -704,7 +705,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonObjReAssign()
   {
     string bhl = @"
@@ -725,7 +726,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayReAssign()
   {
     string bhl = @"
@@ -746,7 +747,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayExplicit()
   {
     string bhl = @"
@@ -768,7 +769,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayInitializer()
   {
     string bhl = @"
@@ -785,7 +786,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestComplexJsonArrayInitializer()
   {
     string bhl = @"
@@ -807,7 +808,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayNewLineNotAllowed()
   {
     string bhl = @"
@@ -829,7 +830,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayReturn()
   {
     string bhl = @"
@@ -856,7 +857,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayExplicitAsArg()
   {
     string bhl = @"
@@ -882,7 +883,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayExplicitSubClass()
   {
     string bhl = @"
@@ -904,7 +905,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonArrayExplicitSubClassNotCompatible()
   {
     string bhl = @"
@@ -932,7 +933,7 @@ public class TestInitializer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonMasterStructWithClass()
   {
     string bhl = @"
@@ -956,7 +957,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonMasterStructWithStruct()
   {
     string bhl = @"
@@ -980,7 +981,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonFuncArg()
   {
     string bhl = @"
@@ -1004,7 +1005,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonFuncArgChainCall()
   {
     string bhl = @"
@@ -1027,7 +1028,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
@@ -1092,7 +1093,7 @@ public class TestInitializer : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestJsonMapInitializer()
   {
     string bhl = @"

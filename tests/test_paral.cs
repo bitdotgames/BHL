@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestParal : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestBasicParal()
   {
     string bhl = @"
@@ -55,7 +56,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBasicParalAutoSeqWrap()
   {
     string bhl = @"
@@ -106,7 +107,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubParalAutoSeqWrap()
   {
     string bhl = @"
@@ -159,7 +160,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubParalAutoSeqWrapLambda()
   {
     string bhl = @"
@@ -220,7 +221,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalBreak()
   {
     string bhl = @"
@@ -251,7 +252,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllBreak()
   {
     string bhl = @"
@@ -282,7 +283,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalReuse()
   {
     string bhl = @"
@@ -319,7 +320,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalWithSubFuncs()
   {
     string bhl = @"
@@ -354,7 +355,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalWithSubFuncsAndAutoSeqWrap()
   {
     string bhl = @"
@@ -385,7 +386,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalForComplexStatement()
   {
     string bhl = @"
@@ -418,7 +419,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllRunning()
   {
     string bhl = @"
@@ -444,7 +445,7 @@ public class TestParal : BHL_TestBase
       AssertTrue(vm.Tick());
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllFinished()
   {
     string bhl = @"
@@ -474,7 +475,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllForComplexStatement()
   {
     string bhl = @"
@@ -507,7 +508,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllForNestedSeqs()
   {
     string bhl = @"
@@ -550,7 +551,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalFailure()
   {
     string bhl = @"
@@ -595,7 +596,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllFailure()
   {
     string bhl = @"
@@ -640,7 +641,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalReturn()
   {
     string bhl = @"
@@ -662,7 +663,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalReturnFromSubFunc()
   {
     string bhl = @"
@@ -688,7 +689,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalNestedReturnFromSubFuncWithSeq()
   {
     string bhl = @"
@@ -717,7 +718,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalNestedReturnFromSubFuncWithParalAllSeq()
   {
     string bhl = @"
@@ -750,7 +751,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalNestedReturn()
   {
     string bhl = @"
@@ -777,7 +778,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllReturn()
   {
     string bhl = @"
@@ -799,7 +800,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllYieldReturn()
   {
     string bhl = @"
@@ -819,7 +820,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestParalAllNestedReturn()
   {
     string bhl = @"
@@ -846,7 +847,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllNestedParalInFunc()
   {
     string bhl = @"
@@ -878,7 +879,7 @@ public class TestParal : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyParalIsNotAllowed()
   {
     string bhl = @"
@@ -900,7 +901,7 @@ public class TestParal : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEmptyParalAllIsNotAllowed()
   {
     string bhl = @"

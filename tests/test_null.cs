@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestNull : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestStructCanBeNull()
   {
     string bhl = @"
@@ -26,7 +27,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullWithEncodedStruct()
   {
     string bhl = @"
@@ -66,7 +67,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullPassedAsNullObj()
   {
     string bhl = @"
@@ -94,7 +95,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullPassedFromAbove()
   {
     string bhl = @"
@@ -122,7 +123,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSetNullObjFromUserBinding()
   {
     string bhl = @"
@@ -148,7 +149,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullIncompatible()
   {
     string bhl = @"
@@ -171,7 +172,7 @@ public class TestNull : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullArray()
   {
     string bhl = @"
@@ -211,7 +212,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullArrayByDefault()
   {
     string bhl = @"
@@ -237,7 +238,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullFuncPtr()
   {
     string bhl = @"
@@ -272,7 +273,7 @@ public class TestNull : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullFuncPtrAsDefaultFuncArg()
   {
     string bhl = @"

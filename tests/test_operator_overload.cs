@@ -1,10 +1,11 @@
 using System;
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestOperatorOverload : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestEqualityOverloadedForNativeClassAndNull()
   {
     string bhl = @"
@@ -58,7 +59,7 @@ public class TestOperatorOverload : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCustomOperatorOverloadInvalidForNativeClass()
   {
     {
@@ -108,7 +109,7 @@ public class TestOperatorOverload : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
   {
     string bhl = @"
@@ -141,7 +142,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
   
-  [IsTested()]
+  [Fact]
   public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -170,7 +171,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -199,7 +200,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -228,7 +229,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDivNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -257,7 +258,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGtNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -286,7 +287,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGteNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -315,7 +316,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLtNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -344,7 +345,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLteNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -373,7 +374,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUnaryMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -401,7 +402,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBitAndNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -430,7 +431,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBitOrNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -459,7 +460,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLogicalAndNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -488,7 +489,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLogicalOrNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -517,7 +518,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUnaryNotNotOverloadedForNativeClass()
   {
     string bhl = @"
@@ -545,7 +546,7 @@ public class TestOperatorOverload : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPlusOverloadedForNativeClass()
   {
     string bhl = @"
@@ -591,7 +592,7 @@ public class TestOperatorOverload : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultOverloadedForNativeClass()
   {
     string bhl = @"
@@ -636,7 +637,7 @@ public class TestOperatorOverload : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOverloadedBinOpsPriorityForNativeClass()
   {
     string bhl = @"
@@ -706,7 +707,7 @@ public class TestOperatorOverload : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEqualityOverloadedForNativeClass()
   {
     string bhl = @"

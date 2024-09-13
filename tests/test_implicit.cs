@@ -3,10 +3,11 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestImplicit : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleCase()
   {
     string bhl = @"
@@ -21,7 +22,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiAssignment()
   {
     string bhl = @"
@@ -39,7 +40,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMultiAssignmentMixed()
   {
     string bhl = @"
@@ -57,7 +58,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVoidError()
   {
     string bhl = @"
@@ -80,7 +81,7 @@ public class TestImplicit : BHL_TestBase
      );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncResult()
   {
     string bhl = @"
@@ -100,7 +101,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachArray()
   {
     string bhl = @"
@@ -119,7 +120,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachNotArray()
   {
     string bhl = @"
@@ -141,7 +142,7 @@ public class TestImplicit : BHL_TestBase
      );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachNonTypedJson()
   {
     string bhl = @"
@@ -163,7 +164,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachMap()
   {
     SubTest("both var", () => {
@@ -242,7 +243,7 @@ public class TestImplicit : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestForeachMapNonTypedJson()
   {
     string bhl = @"
@@ -264,7 +265,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNamespaceClass()
   {
     string bhl = @"
@@ -288,7 +289,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNamespaceClassJsonInit()
   {
     string bhl = @"
@@ -311,7 +312,7 @@ public class TestImplicit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullIsNotAllowed()
   {
     string bhl = @"
@@ -332,7 +333,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarWithoutAssignExpressionIsNotAllowed()
   {
     string bhl = @"
@@ -353,7 +354,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarIsAlreadyDefined()
   {
     string bhl = @"
@@ -373,7 +374,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIcompatibleTypes()
   {
     string bhl = @"
@@ -396,7 +397,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGlobal()
   {
     string bhl = @"
@@ -418,7 +419,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFuncSignatureMemberNotAllowed()
   {
     {
@@ -460,7 +461,7 @@ public class TestImplicit : BHL_TestBase
      }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarArrayNotAllowed()
   {
     string bhl = @"
@@ -481,7 +482,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVarTypeMemberNotAllowed()
   {
     string bhl = @"
@@ -502,7 +503,7 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallNonExistingFunc()
   {
     string bhl = @"

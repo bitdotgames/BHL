@@ -1,10 +1,10 @@
 using System;
-using System.Text;
 using bhl;
+using Xunit;
 
 public class TestAny : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestAnyAndNullConstant()
   {
     string bhl = @"
@@ -40,7 +40,7 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAnyNullEquality()
   {
     string bhl = @"
@@ -58,7 +58,7 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAnyNullAssign()
   {
     string bhl = @"
@@ -76,7 +76,7 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastClassToAny()
   {
     string bhl = @"
@@ -102,7 +102,7 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDynamicArrayOfAny()
   {
     string bhl = @"

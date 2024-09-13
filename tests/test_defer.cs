@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestDefer : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestBasicDefer()
   {
     string bhl = @"
@@ -48,7 +49,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferAccessVar()
   {
     string bhl = @"
@@ -78,7 +79,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferCallFuncWithSeveralArgs()
   {
     string bhl = @"
@@ -117,7 +118,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferAccessVarInCoroutine()
   {
     string bhl = @"
@@ -167,7 +168,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferAccessVarInCoroutineInterrupted()
   {
     string bhl = @"
@@ -214,7 +215,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferScopes()
   {
     string bhl = @"
@@ -251,7 +252,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferNestedNotAllowed()
   {
     string bhl = @"
@@ -289,7 +290,7 @@ public class TestDefer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferNestedSubCall()
   {
     string bhl = @"
@@ -322,7 +323,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferAndReturn()
   {
     string bhl = @"
@@ -361,7 +362,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferOnFailure()
   {
     string bhl = @"
@@ -404,7 +405,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnInDeferIsForbidden()
   {
     string bhl = @"
@@ -429,7 +430,7 @@ public class TestDefer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnInDeferIsOkInLambda()
   {
     string bhl = @"
@@ -447,7 +448,7 @@ public class TestDefer : BHL_TestBase
     Compile(bhl);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubCallsInDefer()
   {
     string bhl = @"
@@ -477,7 +478,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralDefers()
   {
     string bhl = @"
@@ -507,7 +508,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubFuncDefer()
   {
     string bhl = @"
@@ -552,7 +553,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubSubFuncDefer()
   {
     string bhl = @"
@@ -591,7 +592,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSequenceDefer()
   {
     string bhl = @"
@@ -621,7 +622,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSequenceDeferAfterSubCall()
   {
     string bhl = @"
@@ -658,7 +659,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfTrueDefer()
   {
     string bhl = @"
@@ -693,7 +694,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfElseDefer()
   {
     string bhl = @"
@@ -729,7 +730,7 @@ public class TestDefer : BHL_TestBase
   }
 
 
-  [IsTested()]
+  [Fact]
   public void TestBugWithStartingFiberFromDeferInterruptedParal()
   {
     string bhl = @"
@@ -776,7 +777,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugWithStartingFiberFromDeferInterruptedParalAndRefs()
   {
     string bhl = @"
@@ -822,7 +823,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadBreakInDefer()
   {
     string bhl = @"
@@ -849,7 +850,7 @@ public class TestDefer : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBreakInLoopInDefer()
   {
     string bhl = @"
@@ -877,7 +878,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestContinueInLoopInDefer()
   {
     string bhl = @"
@@ -909,7 +910,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeqFailureWithEmptyDefer()
   {
     string bhl = @"
@@ -935,7 +936,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileDefer()
   {
     string bhl = @"
@@ -968,7 +969,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferInInfiniteLoop()
   {
     string bhl = @"
@@ -1006,7 +1007,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferInInfiniteWithBreak()
   {
     string bhl = @"
@@ -1041,7 +1042,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWhileBreakDefer()
   {
     string bhl = @"
@@ -1077,7 +1078,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalDefer()
   {
     string bhl = @"
@@ -1108,7 +1109,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferAccessVarInParal()
   {
     string bhl = @"
@@ -1140,7 +1141,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDeferInSubParalFuncCall()
   {
     string bhl = @"
@@ -1186,7 +1187,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
@@ -1222,7 +1223,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalWithMultiSeqDefers()
   {
     string bhl = @"
@@ -1274,7 +1275,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllDefer()
   {
     string bhl = @"
@@ -1305,7 +1306,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllWithYieldDefer()
   {
     string bhl = @"
@@ -1342,7 +1343,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParalAllFailureWithMultiSeqDefers()
   {
     string bhl = @"
@@ -1397,7 +1398,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestLambdaDefer()
   {
     string bhl = @"
@@ -1429,7 +1430,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStopFiberExternallyWithProperDefers()
   {
     string bhl = @"
@@ -1481,7 +1482,7 @@ public class TestDefer : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStopFiberExternallyWithProperDefersInParalsInModules()
   {
     string bhl2 = @"

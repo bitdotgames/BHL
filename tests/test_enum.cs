@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestEnum : BHL_TestBase
 {
@@ -13,7 +14,7 @@ public class TestEnum : BHL_TestBase
     en.Define(new EnumItemSymbol(new Origin(), "SPAWNED2", 20));
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindEnum()
   {
     string bhl = @"
@@ -40,7 +41,7 @@ public class TestEnum : BHL_TestBase
     Bar = 2
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindEnumNative()
   {
     string bhl = @"
@@ -65,7 +66,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEqEnum()
   {
     string bhl = @"
@@ -86,7 +87,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotEqEnum()
   {
     string bhl = @"
@@ -107,7 +108,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestEnumArray()
   {
     string bhl = @"
@@ -135,7 +136,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassEnumToNativeFunc()
   {
     string bhl = @"
@@ -168,7 +169,7 @@ public class TestEnum : BHL_TestBase
     AssertTrue(res);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnum()
   {
     string bhl = @"
@@ -192,7 +193,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserNegativeEnum()
   {
     string bhl = @"
@@ -216,7 +217,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumOrderIrrelevant()
   {
     string bhl = @"
@@ -243,7 +244,7 @@ public class TestEnum : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumWithDuplicateKey()
   {
     string bhl = @"
@@ -268,7 +269,7 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumWithDuplicateValue()
   {
     string bhl = @"
@@ -293,7 +294,7 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumConflictsWithAnotherEnum()
   {
     string bhl = @"
@@ -322,7 +323,7 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumConflictsWithClass()
   {
     string bhl = @"
@@ -350,7 +351,7 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitCastEnumToInt()
   {
     SubTest(() => {
@@ -414,7 +415,7 @@ public class TestEnum : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitCastFromIntToEnumIsNotAllowed()
   {
     string bhl = @"
@@ -440,7 +441,7 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitCastFromFloatToEnumIsNotAllowed()
   {
     string bhl = @"

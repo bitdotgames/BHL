@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestPreproc : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestIfMissingDefine()
   {
     string bhl = @"
@@ -23,7 +24,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfDefineExists()
   {
     string bhl = @"
@@ -41,7 +42,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfNotMissingDefine()
   {
     string bhl = @"
@@ -59,7 +60,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIfNotDefineExists()
   {
     string bhl = @"
@@ -77,7 +78,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestElseMissingDefine()
   {
     string bhl = @"
@@ -97,7 +98,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestElseDefineExists()
   {
     string bhl = @"
@@ -117,7 +118,7 @@ public class TestPreproc : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDanglingEndif()
   {
     string bhl = @"
@@ -139,7 +140,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoubleElse()
   {
     string bhl = @"
@@ -164,7 +165,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotClosedIf()
   {
     string bhl = @"
@@ -186,7 +187,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestWeirdIf()
   {
     string bhl = @"
@@ -209,7 +210,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestErrorReportingFromParser()
   {
     string bhl = @"
@@ -234,7 +235,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestErrorReportingFromParser2()
   {
     string bhl = @"
@@ -258,7 +259,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestErrorReportingPreserveLines()
   {
     string bhl = @"
@@ -287,7 +288,7 @@ public class TestPreproc : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUtf8SymbolsCopiedProperly()
   {
     string bhl = @"
@@ -305,7 +306,7 @@ func test()
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUtf8SymbolsRemovedProperly()
   {
     string bhl = @"
@@ -323,7 +324,7 @@ func test()
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCommentedPreprocessorDirective()
   {
     string bhl = @"
@@ -341,7 +342,7 @@ func bool test()
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSharpSymbolInComments()
   {
     string bhl = @"

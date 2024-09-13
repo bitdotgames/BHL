@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestClass : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestEmptyUserClass()
   {
     {
@@ -62,7 +63,7 @@ public class TestClass : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassBindConflict()
   {
     string bhl = @"
@@ -91,7 +92,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallFreeFuncFromMethodWithSameName()
   {
     string bhl1 = @"
@@ -130,7 +131,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallFreeFuncFromStaticMethodWithSameName()
   {
     string bhl1 = @"
@@ -168,7 +169,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralEmptyUserClasses()
   {
     string bhl = @"
@@ -191,7 +192,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
@@ -210,7 +211,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithSimpleMembers()
   {
     string bhl = @"
@@ -279,7 +280,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMemberOperations()
   {
     string bhl = @"
@@ -301,7 +302,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserSeveralClassMembersOperations()
   {
     string bhl = @"
@@ -329,7 +330,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindNativeChildClass()
   {
     string bhl = @"
@@ -354,7 +355,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeChildClassCallParentMethod()
   {
     string bhl = @"
@@ -378,7 +379,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeChildClassCallOwnMethod()
   {
     string bhl = @"
@@ -403,7 +404,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedMembersAccess()
   {
     string bhl = @"
@@ -452,7 +453,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCtorNotAllowed()
   {
     string bhl = @"
@@ -484,7 +485,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestJsonCtorNotAllowed()
   {
     string bhl = @"
@@ -516,7 +517,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetFieldOperationIsNotAllowed()
   {
     string bhl = @"
@@ -561,7 +562,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSetFieldOperationIsNotAllowed()
   {
     string bhl = @"
@@ -607,7 +608,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnNativeInstance()
   {
     string bhl = @"
@@ -635,7 +636,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUserClass()
   {
     string bhl1 = @"
@@ -676,7 +677,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportClassMoreComplex()
   {
     string bhl1 = @"
@@ -721,7 +722,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportClassConflict()
   {
     string bhl1 = @"
@@ -752,7 +753,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInit()
   {
     string bhl = @"
@@ -775,7 +776,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInitBool()
   {
     string bhl = @"
@@ -796,7 +797,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithArr()
   {
     string bhl = @"
@@ -817,7 +818,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInitArr()
   {
     string bhl = @"
@@ -838,7 +839,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayOfNonExistingClass()
   {
     string bhl = @"
@@ -864,7 +865,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassArrayClear()
   {
     string bhl = @"
@@ -887,7 +888,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithFuncPtr()
   {
     string bhl = @"
@@ -915,7 +916,7 @@ public class TestClass : BHL_TestBase
   }
 
   //TODO:
-  //[IsTested()]
+  //[Fact]
   public void TestSelfReferenceLeak()
   {
     SubTest(() => {
@@ -938,7 +939,7 @@ public class TestClass : BHL_TestBase
   }
 
   //TODO:
-  //[IsTested()]
+  //[Fact]
   public void TestFuncPtrAccessThisMethodLeak()
   {
     SubTest(() => {
@@ -966,7 +967,7 @@ public class TestClass : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInitFuncPtr()
   {
     string bhl = @"
@@ -987,7 +988,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithFuncPtrsArray()
   {
     string bhl = @"
@@ -1020,7 +1021,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithFuncPtrsArrayCleanArgsStack()
   {
     string bhl = @"
@@ -1063,7 +1064,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGettingMethodPtrsNotAllowedYet()
   {
     string bhl = @"
@@ -1092,7 +1093,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodPtrs()
   {
     string bhl = @"
@@ -1116,7 +1117,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAssigningMethodsNotAllowed()
   {
     string bhl = @"
@@ -1145,7 +1146,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInitEnum()
   {
     string bhl = @"
@@ -1171,7 +1172,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassWithAnotherUserClassMember()
   {
     string bhl = @"
@@ -1196,7 +1197,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassDefaultInitStringConcat()
   {
     string bhl = @"
@@ -1218,7 +1219,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassAny()
   {
     string bhl = @"
@@ -1238,7 +1239,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassAnyCastBack()
   {
     string bhl = @"
@@ -1259,7 +1260,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMethod()
   {
     string bhl = @"
@@ -1310,7 +1311,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralUserClassMethods()
   {
     string bhl = @"
@@ -1345,7 +1346,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMethodCallMemberMethod()
   {
     string bhl = @"
@@ -1380,7 +1381,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestThisInLambda()
   {
     string bhl = @"
@@ -1408,7 +1409,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBaseNotAllowedInRootClass()
   {
     string bhl = @"
@@ -1434,7 +1435,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMemberNotFoundInBaseClass()
   {
     string bhl = @"
@@ -1463,7 +1464,7 @@ public class TestClass : BHL_TestBase
   }
 
 
-  [IsTested()]
+  [Fact]
   public void TestBaseKeywordIsReserved()
   {
     string bhl = @"
@@ -1490,7 +1491,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArgToClassMethod()
   {
     string bhl = @"
@@ -1518,7 +1519,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArgToClassMethodFromAnotherMethod()
   {
     string bhl = @"
@@ -1543,7 +1544,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDefaultArgValueInMethod()
   {
     string bhl = @"
@@ -1571,7 +1572,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDefaultArgValueInMethod2()
   {
     string bhl = @"
@@ -1599,7 +1600,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMethodNamedLikeClass()
   {
     string bhl = @"
@@ -1624,7 +1625,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMethodLocalVariableNotDeclared()
   {
     string bhl = @"
@@ -1652,7 +1653,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassMethodLocalVarAndAttribute()
   {
     string bhl = @"
@@ -1680,7 +1681,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildAttributes()
   {
     string bhl = @"
@@ -1708,7 +1709,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildAttributeConflict()
   {
     string bhl = @"
@@ -1735,7 +1736,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonStaticFieldAccessAsStaticNotAllowed()
   {
     string bhl = @"
@@ -1760,7 +1761,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticFieldAccessAsNonStaticNotAllowed()
   {
     string bhl = @"
@@ -1786,7 +1787,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMethodCallsStaticFieldWithoutPrefix()
   {
     string bhl = @"
@@ -1812,7 +1813,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodCallsStaticFieldWithoutPrefix()
   {
     string bhl = @"
@@ -1837,7 +1838,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildClassMethod()
   {
     string bhl = @"
@@ -1879,7 +1880,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserSubChildClassMethod()
   {
     string bhl = @"
@@ -1923,7 +1924,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildClassMethodAccessesParent()
   {
     string bhl = @"
@@ -1968,7 +1969,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildClassMethodAccessesParentViaBase()
   {
     string bhl = @"
@@ -2013,7 +2014,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassAndLocalVariableOwnership()
   {
     string bhl = @"
@@ -2048,7 +2049,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildClassMethodsOrderIrrelevant()
   {
     string bhl = @"
@@ -2099,7 +2100,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserSubChildClassMethodAccessesParent()
   {
     string bhl = @"
@@ -2147,7 +2148,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserChildClassMethodAlreadyDefined()
   {
     string bhl = @"
@@ -2177,7 +2178,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayOfUserClasses()
   {
     string bhl = @"
@@ -2200,7 +2201,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassCast()
   {
     string bhl = @"
@@ -2223,7 +2224,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassInlineCast()
   {
     string bhl = @"
@@ -2245,7 +2246,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassInlineCastArr()
   {
     string bhl = @"
@@ -2267,7 +2268,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassInlineCastArr2()
   {
     string bhl = @"
@@ -2289,7 +2290,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClass()
   {
     string bhl = @"
@@ -2313,7 +2314,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassOrderIrrelevant()
   {
     string bhl = @"
@@ -2338,7 +2339,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassDowncast()
   {
     string bhl = @"
@@ -2365,7 +2366,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassUpcast()
   {
     string bhl = @"
@@ -2393,7 +2394,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassDefaultInit()
   {
     string bhl = @"
@@ -2419,7 +2420,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpUserClassReadDefaultField()
   {
     string bhl = @"
@@ -2439,7 +2440,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpUserClassReadField()
   {
     string bhl = @"
@@ -2459,7 +2460,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpUserClassWriteFieldAllowed()
   {
     string bhl = @"
@@ -2479,7 +2480,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpNativeClassCallMethod()
   {
     string bhl = @"
@@ -2502,7 +2503,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassAlreadyDefinedMember()
   {
     string bhl = @"
@@ -2535,7 +2536,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestChildUserClassOfNativeClassIsForbidden()
   {
     string bhl = @"
@@ -2562,7 +2563,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassNotAllowedToContainThisMember()
   {
     string bhl = @"
@@ -2585,7 +2586,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserClassContainThisMethodNotAllowed()
   {
     string bhl = @"
@@ -2612,7 +2613,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindNativeClass()
   {
     string bhl = @"
@@ -2651,7 +2652,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassWithSimpleMembers()
   {
     string bhl = @"
@@ -2716,7 +2717,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassAttributesAccess()
   {
     string bhl = @"
@@ -2740,7 +2741,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassCallMember()
   {
     string bhl = @"
@@ -2763,7 +2764,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeAttributeIsNotAFunction()
   {
     string bhl = @"
@@ -2796,7 +2797,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassTypeRefNotFound()
   {
     string bhl = @"
@@ -2831,7 +2832,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullWithClassInstance()
   {
     string bhl = @"
@@ -2878,7 +2879,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallImportedMethodFromLocalMethod()
   {
     string bhl1 = @"
@@ -2915,7 +2916,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallImportedMemberMethodFromMethod()
   {
     string bhl1 = @"
@@ -2967,7 +2968,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallImportedVirtualMemberMethodFromMethod()
   {
     string bhl1 = @"
@@ -3019,7 +3020,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBasicVirtualMethodsSupport()
   {
     string bhl = @"
@@ -3093,7 +3094,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVirtualMethodsChecks()
   {
     {
@@ -3241,7 +3242,7 @@ public class TestClass : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVirtualOverrideIn3dChild()
   {
     string bhl = @"
@@ -3316,7 +3317,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVirtualMethodsSupportBaseCall()
   {
     string bhl = @"
@@ -3358,7 +3359,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsSupport()
   {
     string bhl1 = @"
@@ -3426,7 +3427,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsSupportFromCachedModule()
   {
     string bhl_1 = @"
@@ -3524,7 +3525,7 @@ public class TestClass : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsSupportFromCachedModule2()
   {
     string bhl_1 = @"
@@ -3624,7 +3625,7 @@ public class TestClass : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportedClassStaticMethodsSupportFromCachedModule()
   {
     string bhl_1 = @"
@@ -3677,7 +3678,7 @@ public class TestClass : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsSupportFromRootNamespace()
   {
     string bhl1 = @"
@@ -3735,7 +3736,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsSupportInADifferentNamespace()
   {
     string bhl1 = @"
@@ -3797,7 +3798,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestVirtualCoroutineSupport()
   {
     string bhl = @"
@@ -3874,7 +3875,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInvalidFuncAttrubutes()
   {
     string bhl = @"
@@ -3895,7 +3896,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportedClassVirtualMethodsOrderIsIrrelevant()
   {
     string bhl1 = @"
@@ -3937,7 +3938,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixInterfaceWithVirtualMethod()
   {
     string bhl = @"
@@ -3968,7 +3969,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixInterfaceWithVirtualMethodAndCasting()
   {
     string bhl = @"
@@ -4125,7 +4126,7 @@ public class TestClass : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeVirtualMethodsSupport()
   {
     string bhl = @"
@@ -4159,7 +4160,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNestedClass()
   {
     string bhl = @"
@@ -4185,7 +4186,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedClassIsAvailableWithoutPrefixInMasterMethod()
   {
     string bhl = @"
@@ -4213,7 +4214,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNestedClassMethods()
   {
     string bhl = @"
@@ -4245,7 +4246,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSubNestedClassMethods()
   {
     string bhl = @"
@@ -4284,7 +4285,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNestedEnum()
   {
     string bhl = @"
@@ -4314,7 +4315,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleNestedInterface()
   {
     string bhl = @"
@@ -4349,7 +4350,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleStaticMethod()
   {
     string bhl = @"
@@ -4370,7 +4371,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodCallsAnotherStaticMethodWithoutPrefix()
   {
     string bhl = @"
@@ -4395,7 +4396,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMethodCallsStaticMethodWithoutPrefix()
   {
     string bhl = @"
@@ -4421,7 +4422,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodCallsSimilarWithMethodFreeFunc()
   {
     string bhl = @"
@@ -4450,7 +4451,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleStaticMethodWithArgs()
   {
     string bhl = @"
@@ -4471,7 +4472,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleStaticMethodMixed()
   {
     string bhl = @"
@@ -4498,7 +4499,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodImported()
   {
     string bhl1 = @"
@@ -4538,7 +4539,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodCantBeCalledOnInstance()
   {
     string bhl = @"
@@ -4567,7 +4568,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInstanceMethodCantBeCalledAsStatic()
   {
     string bhl = @"
@@ -4595,7 +4596,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticMethodNoThisAllowed()
   {
     string bhl = @"
@@ -4626,7 +4627,7 @@ public class TestClass : BHL_TestBase
     public static int static_foo(int n) { return n; }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassStaticMethod()
   {
     string bhl = @"
@@ -4663,7 +4664,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleStaticField()
   {
     string bhl = @"
@@ -4684,7 +4685,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticFieldInitNotAllowed()
   {
     string bhl = @"
@@ -4711,7 +4712,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonCoroMemberCalledInYield()
   {
     string bhl = @"
@@ -4736,7 +4737,7 @@ public class TestClass : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticFieldImported()
   {
     string bhl1 = @"
@@ -4767,7 +4768,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStaticFieldImportedMixWithGlobalVars()
   {
     string bhl0 = @"
@@ -4811,7 +4812,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeStaticField()
   {
     string bhl = @"
@@ -4860,7 +4861,7 @@ public class TestClass : BHL_TestBase
     public int c;
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNestedNativeClassesIrrelevantOrder()
   {
     var ts_fn = new Action<Types>((ts) => {
@@ -5022,7 +5023,7 @@ public class TestClass : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTypoArgWithClassType()
   {
     string bhl = @"

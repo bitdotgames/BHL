@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using bhl;
+using Xunit;
 
 public class TestImport : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleImport()
   {
     string bhl1 = @"
@@ -89,7 +90,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadImport()
   {
     string bhl1 = @"
@@ -116,7 +117,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadImportNotInSourceFiles()
   {
     string bhl1 = @"
@@ -150,7 +151,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfImportIsIgnored()
   {
     string bhl1 = @"
@@ -166,7 +167,7 @@ public class TestImport : BHL_TestBase
     CompileFiles(files);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoubleImportError()
   {
     string file_a = @"
@@ -196,7 +197,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncrementalBuildOfChangedFiles()
   {
     string file_unit = @"
@@ -263,7 +264,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncrementalBuildOfChangedFilesWithIntermediateFile()
   {
     string file_unit = @"
@@ -334,7 +335,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
   {
     string file_unit = @"
@@ -418,7 +419,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncrementalBuildOfChangedFilesWithChangedImportedDependency()
   {
     string file_unit = @"
@@ -487,7 +488,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncrementalBuildOfChangedFilesWithGlobalVars()
   {
     string file_unit = @"
@@ -557,7 +558,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportEnum()
   {
     string bhl1 = @"
@@ -594,7 +595,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportEnumConflict()
   {
     string bhl1 = @"
@@ -629,7 +630,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportReadWriteGlobalVar()
   {
     string bhl1 = @"
@@ -658,7 +659,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportReadWriteSeveralGlobalVars()
   {
     string bhl1 = @"
@@ -688,7 +689,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportGlobalObjectVar()
   {
     string bhl1 = @"
@@ -727,7 +728,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportGlobalObjectVarWithDepCycles()
   {
     string main_bhl = @"
@@ -790,7 +791,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportGlobalVarConflict()
   {
     string bhl1 = @"
@@ -821,7 +822,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportMixed()
   {
     string bhl1 = @"
@@ -865,7 +866,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportWithCycles()
   {
     string bhl1 = @"
@@ -908,7 +909,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportWithSemicolon()
   {
     string bhl1 = @"
@@ -950,7 +951,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportConflict()
   {
     string bhl1 = @"
@@ -990,7 +991,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportInvalidateCachesAfterChange()
   {
     string file_unit = @"
@@ -1043,7 +1044,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSearchIncludePath()
   {
     string file_unit = @"
@@ -1083,7 +1084,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportTryIncludePathWithSlash()
   {
     string file_unit = @"
@@ -1117,7 +1118,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportTryIncludePathNoInitialSlash()
   {
     string file_unit = @"
@@ -1151,7 +1152,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUseRelativePath()
   {
     string file_unit = @"
@@ -1187,7 +1188,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMistakenlyImportedBy3dParty()
   {
     string file_unit = @"
@@ -1235,7 +1236,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCommentedImportsIgnored()
   {
     string file_unit = @"
@@ -1268,7 +1269,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCommentedImportError()
   {
     string file_unit = @"
@@ -1303,7 +1304,7 @@ public class TestImport : BHL_TestBase
 
   }
 
-  [IsTested()]
+  [Fact]
   public void TestModuleNamesCollision()
   {
     string file_test1 = @"
@@ -1337,7 +1338,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUseGlobalVarFromAnotherModuleAfterIncrementalBuild()
   {
     string file_a = @"
@@ -1373,7 +1374,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImportUseSrcDirsWithIncPath()
   {
     string file_unit = @"
@@ -1409,7 +1410,7 @@ public class TestImport : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportFuncPtrs()
   {
     string bhl1 = @"
@@ -1478,7 +1479,7 @@ public class TestImport : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportNativeModulesFromCachedModule()
   {
     string bhl1 = @"
@@ -1526,7 +1527,7 @@ public class TestImport : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestImportInheritedClassFromCachedModule()
   {
     string bhl1 = @"
@@ -1583,7 +1584,7 @@ public class TestImport : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug()
   {
     string file_foo = @"
@@ -1641,7 +1642,7 @@ public class TestImport : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug2()
   {
     string file_foo = @"

@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using bhl;
+using Xunit;
 
 public class TestInterface : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestEmptyUserInterface()
   {
     {
@@ -40,7 +41,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterfaceWithMethod()
   {
     string bhl = @"
@@ -60,7 +61,7 @@ public class TestInterface : BHL_TestBase
     AssertEqual(Types.Void, hey.ret_type.Get());
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterfaceWithSeveralMethods()
   {
     string bhl = @"
@@ -94,7 +95,7 @@ public class TestInterface : BHL_TestBase
     AssertEqual(Types.Int, tuple[1].Get());
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterfaceInheritanceIrrelevantOrder()
   {
     string bhl = @"
@@ -154,7 +155,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterfaceDeepInheritance()
   {
     string bhl = @"
@@ -208,7 +209,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserInterfaceMethodDefaultValuesNotAllowed()
   {
     string bhl = @"
@@ -229,7 +230,7 @@ public class TestInterface : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestClassDoesntImplementInterface()
   {
     {
@@ -326,7 +327,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoubleImplementationIsNotAllowed()
   {
     string bhl = @"
@@ -354,7 +355,7 @@ public class TestInterface : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoubleInheritanceIsNotAllowed()
   {
     string bhl = @"
@@ -379,7 +380,7 @@ public class TestInterface : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
@@ -404,7 +405,7 @@ public class TestInterface : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestClassImplementsInterface()
   {
     {
@@ -440,7 +441,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallInterfaceFuncAsVar()
   {
     {
@@ -526,7 +527,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallInterfaceFuncAsVarOrderIrrelevant()
   {
     string bhl = @"
@@ -569,7 +570,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassInterfaceAsFuncArgAndCall()
   {
     {
@@ -628,7 +629,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassInterfaceAsFuncArgAndCallOrderIrrelevant()
   {
     {
@@ -662,7 +663,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNullInterface()
   {
     string bhl = @"
@@ -680,7 +681,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNonNullInterface()
   {
     string bhl = @"
@@ -704,7 +705,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplementingNativeInterfaceNotSupported()
   {
     string bhl = @"
@@ -738,7 +739,7 @@ public class TestInterface : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMixNativeAndScriptInterfacesNotSupported()
   {
     string bhl = @"
@@ -797,7 +798,7 @@ public class TestInterface : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeInterfaceCastToConcreteType()
   {
     string bhl = @"
@@ -876,7 +877,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCallImportedMethodFromLocalMethod()
   {
     string bhl1 = @"
@@ -910,7 +911,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugPassThisAsInterfaceArgToFreeFunc()
   {
     string bhl1 = @"
@@ -961,7 +962,7 @@ public class TestInterface : BHL_TestBase
     public int foo(int n) { return n; }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassAndInterface()
   {
     string bhl = @"
@@ -1019,7 +1020,7 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCircularDependencyInModules()
   {
     string bhl1 = @"

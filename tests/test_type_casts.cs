@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestTypeCasts : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestBoolToIntTypeCast()
   {
     string bhl = @"
@@ -39,7 +40,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIntToStringTypeCast()
   {
     string bhl = @"
@@ -73,7 +74,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitIntToStringTypeCastLhs()
   {
     string bhl = @"
@@ -109,7 +110,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitIntToStringTypeCastRhs()
   {
     string bhl = @"
@@ -145,7 +146,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastFloatToStr()
   {
     string bhl = @"
@@ -161,7 +162,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrDecIsForbidden()
   {
     string bhl = @"
@@ -183,7 +184,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStrConcatImplicitTypes()
   {
     SubTest("int", () => {
@@ -313,7 +314,7 @@ public class TestTypeCasts : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitIntArgsCast()
   {
     string bhl = @"
@@ -335,7 +336,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestImplicitIntArgsCastNativeFunc()
   {
     string bhl = @"
@@ -361,7 +362,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastFloatToInt()
   {
     string bhl = @"
@@ -378,7 +379,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastIntsDivResultToToInt()
   {
     string bhl = @"
@@ -397,7 +398,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastIntToAny()
   {
     string bhl = @"
@@ -414,7 +415,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastIntToAnyFuncArg()
   {
     string bhl = @"
@@ -436,7 +437,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInternalIntIsLong()
   {
     string bhl = @"
@@ -452,7 +453,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastStrToAny()
   {
     string bhl = @"
@@ -469,7 +470,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleIs()
   {
     string bhl = @"
@@ -501,7 +502,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIsAndBuiltinTypes()
   {
     {
@@ -580,7 +581,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSimpleAsForSelf()
   {
     string bhl = @"
@@ -619,7 +620,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIsForChildClass()
   {
     string bhl = @"
@@ -653,7 +654,7 @@ public class TestTypeCasts : BHL_TestBase
     public int bar = 100;
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIsForChildNativeClass()
   {
     string bhl = @"
@@ -742,7 +743,7 @@ public class TestTypeCasts : BHL_TestBase
     });
   }
   
-  [IsTested()]
+  [Fact]
   public void TestIsForClassImplementingNativeInterface()
   {
     string bhl = @"
@@ -784,7 +785,7 @@ public class TestTypeCasts : BHL_TestBase
   public interface INativeWow {}
   public class NativeWow : INativeWow {}
 
-  [IsTested()]
+  [Fact]
   public void TestIsForClassImplementingNativeInterfaceReturnedAsInterface()
   {
     string bhl = @"
@@ -828,7 +829,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForChildClass()
   {
     string bhl = @"
@@ -886,7 +887,7 @@ public class TestTypeCasts : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastToChildTypeAndCallMethod()
   {
     string bhl = @"
@@ -921,7 +922,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastAnyToChildTypeAndCallMethod()
   {
     string bhl = @"
@@ -956,7 +957,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastNullToUserType()
   {
     string bhl = @"
@@ -975,7 +976,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadCastInRuntime()
   {
     string bhl = @"
@@ -999,7 +1000,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeChildClassImplicitBaseCast()
   {
     string bhl = @"
@@ -1023,7 +1024,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeChildClassExplicitBaseCast()
   {
     string bhl = @"
@@ -1047,7 +1048,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBindChildClassExplicitDownCast()
   {
     string bhl = @"
@@ -1074,7 +1075,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompatibleImplicitClassCast()
   {
     string bhl = @"
@@ -1112,7 +1113,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompatibleExplicitClassCast()
   {
     string bhl = @"
@@ -1149,7 +1150,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForChildClassObjReturnedFromMethod()
   {
     {
@@ -1212,7 +1213,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIsForChildClassAndInterface()
   {
     string bhl = @"
@@ -1244,7 +1245,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForChildClassAndInterface()
   {
     string bhl = @"
@@ -1280,7 +1281,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsAndAny()
   {
     string bhl = @"
@@ -1302,7 +1303,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsAndBuiltinTypes()
   {
     {
@@ -1366,7 +1367,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForFuncSignature()
   {
     {
@@ -1430,7 +1431,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForArray()
   {
     {
@@ -1479,7 +1480,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAsForArrayOfFuncPtrs()
   {
     {
@@ -1513,7 +1514,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterfaceAs()
   {
     string bhl = @"
@@ -1568,7 +1569,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBasicTypeof()
   {
     {
@@ -1640,7 +1641,7 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTypeNotFoundInTypeof()
   {
     string bhl = @"
@@ -1662,7 +1663,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassTypeAsArg()
   {
     string bhl = @"
@@ -1682,7 +1683,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBasicType()
   {
     SubTest(() =>
@@ -1740,7 +1741,7 @@ public class TestTypeCasts : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMissingTypePropertyIsNotConfusedWithTypeFunc1()
   {
     string bhl = @"
@@ -1766,7 +1767,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMissingTypePropertyIsNotConfusedWithTypeFunc2()
   {
     string bhl = @"
@@ -1804,7 +1805,7 @@ public class TestTypeCasts : BHL_TestBase
     en.Define(new EnumItemSymbol(new Origin(), "SPAWNED2", 20));
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastEnumToInt()
   {
     string bhl = @"
@@ -1825,7 +1826,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastEnumToFloat()
   {
     string bhl = @"
@@ -1846,7 +1847,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastEnumToStr()
   {
     string bhl = @"
@@ -1867,7 +1868,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestUserEnumIntCast()
   {
     string bhl = @"
@@ -1890,7 +1891,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIntCastToUserEnum()
   {
     string bhl = @"
@@ -1914,7 +1915,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCastFromEnumToIntIsNoOp()
   {
     string bhl = @"
@@ -1946,7 +1947,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBugCastForTemporaryInstance()
   {
     string bhl = @"

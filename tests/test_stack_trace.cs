@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestStackTrace : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestGetStackTrace()
   {
     string bhl3 = @"
@@ -80,7 +81,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromMethod()
   {
     string bhl3 = @"
@@ -159,7 +160,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromVirtualMethod()
   {
     string bhl3 = @"
@@ -242,7 +243,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromInterfaceMethod()
   {
     string bhl3 = @"
@@ -325,7 +326,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromFuncAsArg()
   {
     string bhl3 = @"
@@ -398,7 +399,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(11, trace[2].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceForUserObjNullRef()
   {
     string bhl2 = @"
@@ -453,7 +454,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(5, trace[1].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceAfterNativeException()
   {
     string bhl3 = @"
@@ -539,7 +540,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromParal()
   {
     string bhl3 = @"
@@ -621,7 +622,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceFromParalAll()
   {
     string bhl3 = @"
@@ -702,7 +703,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInDefer()
   {
     string bhl3 = @"
@@ -779,7 +780,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInParalDefer()
   {
     string bhl3 = @"
@@ -866,7 +867,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInSeqWithSuspendDefer()
   {
     string bhl3 = @"
@@ -973,7 +974,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(6, trace[3].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInParalWithSuspendDefer()
   {
     string bhl3 = @"
@@ -1073,7 +1074,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(6, trace[2].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInSubParal()
   {
     string bhl3 = @"
@@ -1160,7 +1161,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[4].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInLambda()
   {
     string bhl3 = @"
@@ -1256,7 +1257,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual(10, trace[5].line);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInDeferFromNullPtrWhenStopped()
   {
     string bhl = @"
@@ -1290,7 +1291,7 @@ public class TestStackTrace : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInDeferFromExceptionWhenStoppedWithinParal()
   {
     string bhl = @"
@@ -1334,7 +1335,7 @@ public class TestStackTrace : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestGetStackTraceInDeferFromExceptionWhenStoppedWithinParalAll()
   {
     string bhl = @"

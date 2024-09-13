@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using bhl;
+using Xunit;
 
 public class TestInit : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestAutoCallInitFunc()
   {
     string bhl = @"
@@ -27,7 +28,7 @@ public class TestInit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDontCallNonLocalInitFunc()
   {
     string bhl = @"
@@ -49,7 +50,7 @@ public class TestInit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDontCallLocalInitFuncInNamespace()
   {
     string bhl = @"
@@ -73,7 +74,7 @@ public class TestInit : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInitFuncCantBeCoro()
   {
     string bhl = @"
@@ -89,7 +90,7 @@ public class TestInit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInitFuncCantHaveArgs()
   {
     string bhl = @"
@@ -105,7 +106,7 @@ public class TestInit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInitFuncCantHaveReturnValue()
   {
     string bhl = @"
@@ -123,7 +124,7 @@ public class TestInit : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralModulesInit()
   {
     string file_foo = @"

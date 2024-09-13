@@ -1,9 +1,10 @@
 using System;           
 using System.IO;
+using Xunit;
 
 public class TestStd : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleIO()
   {
     string bhl = @"

@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 using bhl;
 using bhl.marshall;
+using Xunit;
 
 public class TestMarshall : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSerializeModuleSymbols()
   {
     var s = new MemoryStream();
@@ -178,7 +179,7 @@ public class TestMarshall : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestSerializeModuleSymbolsTypeEdgeCase()
   {
     var s = new MemoryStream();

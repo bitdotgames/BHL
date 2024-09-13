@@ -1,10 +1,11 @@
 using System;           
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestVariadic : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestSimpleUsage()
   {
     string bhl = @"
@@ -31,7 +32,7 @@ public class TestVariadic : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCombineWithOtherArgs()
   {
     string bhl = @"
@@ -58,7 +59,7 @@ public class TestVariadic : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestCombineWithOtherDefaultArg()
   {
     string bhl = @"
@@ -85,7 +86,7 @@ public class TestVariadic : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestPassArrayAsVariadicArg()
   {
     string bhl = @"
@@ -118,7 +119,7 @@ public class TestVariadic : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTypeMismatch()
   {
     {
@@ -188,7 +189,7 @@ public class TestVariadic : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDefaultArgIsNotAllowed()
   {
     string bhl = @"
@@ -208,7 +209,7 @@ public class TestVariadic : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestMustBeLast()
   {
     string bhl = @"
@@ -228,7 +229,7 @@ public class TestVariadic : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNoRefAllowed()
   {
     SubTest(() =>
@@ -270,7 +271,7 @@ public class TestVariadic : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInvalidVariadicUnpacking()
   {
     {
@@ -337,7 +338,7 @@ public class TestVariadic : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInterleaveValuesStackInParalAll()
   {
     string bhl = @"
@@ -373,7 +374,7 @@ public class TestVariadic : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeBinding()
   {
     string bhl = @"

@@ -3,10 +3,11 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using bhl;
+using Xunit;
 
 public class TestParsing : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestUtf8Comments()
   {
     string bhl = @"
@@ -23,7 +24,7 @@ public class TestParsing : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestReturnParseSpecialCasesForDeclVars()
   {
     SubTest(() => {
@@ -71,7 +72,7 @@ public class TestParsing : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParseMapTypeAmbuiguityWithArrAccess()
   {
     string bhl = @"

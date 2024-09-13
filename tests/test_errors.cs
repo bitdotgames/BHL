@@ -4,10 +4,11 @@ using System.IO;
 using bhl;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using Xunit;
 
 public class TestErrors : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestMissingFuncKeyword()
   {
     string bhl = @"
@@ -29,7 +30,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInvalidIncOperator()
   {
     string bhl = @"
@@ -51,7 +52,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompleteFuncSignature()
   {
     //TODO: make this test work under Windows (error assertion doesn't match)
@@ -75,7 +76,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompleteCoroFuncSignature()
   {
     //TODO: make this test work under Windows (error assertion doesn't match)
@@ -98,7 +99,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompleteFuncCall()
   {
     string bhl = @"
@@ -120,7 +121,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompleteMemberAccess()
   {
     string bhl = @"
@@ -147,7 +148,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestIncompleteEnumAccess()
   {
     string bhl = @"
@@ -173,7 +174,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralSemanticErrorsInOneFile()
   {
     string bhl = @"
@@ -213,7 +214,7 @@ public class TestErrors : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralSemanticErrorsInManyFiles()
   {
     string bhl1 = @"
@@ -263,7 +264,7 @@ public class TestErrors : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSeveralSemanticErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
@@ -299,7 +300,7 @@ public class TestErrors : BHL_TestBase
     AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
   }
 
-  [IsTested()]
+  [Fact]
   public void TestParseErrorsPreventFromFurtherProcessing()
   {
     string bhl1 = @"
@@ -341,7 +342,7 @@ public class TestErrors : BHL_TestBase
     AssertTrue(lines[1].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12"));
   }
   
-  [IsTested()]
+  [Fact]
   public void TestSeveralErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
@@ -386,7 +387,7 @@ public class TestErrors : BHL_TestBase
   }
 
   //TODO
-  //[IsTested()]
+  //[Fact]
   public void TestBorkedInput()
   {
     string bhl = @"
@@ -399,7 +400,7 @@ public class TestErrors : BHL_TestBase
   }
 
   //TODO
-  //[IsTested()]
+  //[Fact]
   public void TestSeveralSyntaxErrors()
   {
     string bhl = @"
@@ -456,7 +457,7 @@ public class TestErrors : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadImport()
   {
     string bhl = @"
@@ -477,7 +478,7 @@ public class TestErrors : BHL_TestBase
     );
   }
 
-//  [IsTested()]
+//  [Fact]
 //  public void TestErrorNodes()
 //  {
 //    string bhl = @"

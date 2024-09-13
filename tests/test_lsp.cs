@@ -3,10 +3,11 @@ using System.IO;
 using System.Collections.Generic;
 using bhl;
 using bhl.lsp;
+using Xunit;
 
 public class TestLSP : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestDocumentCalcByteIndex()
   {
     SubTest("Unix line endings", () => {
@@ -55,7 +56,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDocumentGetLineColumn()
   {
     string bhl = "func int test()\n{\nwhat()\n}";
@@ -89,7 +90,7 @@ public class TestLSP : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeSymbolReflection()
   {
     var fn = new FuncSymbolNative(new Origin(), "test", Types.Void,
@@ -101,7 +102,7 @@ public class TestLSP : BHL_TestBase
     AssertTrue(fn.origin.source_range.start.line > 0);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestRpcResponseErrors()
   {
     SubTest("parse error", () =>
@@ -156,7 +157,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestInitShutdownExit()
   {
     var srv = new Server(NoLogger(), NoConnection(), new Workspace());
@@ -233,7 +234,7 @@ public class TestLSP : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestBadImportError()
   {
     string bhl_v1 = @"
@@ -277,7 +278,7 @@ public class TestLSP : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestOpenChangeCloseDocument()
   {
     string bhl_v1 = @"
@@ -369,7 +370,7 @@ public class TestLSP : BHL_TestBase
     }
   }
   
-  [IsTested()]
+  [Fact]
   public void TestGoToDefinition()
   {
     string bhl1 = @"
@@ -556,7 +557,7 @@ public class TestLSP : BHL_TestBase
 
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFindReferences()
   {
     string bhl1 = @"
@@ -651,7 +652,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestHover()
   {
     string bhl1 = @"
@@ -694,7 +695,7 @@ public class TestLSP : BHL_TestBase
   }
 
   //TODO:
-  //[IsTested()]
+  //[Fact]
   public void TestSignatureHelp()
   {
     string bhl1 = @"
@@ -745,7 +746,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSemanticTokensBasic()
   {
     string bhl = @"

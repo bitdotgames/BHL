@@ -2,10 +2,11 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestFiber : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestFuncAddr()
   {
     string bhl = @"
@@ -23,7 +24,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestResultMustBeReadyOnceFinished()
   {
     string bhl = @"
@@ -42,7 +43,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestStackList3Args()
   {
     string bhl = @"
@@ -64,7 +65,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFiberStopChildren()
   {
     string bhl = @"
@@ -107,7 +108,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDirectExecuteNativeFunc()
   {
     string bhl = @"
@@ -134,7 +135,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDirectExecuteNativeFuncWithDefaultArgsPassed()
   {
     string bhl = @"
@@ -162,7 +163,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDirectExecuteNativeFuncWithDefaultArgsNotPassed()
   {
     string bhl = @"
@@ -190,7 +191,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestDirectExecuteNativeCoro()
   {
     string bhl = @"
@@ -203,7 +204,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartNativeFunc()
   {
     string bhl = @"
@@ -252,7 +253,7 @@ public class TestFiber : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartNativeStatefulFunc()
   {
     string bhl = @"
@@ -283,7 +284,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartSameFuncPtr()
   {
     string bhl = @"
@@ -314,7 +315,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartImportedSameFuncPtr()
   {
     string bhl2 = @"
@@ -356,7 +357,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartFiberFromScript()
   {
     string bhl = @"
@@ -383,7 +384,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStopFiberFromScript()
   {
     string bhl = @"
@@ -426,7 +427,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestDoubleStopFiberFromScript()
   {
     string bhl = @"
@@ -470,7 +471,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfStopFiberFromScript()
   {
     string bhl = @"
@@ -515,7 +516,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfStopFiberFromNativeFunc()
   {
     string bhl = @"
@@ -594,7 +595,7 @@ public class TestFiber : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestSelfStopFiberFromNativeCoro()
   {
     string bhl = @"
@@ -648,7 +649,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestFiberCache()
   {
     string bhl = @"
@@ -691,7 +692,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaInScriptMgr()
   {
     string bhl = @"
@@ -747,7 +748,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaRunninInScriptMgr()
   {
     string bhl = @"
@@ -809,7 +810,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaManyTimesInScriptMgr()
   {
     string bhl = @"
@@ -851,7 +852,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartFuncPtrManyTimesInScriptMgr()
   {
     string bhl = @"
@@ -897,7 +898,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartNativeFuncPtrManyTimesInScriptMgr()
   {
     string bhl = @"
@@ -948,7 +949,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestStartCoroFuncPtrManyTimesInScriptMgr()
   {
     string bhl = @"
@@ -1004,7 +1005,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaVarManyTimesInScriptMgr()
   {
     string bhl = @"
@@ -1051,7 +1052,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaManyTimesInScriptMgrWithUpVals()
   {
     string bhl = @"
@@ -1098,7 +1099,7 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStartLambdaManyTimesInScriptMgrWithValCopies()
   {
     string bhl = @"

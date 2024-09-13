@@ -1,12 +1,12 @@
 using System;
-using System.Collections;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
+using Xunit;
 
 public class TestArrays : BHL_TestBase
 {
-  [IsTested()]
+  [Fact]
   public void TestEmptyIntArray()
   {
     string bhl = @"
@@ -42,7 +42,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestAddToStringArray()
   {
     string bhl = @"
@@ -61,7 +61,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStringArrayIndex()
   {
     string bhl = @"
@@ -81,7 +81,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpArrayAtIdx()
   {
     string bhl = @"
@@ -106,7 +106,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayRemoveAt()
   {
     string bhl = @"
@@ -134,7 +134,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpArrayCount() 
   {
     string bhl = @"
@@ -159,7 +159,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpArrayRemoveAt()
   {
     string bhl = @"
@@ -183,7 +183,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestTmpArrayAdd()
   {
     string bhl = @"
@@ -207,7 +207,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayIndexOf()
   {
     {
@@ -267,7 +267,7 @@ public class TestArrays : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestStringArrayAssign()
   {
     string bhl = @"
@@ -294,7 +294,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestValueIsClonedOnceStoredInArray()
   {
     string bhl = @"
@@ -333,7 +333,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayPassedToFuncIsChanged()
   {
     string bhl = @"
@@ -361,7 +361,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayPassedToFuncByRef()
   {
     string bhl = @"
@@ -391,7 +391,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayCount()
   {
     string bhl = @"
@@ -412,7 +412,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestClearArray()
   {
     string bhl = @"
@@ -433,7 +433,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestInsert()
   {
     string bhl = @"
@@ -461,7 +461,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayPool()
   {
     string bhl = @"
@@ -502,7 +502,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestArrayPoolInInfiniteLoop()
   {
     string bhl = @"
@@ -534,7 +534,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassArray()
   {
     string bhl = @"
@@ -571,7 +571,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassArrayIndexOf()
   {
     {
@@ -647,7 +647,7 @@ public class TestArrays : BHL_TestBase
     }
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeClassTmpArray()
   {
     string bhl = @"
@@ -680,7 +680,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeSubClassArray()
   {
     string bhl = @"
@@ -710,7 +710,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeListProxy()
   {
     string bhl = @"
@@ -748,7 +748,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeListProxyForeach()
   {
     string bhl = @"
@@ -784,7 +784,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [IsTested()]
+  [Fact]
   public void TestNativeListProxyForeachAsGenericType()
   {
     string bhl = @"
@@ -820,7 +820,7 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [IsTested()]
+  [Fact]
   public void TestNativeListEquality()
   {
     var ArrayInts1 = new NativeListTypeSymbol<int>(
@@ -854,7 +854,7 @@ public class TestArrays : BHL_TestBase
     AssertFalse(ArrayString.Equals(ArrayInts1));
   }
   
-  [IsTested()]
+  [Fact]
   public void TestGenericArrayEquality()
   {
     var ArrayInts1 = new GenericArrayTypeSymbol(
