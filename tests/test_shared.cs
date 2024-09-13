@@ -1001,12 +1001,6 @@ public class BHL_TestBase
     return (p == 4) || (p == 6) || (p == 128);
   }
 
-  public static void Assert(bool condition, string msg = null)
-  {
-    if(!condition)
-      throw new Exception("Assertion failed " + (msg != null ? msg : ""));
-  }
-
   public static void AssertEqual<T>(T a, T b) where T : class
   {
     if(!(a == b))

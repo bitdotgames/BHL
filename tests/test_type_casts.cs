@@ -725,13 +725,13 @@ public class TestTypeCasts : BHL_TestBase
 
     SubTest(() => {
       var vm = MakeVM(bhl, ts_fn);
-      Assert(Execute(vm, "test").result.PopRelease().bval);
+      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     });
 
     SubTest(() => {
       var vm = MakeVM(bhl, ts_fn);
-      Assert(Execute(vm, "test2").result.PopRelease().bval);
+      AssertTrue(Execute(vm, "test2").result.PopRelease().bval);
       CommonChecks(vm);
     });
 
@@ -777,7 +777,7 @@ public class TestTypeCasts : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert(Execute(vm, "test").result.PopRelease().bval);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -824,7 +824,7 @@ public class TestTypeCasts : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert(Execute(vm, "test").result.PopRelease().bval);
+    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
