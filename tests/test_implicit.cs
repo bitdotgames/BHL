@@ -164,10 +164,11 @@ public class TestImplicit : BHL_TestBase
     );
   }
 
-  [Fact]
-  public void TestForeachMap()
+  public class TestForeachMap : BHL_TestBase
   {
-    SubTest("both var", () => {
+    [Fact]
+    public void BothVars()
+    {
       string bhl = @"
       func int test() {
         [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
@@ -190,9 +191,11 @@ public class TestImplicit : BHL_TestBase
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("only key", () => {
+    [Fact]
+    public void OnlyKey()
+    {
       string bhl = @"
       func int test() {
         [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
@@ -215,9 +218,11 @@ public class TestImplicit : BHL_TestBase
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("only value", () => {
+    [Fact]
+    public void OnlyValue()
+    {
       string bhl = @"
       func int test() {
         [int]string m = [[1, ""a""], [2, ""b""], [3, ""c""]]
@@ -240,7 +245,7 @@ public class TestImplicit : BHL_TestBase
       AssertEqual(6, Execute(vm, "test").result.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
