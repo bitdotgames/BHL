@@ -915,8 +915,7 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:
-  //[Fact]
+  [Fact(Skip = "TODO: not implemented yet")]
   public void TestSelfReferenceLeak()
   {
     SubTest(() => {
@@ -938,8 +937,7 @@ public class TestClass : BHL_TestBase
     });
   }
 
-  //TODO:
-  //[Fact]
+  [Fact(Skip = "TODO: not implemented yet")]
   public void TestFuncPtrAccessThisMethodLeak()
   {
     SubTest(() => {

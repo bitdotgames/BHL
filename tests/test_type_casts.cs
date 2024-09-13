@@ -1796,7 +1796,7 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  public void BindEnum(Types ts)
+  void BindEnum(Types ts)
   {
     var en = new EnumSymbolScript(new Origin(), "EnumState");
     ts.ns.Define(en);

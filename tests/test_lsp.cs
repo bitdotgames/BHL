@@ -694,8 +694,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  //TODO:
-  //[Fact]
+  [Fact(Skip = "TODO: not implemented yet")]
   public void TestSignatureHelp()
   {
     string bhl1 = @"

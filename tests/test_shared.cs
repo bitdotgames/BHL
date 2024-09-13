@@ -1,200 +1,12 @@
 using System;
-using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Mono.Options;
 using bhl;
 using Xunit;
 
-public class IsTestedAttribute : Attribute
-{
-  public override string ToString()
-  {
-    return "Is Tested";
-  }
-}
-
-public class BHL_TestRunner
-{
-  static public bool verbose { get; private set; }
-
-  public static void Main(string[] args)
-  {
-    verbose = false;
-    var p = new OptionSet() {
-      { "verbose", "be verbose",
-        v => verbose = v != null },
-     };
-
-    var names = p.Parse(args);
-
-    int counter = 0;
-
-    counter += Run(names, new TestNodes());
-    counter += Run(names, new TestVM());
-    counter += Run(names, new TestNull());
-    counter += Run(names, new TestArrays());
-    counter += Run(names, new TestMaps());
-    counter += Run(names, new TestOperatorOverload());
-    counter += Run(names, new TestParal());
-    counter += Run(names, new TestParsing());
-    counter += Run(names, new TestPreproc());
-    counter += Run(names, new TestFiber());
-    counter += Run(names, new TestLocal());
-    counter += Run(names, new TestInit());
-    counter += Run(names, new TestLambda());
-    counter += Run(names, new TestDefer());
-    counter += Run(names, new TestStrings());
-    counter += Run(names, new TestAny());
-    counter += Run(names, new TestEnum());
-    counter += Run(names, new TestYield());
-    counter += Run(names, new TestImport());
-    counter += Run(names, new TestVariadic());
-    counter += Run(names, new TestClass());
-    counter += Run(names, new TestInitializer());
-    counter += Run(names, new TestInterface());
-    counter += Run(names, new TestTypeCasts());
-    counter += Run(names, new TestNamespace());
-    counter += Run(names, new TestImplicit());
-    counter += Run(names, new TestStackTrace());
-    counter += Run(names, new TestStd());
-    counter += Run(names, new TestErrors());
-    counter += Run(names, new TestMarshall());
-    counter += Run(names, new TestLSP());
-    counter += Run(names, new TestPerf());
-
-    Console.WriteLine("Total tests: " + counter);
-  }
-
-  static int Run(IList<string> names, BHL_TestBase test)
-  {
-    try
-    {
-      return _Run(names, test);
-    }
-    catch(Exception e)
-    {
-      //TODO: ICompileError can't be handled here, it's hidden by reflection exception
-      Console.Error.WriteLine(e.ToString());
-      Console.Error.WriteLine("=========================");
-      Console.Error.WriteLine(e.GetFullMessage());
-      System.Environment.Exit(1);
-      return 0;
-    }
-  }
-
-  internal class MethodToTest
-  {
-    internal MethodInfo method;
-    internal int sub_test_idx_filter; 
-  }
-
-  static int _Run(IList<string> names, BHL_TestBase test)
-  {
-    var tested_methods = new List<MethodToTest>();
-
-    foreach(var method in test.GetType().GetMethods())
-    {
-      MethodToTest to_test;
-      if(HasTestedAttribute(method) && CheckForTesting(names, test, method, out to_test))
-        tested_methods.Add(to_test);
-    }
-
-    int counter = 0;
-
-    if(tested_methods.Count > 0)
-    {
-      Console.WriteLine(">>>> Testing " + test.GetType().Name + " (" + tested_methods.Count + ")");
-
-      foreach(var to_test in tested_methods)
-      {
-        if(verbose)
-          Console.WriteLine(">>>>> " + test.GetType().Name + "." + to_test.method.Name);
-
-        test.sub_test_idx_filter = to_test.sub_test_idx_filter;
-        test.sub_test_idx = -1;
-        to_test.method.Invoke(test, new object[] {});
-        ++counter;
-      }
-    }
-    return counter;
-  }
-
-  static bool CheckForTesting(
-    IList<string> names, 
-    BHL_TestBase test, 
-    MethodInfo member, 
-    out MethodToTest to_test
-  )
-  {
-    to_test = new MethodToTest();
-    to_test.sub_test_idx_filter = -1;
-    to_test.method = member;
-
-    if(names?.Count == 0)
-      return true;
-
-    for(int i=0;i<names.Count;++i)
-    {
-      var name = names[i];
-
-      var parts = name.Split('.');
-
-      string test_filter = parts.Length >= 1 ? parts[0] : null;
-      string method_filter = parts.Length > 1 ? parts[1] : null;
-      string sub_filter = parts.Length > 2 ? parts[2] : null; 
-
-      bool exact = true;
-      if(!string.IsNullOrEmpty(test_filter) && test_filter.EndsWith("~"))
-      {
-        exact = false;
-        test_filter = test_filter.Substring(0, test_filter.Length-1);
-      }
-
-      if(!string.IsNullOrEmpty(method_filter) && method_filter.EndsWith("~"))
-      {
-        exact = false;
-        method_filter = method_filter.Substring(0, method_filter.Length-1);
-      }
-
-      if(string.IsNullOrEmpty(test_filter) || 
-        (!string.IsNullOrEmpty(test_filter) && 
-         (exact ? test.GetType().Name == test_filter : test.GetType().Name.IndexOf(test_filter) != -1))
-        )
-      {
-        if(string.IsNullOrEmpty(method_filter) || 
-          (!string.IsNullOrEmpty(method_filter) && 
-          (exact ? member.Name == method_filter : member.Name.IndexOf(method_filter) != -1))
-          )
-        {
-          if(sub_filter != null)
-            to_test.sub_test_idx_filter = int.Parse(sub_filter);
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  static bool HasTestedAttribute(MemberInfo member)
-  {
-    foreach(var attribute in member.GetCustomAttributes(true))
-    {
-      if(attribute is IsTestedAttribute)
-        return true;
-    }
-    return false;
-  }
-}
-
 public class BHL_TestBase
 {
-  internal int sub_test_idx;
-  //TODO: make it a set?
-  internal int sub_test_idx_filter;
-
   protected void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
@@ -980,13 +792,7 @@ public class BHL_TestBase
 
   public void SubTest(string name, System.Action fn)
   {
-    ++sub_test_idx;
-    if(sub_test_idx_filter == -1 || sub_test_idx_filter == sub_test_idx)
-    {
-      if(BHL_TestRunner.verbose)
-        Console.WriteLine(">>>>>> Sub Test(" + sub_test_idx + ") : " + name);
-      fn();
-    }
+    fn();
   }
 
   public static string TestDirPath()
@@ -1075,7 +881,7 @@ public class BHL_TestBase
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
     if(err == null)
-      Assert.True(false, "No error happened, expected: " + msg);
+      Assert.Fail("No error happened, expected: " + msg);
 
     //TODO: in case of multi errors we consider only the first one,
     //      probably it should be more flexible
@@ -1090,7 +896,7 @@ public class BHL_TestBase
     if(place_assert != null)
     {
       if(place_assert.err_type != null && err.GetType() != place_assert.err_type)
-        Assert.True(false, "Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
+        Assert.Fail("Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
 
       if(err is ICompileError cerr)
       {
@@ -1100,7 +906,7 @@ public class BHL_TestBase
         Assert.Equal(place_err.Trim('\r','\n'), place_assert.expect.Trim('\r','\n'));
       }
       else
-        Assert.True(false, "No ICompileError occured, got " + err?.GetType().Name); 
+        Assert.Fail("No ICompileError occured, got " + err?.GetType().Name); 
     }
   }
 
@@ -1155,7 +961,7 @@ public class BHL_TestBase
     proj.tmp_dir = TestDirPath() + "/cache";
     proj.error_file = TestDirPath() + "/error.log";
     proj.use_cache = use_cache;
-    proj.verbosity = BHL_TestRunner.verbose ? 1 : 0;
+    proj.verbosity = 0;
     proj.Setup();
 
     var conf = new CompileConf();

@@ -1374,6 +1374,7 @@ public class TestLambda : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
   public void TestClosure()
   {
     string bhl = @"

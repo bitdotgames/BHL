@@ -3,7 +3,6 @@
         <RootNamespace>bhl</RootNamespace>
         <TargetFrameworks>net7.0</TargetFrameworks>
         <DefineConstants>BHL_FRONT</DefineConstants>
-        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
 
     <ItemGroup>

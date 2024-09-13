@@ -386,8 +386,7 @@ public class TestErrors : BHL_TestBase
     AssertTrue(lines[4].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 13"));
   }
 
-  //TODO
-  //[Fact]
+  [Fact(Skip = "TODO: not implemented yet")]
   public void TestBorkedInput()
   {
     string bhl = @"
@@ -399,9 +398,8 @@ public class TestErrors : BHL_TestBase
     Compile(bhl, show_parse_tree: true, show_ast: true);
   }
 
-  //TODO
-  //[Fact]
-  public void TestSeveralSyntaxErrors()
+  [Fact(Skip = "TODO: not implemented yet")]
+  void TestSeveralSyntaxErrors()
   {
     string bhl = @"
     func foo() { }
