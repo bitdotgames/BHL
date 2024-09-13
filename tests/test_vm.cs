@@ -5822,8 +5822,7 @@ public class TestVM : BHL_TestBase
   [Fact]
   public void TestDefaultFuncOtherFunc()
   {
-    SubTest(() => {
-      string bhl = @"
+    string bhl = @"
       func int bar(int i) {
         return i
       }
@@ -5838,31 +5837,32 @@ public class TestVM : BHL_TestBase
       }
       ";
 
-      var vm = MakeVM(bhl);
-      AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
-      CommonChecks(vm);
-    });
+    var vm = MakeVM(bhl);
+    AssertEqual(10 + 1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestDefaultFuncOtherFuncOrderIndependent()
+  {
+    string bhl = @"
+    func int foo(int a, func int(int) cb = bar) {
+      return a + cb(1)
+    }
 
-    SubTest("order independent", () => {
-      string bhl = @"
-      func int foo(int a, func int(int) cb = bar) {
-        return a + cb(1)
-      }
+    func int bar(int i) {
+      return i
+    }
 
-      func int bar(int i) {
-        return i
-      }
+    func int test()
+    {
+      return foo(10)
+    }
+    ";
 
-      func int test()
-      {
-        return foo(10)
-      }
-      ";
-
-      var vm = MakeVM(bhl);
-      AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
-      CommonChecks(vm);
-    });
+    var vm = MakeVM(bhl);
+    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
   }
 
   [Fact]
