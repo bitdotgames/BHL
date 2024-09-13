@@ -3,6 +3,38 @@ using System.Text;
 using System.Collections.Generic;
 using bhl;
 
+#if XUNIT 
+using Xunit;
+
+public class TestVMX : BHL_TestBase
+{
+  [Fact]
+  public void TestEmptyFunc()
+  {
+    {
+      string bhl = @"
+      func test() {}
+      ";
+
+      var c = Compile(bhl);
+
+      var expected = 
+        new ModuleCompiler()
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
+        ;
+      AssertEqualX(c, expected);
+
+      var vm = MakeVM(c);
+      vm.Start("test");
+      Xunit.Assert.False(vm.Tick());
+      CommonChecks(vm);
+    }
+  }
+}
+#endif
+
 public class TestVM : BHL_TestBase
 {
   [IsTested()]

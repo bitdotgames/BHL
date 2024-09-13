@@ -1370,6 +1370,28 @@ public class BHL_TestBase
   {
     AssertEqual(ca.Compile(), cb.Compile());
   }
+  
+  public static void AssertEqualX(bhl.Module ca, ModuleCompiler cb)
+  {
+    AssertEqualX(ca, cb.Compile());
+  }
+  
+  public static void AssertEqualX(bhl.Module ca, bhl.Module cb)
+  {
+    string cmp;
+
+    if(!CompareCode(ca.compiled.initcode, cb.compiled.initcode, out cmp))
+    {
+      Console.WriteLine(cmp);
+      throw new Exception("Assertion failed: init bytes not equal");
+    }
+
+    if(!CompareCode(ca.compiled.bytecode, cb.compiled.bytecode, out cmp))
+    {
+      Console.WriteLine(cmp);
+      throw new Exception("Assertion failed: bytes not equal");
+    }
+  }
 
   public static void AssertEqual(bhl.Module ca, ModuleCompiler cb)
   {

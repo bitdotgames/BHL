@@ -1,11 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <AssemblyName>bhl_tests</AssemblyName>
-        <OutputType>Library</OutputType>
         <RootNamespace>bhl</RootNamespace>
-        <TargetFrameworks>netstandard2.1</TargetFrameworks>
-        <DefineConstants>BHL_FRONT</DefineConstants>
+        <TargetFrameworks>net7.0</TargetFrameworks>
+        <DefineConstants>BHL_FRONT,XUNIT</DefineConstants>
+        <GenerateProgramFile>false</GenerateProgramFile>
     </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+      <PackageReference Include="xunit" Version="2.9.0" />
+      <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
+    </ItemGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\src\compile\bhl_front.csproj" />
       <ProjectReference Include="..\src\lsp\bhl_lsp.csproj" />
