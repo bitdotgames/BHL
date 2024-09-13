@@ -185,29 +185,6 @@ public static class Tasks
   {
     Environment.SetEnvironmentVariable("BHL_TEST", "1");
   }
-
-  [Task("set_env_BHL_TEST", "build_front_dll", "build_lsp_dll")]
-  public static void test(Taskman tm, string[] args)
-  {
-    MCSBuild(tm, 
-     new string[] {
-        $"{BHL_ROOT}/tests/*.cs",
-        $"{BHL_ROOT}/deps/mono_opts.dll",
-        $"{BHL_ROOT}/build/bhl_front.dll",
-        $"{BHL_ROOT}/build/bhl_lsp.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"
-     },
-      $"{BHL_ROOT}/build/test.exe",
-      "-define:BHL_FRONT -debug"
-    );
-
-    string mono_opts = "--debug"; 
-    if(Environment.GetEnvironmentVariable("BHL_TDEBUG") == "1")
-      mono_opts += " --debugger-agent=transport=dt_socket,server=y,address=127.0.0.1:55556";
-
-    MonoRun(tm, $"{BHL_ROOT}/build/test.exe", args, mono_opts);
-  }
   
   [Task(deps: "build_front_dll")]
   public static void build_lsp_dll(Taskman tm, string[] args)
