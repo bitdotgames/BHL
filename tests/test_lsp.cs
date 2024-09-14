@@ -389,9 +389,8 @@ public class TestLSP : BHL_TestBase
       );
     }
   }
-  
-  [Fact]
-  public void TestGoToDefinition()
+
+  public class TestGoToDefinition : BHL_TestBase
   {
     string bhl1 = @"
     class Foo {
@@ -418,7 +417,7 @@ public class TestLSP : BHL_TestBase
       test1(42)
     }
     ";
-    
+
     string bhl2 = @"
     import ""bhl1""
 
@@ -453,128 +452,166 @@ public class TestLSP : BHL_TestBase
       }()
     }
     ";
-    
-    var ws = new Workspace();
 
-    var srv = new Server(NoLogger(), NoConnection(), ws);
-    srv.AttachService(new bhl.lsp.TextDocumentGoToService(srv));
-    
-    CleanTestFiles();
-    
-    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
-    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+    Workspace ws = new Workspace();
+    Server srv;
 
-    var ts = new bhl.Types();
-    var fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
-    ts.ns.Define(fn_TEST);
-    
-    ws.Init(ts, GetTestProjConf());
-    ws.IndexFiles();
-    
-    SubTest(() => {
+    bhl.lsp.proto.Uri uri1;
+    bhl.lsp.proto.Uri uri2;
+
+    FuncSymbolNative fn_TEST;
+
+    public TestGoToDefinition()
+    {
+      srv = new Server(NoLogger(), NoConnection(), ws);
+      srv.AttachService(new bhl.lsp.TextDocumentGoToService(srv));
+
+      CleanTestFiles();
+
+      uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+      uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+      var ts = new bhl.Types();
+      fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
+      ts.ns.Define(fn_TEST);
+
+      ws.Init(ts, GetTestProjConf());
+      ws.IndexFiles();
+    }
+
+    [Fact]
+    public void _1()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri1, "st1(42)")),
         GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3)
       );
-    });
+    }
     
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "est2()")),
         GoToDefinitionRsp(uri1, "func test2()", end_line_offset: 4)
       );
-    });
+    }
     
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _4()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _5()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _6()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _7()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "AR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _8()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
         GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 2)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _9()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "k = 10")),
         GoToDefinitionRsp(uri2, "k, int j)")
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _10()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "j = 100")),
         GoToDefinitionRsp(uri2, "j)")
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _11()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "test4()")),
         GoToDefinitionRsp(uri2, "func ErrorCodes test4()", end_line_offset: 7)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _12()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
         GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _13()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
         GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 6)
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _14()
+    {
       var rsp = srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
       AssertContains(rsp, "test_lsp.cs");
       AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _15()
+    {
       AssertEqual(
         srv.Handle(GoToDefinitionReq(uri2, "pval + 1")),
         GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4)
       );
-    });
-
+    }
   }
 
   [Fact]
