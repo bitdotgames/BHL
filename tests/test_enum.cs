@@ -351,10 +351,11 @@ public class TestEnum : BHL_TestBase
     );
   }
 
-  [Fact]
-  public void TestImplicitCastEnumToInt()
+  public class TestImplicitCastEnumToInt : BHL_TestBase
   {
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       enum Foo {
         A = 1
@@ -370,9 +371,11 @@ public class TestEnum : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertTrue(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       enum Foo {
         A = 1
@@ -389,9 +392,11 @@ public class TestEnum : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       string bhl = @"
       enum Foo {
         A = 1
@@ -412,7 +417,7 @@ public class TestEnum : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
