@@ -184,10 +184,11 @@ public class TestTypeCasts : BHL_TestBase
     );
   }
 
-  [Fact]
-  public void TestStrConcatImplicitTypes()
+  public class TestStrConcatImplicitTypes : BHL_TestBase
   {
-    SubTest("int", () => {
+    [Fact]
+    public void _int()
+    {
       string bhl = @"
       func string test() 
       {
@@ -200,9 +201,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "what11now");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("int and float", () => {
+    [Fact]
+    public void _int_and_float()
+    {
       string bhl = @"
       func string test() 
       {
@@ -216,9 +219,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "what11now12.1");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("arr count 1", () => {
+    [Fact]
+    public void _arr_count_1()
+    {
       string bhl = @"
       func string test() 
       {
@@ -231,9 +236,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "what3");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("arr count 2", () => {
+    [Fact]
+    public void _arr_count_2()
+    {
       string bhl = @"
       func string test() 
       {
@@ -246,9 +253,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "3now");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("+=", () => {
+    [Fact]
+    public void _plus_equal()
+    {
       string bhl = @"
       func string test() 
       {
@@ -262,9 +271,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "???100");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("empty string var", () => {
+    [Fact]
+    public void _empty_string_var()
+    {
       string bhl = @"
       func string test() 
       {
@@ -277,9 +288,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "hey1");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("bools", () => {
+    [Fact]
+    public void _bools()
+    {
       string bhl = @"
       func string test() 
       {
@@ -293,9 +306,11 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "0hey1");
       CommonChecks(vm);
-    });
+    }
 
-    SubTest("enums", () => {
+    [Fact]
+    public void _enums()
+    {
       string bhl = @"
       enum Foo {
         A = 10
@@ -311,7 +326,7 @@ public class TestTypeCasts : BHL_TestBase
       var res = Execute(vm, "test").result.PopRelease().str;
       AssertEqual(res, "10hey20");
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
