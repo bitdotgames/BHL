@@ -232,43 +232,41 @@ public class TestVariadic : BHL_TestBase
   [Fact]
   public void TestNoRefAllowed()
   {
-    SubTest(() =>
-    {
-      string bhl = @"
-      func sum(ref ...[]int ns) {
-      }
-      ";
+    string bhl = @"
+    func sum(ref ...[]int ns) {
+    }
+    ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "pass by ref not allowed",
-        new PlaceAssert(bhl, @"
-      func sum(ref ...[]int ns) {
----------------^"
-        )
-      );
-    });
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "pass by ref not allowed",
+      new PlaceAssert(bhl, @"
+    func sum(ref ...[]int ns) {
+-------------^"
+      )
+    );
+  }
 
-    SubTest(() =>
-    {
-      string bhl = @"
-      func sum(...[]ref int ns) {
-      }
-      ";
+  [Fact]
+  public void TestNoRefAllowed2()
+  {
+     string bhl = @"
+     func sum(...[]ref int ns) {
+     }
+     ";
 
-      AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-        "extraneous input 'ref'",
-        new PlaceAssert(bhl, @"
-      func sum(...[]ref int ns) {
---------------------^"
-        )
-      );
-    });
+     AssertError<Exception>(
+       delegate() { 
+         Compile(bhl);
+       },
+       "extraneous input 'ref'",
+       new PlaceAssert(bhl, @"
+     func sum(...[]ref int ns) {
+-------------------^"
+       )
+     );
   }
 
   [Fact]

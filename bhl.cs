@@ -41,7 +41,6 @@ public static class Tasks
   public static void build_front_dll(Taskman tm, string[] args)
   {
     bool debug = Environment.GetEnvironmentVariable("BHL_DEBUG") == "1";
-    bool test_debug = Environment.GetEnvironmentVariable("BHL_TDEBUG") == "1";
     bool tests = Environment.GetEnvironmentVariable("BHL_TEST") == "1";
 
     var front_src = new List<string>() {
@@ -58,7 +57,6 @@ public static class Tasks
      $"{BHL_ROOT}/build/bhl_front.dll",
      "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
      (debug ? " -define:BHL_DEBUG" : "") + 
-     (test_debug ? " -define:BHL_TDEBUG" : "") + 
      (tests ? " -define:BHL_TEST" : "")
     );
   }

@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#NOTE: to run bhl binary with debugger attached set BHL_DEBUG=1 env. variable
-#NOTE: to run bhl tests with debugger attached set BHL_TDEBUG=1 env. variable
+#NOTE: to run bhl binary with mono debugger attached set BHL_DEBUG=1 env. variable
 
 set -e
 
