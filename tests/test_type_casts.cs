@@ -845,8 +845,7 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestAsForChildClass()
+  public class TestAsForChildClass : BHL_TestBase
   {
     string bhl = @"
     class Bar 
@@ -884,23 +883,29 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       var vm = MakeVM(bhl);
       AssertEqual(41, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       var vm = MakeVM(bhl);
       AssertEqual(14, Execute(vm, "test2").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       var vm = MakeVM(bhl);
       AssertEqual(41, Execute(vm, "test3").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
