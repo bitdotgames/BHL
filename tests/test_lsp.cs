@@ -614,8 +614,7 @@ public class TestLSP : BHL_TestBase
     }
   }
 
-  [Fact]
-  public void TestFindReferences()
+  public class TestFindReferences : BHL_TestBase
   {
     string bhl1 = @"
     func float test1(float k) 
@@ -659,23 +658,34 @@ public class TestLSP : BHL_TestBase
       return 0
     }
     ";
-    
-    var ws = new Workspace();
 
-    var srv = new Server(NoLogger(), NoConnection(), ws);
-    srv.AttachService(new bhl.lsp.TextDocumentFindReferencesService(srv));
-    
-    CleanTestFiles();
-    
-    var uri1 = MakeTestDocument("bhl1.bhl", bhl1);
-    var uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+    Workspace ws;
+    Server srv;
 
-    var ts = new bhl.Types();
-    
-    ws.Init(ts, GetTestProjConf());
-    ws.IndexFiles();
-    
-    SubTest(() => {
+    bhl.lsp.proto.Uri uri1;
+    bhl.lsp.proto.Uri uri2;
+
+    public TestFindReferences()
+    {
+      var ws = new Workspace();
+
+      srv = new Server(NoLogger(), NoConnection(), ws);
+      srv.AttachService(new bhl.lsp.TextDocumentFindReferencesService(srv));
+
+      CleanTestFiles();
+
+      uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+      uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+
+      var ts = new bhl.Types();
+
+      ws.Init(ts, GetTestProjConf());
+      ws.IndexFiles();
+    }
+
+    [Fact]
+    public void _1()
+    {
       AssertEqual(
         srv.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
@@ -684,9 +694,11 @@ public class TestLSP : BHL_TestBase
           new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
         )
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       AssertEqual(
         srv.Handle(FindReferencesReq(uri1, "pval + 1")),
         FindReferencesRsp(
@@ -695,9 +707,11 @@ public class TestLSP : BHL_TestBase
           new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
         )
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       AssertEqual(
         srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
         FindReferencesRsp(
@@ -706,7 +720,7 @@ public class TestLSP : BHL_TestBase
           new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
         )
       );
-    });
+    }
   }
 
   public class TestHover : BHL_TestBase
