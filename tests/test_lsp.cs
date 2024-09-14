@@ -7,10 +7,11 @@ using Xunit;
 
 public class TestLSP : BHL_TestBase
 {
-  [Fact]
-  public void TestDocumentCalcByteIndex()
+  public class TestDocumentCalcByteIndex : BHL_TestBase
   {
-    SubTest("Unix line endings", () => {
+    [Fact]
+    public void Unix_line_endings()
+    {
       string bhl = "func int test()\n{\nwhat()\n}";
       var code = new CodeIndex();
       code.Update(bhl);
@@ -23,9 +24,11 @@ public class TestLSP : BHL_TestBase
 
       AssertEqual(-1, code.CalcByteIndex(4, 0));
       AssertEqual(-1, code.CalcByteIndex(100, 1));
-    });
-
-    SubTest("Windows line endings", () => {
+    }
+    
+    [Fact]
+    public void Windows_line_endings()
+    {
       string bhl = "func int test()\r\n{\r\nwhat()\r\n}";
       var code = new CodeIndex();
       code.Update(bhl);
@@ -38,9 +41,11 @@ public class TestLSP : BHL_TestBase
 
       AssertEqual(-1, code.CalcByteIndex(4, 0));
       AssertEqual(-1, code.CalcByteIndex(100, 1));
-    });
+    }
 
-    SubTest("Mixed line endings", () => {
+    [Fact]
+    public void Mixed_line_endings()
+    {
       string bhl = "func int test()\n{\r\nwhat()\r}";
       var code = new CodeIndex();
       code.Update(bhl);
@@ -53,7 +58,7 @@ public class TestLSP : BHL_TestBase
 
       AssertEqual(-1, code.CalcByteIndex(4, 0));
       AssertEqual(-1, code.CalcByteIndex(100, 1));
-    });
+    }
   }
 
   [Fact]
