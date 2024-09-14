@@ -168,10 +168,11 @@ public class TestLSP : BHL_TestBase
 
   public class TestInitShutdownExit : BHL_TestBase
   {
-    Server srv = new Server(NoLogger(), NoConnection(), new Workspace());
+    Server srv;
 
     public TestInitShutdownExit()
     {
+      srv = new Server(NoLogger(), NoConnection(), new Workspace());
       srv.AttachService(new LifecycleService(srv));
     }
     
@@ -453,7 +454,6 @@ public class TestLSP : BHL_TestBase
     }
     ";
 
-    Workspace ws = new Workspace();
     Server srv;
 
     bhl.lsp.proto.Uri uri1;
@@ -463,6 +463,8 @@ public class TestLSP : BHL_TestBase
 
     public TestGoToDefinition()
     {
+      var ws = new Workspace();
+    
       srv = new Server(NoLogger(), NoConnection(), ws);
       srv.AttachService(new bhl.lsp.TextDocumentGoToService(srv));
 
@@ -659,7 +661,6 @@ public class TestLSP : BHL_TestBase
     }
     ";
 
-    Workspace ws;
     Server srv;
 
     bhl.lsp.proto.Uri uri1;
@@ -737,13 +738,13 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    Workspace ws = new Workspace();
     Server srv;
 
     bhl.lsp.proto.Uri uri;
 
     public TestHover()
     {
+      var ws = new Workspace();
       srv = new Server(NoLogger(), NoConnection(), ws);
       srv.AttachService(new bhl.lsp.TextDocumentHoverService(srv));
 
@@ -806,23 +807,19 @@ public class TestLSP : BHL_TestBase
     ws.Init(new bhl.Types(), GetTestProjConf());
     ws.IndexFiles();
 
-    SubTest(() => {
-      AssertEqual(
-        srv.Handle(SignatureHelpReq(uri, ") //signature help 1")),
-        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
-        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
-      );
-    });
+    AssertEqual(
+      srv.Handle(SignatureHelpReq(uri, ") //signature help 1")),
+      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
+      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+      "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
+    );
     
-    SubTest(() => {
-      AssertEqual(
-        srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
-        "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
-        "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
-        "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
-      );
-    });
+    AssertEqual(
+      srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
+      "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
+      "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
+      "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
+    );
   }
 
   [Fact]
