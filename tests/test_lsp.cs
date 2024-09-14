@@ -107,10 +107,10 @@ public class TestLSP : BHL_TestBase
     AssertTrue(fn.origin.source_range.start.line > 0);
   }
 
-  [Fact]
-  public void TestRpcResponseErrors()
+  public class TestRpcResponseErrors : BHL_TestBase
   {
-    SubTest("parse error", () =>
+    [Fact]
+    public void parse_error()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
@@ -118,9 +118,10 @@ public class TestLSP : BHL_TestBase
         srv.Handle(json),
         "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest("invalid request", () =>
+    [Fact]
+    public void invalid_request()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
@@ -128,9 +129,10 @@ public class TestLSP : BHL_TestBase
         srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest("invalid request", () =>
+    [Fact]
+    public void invalid_request_2()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
@@ -138,9 +140,10 @@ public class TestLSP : BHL_TestBase
         srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest("method not found", () =>
+    [Fact]
+    public void method_not_found()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
@@ -148,9 +151,10 @@ public class TestLSP : BHL_TestBase
         srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: foo\"},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
     
-    SubTest("invalid params", () =>
+    [Fact]
+    public void invalid_params()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       srv.AttachService(new bhl.lsp.LifecycleService(srv));
@@ -159,7 +163,7 @@ public class TestLSP : BHL_TestBase
         srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.proto.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
   }
 
   [Fact]
