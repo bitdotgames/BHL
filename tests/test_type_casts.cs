@@ -1704,10 +1704,10 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestBasicType()
+  public class TestBasicType : BHL_TestBase
   {
-    SubTest(() =>
+    [Fact]
+    public void _1()
     {
       string bhl = @"
       import ""std""
@@ -1723,9 +1723,10 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("int", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() =>
+    [Fact]
+    public void _2()
     {
       string bhl = @"
       import ""std""
@@ -1741,9 +1742,10 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("string", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() =>
+    [Fact]
+    public void _3()
     {
       string bhl = @"
       import ""std""
@@ -1759,7 +1761,7 @@ public class TestTypeCasts : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual("func void()", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
