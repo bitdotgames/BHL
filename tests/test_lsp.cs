@@ -709,8 +709,7 @@ public class TestLSP : BHL_TestBase
     });
   }
 
-  [Fact]
-  public void TestHover()
+  public class TestHover : BHL_TestBase
   {
     string bhl1 = @"
     func float test1(float k, float n) 
@@ -724,31 +723,41 @@ public class TestLSP : BHL_TestBase
     }
     ";
     
-    var ws = new Workspace();
+    Workspace ws = new Workspace();
+    Server srv;
 
-    var srv = new Server(NoLogger(), NoConnection(), ws);
-    srv.AttachService(new bhl.lsp.TextDocumentHoverService(srv));
-    
-    CleanTestFiles();
-    
-    var uri = MakeTestDocument("bhl1.bhl", bhl1);
+    bhl.lsp.proto.Uri uri;
 
-    ws.Init(new bhl.Types(), GetTestProjConf());
-    ws.IndexFiles();
+    public TestHover()
+    {
+      srv = new Server(NoLogger(), NoConnection(), ws);
+      srv.AttachService(new bhl.lsp.TextDocumentHoverService(srv));
 
-    SubTest(() => {
+      CleanTestFiles();
+
+      uri = MakeTestDocument("bhl1.bhl", bhl1);
+
+      ws.Init(new bhl.Types(), GetTestProjConf());
+      ws.IndexFiles();
+    }
+
+    [Fact]
+    public void _1()
+    {
       AssertEqual(
         srv.Handle(HoverReq(uri, "est1() //hover 1")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float k,float n)\"}},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       AssertEqual(
         srv.Handle(HoverReq(uri, "k //return k")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"float k\"}},\"jsonrpc\":\"2.0\"}"
       );
-    });
+    }
   }
 
   [Fact(Skip = "TODO: not implemented yet")]
