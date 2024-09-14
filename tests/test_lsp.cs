@@ -166,13 +166,18 @@ public class TestLSP : BHL_TestBase
     }
   }
 
-  [Fact]
-  public void TestInitShutdownExit()
+  public class TestInitShutdownExit : BHL_TestBase
   {
-    var srv = new Server(NoLogger(), NoConnection(), new Workspace());
-    srv.AttachService(new bhl.lsp.LifecycleService(srv));
+    Server srv = new Server(NoLogger(), NoConnection(), new Workspace());
 
-    SubTest(() => {
+    public TestInitShutdownExit()
+    {
+      srv.AttachService(new LifecycleService(srv));
+    }
+    
+    [Fact]
+    public void _1()
+    {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
       
       string rsp = "{\"id\":1,\"result\":{" +
@@ -202,30 +207,36 @@ public class TestLSP : BHL_TestBase
                 "\"jsonrpc\":\"2.0\"}";
 
       AssertEqual(srv.Handle(req), rsp);
-    });
+    }
     
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       AssertEqual(
         srv.Handle(new Request(1, "initialized").ToJson()),
         string.Empty
       );
-    });
+    }
     
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       AssertEqual(
         srv.Handle(new Request(1, "shutdown").ToJson()),
         NullResultJson(1)
       );
-    });
+    }
     
-    SubTest(() => {
+    [Fact]
+    public void _4()
+    {
       AssertFalse(srv.going_to_exit);
       AssertEqual(
         srv.Handle(new Request(1, "exit").ToJson()),
         string.Empty
       );
       AssertTrue(srv.going_to_exit);
-    });
+    }
   }
 
   public class MockConnection : IConnection
