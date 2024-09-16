@@ -785,16 +785,6 @@ public class BHL_TestBase
       AssertEqual(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }
 
-  public void SubTest(System.Action fn)
-  {
-    SubTest("", fn);
-  }
-
-  public void SubTest(string name, System.Action fn)
-  {
-    fn();
-  }
-
   public static string TestDirPath()
   {
     string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
