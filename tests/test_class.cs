@@ -918,51 +918,47 @@ public class TestClass : BHL_TestBase
   [Fact(Skip = "TODO: not implemented yet")]
   public void TestSelfReferenceLeak()
   {
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        Bar b?
-      }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.b = b
-      }
-      ";
+    string bhl = @"
+    class Bar {
+      Bar b?
+    }
+      
+    func test() 
+    {
+      Bar b = {}
+      b.b = b
+    }
+    ";
 
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
   }
 
   [Fact(Skip = "TODO: not implemented yet")]
   public void TestFuncPtrAccessThisMethodLeak()
   {
-    SubTest(() => {
-      string bhl = @"
-      class Bar {
-        func() ptr
-        int d
-        func Dummy() {
-          this.d = 1
-        }
+    string bhl = @"
+    class Bar {
+      func() ptr
+      int d
+      func Dummy() {
+        this.d = 1
       }
-        
-      func test() 
-      {
-        Bar b = {}
-        b.ptr = func() [b?] {
-          b.Dummy()
-        }
+    }
+      
+    func test() 
+    {
+      Bar b = {}
+      b.ptr = func() [b?] {
+        b.Dummy()
       }
-      ";
+    }
+    ";
 
-      var vm = MakeVM(bhl);
-      Execute(vm, "test");
-      CommonChecks(vm);
-    });
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
   }
 
   [Fact]
@@ -4859,117 +4855,115 @@ public class TestClass : BHL_TestBase
     public int c;
   }
 
-  [Fact]
-  public void TestNestedNativeClassesIrrelevantOrder()
+  public class TestNestedNativeClassesIrrelevantOrder : BHL_TestBase
   {
-    var ts_fn = new Action<Types>((ts) => {
+    Action<Types> ts_fn;
+    
+    public TestNestedNativeClassesIrrelevantOrder()
+    {
+      ts_fn = new Action<Types>((ts) =>
       {
-        var cl = new ClassSymbolNative(new Origin(), "C", ts.T("B"),
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(new C(), type);
-          }
-        );
+        {
+          var cl = new ClassSymbolNative(new Origin(), "C", ts.T("B"),
+            delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new C(), type); }
+          );
 
-        ts.ns.Define(cl);
+          ts.ns.Define(cl);
 
-        cl.Define(new FieldSymbol(new Origin(), "c", ts.T("int"), 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {
-            var c = (C)ctx.obj;
-            v.SetInt(c.c);
-          },
-          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-          {
-            var c = (C)ctx.obj;
-            c.c = (int)v.num; 
-          }
-        ));
-      }
+          cl.Define(new FieldSymbol(new Origin(), "c", ts.T("int"),
+            delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+            {
+              var c = (C)ctx.obj;
+              v.SetInt(c.c);
+            },
+            delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+            {
+              var c = (C)ctx.obj;
+              c.c = (int)v.num;
+            }
+          ));
+        }
 
-      {
-        var cl = new ClassSymbolNative(new Origin(), "B", ts.T("A"),
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(new B(), type);
-          }
-        );
+        {
+          var cl = new ClassSymbolNative(new Origin(), "B", ts.T("A"),
+            delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new B(), type); }
+          );
 
-        ts.ns.Define(cl);
+          ts.ns.Define(cl);
 
-        cl.Define(new FieldSymbol(new Origin(), "b", ts.T("int"), 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {
-            var b = (B)ctx.obj;
-            v.SetInt(b.b);
-          },
-          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-          {
-            var b = (B)ctx.obj;
-            b.b = (int)v.num; 
-          }
-        ));
+          cl.Define(new FieldSymbol(new Origin(), "b", ts.T("int"),
+            delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+            {
+              var b = (B)ctx.obj;
+              v.SetInt(b.b);
+            },
+            delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+            {
+              var b = (B)ctx.obj;
+              b.b = (int)v.num;
+            }
+          ));
 
-        cl.Define(new FieldSymbol(new Origin(), "b2", ts.T("int"), 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {
-            var b = (B)ctx.obj;
-            v.SetInt(b.b2);
-          },
-          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-          {
-            var b = (B)ctx.obj;
-            b.b2 = (int)v.num; 
-          }
-        ));
-      }
+          cl.Define(new FieldSymbol(new Origin(), "b2", ts.T("int"),
+            delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+            {
+              var b = (B)ctx.obj;
+              v.SetInt(b.b2);
+            },
+            delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+            {
+              var b = (B)ctx.obj;
+              b.b2 = (int)v.num;
+            }
+          ));
+        }
 
-      {
-        var cl = new ClassSymbolNative(new Origin(), "A",
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(new A(), type);
-          }
-        );
+        {
+          var cl = new ClassSymbolNative(new Origin(), "A",
+            delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new A(), type); }
+          );
 
-        ts.ns.Define(cl);
+          ts.ns.Define(cl);
 
-        cl.Define(new FieldSymbol(new Origin(), "a", ts.T("int"), 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {
-            var a = (A)ctx.obj;
-            v.SetInt(a.a);
-          },
-          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-          {
-            var a = (A)ctx.obj;
-            a.a = (int)v.num; 
-          }
-        ));
+          cl.Define(new FieldSymbol(new Origin(), "a", ts.T("int"),
+            delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+            {
+              var a = (A)ctx.obj;
+              v.SetInt(a.a);
+            },
+            delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+            {
+              var a = (A)ctx.obj;
+              a.a = (int)v.num;
+            }
+          ));
 
-        cl.Define(new FieldSymbol(new Origin(), "a2", ts.T("int"), 
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {
-            var a = (A)ctx.obj;
-            v.SetInt(a.a2);
-          },
-          delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-          {
-            var a = (A)ctx.obj;
-            a.a2 = (int)v.num; 
-          }
-        ));
-      }
+          cl.Define(new FieldSymbol(new Origin(), "a2", ts.T("int"),
+            delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+            {
+              var a = (A)ctx.obj;
+              v.SetInt(a.a2);
+            },
+            delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+            {
+              var a = (A)ctx.obj;
+              a.a2 = (int)v.num;
+            }
+          ));
+        }
 
-      {
-        //NOTE: setting up classes not in 'natural' order  
-        (ts.T("C").Get() as ClassSymbolNative).Setup();
-        (ts.T("B").Get() as ClassSymbolNative).Setup();
-        (ts.T("A").Get() as ClassSymbolNative).Setup();
-      }
-    });
+        {
+          //NOTE: setting up classes not in 'natural' order  
+          (ts.T("C").Get() as ClassSymbolNative).Setup();
+          (ts.T("B").Get() as ClassSymbolNative).Setup();
+          (ts.T("A").Get() as ClassSymbolNative).Setup();
+        }
+      });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       func int test() 
       {
@@ -4985,9 +4979,11 @@ public class TestClass : BHL_TestBase
       var vm = MakeVM(bhl, ts_fn);
       AssertEqual(1110, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       func int test() 
       {
@@ -5003,9 +4999,11 @@ public class TestClass : BHL_TestBase
       var vm = MakeVM(bhl, ts_fn);
       AssertEqual(1110, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       string bhl = @"
       func int test() 
       {
@@ -5018,7 +5016,7 @@ public class TestClass : BHL_TestBase
       var vm = MakeVM(bhl, ts_fn);
       AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]

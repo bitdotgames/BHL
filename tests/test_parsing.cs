@@ -24,10 +24,11 @@ public class TestParsing : BHL_TestBase
     AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
   }
 
-  [Fact]
-  public void TestReturnParseSpecialCasesForDeclVars()
+  public class TestReturnParseSpecialCasesForDeclVars : BHL_TestBase
   {
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       coro func test()
       {
@@ -47,9 +48,11 @@ public class TestParsing : BHL_TestBase
       Execute(vm, "test");
       AssertEqual("", log.ToString());
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       coro func test()
       {
@@ -69,7 +72,7 @@ public class TestParsing : BHL_TestBase
       Execute(vm, "test");
       AssertEqual("", log.ToString());
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
