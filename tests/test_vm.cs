@@ -863,10 +863,11 @@ public class TestVM : BHL_TestBase
     );
   }
 
-  [Fact]
-  public void TestVariablDeclMissingAssignFromFuncCall()
+  public class TestVariableDeclMissingAssignFromFuncCall : BHL_TestBase
   {
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       func test()
       {
@@ -884,9 +885,11 @@ public class TestVM : BHL_TestBase
 --------------^"
           )
       );
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       func test()
       {
@@ -904,7 +907,7 @@ public class TestVM : BHL_TestBase
 -----------------------^"
           )
       );
-    });
+    }
   }
 
   [Fact]
@@ -10894,19 +10897,22 @@ public class TestVM : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestSetGlobalFromOutside()
+  public class TestSetGlobalFromOutside : BHL_TestBase
   {
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       int foo = 10
       ";
 
       var vm = MakeVM(bhl);
       AssertFalse(vm.TryFindVarAddr("hey", out var addr));
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       namespace what {
         int hey = 10
@@ -10915,9 +10921,11 @@ public class TestVM : BHL_TestBase
 
       var vm = MakeVM(bhl);
       AssertFalse(vm.TryFindVarAddr("hey", out var addr));
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       string bhl = @"
       int bar = 1
       int foo = 10
@@ -10933,9 +10941,11 @@ public class TestVM : BHL_TestBase
       addr.val.num = 100;
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _4()
+    {
       string bhl = @"
       int bar = 1
       namespace what {
@@ -10954,9 +10964,11 @@ public class TestVM : BHL_TestBase
       addr.val.num = 100;
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _5()
+    {
       string bar_bhl = @"
       int bar = 1
       ";
@@ -10984,9 +10996,11 @@ public class TestVM : BHL_TestBase
       vm.LoadModule("test");
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _6()
+    {
       string bar_bhl = @"
       namespace N {
         int bar = 1
@@ -11020,7 +11034,7 @@ public class TestVM : BHL_TestBase
       vm.LoadModule("test");
       AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]

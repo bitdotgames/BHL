@@ -53,10 +53,11 @@ public class TestStrings : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestIndexOf()
+  public class TestIndexOf : BHL_TestBase
   {
-    SubTest(() => {
+    [Fact]
+    public void _1()
+    {
       string bhl = @"
       func int test() {
         string a = ""FooBar""
@@ -66,9 +67,11 @@ public class TestStrings : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _2()
+    {
       string bhl = @"
       func int test() {
         string a = ""FooBar""
@@ -78,9 +81,11 @@ public class TestStrings : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
 
-    SubTest(() => {
+    [Fact]
+    public void _3()
+    {
       string bhl = @"
       func int test() {
         string a = ""FooBar""
@@ -91,7 +96,7 @@ public class TestStrings : BHL_TestBase
       //like in C#
       AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
-    });
+    }
   }
 
   [Fact]
