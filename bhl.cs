@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using Mono.Options;
 using Newtonsoft.Json;
@@ -53,7 +54,7 @@ public static class Tasks
     //let's add runtime VM sources as well
     front_src.AddRange(VM_SRC);
 
-    MCSBuild(tm, front_src.ToArray(),
+    DotnetBuild(tm, front_src.ToArray(),
      $"{BHL_ROOT}/build/bhl_front.dll",
      "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
      (debug ? " -define:BHL_DEBUG" : "") + 
@@ -221,7 +222,10 @@ public static class Tasks
 
   public static string BHL_ROOT {
     get {
-      return Path.GetDirectoryName(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+      return Path.GetDirectoryName(
+        Path.GetFullPath(
+          Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/../../../../")
+        );
     }
   }
 
@@ -310,6 +314,80 @@ public static class Tasks
     var mono_args = $"{opts} {exe} " + String.Join(" ", args);
     return tm.TryShell("mono", mono_args);
   }
+  
+  public static void DotnetBuild(Taskman tm, string[] srcs, string result, string opts = "")
+  {
+    var files = new List<string>();
+    foreach(var s in srcs)
+      files.AddRange(tm.Glob(s));
+
+    foreach(var f in files)
+      if(!File.Exists(f))
+        throw new Exception($"File not found: '{f}'");
+
+    var dlls = new List<string>();
+    for(int i=files.Count;i-- > 0;)
+    {
+      if(files[i].EndsWith(".dll"))
+      {
+        dlls.Add(files[i]);
+        files.RemoveAt(i);
+      }
+    }
+
+    if(files.Count == 0)
+      throw new Exception("No files");
+
+    string csproj = MakeCSProj(Path.GetFileNameWithoutExtension(result), files, dlls);
+    
+    //TODO: use system temporary directory for that?
+    var csproj_file = result + ".csproj";
+    File.WriteAllText(csproj_file, csproj);
+    
+    //TODO: use system temporary directory for that?
+    string cmd_hash_file = csproj_file + ".mhash";
+    uint cmd_hash = Hash.CRC32(csproj);
+    if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString()) 
+      tm.Write(cmd_hash_file, cmd_hash.ToString());
+
+    files.Add(cmd_hash_file);
+
+    if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, dlls))
+    {
+      tm.Mkdir(Path.GetDirectoryName(result));
+      tm.Shell("dotnet", "build " + csproj_file + " -o " + result + ".build");
+    }
+  }
+
+  public static string MakeCSProj(string name, List<string> files, List<string> dlls)
+  {
+    string csproj_header = @$"
+<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <AssemblyName>{name}</AssemblyName>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>  
+   ";
+    
+    string csproj_footer = @"
+</Project>
+   ";
+
+    string csproj_sources = "<ItemGroup>\n"; 
+    string csproj_dlls = "<ItemGroup>\n"; 
+    
+    foreach(var file in files)
+      csproj_sources += $"<Compile Include=\"{file}\" />\n";
+    csproj_sources += "</ItemGroup>\n\n";
+
+    foreach(var dll in dlls)
+      csproj_dlls += $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dll)}\"><HintPath>{dll}</HintPath></Reference>\n";
+    csproj_dlls += "</ItemGroup>\n\n";
+
+    return csproj_header + csproj_sources + csproj_dlls + csproj_footer;
+  }
 
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
   {
@@ -319,7 +397,7 @@ public static class Tasks
 
     foreach(var f in files)
       if(!File.Exists(f))
-        throw new Exception($"Bad file {f}");
+        throw new Exception($"File not found: '{f}'");
 
     var refs = new List<string>();
     for(int i=files.Count;i-- > 0;)
@@ -527,13 +605,11 @@ public class Taskman
     if(task == null)
       throw new Exception("No such task: " + args[0]);
 
-    var task_args = new string[args.Length-1];
-    for(int i=1;i<args.Length;++i)
-      task_args[i-1] = args[i];
-
     verbose = task.attr.verbose;
 
-    Invoke(task, task_args);
+    var task_args = args.ToList();
+    task_args.RemoveAt(0);
+    Invoke(task, task_args.ToArray());
   }
 
   public void Invoke(Task task, string[] task_args)
@@ -646,9 +722,11 @@ public class Taskman
     int idx = s.IndexOf('*');
     if(idx != -1)
     {
-      string dir = Path.GetDirectoryName(s);
+      string dir = s.Substring(0, idx);
       string mask = s.Substring(idx);
-      files.AddRange(Directory.GetFiles(dir, mask));
+    
+      if(Directory.Exists(dir))
+        files.AddRange(Directory.GetFiles(dir, mask));
     }
     else
       files.Add(s);
