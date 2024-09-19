@@ -29,14 +29,6 @@ public partial class VM : INamedResolver
   
   public class ValPool : Pool<Val>
   {
-    //NOTE: used for debug tracking of not-freed Vals
-    internal struct Tracking
-    {
-      internal Val v;
-      internal string stack_trace;
-    }
-    internal List<Tracking> debug_track = new List<Tracking>();
-
     public void Alloc(VM vm, int num)
     {
       for(int i=0;i<num;++i)
@@ -58,18 +50,6 @@ public partial class VM : INamedResolver
       {
         var v = dvs[i];
         res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n";
-      }
-
-      if(debug_track.Count > 0)
-      {
-        var dangling = new List<Tracking>();
-        foreach(var t in debug_track)
-          if(t.v._refs != -1)
-            dangling.Add(t);
-
-        res += "== dangling:" + dangling.Count + " ==\n";
-        foreach(var t in dangling)
-          res += t.v + " (refs:" + t.v._refs + ") " + t.v.GetHashCode() + "\n" + t.stack_trace + "\n<<<<<\n";
       }
 
       return res;
