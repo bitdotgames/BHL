@@ -775,7 +775,7 @@ public class CompilationExecutor
       //let's check processor related errors
       if(proc.result.errors.Count > 0)
         return true;
-      
+
       foreach(var proc_import in proc.imports)
       {
         //for C# modules file_path is empty

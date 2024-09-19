@@ -907,7 +907,7 @@ public class ModuleCompiler : AST_Visitor
     UseCode();
 
     var fsymb = ast.symbol;
-
+    
     func_decls.Push(fsymb);
 
     fsymb.ip_addr = GetCodeSize();
