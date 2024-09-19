@@ -2,11 +2,10 @@ using System;
 using System.Text;
 using Mono.Options;
 using bhl.lsp;
-using bhl.lsp.proto;
 
 namespace bhl {
 
-public class LSP : ICmd
+public class LSPCmd : ICmd
 {
   public void Run(string[] args)
   {

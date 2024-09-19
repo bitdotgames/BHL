@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using bhl;
 using Mono.Options;
 using Newtonsoft.Json;
 
@@ -25,41 +26,7 @@ public static class Tasks
   [Task(verbose: false)]
   public static void version(Taskman tm, string[] args)
   {
-    BuildAndRunDllCmd(
-      tm,
-      "version",
-      new string[] {
-        $"{BHL_ROOT}/src/cmd/version.cs",
-        $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/src/vm/version.cs",
-      },
-      "",
-      args
-    );
-  }
-
-  [Task()]
-  public static void build_front_dll(Taskman tm, string[] args)
-  {
-    bool debug = Environment.GetEnvironmentVariable("BHL_DEBUG") == "1";
-    bool tests = Environment.GetEnvironmentVariable("BHL_TEST") == "1";
-
-    var front_src = new List<string>() {
-      $"{BHL_ROOT}/src/compile/*.cs",
-      $"{BHL_ROOT}/src/g/*.cs",
-      $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
-      $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-      $"{BHL_ROOT}/deps/lz4.dll", 
-    };
-    //let's add runtime VM sources as well
-    front_src.AddRange(VM_SRC);
-
-    DotnetBuild(tm, front_src.ToArray(),
-     $"{BHL_ROOT}/build/bhl_front.dll",
-     "-define:BHL_FRONT -warnaserror -warnaserror-:3021 -nowarn:3021 -debug -target:library" + 
-     (debug ? " -define:BHL_DEBUG" : "") + 
-     (tests ? " -define:BHL_TEST" : "")
-    );
+    Console.WriteLine(bhl.Version.Name);
   }
 
   [Task()]
@@ -132,90 +99,77 @@ public static class Tasks
     tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp *.g && cp bhl*.cs ../src/g/' ");
   }
 
-  [Task(deps: "build_front_dll")]
+  [Task]
   public static void compile(Taskman tm, string[] args)
   {
     string proj_file;
     var runtime_args = GetProjectArg(args, out proj_file);
 
-    BuildAndRunCompiler(tm, proj_file, ref runtime_args);
+    var proj = new ProjectConf();
+    if(!string.IsNullOrEmpty(proj_file))
+      proj = ProjectConf.ReadFromFile(proj_file);
+
+    var bindings_sources = proj.bindings_sources;
+    if(bindings_sources.Count > 0)
+    {
+      if(string.IsNullOrEmpty(proj.bindings_dll))
+        throw new Exception("Resulting 'bindings_dll' is not set");
+
+      bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj"); 
+      string bindings_dll_path = DotnetBuildLibrary(
+        tm,
+        bindings_sources.ToArray(),
+        proj.bindings_dll, 
+        new List<string>() {"BHL_FRONT"}
+      );
+      runtime_args.Add($"--bindings-dll={bindings_dll_path}");
+    }
+
+    var postproc_sources = proj.postproc_sources;
+    if(postproc_sources.Count > 0)
+    {
+      if(string.IsNullOrEmpty(proj.postproc_dll))
+        throw new Exception("Resulting 'postproc_dll' is not set");
+
+      postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
+      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll");
+      string postproc_dll_path = DotnetBuildLibrary(
+        tm,
+        postproc_sources.ToArray(),
+        proj.postproc_dll,
+        new List<string>() {"BHL_FRONT"}
+      );
+      runtime_args.Add($"--postproc-dll={postproc_dll_path}");
+    }
+
+    var cmd = new CompileCmd();
+    cmd.Run(runtime_args.ToArray());
   }
 
-  [Task(deps: "build_front_dll", verbose: false)]
+  [Task]
   public static void run(Taskman tm, string[] args)
   {
-    BuildAndRunDllCmd(
-      tm,
-      "run",
-      new string[] {
-        $"{BHL_ROOT}/src/cmd/run.cs",
-        $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/build/bhl_front.dll", 
-        $"{BHL_ROOT}/deps/mono_opts.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
-      },
-      "-define:BHL_FRONT",
-      args
-    );
+    var cmd = new RunCmd();
+    cmd.Run(args);
   }
   
-  [Task(deps: "build_front_dll", verbose: false)]
+  [Task]
   public static void bench(Taskman tm, string[] args)
   {
-    BuildAndRunDllCmd(
-      tm,
-      "bench",
-      new string[] {
-        $"{BHL_ROOT}/src/cmd/bench.cs",
-        $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/build/bhl_front.dll", 
-        $"{BHL_ROOT}/deps/mono_opts.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
-      },
-      "",
-      args
-    );
+    var cmd = new BenchCmd();
+    cmd.Run(args);
   }
 
-  [Task()]
+  [Task]
   public static void set_env_BHL_TEST(Taskman tm, string[] args)
   {
     Environment.SetEnvironmentVariable("BHL_TEST", "1");
   }
   
-  [Task(deps: "build_front_dll")]
-  public static void build_lsp_dll(Taskman tm, string[] args)
-  {
-    MCSBuild(tm, 
-      new string[] {
-        $"{BHL_ROOT}/src/lsp/*.cs",
-        $"{BHL_ROOT}/build/bhl_front.dll",
-        $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll",
-        $"{BHL_ROOT}/deps/Newtonsoft.Json.dll"
-      },
-      $"{BHL_ROOT}/build/bhl_lsp.dll",
-      "-target:library -define:BHLSP_DEBUG"
-    );
-  }
-  
-  [Task(deps: "build_lsp_dll", verbose: false)]
   public static void lsp(Taskman tm, string[] args)
   {
-    BuildAndRunDllCmd(
-      tm,
-      "lsp",
-      new string[] {
-        $"{BHL_ROOT}/src/cmd/lsp.cs",
-        $"{BHL_ROOT}/src/cmd/cmd.cs",
-        $"{BHL_ROOT}/build/bhl_front.dll",
-        $"{BHL_ROOT}/build/bhl_lsp.dll",
-        $"{BHL_ROOT}/deps/mono_opts.dll"
-      },
-      "-define:BHLSP_DEBUG",
-      args
-    );
+    var cmd = new LSPCmd();
+    cmd.Run(args);
   }
   
   /////////////////////////////////////////////////
@@ -246,62 +200,6 @@ public static class Tasks
       left.Insert(0, "--proj=" + proj_file);
     return left;
   }
-  
-  public static void BuildAndRunCompiler(Taskman tm, string proj_file, ref List<string> runtime_args)
-  {
-    var sources = new string[] {
-      $"{BHL_ROOT}/src/cmd/compile.cs",
-      $"{BHL_ROOT}/src/cmd/cmd.cs",
-      $"{BHL_ROOT}/build/bhl_front.dll", 
-      $"{BHL_ROOT}/deps/mono_opts.dll",
-      $"{BHL_ROOT}/deps/Newtonsoft.Json.dll",
-      $"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll", 
-    };
-
-    var proj = new ProjectConf();
-    if(!string.IsNullOrEmpty(proj_file))
-      proj = ProjectConf.ReadFromFile(proj_file);
-
-    var bindings_sources = proj.bindings_sources;
-    if(bindings_sources.Count > 0)
-    {
-      if(string.IsNullOrEmpty(proj.bindings_dll))
-        throw new Exception("Resulting 'bindings_dll' is not set");
-
-      bindings_sources.Add($"{BHL_ROOT}/build/bhl_front.dll");
-      bindings_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
-      MCSBuild(tm, 
-        bindings_sources.ToArray(),
-        proj.bindings_dll, 
-        "-define:BHL_FRONT -debug -target:library"
-      );
-      runtime_args.Add($"--bindings-dll={proj.bindings_dll}");
-    }
-
-    var postproc_sources = proj.postproc_sources;
-    if(postproc_sources.Count > 0)
-    {
-      if(string.IsNullOrEmpty(proj.postproc_dll))
-        throw new Exception("Resulting 'postproc_dll' is not set");
-
-      postproc_sources.Add($"{BHL_ROOT}/build/bhl_front.dll");
-      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll"); 
-      MCSBuild(tm, 
-        postproc_sources.ToArray(),
-        proj.postproc_dll,
-        "-define:BHL_FRONT -debug -target:library"
-      );
-      runtime_args.Add($"--postproc-dll={proj.postproc_dll}");
-    }
-
-    BuildAndRunDllCmd(
-      tm,
-      "compile",
-      sources,
-      "-define:BHL_FRONT",
-      runtime_args
-    );
-  }
 
   public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
   {
@@ -315,7 +213,12 @@ public static class Tasks
     return tm.TryShell("mono", mono_args);
   }
   
-  public static void DotnetBuild(Taskman tm, string[] srcs, string result, string opts = "")
+  public static string DotnetBuildLibrary(
+    Taskman tm, 
+    string[] srcs, 
+    string result,
+    List<string> defines
+    )
   {
     var files = new List<string>();
     foreach(var s in srcs)
@@ -324,13 +227,19 @@ public static class Tasks
     foreach(var f in files)
       if(!File.Exists(f))
         throw new Exception($"File not found: '{f}'");
+    
+    //NOTE: in case of dotnet build result is a directory not a file,
+    //      let's remove any conflicting files
+    //TODO: is it OK to do this quietly?
+    if(File.Exists(result))
+      File.Delete(result);
 
-    var dlls = new List<string>();
+    var deps = new List<string>();
     for(int i=files.Count;i-- > 0;)
     {
-      if(files[i].EndsWith(".dll"))
+      if(files[i].EndsWith(".dll") || files[i].EndsWith(".csproj"))
       {
-        dlls.Add(files[i]);
+        deps.Add(files[i]);
         files.RemoveAt(i);
       }
     }
@@ -338,7 +247,14 @@ public static class Tasks
     if(files.Count == 0)
       throw new Exception("No files");
 
-    string csproj = MakeCSProj(Path.GetFileNameWithoutExtension(result), files, dlls);
+    string csproj = MakeLibraryCSProj(
+      Path.GetFileNameWithoutExtension(result), 
+      files, 
+      deps,
+      defines
+      );
+
+    string result_dll = result + "/" + Path.GetFileName(result);
     
     //TODO: use system temporary directory for that?
     var csproj_file = result + ".csproj";
@@ -352,14 +268,18 @@ public static class Tasks
 
     files.Add(cmd_hash_file);
 
-    if(tm.NeedToRegen(result, files) || tm.NeedToRegen(result, dlls))
-    {
-      tm.Mkdir(Path.GetDirectoryName(result));
-      tm.Shell("dotnet", "build " + csproj_file + " -o " + result + ".build");
-    }
+    if(tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
+      tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
+
+    return result_dll;
   }
 
-  public static string MakeCSProj(string name, List<string> files, List<string> dlls)
+  public static string MakeLibraryCSProj(
+    string name, 
+    List<string> files, 
+    List<string> deps,
+    List<string> defines
+    )
   {
     string csproj_header = @$"
 <Project Sdk=""Microsoft.NET.Sdk"">
@@ -368,6 +288,7 @@ public static class Tasks
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.1</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DefineConstants>{string.Join(';', defines)}</DefineConstants>
   </PropertyGroup>  
    ";
     
@@ -376,17 +297,34 @@ public static class Tasks
    ";
 
     string csproj_sources = "<ItemGroup>\n"; 
-    string csproj_dlls = "<ItemGroup>\n"; 
-    
     foreach(var file in files)
       csproj_sources += $"<Compile Include=\"{file}\" />\n";
     csproj_sources += "</ItemGroup>\n\n";
 
-    foreach(var dll in dlls)
-      csproj_dlls += $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dll)}\"><HintPath>{dll}</HintPath></Reference>\n";
-    csproj_dlls += "</ItemGroup>\n\n";
+    string csproj_deps = "<ItemGroup>\n";
+    foreach(var dep in deps)
+    {
+      if(dep.EndsWith(".dll"))
+      {
+        csproj_deps +=
+          $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dep)}\"><HintPath>{dep}</HintPath></Reference>\n";
+      }
+      else if(dep.EndsWith(".csproj"))
+      {
+        csproj_deps +=
+          $"<ProjectReference Include=\"{dep}\"/>\n";
+      }
+      else
+        throw new Exception("Unknown dependency file: " + dep);
+    }
 
-    return csproj_header + csproj_sources + csproj_dlls + csproj_footer;
+    csproj_deps += "</ItemGroup>\n\n";
+
+    return 
+      csproj_header + 
+      csproj_sources + 
+      csproj_deps + 
+      csproj_footer;
   }
 
   public static void MCSBuild(Taskman tm, string[] srcs, string result, string opts = "", string binary = "mcs")
@@ -432,8 +370,13 @@ public static class Tasks
       tm.Shell(binary, args);
     }
   }
-
-  public static void BuildAndRunDllCmd(Taskman tm, string name, string[] sources, string extra_mcs_args, IList<string> args)
+  
+  public static void BuildAndRunDllCmd(
+    Taskman tm, 
+    string name, 
+    string[] sources, 
+    string extra_mcs_args, 
+    IList<string> args)
   {
     var dll_path = $"{BHL_ROOT}/build/bhl_cmd_{name}.dll";
 

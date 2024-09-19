@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -94,9 +95,22 @@ public class ProjectConf
       return new EmptyUserBindings();
 
     var userbindings_assembly = System.Reflection.Assembly.LoadFrom(bindings_dll);
-    var userbindings_class = userbindings_assembly.GetTypes()[0];
-    var bindings = System.Activator.CreateInstance(userbindings_class) as IUserBindings;
-    return bindings;
+    var types = userbindings_assembly.GetTypes();
+
+    Type userbindings_class = null;
+    foreach(var type in types)
+    {
+      if(typeof(IUserBindings).IsAssignableFrom(type))
+      {
+        userbindings_class = type;
+        break;
+      }
+    }
+
+    if(userbindings_class == null)
+      throw new Exception("IUserBindings instance not found");
+      
+    return Activator.CreateInstance(userbindings_class) as IUserBindings;
   }
 
   public IFrontPostProcessor LoadPostprocessor()
@@ -105,9 +119,22 @@ public class ProjectConf
       return new EmptyPostProcessor();
 
     var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll);
-    var postproc_class = postproc_assembly.GetTypes()[0];
-    var postproc = System.Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
-    return postproc;
+    var types = postproc_assembly.GetTypes();
+    
+    Type postproc_class = null;
+    foreach(var type in types)
+    {
+      if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
+      {
+        postproc_class = type;
+        break;
+      }
+    }
+    
+    if(postproc_class == null)
+      throw new Exception("IFrontPostProcessor instance not found");
+    
+    return Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
   }
 }
 
