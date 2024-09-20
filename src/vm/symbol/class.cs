@@ -37,7 +37,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   //   a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type  
   // }
   // setting this attribute controls this behavior
-  internal bool _resolve_only_decl_members;
+  internal bool _resolve_only_decl_members = false;
 
   public VM.ClassCreator creator;
 
