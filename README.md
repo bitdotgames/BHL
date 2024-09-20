@@ -240,7 +240,7 @@ Please note that while BHL works fine under Windows the example assumes you are 
 
 BHL comes with its own simple build tool **bhl**. bhl tool is written in C# and should work just fine both on \*nix and Windows platforms. 
 
-It allows you to build frontend dll, backend dll, compile BHL sources into a binary, run unit tests etc. 
+It allows you to compile BHL sources into a binary, lauch an LSP server etc. 
 
 You can view all available build tasks with the following command:
 
@@ -252,7 +252,7 @@ For now there is no any documentation for BHL except presentation slides. Howeve
 
 You can run unit tests by executing the following command:
 
-> $ bhl test
+> $ cd tests && dotnet test
 
 # Roadmap
 
