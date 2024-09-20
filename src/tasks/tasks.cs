@@ -54,55 +54,6 @@ public static partial class Tasks
     }
   }
 
-  [Task(deps: "geng")]
-  public static void regen(Taskman tm, string[] args)
-  {}
-
-  [Task]
-  public static void geng(Taskman tm, string[] args)
-  {
-    tm.Rm($"{BHL_ROOT}/tmp");
-    tm.Mkdir($"{BHL_ROOT}/tmp");
-
-    tm.Copy($"{BHL_ROOT}/grammar/bhlPreprocLexer.g", $"{BHL_ROOT}/tmp/bhlPreprocLexer.g");
-    tm.Copy($"{BHL_ROOT}/grammar/bhlPreprocParser.g", $"{BHL_ROOT}/tmp/bhlPreprocParser.g");
-    tm.Copy($"{BHL_ROOT}/grammar/bhlLexer.g", $"{BHL_ROOT}/tmp/bhlLexer.g");
-    tm.Copy($"{BHL_ROOT}/grammar/bhlParser.g", $"{BHL_ROOT}/tmp/bhlParser.g");
-    tm.Copy($"{BHL_ROOT}/util/g4sharp", $"{BHL_ROOT}/tmp/g4sharp");
-
-    tm.Shell("sh", $"-c 'cd {BHL_ROOT}/tmp && sh g4sharp *.g && cp bhl*.cs ../src/g/' ");
-  }
-
-  [Task]
-  public static void set_env_BHL_TEST(Taskman tm, string[] args)
-  {
-    Environment.SetEnvironmentVariable("BHL_TEST", "1");
-  }
-
-  /////////////////////////////////////////////////
-
-
-  public static List<string> GetProjectArg(string[] args, out string proj_file)
-  {
-    string _proj_file = "";
-
-    var p = new OptionSet()
-    {
-      {
-        "p|proj=", "project config file",
-        v => _proj_file = v
-      }
-    };
-
-    var left = p.Parse(args);
-
-    proj_file = _proj_file;
-
-    if (!string.IsNullOrEmpty(proj_file))
-      left.Insert(0, "--proj=" + proj_file);
-    return left;
-  }
-
   public static string DotnetBuildLibrary(
     Taskman tm,
     string[] srcs,

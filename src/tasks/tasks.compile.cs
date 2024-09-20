@@ -182,6 +182,27 @@ public static partial class Tasks
       Environment.Exit(ERROR_EXIT_CODE);
     }
   }
+  
+  public static List<string> GetProjectArg(string[] args, out string proj_file)
+  {
+    string _proj_file = "";
+
+    var p = new OptionSet()
+    {
+      {
+        "p|proj=", "project config file",
+        v => _proj_file = v
+      }
+    };
+
+    var left = p.Parse(args);
+
+    proj_file = _proj_file;
+
+    if (!string.IsNullOrEmpty(proj_file))
+      left.Insert(0, "--proj=" + proj_file);
+    return left;
+  }
 }
 
 }
