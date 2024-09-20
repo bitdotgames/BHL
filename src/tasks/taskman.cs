@@ -36,6 +36,8 @@ public class Taskman
   }
 
   List<Task> tasks = new List<Task>();
+  public IList<Task> Tasks => tasks;
+  
   HashSet<Task> invoked = new HashSet<Task>();
 
   public bool IsWin

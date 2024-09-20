@@ -25,6 +25,18 @@ public static partial class Tasks
   {
     Console.WriteLine(bhl.Version.Name);
   }
+  
+  [Task(verbose: false)]
+  public static void help(Taskman tm, string[] args)
+  {
+    Console.WriteLine("=== Available tasks:");
+
+    var tasks = new List<Taskman.Task>(tm.Tasks); 
+    tasks.Sort((a, b) => a.Name.CompareTo(b.Name));
+    
+    foreach(var t in tasks)
+      Console.WriteLine(t.Name);
+  }
 
   [Task]
   public static void clean(Taskman tm, string[] args)
