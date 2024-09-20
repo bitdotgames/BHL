@@ -10,11 +10,7 @@
       <ProjectReference Include="..\compile\bhl_front.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Reference Include="Antlr4.Runtime.Standard">
-        <HintPath>..\..\deps\Antlr4.Runtime.Standard.dll</HintPath>
-      </Reference>
-      <Reference Include="Newtonsoft.Json">
-        <HintPath>..\..\deps\Newtonsoft.Json.dll</HintPath>
-      </Reference>
+      <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 </Project>

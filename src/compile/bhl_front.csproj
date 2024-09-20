@@ -18,14 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Antlr4.Runtime.Standard">
-      <HintPath>..\..\deps\Antlr4.Runtime.Standard.dll</HintPath>
-    </Reference>
     <Reference Include="lz4">
       <HintPath>..\..\deps\lz4.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\deps\Newtonsoft.Json.dll</HintPath>
-    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 </Project>
