@@ -39,6 +39,7 @@ public static partial class Tasks
 
   public static string DotnetBuildLibrary(
     Taskman tm,
+    bool force,
     string[] srcs,
     string result,
     List<string> defines
@@ -92,7 +93,7 @@ public static partial class Tasks
 
     files.Add(cmd_hash_file);
 
-    if(tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
+    if(force || tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
       tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
 
     return result_dll;

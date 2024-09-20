@@ -35,6 +35,7 @@ public static partial class Tasks
       bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
       string bindings_dll_path = DotnetBuildLibrary(
         tm,
+        false,
         bindings_sources.ToArray(),
         proj.bindings_dll,
         new List<string>() { "BHL_FRONT" }
@@ -52,6 +53,7 @@ public static partial class Tasks
       postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll");
       string postproc_dll_path = DotnetBuildLibrary(
         tm,
+        false,
         postproc_sources.ToArray(),
         proj.postproc_dll,
         new List<string>() { "BHL_FRONT" }
