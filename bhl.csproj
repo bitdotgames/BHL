@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <Compile Include="bhl.cs" />
-    <Compile Include="src\cmd\*.cs" />
+    <Compile Include="src\tasks\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

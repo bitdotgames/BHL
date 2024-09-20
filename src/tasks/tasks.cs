@@ -1,19 +1,37 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Mono.Options;
 
 namespace bhl {
-public static class Tasks
+  
+public static partial class Tasks
 {
+  public static string GetSelfFile()
+  {
+    return System.Reflection.Assembly.GetExecutingAssembly().Location;
+  }
+  
+  public static string BHL_ROOT
+  {
+    get
+    {
+      return Path.GetDirectoryName(
+        Path.GetFullPath(
+          Path.GetDirectoryName(GetSelfFile()) + "/../../../../")
+      );
+    }
+  }
+  
+  const int ERROR_EXIT_CODE = 2;
+  
   [Task(verbose: false)]
   public static void version(Taskman tm, string[] args)
   {
     Console.WriteLine(bhl.Version.Name);
   }
 
-  [Task()]
+  [Task]
   public static void clean(Taskman tm, string[] args)
   {
     foreach (var dll in tm.Glob($"{BHL_ROOT}/build/*.dll"))
@@ -38,10 +56,9 @@ public static class Tasks
 
   [Task(deps: "geng")]
   public static void regen(Taskman tm, string[] args)
-  {
-  }
+  {}
 
-  [Task()]
+  [Task]
   public static void geng(Taskman tm, string[] args)
   {
     tm.Rm($"{BHL_ROOT}/tmp");
@@ -57,90 +74,13 @@ public static class Tasks
   }
 
   [Task]
-  public static void compile(Taskman tm, string[] args)
-  {
-    string proj_file;
-    var runtime_args = GetProjectArg(args, out proj_file);
-
-    var proj = new ProjectConfPartial();
-    if (!string.IsNullOrEmpty(proj_file))
-      proj = ProjectConfPartial.ReadFromFile(proj_file);
-
-    var bindings_sources = proj.bindings_sources;
-    if (bindings_sources.Count > 0)
-    {
-      if (string.IsNullOrEmpty(proj.bindings_dll))
-        throw new Exception("Resulting 'bindings_dll' is not set");
-
-      bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
-      string bindings_dll_path = DotnetBuildLibrary(
-        tm,
-        bindings_sources.ToArray(),
-        proj.bindings_dll,
-        new List<string>() { "BHL_FRONT" }
-      );
-      runtime_args.Add($"--bindings-dll={bindings_dll_path}");
-    }
-
-    var postproc_sources = proj.postproc_sources;
-    if (postproc_sources.Count > 0)
-    {
-      if (string.IsNullOrEmpty(proj.postproc_dll))
-        throw new Exception("Resulting 'postproc_dll' is not set");
-
-      postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
-      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll");
-      string postproc_dll_path = DotnetBuildLibrary(
-        tm,
-        postproc_sources.ToArray(),
-        proj.postproc_dll,
-        new List<string>() { "BHL_FRONT" }
-      );
-      runtime_args.Add($"--postproc-dll={postproc_dll_path}");
-    }
-
-    var cmd = new CompileCmd();
-    cmd.Run(runtime_args.ToArray());
-  }
-
-  [Task]
-  public static void run(Taskman tm, string[] args)
-  {
-    var cmd = new RunCmd();
-    cmd.Run(args);
-  }
-
-  [Task]
-  public static void bench(Taskman tm, string[] args)
-  {
-    var cmd = new BenchCmd();
-    cmd.Run(args);
-  }
-
-  [Task]
   public static void set_env_BHL_TEST(Taskman tm, string[] args)
   {
     Environment.SetEnvironmentVariable("BHL_TEST", "1");
   }
 
-  public static void lsp(Taskman tm, string[] args)
-  {
-    var cmd = new LSPCmd();
-    cmd.Run(args);
-  }
-
   /////////////////////////////////////////////////
 
-  public static string BHL_ROOT
-  {
-    get
-    {
-      return Path.GetDirectoryName(
-        Path.GetFullPath(
-          Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/../../../../")
-      );
-    }
-  }
 
   public static List<string> GetProjectArg(string[] args, out string proj_file)
   {
@@ -161,18 +101,6 @@ public static class Tasks
     if (!string.IsNullOrEmpty(proj_file))
       left.Insert(0, "--proj=" + proj_file);
     return left;
-  }
-
-  public static void MonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
-  {
-    var mono_args = $"{opts} {exe} " + String.Join(" ", args);
-    tm.Shell("mono", mono_args);
-  }
-
-  public static int TryMonoRun(Taskman tm, string exe, string[] args = null, string opts = "")
-  {
-    var mono_args = $"{opts} {exe} " + String.Join(" ", args);
-    return tm.TryShell("mono", mono_args);
   }
 
   public static string DotnetBuildLibrary(

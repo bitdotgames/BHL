@@ -5,11 +5,9 @@ using Mono.Options;
 
 namespace bhl {
 
-public class CompileCmd : ICmd
+public static partial class Tasks
 {
-  const int ERROR_EXIT_CODE = 2;
-
-  public static void Usage(string msg = "")
+  public static void compile_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
     Console.WriteLine("bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " + 
@@ -18,7 +16,53 @@ public class CompileCmd : ICmd
     Environment.Exit(1);
   }
 
-  public void Run(string[] args)
+  [Task]
+  public static void compile(Taskman tm, string[] args)
+  {
+    string proj_file;
+    var runtime_args = GetProjectArg(args, out proj_file);
+
+    var proj = new ProjectConfPartial();
+    if (!string.IsNullOrEmpty(proj_file))
+      proj = ProjectConfPartial.ReadFromFile(proj_file);
+
+    var bindings_sources = proj.bindings_sources;
+    if (bindings_sources.Count > 0)
+    {
+      if (string.IsNullOrEmpty(proj.bindings_dll))
+        throw new Exception("Resulting 'bindings_dll' is not set");
+
+      bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
+      string bindings_dll_path = DotnetBuildLibrary(
+        tm,
+        bindings_sources.ToArray(),
+        proj.bindings_dll,
+        new List<string>() { "BHL_FRONT" }
+      );
+      runtime_args.Add($"--bindings-dll={bindings_dll_path}");
+    }
+
+    var postproc_sources = proj.postproc_sources;
+    if (postproc_sources.Count > 0)
+    {
+      if (string.IsNullOrEmpty(proj.postproc_dll))
+        throw new Exception("Resulting 'postproc_dll' is not set");
+
+      postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
+      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll");
+      string postproc_dll_path = DotnetBuildLibrary(
+        tm,
+        postproc_sources.ToArray(),
+        proj.postproc_dll,
+        new List<string>() { "BHL_FRONT" }
+      );
+      runtime_args.Add($"--postproc-dll={postproc_dll_path}");
+    }
+
+    _compile(tm, runtime_args.ToArray());
+  }
+  
+  static void _compile(Taskman tm, string[] args)
   {
     var files = new List<string>();
 
@@ -62,7 +106,7 @@ public class CompileCmd : ICmd
     }
     catch(OptionException e)
     {
-      Usage(e.Message);
+      compile_usage(e.Message);
     }
 
     if(Environment.GetEnvironmentVariable("BHL_VERBOSE") != null)
@@ -74,13 +118,13 @@ public class CompileCmd : ICmd
 
     for(int i=0;i<proj.src_dirs.Count;++i)
       if(!Directory.Exists(proj.src_dirs[i]))
-        Usage("Source directory not found: " + proj.src_dirs[i]);
+        compile_usage("Source directory not found: " + proj.src_dirs[i]);
 
     if(string.IsNullOrEmpty(proj.result_file))
-      Usage("Result file path not set");
+      compile_usage("Result file path not set");
 
     if(string.IsNullOrEmpty(proj.tmp_dir))
-      Usage("Tmp dir not set");
+      compile_usage("Tmp dir not set");
 
     IUserBindings bindings = null;
     try
@@ -89,7 +133,7 @@ public class CompileCmd : ICmd
     }
     catch(Exception e)
     {
-      Usage($"Could not load bindings({proj.bindings_dll}): " + e);
+      compile_usage($"Could not load bindings({proj.bindings_dll}): " + e);
     }
 
     IFrontPostProcessor postproc = null;
@@ -99,7 +143,7 @@ public class CompileCmd : ICmd
     }
     catch(Exception e)
     {
-      Usage($"Could not load postproc({proj.postproc_dll}): " + e);
+      compile_usage($"Could not load postproc({proj.postproc_dll}): " + e);
     }
 
     if(files.Count == 0)
@@ -137,11 +181,6 @@ public class CompileCmd : ICmd
       }
       Environment.Exit(ERROR_EXIT_CODE);
     }
-  }
-
-  public static string GetSelfFile()
-  {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
   }
 }
 

@@ -6,12 +6,11 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
 using Mono.Options;
 
-namespace bhl
-{
+namespace bhl {
     
-public class BenchCmd : ICmd
+public static partial class Tasks
 {
-  public static void Usage(string msg = "")
+  static void bench_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
     Console.WriteLine("bhl bench [--profile] [--fast] [-n=<iterations count>] [--defines=FOO,BAR]file1 file2 ..fileN");
@@ -19,7 +18,8 @@ public class BenchCmd : ICmd
     Environment.Exit(1);
   }
   
-  public void Run(string[] args)
+  [Task]
+  public static void bench(Taskman tm, string[] args)
   {
     if (args.Length == 0)
       throw new Exception("No arguments");
@@ -54,7 +54,7 @@ public class BenchCmd : ICmd
     }
     catch(OptionException e)
     {
-      Usage(e.Message);
+      bench_usage(e.Message);
     }
 
     foreach (var file in files)

@@ -5,11 +5,9 @@ using Mono.Options;
 
 namespace bhl {
 
-public class RunCmd : ICmd
+public static partial class Tasks 
 {
-  const int ERROR_EXIT_CODE = 2;
-
-  public static void Usage(string msg = "")
+  static void run_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
     Console.WriteLine("bhl run <script.bhl>");
@@ -17,7 +15,8 @@ public class RunCmd : ICmd
     Environment.Exit(1);
   }
 
-  public void Run(string[] args)
+  [Task]
+  public static void run(Taskman tm, string[] args)
   {
     var files = new List<string>();
 
@@ -31,7 +30,7 @@ public class RunCmd : ICmd
     }
     catch(OptionException e)
     {
-      Usage(e.Message);
+      run_usage(e.Message);
     }
     files.AddRange(extra);
 
@@ -42,7 +41,7 @@ public class RunCmd : ICmd
     }
 
     if(files.Count == 0)
-      Usage("No files to run");
+      run_usage("No files to run");
 
     string src_dir = Path.GetDirectoryName(files[0]);
     if(string.IsNullOrEmpty(src_dir))

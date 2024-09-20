@@ -5,9 +5,10 @@ using bhl.lsp;
 
 namespace bhl {
 
-public class LSPCmd : ICmd
+public static partial class Tasks
 {
-  public void Run(string[] args)
+  [Task]
+  static public void lsp(Taskman tm, string[] args)
   {
     string log_file_path = "";
 
