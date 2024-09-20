@@ -32,8 +32,6 @@ jobs:
    steps:
    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
    - uses: actions/checkout@v2
-   - name: Install mono
-     run: choco install mono
    - name: Install dotnet
      run: choco install dotnet
    - name: Setup env
