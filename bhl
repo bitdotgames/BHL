@@ -7,7 +7,7 @@ BHL_DLL=$DIR/build/Debug/bhl/net7.0/bhl.dll
 VERSION=$DIR/src/vm/version.cs
 
 if [[ ! -f "$BHL_DLL" ]] || [[ "$BHL_DLL" -ot "$VERSION"  ]] ; then
-  dotnet publish $DIR/bhl.csproj 
+  cd $DIR && dotnet publish bhl.csproj 
 fi
 
 dotnet $BHL_DLL $*

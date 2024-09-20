@@ -204,10 +204,10 @@ public class Taskman
     p.StartInfo.UseShellExecute = false;
     p.StartInfo.RedirectStandardOutput = false;
     p.StartInfo.RedirectStandardError = false;
+    
     p.Start();
-
     p.WaitForExit();
-
+    
     return p.ExitCode;
   }
 

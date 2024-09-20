@@ -29,24 +29,12 @@ public static partial class Tasks
   [Task]
   public static void clean(Taskman tm, string[] args)
   {
-    foreach (var dll in tm.Glob($"{BHL_ROOT}/build/*.dll"))
-    {
-      tm.Rm(dll);
-      tm.Rm($"{dll}.mdb");
-    }
-
-    foreach (var exe in tm.Glob($"{BHL_ROOT}/build/*.exe"))
-    {
-      //NOTE: when removing itself under Windows we can get an exception, so let's force its staleness
-      if (exe.EndsWith("bhlb.exe"))
-      {
-        tm.Touch(exe, new DateTime(1970, 3, 1, 7, 0, 0) /*some random date in the past*/);
-        continue;
-      }
-
-      tm.Rm(exe);
-      tm.Rm($"{exe}.mdb");
-    }
+    //touching version file which is used for detection of bhl dll
+    //'staleness' in top level scripts
+    tm.Touch($"{BHL_ROOT}/src/vm/version.cs", DateTime.Now);
+    
+    //invoking dotnet clean to remove all build products
+    tm.TryShell("dotnet",$"clean {BHL_ROOT}/bhl.csproj");
   }
 
   public static string DotnetBuildLibrary(
