@@ -4,8 +4,9 @@ namespace bhl {
 
 public static class BHLBuild
 {
-  //TODO: this is currently required for external UPM packaging,
-  //      UPM package must be built as an external build step 
+  //TODO: This is currently required as a hint for external UPM packaging only.
+  //      This code should be removed once UPM package is built automatically
+  //      as an external build step. 
   static readonly string[] VM_SRC = new string[]
   {
     "src/vm/*.cs",
