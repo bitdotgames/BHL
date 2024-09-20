@@ -50,7 +50,7 @@ public static partial class Tasks
         throw new Exception("Resulting 'postproc_dll' is not set");
 
       postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
-      postproc_sources.Add($"{BHL_ROOT}/deps/Antlr4.Runtime.Standard.dll");
+      postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
       string postproc_dll_path = DotnetBuildLibrary(
         tm,
         false,

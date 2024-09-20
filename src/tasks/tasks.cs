@@ -49,10 +49,6 @@ public static partial class Tasks
     foreach(var s in srcs)
       files.AddRange(tm.Glob(s));
 
-    foreach(var f in files)
-      if(!File.Exists(f))
-        throw new Exception($"File not found: '{f}'");
-
     //NOTE: in case of dotnet build result is a directory not a file,
     //      let's remove any conflicting files
     //TODO: is it OK to do this quietly?
@@ -60,11 +56,17 @@ public static partial class Tasks
       File.Delete(result);
 
     var deps = new List<string>();
+    var pkgs = new List<string>();
     for(int i = files.Count; i-- > 0;)
     {
       if(files[i].EndsWith(".dll") || files[i].EndsWith(".csproj"))
       {
         deps.Add(files[i]);
+        files.RemoveAt(i);
+      }
+      else if(files[i].Contains("="))
+      {
+        pkgs.Add(files[i]);
         files.RemoveAt(i);
       }
     }
@@ -76,6 +78,7 @@ public static partial class Tasks
       Path.GetFileNameWithoutExtension(result),
       files,
       deps,
+      pkgs,
       defines
     );
 
@@ -104,6 +107,7 @@ public static partial class Tasks
     string name,
     List<string> files,
     List<string> deps,
+    List<string> pkgs,
     List<string> defines
   )
   {
@@ -130,18 +134,25 @@ public static partial class Tasks
     string csproj_deps = "<ItemGroup>\n";
     foreach (var dep in deps)
     {
-      if (dep.EndsWith(".dll"))
+      if(dep.EndsWith(".dll"))
       {
         csproj_deps +=
           $"<Reference Include=\"{Path.GetFileNameWithoutExtension(dep)}\"><HintPath>{dep}</HintPath></Reference>\n";
       }
-      else if (dep.EndsWith(".csproj"))
+      else if(dep.EndsWith(".csproj"))
       {
         csproj_deps +=
           $"<ProjectReference Include=\"{dep}\"/>\n";
       }
       else
         throw new Exception("Unknown dependency file: " + dep);
+    }
+
+    foreach(var pkg in pkgs)
+    {
+      var items = pkg.Split('=');
+      csproj_deps +=
+        $"<PackageReference Include=\"{items[0]}\" Version=\"{items[1]}\"/>\n";
     }
 
     csproj_deps += "</ItemGroup>\n\n";
