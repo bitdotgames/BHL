@@ -57,7 +57,7 @@ public class Taskman
     foreach (var method in tasks_class.GetMethods())
     {
       var attr = GetAttribute<TaskAttribute>(method);
-      if (attr == null)
+      if(attr == null)
         continue;
       var task = new Task()
       {
@@ -69,10 +69,10 @@ public class Taskman
 
     foreach (var task in tasks)
     {
-      foreach (var dep_name in task.attr.deps)
+      foreach(var dep_name in task.attr.deps)
       {
         var dep = FindTask(dep_name);
-        if (dep == null)
+        if(dep == null)
           throw new Exception($"No such dependency '{dep_name}' for task '{task.Name}'");
         task.Deps.Add(dep);
       }
@@ -81,9 +81,9 @@ public class Taskman
 
   static T GetAttribute<T>(MemberInfo member) where T : Attribute
   {
-    foreach (var attribute in member.GetCustomAttributes(true))
+    foreach(var attribute in member.GetCustomAttributes(true))
     {
-      if (attribute is TaskAttribute)
+      if(attribute is TaskAttribute)
         return (T)attribute;
     }
 
@@ -92,11 +92,11 @@ public class Taskman
 
   public void Run(string[] args)
   {
-    if (args.Length == 0)
+    if(args.Length == 0)
       throw new Exception("No task specified");
 
     var task = FindTask(args[0]);
-    if (task == null)
+    if(task == null)
       throw new Exception("No such task: " + args[0]);
 
     verbose = task.attr.verbose;
@@ -108,11 +108,11 @@ public class Taskman
 
   public void Invoke(Task task, string[] task_args)
   {
-    if (invoked.Contains(task))
+    if(invoked.Contains(task))
       return;
     invoked.Add(task);
 
-    foreach (var dep in task.Deps)
+    foreach(var dep in task.Deps)
       Invoke(dep, new string[] { });
 
     Echo($"***** BHL '{task.Name}' start *****");
@@ -125,9 +125,9 @@ public class Taskman
 
   public Task FindTask(string name)
   {
-    foreach (var t in tasks)
+    foreach(var t in tasks)
     {
-      if (t.Name == name)
+      if(t.Name == name)
         return t;
     }
 
@@ -136,10 +136,10 @@ public class Taskman
 
   public string CLIPath(string p)
   {
-    if (p.IndexOf(" ") == -1)
+    if(p.IndexOf(" ") == -1)
       return p;
 
-    if (IsWin)
+    if(IsWin)
     {
       p = "\"" + p.Trim(new char[] { '"' }) + "\"";
       return p;
@@ -153,19 +153,19 @@ public class Taskman
 
   public void Echo(string s)
   {
-    if (verbose)
+    if(verbose)
       Console.WriteLine(s);
   }
 
   public void Mkdir(string path)
   {
-    if (!Directory.Exists(path))
+    if(!Directory.Exists(path))
       Directory.CreateDirectory(path);
   }
 
   public void Copy(string src, string dst)
   {
-    if (File.Exists(dst))
+    if(File.Exists(dst))
       File.Delete(dst);
     Mkdir(Path.GetDirectoryName(dst));
     File.Copy(src, dst);
@@ -185,7 +185,7 @@ public class Taskman
 
     var p = new System.Diagnostics.Process();
 
-    if (IsWin)
+    if(IsWin)
     {
       string tmp_path = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + "/build/";
       string cmd = binary + " " + args;
@@ -215,12 +215,12 @@ public class Taskman
   {
     var files = new List<string>();
     int idx = s.IndexOf('*');
-    if (idx != -1)
+    if(idx != -1)
     {
       string dir = s.Substring(0, idx);
       string mask = s.Substring(idx);
 
-      if (Directory.Exists(dir))
+      if(Directory.Exists(dir))
         files.AddRange(Directory.GetFiles(dir, mask));
     }
     else
@@ -231,7 +231,7 @@ public class Taskman
 
   public void Rm(string path)
   {
-    if (Directory.Exists(path))
+    if(Directory.Exists(path))
       Directory.Delete(path, true);
     else
       File.Delete(path);
@@ -245,20 +245,20 @@ public class Taskman
 
   public void Touch(string path, DateTime dt)
   {
-    if (!File.Exists(path))
+    if(!File.Exists(path))
       File.WriteAllText(path, "");
     File.SetLastWriteTime(path, dt);
   }
 
   public bool NeedToRegen(string file, IList<string> deps)
   {
-    if (!File.Exists(file))
+    if(!File.Exists(file))
       return true;
 
     var fmtime = new FileInfo(file).LastWriteTime;
-    foreach (var dep in deps)
+    foreach(var dep in deps)
     {
-      if (File.Exists(dep) && (new FileInfo(dep).LastWriteTime > fmtime))
+      if(File.Exists(dep) && (new FileInfo(dep).LastWriteTime > fmtime))
         return true;
     }
 

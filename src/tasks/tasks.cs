@@ -45,30 +45,30 @@ public static partial class Tasks
   )
   {
     var files = new List<string>();
-    foreach (var s in srcs)
+    foreach(var s in srcs)
       files.AddRange(tm.Glob(s));
 
-    foreach (var f in files)
-      if (!File.Exists(f))
+    foreach(var f in files)
+      if(!File.Exists(f))
         throw new Exception($"File not found: '{f}'");
 
     //NOTE: in case of dotnet build result is a directory not a file,
     //      let's remove any conflicting files
     //TODO: is it OK to do this quietly?
-    if (File.Exists(result))
+    if(!Directory.Exists(result) && File.Exists(result))
       File.Delete(result);
 
     var deps = new List<string>();
-    for (int i = files.Count; i-- > 0;)
+    for(int i = files.Count; i-- > 0;)
     {
-      if (files[i].EndsWith(".dll") || files[i].EndsWith(".csproj"))
+      if(files[i].EndsWith(".dll") || files[i].EndsWith(".csproj"))
       {
         deps.Add(files[i]);
         files.RemoveAt(i);
       }
     }
 
-    if (files.Count == 0)
+    if(files.Count == 0)
       throw new Exception("No files");
 
     string csproj = MakeLibraryCSProj(
@@ -87,12 +87,12 @@ public static partial class Tasks
     //TODO: use system temporary directory for that?
     string cmd_hash_file = csproj_file + ".mhash";
     uint cmd_hash = Hash.CRC32(csproj);
-    if (!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString())
+    if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString())
       tm.Write(cmd_hash_file, cmd_hash.ToString());
 
     files.Add(cmd_hash_file);
 
-    if (tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
+    if(tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
       tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
 
     return result_dll;
