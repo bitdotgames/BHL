@@ -205,16 +205,12 @@ BHL utilizes a standard interpreter architecture with a **frontend** and a **bac
 ### Frontend
 
 In order to use the frontend you can use the **bhl** tool which ships with the code. See the quick build example below for instructions.  
-
-### Backend
-
-Before using the backend you have to compile the **bhl_back.dll** and somehow integrate it into your build pipeline. See the quick build example below for instructions.  
+ 
 
 ## Quick build example
 
-Currently BHL assumes that you have [mono](http://www.mono-project.com/) installed and its binaries are in your PATH.
+Currently BHL assumes that you have [dotnet]([https://dotnet.microsoft.com/]) installed and its binaries are in your PATH.
 
-In the example directory you can find a simple illustration of gluing together **frontend** and **backend**. 
 
 Just try running *run.sh* script: 
 
@@ -239,11 +235,6 @@ Found new target 902! Approaching it.
 
 Please note that while BHL works fine under Windows the example assumes you are using \*nix platform.     
 
-### Unity engine integration
-
-The example script has also a special Unity compatibility mode. It illustrates how you can build a BHL backend dll (**bhl_back.dll**) for Unity. After that you can put it into Assets/Plugins directory and use BHL for your Unity game development. You can run the example script in this mode just as follows: 
-
-> cd example && ./run.sh -unity
 
 ## Building
 
