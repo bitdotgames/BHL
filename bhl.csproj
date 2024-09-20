@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <OutputPath>build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
@@ -11,7 +11,6 @@
   <ItemGroup>
     <Compile Include="bhl.cs" />
     <Compile Include="src\cmd\*.cs" />
-    <Compile Include="src\lsp\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +21,10 @@
 
   <ItemGroup>
     <ProjectReference Include="src\compile\bhl_front.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="src\lsp\bhl_lsp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
