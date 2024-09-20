@@ -165,7 +165,7 @@ public static partial class Tasks
     conf.proj = proj;
     conf.logger = logger;
     conf.args = string.Join(";", args);
-    conf.self_file = GetSelfFile();
+    conf.self_file = BuildUtils.GetSelfFile();
     conf.files = BuildUtils.NormalizeFilePaths(files);
     conf.bindings = bindings;
     conf.postproc = postproc;

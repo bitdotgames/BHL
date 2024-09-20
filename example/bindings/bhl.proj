@@ -2,5 +2,7 @@
   "src_dirs" : ["./"],
   "bindings_sources" : ["./bindings.cs"],
   "bindings_dll" : "./tmp/bindings.dll",
+  "result_file" : "./tmp/bhl.bytes",
+  "use_cache" : false,
   "tmp_dir" : "./tmp"
 }

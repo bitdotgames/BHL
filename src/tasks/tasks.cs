@@ -7,18 +7,13 @@ namespace bhl {
   
 public static partial class Tasks
 {
-  public static string GetSelfFile()
-  {
-    return System.Reflection.Assembly.GetExecutingAssembly().Location;
-  }
-  
   public static string BHL_ROOT
   {
     get
     {
       return Path.GetDirectoryName(
         Path.GetFullPath(
-          Path.GetDirectoryName(GetSelfFile()) + "/../../../../")
+          Path.GetDirectoryName(BuildUtils.GetSelfFile()) + "/../../../../")
       );
     }
   }
