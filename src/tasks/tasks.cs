@@ -83,6 +83,7 @@ public static partial class Tasks
 
     //TODO: use system temporary directory for that?
     var csproj_file = result + ".csproj";
+    Directory.CreateDirectory(Path.GetDirectoryName(csproj_file));
     File.WriteAllText(csproj_file, csproj);
 
     //TODO: use system temporary directory for that?
