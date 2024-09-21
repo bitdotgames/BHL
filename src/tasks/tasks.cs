@@ -30,13 +30,13 @@ public static partial class Tasks
   public static void help(Taskman tm, string[] args)
   {
     Console.WriteLine("BHL build tool version " + bhl.Version.Name + "\n");
-    Console.WriteLine("Available commands:");
+    Console.WriteLine("Available tasks:");
 
     var tasks = new List<Taskman.Task>(tm.Tasks); 
     tasks.Sort((a, b) => a.Name.CompareTo(b.Name));
     
     foreach(var t in tasks)
-      Console.WriteLine(t.Name);
+      Console.WriteLine(" " + t.Name);
   }
 
   [Task]
