@@ -23,19 +23,21 @@ public static partial class Tasks
     var runtime_args = GetProjectArg(args, out proj_file);
 
     var proj = new ProjectConfPartial();
-    if (!string.IsNullOrEmpty(proj_file))
+    if(!string.IsNullOrEmpty(proj_file))
       proj = ProjectConfPartial.ReadFromFile(proj_file);
 
+    bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
+
     var bindings_sources = proj.bindings_sources;
-    if (bindings_sources.Count > 0)
+    if(bindings_sources.Count > 0)
     {
-      if (string.IsNullOrEmpty(proj.bindings_dll))
+      if(string.IsNullOrEmpty(proj.bindings_dll))
         throw new Exception("Resulting 'bindings_dll' is not set");
 
       bindings_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
       string bindings_dll_path = DotnetBuildLibrary(
         tm,
-        false,
+        force_rebuild,
         bindings_sources.ToArray(),
         proj.bindings_dll,
         new List<string>() { "BHL_FRONT" }
@@ -44,16 +46,16 @@ public static partial class Tasks
     }
 
     var postproc_sources = proj.postproc_sources;
-    if (postproc_sources.Count > 0)
+    if(postproc_sources.Count > 0)
     {
-      if (string.IsNullOrEmpty(proj.postproc_dll))
+      if(string.IsNullOrEmpty(proj.postproc_dll))
         throw new Exception("Resulting 'postproc_dll' is not set");
 
       postproc_sources.Add($"{BHL_ROOT}/src/compile/bhl_front.csproj");
       postproc_sources.Add("Antlr4.Runtime.Standard=4.13.1");
       string postproc_dll_path = DotnetBuildLibrary(
         tm,
-        false,
+        force_rebuild,
         postproc_sources.ToArray(),
         proj.postproc_dll,
         new List<string>() { "BHL_FRONT" }

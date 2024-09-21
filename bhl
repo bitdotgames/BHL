@@ -3,10 +3,10 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-BHL_DLL=$DIR/build/Debug/bhl/net7.0/bhl.dll
+BHL_DLL=$DIR/build/Release/bhl/net8.0/bhl.dll
 VERSION=$DIR/src/vm/version.cs
 
-if [[ ! -f "$BHL_DLL" ]] || [[ "$BHL_DLL" -ot "$VERSION"  ]] ; then
+if [[ ! -f "$BHL_DLL" ]] || [[ "$BHL_DLL" -ot "$VERSION"  ]] || [[ -n "$BHL_REBUILD" ]] ; then
   cd $DIR && dotnet publish bhl.csproj 
 fi
 

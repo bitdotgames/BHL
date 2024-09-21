@@ -29,7 +29,8 @@ public static partial class Tasks
   [Task(verbose: false)]
   public static void help(Taskman tm, string[] args)
   {
-    Console.WriteLine("=== Available tasks:");
+    Console.WriteLine("BHL build tool version " + bhl.Version.Name + "\n");
+    Console.WriteLine("Available commands:");
 
     var tasks = new List<Taskman.Task>(tm.Tasks); 
     tasks.Sort((a, b) => a.Name.CompareTo(b.Name));
