@@ -1,4 +1,5 @@
 @echo off
+setlocal
 
 set DIR=%~dp0
 set BHL_DLL=%DIR%\build\Release\bhl\net8.0\bhl.dll
