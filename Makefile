@@ -4,6 +4,9 @@ publish:
 test:
 	cd ./tests && dotnet test
 
+examples:
+	cd ./example && ./run.sh
+
 geng:
 	mkdir -p ./tmp
 	cp ./grammar/bhlPreprocLexer.g ./tmp/
