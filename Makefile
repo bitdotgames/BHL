@@ -1,12 +1,20 @@
+.PHONY: build
+build:
+	dotnet build bhl.csproj
+
+.PHONY: publish
 publish:
 	dotnet publish bhl.csproj
 
+.PHONY: test
 test:
 	cd ./tests && dotnet test
 
+.PHONY: examples
 examples:
 	cd ./example && ./run.sh
 
+.PHONY: geng
 geng:
 	mkdir -p ./tmp
 	cp ./grammar/bhlPreprocLexer.g ./tmp/

@@ -100,17 +100,17 @@ public static partial class Tasks
     //TODO: use system temporary directory for that?
     var csproj_file = result + ".csproj";
     Directory.CreateDirectory(Path.GetDirectoryName(csproj_file));
-    File.WriteAllText(csproj_file, csproj);
+    if(!File.Exists(csproj_file) || File.ReadAllText(csproj_file) != csproj)
+      tm.Write(csproj_file, csproj);
 
-    //TODO: use system temporary directory for that?
-    string cmd_hash_file = csproj_file + ".mhash";
-    uint cmd_hash = Hash.CRC32(csproj);
-    if(!File.Exists(cmd_hash_file) || File.ReadAllText(cmd_hash_file) != cmd_hash.ToString())
-      tm.Write(cmd_hash_file, cmd_hash.ToString());
+    //let's add bhl binary as a dependency
+    deps.Add(BuildUtils.GetSelfFile());
+    //let's generated csproj as a dependency
+    deps.Add(csproj_file);
 
-    files.Add(cmd_hash_file);
-
-    if(force || tm.NeedToRegen(result_dll, files) || tm.NeedToRegen(result_dll, deps))
+    if(force || 
+       tm.NeedToRegen(result_dll, files) || 
+       tm.NeedToRegen(result_dll, deps))
       tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
 
     return result_dll;
