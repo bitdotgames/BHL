@@ -36,6 +36,6 @@ jobs:
    - name: Install dotnet
      run: choco install dotnet
    - name: Show Version
-     run: bhl version
+     run: ./bhl version
    - name: Run all tests
      run: cd tests && dotnet test
