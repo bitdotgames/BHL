@@ -2,7 +2,7 @@
 
 set DIR=%~dp0
 set BHL_DLL=%DIR%\build\Release\bhl\net8.0\bhl.dll
-set VERSION=%$DIR%\src\vm\version.cs
+set VERSION=%DIR%\src\vm\version.cs
 
 IF DEFINED BHL_REBUILD GOTO :BUILD
 IF NOT EXIST %BHL_DLL% GOTO :BUILD
