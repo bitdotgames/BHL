@@ -87,10 +87,15 @@ public class BuildError : Exception, ICompileError
     this.file = file;
   }
 
+  private const int MAX_EXCEPTION_STACK_LEN = 700;
+
   public BuildError(string file, Exception inner)
     : base(ErrorUtils.MakeMessage(file, new SourceRange(), inner.Message), inner)
   {
-    this.text = inner.Message;
+    var stack = inner.StackTrace;
+    if(stack.Length > MAX_EXCEPTION_STACK_LEN)
+      stack = stack.Substring(0, MAX_EXCEPTION_STACK_LEN) + "...";
+    this.text = inner.Message + stack;
     this.file = file;
   }
 }

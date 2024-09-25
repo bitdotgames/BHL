@@ -41,7 +41,6 @@ public class CompilationExecutor
     }
     catch(Exception e)
     {
-      conf.logger.Error(e.Message + " " + e.StackTrace);
       errors.Add(new BuildError("?", e));
     }
 
@@ -368,7 +367,6 @@ public class CompilationExecutor
             w.errors.Add(ie);
           else
           {
-            w.conf.logger.Error(e.Message + " " + e.StackTrace);
             w.errors.Add(new BuildError(kv.Key, e));
           }
         }
@@ -508,7 +506,6 @@ public class CompilationExecutor
           errors.Add(ie);
         else
         {
-          conf.logger.Error(e.Message + " " + e.StackTrace);
           errors.Add(new BuildError(current_file, e));
         }
       }
@@ -711,7 +708,6 @@ public class CompilationExecutor
           errors.Add(ie);
         else
         {
-          conf.logger.Error(e.Message + " " + e.StackTrace);
           errors.Add(new BuildError(current_file, e));
         }
       }
