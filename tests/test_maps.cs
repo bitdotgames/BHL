@@ -158,6 +158,29 @@ public class TestMaps : BHL_TestBase
   }
 
   [Fact]
+  public void TestMissingKeyVariable()
+  {
+    {
+      string bhl = @"
+      [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
+
+      func int test() {
+        return m[kek]
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { Compile(bhl); },
+        @"symbol 'kek' not resolved",
+        new PlaceAssert(bhl, @"
+        return m[kek]
+-----------------^"
+        )
+      );
+    }
+  }
+
+  [Fact]
   public void TestInitErrorsWithJson()
   {
     {
