@@ -1638,7 +1638,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return;
 
       if(Annotate(arr_exp).eval_type == null ||
-         Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
+         !Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
       {
         AddError(arr_exp, "not compatible map key types");
         return;
