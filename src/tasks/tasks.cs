@@ -108,10 +108,21 @@ public static partial class Tasks
     //let's generated csproj as a dependency
     deps.Add(csproj_file);
 
-    if(force || 
-       tm.NeedToRegen(result_dll, files) || 
-       tm.NeedToRegen(result_dll, deps))
-      tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
+    if(force ||
+        tm.NeedToRegen(result_dll, files) ||
+        tm.NeedToRegen(result_dll, deps))
+    {
+      try
+      {
+        //let's try building without restore since it's faster
+        tm.Shell("dotnet", "build --no-restore " + csproj_file + " -o " + result);
+      }
+      catch (Exception)
+      {
+        //..and if it doesn't work let's try the 'normal' build
+        tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
+      }
+    }
 
     return result_dll;
   }
