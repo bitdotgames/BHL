@@ -136,7 +136,7 @@ public class Server
 
   public void Start()
   {
-    logger.Log(1, "Starting BHL LSP server...");
+    logger.Log(1, "Starting BHL (" + bhl.Version.Name + ") LSP server...");
 
     while(true)
     {
@@ -153,7 +153,7 @@ public class Server
       }
     }
 
-    logger.Log(1, "Stopping BHL LSP server...");
+    logger.Log(1, "Stopping BHL (" + bhl.Version.Name + ") LSP server...");
   }
 
   bool ReadAndHandle()

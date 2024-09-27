@@ -72,10 +72,10 @@ public class ConnectionStdIO : IConnection
 
 class StreamReader
 {
-  const int bufferSize = 1024;
+  const int MAX_BUFFER_CHUNK_SIZE = 1024;
   
   Stream stream;
-  List<byte[]> buffers;
+  List<byte[]> bufferChunks;
   int headPos;
   int tailPos;
   int lengthRead;
@@ -83,38 +83,38 @@ class StreamReader
   public StreamReader(Stream input)
   {
     stream = input;
-    buffers = new List<byte[]>();
+    bufferChunks = new List<byte[]>();
   }
 
   public byte[] ReadToSeparator(byte[] separator)
   {
-    var separatorLength = separator.Length;
-    var lengthPrepared = lengthRead;
-    var bufferIndex = 0;
-    var bufferPos = headPos;
+    int separatorLength = separator.Length;
+    int lengthBuffered = lengthRead;
+    int bufferIndex = 0;
+    int bufferPos = headPos;
     
     while(true)
     {
-      while(lengthPrepared < separatorLength)
+      while(lengthBuffered < separatorLength)
       {
         if(!stream.CanRead)
           return Slice(lengthRead, 0);
         
-        lengthPrepared += FillBuffer();
+        lengthBuffered += FillBuffer();
       }
 
       int count;
       if(FindSeparator(separator, bufferIndex, bufferPos, out count))
         return Slice(count, separatorLength);
       
-      lengthPrepared -= count;
-      bufferIndex = buffers.Count - 1;
+      lengthBuffered -= count;
+      bufferIndex = bufferChunks.Count - 1;
       bufferPos = tailPos - separatorLength + 1;
       
       if(tailPos < separatorLength)
       {
         bufferIndex -= 1;
-        bufferPos += bufferSize;
+        bufferPos += MAX_BUFFER_CHUNK_SIZE;
       }
     }
   }
@@ -122,27 +122,28 @@ class StreamReader
   int FillBuffer()
   {
     byte[] lastBuffer;
-    if(buffers.Count > 0 && tailPos < bufferSize)
-      lastBuffer = buffers[buffers.Count - 1];
+    if(bufferChunks.Count > 0 && tailPos < MAX_BUFFER_CHUNK_SIZE)
+      lastBuffer = bufferChunks[bufferChunks.Count - 1];
     else
     {
-      lastBuffer = new byte[bufferSize];
-      buffers.Add(lastBuffer);
+      lastBuffer = new byte[MAX_BUFFER_CHUNK_SIZE];
+      bufferChunks.Add(lastBuffer);
       tailPos = 0;
     }
 
-    try
-    {
+    //commented for investigation
+    //try
+    //{
       var length = stream.Read(lastBuffer, tailPos, lastBuffer.Length - tailPos);
       lengthRead += length;
       tailPos += length;
       
       return length;
-    }
-    catch
-    {
-      return 0;
-    }
+    //}
+    //catch
+    //{
+    //  return 0;
+    //}
   }
 
   bool FindSeparator(byte[] separator, int bufferIndex, int bufferPos, out int count)
@@ -150,14 +151,14 @@ class StreamReader
     count = 0;
     var separatorLength = separator.Length;
     var bufferIndexMin = bufferIndex;
-    var bufferIndexMax = tailPos < separatorLength ? buffers.Count - 1 : buffers.Count;
+    var bufferIndexMax = tailPos < separatorLength ? bufferChunks.Count - 1 : bufferChunks.Count;
     
     for(var i = bufferIndexMin; i < bufferIndexMax; i++)
     {
       var posMin = i == bufferIndexMin ? bufferPos : 0;
       var posMax = i == bufferIndexMax - 1
-          ? tailPos < separatorLength ? bufferSize + tailPos - separatorLength + 1 : tailPos - separatorLength + 1
-          : bufferSize;
+          ? tailPos < separatorLength ? MAX_BUFFER_CHUNK_SIZE + tailPos - separatorLength + 1 : tailPos - separatorLength + 1
+          : MAX_BUFFER_CHUNK_SIZE;
       
       for(var j = posMin; j < posMax; j++)
       {
@@ -175,9 +176,9 @@ class StreamReader
   {
     for(var i = 0; i < separator.Length; i++)
     {
-      var b = bufferPos + i < bufferSize
-          ? buffers[bufferIndex][bufferPos + i]
-          : buffers[bufferIndex + 1][bufferPos + i - bufferSize];
+      var b = bufferPos + i < MAX_BUFFER_CHUNK_SIZE
+          ? bufferChunks[bufferIndex][bufferPos + i]
+          : bufferChunks[bufferIndex + 1][bufferPos + i - MAX_BUFFER_CHUNK_SIZE];
       
       if(b != separator[i])
         return false;
@@ -189,23 +190,23 @@ class StreamReader
   byte[] Slice(int copyLength, int chopLength)
   {
     var dest = new byte[copyLength];
-    var destPos = 0;
-    var copying = true;
-    var newBuffers = new List<byte[]>();
-    var newHeadPos = 0;
-    var newLengthRead = 0;
+    int destPos = 0;
+    bool copying = true;
+    var newBufferChunks = new List<byte[]>();
+    int newHeadPos = 0;
+    int newLengthRead = 0;
     
-    foreach(var src in buffers)
+    foreach(var src in bufferChunks)
     {
-      var bufferPos = src == buffers[0] ? headPos : 0;
-      var bufferLen = src == buffers[buffers.Count - 1] ? tailPos : src.Length;
+      int bufferPos = src == bufferChunks[0] ? headPos : 0;
+      int bufferLen = src == bufferChunks[bufferChunks.Count - 1] ? tailPos : src.Length;
       
       if(copying)
       {
-        var srcPos = bufferPos;
-        var srcLen = bufferLen - srcPos;
-        var destLen = dest.Length - destPos;
-        var copyLen = srcLen < destLen ? srcLen : destLen;
+        int srcPos = bufferPos;
+        int srcLen = bufferLen - srcPos;
+        int destLen = dest.Length - destPos;
+        int copyLen = srcLen < destLen ? srcLen : destLen;
         
         Array.Copy(src, srcPos, dest, destPos, copyLen);
         
@@ -214,26 +215,22 @@ class StreamReader
         {
           copying = false;
           newHeadPos = srcPos + copyLen + chopLength;
+          newLengthRead = bufferLen - newHeadPos;
+          
           if(newHeadPos < bufferLen)
-          {
-            newBuffers.Add(src);
-            newLengthRead = bufferLen - newHeadPos;
-          }
+            newBufferChunks.Add(src);
           else
-          {
-            newLengthRead = bufferLen - newHeadPos;
             newHeadPos -= bufferLen;
-          }
         }
       }
       else
       {
-        newBuffers.Add(src);
+        newBufferChunks.Add(src);
         newLengthRead += bufferLen;
       }
     }
 
-    buffers = newBuffers;
+    bufferChunks = newBufferChunks;
     headPos = newHeadPos;
     lengthRead = newLengthRead;
     

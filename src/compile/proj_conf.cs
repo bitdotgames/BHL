@@ -47,16 +47,20 @@ public class ProjectConf
   public bool deterministic = false;
 
   public List<string> bindings_sources = new List<string>();
+  //NOTE: this can be a directory path as well containing dll
   public string bindings_dll = "";
 
   public List<string> postproc_sources = new List<string>();
+  //NOTE: this can be a directory path as well containing dll
   public string postproc_dll = "";
 
-  string NormalizePath(string file_path)
+  public static string NormalizePath(string proj_file, string file_path)
   {
     if(Path.IsPathRooted(file_path))
       return BuildUtils.NormalizeFilePath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
+    else if(!string.IsNullOrEmpty(proj_file) && 
+            !string.IsNullOrEmpty(file_path) && 
+            file_path[0] == '.')
       return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
     return file_path;
   }
@@ -65,28 +69,37 @@ public class ProjectConf
   {
     for(int i=0;i<inc_dirs.Count;++i)
     {
-      inc_dirs[i] = NormalizePath(inc_dirs[i]);
+      inc_dirs[i] = NormalizePath(proj_file, inc_dirs[i]);
       inc_path.Add(inc_dirs[i]);
     }
 
     for(int i=0;i<src_dirs.Count;++i)
     {
-      src_dirs[i] = NormalizePath(src_dirs[i]);
+      src_dirs[i] = NormalizePath(proj_file, src_dirs[i]);
       if(inc_dirs.Count == 0)
         inc_path.Add(src_dirs[i]);
     }
 
     for(int i=0;i<bindings_sources.Count;++i)
-      bindings_sources[i] = NormalizePath(bindings_sources[i]);
-    bindings_dll = NormalizePath(bindings_dll);
+      bindings_sources[i] = NormalizePath(proj_file, bindings_sources[i]);
+    bindings_dll = NormalizePath(proj_file, bindings_dll);
 
     for(int i=0;i<postproc_sources.Count;++i)
-      postproc_sources[i] = NormalizePath(postproc_sources[i]);
-    postproc_dll = NormalizePath(postproc_dll);
+      postproc_sources[i] = NormalizePath(proj_file, postproc_sources[i]);
+    postproc_dll = NormalizePath(proj_file, postproc_dll);
 
-    result_file = NormalizePath(result_file);
-    tmp_dir = NormalizePath(tmp_dir);
-    error_file = NormalizePath(error_file);
+    result_file = NormalizePath(proj_file, result_file);
+    tmp_dir = NormalizePath(proj_file, tmp_dir);
+    error_file = NormalizePath(proj_file, error_file);
+  }
+
+  static System.Reflection.Assembly LoadAssemblyFromDirOrFile(string path)
+  {
+    return System.Reflection.Assembly.LoadFrom(
+      Directory.Exists(path) ? 
+        path + "/" + Path.GetFileName(path) : 
+        path
+      );
   }
 
   public IUserBindings LoadBindings()
@@ -94,7 +107,7 @@ public class ProjectConf
     if(string.IsNullOrEmpty(bindings_dll))
       return new EmptyUserBindings();
 
-    var userbindings_assembly = System.Reflection.Assembly.LoadFrom(bindings_dll);
+    var userbindings_assembly = LoadAssemblyFromDirOrFile(bindings_dll);
     var types = userbindings_assembly.GetTypes();
 
     Type userbindings_class = null;
@@ -118,7 +131,7 @@ public class ProjectConf
     if(string.IsNullOrEmpty(postproc_dll))
       return new EmptyPostProcessor();
 
-    var postproc_assembly = System.Reflection.Assembly.LoadFrom(postproc_dll);
+    var postproc_assembly = LoadAssemblyFromDirOrFile(postproc_dll);
     var types = postproc_assembly.GetTypes();
     
     Type postproc_class = null;

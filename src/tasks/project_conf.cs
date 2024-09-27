@@ -18,29 +18,22 @@ public class ProjectConfPartial
   [JsonIgnore] public string proj_file = "";
 
   public List<string> bindings_sources = new List<string>();
+  //NOTE: this is rather a path to directory containing dll
   public string bindings_dll = "";
 
   public List<string> postproc_sources = new List<string>();
+  //NOTE: this is rather a path to directory containing dll
   public string postproc_dll = "";
-
-  string NormalizePath(string file_path)
-  {
-    if (Path.IsPathRooted(file_path))
-      return Path.GetFullPath(file_path);
-    else if (!string.IsNullOrEmpty(proj_file) && !string.IsNullOrEmpty(file_path) && file_path[0] == '.')
-      return Path.GetFullPath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
-    return file_path;
-  }
 
   public void Setup()
   {
     for (int i = 0; i < bindings_sources.Count; ++i)
-      bindings_sources[i] = NormalizePath(bindings_sources[i]);
-    bindings_dll = NormalizePath(bindings_dll);
+      bindings_sources[i] = ProjectConf.NormalizePath(proj_file, bindings_sources[i]);
+    bindings_dll = ProjectConf.NormalizePath(proj_file, bindings_dll);
 
     for (int i = 0; i < postproc_sources.Count; ++i)
-      postproc_sources[i] = NormalizePath(postproc_sources[i]);
-    postproc_dll = NormalizePath(postproc_dll);
+      postproc_sources[i] = ProjectConf.NormalizePath(proj_file, postproc_sources[i]);
+    postproc_dll = ProjectConf.NormalizePath(proj_file, postproc_dll);
   }
 }
 
