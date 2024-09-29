@@ -34,7 +34,7 @@ public static partial class Tasks
     var stdin = Console.OpenStandardInput();
     var stdout = Console.OpenStandardOutput();
     
-    var connection = new ConnectionStdIO(stdout, stdin);
+    var connection = new ConnectionStdIO(logger, stdout, stdin);
     
     var srv = new Server(logger, connection, workspace);
     
