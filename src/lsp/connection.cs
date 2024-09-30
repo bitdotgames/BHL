@@ -13,8 +13,7 @@ public interface IConnection
 
 public class ConnectionStdIO : IConnection
 {
-  const byte CR = 13;
-  const byte LF = 10;
+  const int SeparatorLen = 2;
   
   private readonly Logger logger;
   private readonly Stream input;
@@ -72,15 +71,15 @@ public class ConnectionStdIO : IConnection
     {
       logger.Log(1, "BUF CAP " + buffer.Length + " AVAIL " + buffer_available_len);
       
-      if (buffer_available_len > 0)
+      if(buffer_available_len > 0)
       {
         int separator_pos = FindSeparatorPos(new Span<byte>(buffer, 0, buffer_available_len));
-        if (separator_pos != -1)
+        if(separator_pos != -1)
         {
           var result = new byte[separator_pos];
           Buffer.BlockCopy(buffer, 0, result, 0, result.Length);
           
-          int buffer_leftover_pos = separator_pos + 2;
+          int buffer_leftover_pos = separator_pos + SeparatorLen;
           int buffer_leftover = buffer_available_len - buffer_leftover_pos;
           logger.Log(1, "SEPARATOR " + separator_pos + " LEFTOVER " + buffer_leftover + " PREV " + buffer_available_len + " RES " + result.Length);
           //let's copy leftover to the beginning
@@ -101,7 +100,7 @@ public class ConnectionStdIO : IConnection
 
       logger.Log(1, "BUF TRY READ " + (buffer.Length - buffer_available_len));
       int read_len = input.Read(buffer, buffer_available_len, buffer.Length - buffer_available_len);
-      if (read_len == 0)
+      if(read_len == 0)
         throw new Exception("TODO: handle gracefully");
       logger.Log(1, "BUF DID READ " + read_len);
 
@@ -109,53 +108,56 @@ public class ConnectionStdIO : IConnection
     }
   }
 
-  byte[] ReadBytes(int len)
+  byte[] ReadBytes(int total_len)
   {
-    var result = new byte[len];
-    int offset = 0;
+    var result = new byte[total_len];
 
-    if (buffer_available_len > 0)
-    {
-      if (len <= buffer_available_len)
-      {
-        logger.Log(1, "AVALABLE FULL " + len + " VS " + buffer_available_len);
-        //let's copy from the buffer to result
-        Buffer.BlockCopy(buffer, 0, result, 0, len);
-        //let's copy leftover to the beginning
-        Buffer.BlockCopy(buffer, len, buffer, 0, buffer_available_len - len);
-        buffer_available_len -= len;
-        return result;
-      }
-      else
-      {
-        logger.Log(1, "AVALABLE PART " + len + " VS " + buffer_available_len);
-        //let's copy from the buffer to result
-        Buffer.BlockCopy(buffer, 0, result, 0, buffer_available_len);
-        offset += buffer_available_len;
-        len -= buffer_available_len;
-        buffer_available_len = 0;
-      }
-    }
+    FillFromBuffer(ref total_len, result);
     
-    while (len > 0)
+    while(total_len > 0)
     {
-      int read_len = input.Read(result, offset, result.Length - offset);
-      logger.Log(1, "BUF RLEN " + read_len + " OFFSET " + offset + " LEN " + len + " CAP " + result.Length);
+      int read_len = input.Read(result, result.Length - total_len, total_len);
+      logger.Log(1, "BUF RLEN " + read_len + " OFFSET " + (result.Length - total_len) + " LEN " + total_len + " CAP " + result.Length);
       if (read_len == 0)
         throw new Exception("TODO: handle gracefully");
 
-      len -= read_len;
-      offset += read_len;
+      total_len -= read_len;
     }
 
     return result;
   }
 
+  void FillFromBuffer(ref int len, byte[] result)
+  {
+    if(buffer_available_len == 0)
+      return;
+    
+    if(len <= buffer_available_len)
+    {
+      logger.Log(1, "AVALABLE FULL " + len + " VS " + buffer_available_len);
+      //let's copy from the buffer to result
+      Buffer.BlockCopy(buffer, 0, result, 0, len);
+      //let's copy leftover to the beginning
+      Buffer.BlockCopy(buffer, len, buffer, 0, buffer_available_len - len);
+      buffer_available_len -= len;
+      len = 0;
+    }
+    else
+    {
+      logger.Log(1, "AVALABLE PART " + len + " VS " + buffer_available_len);
+      //let's copy from the buffer to result
+      Buffer.BlockCopy(buffer, 0, result, 0, buffer_available_len);
+      len -= buffer_available_len;
+      buffer_available_len = 0;
+    }
+  }
+
   static int FindSeparatorPos(Span<byte> bytes)
   {
-    for (int i = 0; i < bytes.Length - 1; ++i)
+    for(int i = 0; i < bytes.Length - 1; ++i)
     {
-      if (bytes[i] == CR && bytes[i + 1] == LF)
+      if(bytes[i] == 13/* \r */ && 
+         bytes[i + 1] == 10/* \n */)
         return i;
     }
 
