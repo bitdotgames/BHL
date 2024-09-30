@@ -40,17 +40,17 @@ public class ConnectionStdIO : IConnection
     
     while(header_bytes.Length != 0)
     {
-      logger.Log(1, "HEADER BYTES: " + header_bytes.Length);
+      //logger.Log(2, "HEADER BYTES: " + header_bytes.Length);
       
       string header_line = Encoding.ASCII.GetString(header_bytes);
-      logger.Log(1, "HEADER LINE: '" + header_line + "'");
+      //logger.Log(2, "HEADER LINE: '" + header_line + "'");
       int position = header_line.IndexOf(": ", StringComparison.Ordinal);
       if(position >= 0)
       {
         string key = header_line.Substring(0, position);
         string value = header_line.Substring(position + 2);
         
-        logger.Log(1, "HEADER: '" + key  + "' '" + value + "'");
+        //logger.Log(2, "HEADER: '" + key  + "' '" + value + "'");
         
         if(string.Equals(key, "Content-Length", StringComparison.Ordinal))
           int.TryParse(value, out content_len);
@@ -70,7 +70,7 @@ public class ConnectionStdIO : IConnection
   {
     while(true)
     {
-      logger.Log(1, "BUF CAP " + buffer.Length + " AVAIL " + buffer_available_len);
+      //logger.Log(2, "BUF CAP " + buffer.Length + " AVAIL " + buffer_available_len);
       
       if(buffer_available_len > 0)
       {
@@ -82,7 +82,7 @@ public class ConnectionStdIO : IConnection
           
           int buffer_leftover_pos = separator_pos + SeparatorLen;
           int buffer_leftover = buffer_available_len - buffer_leftover_pos;
-          logger.Log(1, "SEPARATOR " + separator_pos + " LEFTOVER " + buffer_leftover + " PREV " + buffer_available_len + " RES " + result.Length);
+          //logger.Log(2, "SEPARATOR " + separator_pos + " LEFTOVER " + buffer_leftover + " PREV " + buffer_available_len + " RES " + result.Length);
           //let's copy leftover to the beginning
           Buffer.BlockCopy(buffer, buffer_leftover_pos, buffer, 0, buffer_leftover);
           buffer_available_len = buffer_leftover;
@@ -96,12 +96,12 @@ public class ConnectionStdIO : IConnection
         var temp = new byte[buffer.Length * 2];
         Buffer.BlockCopy(buffer, 0, temp, 0, buffer.Length);
         buffer = temp;
-        logger.Log(1, "BUF INC " + buffer.Length);
+        //logger.Log(2, "BUF INC " + buffer.Length);
       }
 
-      logger.Log(1, "BUF TRY READ " + (buffer.Length - buffer_available_len));
+      //logger.Log(2, "BUF TRY READ " + (buffer.Length - buffer_available_len));
       int read_len = await input.ReadAsync(buffer, buffer_available_len, buffer.Length - buffer_available_len, ct);
-      logger.Log(1, "BUF DID READ " + read_len);
+      //logger.Log(2, "BUF DID READ " + read_len);
       if(read_len == 0)
         throw new EndOfStreamException();
 
@@ -118,7 +118,7 @@ public class ConnectionStdIO : IConnection
     while(total_len > 0)
     {
       int read_len = await input.ReadAsync(result, result.Length - total_len, total_len, ct);
-      logger.Log(1, "BUF RLEN " + read_len + " OFFSET " + (result.Length - total_len) + " LEN " + total_len + " CAP " + result.Length);
+      //logger.Log(2, "BUF RLEN " + read_len + " OFFSET " + (result.Length - total_len) + " LEN " + total_len + " CAP " + result.Length);
       if (read_len == 0)
         throw new EndOfStreamException();
 
@@ -135,7 +135,7 @@ public class ConnectionStdIO : IConnection
     
     if(result_len <= buffer_available_len)
     {
-      logger.Log(1, "AVALABLE FULL " + result_len + " VS " + buffer_available_len);
+      //logger.Log(2, "AVALABLE FULL " + result_len + " VS " + buffer_available_len);
       //let's copy from the buffer to result
       Buffer.BlockCopy(buffer, 0, result, 0, result_len);
       //let's copy leftover to the beginning
@@ -145,7 +145,7 @@ public class ConnectionStdIO : IConnection
     }
     else
     {
-      logger.Log(1, "AVALABLE PART " + result_len + " VS " + buffer_available_len);
+      //logger.Log(2, "AVALABLE PART " + result_len + " VS " + buffer_available_len);
       //let's copy from the buffer to result
       Buffer.BlockCopy(buffer, 0, result, 0, buffer_available_len);
       result_len -= buffer_available_len;

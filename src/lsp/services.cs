@@ -126,7 +126,7 @@ public class DiagnosticService : IService
     }
   }
 
-  void PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
+  async Task PublishDiagnostics(Dictionary<string, CompileErrors> new_uri2errs)
   {
     foreach(var kv in new_uri2errs)
     {
@@ -167,7 +167,7 @@ public class DiagnosticService : IService
           @params = dparams
         };
 
-        srv.Publish(notification, cts.Token).GetAwaiter().GetResult();
+        await srv.Publish(notification, cts.Token);
       }
     }
 

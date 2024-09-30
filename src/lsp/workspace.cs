@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
@@ -13,7 +14,7 @@ public class Workspace
 
   ProjectConf conf;
 
-  public event System.Action<Dictionary<string, CompileErrors>> OnDiagnostics;
+  public event System.Func<Dictionary<string, CompileErrors>, Task> OnDiagnostics;
 
   //NOTE: keeping both collections for convenience of re-indexing
   Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
