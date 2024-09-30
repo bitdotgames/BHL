@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
 using Xunit;
@@ -110,57 +111,57 @@ public class TestLSP : BHL_TestBase
   public class TestRpcResponseErrors : BHL_TestBase
   {
     [Fact]
-    public void parse_error()
+    public async Task parse_error()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       AssertEqual(
-        srv.Handle(json),
+        await srv.Handle(json),
         "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
       );
     }
     
     [Fact]
-    public void invalid_request()
+    public async Task invalid_request()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
       AssertEqual(
-        srv.Handle(json),
+        await srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     }
     
     [Fact]
-    public void invalid_request_2()
+    public async Task invalid_request_2()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        srv.Handle(json),
+        await srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
       );
     }
     
     [Fact]
-    public void method_not_found()
+    public async Task method_not_found()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
       AssertEqual(
-        srv.Handle(json),
+        await srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: foo\"},\"jsonrpc\":\"2.0\"}"
       );
     }
     
     [Fact]
-    public void invalid_params()
+    public async Task invalid_params()
     {
       var srv = new Server(NoLogger(), NoConnection(), new Workspace());
       srv.AttachService(new bhl.lsp.LifecycleService(srv));
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
       AssertEqual(
-        srv.Handle(json),
+        await srv.Handle(json),
         "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.proto.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
       );
     }
@@ -177,7 +178,7 @@ public class TestLSP : BHL_TestBase
     }
     
     [Fact]
-    public void _1()
+    public async Task _1()
     {
       string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
       
@@ -207,33 +208,33 @@ public class TestLSP : BHL_TestBase
                 "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
                 "\"jsonrpc\":\"2.0\"}";
 
-      AssertEqual(srv.Handle(req), rsp);
+      AssertEqual(await srv.Handle(req), rsp);
     }
     
     [Fact]
-    public void _2()
+    public async Task _2()
     {
       AssertEqual(
-        srv.Handle(new Request(1, "initialized").ToJson()),
+        await srv.Handle(new Request(1, "initialized").ToJson()),
         string.Empty
       );
     }
     
     [Fact]
-    public void _3()
+    public async Task _3()
     {
       AssertEqual(
-        srv.Handle(new Request(1, "shutdown").ToJson()),
+        await srv.Handle(new Request(1, "shutdown").ToJson()),
         NullResultJson(1)
       );
     }
     
     [Fact]
-    public void _4()
+    public async Task _4()
     {
       AssertFalse(srv.going_to_exit);
       AssertEqual(
-        srv.Handle(new Request(1, "exit").ToJson()),
+        await srv.Handle(new Request(1, "exit").ToJson()),
         string.Empty
       );
       AssertTrue(srv.going_to_exit);
@@ -244,19 +245,20 @@ public class TestLSP : BHL_TestBase
   {
     public string buffer = "";
 
-    public string Read()
+    public Task<string> Read()
     {
-      return null;
+      return Task.FromResult(string.Empty);
     }
 
-    public void Write(string json)
+    public Task Write(string json)
     {
       buffer += json;
+      return Task.CompletedTask;
     }
   }
 
   [Fact]
-  public void TestBadImportError()
+  public async Task TestBadImportError()
   {
     string bhl_v1 = @"
     import hey""
@@ -283,7 +285,7 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        srv.Handle(new Request(1, "textDocument/didOpen",
+        await srv.Handle(new Request(1, "textDocument/didOpen",
           new bhl.lsp.proto.DidOpenTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentItem() { 
               languageId = "bhl", 
@@ -300,7 +302,7 @@ public class TestLSP : BHL_TestBase
   }
 
   [Fact]
-  public void TestOpenChangeCloseDocument()
+  public async Task TestOpenChangeCloseDocument()
   {
     string bhl_v1 = @"
     func float test1(float k) 
@@ -341,7 +343,7 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        srv.Handle(new Request(1, "textDocument/didOpen",
+        await srv.Handle(new Request(1, "textDocument/didOpen",
           new bhl.lsp.proto.DidOpenTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentItem() { 
               languageId = "bhl", 
@@ -362,7 +364,7 @@ public class TestLSP : BHL_TestBase
       ws.IndexFiles();
 
       AssertEqual(
-        srv.Handle(new Request(1, "textDocument/didChange",
+        await srv.Handle(new Request(1, "textDocument/didChange",
           new bhl.lsp.proto.DidChangeTextDocumentParams() {
             textDocument = new bhl.lsp.proto.VersionedTextDocumentIdentifier() { 
               version = 1, 
@@ -379,7 +381,7 @@ public class TestLSP : BHL_TestBase
     
     {
       AssertEqual(
-        srv.Handle(new Request(1, "textDocument/didClose",
+        await srv.Handle(new Request(1, "textDocument/didClose",
           new bhl.lsp.proto.DidCloseTextDocumentParams() {
             textDocument = new bhl.lsp.proto.TextDocumentIdentifier() { 
               uri = uri
@@ -482,135 +484,135 @@ public class TestLSP : BHL_TestBase
     }
 
     [Fact]
-    public void _1()
+    public async Task _1()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri1, "st1(42)")),
+        await srv.Handle(GoToDefinitionReq(uri1, "st1(42)")),
         GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3)
       );
     }
     
     [Fact]
-    public void _2()
+    public async Task _2()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "est2()")),
+        await srv.Handle(GoToDefinitionReq(uri2, "est2()")),
         GoToDefinitionRsp(uri1, "func test2()", end_line_offset: 4)
       );
     }
     
     [Fact]
-    public void _3()
+    public async Task _3()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
+        await srv.Handle(GoToDefinitionReq(uri1, "oo foo = {")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     }
 
     [Fact]
-    public void _4()
+    public async Task _4()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
+        await srv.Handle(GoToDefinitionReq(uri1, "Foo //create new Foo")),
         GoToDefinitionRsp(uri1, "class Foo {", end_line_offset: 2)
       );
     }
 
     [Fact]
-    public void _5()
+    public async Task _5()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
+        await srv.Handle(GoToDefinitionReq(uri1, "BAR : 0")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     }
 
     [Fact]
-    public void _6()
+    public async Task _6()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
+        await srv.Handle(GoToDefinitionReq(uri2, "BAR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     }
 
     [Fact]
-    public void _7()
+    public async Task _7()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "AR = 1")),
+        await srv.Handle(GoToDefinitionReq(uri2, "AR = 1")),
         GoToDefinitionRsp(uri1, "int BAR", end_column_offset: 6)
       );
     }
 
     [Fact]
-    public void _8()
+    public async Task _8()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
+        await srv.Handle(GoToDefinitionReq(uri2, "foo.BAR")),
         GoToDefinitionRsp(uri1, "foo = {", end_column_offset: 2)
       );
     }
 
     [Fact]
-    public void _9()
+    public async Task _9()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "k = 10")),
+        await srv.Handle(GoToDefinitionReq(uri2, "k = 10")),
         GoToDefinitionRsp(uri2, "k, int j)")
       );
     }
 
     [Fact]
-    public void _10()
+    public async Task _10()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "j = 100")),
+        await srv.Handle(GoToDefinitionReq(uri2, "j = 100")),
         GoToDefinitionRsp(uri2, "j)")
       );
     }
 
     [Fact]
-    public void _11()
+    public async Task _11()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "test4()")),
+        await srv.Handle(GoToDefinitionReq(uri2, "test4()")),
         GoToDefinitionRsp(uri2, "func ErrorCodes test4()", end_line_offset: 7)
       );
     }
 
     [Fact]
-    public void _12()
+    public async Task _12()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
+        await srv.Handle(GoToDefinitionReq(uri2, "rrorCodes err")),
         GoToDefinitionRsp(uri1, "enum ErrorCodes", end_line_offset: 3)
       );
     }
 
     [Fact]
-    public void _13()
+    public async Task _13()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
+        await srv.Handle(GoToDefinitionReq(uri2, "Bad //error code")),
         GoToDefinitionRsp(uri1, "Bad = 1", end_column_offset: 6)
       );
     }
 
     [Fact]
-    public void _14()
+    public async Task _14()
     {
-      var rsp = srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
+      var rsp = await srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
       AssertContains(rsp, "test_lsp.cs");
       AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
     }
 
     [Fact]
-    public void _15()
+    public async Task _15()
     {
       AssertEqual(
-        srv.Handle(GoToDefinitionReq(uri2, "pval + 1")),
+        await srv.Handle(GoToDefinitionReq(uri2, "pval + 1")),
         GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4)
       );
     }
@@ -685,10 +687,10 @@ public class TestLSP : BHL_TestBase
     }
 
     [Fact]
-    public void _1()
+    public async Task _1()
     {
       AssertEqual(
-        srv.Handle(FindReferencesReq(uri1, "st1(42)")),
+        await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
         FindReferencesRsp(
           new UriNeedle(uri1, "func float test1(float k)", end_line_offset: 3),
           new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
@@ -698,10 +700,10 @@ public class TestLSP : BHL_TestBase
     }
 
     [Fact]
-    public void _2()
+    public async Task _2()
     {
       AssertEqual(
-        srv.Handle(FindReferencesReq(uri1, "pval + 1")),
+        await srv.Handle(FindReferencesReq(uri1, "pval + 1")),
         FindReferencesRsp(
           new UriNeedle(uri1, "int upval = 1", end_column_offset: 8),
           new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
@@ -711,10 +713,10 @@ public class TestLSP : BHL_TestBase
     }
 
     [Fact]
-    public void _3()
+    public async Task _3()
     {
       AssertEqual(
-        srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
+        await srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
         FindReferencesRsp(
           new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
           new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
@@ -757,26 +759,26 @@ public class TestLSP : BHL_TestBase
     }
 
     [Fact]
-    public void _1()
+    public async Task _1()
     {
       AssertEqual(
-        srv.Handle(HoverReq(uri, "est1() //hover 1")),
+        await srv.Handle(HoverReq(uri, "est1() //hover 1")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float k,float n)\"}},\"jsonrpc\":\"2.0\"}"
       );
     }
 
     [Fact]
-    public void _2()
+    public async Task _2()
     {
       AssertEqual(
-        srv.Handle(HoverReq(uri, "k //return k")),
+        await srv.Handle(HoverReq(uri, "k //return k")),
         "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"float k\"}},\"jsonrpc\":\"2.0\"}"
       );
     }
   }
 
   [Fact(Skip = "TODO: not implemented yet")]
-  public void TestSignatureHelp()
+  public async Task TestSignatureHelp()
   {
     string bhl1 = @"
     func float test1(float k, float n) 
@@ -808,14 +810,14 @@ public class TestLSP : BHL_TestBase
     ws.IndexFiles();
 
     AssertEqual(
-      srv.Handle(SignatureHelpReq(uri, ") //signature help 1")),
+      await srv.Handle(SignatureHelpReq(uri, ") //signature help 1")),
       "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
       "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
     );
     
     AssertEqual(
-      srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
+      await srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
       "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
       "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
@@ -823,7 +825,7 @@ public class TestLSP : BHL_TestBase
   }
 
   [Fact]
-  public void TestSemanticTokensBasic()
+  public async Task TestSemanticTokensBasic()
   {
     string bhl = @"
     class BHL_M3Globals
@@ -849,7 +851,7 @@ public class TestLSP : BHL_TestBase
     json += "{\"textDocument\": {\"uri\": \"" + uri1.ToString() + "\"}}}";
     
     AssertEqual(
-      srv.Handle(json),
+      await srv.Handle(json),
       "{\"id\":1,\"result\":{\"data\":" +
       "[1,4,5,6,0,"+"0,6,13,0,0,"+"2,8,6,5,0,"+"0,7,15,2,2]},\"jsonrpc\":\"2.0\"}"
     );
@@ -992,20 +994,8 @@ public class TestLSP : BHL_TestBase
     return "{\"id\":" + id + ",\"jsonrpc\":\"2.0\",\"result\":null}";
   }
 
-  public class DummyConnection : IConnection
-  {
-    public string Read()
-    {
-      return null;
-    }
-
-    public void Write(string json)
-    {
-    }
-  }
-
   static IConnection NoConnection()
   {
-    return new DummyConnection();
+    return new MockConnection();
   }
 }

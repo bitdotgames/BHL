@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using bhl.lsp.proto;
@@ -134,7 +135,7 @@ public class Server
     services.Add(service);
   }
 
-  public void Start()
+  public async Task Start()
   {
     logger.Log(1, "Starting BHL (" + bhl.Version.Name + ") LSP server...");
 
@@ -142,7 +143,7 @@ public class Server
     {
       try
       {
-        bool success = ReadAndHandle();
+        bool success = await ReadAndHandle();
         if(!success)
           break;
       }
@@ -156,18 +157,18 @@ public class Server
     logger.Log(1, "Stopping BHL (" + bhl.Version.Name + ") LSP server...");
   }
 
-  bool ReadAndHandle()
+  async Task<bool> ReadAndHandle()
   {
     try
     {
-      string json = connection.Read();
+      string json = await connection.Read();
       if(string.IsNullOrEmpty(json))
         return false;
     
-      string response = Handle(json);
+      string response = await Handle(json);
 
       if(!string.IsNullOrEmpty(response))
-        connection.Write(response);
+        await connection.Write(response);
       else if(going_to_exit)
         return false;
     }
@@ -180,7 +181,7 @@ public class Server
     return true;
   }
 
-  public string Handle(string req_json)
+  public async Task<string> Handle(string req_json)
   {
     var sw = Stopwatch.StartNew();
     
@@ -215,7 +216,7 @@ public class Server
     if(req != null && rsp == null)
     {
       if(req.IsValid())
-        rsp = HandleRequest(req);
+        rsp = await HandleRequest(req);
       else
         rsp = new Response
         {
@@ -246,7 +247,7 @@ public class Server
     return resp_json;
   }
   
-  public Response HandleRequest(Request request)
+  public async Task<Response> HandleRequest(Request request)
   {
     Response response;
     
@@ -254,7 +255,7 @@ public class Server
     {
       if(!string.IsNullOrEmpty(request.method))
       {
-        RpcResult result = CallRpcMethod(request.method, request.@params);
+        RpcResult result = await CallRpcMethod(request.method, request.@params);
         if(result != null)
         {
           response = new Response
@@ -298,7 +299,7 @@ public class Server
     return response;
   }
 
-  RpcResult CallRpcMethod(string name, JToken @params)
+  async Task<RpcResult> CallRpcMethod(string name, JToken @params)
   {
     if(double.TryParse(name, out _))
     {
@@ -337,7 +338,7 @@ public class Server
       }
     }
     
-    return (RpcResult)sm.method.Invoke(sm.service, args);
+    return await (Task<RpcResult>)sm.method.Invoke(sm.service, args);
   }
 
   public void Publish(Notification notification)
@@ -365,7 +366,9 @@ public class RpcResult
 {
   public object result;
   public ResponseError error;
-  
+
+  static public RpcResult Null = null;
+
   public static RpcResult Error(ResponseError error)
   {
     return new RpcResult(null, error);

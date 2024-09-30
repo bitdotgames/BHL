@@ -41,7 +41,7 @@ public static partial class Tasks
     try
     {
       srv.AttachAllServices();
-      srv.Start();
+      srv.Start().GetAwaiter().GetResult();
     }
     catch (Exception e)
     {

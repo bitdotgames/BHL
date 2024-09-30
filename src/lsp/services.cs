@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using bhl.lsp.proto;
 
@@ -22,7 +23,7 @@ public class LifecycleService : IService
   {}
 
   [RpcMethod("initialize")]
-  public RpcResult Initialize(InitializeParams args)
+  public Task<RpcResult> Initialize(InitializeParams args)
   {
     process_id = args.processId;
     
@@ -63,7 +64,7 @@ public class LifecycleService : IService
     foreach(var service in srv.services)
       service.GetCapabilities(args.capabilities, ref server_capabilities);
     
-    return new RpcResult(new InitializeResult
+    return Task.FromResult(new RpcResult(new InitializeResult
     {
       capabilities = server_capabilities,
       serverInfo = new InitializeResult.InitializeResultsServerInfo
@@ -71,27 +72,27 @@ public class LifecycleService : IService
         name = "bhlsp",
         version = Version.Name
       }
-    });
+    }));
   }
 
   [RpcMethod("initialized")]
-  public RpcResult Initialized()
+  public Task<RpcResult> Initialized()
   {
-    return null;
+    return Task.FromResult(RpcResult.Null);
   }
 
   [RpcMethod("shutdown")]
-  public RpcResult Shutdown()
+  public Task<RpcResult> Shutdown()
   {
     workspace.Shutdown();
 
-    return new RpcResult(null);
+    return Task.FromResult(new RpcResult(null));
   }
 
   [RpcMethod("exit")]
-  public RpcResult Exit()
+  public Task<RpcResult> Exit()
   {
-    return RpcResult.Error(ErrorCodes.Exit);
+    return Task.FromResult(RpcResult.Error(ErrorCodes.Exit));
   }
 }
 
@@ -192,60 +193,60 @@ public class TextDocumentSynchronizationService : IService
   }
 
   [RpcMethod("textDocument/didOpen")]
-  public RpcResult DidOpenTextDocument(DidOpenTextDocumentParams args)
+  public Task<RpcResult> DidOpenTextDocument(DidOpenTextDocumentParams args)
   {
     workspace.OpenDocument(args.textDocument.uri, args.textDocument.text);
 
-    return null;
+    return Task.FromResult(RpcResult.Null);
   }
   
   [RpcMethod("textDocument/didChange")]
-  public RpcResult DidChangeTextDocument(DidChangeTextDocumentParams args)
+  public Task<RpcResult> DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
     foreach(var changes in args.contentChanges)
     {
       if(!workspace.UpdateDocument(args.textDocument.uri, changes.text))
-        return RpcResult.Error(new ResponseError
+        return Task.FromResult(RpcResult.Error(new ResponseError
         {
           code = (int)ErrorCodes.RequestFailed,
           message = "Update failed"
-        });
+        }));
     }
     
-    return null;
+    return Task.FromResult(RpcResult.Null);
   }
 
   [RpcMethod("textDocument/didClose")]
-  public RpcResult DidCloseTextDocument(DidCloseTextDocumentParams args)
+  public Task<RpcResult> DidCloseTextDocument(DidCloseTextDocumentParams args)
   {
-    return null;
+    return Task.FromResult(RpcResult.Null);
   }
   
   [RpcMethod("textDocument/willSave")]
-  public RpcResult WillSaveTextDocument(WillSaveTextDocumentParams args)
+  public Task<RpcResult> WillSaveTextDocument(WillSaveTextDocumentParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
 
   [RpcMethod("textDocument/willSaveWaitUntil")]
-  public RpcResult WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
+  public Task<RpcResult> WillSaveWaitUntilTextDocument(WillSaveTextDocumentParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
 
   [RpcMethod("textDocument/didSave")]
-  public RpcResult DidSaveTextDocument(DidSaveTextDocumentParams args)
+  public Task<RpcResult> DidSaveTextDocument(DidSaveTextDocumentParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
 }
 
@@ -268,7 +269,7 @@ public class TextDocumentSignatureHelpService : IService
   }
 
   [RpcMethod("textDocument/signatureHelp")]
-  public RpcResult SignatureHelp(SignatureHelpParams args)
+  public Task<RpcResult> SignatureHelp(SignatureHelpParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -286,7 +287,7 @@ public class TextDocumentSignatureHelpService : IService
         {
           var ps = GetSignatureParams(symb);
 
-          return new RpcResult(new SignatureHelp() {
+          return Task.FromResult(new RpcResult(new SignatureHelp() {
               signatures = new SignatureInformation[] {
                 new SignatureInformation() {
                   label = symb.ToString(),
@@ -297,12 +298,12 @@ public class TextDocumentSignatureHelpService : IService
               activeSignature = 0,
               activeParameter = 0
             }
-          );
+          ));
         }
       }
     }
     
-    return new RpcResult(null);
+    return Task.FromResult(new RpcResult(null));
   }
 
   static ParameterInformation[] GetSignatureParams(FuncSymbol symb)
@@ -350,7 +351,7 @@ public class TextDocumentGoToService : IService
    * and depends on the corresponding client capability textDocument.definition.linkSupport.
    */
   [RpcMethod("textDocument/definition")]
-  public RpcResult GotoDefinition(DefinitionParams args)
+  public Task<RpcResult> GotoDefinition(DefinitionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
         
@@ -361,15 +362,15 @@ public class TextDocumentGoToService : IService
       if(symb != null)
       {
         var range = (bhl.lsp.proto.Range)symb.origin.source_range;
-        return new RpcResult(new Location
+        return Task.FromResult(new RpcResult(new Location
         {
           uri = new proto.Uri(symb.origin.source_file),
           range = range
-        });
+        }));
       }
     }
 
-    return new RpcResult(new Location());
+    return Task.FromResult(new RpcResult(new Location()));
   }
   
   /**
@@ -377,12 +378,12 @@ public class TextDocumentGoToService : IService
    * and depends on the corresponding client capability textDocument.declaration.linkSupport.
    */
   [RpcMethod("textDocument/declaration")]
-  public RpcResult GotoDeclaration(DeclarationParams args)
+  public Task<RpcResult> GotoDeclaration(DeclarationParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
   
   /**
@@ -390,12 +391,12 @@ public class TextDocumentGoToService : IService
    * and depends on the corresponding client capability textDocument.typeDefinition.linkSupport.
    */
   [RpcMethod("textDocument/typeDefinition")]
-  public RpcResult GotoTypeDefinition(TypeDefinitionParams args)
+  public Task<RpcResult> GotoTypeDefinition(TypeDefinitionParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
   
   /**
@@ -403,12 +404,12 @@ public class TextDocumentGoToService : IService
    * and depends on the corresponding client capability textDocument.implementation.linkSupport.
    */
   [RpcMethod("textDocument/implementation")]
-  public RpcResult GotoImplementation(ImplementationParams args)
+  public Task<RpcResult> GotoImplementation(ImplementationParams args)
   {
-    return RpcResult.Error(
+    return Task.FromResult(RpcResult.Error(
       ErrorCodes.RequestFailed,
       "Not supported"
-    );
+    ));
   }
 }
 
@@ -428,7 +429,7 @@ public class TextDocumentHoverService : IService
   }
 
   [RpcMethod("textDocument/hover")]
-  public RpcResult Hover(TextDocumentPositionParams args)
+  public Task<RpcResult> Hover(TextDocumentPositionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -438,17 +439,17 @@ public class TextDocumentHoverService : IService
 
     if(symb != null)
     {
-      return new RpcResult(new Hover
+      return Task.FromResult(new RpcResult(new Hover
       {
         contents = new MarkupContent
         {
           kind = "plaintext",
           value = symb.ToString()
         }
-      });
+      }));
     }
     
-    return new RpcResult(null);
+    return Task.FromResult(new RpcResult(null));
   }
 }
 
@@ -479,19 +480,19 @@ public class TextDocumentSemanticTokensService : IService
   }
 
   [RpcMethod("textDocument/semanticTokens/full")]
-  public RpcResult SemanticTokensFull(SemanticTokensParams args)
+  public Task<RpcResult> SemanticTokensFull(SemanticTokensParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
     if(document?.proc != null)
     {
-      return new RpcResult(new SemanticTokens
+      return Task.FromResult(new RpcResult(new SemanticTokens
       {
         data = document.proc.GetEncodedSemanticTokens().ToArray()
-      });
+      }));
     }
     else
-      return new RpcResult(null);
+      return Task.FromResult(new RpcResult(null));
   }
 }
 
@@ -514,7 +515,7 @@ public class TextDocumentFindReferencesService : IService
    * The result type Location[] | null
    */
   [RpcMethod("textDocument/references")]
-  public RpcResult FindReferences(ReferenceParams args)
+  public Task<RpcResult> FindReferences(ReferenceParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
 
@@ -563,7 +564,7 @@ public class TextDocumentFindReferencesService : IService
       }
     }
 
-    return new RpcResult(refs);
+    return Task.FromResult(new RpcResult(refs));
   }
 }
 

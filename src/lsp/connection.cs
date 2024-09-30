@@ -1,14 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace bhl.lsp {
 
 public interface IConnection
 {
-  string Read();
-  void Write(string json);
+  Task<string> Read();
+  Task Write(string json);
 }
 
 public class ConnectionStdIO : IConnection
@@ -30,7 +30,7 @@ public class ConnectionStdIO : IConnection
     this.output = output;
   }
 
-  public string Read()
+  public Task<string> Read()
   {
     int content_len = 0;
 
@@ -54,15 +54,14 @@ public class ConnectionStdIO : IConnection
           int.TryParse(value, out content_len);
       }
       
-      //headerBytes = reader.ReadToSeparator(separator);
       header_bytes = ReadToSeparator();
     }
     
     if(content_len == 0)
-      return string.Empty;
+      return Task.FromResult(string.Empty);
     
     var bytes = ReadBytes(content_len);
-    return Encoding.UTF8.GetString(bytes);
+    return Task.FromResult(Encoding.UTF8.GetString(bytes));
   }
 
   byte[] ReadToSeparator()
@@ -164,7 +163,7 @@ public class ConnectionStdIO : IConnection
     return -1;
   }
   
-  public void Write(string json)
+  public Task Write(string json)
   {
     var utf8 = Encoding.UTF8.GetBytes(json);
     using(var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
@@ -176,6 +175,8 @@ public class ConnectionStdIO : IConnection
       
     output.Write(utf8, 0, utf8.Length);
     output.Flush();
+
+    return Task.CompletedTask;
   }
 }
 
