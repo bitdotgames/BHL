@@ -1,14 +1,16 @@
 using System;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace bhl.lsp {
 
 public interface IConnection
 {
-  Task<string> Read();
-  Task Write(string json);
+  Task<string> Read(CancellationToken ct);
+  Task Write(string json, CancellationToken ct);
 }
 
 public class ConnectionStdIO : IConnection
@@ -30,11 +32,11 @@ public class ConnectionStdIO : IConnection
     this.output = output;
   }
 
-  public Task<string> Read()
+  public async Task<string> Read(CancellationToken ct)
   {
     int content_len = 0;
 
-    var header_bytes = ReadToSeparator();
+    var header_bytes = await ReadToSeparator(ct);
     
     while(header_bytes.Length != 0)
     {
@@ -54,17 +56,17 @@ public class ConnectionStdIO : IConnection
           int.TryParse(value, out content_len);
       }
       
-      header_bytes = ReadToSeparator();
+      header_bytes = await ReadToSeparator(ct);
     }
     
     if(content_len == 0)
-      return Task.FromResult(string.Empty);
+      return string.Empty;
     
-    var bytes = ReadBytes(content_len);
-    return Task.FromResult(Encoding.UTF8.GetString(bytes));
+    var bytes = await ReadBytes(content_len, ct);
+    return Encoding.UTF8.GetString(bytes);
   }
 
-  byte[] ReadToSeparator()
+  async Task<byte[]> ReadToSeparator(CancellationToken ct)
   {
     while(true)
     {
@@ -98,27 +100,27 @@ public class ConnectionStdIO : IConnection
       }
 
       logger.Log(1, "BUF TRY READ " + (buffer.Length - buffer_available_len));
-      int read_len = input.Read(buffer, buffer_available_len, buffer.Length - buffer_available_len);
-      if(read_len == 0)
-        throw new Exception("TODO: handle gracefully");
+      int read_len = await input.ReadAsync(buffer, buffer_available_len, buffer.Length - buffer_available_len, ct);
       logger.Log(1, "BUF DID READ " + read_len);
+      if(read_len == 0)
+        throw new EndOfStreamException();
 
       buffer_available_len += read_len;
     }
   }
 
-  byte[] ReadBytes(int total_len)
+  async Task<byte[]> ReadBytes(int total_len, CancellationToken ct)
   {
     var result = new byte[total_len];
 
-    FillFromBuffer(ref total_len, result);
+    FillFromAvailableBuffer(ref total_len, result);
     
     while(total_len > 0)
     {
-      int read_len = input.Read(result, result.Length - total_len, total_len);
+      int read_len = await input.ReadAsync(result, result.Length - total_len, total_len, ct);
       logger.Log(1, "BUF RLEN " + read_len + " OFFSET " + (result.Length - total_len) + " LEN " + total_len + " CAP " + result.Length);
       if (read_len == 0)
-        throw new Exception("TODO: handle gracefully");
+        throw new EndOfStreamException();
 
       total_len -= read_len;
     }
@@ -126,27 +128,27 @@ public class ConnectionStdIO : IConnection
     return result;
   }
 
-  void FillFromBuffer(ref int len, byte[] result)
+  void FillFromAvailableBuffer(ref int result_len, byte[] result)
   {
     if(buffer_available_len == 0)
       return;
     
-    if(len <= buffer_available_len)
+    if(result_len <= buffer_available_len)
     {
-      logger.Log(1, "AVALABLE FULL " + len + " VS " + buffer_available_len);
+      logger.Log(1, "AVALABLE FULL " + result_len + " VS " + buffer_available_len);
       //let's copy from the buffer to result
-      Buffer.BlockCopy(buffer, 0, result, 0, len);
+      Buffer.BlockCopy(buffer, 0, result, 0, result_len);
       //let's copy leftover to the beginning
-      Buffer.BlockCopy(buffer, len, buffer, 0, buffer_available_len - len);
-      buffer_available_len -= len;
-      len = 0;
+      Buffer.BlockCopy(buffer, result_len, buffer, 0, buffer_available_len - result_len);
+      buffer_available_len -= result_len;
+      result_len = 0;
     }
     else
     {
-      logger.Log(1, "AVALABLE PART " + len + " VS " + buffer_available_len);
+      logger.Log(1, "AVALABLE PART " + result_len + " VS " + buffer_available_len);
       //let's copy from the buffer to result
       Buffer.BlockCopy(buffer, 0, result, 0, buffer_available_len);
-      len -= buffer_available_len;
+      result_len -= buffer_available_len;
       buffer_available_len = 0;
     }
   }
@@ -163,7 +165,7 @@ public class ConnectionStdIO : IConnection
     return -1;
   }
   
-  public Task Write(string json)
+  public async Task Write(string json, CancellationToken ct)
   {
     var utf8 = Encoding.UTF8.GetBytes(json);
     using(var writer = new StreamWriter(output, Encoding.ASCII, 1024, true))
@@ -173,10 +175,8 @@ public class ConnectionStdIO : IConnection
       writer.Flush();
     }
       
-    output.Write(utf8, 0, utf8.Length);
-    output.Flush();
-
-    return Task.CompletedTask;
+    await output.WriteAsync(utf8, 0, utf8.Length, ct);
+    await output.FlushAsync(ct);
   }
 }
 

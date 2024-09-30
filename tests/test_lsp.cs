@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
@@ -245,12 +246,12 @@ public class TestLSP : BHL_TestBase
   {
     public string buffer = "";
 
-    public Task<string> Read()
+    public Task<string> Read(CancellationToken ct)
     {
       return Task.FromResult(string.Empty);
     }
 
-    public Task Write(string json)
+    public Task Write(string json, CancellationToken ct)
     {
       buffer += json;
       return Task.CompletedTask;

@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -135,7 +136,7 @@ public class Server
     services.Add(service);
   }
 
-  public async Task Start()
+  public async Task Start(CancellationToken ct)
   {
     logger.Log(1, "Starting BHL (" + bhl.Version.Name + ") LSP server...");
 
@@ -143,7 +144,7 @@ public class Server
     {
       try
       {
-        bool success = await ReadAndHandle();
+        bool success = await ReadAndHandle(ct);
         if(!success)
           break;
       }
@@ -157,18 +158,18 @@ public class Server
     logger.Log(1, "Stopping BHL (" + bhl.Version.Name + ") LSP server...");
   }
 
-  async Task<bool> ReadAndHandle()
+  async Task<bool> ReadAndHandle(CancellationToken ct)
   {
     try
     {
-      string json = await connection.Read();
+      string json = await connection.Read(ct);
       if(string.IsNullOrEmpty(json))
         return false;
     
       string response = await Handle(json);
 
       if(!string.IsNullOrEmpty(response))
-        await connection.Write(response);
+        await connection.Write(response, ct);
       else if(going_to_exit)
         return false;
     }
@@ -341,13 +342,13 @@ public class Server
     return await (Task<RpcResult>)sm.method.Invoke(sm.service, args);
   }
 
-  public void Publish(Notification notification)
+  public async Task Publish(Notification notification, CancellationToken ct)
   {
     string json = notification.ToJson();
 
     logger.Log(1, $"<< ({notification.method} {(json?.Length > 500 ? json?.Substring(0,500) + ".." : json)}");
 
-    connection.Write(notification.ToJson());
+    await connection.Write(notification.ToJson(), ct);
   }
   
   static string FindRpcMethodName(MethodInfo m)

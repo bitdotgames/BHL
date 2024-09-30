@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 using Mono.Options;
 using bhl.lsp;
 
@@ -37,11 +38,13 @@ public static partial class Tasks
     var connection = new ConnectionStdIO(logger, stdout, stdin);
     
     var srv = new Server(logger, connection, workspace);
+
+    var cts = new CancellationTokenSource();
     
     try
     {
       srv.AttachAllServices();
-      srv.Start().GetAwaiter().GetResult();
+      srv.Start(cts.Token).GetAwaiter().GetResult();
     }
     catch (Exception e)
     {

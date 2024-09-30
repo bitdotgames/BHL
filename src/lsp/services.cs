@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using bhl.lsp.proto;
@@ -98,13 +99,17 @@ public class LifecycleService : IService
 
 public class DiagnosticService : IService
 {
-  Server srv;
+  private Server srv;
 
-  Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
+  private CancellationTokenSource cts;
+
+  private Dictionary<string, CompileErrors> uri2errs = new Dictionary<string, CompileErrors>();
   
   public DiagnosticService(Server srv)
   {
     this.srv = srv;
+
+    this.cts = new CancellationTokenSource();
 
     srv.workspace.OnDiagnostics += PublishDiagnostics;
   }
@@ -162,7 +167,7 @@ public class DiagnosticService : IService
           @params = dparams
         };
 
-        srv.Publish(notification);
+        srv.Publish(notification, cts.Token).GetAwaiter().GetResult();
       }
     }
 
