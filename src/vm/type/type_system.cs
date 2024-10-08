@@ -273,13 +273,24 @@ public class Types : INamedResolver
   {
     if(dest_type is INativeType dest_intype)
     {
-      if(val?.type is INativeType val_intype)
+      var val_type = val?.type;
+      
+      if(val_type is INativeType val_intype)
       {
         var dest_ntype = dest_intype.GetNativeType();
         var nobj = val_intype.GetNativeObject(val);
         return dest_ntype?.IsAssignableFrom(
           nobj?.GetType() ?? val_intype.GetNativeType()
           ) ?? false;
+      }
+      //special case for 'any' type being cast to native type 
+      else if(val_type == Types.Any)
+      {
+        var dest_ntype = dest_intype.GetNativeType();
+        if(val.is_null && dest_ntype != null)
+          return true;
+        var nobj = val._obj;
+        return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
       }
       else
         return false;

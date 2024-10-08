@@ -119,4 +119,62 @@ public class TestAny : BHL_TestBase
     AssertTrue(res);
     CommonChecks(vm);
   }
+  
+  [Fact]
+  public void TestCastAnyTypeReturnedFromBindings()
+  {
+    string bhl = @"
+      
+    func float test() 
+    {
+      any tmp = mkcolor_any()
+      Color c = (Color)tmp
+      c.r = 10
+      c.g = 100
+      return c.g + c.r 
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+      
+      var fn = new FuncSymbolNative(new Origin(), "mkcolor_any", Types.Any,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var v = Val.NewObj(frm.vm, new Color(), Types.Any);
+            stack.Push(v);
+            return null;
+          }
+      );
+      ts.ns.Define(fn);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(res, 110);
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestCastAnyTypeReturnedFromBindingsAsNull()
+  {
+    string bhl = @"
+      
+    func bool test() 
+    {
+      any tmp = mkcolor_null()
+      Color c = (Color)tmp
+      return c == null
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").result.PopRelease().bval;
+    AssertTrue(res);
+    CommonChecks(vm);
+  }
 }

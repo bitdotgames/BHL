@@ -72,6 +72,12 @@ public class Val
     }
   }
 
+  public bool is_null {
+    get {
+      return this == vm.Null;
+    }
+  }
+
   public VM vm;
 
   //NOTE: use New() instead
