@@ -998,7 +998,7 @@ public class TestTypeCasts : BHL_TestBase
   }
 
   [Fact]
-  public void TestBadCastInRuntime()
+  public void TestBadCastInRuntimeForUserClass()
   {
     string bhl = @"
     class Bar { }
@@ -1018,6 +1018,86 @@ public class TestTypeCasts : BHL_TestBase
         Execute(vm, "test");
       },
       "Invalid type cast: type 'Bar' can't be cast to 'Foo'"
+    );
+  }
+  
+  [Fact]
+  public void TestBadCastInRuntimeForNativeClass()
+  {
+    string bhl = @"
+    func test() 
+    {
+      Foo foo = {}
+      any o = foo
+      Color c = (Color)o
+    }
+    ";
+    
+    var ts_fn = new Action<Types>((ts) => {
+      BindFoo(ts);
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    AssertError<Exception>(
+      delegate() { 
+        Execute(vm, "test");
+      },
+      "Invalid type cast: type '[native] Foo' can't be cast to '[native] Color'"
+    );
+  }
+  
+  [Fact]
+  public void TestBadCastInRuntimeForNativeClassMixedWithUserClass()
+  {
+    string bhl = @"
+    class Bar { }
+
+    func test() 
+    {
+      Bar b = {}
+      any o = b
+      Color c = (Color)o
+    }
+    ";
+    
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    AssertError<Exception>(
+      delegate() { 
+        Execute(vm, "test");
+      },
+      "Invalid type cast: type 'Bar' can't be cast to '[native] Color'"
+    );
+  }
+
+  [Fact]
+  public void TestBadCastInRuntimeForNativeClassMixedWithUserClass2()
+  {
+    string bhl = @"
+    class Bar { }
+
+    func test() 
+    {
+      Color c = {}
+      any o = c
+      Bar b = (Bar)o
+    }
+    ";
+    
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    AssertError<Exception>(
+      delegate() { 
+        Execute(vm, "test");
+      },
+      "Invalid type cast: type '[native] Color' can't be cast to 'Bar'"
     );
   }
 

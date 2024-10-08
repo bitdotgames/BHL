@@ -77,7 +77,7 @@ public class TestAny : BHL_TestBase
   }
 
   [Fact]
-  public void TestCastClassToAny()
+  public void TestCastNativeClassToAny()
   {
     string bhl = @"
       
@@ -121,7 +121,7 @@ public class TestAny : BHL_TestBase
   }
   
   [Fact]
-  public void TestCastAnyTypeReturnedFromBindings()
+  public void TestCastAnyNativeTypeReturnedFromBindings()
   {
     string bhl = @"
       
@@ -156,7 +156,7 @@ public class TestAny : BHL_TestBase
   }
   
   [Fact]
-  public void TestCastAnyTypeReturnedFromBindingsAsNull()
+  public void TestCastAnyNativeTypeReturnedFromBindingsAsNull()
   {
     string bhl = @"
       
