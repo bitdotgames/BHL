@@ -136,6 +136,10 @@ public partial class VM : INamedResolver
     public Frame MakeFrame(VM vm, Frame curr_frame, ValStack curr_stack)
     {
       var frm = Frame.New(vm);
+
+      if(native != null)
+        return frm;
+
       if(module != null)
         frm.Init(curr_frame.fb, curr_frame, curr_stack, module, func_ip);
       else

@@ -112,6 +112,15 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
+    internal void Attach(Frame frm)
+    {
+      frm.fb = this;
+      exec.ip = frm.start_ip;
+      exec.frames.Push(frm);
+      exec.regions.Push(new Region(frm, frm));
+      exec.stack = frm._stack;
+    }
+
     internal void ExitScopes()
     {
       if(exec.frames.Count > 0)
@@ -403,11 +412,17 @@ public partial class VM : INamedResolver
     fb.func_addr = ptr.func_addr;
     Register(fb, curr_frame.fb);
 
-    //checking native call
+    var frame = ptr.MakeFrame(this, curr_frame, curr_stack);  
+
+    Init(ptr, curr_frame, fb, frame, curr_stack, args);
+
+    return fb;
+  }
+
+  internal void Init(FuncPtr ptr, Frame curr_frame, Fiber fb, Frame frame, ValStack curr_stack, StackList <Val> args)
+  {
     if(ptr.native != null)
     {
-      //let's create a fake frame for a native call
-      var frame = Frame.New(this);
       frame.Init(fb, curr_frame, curr_stack, null, null, null, null, VM.EXIT_FRAME_IP);
 
       for(int i=args.Count;i-- > 0;)
@@ -415,7 +430,7 @@ public partial class VM : INamedResolver
         var arg = args[i];
         curr_stack.Push(arg);
       }
-      Attach(fb, frame);
+      fb.Attach(frame);
       //NOTE: we use curr_stack not new fake frame's stack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
@@ -431,8 +446,6 @@ public partial class VM : INamedResolver
     }
     else
     {
-      var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
-
       for(int i=args.Count;i-- > 0;)
       {
         var arg = args[i];
@@ -441,10 +454,8 @@ public partial class VM : INamedResolver
       //passing args info as stack variable
       frame._stack.Push(Val.NewNum(this, args.Count));
 
-      Attach(fb, frame);
+      fb.Attach(frame);
     }
-
-    return fb;
   }
 
   public void Detach(Fiber fb)
@@ -452,7 +463,7 @@ public partial class VM : INamedResolver
     fibers.Remove(fb);
   }
 
-  void Attach(Fiber fb, Frame frm)
+  static void Attach(Fiber fb, Frame frm)
   {
     frm.fb = fb;
     fb.exec.ip = frm.start_ip;
