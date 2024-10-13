@@ -1148,6 +1148,35 @@ public class TestFiber : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestTrampoline()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    {
+      var fb = tr.Start();
+      AssertFalse(vm.Tick(fb));
+      AssertEqual(fb.result.PopRelease().num, 10);
+    }
+
+    {
+      var fb = tr.Start();
+      AssertFalse(vm.Tick(fb));
+      AssertEqual(fb.result.PopRelease().num, 10);
+    }
+
+    //TODO:
+    //CommonChecks(vm);
+  }
+
   void BindStartScriptInMgr(Types ts)
   {
     {

@@ -350,12 +350,25 @@ public partial class VM : INamedResolver
     Register(fb);
 
     var frame = Frame.New(this);
-      
+
+    Start(addr, fb, frame, cargs_bits, args);
+
+    return fb;
+  }
+
+  internal void Start(
+    FuncAddr addr, 
+    Fiber fb, 
+    Frame frame, 
+    uint cargs_bits, 
+    StackList<Val> args
+  )
+  {
+    var frame0 = fb.frame0;
+
     //checking native call
     if(addr.fsn != null)
     {
-      var frame0 = fb.frame0;
-      
       frame.Init(fb, frame0, frame0._stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       for(int i=args.Count;i-- > 0;)
@@ -363,7 +376,7 @@ public partial class VM : INamedResolver
         var arg = args[i];
         frame0._stack.Push(arg);
       }
-      Attach(fb, frame);
+      fb.Attach(frame);
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
@@ -379,7 +392,7 @@ public partial class VM : INamedResolver
     }
     else
     {
-      frame.Init(fb, fb.frame0, fb.frame0._stack, addr.module, addr.ip);
+      frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
       for(int i = args.Count; i-- > 0;)
       {
@@ -390,10 +403,8 @@ public partial class VM : INamedResolver
       //passing args info as stack variable
       frame._stack.Push(Val.NewInt(this, cargs_bits));
 
-      Attach(fb, frame);
+      fb.Attach(frame);
     }
-
-    return fb;
   }
   
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
@@ -414,12 +425,19 @@ public partial class VM : INamedResolver
 
     var frame = ptr.MakeFrame(this, curr_frame, curr_stack);  
 
-    Init(ptr, curr_frame, fb, frame, curr_stack, args);
+    Start(ptr, curr_frame, fb, frame, curr_stack, args);
 
     return fb;
   }
 
-  internal void Init(FuncPtr ptr, Frame curr_frame, Fiber fb, Frame frame, ValStack curr_stack, StackList <Val> args)
+  internal void Start(
+      FuncPtr ptr, 
+      Frame curr_frame, 
+      Fiber fb, 
+      Frame frame, 
+      ValStack curr_stack, 
+      StackList <Val> args
+    )
   {
     if(ptr.native != null)
     {
@@ -461,15 +479,6 @@ public partial class VM : INamedResolver
   public void Detach(Fiber fb)
   {
     fibers.Remove(fb);
-  }
-
-  static void Attach(Fiber fb, Frame frm)
-  {
-    frm.fb = fb;
-    fb.exec.ip = frm.start_ip;
-    fb.exec.frames.Push(frm);
-    fb.exec.regions.Push(new Region(frm, frm));
-    fb.exec.stack = frm._stack;
   }
 
   void Register(Fiber fb, Fiber parent = null)

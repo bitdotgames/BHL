@@ -123,6 +123,11 @@ public partial class VM : INamedResolver
     {
       return HashCode.Combine(module, path);
     }
+
+    public override string ToString()
+    {
+      return module + ":" + path;
+    }
   }
 
   public VM(Types types = null, IModuleLoader loader = null)

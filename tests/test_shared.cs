@@ -7,6 +7,8 @@ using Xunit;
 
 public class BHL_TestBase
 {
+  public const string TestModuleName = "";
+
   protected void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
@@ -1041,7 +1043,7 @@ public class BHL_TestBase
     HashSet<string> defines = null
   ) 
   {
-    var mdl = new bhl.Module(ts, "");
+    var mdl = new bhl.Module(ts, TestModuleName);
     var proc = ANTLR_Processor.ParseAndMakeProcessor(
       mdl, 
       new FileImports(), 
@@ -1065,7 +1067,7 @@ public class BHL_TestBase
     }
 
     var proc_bundle = new ProjectCompilationStateBundle(ts);
-    proc_bundle.file2proc = new Dictionary<string, ANTLR_Processor>() { { "", proc } };
+    proc_bundle.file2proc = new Dictionary<string, ANTLR_Processor>() { { TestModuleName, proc } };
     proc_bundle.file2cached = null;
     ANTLR_Processor.ProcessAll(proc_bundle);
 
