@@ -39,18 +39,18 @@ public partial class VM : INamedResolver
     }
 
     public TrampolineBase(VM vm, SymbolSpec spec, int args_num)
-    {
-      var err = vm.TryLoadModuleSymbol(spec, out var ms);
-      if(err != 0)
-        throw new Exception($"Error loading symbol by spec '{spec}': {err}");
+      : this(vm, spec.LoadModuleSymbol(vm), args_num)
+    {}
 
+    public TrampolineBase(VM vm, ModuleSymbol ms, int args_num)
+    {
       this.vm = vm;
 
       //NOTE: only script functions are supported
       var fs = (FuncSymbolScript)ms.symbol;
 
       if(fs.signature.arg_types.Count != args_num)
-        throw new Exception($"Arguments amount doesn't match func signature, got: {args_num}, expected: {fs.signature.arg_types.Count} in {spec}");
+        throw new Exception($"Arguments amount doesn't match func signature {fs}, got: {args_num}, expected: {fs.signature.arg_types.Count}");
 
       addr = new FuncAddr() {
         module = ms.module,
