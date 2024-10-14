@@ -1162,19 +1162,18 @@ public class TestFiber : BHL_TestBase
 
     var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test")); 
     {
-      var fb = tr.Start();
-      AssertFalse(vm.Tick(fb));
+      var fb = tr.Execute();
       AssertEqual(fb.result.PopRelease().num, 10);
+      CommonChecks(vm);
     }
 
     {
-      var fb = tr.Start();
+      var fb = tr.Execute();
       AssertFalse(vm.Tick(fb));
       AssertEqual(fb.result.PopRelease().num, 10);
+      CommonChecks(vm);
     }
 
-    //TODO:
-    //CommonChecks(vm);
   }
 
   void BindStartScriptInMgr(Types ts)
