@@ -352,19 +352,6 @@ public partial class VM : INamedResolver
 
     var frame = Frame.New(this);
 
-    Start(addr, fb, frame, cargs_bits, args);
-
-    return fb;
-  }
-
-  internal void Start(
-    FuncAddr addr, 
-    Fiber fb, 
-    Frame frame, 
-    uint cargs_bits, 
-    StackList<Val> args
-  )
-  {
     var frame0 = fb.frame0;
 
     //checking native call
@@ -372,42 +359,21 @@ public partial class VM : INamedResolver
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
-      for(int i=args.Count;i-- > 0;)
-      {
-        var arg = args[i];
-        frame0._stack.Push(arg);
-      }
-      fb.Attach(frame);
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      fb.exec.stack = frame0._stack; 
-      
-      //passing args info as argument
-      fb.exec.coroutine = addr.fsn.cb(frame, frame0._stack, new FuncArgsInfo(cargs_bits), ref fb.status);
-      //NOTE: before executing a coroutine VM will increment ip optimistically
-      //      but we need it to remain at the same position so that it points at
-      //      the fake return opcode
-      if(fb.exec.coroutine != null)
-        --fb.exec.ip;
+      StartNative(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
     }
     else
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
-      for(int i = args.Count; i-- > 0;)
-      {
-        var arg = args[i];
-        frame._stack.Push(arg);
-      }
-
-      //passing args info as stack variable
-      frame._stack.Push(Val.NewInt(this, cargs_bits));
-
-      fb.Attach(frame);
+      StartScript(fb, frame, frame._stack, cargs_bits, args);
     }
+
+    return fb;
   }
-  
+
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>());
@@ -426,56 +392,69 @@ public partial class VM : INamedResolver
 
     var frame = ptr.MakeFrame(this, curr_frame, curr_stack);  
 
-    Start(ptr, curr_frame, fb, frame, curr_stack, args);
-
-    return fb;
-  }
-
-  internal void Start(
-      FuncPtr ptr, 
-      Frame curr_frame, 
-      Fiber fb, 
-      Frame frame, 
-      ValStack curr_stack, 
-      StackList <Val> args
-    )
-  {
     if(ptr.native != null)
     {
       frame.Init(fb, curr_frame, curr_stack, null, null, null, null, VM.EXIT_FRAME_IP);
 
-      for(int i=args.Count;i-- > 0;)
-      {
-        var arg = args[i];
-        curr_stack.Push(arg);
-      }
-      fb.Attach(frame);
       //NOTE: we use curr_stack not new fake frame's stack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      fb.exec.stack = curr_stack;
-      
-      //passing args info as argument
-      fb.exec.coroutine = ptr.native.cb(frame, curr_stack, new FuncArgsInfo(args.Count), ref fb.status);
-      //NOTE: before executing a coroutine VM will increment ip optimistically
-      //      but we need it to remain at the same position so that it points at
-      //      the fake return opcode
-      if(fb.exec.coroutine != null)
-        --fb.exec.ip;
+      StartNative(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
     }
     else
     {
-      for(int i=args.Count;i-- > 0;)
-      {
-        var arg = args[i];
-        frame._stack.Push(arg);
-      }
-      //passing args info as stack variable
-      frame._stack.Push(Val.NewNum(this, args.Count));
-
-      fb.Attach(frame);
+      StartScript(fb, frame, frame._stack, (uint)args.Count, args);
     }
+
+    return fb;
   }
+
+  internal void StartNative(
+    FuncSymbolNative fsn,
+    Fiber fb, 
+    Frame frame, 
+    ValStack curr_stack,
+    FuncArgsInfo args_info,
+    StackList <Val> args
+  )
+  {
+    for(int i=args.Count;i-- > 0;)
+    {
+      var arg = args[i];
+      curr_stack.Push(arg);
+    }
+    fb.Attach(frame);
+    fb.exec.stack = curr_stack; 
+    
+    //passing args info as argument
+    fb.exec.coroutine = fsn.cb(frame, curr_stack, args_info, ref fb.status);
+    //NOTE: before executing a coroutine VM will increment ip optimistically
+    //      but we need it to remain at the same position so that it points at
+    //      the fake return opcode
+    if(fb.exec.coroutine != null)
+      --fb.exec.ip;
+  }
+
+  internal void StartScript(
+    Fiber fb, 
+    Frame frame, 
+    ValStack curr_stack,
+    uint cargs_bits,
+    StackList <Val> args
+  )
+  {
+    for(int i = args.Count; i-- > 0;)
+    {
+      var arg = args[i];
+      curr_stack.Push(arg);
+    }
+
+    //passing args info as stack variable
+    curr_stack.Push(Val.NewInt(this, cargs_bits));
+
+    fb.Attach(frame);
+  }
+  
 
   public void Detach(Fiber fb)
   {
