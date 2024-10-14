@@ -1160,20 +1160,96 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
     {
-      var fb = tr.Execute();
-      AssertEqual(fb.result.PopRelease().num, 10);
+      var result = tr.Execute();
+      AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
 
     {
-      var fb = tr.Execute();
-      AssertFalse(vm.Tick(fb));
-      AssertEqual(fb.result.PopRelease().num, 10);
+      var result = tr.Execute();
+      AssertEqual(result.PopRelease().num, 10);
+      CommonChecks(vm);
+    }
+  }
+
+  [Fact]
+  public void TestTrampolineWithArgs()
+  {
+    string bhl = @"
+    func int test(int k) 
+    {
+      return k * 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
+    {
+      var result = tr.Execute(new StackList<Val>() { Val.NewInt(vm, 10) } );
+      AssertEqual(result.PopRelease().num, 100);
       CommonChecks(vm);
     }
 
+    {
+      var result = tr.Execute(new StackList<Val>() { Val.NewInt(vm, 2) } );
+      AssertEqual(result.PopRelease().num, 20);
+      CommonChecks(vm);
+    }
+  }
+
+  [Fact]
+  public void TestTrampoline1()
+  {
+    string bhl = @"
+    func int test(int k) 
+    {
+      return k * 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var tr = new VM.Trampoline1(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    {
+      var result = tr.Execute(Val.NewInt(vm, 10));
+      AssertEqual(result.PopRelease().num, 100);
+      CommonChecks(vm);
+    }
+
+    {
+      var result = tr.Execute(Val.NewInt(vm, 2));
+      AssertEqual(result.PopRelease().num, 20);
+      CommonChecks(vm);
+    }
+  }
+
+  [Fact]
+  public void TestTrampoline2()
+  {
+    string bhl = @"
+    func int test(int k, int d) 
+    {
+      return d - k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var tr = new VM.Trampoline2(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    {
+      var result = tr.Execute(Val.NewInt(vm, 10), Val.NewInt(vm, 20));
+      AssertEqual(result.PopRelease().num, 10);
+      CommonChecks(vm);
+    }
+
+    {
+      var result = tr.Execute(Val.NewInt(vm, 2), Val.NewInt(vm, 1));
+      AssertEqual(result.PopRelease().num, -1);
+      CommonChecks(vm);
+    }
   }
 
   void BindStartScriptInMgr(Types ts)

@@ -126,7 +126,7 @@ public partial class VM : INamedResolver
 
     public override string ToString()
     {
-      return module + ":" + path;
+      return path + "(" + module + ")";
     }
   }
 
