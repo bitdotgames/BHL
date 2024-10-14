@@ -359,6 +359,156 @@ public partial class VM : INamedResolver
       return new Result(fb);
     }
   }
+  
+  public class Trampoline7 : TrampolineBase
+  {
+    Val args_info;
+
+    public Trampoline7(VM vm, SymbolSpec spec)
+      : base(vm, spec, 7)
+    {
+      args_info = new Val(vm); 
+      args_info.num = 7;
+
+      //let's own it forever
+      args_info.Retain();
+    }
+
+    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7)
+    {
+      _Prepare();
+
+      frm._stack.Push(arg7);
+      frm._stack.Push(arg6);
+      frm._stack.Push(arg5);
+      frm._stack.Push(arg4);
+      frm._stack.Push(arg3);
+      frm._stack.Push(arg2);
+      frm._stack.Push(arg1);
+
+      //passing args info as stack variable
+      args_info.Retain();
+      frm._stack.Push(args_info);
+
+      _Execute();
+
+      return new Result(fb);
+    }
+  }
+  
+  public class Trampoline8 : TrampolineBase
+  {
+    Val args_info;
+
+    public Trampoline8(VM vm, SymbolSpec spec)
+      : base(vm, spec, 8)
+    {
+      args_info = new Val(vm); 
+      args_info.num = 8;
+
+      //let's own it forever
+      args_info.Retain();
+    }
+
+    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8)
+    {
+      _Prepare();
+
+      frm._stack.Push(arg8);
+      frm._stack.Push(arg7);
+      frm._stack.Push(arg6);
+      frm._stack.Push(arg5);
+      frm._stack.Push(arg4);
+      frm._stack.Push(arg3);
+      frm._stack.Push(arg2);
+      frm._stack.Push(arg1);
+
+      //passing args info as stack variable
+      args_info.Retain();
+      frm._stack.Push(args_info);
+
+      _Execute();
+
+      return new Result(fb);
+    }
+  }
+  
+  public class Trampoline9 : TrampolineBase
+  {
+    Val args_info;
+
+    public Trampoline9(VM vm, SymbolSpec spec)
+      : base(vm, spec, 9)
+    {
+      args_info = new Val(vm); 
+      args_info.num = 9;
+
+      //let's own it forever
+      args_info.Retain();
+    }
+
+    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9)
+    {
+      _Prepare();
+
+      frm._stack.Push(arg9);
+      frm._stack.Push(arg8);
+      frm._stack.Push(arg7);
+      frm._stack.Push(arg6);
+      frm._stack.Push(arg5);
+      frm._stack.Push(arg4);
+      frm._stack.Push(arg3);
+      frm._stack.Push(arg2);
+      frm._stack.Push(arg1);
+
+      //passing args info as stack variable
+      args_info.Retain();
+      frm._stack.Push(args_info);
+
+      _Execute();
+
+      return new Result(fb);
+    }
+  }
+  
+  public class Trampoline10 : TrampolineBase
+  {
+    Val args_info;
+
+    public Trampoline10(VM vm, SymbolSpec spec)
+      : base(vm, spec, 10)
+    {
+      args_info = new Val(vm); 
+      args_info.num = 10;
+
+      //let's own it forever
+      args_info.Retain();
+    }
+
+    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9, Val arg10)
+    {
+      _Prepare();
+
+      frm._stack.Push(arg10);
+      frm._stack.Push(arg9);
+      frm._stack.Push(arg8);
+      frm._stack.Push(arg7);
+      frm._stack.Push(arg6);
+      frm._stack.Push(arg5);
+      frm._stack.Push(arg4);
+      frm._stack.Push(arg3);
+      frm._stack.Push(arg2);
+      frm._stack.Push(arg1);
+
+      //passing args info as stack variable
+      args_info.Retain();
+      frm._stack.Push(args_info);
+
+      _Execute();
+
+      return new Result(fb);
+    }
+  }
 }
 
 }
