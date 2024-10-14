@@ -133,6 +133,7 @@ public partial class VM : INamedResolver
 
         //we need to copy 0 index frame returned values 
         {
+          var frame0 = exec.frames[0];
           for(int c=0;c<frame0._stack.Count;++c)
             result.Push(frame0._stack[c]);
           //let's clear the frame's stack so that values 
