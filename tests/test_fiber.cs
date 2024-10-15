@@ -1149,7 +1149,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestTrampoline()
+  public void TestFuncAction()
   {
     string bhl = @"
     func int test() 
@@ -1160,7 +1160,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
+    var tr = new ScriptFuncAction(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
     {
       var result = tr.Execute(vm);
       AssertEqual(result.PopRelease().num, 10);
@@ -1175,7 +1175,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestTrampolineWithArgs()
+  public void TestFuncActionWithArgs()
   {
     string bhl = @"
     func int test(int k) 
@@ -1186,7 +1186,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
+    var tr = new ScriptFuncAction(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
     {
       var result = tr.Execute(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
       AssertEqual(result.PopRelease().num, 100);
@@ -1201,7 +1201,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestTrampoline1()
+  public void TestFuncAction1()
   {
     string bhl = @"
     func int test(int k) 
@@ -1212,7 +1212,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new VM.Trampoline1(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    var tr = new ScriptFuncAction1(vm, new VM.SymbolSpec(TestModuleName, "test")); 
     {
       var result = tr.Execute(vm, Val.NewInt(vm, 10));
       AssertEqual(result.PopRelease().num, 100);
@@ -1227,7 +1227,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestTrampoline2()
+  public void TestFuncAction2()
   {
     string bhl = @"
     func int test(int k, int d) 
@@ -1238,7 +1238,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new VM.Trampoline2(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    var tr = new ScriptFuncAction2(vm, new VM.SymbolSpec(TestModuleName, "test")); 
     {
       var result = tr.Execute(vm, Val.NewInt(vm, 10), Val.NewInt(vm, 20));
       AssertEqual(result.PopRelease().num, 10);

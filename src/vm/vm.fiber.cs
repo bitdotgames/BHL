@@ -298,8 +298,6 @@ public partial class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
-  public delegate void OnNewFiberCb(Fiber fb);
-  public event OnNewFiberCb OnNewFiber;
   
   public Fiber Start(string func, params Val[] args)
   {
@@ -472,8 +470,6 @@ public partial class VM : INamedResolver
     fb.id = ++fibers_ids;
     fibers.Add(fb);
     parent?.AddChild(fb);
-
-    OnNewFiber?.Invoke(fb);
   }
 
   public void Stop(Fiber fb)
