@@ -1162,13 +1162,13 @@ public class TestFiber : BHL_TestBase
 
     var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
     {
-      var result = tr.Execute();
+      var result = tr.Execute(vm);
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute();
+      var result = tr.Execute(vm);
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
@@ -1188,13 +1188,13 @@ public class TestFiber : BHL_TestBase
 
     var tr = new VM.Trampoline(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
     {
-      var result = tr.Execute(new StackList<Val>() { Val.NewInt(vm, 10) } );
+      var result = tr.Execute(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
       AssertEqual(result.PopRelease().num, 100);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute(new StackList<Val>() { Val.NewInt(vm, 2) } );
+      var result = tr.Execute(vm, new StackList<Val>() { Val.NewInt(vm, 2) } );
       AssertEqual(result.PopRelease().num, 20);
       CommonChecks(vm);
     }
@@ -1214,13 +1214,13 @@ public class TestFiber : BHL_TestBase
 
     var tr = new VM.Trampoline1(vm, new VM.SymbolSpec(TestModuleName, "test")); 
     {
-      var result = tr.Execute(Val.NewInt(vm, 10));
+      var result = tr.Execute(vm, Val.NewInt(vm, 10));
       AssertEqual(result.PopRelease().num, 100);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute(Val.NewInt(vm, 2));
+      var result = tr.Execute(vm, Val.NewInt(vm, 2));
       AssertEqual(result.PopRelease().num, 20);
       CommonChecks(vm);
     }
@@ -1240,14 +1240,67 @@ public class TestFiber : BHL_TestBase
 
     var tr = new VM.Trampoline2(vm, new VM.SymbolSpec(TestModuleName, "test")); 
     {
-      var result = tr.Execute(Val.NewInt(vm, 10), Val.NewInt(vm, 20));
+      var result = tr.Execute(vm, Val.NewInt(vm, 10), Val.NewInt(vm, 20));
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute(Val.NewInt(vm, 2), Val.NewInt(vm, 1));
+      var result = tr.Execute(vm, Val.NewInt(vm, 2), Val.NewInt(vm, 1));
       AssertEqual(result.PopRelease().num, -1);
+      CommonChecks(vm);
+    }
+  }
+
+  [Fact]
+  public void TestScriptFuncSource()
+  {
+    string bhl = @"
+    func int test(int k) 
+    {
+      return k * 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
+    AssertEqual(fs.IdleCount, 0);
+    AssertEqual(fs.BusyCount, 0);
+
+    {
+      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
+
+      AssertEqual(fs.IdleCount, 0);
+      AssertEqual(fs.BusyCount, 1);
+
+      AssertFalse(fn.IsStopped);
+
+      AssertFalse(fn.Tick());
+      AssertTrue(fn.IsStopped);
+      AssertEqual(fn.Result.PopRelease().num, 100);
+
+      AssertEqual(fs.IdleCount, 1);
+      AssertEqual(fs.BusyCount, 0);
+
+      CommonChecks(vm);
+    }
+
+    {
+      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 2) } );
+
+      AssertEqual(fs.IdleCount, 0);
+      AssertEqual(fs.BusyCount, 1);
+
+      AssertFalse(fn.IsStopped);
+
+      AssertFalse(fn.Tick());
+      AssertTrue(fn.IsStopped);
+      AssertEqual(fn.Result.PopRelease().num, 20);
+      
+      AssertEqual(fs.IdleCount, 1);
+      AssertEqual(fs.BusyCount, 0);
+
       CommonChecks(vm);
     }
   }

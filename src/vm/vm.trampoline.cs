@@ -7,8 +7,6 @@ public partial class VM : INamedResolver
 {
   public class TrampolineBase
   {
-    protected VM vm;
-
     protected FuncAddr addr;
 
     //NOTE: we manually create and own these 
@@ -39,13 +37,11 @@ public partial class VM : INamedResolver
     }
 
     public TrampolineBase(VM vm, SymbolSpec spec, int args_num)
-      : this(vm, spec.LoadModuleSymbol(vm), args_num)
+      : this(spec.LoadModuleSymbol(vm), args_num)
     {}
 
-    public TrampolineBase(VM vm, ModuleSymbol ms, int args_num)
+    public TrampolineBase(ModuleSymbol ms, int args_num)
     {
-      this.vm = vm;
-
       //NOTE: only script functions are supported
       var fs = (FuncSymbolScript)ms.symbol;
 
@@ -59,18 +55,18 @@ public partial class VM : INamedResolver
       };
 
       //NOTE: manually creating 0 Frame
-      fb_frm0 = new Frame(vm);
+      fb_frm0 = new Frame(null);
       //just for consistency with refcounting
       fb_frm0.Retain();
 
       //NOTE: manually creating Fiber
-      fb = new Fiber(vm);
+      fb = new Fiber(null);
       //just for consistency with refcounting
       fb.Retain();
       fb.func_addr = addr;
 
       //NOTE: manually creating Frame
-      frm = new Frame(vm);
+      frm = new Frame(null);
       //just for consistency with refcounting
       frm.Retain();
 
@@ -88,8 +84,12 @@ public partial class VM : INamedResolver
       frm.Retain();
     }
 
-    protected void _Execute()
+    protected void _Execute(VM vm)
     {
+      frm.vm = vm;
+      fb_frm0.vm = vm;
+      fb.vm = vm;
+
       fb.Attach(frm);
 
       bool is_running = vm.Tick(fb);
@@ -108,17 +108,17 @@ public partial class VM : INamedResolver
       : base(vm, spec, args_num)
     {}
 
-    public Result Execute()
+    public Result Execute(VM vm)
     {
-      return Execute(0, new StackList<Val>());
+      return Execute(vm, 0, new StackList<Val>());
     }
 
-    public Result Execute(StackList<Val> args)
+    public Result Execute(VM vm, StackList<Val> args)
     {
-      return Execute((uint)args.Count, args);
+      return Execute(vm, (uint)args.Count, args);
     }
 
-    public Result Execute(uint cargs_bits, StackList<Val> args)
+    public Result Execute(VM vm, uint cargs_bits, StackList<Val> args)
     {
       _Prepare();
 
@@ -131,7 +131,7 @@ public partial class VM : INamedResolver
       //passing args info as stack variable
       frm._stack.Push(Val.NewInt(vm, cargs_bits));
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -144,14 +144,13 @@ public partial class VM : INamedResolver
     public Trampoline0(VM vm, SymbolSpec spec)
       : base(vm, spec, 0)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 0;
-
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute()
+    public Result Execute(VM vm)
     {
       _Prepare();
 
@@ -159,7 +158,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -172,14 +171,14 @@ public partial class VM : INamedResolver
     public Trampoline1(VM vm, SymbolSpec spec)
       : base(vm, spec, 1)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 1;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1)
+    public Result Execute(VM vm, Val arg1)
     {
       _Prepare();
 
@@ -189,7 +188,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -202,14 +201,14 @@ public partial class VM : INamedResolver
     public Trampoline2(VM vm, SymbolSpec spec)
       : base(vm, spec, 2)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 2;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2)
+    public Result Execute(VM vm, Val arg1, Val arg2)
     {
       _Prepare();
 
@@ -220,7 +219,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -233,14 +232,14 @@ public partial class VM : INamedResolver
     public Trampoline3(VM vm, SymbolSpec spec)
       : base(vm, spec, 3)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 3;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3)
     {
       _Prepare();
 
@@ -252,7 +251,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -265,14 +264,14 @@ public partial class VM : INamedResolver
     public Trampoline4(VM vm, SymbolSpec spec)
       : base(vm, spec, 4)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 4;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4)
     {
       _Prepare();
 
@@ -285,7 +284,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -298,14 +297,14 @@ public partial class VM : INamedResolver
     public Trampoline5(VM vm, SymbolSpec spec)
       : base(vm, spec, 5)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 5;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5)
     {
       _Prepare();
 
@@ -319,7 +318,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -332,14 +331,14 @@ public partial class VM : INamedResolver
     public Trampoline6(VM vm, SymbolSpec spec)
       : base(vm, spec, 6)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 6;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6)
     {
       _Prepare();
 
@@ -354,7 +353,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -367,14 +366,14 @@ public partial class VM : INamedResolver
     public Trampoline7(VM vm, SymbolSpec spec)
       : base(vm, spec, 7)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 7;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7)
     {
       _Prepare();
 
@@ -390,7 +389,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -403,14 +402,14 @@ public partial class VM : INamedResolver
     public Trampoline8(VM vm, SymbolSpec spec)
       : base(vm, spec, 8)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 8;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8)
     {
       _Prepare();
 
@@ -427,7 +426,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -440,14 +439,14 @@ public partial class VM : INamedResolver
     public Trampoline9(VM vm, SymbolSpec spec)
       : base(vm, spec, 9)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 9;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9)
     {
       _Prepare();
 
@@ -465,7 +464,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }
@@ -478,14 +477,14 @@ public partial class VM : INamedResolver
     public Trampoline10(VM vm, SymbolSpec spec)
       : base(vm, spec, 10)
     {
-      args_info = new Val(vm); 
+      args_info = new Val(null); 
       args_info.num = 10;
 
       //let's own it forever
       args_info.Retain();
     }
 
-    public Result Execute(Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9, Val arg10)
+    public Result Execute(VM vm, Val arg1, Val arg2, Val arg3, Val arg4, Val arg5, Val arg6, Val arg7, Val arg8, Val arg9, Val arg10)
     {
       _Prepare();
 
@@ -504,7 +503,7 @@ public partial class VM : INamedResolver
       args_info.Retain();
       frm._stack.Push(args_info);
 
-      _Execute();
+      _Execute(vm);
 
       return new Result(fb);
     }

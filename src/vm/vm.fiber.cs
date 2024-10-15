@@ -362,13 +362,13 @@ public partial class VM : INamedResolver
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      StartNative(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
+      PassArgs(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
     }
     else
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
-      StartScript(fb, frame, frame._stack, cargs_bits, args);
+      PassArgs(fb, frame, frame._stack, cargs_bits, args);
     }
 
     return fb;
@@ -399,17 +399,17 @@ public partial class VM : INamedResolver
       //NOTE: we use curr_stack not new fake frame's stack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      StartNative(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
+      PassArgs(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
     }
     else
     {
-      StartScript(fb, frame, frame._stack, (uint)args.Count, args);
+      PassArgs(fb, frame, frame._stack, (uint)args.Count, args);
     }
 
     return fb;
   }
 
-  internal void StartNative(
+  internal void PassArgs(
     FuncSymbolNative fsn,
     Fiber fb, 
     Frame frame, 
@@ -435,7 +435,7 @@ public partial class VM : INamedResolver
       --fb.exec.ip;
   }
 
-  internal void StartScript(
+  internal void PassArgs(
     Fiber fb, 
     Frame frame, 
     ValStack curr_stack,
@@ -459,6 +459,12 @@ public partial class VM : INamedResolver
   public void Detach(Fiber fb)
   {
     fibers.Remove(fb);
+  }
+
+  public void Attach(Fiber fb)
+  {
+    if(fibers.IndexOf(fb) == -1)
+      fibers.Add(fb);
   }
 
   void Register(Fiber fb, Fiber parent = null)
