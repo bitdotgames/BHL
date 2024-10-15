@@ -16,6 +16,8 @@ public class ScriptFuncPtr
   VM.Frame fb_frm0;
   VM.Frame frm;
 
+  internal int _refs;
+
   public FixedStack<Val> Result => fb.result;
 
   public bool IsStopped => fb.IsStopped();
@@ -41,6 +43,25 @@ public class ScriptFuncPtr
     frm = new VM.Frame(null);
     //just for consistency with refcounting
     frm.Retain();
+  }
+
+  public void Retain()
+  {
+    if(_refs == -1)
+      throw new Exception("Invalid state");
+
+    ++_refs;
+  }
+
+  public void Release()
+  {
+    if(_refs == -1)
+      throw new Exception("Invalid state");
+
+    if(_refs > 0)
+      --_refs;
+
+    TryClear();
   }
 
   internal void Init(VM vm, Val args_info, StackList<Val> args)
@@ -72,6 +93,10 @@ public class ScriptFuncPtr
     frm._stack.Push(args_info);
 
     fb.Attach(frm);
+
+    //NOTE: no extra references default mode,
+    //      will be auto cleared upon last tick
+    _refs = 0;
   }
 
   public bool Tick()
@@ -79,16 +104,32 @@ public class ScriptFuncPtr
     bool is_running = vm.Tick(fb);
 
     if(!is_running)
-    {
-      //let's clear stuff
-      frm.Clear();
-      fb_frm0.Clear();
-
-      //let's return itself into cache
-      pool.cache.Push(this);
-    }
+      TryClear();
 
     return is_running;
+  }
+
+  public void Stop()
+  {
+    vm.Stop(fb);
+
+    TryClear();
+  }
+
+  //NOTE: auto clearing happens only if there are no extra references 
+  void TryClear()
+  {
+    if(_refs != 0)
+      return;
+
+    //let's clear stuff
+    frm.Clear();
+    fb_frm0.Clear();
+
+    //let's return itself into cache
+    pool.cache.Push(this);
+
+    _refs = -1;
   }
 }
 
