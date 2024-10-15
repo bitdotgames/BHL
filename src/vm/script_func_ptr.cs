@@ -8,23 +8,34 @@ public class ScriptFuncPtr
   ScriptFuncSource pool;
 
   VM vm;
+  public VM VM => vm;
+
+  FuncSymbolScript func_symbol;
+  public FuncSymbolScript Symbol => func_symbol;
+  public Module Module => func_symbol._module;
 
   VM.FuncAddr addr;
+  public VM.FuncAddr Addr => addr;
 
-  //NOTE: we manually create and own these 
+  //NOTE: we manually create and own these
   VM.Fiber fb;
   VM.Frame fb_frm0;
   VM.Frame frm;
 
-  internal int _refs;
-
+  public VM.Fiber Fiber => fb;
   public FixedStack<Val> Result => fb.result;
+  public BHS Status => fb.status;
 
   public bool IsStopped => fb.IsStopped();
 
-  public ScriptFuncPtr(ScriptFuncSource pool, VM.FuncAddr addr)
+  //for simple refcounting
+  int refs;
+
+  public ScriptFuncPtr(ScriptFuncSource pool, FuncSymbolScript fs, VM.FuncAddr addr)
   {
     this.pool = pool;
+
+    this.func_symbol = fs;
 
     this.addr = addr;
 
@@ -45,21 +56,26 @@ public class ScriptFuncPtr
     frm.Retain();
   }
 
+  public void GetStackTrace(List<VM.TraceItem> info)
+  {
+    fb.GetStackTrace(info);
+  }
+
   public void Retain()
   {
-    if(_refs == -1)
+    if(refs == -1)
       throw new Exception("Invalid state");
 
-    ++_refs;
+    ++refs;
   }
 
   public void Release()
   {
-    if(_refs == -1)
+    if(refs == -1)
       throw new Exception("Invalid state");
 
-    if(_refs > 0)
-      --_refs;
+    if(refs > 0)
+      --refs;
 
     TryClear();
   }
@@ -96,7 +112,7 @@ public class ScriptFuncPtr
 
     //NOTE: no extra references default mode,
     //      will be auto cleared upon last tick
-    _refs = 0;
+    refs = 0;
   }
 
   public bool Tick()
@@ -109,6 +125,12 @@ public class ScriptFuncPtr
     return is_running;
   }
 
+  public void Call()
+  {
+    if(Tick())
+      throw new Exception($"Not expected to be running: {func_symbol}");
+  }
+
   public void Stop()
   {
     vm.Stop(fb);
@@ -116,10 +138,10 @@ public class ScriptFuncPtr
     TryClear();
   }
 
-  //NOTE: auto clearing happens only if there are no extra references 
+  //NOTE: auto clearing happens only if there are no extra references
   void TryClear()
   {
-    if(_refs != 0)
+    if(refs != 0)
       return;
 
     //let's clear stuff
@@ -129,12 +151,14 @@ public class ScriptFuncPtr
     //let's return itself into cache
     pool.cache.Push(this);
 
-    _refs = -1;
+    refs = -1;
   }
 }
 
 public class ScriptFuncSource
 {
+  FuncSymbolScript func_symbol;
+
   VM.FuncAddr addr;
 
   Val args_info;
@@ -157,15 +181,15 @@ public class ScriptFuncSource
   public ScriptFuncSource(VM.ModuleSymbol ms, int args_num)
   {
     //NOTE: only script functions are supported
-    var fs = (FuncSymbolScript)ms.symbol;
+    func_symbol = (FuncSymbolScript)ms.symbol;
 
-    if(fs.signature.arg_types.Count != args_num)
-      throw new Exception($"Arguments amount doesn't match func signature {fs}, got: {args_num}, expected: {fs.signature.arg_types.Count}");
+    if(func_symbol.signature.arg_types.Count != args_num)
+      throw new Exception($"Arguments amount doesn't match func signature {func_symbol}, got: {args_num}, expected: {func_symbol.signature.arg_types.Count}");
 
     addr = new VM.FuncAddr() {
       module = ms.module,
-      fs = fs,
-      ip = fs.ip_addr
+      fs = func_symbol,
+      ip = func_symbol.ip_addr
     };
 
     args_info = new Val(null);
@@ -176,19 +200,19 @@ public class ScriptFuncSource
 
   public ScriptFuncPtr Request(VM vm, StackList<Val> args)
   {
-    ScriptFuncPtr cached = null;
+    ScriptFuncPtr ptr = null;
 
     if(cache.Count == 0)
     {
-      cached = new ScriptFuncPtr(this, addr);
+      ptr = new ScriptFuncPtr(this, func_symbol, addr);
       ++miss;
     }
     else
-      cached = cache.Pop();
+      ptr = cache.Pop();
 
-    cached.Init(vm, args_info, args);
+    ptr.Init(vm, args_info, args);
 
-    return cached;
+    return ptr;
   }
 }
 
