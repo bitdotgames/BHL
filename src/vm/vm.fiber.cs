@@ -341,6 +341,12 @@ public partial class VM : INamedResolver
   {
     return Start(addr, FuncArgsInfo.GetBits(args.Count), args);
   }
+  
+  public Fiber Start(FuncSymbolScript fs, StackList<Val> args)
+  {
+    var addr = new FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
+    return Start(addr, FuncArgsInfo.GetBits(args.Count), args);
+  }
 
   public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
   {
