@@ -229,8 +229,8 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   static IDictionary<Val,Val> AsDictionary(Val map)
   {
     var dict = map._obj as IDictionary<Val,Val>;
-    if(dict == null)
-      throw new Exception("Not a IDictionary<Val,Val>: " + (map._obj != null ? map._obj.GetType().Name : ""+map));
+    if(map._obj != null && dict == null)
+      throw new Exception("Not a IDictionary<Val,Val>: " + map._obj.GetType().Name);
     return dict;
   }
   

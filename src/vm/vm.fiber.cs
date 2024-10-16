@@ -360,13 +360,13 @@ public partial class VM : INamedResolver
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      PassArgs(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
+      PassArgsAndAttach(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
     }
     else
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
-      PassArgs(fb, frame, frame._stack, cargs_bits, args);
+      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, cargs_bits), args);
     }
 
     return fb;
@@ -392,22 +392,25 @@ public partial class VM : INamedResolver
 
     if(ptr.native != null)
     {
+      //TODO: shouldn't be this done in ptr.MakeFrame(..)?
       frame.Init(fb, curr_frame, curr_stack, null, null, null, null, VM.EXIT_FRAME_IP);
 
       //NOTE: we use curr_stack not new fake frame's stack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      PassArgs(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
+      PassArgsAndAttach(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
     }
     else
     {
-      PassArgs(fb, frame, frame._stack, (uint)args.Count, args);
+      //NOTE: frame is already initialized in ptr.MakeFrame(..)
+
+      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, (uint)args.Count), args);
     }
 
     return fb;
   }
 
-  internal void PassArgs(
+  internal static void PassArgsAndAttach(
     FuncSymbolNative fsn,
     Fiber fb, 
     Frame frame, 
@@ -433,11 +436,11 @@ public partial class VM : INamedResolver
       --fb.exec.ip;
   }
 
-  internal void PassArgs(
+  internal static void PassArgsAndAttach(
     Fiber fb, 
     Frame frame, 
     ValStack curr_stack,
-    uint cargs_bits,
+    Val args_info,
     StackList <Val> args
   )
   {
@@ -448,7 +451,7 @@ public partial class VM : INamedResolver
     }
 
     //passing args info as stack variable
-    curr_stack.Push(Val.NewInt(this, cargs_bits));
+    curr_stack.Push(args_info);
 
     fb.Attach(frame);
   }

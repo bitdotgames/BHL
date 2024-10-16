@@ -185,8 +185,8 @@ public class GenericArrayTypeSymbol :
   static IList<Val> AsList(Val arr)
   {
     var lst = arr._obj as IList<Val>;
-    if(lst == null)
-      throw new Exception("Not a IList<Val>: " + (arr._obj != null ? arr.obj.GetType().Name : ""+arr));
+    if(arr._obj != null && lst == null)
+      throw new Exception("Not an IList<Val>: " + arr.obj.GetType().Name);
     return lst;
   }
 
@@ -319,8 +319,8 @@ public abstract class GenericNativeArrayTypeSymbol :
   static IList AsIList(Val arr)
   {
     var lst = arr._obj as IList;
-    if(lst == null)
-      throw new Exception("Not a IList: " + (arr._obj != null ? arr._obj.GetType().Name : ""+arr));
+    if(arr._obj != null && lst == null)
+      throw new Exception("Not an IList: " + arr._obj.GetType().Name);
     return lst;
   }
 

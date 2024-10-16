@@ -89,9 +89,8 @@ public class ScriptFuncActionBase
 
     fb.Attach(frm);
 
-    bool is_running = vm.Tick(fb);
-    if(is_running)
-      throw new Exception("Not expected state");
+    if(vm.Tick(fb))
+      throw new Exception("Not expected state to be running");
 
     //let's clear stuff
     frm.Clear();

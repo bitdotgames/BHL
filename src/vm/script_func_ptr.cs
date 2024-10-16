@@ -31,7 +31,7 @@ public class ScriptFuncPtr
   //for simple refcounting
   int refs;
 
-  public ScriptFuncPtr(ScriptFuncSource pool, FuncSymbolScript fs, VM.FuncAddr addr)
+  public ScriptFuncPtr(FuncSymbolScript fs, VM.FuncAddr addr, ScriptFuncSource pool = null)
   {
     this.pool = pool;
 
@@ -80,7 +80,7 @@ public class ScriptFuncPtr
     TryClear();
   }
 
-  internal void Init(VM vm, Val args_info, StackList<Val> args)
+  public void Reset(VM vm, Val args_info, StackList<Val> args)
   {
     this.vm = vm;
 
@@ -125,7 +125,7 @@ public class ScriptFuncPtr
     return is_running;
   }
 
-  public void Call()
+  public void Execute()
   {
     if(Tick())
       throw new Exception($"Not expected to be running: {func_symbol}");
@@ -149,7 +149,7 @@ public class ScriptFuncPtr
     fb_frm0.Clear();
 
     //let's return itself into cache
-    pool.cache.Push(this);
+    pool?.cache.Push(this);
 
     refs = -1;
   }
@@ -204,13 +204,13 @@ public class ScriptFuncSource
 
     if(cache.Count == 0)
     {
-      ptr = new ScriptFuncPtr(this, func_symbol, addr);
+      ptr = new ScriptFuncPtr(func_symbol, addr, this);
       ++miss;
     }
     else
       ptr = cache.Pop();
 
-    ptr.Init(vm, args_info, args);
+    ptr.Reset(vm, args_info, args);
 
     return ptr;
   }
