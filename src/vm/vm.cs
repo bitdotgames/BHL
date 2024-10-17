@@ -117,12 +117,6 @@ public partial class VM : INamedResolver
       return ms;
     }
 
-    public FuncSymbolScript LoadFuncSymbolScript(VM vm)
-    {
-      var ms = LoadModuleSymbol(vm);
-      return (FuncSymbolScript)ms.symbol;
-    }
-
     public bool Equals(SymbolSpec other)
     {
       return module == other.module && path == other.path;
@@ -159,8 +153,6 @@ public partial class VM : INamedResolver
     //      still we need to retain it so that it's never
     //      accidentally released when pushed/popped
     null_val.Retain();
-
-    script_executor = new ScriptExecutor(this);
   }
 
   public bool TryFindFuncAddr(string path, out FuncAddr addr)

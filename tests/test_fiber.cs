@@ -1160,7 +1160,8 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var fs = new VM.SymbolSpec(TestModuleName, "test").LoadFuncSymbolScript(vm);
+    var fs = 
+      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
       var result = vm.Execute(fs);
@@ -1187,7 +1188,8 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var fs = new VM.SymbolSpec(TestModuleName, "test").LoadFuncSymbolScript(vm);
+    var fs = 
+      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
       var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 10), Val.NewInt(vm, 20)));
