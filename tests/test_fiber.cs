@@ -1149,7 +1149,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestFuncAction()
+  public void TestExecute()
   {
     string bhl = @"
     func int test() 
@@ -1160,74 +1160,23 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new ScriptFuncAction(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
+    var fs = new VM.SymbolSpec(TestModuleName, "test").LoadFuncSymbolScript(vm);
+
     {
-      var result = tr.Execute(vm);
+      var result = vm.Execute(fs);
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute(vm);
+      var result = vm.Execute(fs);
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
   }
 
   [Fact]
-  public void TestFuncActionWithArgs()
-  {
-    string bhl = @"
-    func int test(int k) 
-    {
-      return k * 10
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var tr = new ScriptFuncAction(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
-    {
-      var result = tr.Execute(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-      AssertEqual(result.PopRelease().num, 100);
-      CommonChecks(vm);
-    }
-
-    {
-      var result = tr.Execute(vm, new StackList<Val>() { Val.NewInt(vm, 2) } );
-      AssertEqual(result.PopRelease().num, 20);
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestFuncAction1()
-  {
-    string bhl = @"
-    func int test(int k) 
-    {
-      return k * 10
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var tr = new ScriptFuncAction1(vm, new VM.SymbolSpec(TestModuleName, "test")); 
-    {
-      var result = tr.Execute(vm, Val.NewInt(vm, 10));
-      AssertEqual(result.PopRelease().num, 100);
-      CommonChecks(vm);
-    }
-
-    {
-      var result = tr.Execute(vm, Val.NewInt(vm, 2));
-      AssertEqual(result.PopRelease().num, 20);
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestFuncAction2()
+  public void TestExecuteWithArgs()
   {
     string bhl = @"
     func int test(int k, int d) 
@@ -1238,246 +1187,17 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var tr = new ScriptFuncAction2(vm, new VM.SymbolSpec(TestModuleName, "test")); 
+    var fs = new VM.SymbolSpec(TestModuleName, "test").LoadFuncSymbolScript(vm);
+
     {
-      var result = tr.Execute(vm, Val.NewInt(vm, 10), Val.NewInt(vm, 20));
+      var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 10), Val.NewInt(vm, 20)));
       AssertEqual(result.PopRelease().num, 10);
       CommonChecks(vm);
     }
 
     {
-      var result = tr.Execute(vm, Val.NewInt(vm, 2), Val.NewInt(vm, 1));
+      var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 2), Val.NewInt(vm, 1)));
       AssertEqual(result.PopRelease().num, -1);
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestScriptFuncSource()
-  {
-    string bhl = @"
-    func int test(int k) 
-    {
-      return k * 10
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
-    AssertEqual(fs.IdleCount, 0);
-    AssertEqual(fs.BusyCount, 0);
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-      AssertEqual(fn.Result.PopRelease().num, 100);
-
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
-      CommonChecks(vm);
-    }
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 2) } );
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-      AssertEqual(fn.Result.PopRelease().num, 20);
-      
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestScriptFuncSourceRefCounting()
-  {
-    string bhl = @"
-    func int test(int k) 
-    {
-      return k * 10
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 1); 
-    AssertEqual(fs.IdleCount, 0);
-    AssertEqual(fs.BusyCount, 0);
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-      fn.Retain();
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-      AssertEqual(fn.Result.PopRelease().num, 100);
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-      
-      fn.Release();
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestCoroScriptFuncSource()
-  {
-    string bhl = @"
-    coro func int test() 
-    {
-      yield()
-      yield()
-      return 42
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
-    AssertEqual(fs.IdleCount, 0);
-    AssertEqual(fs.BusyCount, 0);
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-      fn.Retain();
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertTrue(fn.Tick());
-      AssertFalse(fn.IsStopped);
-
-      AssertTrue(fn.Tick());
-      AssertFalse(fn.IsStopped);
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-
-      AssertEqual(fn.Result.PopRelease().num, 42);
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      fn.Release();
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestCoroScriptFuncSourceStop()
-  {
-    string bhl = @"
-    coro func int test() 
-    {
-      yield()
-      yield()
-      return 42
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
-    AssertEqual(fs.IdleCount, 0);
-    AssertEqual(fs.BusyCount, 0);
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertTrue(fn.Tick());
-      AssertFalse(fn.IsStopped);
-
-      fn.Stop();
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-
-      AssertEqual(fn.Result.Count, 0);
-
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
-      CommonChecks(vm);
-    }
-  }
-
-  [Fact]
-  public void TestCoroScriptFuncSourceReleaseAndStop()
-  {
-    string bhl = @"
-    coro func int test() 
-    {
-      yield()
-      yield()
-      return 42
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    var fs = new ScriptFuncSource(vm, new VM.SymbolSpec(TestModuleName, "test"), 0); 
-    AssertEqual(fs.IdleCount, 0);
-    AssertEqual(fs.BusyCount, 0);
-
-    {
-      var fn = fs.Request(vm, new StackList<Val>() { Val.NewInt(vm, 10) } );
-      fn.Retain();
-
-      AssertEqual(fs.IdleCount, 0);
-      AssertEqual(fs.BusyCount, 1);
-
-      AssertFalse(fn.IsStopped);
-
-      AssertTrue(fn.Tick());
-      AssertFalse(fn.IsStopped);
-
-      fn.Release();
-      fn.Stop();
-
-      AssertFalse(fn.Tick());
-      AssertTrue(fn.IsStopped);
-
-      AssertEqual(fn.Result.Count, 0);
-
-      AssertEqual(fs.IdleCount, 1);
-      AssertEqual(fs.BusyCount, 0);
-
       CommonChecks(vm);
     }
   }

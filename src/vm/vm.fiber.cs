@@ -577,7 +577,6 @@ public partial class VM : INamedResolver
   public class ScriptExecutor
   {
     VM vm;
-
     //NOTE: we manually create and own these
     VM.Fiber fb;
     VM.Frame fb_frm0;
@@ -668,7 +667,7 @@ public partial class VM : INamedResolver
       executor = new ScriptExecutor(this);
     else
       executor = script_executors.Pop();
-    var res= executor.Execute(fs, 0, args);
+    var res = executor.Execute(fs, 0, args);
     script_executors.Push(executor);
     return res;
   }
