@@ -33,6 +33,28 @@ public partial class VM : INamedResolver
     }
   }
 
+  public struct FiberResult
+  {
+    Fiber fb;
+
+    public int Count => fb.result.Count;
+
+    public FiberResult(Fiber fb)
+    {
+      this.fb = fb;
+    }
+
+    public Val Pop()
+    {
+      return fb.result.Pop();
+    }
+
+    public Val PopRelease()
+    {
+      return fb.result.PopRelease();
+    }
+  }
+
   public class Fiber : ITask
   {
     public VM vm;
@@ -542,6 +564,97 @@ public partial class VM : INamedResolver
     return null;
   }
 
+  public class ScriptExecutor
+  {
+    VM vm;
+  
+    //NOTE: we manually create and own these
+    VM.Fiber fb;
+    VM.Frame fb_frm0;
+    VM.Frame frm;
+
+    Val args_info;
+  
+    public ScriptExecutor(VM vm)
+    {
+      this.vm = vm;
+  
+      //NOTE: manually creating 0 Frame
+      fb_frm0 = new VM.Frame(vm);
+      //just for consistency with refcounting
+      fb_frm0.Retain();
+  
+      //NOTE: manually creating Fiber
+      fb = new VM.Fiber(vm);
+      //just for consistency with refcounting
+      fb.Retain();
+  
+      //NOTE: manually creating Frame
+      frm = new VM.Frame(vm);
+      //just for consistency with refcounting
+      frm.Retain();
+
+      args_info = new Val(vm); 
+      args_info.num = 0;
+      //let's own it forever
+      args_info.Retain();
+    }
+  
+    public FiberResult Execute(FuncSymbolScript fs, uint args_bits, StackList<Val> args)
+    {
+      var addr = new FuncAddr() { 
+        module = fs._module, 
+        fs = fs, 
+        ip = fs.ip_addr 
+      };
+
+      fb.func_addr = addr;
+  
+      fb.Retain();
+  
+      fb_frm0.Retain();
+      //0 index frame used for return values consistency
+      fb.exec.frames.Push(fb_frm0);
+  
+      frm.Retain();
+  
+      frm.Init(fb, fb_frm0, fb_frm0._stack, addr.module, addr.ip);
+  
+      for(int i = args.Count; i-- > 0;)
+      {
+        var arg = args[i];
+        frm._stack.Push(arg);
+      }
+  
+      //passing args info as stack variable
+      args_info.Retain();
+      args_info._num = args_bits;
+      frm._stack.Push(args_info);
+  
+      fb.Attach(frm);
+
+      if(vm.Tick(fb))
+        throw new Exception($"Not expected to be running: {fs}");
+      
+      //let's clear stuff
+      frm.Clear();
+      fb_frm0.Clear();
+
+      return new FiberResult(fb);
+    }
+  }
+
+  ScriptExecutor script_executor;
+
+  public FiberResult Execute(FuncSymbolScript fs)
+  {
+    return script_executor.Execute(fs, 0, new StackList<Val>());
+  }
+
+  public FiberResult Execute(FuncSymbolScript fs, StackList<Val> args)
+  {
+    return script_executor.Execute(fs, FuncArgsInfo.GetBits(args.Count), args);
+  }
 }
 
 }
