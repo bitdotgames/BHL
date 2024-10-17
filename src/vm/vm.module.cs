@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 namespace bhl {
-    
+
 public partial class VM : INamedResolver
 {
   //NOTE: key is a Module's name
@@ -14,16 +14,17 @@ public partial class VM : INamedResolver
     internal Module loaded;
   }
   List<LoadingModule> loading_modules = new List<LoadingModule>();
-  
+
   public struct ModuleSymbol
   {
     public Module module;
     public Symbol symbol;
   }
-  
+
   IModuleLoader loader;
-  
+
   Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module = new Dictionary<SymbolSpec, ModuleSymbol>();
+  Dictionary<object, ModuleSymbol> cache_tag2module = new Dictionary<object, ModuleSymbol>();
 
   public enum LoadModuleSymbolError
   {
@@ -31,7 +32,7 @@ public partial class VM : INamedResolver
     ModuleNotFound,
     SymbolNotFound
   }
-  
+
   public bool LoadModule(string module_name)
   {
     //Console.WriteLine("==START LOAD " + module_name);
@@ -146,10 +147,18 @@ public partial class VM : INamedResolver
       UnloadModule(key);
   }
 
-  public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms)
+  public LoadModuleSymbolError TryLoadModuleSymbol(object cache_tag, SymbolSpec spec, out ModuleSymbol ms)
   {
-    if(symbol_spec2module.TryGetValue(spec, out ms))
+    if(cache_tag != null && cache_tag2module.TryGetValue(cache_tag, out ms))
       return LoadModuleSymbolError.Ok;
+
+    if(symbol_spec2module.TryGetValue(spec, out ms))
+    {
+      if(cache_tag != null)
+        cache_tag2module[cache_tag] = ms;
+
+      return LoadModuleSymbolError.Ok;
+    }
 
     if(!LoadModule(spec.module))
       return LoadModuleSymbolError.ModuleNotFound;
@@ -165,9 +174,17 @@ public partial class VM : INamedResolver
     ms.module = cm;
     ms.symbol = symb;
 
-    symbol_spec2module.Add(spec, ms);
+    symbol_spec2module[spec] = ms;
+
+    if(cache_tag != null)
+      cache_tag2module[cache_tag] = ms;
 
     return LoadModuleSymbolError.Ok;
+  }
+
+  public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms)
+  {
+    return TryLoadModuleSymbol(null, spec, out ms);
   }
 }
 

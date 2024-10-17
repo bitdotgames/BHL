@@ -6,7 +6,7 @@ namespace bhl {
 public partial class VM : INamedResolver
 {
   Types types;
-  
+
   public struct TraceItem
   {
     public string file;
@@ -44,7 +44,7 @@ public partial class VM : INamedResolver
           case TraceFormat.Verbose:
           default:
             s += "at " + t.func + "(..) +" + t.ip + " in " + t.file + ":" + t.line + "\n";
-            break; 
+            break;
         }
       }
 
@@ -55,7 +55,7 @@ public partial class VM : INamedResolver
   public struct FuncAddr
   {
     public Module module;
-    
+
     public FuncSymbolScript fs;
     public int ip;
 
@@ -76,8 +76,8 @@ public partial class VM : INamedResolver
           _symbol = FindSymbol();
         return _symbol;
       }
-    } 
-    
+    }
+
     public FuncSymbol FindSymbol()
     {
       if(fs != null)
@@ -162,16 +162,16 @@ public partial class VM : INamedResolver
     var fs = ResolveNamedByPath(path) as FuncSymbol;
     if(fs == null)
       return false;
-    
+
     var fss = fs as FuncSymbolScript;
     registered_modules.TryGetValue(((Namespace)fs.scope).module.name, out var module);
-    
+
     addr = new FuncAddr() {
       module = module,
-      
+
       fs = fss,
       ip = fss?.ip_addr ?? -1,
-      
+
       fsn = fss != null ? null : fs as FuncSymbolNative,
     };
 
@@ -285,9 +285,9 @@ public partial class VM : INamedResolver
       {
         fb.GetStackTrace(trace);
       }
-      catch(Exception) 
+      catch(Exception)
       {}
-      throw new Error(trace, e); 
+      throw new Error(trace, e);
     }
     return !fb.IsStopped();
   }
