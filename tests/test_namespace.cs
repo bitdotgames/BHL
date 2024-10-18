@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using bhl;
@@ -1455,7 +1453,7 @@ public class TestNamespace : BHL_TestBase
 
     func int test() {
       foo.bar.E e = foo.bar.E.W
-      return (int)e + foo.bar.ToInt(foo.bar.E.V)
+      return (int)e + foo.ToInt(foo.bar.E.V)
     }
     ";
 
@@ -2218,6 +2216,31 @@ public class TestNamespace : BHL_TestBase
     AssertEqual(120, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  [Fact]
+  public void TestImproperResolvingBug()
+  {
+    string bhl = @"
+    func Test() {
+    }
+
+    namespace Pilots.Traits.InRadiusAndFollow {
+      func test() {
+         Pilots.Test()
+      }
+    }
+    ";
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "symbol 'Test' not resolved",
+      new PlaceAssert(bhl, @"
+         Pilots.Test()
+----------------^"
+      )
+    );
+   }
 
   static List<Symbol> GetLocalSymbols(Namespace ns)
   {

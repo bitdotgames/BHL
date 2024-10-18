@@ -1191,7 +1191,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           ref curr_type, 
           cargs.Start.Line, 
           write: false, 
-          is_root: c == chain_offset
+          is_root: chain_offset == 0
         );
         curr_name = null;
       }
