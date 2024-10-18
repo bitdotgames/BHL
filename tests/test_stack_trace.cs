@@ -1287,7 +1287,7 @@ public class TestStackTrace : BHL_TestBase
       delegate() {
         vm.Stop();
       },
-      "at wow(..) +24 in .bhl:6"
+      "at wow(..) in .bhl:6"
     );
   }
 
@@ -1331,7 +1331,7 @@ public class TestStackTrace : BHL_TestBase
       delegate() {
         vm.Stop();
       },
-      "at wow(..) +13 in .bhl:5"
+      "at wow(..) in .bhl:5"
     );
   }
 
@@ -1375,7 +1375,7 @@ public class TestStackTrace : BHL_TestBase
       delegate() {
         vm.Stop();
       },
-      "at wow(..) +13 in .bhl:5"
+      "at wow(..) in .bhl:5"
     );
   }
 

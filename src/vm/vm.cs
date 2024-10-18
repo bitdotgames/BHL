@@ -31,7 +31,7 @@ public partial class VM : INamedResolver
       Compact = 2
     }
 
-    static public string ToString(List<TraceItem> trace, TraceFormat format = TraceFormat.Verbose)
+    static public string ToString(List<TraceItem> trace, TraceFormat format = TraceFormat.Compact)
     {
       string s = "\n";
       foreach(var t in trace)

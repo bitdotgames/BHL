@@ -274,11 +274,11 @@ public partial class VM : INamedResolver
       }
     }
 
-    public string GetStackTrace()
+    public string GetStackTrace(Error.TraceFormat format = Error.TraceFormat.Compact)
     {
       var trace = new List<TraceItem>();
       GetStackTrace(trace);
-      return Error.ToString(trace);
+      return Error.ToString(trace, format);
     }
 
     static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
