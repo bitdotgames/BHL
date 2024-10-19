@@ -330,39 +330,6 @@ public partial class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
-  public Fiber Start(string func)
-  {
-    return Start(func, 0u, new StackList<Val>());
-  }
-
-  public Fiber Start(string func, Val arg1)
-  {
-    return Start(func, 1u, new StackList<Val>(arg1));
-  }
-
-  public Fiber Start(string func, Val arg1, Val arg2)
-  {
-    return Start(func, 2u, new StackList<Val>(arg1, arg2));
-  }
-
-  public Fiber Start(string func, Val arg1, Val arg2, Val arg3)
-  {
-    return Start(func, 3u, new StackList<Val>(arg1, arg2, arg3));
-  }
-
-  public Fiber Start(string func, StackList<Val> args)
-  {
-    return Start(func, args.Count, args);
-  }
-
-  public Fiber Start(string func, FuncArgsInfo args_info, StackList<Val> args)
-  {
-    if(!TryFindFuncAddr(func, out var addr))
-      return null;
-
-    return Start(addr, args_info, args);
-  }
-
   public Fiber Start(FuncAddr addr)
   {
     return Start(addr, new StackList<Val>());
