@@ -330,57 +330,41 @@ public partial class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
-
   public Fiber Start(string func, params Val[] args)
   {
-    return Start(func, FuncArgsInfo.GetBits(args?.Length ?? 0), args);
-  }
-
-  public Fiber Start(string func, FuncArgsInfo args_info, params Val[] args)
-  {
-    return Start(func, args_info.bits, args);
-  }
-
-  public Fiber Start(string func, uint cargs_bits, params Val[] args)
-  {
-    return Start(func, cargs_bits, new StackList<Val>(args));
+    return Start(func, args?.Length ?? 0, new StackList<Val>(args));
   }
 
   public Fiber Start(string func, StackList<Val> args)
   {
-    return Start(func, FuncArgsInfo.GetBits(args.Count), args);
+    return Start(func, args.Count, args);
   }
 
   public Fiber Start(string func, FuncArgsInfo args_info, StackList<Val> args)
   {
-    return Start(func, args_info.bits, args);
-  }
-
-  public Fiber Start(string func, uint cargs_bits, StackList<Val> args)
-  {
     if(!TryFindFuncAddr(func, out var addr))
       return null;
 
-    return Start(addr, cargs_bits, args);
+    return Start(addr, args_info, args);
   }
 
-  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
+  public Fiber Start(FuncAddr addr)
   {
-    return Start(addr, cargs_bits, new StackList<Val>(args));
+    return Start(addr, new StackList<Val>());
   }
 
   public Fiber Start(FuncAddr addr, StackList<Val> args)
   {
-    return Start(addr, FuncArgsInfo.GetBits(args.Count), args);
+    return Start(addr, args.Count, args);
   }
 
   public Fiber Start(FuncSymbolScript fs, StackList<Val> args)
   {
     var addr = new FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
-    return Start(addr, FuncArgsInfo.GetBits(args.Count), args);
+    return Start(addr, args.Count, args);
   }
 
-  public Fiber Start(FuncAddr addr, uint cargs_bits, StackList<Val> args)
+  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
@@ -398,13 +382,13 @@ public partial class VM : INamedResolver
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      PassArgsAndAttach(addr.fsn, fb, frame, frame0._stack, new FuncArgsInfo(cargs_bits), args);
+      PassArgsAndAttach(addr.fsn, fb, frame, frame0._stack, args_info, args);
     }
     else
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
-      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, cargs_bits), args);
+      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
     }
 
     return fb;
@@ -415,11 +399,6 @@ public partial class VM : INamedResolver
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>());
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, params Val[] args)
-  {
-    return Start(ptr, curr_frame, curr_stack, new StackList<Val>(args));
-  }
-
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
   {
     var fb = Fiber.New(this);
@@ -427,6 +406,8 @@ public partial class VM : INamedResolver
     Register(fb, curr_frame.fb);
 
     var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
+
+    var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
     {
@@ -436,13 +417,13 @@ public partial class VM : INamedResolver
       //NOTE: we use curr_stack not new fake frame's stack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      PassArgsAndAttach(ptr.native, fb, frame, curr_stack, new FuncArgsInfo(args.Count), args);
+      PassArgsAndAttach(ptr.native, fb, frame, curr_stack, args_info, args);
     }
     else
     {
       //NOTE: frame is already initialized in ptr.MakeFrame(..)
 
-      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, (uint)args.Count), args);
+      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
     }
 
     return fb;
@@ -493,7 +474,6 @@ public partial class VM : INamedResolver
 
     fb.Attach(frame);
   }
-
 
   public void Detach(Fiber fb)
   {
@@ -582,7 +562,7 @@ public partial class VM : INamedResolver
     VM.Frame fb_frm0;
     VM.Frame frm;
 
-    Val args_info;
+    Val args_info_val;
 
     public ScriptExecutor(VM vm)
     {
@@ -603,13 +583,13 @@ public partial class VM : INamedResolver
       //just for consistency with refcounting
       frm.Retain();
 
-      args_info = new Val(vm);
-      args_info.num = 0;
+      args_info_val = new Val(vm);
+      args_info_val.num = 0;
       //let's own it forever
-      args_info.Retain();
+      args_info_val.Retain();
     }
 
-    public FiberResult Execute(FuncSymbolScript fs, uint args_bits, StackList<Val> args)
+    public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
       var addr = new FuncAddr() {
         module = fs._module,
@@ -636,9 +616,9 @@ public partial class VM : INamedResolver
       }
 
       //passing args info as stack variable
-      args_info.Retain();
-      args_info._num = args_bits;
-      frm._stack.Push(args_info);
+      args_info_val.Retain();
+      args_info_val._num = args_info.bits;
+      frm._stack.Push(args_info_val);
 
       fb.Attach(frm);
 
@@ -662,12 +642,17 @@ public partial class VM : INamedResolver
 
   public FiberResult Execute(FuncSymbolScript fs, StackList<Val> args)
   {
+    return Execute(fs, args.Count, args);
+  }
+
+  public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
+  {
     ScriptExecutor executor;
     if(script_executors.Count == 0)
       executor = new ScriptExecutor(this);
     else
       executor = script_executors.Pop();
-    var res = executor.Execute(fs, 0, args);
+    var res = executor.Execute(fs, args_info, args);
     script_executors.Push(executor);
     return res;
   }

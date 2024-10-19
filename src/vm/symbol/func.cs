@@ -40,6 +40,7 @@ public class FuncArgSymbol : VariableSymbol
   }
 }
 
+//TODO: add support for arbitrary amount of default arguments
 public struct FuncArgsInfo
 {
   //NOTE: 6 bits are used for a total number of args passed (max 63), 
@@ -51,11 +52,18 @@ public struct FuncArgsInfo
 
   public uint bits;
 
+  //NOTE: uints are for bits, ints are for arguments amounts
+  public static implicit operator FuncArgsInfo(uint bits) => new FuncArgsInfo(bits);
+
+  public static implicit operator FuncArgsInfo(int num_args) => new FuncArgsInfo(num_args);
+
+  //NOTE: setting all bits
   public FuncArgsInfo(uint bits)
   {
     this.bits = bits;
   }
   
+  //NOTE: setting only amount of arguments, bits will be calculated
   public FuncArgsInfo(int num_args)
   {
     bits = 0;

@@ -648,17 +648,12 @@ public class BHL_TestBase
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
-    return Execute(vm, fn_name, new FuncArgsInfo(args?.Length ?? 0), args);
+    return Execute(vm, fn_name, args?.Length ?? 0, args);
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params Val[] args)
   {
-    return Execute(vm, fn_name, args_info.bits, args);
-  }
-
-  public VM.Fiber Execute(VM vm, string fn_name, uint cargs_bits, params Val[] args)
-  {
-    var fb = vm.Start(fn_name, cargs_bits, args);
+    var fb = vm.Start(fn_name, args_info, new StackList<Val>(args));
     const int LIMIT = 20;
     int c = 0;
     for(;c<LIMIT;++c)
