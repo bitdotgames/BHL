@@ -330,9 +330,24 @@ public partial class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
-  public Fiber Start(string func, params Val[] args)
+  public Fiber Start(string func)
   {
-    return Start(func, args?.Length ?? 0, new StackList<Val>(args));
+    return Start(func, 0u, new StackList<Val>());
+  }
+
+  public Fiber Start(string func, Val arg1)
+  {
+    return Start(func, 1u, new StackList<Val>(arg1));
+  }
+
+  public Fiber Start(string func, Val arg1, Val arg2)
+  {
+    return Start(func, 2u, new StackList<Val>(arg1, arg2));
+  }
+
+  public Fiber Start(string func, Val arg1, Val arg2, Val arg3)
+  {
+    return Start(func, 3u, new StackList<Val>(arg1, arg2, arg3));
   }
 
   public Fiber Start(string func, StackList<Val> args)
@@ -637,7 +652,7 @@ public partial class VM : INamedResolver
 
   public FiberResult Execute(FuncSymbolScript fs)
   {
-    return Execute(fs, new StackList<Val>());
+    return Execute(fs, 0u, new StackList<Val>());
   }
 
   public FiberResult Execute(FuncSymbolScript fs, StackList<Val> args)
