@@ -330,6 +330,13 @@ public partial class VM : INamedResolver
   List<Fiber> fibers = new List<Fiber>();
   public Fiber last_fiber = null;
 
+  [Flags]
+  public enum FiberOptions
+  {
+    Detach = 1,
+    Retain = 2
+  }
+
   public Fiber Start(FuncAddr addr)
   {
     return Start(addr, new StackList<Val>());
@@ -340,17 +347,11 @@ public partial class VM : INamedResolver
     return Start(addr, args.Count, args);
   }
 
-  public Fiber Start(FuncSymbolScript fs, StackList<Val> args)
-  {
-    var addr = new FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
-    return Start(addr, args.Count, args);
-  }
-
-  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args)
+  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
-    Register(fb);
+    Register(fb, null, opts);
 
     var frame = Frame.New(this);
 
@@ -373,6 +374,8 @@ public partial class VM : INamedResolver
       PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
     }
 
+    if(opts.HasFlag(FiberOptions.Retain))
+      fb.Retain();
     return fb;
   }
 
@@ -385,7 +388,7 @@ public partial class VM : INamedResolver
   {
     var fb = Fiber.New(this);
     fb.func_addr = ptr.func_addr;
-    Register(fb, curr_frame.fb);
+    Register(fb, curr_frame.fb, 0);
 
     var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
 
@@ -468,10 +471,11 @@ public partial class VM : INamedResolver
       fibers.Add(fb);
   }
 
-  void Register(Fiber fb, Fiber parent = null)
+  void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
-    fibers.Add(fb);
+    if(!opts.HasFlag(FiberOptions.Detach))
+      fibers.Add(fb);
     parent?.AddChild(fb);
   }
 
