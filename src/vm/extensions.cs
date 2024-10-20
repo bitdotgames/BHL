@@ -35,6 +35,12 @@ public static class VMExtensions
 
     return vm.Start(addr, args_info, args);
   }
+
+  static public VM.Fiber Start(this VM vm, FuncSymbolScript fs, StackList<Val> args)
+  {
+    var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
+    return vm.Start(addr, args.Count, args);
+  }
 }
 
 }
