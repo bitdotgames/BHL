@@ -35,6 +35,8 @@ public class TestLSPFindReferences : TestLSPShared
   }
 
   func sink(func() ptr) {}
+
+  class Foo {} //class Foo
   ";
   
   string bhl2 = @"
@@ -44,6 +46,11 @@ public class TestLSPFindReferences : TestLSPShared
   {
     test1(24)
     return 0
+  }
+
+  func Foo test6() //test6 
+  {
+    return new Foo
   }
   ";
 
@@ -105,6 +112,17 @@ public class TestLSPFindReferences : TestLSPShared
         new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
         new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
         new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
+      )
+    );
+  }
+
+  [Fact(Skip = "TODO: not implemented yet")]
+  public async Task _4()
+  {
+    AssertEqual(
+      await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
+      FindReferencesRsp(
+        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 3)
       )
     );
   }
