@@ -1,8 +1,9 @@
+using System;
 using System.Threading.Tasks;
 using bhl.lsp;
 using Xunit;
 
-public class TestLSPFindReferences : TestLSPShared
+public class TestLSPFindRefs : TestLSPShared
 {
   string bhl1 = @"
   func float test1(float k) 
@@ -59,7 +60,7 @@ public class TestLSPFindReferences : TestLSPShared
   bhl.lsp.proto.Uri uri1;
   bhl.lsp.proto.Uri uri2;
 
-  public TestLSPFindReferences()
+  public TestLSPFindRefs()
   {
     var ws = new Workspace();
 
@@ -116,12 +117,15 @@ public class TestLSPFindReferences : TestLSPShared
     );
   }
 
-  [Fact(Skip = "TODO: not implemented yet")]
+  [Fact(Skip = "TODO")]
   public async Task _4()
   {
+    Console.WriteLine(await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")));
+
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
       FindReferencesRsp(
+        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 3),
         new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 3)
       )
     );

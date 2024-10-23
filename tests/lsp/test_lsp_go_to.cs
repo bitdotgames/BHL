@@ -214,7 +214,7 @@ public class TestLSPGoToDefinition : TestLSPShared
   public async Task _14()
   {
     var rsp = await srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
-    AssertContains(rsp, "test_lsp_go_to_definition.cs");
+    AssertContains(rsp, "test_lsp_go_to.cs");
     AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
   }
 

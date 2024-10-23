@@ -2125,6 +2125,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   ProxyType ParseType(bhlParser.TypeContext ctx)
   {
     var tp = new ProxyType();
+
     if(ctx.nsName() != null)
     {
       LSP_AddSemanticToken(ctx.nsName().dotName().NAME(), SemanticToken.Type);
@@ -2165,11 +2166,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       tp = curr_scope.R().TMap(ktp, tp);
     }
 
-    if(tp.Get() == null)
+    var resolved = tp.Get();
+    if(resolved == null)
     {
       AddError(ctx, "type '" + tp + "' not found");
       return tp;
     }
+
+    //NOTE: this is required for LSP, we might want to have 
+    //      a special LSP mode for that?
+    if(ctx.nsName() != null && resolved is Symbol symb)
+      LSP_SetSymbol(ctx.nsName().dotName(), symb);
 
    return tp;
   }
