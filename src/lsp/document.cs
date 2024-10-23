@@ -59,6 +59,7 @@ public class BHLDocument
 
     //Logger.current.Log(0, "NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " + node.Parent.GetType().Name + " " + node.Parent.GetText());
 
+    //TODO: why node.Parent?
     var annotated = proc.FindAnnotated(node.Parent);
     if(annotated == null)
       return null;

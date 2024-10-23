@@ -596,8 +596,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public AnnotatedParseTree FindAnnotated(IParseTree t)
   {
-    AnnotatedParseTree at;
-    annotated_nodes.TryGetValue(t, out at);
+    annotated_nodes.TryGetValue(t, out var at);
     return at;
   }
 
@@ -4212,6 +4211,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(ctx.NAME(), err.Message);
       return null;
     }
+    
+    LSP_SetSymbol(ctx, symb);
 
     for(int i=0;i<ctx.enumBlock()?.enumMember()?.Length;++i)
     {

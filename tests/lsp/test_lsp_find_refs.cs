@@ -38,6 +38,11 @@ public class TestLSPFindRefs : TestLSPShared
   func sink(func() ptr) {}
 
   class Foo {} //class Foo
+
+  enum Item //enum Item
+  {
+    Type = 1
+  }
   ";
   
   string bhl2 = @"
@@ -53,6 +58,11 @@ public class TestLSPFindRefs : TestLSPShared
   {
     return new Foo //new Foo
   }
+
+  func Item test7() //test7
+  {
+    return Item.Type //new Item.Type
+  } 
   ";
 
   Server srv;
@@ -79,7 +89,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
 
   [Fact]
-  public async Task _1()
+  public async Task ref_test1()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
@@ -92,7 +102,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
 
   [Fact]
-  public async Task _2()
+  public async Task ref_upval()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "pval + 1")),
@@ -105,7 +115,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
 
   [Fact]
-  public async Task _3()
+  public async Task ref_upval_arg()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
@@ -118,7 +128,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
 
   [Fact]
-  public async Task _4()
+  public async Task ref_Foo()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
@@ -126,6 +136,19 @@ public class TestLSPFindRefs : TestLSPShared
         new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
         new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
         new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
+      )
+    );
+  }
+  
+  [Fact]
+  public async Task ref_Item()
+  {
+    AssertEqual(
+      await srv.Handle(FindReferencesReq(uri1, "tem //enum Item")),
+      FindReferencesRsp(
+        new UriNeedle(uri1, "enum Item //enum Item", end_line_offset: 3),
+        new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
+        new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
       )
     );
   }
