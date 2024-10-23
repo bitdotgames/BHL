@@ -3897,6 +3897,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(pass.class_ctx.NAME(), err.Message);
       return;
     }
+    
+    LSP_SetSymbol(pass.class_ctx.NAME(), pass.class_symb);
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 

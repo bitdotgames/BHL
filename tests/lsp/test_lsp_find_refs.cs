@@ -51,7 +51,7 @@ public class TestLSPFindRefs : TestLSPShared
 
   func Foo test6() //test6 
   {
-    return new Foo
+    return new Foo //new Foo
   }
   ";
 
@@ -117,16 +117,15 @@ public class TestLSPFindRefs : TestLSPShared
     );
   }
 
-  [Fact(Skip = "TODO")]
+  [Fact]
   public async Task _4()
   {
-    Console.WriteLine(await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")));
-
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
       FindReferencesRsp(
-        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 3),
-        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 3)
+        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
+        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
+        new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
       )
     );
   }
