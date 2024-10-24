@@ -4109,6 +4109,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return;
           }
 
+          LSP_SetSymbol(ext_name.dotName().NAME().Parent, cs);
           super_class = cs;
         }
         else if(ext is InterfaceSymbol ifs)
@@ -4212,7 +4213,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
     
-    LSP_SetSymbol(ctx, symb);
+    LSP_SetSymbol(ctx.NAME().Parent, symb);
 
     for(int i=0;i<ctx.enumBlock()?.enumMember()?.Length;++i)
     {

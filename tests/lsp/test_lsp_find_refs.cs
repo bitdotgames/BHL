@@ -39,6 +39,8 @@ public class TestLSPFindRefs : TestLSPShared
 
   class Foo {} //class Foo
 
+  class Bar : Foo {} //class Bar
+
   enum Item //enum Item
   {
     Type = 1
@@ -134,6 +136,7 @@ public class TestLSPFindRefs : TestLSPShared
       await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
       FindReferencesRsp(
         new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
+        new UriNeedle(uri1, "Foo {} //class Bar", end_column_offset: 2),
         new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
         new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
       )
