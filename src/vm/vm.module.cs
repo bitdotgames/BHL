@@ -67,8 +67,9 @@ public partial class VM : INamedResolver
     if(rm != null)
       return rm;
 
-    if(registered_modules.TryGetValue(module_name, out var cm))
-      return cm;
+    if(registered_modules.TryGetValue(module_name, out rm))
+      return rm;
+    
     return null;
   }
 
@@ -130,10 +131,10 @@ public partial class VM : INamedResolver
 
   public void UnloadModule(string module_name)
   {
-    if(!registered_modules.TryGetValue(module_name, out var cm))
+    if(!registered_modules.TryGetValue(module_name, out var rm))
       return;
 
-    cm.ClearGlobalVars();
+    rm.ClearGlobalVars();
 
     registered_modules.Remove(module_name);
   }
@@ -169,9 +170,9 @@ public partial class VM : INamedResolver
 
     //TODO: should we actually check if loaded module matches
     //      the module where the found symbol actually resides?
-    var cm = registered_modules[((Namespace)symb.scope).module.name];
+    var rm = registered_modules[((Namespace)symb.scope).module.name];
 
-    ms.module = cm;
+    ms.module = rm;
     ms.symbol = symb;
 
     symbol_spec2module[spec] = ms;
