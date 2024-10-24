@@ -3718,7 +3718,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var name = pass.iface_ctx.NAME().GetText();
 
     pass.iface_symb = new InterfaceSymbolScript(Annotate(pass.iface_ctx), name);
-    LSP_SetSymbol(pass.iface_ctx, pass.iface_symb);
+    LSP_SetSymbol(pass.iface_ctx.NAME(), pass.iface_symb);
 
     if(!pass.scope.TryDefine(pass.iface_symb, out SymbolError err))
     {
@@ -4126,6 +4126,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return;
           }
 
+          LSP_SetSymbol(ext_name.dotName().NAME().Parent, ifs);
           implements.Add(ifs);
         }
         else

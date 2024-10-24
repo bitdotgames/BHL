@@ -832,6 +832,12 @@ public class BHL_TestBase
 
   public static void AssertEqual(string a, string b)
   {
+    if(a != null && b != null && !a.Equals(b, StringComparison.Ordinal))
+    {
+      Console.WriteLine("A:\n" + a);
+      Console.WriteLine("B:\n" + b);
+    }
+
     Assert.Equal(a, b);
   }
 

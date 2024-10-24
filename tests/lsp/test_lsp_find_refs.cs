@@ -39,12 +39,14 @@ public class TestLSPFindRefs : TestLSPShared
 
   class Foo {} //class Foo
 
-  class Bar : Foo {} //class Bar
+  class Bar : IFoo, Foo {} //class Bar
 
   enum Item //enum Item
   {
     Type = 1
   }
+
+  interface IFoo {} //interface IFoo
   ";
   
   string bhl2 = @"
@@ -65,6 +67,11 @@ public class TestLSPFindRefs : TestLSPShared
   {
     return Item.Type //new Item.Type
   } 
+
+  func IFoo test8() //test8
+  {
+    return null
+  }
   ";
 
   Server srv;
@@ -130,7 +137,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
 
   [Fact]
-  public async Task ref_Foo()
+  public async Task ref_class_Foo()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
@@ -144,7 +151,7 @@ public class TestLSPFindRefs : TestLSPShared
   }
   
   [Fact]
-  public async Task ref_Item()
+  public async Task ref_enum_Item()
   {
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "tem //enum Item")),
@@ -152,6 +159,19 @@ public class TestLSPFindRefs : TestLSPShared
         new UriNeedle(uri1, "enum Item //enum Item", end_line_offset: 3),
         new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
         new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
+      )
+    );
+  }
+  
+  [Fact]
+  public async Task ref_interface_IFoo()
+  {
+    AssertEqual(
+      await srv.Handle(FindReferencesReq(uri2, "o test8() //test8")),
+      FindReferencesRsp(
+        new UriNeedle(uri1, "IFoo, Foo {} //class Bar", end_column_offset: 3),
+        new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 3),
+        new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 3)
       )
     );
   }
