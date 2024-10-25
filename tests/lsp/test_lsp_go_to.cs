@@ -24,7 +24,7 @@ public class TestLSPGoToDefinition : TestLSPShared
     return 0
   }
 
-  func test2() 
+  func test2() //test2 
   {
     var tmp_foo = new Foo //create new Foo
     test1(42)
@@ -41,9 +41,9 @@ public class TestLSPGoToDefinition : TestLSPShared
     return 0
   }
 
-  func ErrorCodes test4() 
+  func ErrorCodes test4() //test4 
   {
-    test2()
+    test2() //call test2()
     foo.BAR = 1
 
     ErrorCodes err = ErrorCodes.Bad //error code 
@@ -53,6 +53,7 @@ public class TestLSPGoToDefinition : TestLSPShared
   func test5() 
   {
     TEST() //native call
+    test4() //call test4()
   }
   
   func test6()
@@ -106,8 +107,8 @@ public class TestLSPGoToDefinition : TestLSPShared
   public async Task _2()
   {
     AssertEqual(
-      await srv.Handle(GoToDefinitionReq(uri2, "est2()")),
-      GoToDefinitionRsp(uri1, "func test2()", end_line_offset: 4)
+      await srv.Handle(GoToDefinitionReq(uri2, "est2() //call test2()")),
+      GoToDefinitionRsp(uri1, "func test2() //test2", end_line_offset: 4)
     );
   }
   
@@ -187,8 +188,17 @@ public class TestLSPGoToDefinition : TestLSPShared
   public async Task _11()
   {
     AssertEqual(
-      await srv.Handle(GoToDefinitionReq(uri2, "test4()")),
-      GoToDefinitionRsp(uri2, "func ErrorCodes test4()", end_line_offset: 7)
+      await srv.Handle(GoToDefinitionReq(uri2, "est4() //call test4()")),
+      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7)
+    );
+  }
+  
+  [Fact]
+  public async Task _11_1()
+  {
+    AssertEqual(
+      await srv.Handle(GoToDefinitionReq(uri2, "est4() //test4")),
+      GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7)
     );
   }
 

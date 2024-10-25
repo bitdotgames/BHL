@@ -1441,7 +1441,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return name_symb;
       }
 
-      LSP_SetSymbol(name.Parent, name_symb);
+      LSP_SetSymbol(name, name_symb);
 
       var var_symb = name_symb as VariableSymbol;
       var func_symb = name_symb as FuncSymbol;
@@ -2175,7 +2175,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: this is required for LSP, we might want to have 
     //      a special LSP mode for that?
     if(ctx.nsName() != null && resolved is Symbol symb)
-      LSP_SetSymbol(ctx.nsName().dotName(), symb);
+      LSP_SetSymbol(ctx.nsName().dotName().NAME(), symb);
 
    return tp;
   }
@@ -2502,7 +2502,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    LSP_SetSymbol(ctx, member);
+    LSP_SetSymbol(ctx.NAME(), member);
 
     var ast = new AST_JsonPair(curr_type, name_str, member.scope_idx, ctx.NAME().Symbol.Line);
 
@@ -2631,7 +2631,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     if(ctx.newExp().type().nsName() != null)
-     LSP_SetSymbol(ctx.newExp().type().nsName().dotName(), cl as Symbol);
+     LSP_SetSymbol(ctx.newExp().type().nsName().dotName().NAME(), cl as Symbol);
 
     if (ctx.newExp().jsonObject() != null)
     {
@@ -3589,7 +3589,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
     }
 
-    LSP_SetSymbol(func_ann, pass.func_symb);
+    LSP_SetSymbol(pass.func_ctx.NAME(), pass.func_symb);
     pass.func_ast = new AST_FuncDecl(pass.func_symb, pass.func_ctx.Stop.Line);
     pass.ast.AddChild(pass.func_ast);
   }
@@ -3698,7 +3698,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     pass.gvar_symb.is_local = pass.gvar_decl_ctx.STATIC() != null;
 
     LSP_AddSemanticToken(pass.gvar_decl_ctx.STATIC(), SemanticToken.Keyword);
-    LSP_SetSymbol(vd, pass.gvar_symb);
+    LSP_SetSymbol(vd.NAME(), pass.gvar_symb);
 
     if(!curr_scope.TryDefine(pass.gvar_symb, out SymbolError err))
     {
@@ -4109,7 +4109,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return;
           }
 
-          LSP_SetSymbol(ext_name.dotName().NAME().Parent, cs);
+          LSP_SetSymbol(ext_name.dotName().NAME(), cs);
           super_class = cs;
         }
         else if(ext is InterfaceSymbol ifs)
@@ -4126,7 +4126,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return;
           }
 
-          LSP_SetSymbol(ext_name.dotName().NAME().Parent, ifs);
+          LSP_SetSymbol(ext_name.dotName().NAME(), ifs);
           implements.Add(ifs);
         }
         else
@@ -4214,7 +4214,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
     
-    LSP_SetSymbol(ctx.NAME().Parent, symb);
+    LSP_SetSymbol(ctx.NAME(), symb);
 
     for(int i=0;i<ctx.enumBlock()?.enumMember()?.Length;++i)
     {
@@ -4272,7 +4272,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     pass.gvar_symb.origin.parsed.eval_type = pass.gvar_symb.type.Get();
 
     if(vd.type().nsName() != null)
-      LSP_SetSymbol(vd.type().nsName().dotName(), pass.gvar_symb.type.Get() as Symbol);
+      LSP_SetSymbol(vd.type().nsName().dotName().NAME(), pass.gvar_symb.type.Get() as Symbol);
 
     PushAST((AST_Tree)pass.ast);
 
@@ -4553,7 +4553,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         var_ann = var_symb.origin.parsed;
         var_ann.eval_type = var_symb.type.Get();
-        LSP_SetSymbol(vd_name.Parent, var_symb);
+        LSP_SetSymbol(vd_name, var_symb);
       }
       else if(vproxy.LocalNameAt(i) != null)
       {
@@ -4567,7 +4567,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         var_ann = Annotate(vd_name);
         var_ann.eval_type = var_symb.type.Get();
-        LSP_SetSymbol(vd_name.Parent, var_symb);
+        LSP_SetSymbol(vd_name, var_symb);
 
         bool is_global = var_symb.scope is Namespace;
         var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);
@@ -4767,7 +4767,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var_ann.eval_type = tp.Get();
 
     if(tp_ctx?.nsName() != null)
-      LSP_SetSymbol(tp_ctx.nsName().dotName(), var_ann.eval_type as Symbol);
+      LSP_SetSymbol(tp_ctx.nsName().dotName().NAME(), var_ann.eval_type as Symbol);
 
     if(is_ref && !func_arg)
     {
@@ -4785,7 +4785,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    LSP_SetSymbol(name.Parent, symb);
+    LSP_SetSymbol(name, symb);
 
     if(write)
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb, 0, name);

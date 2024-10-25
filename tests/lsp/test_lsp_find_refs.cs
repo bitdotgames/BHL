@@ -103,7 +103,7 @@ public class TestLSPFindRefs : TestLSPShared
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
       FindReferencesRsp(
-        new UriNeedle(uri1, "func float test1(float k)", end_line_offset: 3),
+        new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
         new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
         new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
       )
@@ -116,7 +116,7 @@ public class TestLSPFindRefs : TestLSPShared
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "pval + 1")),
       FindReferencesRsp(
-        new UriNeedle(uri1, "int upval = 1", end_column_offset: 8),
+        new UriNeedle(uri1, "upval = 1", end_column_offset: 4),
         new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
         new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
       )
@@ -129,7 +129,7 @@ public class TestLSPFindRefs : TestLSPShared
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
       FindReferencesRsp(
-        new UriNeedle(uri1, "int upval) //upval arg", end_column_offset: 8),
+        new UriNeedle(uri1, "upval) //upval arg", end_column_offset: 4),
         new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
         new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
       )
@@ -156,7 +156,7 @@ public class TestLSPFindRefs : TestLSPShared
     AssertEqual(
       await srv.Handle(FindReferencesReq(uri1, "tem //enum Item")),
       FindReferencesRsp(
-        new UriNeedle(uri1, "enum Item //enum Item", end_line_offset: 3),
+        new UriNeedle(uri1, "Item //enum Item", end_column_offset: 3),
         new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
         new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
       )

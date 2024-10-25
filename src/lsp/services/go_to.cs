@@ -38,7 +38,6 @@ public class TextDocumentGoToService : IService
     if(document != null)
     {
       var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
-
       if(symb != null)
       {
         var range = (bhl.lsp.proto.Range)symb.origin.source_range;
