@@ -1,3 +1,5 @@
+
+using System.Runtime.CompilerServices;
 using System;
 
 namespace bhl {
@@ -29,7 +31,7 @@ public class FixedStack<T>
     }
   }
 
-  //let's validate index during parsing
+  //let's validate index during parsing phase only
   [System.Diagnostics.Conditional("BHL_FRONT")]
   void ValidateIndex(int index)
   {
@@ -49,17 +51,20 @@ public class FixedStack<T>
     return true;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T Push(T item)
   {
     storage[head++] = item;
     return item;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T Pop()
   {
     return storage[--head];
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T Pop(T repl)
   {
     --head;
@@ -68,6 +73,7 @@ public class FixedStack<T>
     return retval;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T Peek()
   {
     return storage[head - 1];
