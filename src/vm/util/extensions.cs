@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
     
@@ -47,6 +48,7 @@ public static class Extensions
     return total;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static Val PopRelease(this FixedStack<Val> stack)
   {
     var val = stack.Pop();
@@ -54,6 +56,7 @@ public static class Extensions
     return val;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static void PushRetain(this FixedStack<Val> stack, Val val)
   {
     val.RefMod(RefOp.INC | RefOp.USR_INC);

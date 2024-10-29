@@ -5,5 +5,6 @@
         <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
         <RootNamespace>bhl</RootNamespace>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 </Project>

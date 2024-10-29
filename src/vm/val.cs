@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -86,6 +87,7 @@ public class Val
     this.vm = vm;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val New(VM vm)
   {
     Val dv;
@@ -210,11 +212,13 @@ public class Val
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Retain()
   {
     RefMod(RefOp.USR_INC | RefOp.INC);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Release()
   {
     RefMod(RefOp.USR_DEC | RefOp.DEC);

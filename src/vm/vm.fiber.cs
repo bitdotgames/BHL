@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -621,11 +622,13 @@ public partial class VM : INamedResolver
 
   Stack<ScriptExecutor> script_executors = new Stack<ScriptExecutor>();
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult Execute(FuncSymbolScript fs)
   {
     return Execute(fs, 0u, new StackList<Val>());
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult Execute(FuncSymbolScript fs, StackList<Val> args)
   {
     return Execute(fs, args.Count, args);
