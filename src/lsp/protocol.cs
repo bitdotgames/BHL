@@ -284,8 +284,38 @@ public class WorkDoneProgressOptions
 
 public class CompletionOptions : WorkDoneProgressOptions
 {
+  /**
+   * The additional characters, beyond the defaults provided by the client (typically
+   * [a-zA-Z]), that should automatically trigger a completion request. For example
+   * `.` in JavaScript represents the beginning of an object property or method and is
+   * thus a good candidate for triggering a completion request.
+   *
+   * Most tools trigger a completion request automatically without explicitly
+   * requesting it using a keyboard shortcut (e.g. Ctrl+Space). Typically they
+   * do so when the user starts to type an identifier. For example if the user
+   * types `c` in a JavaScript file code complete will automatically pop up
+   * present `console` besides others as a completion item. Characters that
+   * make up identifiers don't need to be listed here.
+   */
   public string[] triggerCharacters;
+  
+  /**
+   * The list of all possible characters that commit a completion. This field
+   * can be used if clients don't support individual commit characters per
+   * completion item. See client capability
+   * `completion.completionItem.commitCharactersSupport`.
+   *
+   * If a server provides both `allCommitCharacters` and commit characters on
+   * an individual completion item the ones on the completion item win.
+   *
+   * @since 3.2.0
+   */
   public string[] allCommitCharacters;
+  
+  /**
+   * The server provides support to resolve additional
+   * information for a completion item.
+   */
   public bool? resolveProvider;
 }
 
@@ -858,10 +888,10 @@ public class SemanticTokensClientCapabilities
 
 public class PublishDiagnosticsClientCapabilities 
 {
-	/**
-	 * Whether the clients accepts diagnostics with related information.
-	 */
-	public bool relatedInformation;
+  /**
+   * Whether the clients accepts diagnostics with related information.
+   */
+  public bool relatedInformation;
 
   public class TagSupport 
   {
@@ -902,6 +932,158 @@ public class PublishDiagnosticsClientCapabilities
 	 * @since 3.16.0
 	 */
 	public bool dataSupport;
+}
+
+public class CompletionClientCapabilities
+{
+  /**
+   * Whether completion supports dynamic registration.
+   */
+  public bool? dynamicRegistration;
+
+  public class CompletionItemCapability
+  {
+    /**
+     * Client supports snippets as insert text.
+     *
+     * A snippet can define tab stops and placeholders with `$1`, `$2`
+     * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+     * the end of the snippet. Placeholders with equal identifiers are
+     * linked, that is typing in one will update others too.
+     */
+    public bool? snippetSupport;
+
+    /**
+     * Client supports commit characters on a completion item.
+     */
+    public bool? commitCharactersSupport;
+
+      /**
+       * Client supports the follow content formats for the documentation
+       * property. The order describes the preferred format of the client.
+       */
+      //documentationFormat ?: MarkupKind[];
+
+      /**
+       * Client supports the deprecated property on a completion item.
+       */
+      public bool? deprecatedSupport;
+
+      /**
+       * Client supports the preselect property on a completion item.
+       */
+      public bool? preselectSupport;
+      
+      /**
+       * Client supports the tag property on a completion item. Clients
+       * supporting tags have to handle unknown tags gracefully. Clients
+       * especially need to preserve unknown tags when sending a completion
+       * item back to the server in a resolve call.
+       *
+       * @since 3.15.0
+       */
+      //public tagSupport?: {
+      //    /**
+      //     * The tags supported by the client.
+      //     */
+      //    valueSet: CompletionItemTag[];
+      //};
+
+      /**
+       * Client supports insert replace edit to control different behavior if
+       * a completion item is inserted in the text or should replace text.
+       *
+       * @since 3.16.0
+       */
+      public bool? insertReplaceSupport;
+      
+      /**
+       * Indicates which properties a client can resolve lazily on a
+       * completion item. Before version 3.16.0 only the predefined properties
+       * `documentation` and `detail` could be resolved lazily.
+       *
+       * @since 3.16.0
+       */
+      //resolveSupport?: {
+      //    /**
+      //     * The properties that a client can resolve lazily.
+      //     */
+      //    properties: string[];
+      //};
+      
+      /**
+       * The client supports the `insertTextMode` property on
+       * a completion item to override the whitespace handling mode
+       * as defined by the client (see `insertTextMode`).
+       *
+       * @since 3.16.0
+       */
+      //insertTextModeSupport?: {
+      //    valueSet: InsertTextMode[];
+      //};
+
+     /**
+      * The client has support for completion item label
+      * details (see also `CompletionItemLabelDetails`).
+      *
+      * @since 3.17.0
+      */
+      public bool? labelDetailsSupport;
+  }
+
+  /**
+   * The client supports the following `CompletionItem` specific
+   * capabilities.
+   */
+  public CompletionItemCapability? completionItem;
+  
+  //public completionItemKind?: {
+  //    /**
+  //     * The completion item kind values the client supports. When this
+  //     * property exists the client also guarantees that it will
+  //     * handle values outside its set gracefully and falls back
+  //     * to a default value when unknown.
+  //     *
+  //     * If this property is not present the client only supports
+  //     * the completion items kinds from `Text` to `Reference` as defined in
+  //     * the initial version of the protocol.
+  //     */
+  //    valueSet?: CompletionItemKind[];
+  //};
+
+  /**
+   * The client supports to send additional context information for a
+   * `textDocument/completion` request.
+   */
+  public bool? contextSupport;
+  
+  /**
+   * The client's default when the completion item doesn't provide a
+   * `insertTextMode` property.
+   *
+   * @since 3.17.0
+   */
+  //insertTextMode?: InsertTextMode;
+  
+  /**
+   * The client supports the following `CompletionList` specific
+   * capabilities.
+   *
+   * @since 3.17.0
+   */
+  //completionList?: {
+  //    /**
+  //     * The client supports the following itemDefaults on
+  //     * a completion list.
+  //     *
+  //     * The value lists the supported property names of the
+  //     * `CompletionList.itemDefaults` object. If omitted
+  //     * no properties are supported.
+  //     *
+  //     * @since 3.17.0
+  //     */
+  //    itemDefaults?: string[];
+  //}
 }
 
 public class TextDocumentClientCapabilities
@@ -956,11 +1138,16 @@ public class TextDocumentClientCapabilities
    */
   public SemanticTokensClientCapabilities semanticTokens;
 
-	/**
-	 * Capabilities specific to the `textDocument/publishDiagnostics`
-	 * notification.
-	 */
-	public PublishDiagnosticsClientCapabilities publishDiagnostics;
+  /**
+   * Capabilities specific to the `textDocument/publishDiagnostics`
+   * notification.
+   */
+  public PublishDiagnosticsClientCapabilities publishDiagnostics;
+  
+  /**
+   * Capabilities specific to the `textDocument/completion` request.
+   */
+  public CompletionClientCapabilities completion;
 }
 
 public class ClientCapabilities
@@ -1515,8 +1702,8 @@ public class TextDocumentPositionParams
 
 public enum CompletionTriggerKind
 {
-  Invoked = 1,
-  TriggerCharacter = 2,
+  Invoked                         = 1,
+  TriggerCharacter                = 2,
   TriggerForIncompleteCompletions = 3
 }
 
@@ -1701,12 +1888,12 @@ public class CompletionItem
    * A human-readable string with additional information
    * about this item, like type or symbol information.
    */
-  public string detail;
+  public string? detail;
 
   /**
    * A human-readable string that represents a doc-comment.
    */
-  public EitherType<string, MarkupContent> documentation;
+  public EitherType<string, MarkupContent>? documentation;
 
   /**
    * Indicates if this item is deprecated.
@@ -1737,13 +1924,13 @@ public class CompletionItem
   public string filterText;
 
   /**
-   * * A string that should be inserted into a document when selecting
-   * * this completion. When `falsy` the label is used.
-   * *
-   * * The `insertText` is subject to interpretation by the client side.
-   * * Some tools might not take the string literally. For example
-   * * VS Code when code complete is requested in this example
-   * * `con
+   *  A string that should be inserted into a document when selecting
+   *  this completion. When `falsy` the label is used.
+   * 
+   *  The `insertText` is subject to interpretation by the client side.
+   *  Some tools might not take the string literally. For example
+   *  VS Code when code complete is requested in this example
+   *  `con
    * <cursor position>
    *   ` and a completion item with an `insertText` of
    *   * `console` is provided it will only insert `sole`. Therefore it is
@@ -1760,7 +1947,7 @@ public class CompletionItem
    * Please note that the insertTextFormat doesn't apply to
    * `additionalTextEdits`.
    */
-  public InsertTextFormat insertTextFormat;
+  public InsertTextFormat? insertTextFormat;
 
   /**
    * How whitespace and indentation is handled during completion
@@ -1773,39 +1960,39 @@ public class CompletionItem
   public InsertTextMode? insertTextMode;
 
   /**
-   * * An edit which is applied to a document when selecting this completion.
-   * * When an edit is provided the value of `insertText` is ignored.
-   * *
-   * * *Note:* The range of the edit must be a single line range and it must
-   * * contain the position at which completion has been requested.
-   * *
-   * * Most editors support two different operations when accepting a completion
-   * * item. One is to insert a completion text and the other is to replace an
-   * * existing text with a completion text. Since this can usually not be
-   * * predetermined by a server it can report both ranges. Clients need to
-   * * signal support for `InsertReplaceEdits` via the
-   * * `textDocument.completion.insertReplaceSupport` client capability
-   * * property.
-   * *
-   * * *Note 1:* The text edit's range as well as both ranges from an insert
-   * * replace edit must be a [single line] and they must contain the position
-   * * at which completion has been requested.
-   * * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
-   * * must be a prefix of the edit's replace range, that means it must be
-   * * contained and starting at the same position.
-   * *
-   * * @since 3.16.0 additional type `InsertReplaceEdit`
+   *  An edit which is applied to a document when selecting this completion.
+   *  When an edit is provided the value of `insertText` is ignored.
+   * 
+   *  *Note:* The range of the edit must be a single line range and it must
+   *  contain the position at which completion has been requested.
+   * 
+   *  Most editors support two different operations when accepting a completion
+   *  item. One is to insert a completion text and the other is to replace an
+   *  existing text with a completion text. Since this can usually not be
+   *  predetermined by a server it can report both ranges. Clients need to
+   *  signal support for `InsertReplaceEdits` via the
+   *  `textDocument.completion.insertReplaceSupport` client capability
+   *  property.
+   * 
+   *  *Note 1:* The text edit's range as well as both ranges from an insert
+   *  replace edit must be a [single line] and they must contain the position
+   *  at which completion has been requested.
+   *  *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+   *  must be a prefix of the edit's replace range, that means it must be
+   *  contained and starting at the same position.
+   * 
+   *  @since 3.16.0 additional type `InsertReplaceEdit`
    */
   public EitherType<TextEdit, InsertReplaceEdit>? textEdit;
 
   /**
-   * * An optional array of additional text edits that are applied when
-   * * selecting this completion. Edits must not overlap (including the same
-   * * insert position) with the main edit nor with themselves.
-   * *
-   * * Additional text edits should be used to change text unrelated to the
-   * * current cursor position (for example adding an import statement at the
-   * * top of the file if the completion item will insert an unqualified type).
+   *  An optional array of additional text edits that are applied when
+   *  selecting this completion. Edits must not overlap (including the same
+   *  insert position) with the main edit nor with themselves.
+   * 
+   *  Additional text edits should be used to change text unrelated to the
+   *  current cursor position (for example adding an import statement at the
+   *  top of the file if the completion item will insert an unqualified type).
    */
   public TextEdit[] additionalTextEdits;
 
@@ -1822,7 +2009,7 @@ public class CompletionItem
    * * *Note* that additional modifications to the current document should be
    * * described with the additionalTextEdits-property.
    */
-  public Command command;
+  public Command? command;
 
   /**
    * A data entry field that is preserved on a completion item between

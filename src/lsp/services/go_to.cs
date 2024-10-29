@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using bhl.lsp.proto;
 
 namespace bhl.lsp {
+  
 public class TextDocumentGoToService : IService
 {
   Workspace workspace;

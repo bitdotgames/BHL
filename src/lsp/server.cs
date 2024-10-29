@@ -43,6 +43,7 @@ public class Server
     AttachService(new TextDocumentSynchronizationService(this));
     AttachService(new TextDocumentSignatureHelpService(this));
     AttachService(new TextDocumentGoToService(this));
+    AttachService(new TextDocumentCompletionService(this));
     AttachService(new TextDocumentFindReferencesService(this));
     AttachService(new TextDocumentHoverService(this));
     AttachService(new TextDocumentSemanticTokensService(this));
