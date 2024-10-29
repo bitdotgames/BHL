@@ -1,4 +1,4 @@
-
+using System.Runtime.CompilerServices;
 using System;
 using System.IO;
 
@@ -22,12 +22,14 @@ public class Bytecode
     return stream.ToArray();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static byte Decode8(byte[] bytecode, ref int ip)
   {
     ++ip;
     return bytecode[ip];
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static ushort Decode16(byte[] bytecode, ref int ip)
   {
     ++ip;
@@ -40,6 +42,7 @@ public class Bytecode
     return val;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint Decode24(byte[] bytecode, ref int ip)
   {
     ++ip;
@@ -53,6 +56,7 @@ public class Bytecode
     return val;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint Decode32(byte[] bytecode, ref int ip)
   {
     ++ip;

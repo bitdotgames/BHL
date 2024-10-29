@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using bhl.lsp.proto;
 
 namespace bhl.lsp {
+
 public class DiagnosticService : IService
 {
   private Server srv;
