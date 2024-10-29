@@ -54,7 +54,7 @@ public class LifecycleService : IService
     
     workspace.Init(ts, proj);
 
-    //TODO: run it in background
+    //TODO: run it in background?
     workspace.IndexFiles();
 
     var server_capabilities = srv.capabilities;

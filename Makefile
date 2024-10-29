@@ -2,8 +2,8 @@
 build:
 	dotnet build bhl.csproj
 
-.PHONY: publish
-publish:
+.PHONY: lsp
+lsp:
 	dotnet publish bhl.csproj
 
 .PHONY: test

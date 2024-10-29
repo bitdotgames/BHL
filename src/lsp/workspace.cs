@@ -48,7 +48,7 @@ public class Workspace
 
         using(var sfs = File.OpenRead(norm_file))
         {
-          var proc = ParseFile(ts, norm_file, sfs);
+          var proc = ParseFile(norm_file, sfs);
           uri2proc.Add(norm_file, proc);
         }
       }
@@ -71,35 +71,23 @@ public class Workspace
     }
   }
 
-  ANTLR_Processor ParseFile(Types ts, string file, Stream stream)
+  ANTLR_Processor ParseFile(string file, Stream stream)
   {
     var imports = CompilationExecutor.ParseWorker.ParseMaybeImports(conf.inc_path, file, stream);
     var module = new bhl.Module(ts, conf.inc_path.FilePath2ModuleName(file), file);
 
     //TODO: use different error handlers?
     var err_hub = CompileErrorsHub.MakeStandard(file);
-
-    var parser = ANTLR_Processor.Stream2Parser(
-      module, 
-      err_hub,
-      stream, 
-      //TODO: pass actual defines
-      defines: null,
-      preproc_parsed: out var _,
-      tokens: out var __
-    );
-
-    //NOTE: ANTLR parsing happens here when accessing the parse tree
-    var parse_tree = parser.program(); 
-    var parsed = new ANTLR_Parsed(parser, parse_tree);
-
-    var proc = new ANTLR_Processor(
-      parsed, 
+    
+    var proc = ANTLR_Processor.ParseAndMakeProcessor(
       module, 
       imports, 
+      stream, 
       ts, 
-      err_hub.errors
-    );
+      err_hub,
+      new HashSet<string>(conf.defines),
+      out var _
+      );
 
     return proc;
   }
@@ -150,7 +138,7 @@ public class Workspace
       return false;
 
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(ts, document.uri.path, ms);
+    var proc = ParseFile(document.uri.path, ms);
 
     uri2proc[document.uri.path] = proc;
 
