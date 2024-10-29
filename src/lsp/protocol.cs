@@ -1857,6 +1857,23 @@ public class Command
   public object[] arguments;
 }
 
+public class CompletionList
+{ 
+  /**
+  * This list is not complete. Further typing should result in recomputing
+  * this list.
+  *
+  * Recomputed lists have all their items replaced (not appended) in the
+  * incomplete completion sessions.
+  */
+  public bool isIncomplete;
+
+  /**
+   * The completion items.
+   */
+  public List<CompletionItem> items;
+}
+
 public class CompletionItem
 {
   /**

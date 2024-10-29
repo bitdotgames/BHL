@@ -20,7 +20,8 @@ public class TextDocumentCompletionService : IService
     {
       var opts = new CompletionOptions();
       opts.resolveProvider = true;
-      opts.triggerCharacters = new[] { "A" };
+      //TODO:
+      //opts.triggerCharacters = new[] { "A" };
       sc.completionProvider = opts;
     }
   }
@@ -32,14 +33,18 @@ public class TextDocumentCompletionService : IService
   [RpcMethod("textDocument/completion")]
   public Task<RpcResult> Completion(CompletionParams args)
   {
-    var items = new List<CompletionItem>();
-
-    var item = new CompletionItem();
-    item.label = "Boo";
-    item.insertText = item.label;
-    items.Add(item);
+    var list = new CompletionList();
+    list.isIncomplete = false;
     
-    return Task.FromResult(new RpcResult(items));
+    list.items = new List<CompletionItem>();
+
+    //TODO:
+    //var item = new CompletionItem();
+    //item.label = "Boo";
+    //item.insertText = item.label;
+    //list.items.Add(item);
+    
+    return Task.FromResult(new RpcResult(list));
   }
 }
  
