@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
   
@@ -57,6 +58,7 @@ public partial class VM : INamedResolver
     }
   }
   
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
   {
     var status = BHS.SUCCESS;
@@ -887,6 +889,7 @@ public partial class VM : INamedResolver
       throw new Exception("Module '" + module.name + "' init function is still running");
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void ExecuteUnaryOp(Opcodes op, ValStack stack)
   {
     var operand = stack.PopRelease().num;
@@ -901,6 +904,7 @@ public partial class VM : INamedResolver
     }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void ExecuteBinaryOp(Opcodes op, ValStack stack)
   {
     var r_operand = stack.Pop();
@@ -1153,6 +1157,7 @@ public partial class VM : INamedResolver
     val.Release();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void HandleTypeIs(ExecState exec, IType type)
   {
     var val = exec.stack.Pop();
@@ -1160,6 +1165,7 @@ public partial class VM : INamedResolver
     val.Release();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void HandleNew(Frame curr_frame, ValStack stack, IType type)
   {
     var cls = type as ClassSymbol;
@@ -1171,12 +1177,14 @@ public partial class VM : INamedResolver
     stack.Push(val);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static void ReadBlockHeader(ref int ip, Frame curr_frame, out BlockType type, out int size)
   {
     type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal Val MakeDefaultVal(IType type)
   {
     var v = Val.New(this);
@@ -1184,6 +1192,7 @@ public partial class VM : INamedResolver
     return v;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal void InitDefaultVal(IType type, Val v)
   {
     //TODO: make type responsible for default initialization

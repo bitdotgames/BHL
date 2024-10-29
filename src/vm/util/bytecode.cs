@@ -28,6 +28,12 @@ public class Bytecode
   {
     return bytecode[++ip];
   }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe byte Decode8(byte* bytecode, ref int ip)
+  {
+    return bytecode[++ip];
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static ushort Decode16(byte[] bytecode, ref int ip)
@@ -54,6 +60,17 @@ public class Bytecode
     return val;
 #endif
   }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe uint Decode16(byte* p, ref int ip)
+  {
+    uint val = 
+    ((uint)p[ip+1] | 
+     ((uint)p[ip+2]) << 8
+     );
+    ip += 2;
+    return val;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint Decode24(byte[] bytecode, ref int ip)
@@ -63,7 +80,7 @@ public class Bytecode
     {
       fixed(byte* p = bytecode)
       {
-        uint val = (uint)
+        uint val =
         ((uint)p[ip+1]         | 
          ((uint)p[ip+2]) << 8  |
          ((uint)p[ip+3]) << 16
@@ -73,7 +90,7 @@ public class Bytecode
       }
     }
 #else
-    uint val = (uint)
+    uint val =
       ((uint)bytecode[ip+1]        | 
        ((uint)bytecode[ip+2]) << 8 |
        ((uint)bytecode[ip+3]) << 16
@@ -81,6 +98,18 @@ public class Bytecode
     ip += 3;
     return val;
 #endif
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe uint Decode24(byte* p, ref int ip)
+  {
+    uint val =
+    ((uint)p[ip+1]         | 
+     ((uint)p[ip+2]) << 8  |
+     ((uint)p[ip+3]) << 16
+     );
+    ip += 3;
+    return val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,6 +140,19 @@ public class Bytecode
     ip += 4;
     return val;
 #endif
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe uint Decode32(byte* p, ref int ip)
+  {
+     uint val =
+     ((uint)p[ip+1]         | 
+      ((uint)p[ip+2]) << 8  |
+      ((uint)p[ip+3]) << 16 |
+      ((uint)p[ip+4]) << 24
+      );
+     ip += 4;
+     return val;
   }
 
   public static uint Decode(byte[] bytecode, int num_bytes, ref int ip)
