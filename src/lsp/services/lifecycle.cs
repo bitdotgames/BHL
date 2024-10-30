@@ -85,6 +85,13 @@ public class LifecycleService : IService
 
     return Task.FromResult(new RpcResult(null));
   }
+  
+  [RpcMethod("$/cancelRequest")]
+  public Task<RpcResult> CancelRequest(CancelParams args)
+  {
+    //TODO: implement it
+    return Task.FromResult(RpcResult.Error(ErrorCodes.RequestCancelled));
+  }
 
   [RpcMethod("exit")]
   public Task<RpcResult> Exit()

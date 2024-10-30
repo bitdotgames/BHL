@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
     
@@ -53,17 +54,21 @@ public struct FuncArgsInfo
   public uint bits;
 
   //NOTE: uints are for bits, ints are for arguments amounts
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator FuncArgsInfo(uint bits) => new FuncArgsInfo(bits);
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator FuncArgsInfo(int num_args) => new FuncArgsInfo(num_args);
 
   //NOTE: setting all bits
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FuncArgsInfo(uint bits)
   {
     this.bits = bits;
   }
   
   //NOTE: setting only amount of arguments, bits will be calculated
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FuncArgsInfo(int num_args)
   {
     bits = 0;
@@ -72,27 +77,32 @@ public struct FuncArgsInfo
       throw new Exception("Not supported amount of arguments: " + num_args);
   }
   
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint GetBits(int num_args)
   {
     var info = new FuncArgsInfo(num_args);
     return info.bits;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountArgs()
   {
     return (int)(bits & ARGS_NUM_MASK);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool HasDefaultUsedArgs()
   {              
     return (bits & ~ARGS_NUM_MASK) > 0;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountRequiredArgs()
   {
     return CountArgs() - CountUsedDefaultArgs();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountUsedDefaultArgs()
   {
     int c = 0;
@@ -102,6 +112,7 @@ public struct FuncArgsInfo
     return c;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool SetArgsNum(int num)
   {
     if(num < 0 || num > MAX_ARGS)
@@ -110,6 +121,7 @@ public struct FuncArgsInfo
     return true;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IncArgsNum()
   {
     uint num = bits & ARGS_NUM_MASK; 
@@ -136,6 +148,7 @@ public struct FuncArgsInfo
   }
 
   //NOTE: idx starts from 0
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsDefaultArgUsed(int idx)
   {
     return (bits & (1u << (idx + ARGS_NUM_BITS))) != 0;
