@@ -1,6 +1,5 @@
 
-coro func bool Idle()
-{
+coro func bool Idle() {
   bool done = false
   defer {
     if(!done) {
@@ -19,8 +18,7 @@ coro func bool Idle()
   return true
 }
 
-coro func bool FindTarget(ref int target_id)
-{
+coro func bool FindTarget(ref int target_id) {
   target_id = 0
 
   if(Rand() < 0.6) {
@@ -37,8 +35,7 @@ coro func bool FindTarget(ref int target_id)
   return true
 }
 
-coro func bool AttackTarget(ref int target_id)
-{
+coro func bool AttackTarget(ref int target_id) {
   if(target_id == 0) {
     return false
   }
@@ -50,15 +47,13 @@ coro func bool AttackTarget(ref int target_id)
   return true
 }
 
-coro func StateChanged(ref int state)
-{
+coro func StateChanged(ref int state) {
   int last_state = state
   yield while(last_state == state)
   Trace("State changed!")
 }
 
-coro func RandomStateChanger(ref int state)
-{
+coro func RandomStateChanger(ref int state) {
   while(true) {
     yield wait((int)(1 + Rand() * 4)*1000)
     state = state + 1
