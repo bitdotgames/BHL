@@ -26,10 +26,6 @@ public class TextDocumentCompletionService : IService
     }
   }
 
-  /**
-   * The result type LocationLink[] got introduced with version 3.14.0
-   * and depends on the corresponding client capability textDocument.definition.linkSupport.
-   */
   [RpcMethod("textDocument/completion")]
   public Task<RpcResult> Completion(CompletionParams args)
   {

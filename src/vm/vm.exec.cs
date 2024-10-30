@@ -1060,6 +1060,7 @@ public partial class VM : INamedResolver
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status, ref Coroutine coroutine)
   {
     status = BHS.SUCCESS;
