@@ -74,7 +74,7 @@ exp
   | exp LOR exp                               #ExpLogicalOr
   | exp ternaryIfExp                          #ExpTernaryIf
   | newExp                                    #ExpNew
-  //TODO: move it under ExpChain?
+  //TODO: do we need those for intellisense?
   //| chainExp '.'                              #ExpIncompleteMember
   //| chainExp '(' (callArgsList ','?)?         #ExpIncompleteCall
   ;
