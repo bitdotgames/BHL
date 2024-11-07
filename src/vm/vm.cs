@@ -267,7 +267,7 @@ public partial class VM : INamedResolver
       fb.Release();
 
       if(fb.status != BHS.RUNNING)
-        fb.Stop();
+        _Stop(fb);
     }
     catch(Exception e)
     {

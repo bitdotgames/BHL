@@ -88,6 +88,7 @@ public partial class VM : INamedResolver
     }
     public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
 
+    //TODO: get rid of this one
     public BHS status;
 
     static public Fiber New(VM vm)
@@ -305,33 +306,28 @@ public partial class VM : INamedResolver
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool ITask.Tick()
     {
-      return vm.Tick(this);
+      return Tick();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Tick()
     {
       return vm.Tick(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ITask.Stop()
     {
       Stop();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Stop()
     {
-      if(IsStopped())
-        return;
-      stop_guard = true;
-
-      ExitScopes();
-
-      Release();
-      //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
-      //      this way Fiber breaks its current Frame execution loop.
-      exec.ip = STOP_IP + 1;
+      vm.Stop(this);
     }
   }
 
@@ -492,7 +488,7 @@ public partial class VM : INamedResolver
   {
     try
     {
-      fb.Stop();
+      _Stop(fb);
     }
     catch(Exception e)
     {
@@ -507,6 +503,20 @@ public partial class VM : INamedResolver
     }
   }
 
+  void _Stop(Fiber fb)
+  {
+    if(fb.IsStopped())
+      return;
+    fb.stop_guard = true;
+
+    fb.ExitScopes();
+
+    fb.Release();
+    //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
+    //      this way Fiber breaks its current Frame execution loop.
+    fb.exec.ip = STOP_IP + 1;
+  }
+
   public void StopChildren(Fiber fb)
   {
     foreach(var child_ref in fb.children)
@@ -515,7 +525,7 @@ public partial class VM : INamedResolver
       if(child != null)
       {
         StopChildren(child);
-        child.Stop();
+        Stop(child);
       }
     }
   }
