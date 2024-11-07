@@ -10,9 +10,9 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  Types ts;
+  public Types ts;
 
-  ProjectConf conf;
+  public ProjectConf conf;
 
   public event System.Func<Dictionary<string, CompileErrors>, Task> OnDiagnostics;
 

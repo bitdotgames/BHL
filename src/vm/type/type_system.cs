@@ -207,6 +207,14 @@ public class Types : INamedResolver
     return !(static_module == m || module == m);
   }
 
+  public IEnumerable<Module> GetModules()
+  {
+    yield return static_module;
+    
+    foreach(var kv in modules)
+      yield return kv.Value;
+  }
+
   void CopyFromStaticModule()
   {
     //NOTE: dumb copy of all items from the static module
