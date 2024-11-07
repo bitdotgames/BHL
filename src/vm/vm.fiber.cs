@@ -77,7 +77,7 @@ public partial class VM : INamedResolver
     internal int id;
     public int Id => id;
 
-    internal int tick;
+    internal bool stop_guard;
 
     internal ExecState exec = new ExecState();
 
@@ -108,6 +108,7 @@ public partial class VM : INamedResolver
       }
 
       fb.refs = 1;
+      fb.stop_guard = false;
       fb.result.Clear();
       fb.parent.Clear();
       fb.children.Clear();
@@ -185,8 +186,6 @@ public partial class VM : INamedResolver
     internal void Clear()
     {
       ExitScopes();
-
-      tick = 0;
     }
 
     internal void AddChild(Fiber fb)
@@ -216,7 +215,7 @@ public partial class VM : INamedResolver
 
     public bool IsStopped()
     {
-      return exec.ip >= STOP_IP;
+      return stop_guard || exec.ip >= STOP_IP;
     }
 
     static void GetCalls(VM.ExecState exec, List<VM.Frame> calls, int offset = 0)
@@ -318,12 +317,21 @@ public partial class VM : INamedResolver
 
     void ITask.Stop()
     {
-      vm.Stop(this);
+      Stop();
     }
 
     public void Stop()
     {
-      vm.Stop(this);
+      if(IsStopped())
+        return;
+      stop_guard = true;
+
+      ExitScopes();
+
+      Release();
+      //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
+      //      this way Fiber breaks its current Frame execution loop.
+      exec.ip = STOP_IP + 1;
     }
   }
 
@@ -484,7 +492,7 @@ public partial class VM : INamedResolver
   {
     try
     {
-      _Stop(fb);
+      fb.Stop();
     }
     catch(Exception e)
     {
@@ -507,22 +515,9 @@ public partial class VM : INamedResolver
       if(child != null)
       {
         StopChildren(child);
-        _Stop(child);
+        child.Stop();
       }
     }
-  }
-
-  internal void _Stop(Fiber fb)
-  {
-    if(fb.IsStopped())
-      return;
-
-    fb.ExitScopes();
-
-    fb.Release();
-    //NOTE: we assing Fiber ip to a special value which is just one value after STOP_IP
-    //      this way Fiber breaks its current Frame execution loop.
-    fb.exec.ip = STOP_IP + 1;
   }
 
   public void Stop(int fid)
@@ -585,6 +580,7 @@ public partial class VM : INamedResolver
       };
 
       fb.func_addr = addr;
+      fb.stop_guard = false;
 
       fb.Retain();
 
