@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.CompilerServices;
 
 namespace bhl {
@@ -15,6 +16,20 @@ public partial class VM : INamedResolver
     {
       this.id = (fiber?.id ?? 0);
       this.fiber = fiber;
+    }
+
+    public FiberRef(Val val)
+    {
+      this.id = (int)val._num;
+      this.fiber = (VM.Fiber)val._obj;
+    }
+
+    public static Val Encode(VM vm, VM.Fiber fb)
+    {
+      var val = Val.NewObj(vm, fb, Types.FiberRef);
+      //let's encode FiberRef into Val
+      val._num = fb.id;
+      return val;
     }
 
     public Fiber Get()
@@ -66,6 +81,8 @@ public partial class VM : INamedResolver
     internal FiberRef parent;
     public FiberRef Parent => parent;
 
+    internal List<Fiber> owns = new List<Fiber>();
+    
     internal List<FiberRef> children = new List<FiberRef>();
 
     public IReadOnlyList<FiberRef> Children => children;
@@ -110,8 +127,10 @@ public partial class VM : INamedResolver
 
       fb.refs = 1;
       fb.stop_guard = false;
+      //TODO: what about realising values?
       fb.result.Clear();
       fb.parent.Clear();
+      fb.owns.Clear();
       fb.children.Clear();
 
       //0 index frame used for return values consistency
@@ -187,6 +206,14 @@ public partial class VM : INamedResolver
     internal void Clear()
     {
       ExitScopes();
+    }
+
+    internal void AddOwn(Fiber fb)
+    {
+      AddChild(fb);
+      
+      fb.Retain();
+      owns.Add(fb);
     }
 
     internal void AddChild(Fiber fb)
@@ -339,7 +366,8 @@ public partial class VM : INamedResolver
   public enum FiberOptions
   {
     Detach = 1,
-    Retain = 2
+    Retain = 2,
+    Own    = 4,
   }
 
   public Fiber Start(FuncAddr addr)
@@ -390,16 +418,16 @@ public partial class VM : INamedResolver
     return Start(addr, cargs_bits, new StackList<Val>(args));
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, FiberOptions opts = 0)
   {
-    return Start(ptr, curr_frame, curr_stack, new StackList<Val>());
+    return Start(ptr, curr_frame, curr_stack, new StackList<Val>(), opts);
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = ptr.func_addr;
-    Register(fb, curr_frame.fb, 0);
+    Register(fb, curr_frame.fb, opts);
 
     var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
 
@@ -418,7 +446,6 @@ public partial class VM : INamedResolver
     else
     {
       //NOTE: frame is already initialized in ptr.MakeFrame(..)
-
       PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
     }
 
@@ -482,18 +509,33 @@ public partial class VM : INamedResolver
       fibers.Add(fb);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
-    if(!opts.HasFlag(FiberOptions.Detach))
-      fibers.Add(fb);
-    parent?.AddChild(fb);
+    if(opts.HasFlag(FiberOptions.Own))
+    {
+      parent.AddOwn(fb);
+    }
+    else
+    {
+      if(!opts.HasFlag(FiberOptions.Detach))
+        fibers.Add(fb);
+      parent?.AddChild(fb);
+    }
   }
 
   public void Stop(Fiber fb)
   {
     try
     {
+      if(fb.owns.Count > 0)
+      {
+        for(int i = fb.owns.Count;i-- > 0; )
+          _Stop(fb.owns[i]);
+        fb.owns.Clear();
+      }
+      
       _Stop(fb);
     }
     catch(Exception e)
@@ -509,7 +551,7 @@ public partial class VM : INamedResolver
     }
   }
 
-  void _Stop(Fiber fb)
+  static void _Stop(Fiber fb)
   {
     if(fb.IsStopped())
       return;
@@ -517,6 +559,7 @@ public partial class VM : INamedResolver
 
     fb.ExitScopes();
 
+    //NOTE: we release the fiber
     fb.Release();
     //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.

@@ -42,15 +42,14 @@ public static class Prelude
       m.ns.Define(fn);
     }
 
-    //TODO: return an actual Fiber object
     {
-      var fn = new FuncSymbolNative(new Origin(), "start", Types.Int,
+      var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = stack.Pop();
-          int id = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm, stack).id;
+          var fb = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm, stack, VM.FiberOptions.Own);
           val_ptr.Release();
-          stack.Push(Val.NewNum(frm.vm, id));
+          stack.Push(VM.FiberRef.Encode(frm.vm, fb));
           return null;
         }, 
         new FuncArgSymbol("p", m.TFunc(true/*is coro*/, "void"))
@@ -60,13 +59,16 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-        { 
-          var fid = (int)stack.PopRelease().num;
-          frm.vm.Stop(fid);
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var val = stack.Pop();
+          var fb_ref = new VM.FiberRef(val);
+          var fb = fb_ref.Get();
+          fb?.Stop();
+          val.Release();
           return null;
         }, 
-        new FuncArgSymbol("fid", Types.Int)
+        new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))
       );
       m.ns.Define(fn);
     }

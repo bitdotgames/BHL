@@ -399,7 +399,7 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid = start(coro func() {
+      var fb = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -409,7 +409,7 @@ public class TestFiber : BHL_TestBase
 
       yield()
       trace(""3"")
-      stop(fid)
+      stop(fb)
     }
     ";
 
@@ -442,7 +442,7 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid = start(coro func() {
+      var fb = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -452,8 +452,8 @@ public class TestFiber : BHL_TestBase
 
       yield()
       trace(""3"")
-      stop(fid)
-      stop(fid)
+      stop(fb)
+      stop(fb)
     }
     ";
 
@@ -486,11 +486,11 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid 
-      fid = start(coro func() {
+      FiberRef fb 
+      fb = start(coro func() {
         defer {
           trace(""0"")
-          stop(fid)
+          stop(fb)
         }
         yield foo()
         trace(""2"")
@@ -498,7 +498,7 @@ public class TestFiber : BHL_TestBase
 
       yield()
       trace(""3"")
-      stop(fid)
+      stop(fb)
     }
     ";
 
@@ -530,14 +530,14 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid
-      fid = start(coro func() {
+      FiberRef fb
+      fb = start(coro func() {
         defer {
           trace(""0"")
         }
         yield()
         foo()
-        stop(fid)
+        stop(fb)
         yield()
         trace(""2"")
       })
@@ -575,14 +575,14 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid
-      fid = start(coro func() {
+      FiberRef fb
+      fb = start(coro func() {
         defer {
           trace(""0"")
         }
         yield()
         foo()
-        STOP(fid)
+        STOP(fb)
         yield()
         trace(""2"")
       })
@@ -597,12 +597,15 @@ public class TestFiber : BHL_TestBase
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "STOP", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            int fid = (int)stack.PopRelease().num;
-            frm.vm.Stop(fid);
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var val = stack.Pop();
+            var fb_ref = new VM.FiberRef(val);
+            fb_ref.Get().Stop();
+            val.Release();
             return null;
           }, 
-          new FuncArgSymbol("fid", ts.T("int"))
+          new FuncArgSymbol("fb", ts.T(Types.FiberRef))
       );
       ts.ns.Define(fn);
     });
@@ -619,19 +622,21 @@ public class TestFiber : BHL_TestBase
   class YIELD_STOP : Coroutine
   {
     bool done;
-    int fib;
+    VM.FiberRef fb;
 
     public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
     {
       //first time
       if(!done)
       {
-        fib = (int)exec.stack.PopRelease().num;
+        var val = exec.stack.Pop();
+        fb = new VM.FiberRef(val);
+        val.Release();
         status = BHS.RUNNING;
         done = true;
       }
       else
-        frm.vm.Stop(fib);
+        frm.vm.Stop(fb.Get());
     }
 
     public override void Cleanup(VM.Frame frm, VM.ExecState exec)
@@ -654,14 +659,14 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      int fid
-      fid = start(coro func() {
+      FiberRef fb
+      fb = start(coro func() {
         defer {
           trace(""0"")
         }
         yield()
         foo()
-        yield YIELD_STOP(fid)
+        yield YIELD_STOP(fb)
         yield()
         trace(""2"")
       })
@@ -679,7 +684,7 @@ public class TestFiber : BHL_TestBase
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             return CoroutinePool.New<YIELD_STOP>(frm.vm);
           }, 
-          new FuncArgSymbol("fid", ts.T("int"))
+          new FuncArgSymbol("fb", ts.T(Types.FiberRef))
       );
       ts.ns.Define(fn);
     });

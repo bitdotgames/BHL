@@ -19,6 +19,13 @@ public class Types : INamedResolver
            v.SetObj(null, type);
          }
        );
+  static public ClassSymbolNative FiberRef = 
+    new ClassSymbolNative(new Origin(), "FiberRef", 
+         delegate(VM.Frame frm, ref Val v, IType type) 
+         { 
+           v.SetObj(null, type);
+         }
+       );
   
   //NOTE: These are types which are parametrized with Any types. They are mostly used when
   //      it's required to set a type of a generic ValList
@@ -111,6 +118,7 @@ public class Types : INamedResolver
     SetupGenericMapType();
     SetupStringSymbol();
     SetupClassType();
+    SetupClassFiberRef();
     
     Prelude.Define(static_module);
   }
@@ -190,6 +198,13 @@ public class Types : INamedResolver
       Type.Define(fld);
     }
     Type.Setup();
+  }
+  
+  static void SetupClassFiberRef()
+  {
+    static_module.ns.Define(FiberRef);
+    
+    FiberRef.Setup();
   }
 
   public Types()

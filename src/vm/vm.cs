@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -259,6 +260,21 @@ public partial class VM : INamedResolver
     return fibers.Count != 0;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  void _Tick(Fiber fb)
+  {
+    last_fiber = fb;
+    
+    fb.Retain();
+
+    fb.status = Execute(fb.exec);
+
+    fb.Release();
+
+    if(fb.status != BHS.RUNNING)
+      _Stop(fb);
+  }
+
   public bool Tick(Fiber fb)
   {
     if(fb.IsStopped())
@@ -266,16 +282,14 @@ public partial class VM : INamedResolver
 
     try
     {
-      last_fiber = fb;
-
-      fb.Retain();
-
-      fb.status = Execute(fb.exec);
-
-      fb.Release();
-
-      if(fb.status != BHS.RUNNING)
-        _Stop(fb);
+      _Tick(fb);
+      
+      if(fb.owns.Count > 0)
+      {
+        for(int i = fb.owns.Count;i-- > 0; )
+          _Tick(fb.owns[i]);
+      }
+      
     }
     catch(Exception e)
     {

@@ -1445,7 +1445,7 @@ public class TestDefer : BHL_TestBase
 
     coro func test()
     {
-      int fb = start(coro func() {
+      FiberRef fb = start(coro func() {
         defer {
           trace(""0"")
         }
@@ -1501,7 +1501,7 @@ public class TestDefer : BHL_TestBase
     import ""bhl2""
     coro func test()
     {
-      int fb = start(coro func() {
+      var fb = start(coro func() {
         yield foo()
       })
 
