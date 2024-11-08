@@ -384,6 +384,12 @@ public partial class VM : INamedResolver
     return fb;
   }
 
+  [Obsolete("Use Start(FuncAddr, FuncArgsInfo args_info, StackList<Val> args) instead.")]
+  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
+  {
+    return Start(addr, cargs_bits, new StackList<Val>(args));
+  }
+
   public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack)
   {
     return Start(ptr, curr_frame, curr_stack, new StackList<Val>());

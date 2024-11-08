@@ -29,12 +29,6 @@ public static class VMExtensions
     return vm.Start(func, args.Count, args);
   }
 
-  [Obsolete("Use Start(FuncAddr, FuncArgsInfo args_info, StackList<Val> args) instead.")]
-  static public VM.Fiber Start(this VM vm, VM.FuncAddr addr, uint cargs_bits = 0, params Val[] args)
-  {
-    return vm.Start(addr, cargs_bits, new StackList<Val>(args));
-  }
-
   static public VM.Fiber Start(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args, VM.FiberOptions opts = 0)
   {
     if(!vm.TryFindFuncAddr(func, out var addr))
