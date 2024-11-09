@@ -81,7 +81,7 @@ public partial class VM : INamedResolver
     internal FiberRef parent;
     public FiberRef Parent => parent;
 
-    internal List<Fiber> owns = new List<Fiber>();
+    internal List<Fiber> attached = new List<Fiber>();
     
     internal List<FiberRef> children = new List<FiberRef>();
 
@@ -130,7 +130,7 @@ public partial class VM : INamedResolver
       //TODO: what about realising values?
       fb.result.Clear();
       fb.parent.Clear();
-      fb.owns.Clear();
+      fb.attached.Clear();
       fb.children.Clear();
 
       //0 index frame used for return values consistency
@@ -213,7 +213,7 @@ public partial class VM : INamedResolver
       AddChild(fb);
       
       fb.Retain();
-      owns.Add(fb);
+      attached.Add(fb);
     }
 
     internal void AddChild(Fiber fb)
@@ -367,7 +367,7 @@ public partial class VM : INamedResolver
   {
     Detach = 1,
     Retain = 2,
-    Own    = 4,
+    Adopt    = 4,
   }
 
   public Fiber Start(FuncAddr addr)
@@ -513,7 +513,7 @@ public partial class VM : INamedResolver
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
-    if(opts.HasFlag(FiberOptions.Own))
+    if(opts.HasFlag(FiberOptions.Adopt))
     {
       parent.AddOwn(fb);
     }
@@ -529,11 +529,11 @@ public partial class VM : INamedResolver
   {
     try
     {
-      if(fb.owns.Count > 0)
+      if(fb.attached.Count > 0)
       {
-        for(int i = fb.owns.Count;i-- > 0; )
-          _Stop(fb.owns[i]);
-        fb.owns.Clear();
+        for(int i = fb.attached.Count;i-- > 0; )
+          _Stop(fb.attached[i]);
+        fb.attached.Clear();
       }
       
       _Stop(fb);

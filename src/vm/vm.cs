@@ -245,15 +245,11 @@ public partial class VM : INamedResolver
   public bool Tick(List<Fiber> fibers)
   {
     for(int i=0;i<fibers.Count;++i)
-    {
-      var fb = fibers[i];
-      Tick(fb);
-    }
+      Tick(fibers[i]);
 
     for(int i=fibers.Count;i-- > 0;)
     {
-      var fb = fibers[i];
-      if(fb.IsStopped())
+      if(fibers[i].IsStopped())
         fibers.RemoveAt(i);
     }
 
@@ -263,8 +259,11 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void _Tick(Fiber fb)
   {
+    //TODO: store reference to fiber as FiberRef
     last_fiber = fb;
     
+    //NOTE: stale pointer guard against the fact fiber becomes stopped 
+    //      during execution for some reason (when stopped it's released)
     fb.Retain();
 
     fb.status = Execute(fb.exec);
@@ -283,13 +282,6 @@ public partial class VM : INamedResolver
     try
     {
       _Tick(fb);
-      
-      if(fb.owns.Count > 0)
-      {
-        for(int i = fb.owns.Count;i-- > 0; )
-          _Tick(fb.owns[i]);
-      }
-      
     }
     catch(Exception e)
     {
@@ -302,6 +294,10 @@ public partial class VM : INamedResolver
       {}
       throw new Error(trace, e);
     }
+
+    if(fb.attached.Count > 0)
+      Tick(fb.attached);
+
     return !fb.IsStopped();
   }
 }
