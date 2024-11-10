@@ -273,19 +273,16 @@ public partial class VM : INamedResolver
 
   public bool Tick(Fiber fb)
   {
-    bool self_stopped = fb.IsStoppedSelf();
-    if(self_stopped && fb.attached.Count == 0)
+    if(fb.IsStopped())
       return false;
 
     try
     {
-      if(!self_stopped)
-      {
-        _Tick(fb);
+      _Tick(fb);
 
-        if(fb.status != BHS.RUNNING)
-          _Stop(fb);
-      }
+      //Checking if there's no running couroutine
+      if(fb.status != BHS.RUNNING)
+        _Stop(fb);
     }
     catch(Exception e)
     {
@@ -298,15 +295,7 @@ public partial class VM : INamedResolver
       {}
       throw new Error(trace, e);
     }
-
-    if(fb.attached.Count > 0)
-      Tick(fb.attached);
-
-    bool running = !fb.IsStopped();
-    //Looks like there are no more attached fibers, we can release self
-    if(!running)
-      fb.Release();
-    return running;
+    return !fb.IsStopped();
   }
 }
 

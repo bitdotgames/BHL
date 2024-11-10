@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Runtime.CompilerServices;
 
 namespace bhl {
@@ -80,8 +79,6 @@ public partial class VM : INamedResolver
 
     internal FiberRef parent;
     public FiberRef Parent => parent;
-
-    internal List<Fiber> attached = new List<Fiber>();
     
     internal List<FiberRef> children = new List<FiberRef>();
 
@@ -105,7 +102,7 @@ public partial class VM : INamedResolver
     }
     public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
 
-    //TODO: get rid of this one
+    //TODO: get rid of this one?
     public BHS status;
 
     static public Fiber New(VM vm)
@@ -127,10 +124,9 @@ public partial class VM : INamedResolver
 
       fb.refs = 1;
       fb.stop_guard = false;
-      //TODO: what about realising values?
+      //TODO: what about releasing values?
       fb.result.Clear();
       fb.parent.Clear();
-      fb.attached.Clear();
       fb.children.Clear();
 
       //0 index frame used for return values consistency
@@ -208,12 +204,6 @@ public partial class VM : INamedResolver
       ExitScopes();
     }
 
-    internal void Adopt(Fiber fb)
-    {
-      AddChild(fb);
-      attached.Add(fb);
-    }
-
     internal void AddChild(Fiber fb)
     {
       fb.parent.Set(this);
@@ -241,12 +231,6 @@ public partial class VM : INamedResolver
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsStopped()
-    {
-      return IsStoppedSelf() && attached.Count == 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool IsStoppedSelf()
     {
       return stop_guard || exec.ip >= STOP_IP;
     }
@@ -372,7 +356,6 @@ public partial class VM : INamedResolver
   {
     Detach = 1,
     Retain = 2,
-    Adopt    = 4,
   }
 
   public Fiber Start(FuncAddr addr)
@@ -518,35 +501,19 @@ public partial class VM : INamedResolver
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
-    if(opts.HasFlag(FiberOptions.Adopt))
-    {
-      parent.Adopt(fb);
-    }
-    else
-    {
-      if(!opts.HasFlag(FiberOptions.Detach))
-        fibers.Add(fb);
-      parent?.AddChild(fb);
-    }
+    if(!opts.HasFlag(FiberOptions.Detach))
+      fibers.Add(fb);
+    parent?.AddChild(fb);
   }
 
   public void Stop(Fiber fb)
   {
+    if(fb.IsStopped())
+      return;
+
     try
     {
-      if(fb.attached.Count > 0)
-      {
-        for(int i = fb.attached.Count;i-- > 0; )
-        {
-          var attached = fb.attached[i];
-          _Stop(attached);
-          attached.Release();
-        }
-        fb.attached.Clear();
-      }
-      
       _Stop(fb);
-      fb.Release();
     }
     catch(Exception e)
     {
@@ -561,10 +528,10 @@ public partial class VM : INamedResolver
     }
   }
 
-  static void _Stop(Fiber fb)
+  static bool _Stop(Fiber fb)
   {
-    if(fb.IsStoppedSelf())
-      return;
+    if(fb.IsStopped())
+      return false;
     fb.stop_guard = true;
 
     fb.ExitScopes();
@@ -572,6 +539,10 @@ public partial class VM : INamedResolver
     //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.
     fb.exec.ip = STOP_IP + 1;
+
+    fb.Release();
+
+    return true;
   }
 
   public void StopChildren(Fiber fb)
@@ -585,22 +556,6 @@ public partial class VM : INamedResolver
         Stop(child);
       }
     }
-  }
-
-  public void Stop(int fid)
-  {
-    var fb = FindFiber(fid);
-    if(fb == null)
-      return;
-    Stop(fb);
-  }
-
-  public Fiber FindFiber(int fid)
-  {
-    for(int i=0;i<fibers.Count;++i)
-      if(fibers[i].id == fid)
-        return fibers[i];
-    return null;
   }
 
   public class ScriptExecutor
