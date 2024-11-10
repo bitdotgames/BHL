@@ -259,7 +259,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void _Tick(Fiber fb)
   {
-    //TODO: store reference to fiber as FiberRef
+    //TODO: store reference to fiber as FiberRef?
     last_fiber = fb;
     
     //NOTE: stale pointer guard against the fact fiber becomes stopped 
@@ -269,19 +269,23 @@ public partial class VM : INamedResolver
     fb.status = Execute(fb.exec);
 
     fb.Release();
-
-    if(fb.status != BHS.RUNNING)
-      _Stop(fb);
   }
 
   public bool Tick(Fiber fb)
   {
-    if(fb.IsStopped())
+    bool self_stopped = fb.IsStoppedSelf();
+    if(self_stopped && fb.attached.Count == 0)
       return false;
 
     try
     {
-      _Tick(fb);
+      if(!self_stopped)
+      {
+        _Tick(fb);
+
+        if(fb.status != BHS.RUNNING)
+          _Stop(fb);
+      }
     }
     catch(Exception e)
     {
@@ -298,7 +302,10 @@ public partial class VM : INamedResolver
     if(fb.attached.Count > 0)
       Tick(fb.attached);
 
-    return !fb.IsStopped();
+    bool running = !fb.IsStopped();
+    if(!running)
+      fb.Release();
+    return running;
   }
 }
 

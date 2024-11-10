@@ -241,7 +241,14 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsStopped()
+    {
+      return IsStoppedSelf() && attached.Count == 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsStoppedSelf()
     {
       return stop_guard || exec.ip >= STOP_IP;
     }
@@ -532,11 +539,16 @@ public partial class VM : INamedResolver
       if(fb.attached.Count > 0)
       {
         for(int i = fb.attached.Count;i-- > 0; )
-          _Stop(fb.attached[i]);
+        {
+          var attached = fb.attached[i];
+          _Stop(attached);
+          attached.Release();
+        }
         fb.attached.Clear();
       }
       
       _Stop(fb);
+      fb.Release();
     }
     catch(Exception e)
     {
@@ -559,8 +571,6 @@ public partial class VM : INamedResolver
 
     fb.ExitScopes();
 
-    //NOTE: we release the fiber
-    fb.Release();
     //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.
     fb.exec.ip = STOP_IP + 1;
