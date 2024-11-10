@@ -303,6 +303,7 @@ public partial class VM : INamedResolver
       Tick(fb.attached);
 
     bool running = !fb.IsStopped();
+    //Looks like there are no more attached fibers, we can release self
     if(!running)
       fb.Release();
     return running;

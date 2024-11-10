@@ -208,11 +208,9 @@ public partial class VM : INamedResolver
       ExitScopes();
     }
 
-    internal void AddOwn(Fiber fb)
+    internal void Adopt(Fiber fb)
     {
       AddChild(fb);
-      
-      fb.Retain();
       attached.Add(fb);
     }
 
@@ -522,7 +520,7 @@ public partial class VM : INamedResolver
     fb.id = ++fibers_ids;
     if(opts.HasFlag(FiberOptions.Adopt))
     {
-      parent.AddOwn(fb);
+      parent.Adopt(fb);
     }
     else
     {
@@ -565,7 +563,7 @@ public partial class VM : INamedResolver
 
   static void _Stop(Fiber fb)
   {
-    if(fb.IsStopped())
+    if(fb.IsStoppedSelf())
       return;
     fb.stop_guard = true;
 
