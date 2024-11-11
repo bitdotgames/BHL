@@ -1389,10 +1389,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(name_symb is Namespace ns && chain_items.Count > 0)
     {
       scope = ns;
-      for(chain_offset=0; chain_offset<chain_items.Count;)
+      for(chain_offset = 0; chain_offset < chain_items.Count; )
       {
         var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
-        if(macc == null)
+        if(macc == null || macc.NAME() == null)
         {
           AddError(chain_items.At(chain_offset), "bad chain call");
           return;
