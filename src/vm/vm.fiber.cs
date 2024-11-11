@@ -341,9 +341,9 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Stop()
+    public void Stop(bool with_children = false)
     {
-      vm.Stop(this);
+      vm.Stop(this, with_children);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -512,26 +512,29 @@ public partial class VM : INamedResolver
     parent?.AddChild(fb);
   }
 
-  public void Stop(Fiber fb)
+  public void Stop(Fiber fb, bool with_children = false)
   {
-    if(fb.IsStopped())
-      return;
-
-    try
+    if(!fb.IsStopped())
     {
-      _Stop(fb);
-    }
-    catch(Exception e)
-    {
-      var trace = new List<VM.TraceItem>();
       try
       {
-        fb.GetStackTrace(trace);
+        _Stop(fb);
       }
-      catch(Exception)
-      {}
-      throw new Error(trace, e);
+      catch(Exception e)
+      {
+        var trace = new List<VM.TraceItem>();
+        try
+        {
+          fb.GetStackTrace(trace);
+        }
+        catch(Exception)
+        {}
+        throw new Error(trace, e);
+      }
     }
+
+    if(with_children)
+      StopChildren(fb);
   }
 
   static bool _Stop(Fiber fb)
@@ -557,10 +560,7 @@ public partial class VM : INamedResolver
     {
       var child = child_ref.Get();
       if(child != null)
-      {
-        StopChildren(child);
-        Stop(child);
-      }
+        Stop(child, true);
     }
   }
 

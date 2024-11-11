@@ -131,8 +131,7 @@ public class TestFiber : BHL_TestBase
 
     AssertTrue(fb.Tick());
 
-    fb.Stop();
-    fb.StopChildren();
+    fb.Stop(true);
 
     CommonChecks(vm);
   }
