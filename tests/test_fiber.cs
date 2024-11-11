@@ -107,6 +107,35 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestFiberStopChildrenStartedFromDefer()
+  {
+    string bhl = @"
+    coro func foo() {
+      yield suspend()
+    }
+
+    coro func test() {
+      defer {
+        start(foo)
+      }
+      start(foo)
+      start(foo)
+      yield suspend()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = vm.Start("test");
+
+    AssertTrue(fb.Tick());
+
+    fb.Stop();
+    fb.StopChildren();
+
+    CommonChecks(vm);
+  }
   
   [Fact]
   public void TestDirectExecuteNativeFunc()

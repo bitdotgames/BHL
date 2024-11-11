@@ -345,6 +345,12 @@ public partial class VM : INamedResolver
     {
       vm.Stop(this);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void StopChildren()
+    {
+      vm.StopChildren(this);
+    }
   }
 
   int fibers_ids = 0;
