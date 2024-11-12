@@ -396,7 +396,7 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
     this.native2val = native2val;
   }
 
-  public ValList2NativeAdapter<T> GetAdapter(Val arr_val = null)
+  public ValList2NativeAdapter<T> GetValListAdapter(Val arr_val = null)
   {
     return new ValList2NativeAdapter<T>(val2native, native2val, item_type, arr_val);
   }
