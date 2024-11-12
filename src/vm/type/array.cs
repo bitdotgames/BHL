@@ -515,24 +515,25 @@ public struct ArrayWrapper<T> : IDisposable
   public ArrayWrapper(Val arr)
   {
     this.type = (ArrayTypeSymbol)arr.type;
-    this.arr = arr;
     native = type as NativeListTypeSymbol<T>;
     generic = type as GenericArrayNativeTypeSymbol<T>;
     if(native == null && generic == null)
-      throw new Exception("Incompatible array type");
+      throw new Exception("Incompatible array type: " + type?.GetType().Name);
+    
+    this.arr = arr;
   }
 
   public ArrayWrapper(VM vm, ArrayTypeSymbol type)
   {
     this.type = type;
     
-    arr = Val.New(vm);
-    type.ArrCreate(vm, ref arr);
-    
     native = type as NativeListTypeSymbol<T>;
     generic = type as GenericArrayNativeTypeSymbol<T>;
     if(native == null && generic == null)
-      throw new Exception("Incompatible array type");
+      throw new Exception("Incompatible array type: " + type?.GetType().Name);
+    
+    arr = Val.New(vm);
+    type.ArrCreate(vm, ref arr);
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
