@@ -384,6 +384,8 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
 {
   Func<Val, T> val2native;
   Func<VM, ProxyType, T, Val> native2val;
+  
+  public GenericArrayTypeSymbol GenericType { get; } 
 
   public NativeListTypeSymbol(
     Origin origin, string name, 
@@ -395,11 +397,13 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
   {
     this.val2native = val2native;
     this.native2val = native2val;
+
+    GenericType = new GenericArrayTypeSymbol(origin, item_type);
   }
 
-  public ValList2NativeAdapter<T> GetValListAdapter(ValList lst = null)
+  public GenericArrayAdapter<T> GetGenericAdapter(ValList lst = null)
   {
-    return new ValList2NativeAdapter<T>(val2native, native2val, item_type, lst);
+    return new GenericArrayAdapter<T>(val2native, native2val, item_type, lst);
   }
 
   public Val MakeVal(VM vm, IList<T> lst)
@@ -472,7 +476,7 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
   }
 }
 
-public struct ValList2NativeAdapter<T>
+public struct GenericArrayAdapter<T>
 {
   Func<Val, T> val2native;
   Func<VM, ProxyType, T, Val> native2val;
@@ -483,7 +487,7 @@ public struct ValList2NativeAdapter<T>
 
   public ValList ValList => lst;
 
-  public ValList2NativeAdapter(
+  public GenericArrayAdapter(
     Func<Val, T> val2native, 
     Func<VM, ProxyType, T, Val> native2val,
     ProxyType item_type,

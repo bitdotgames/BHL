@@ -943,7 +943,7 @@ public class TestArrays : BHL_TestBase
     var vm = new VM();
     var lst = ValList.New(vm);
 
-    var adapter = ArrayInts.GetValListAdapter(lst);
+    var adapter = ArrayInts.GetGenericAdapter(lst);
     AssertEqual(0, adapter.Count);
     
     adapter.Add(10);
