@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -324,11 +325,11 @@ public abstract class GenericNativeArrayTypeSymbol :
     return lst;
   }
 
-  public abstract IList CreateList();
+  public abstract IList CreateList(VM vm);
 
   public override void ArrCreate(VM vm, ref Val arr)
   {
-    arr.SetObj(CreateList(), this);
+    arr.SetObj(CreateList(vm), this);
   }
 
   public override int ArrCount(Val arr)
@@ -394,6 +395,16 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
     this.val2native = val2native;
     this.native2val = native2val;
   }
+
+  public ValList2NativeAdapter<T> GetAdapter(Val arr_val = null)
+  {
+    return new ValList2NativeAdapter<T>(val2native, native2val, item_type, arr_val);
+  }
+
+  public Val MakeVal(VM vm, IList<T> lst)
+  {
+    return Val.NewObj(vm, lst, this);
+  }
   
   protected override void DefineMembers()
   {
@@ -419,7 +430,7 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
     }
   }
   
-  public override IList CreateList()
+  public override IList CreateList(VM vm)
   {
     return new List<T>();
   }
@@ -457,6 +468,80 @@ public class NativeListTypeSymbol<T> : GenericNativeArrayTypeSymbol
   public override uint ClassId()
   {
     throw new NotImplementedException();
+  }
+}
+
+public struct ValList2NativeAdapter<T>
+{
+  Func<Val, T> val2native;
+  Func<VM, ProxyType, T, Val> native2val;
+  ProxyType item_type;
+  Val arr_val;
+
+  public int Count => GetCount(arr_val);
+
+  public ValList2NativeAdapter(
+    Func<Val, T> val2native, 
+    Func<VM, ProxyType, T, Val> native2val,
+    ProxyType item_type,
+    Val arr_val
+    )
+  {
+    this.val2native = val2native;
+    this.native2val = native2val;
+    this.item_type = item_type;
+    this.arr_val = arr_val;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Add(T item)
+  {
+    Add(arr_val, item);
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public T At(int idx)
+  {
+    return At(arr_val, idx);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void RemoveAt(int idx)
+  {
+    RemoveAt(arr_val, idx);
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Add(Val arr_val, T item)
+  {
+    var val = native2val(arr_val.vm, item_type, item);
+    Types.Array.ArrAdd(arr_val, val);
+    //the call above calls extra Retain on val
+    val.Release();
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public T At(Val arr_val, int idx)
+  {
+    var val = Types.Array.ArrGetAt(arr_val, idx);
+    //the call above calls extra Retain on val
+    val.Release();
+    return val2native(val);
+  }
+    
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void RemoveAt(Val arr_val, int idx)
+  {
+    var val = Types.Array.ArrGetAt(arr_val, idx);
+    Types.Array.ArrRemoveAt(arr_val, idx);
+    //the call above doesn't Release the val we need to do it manually
+    val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public int GetCount(Val arr_val)
+  {
+    return Types.Array.ArrCount(arr_val);
   }
 }
 

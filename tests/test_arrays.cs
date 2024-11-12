@@ -709,6 +709,54 @@ public class TestArrays : BHL_TestBase
     AssertEqual(res, "2102030");
     CommonChecks(vm);
   }
+  
+  [Fact]
+  public void TestNativeListTypeSymbolBasicOperations()
+  {
+    var ArrayInts = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, itype, n) => Val.NewInt(_vm, n),
+      Types.Int
+    );
+    ArrayInts.Setup();
+
+    var list = new List<int>();
+    
+    var vm = new VM();
+    var arr = ArrayInts.MakeVal(vm, list);
+    
+    AssertEqual(0, ArrayInts.ArrCount(arr));
+
+    {
+      var val = Val.NewInt(vm, 10);
+      ArrayInts.ArrAdd(arr, val);
+      val.Release();
+      
+      AssertEqual(1, ArrayInts.ArrCount(arr));
+      AssertEqual(1, list.Count);
+    }
+
+    {
+      var val = ArrayInts.ArrGetAt(arr, 0);
+      AssertEqual(10, val.num);
+      val.Release();
+      
+      AssertEqual(10, list[0]);
+    }
+
+    {
+      ArrayInts.ArrRemoveAt(arr, 0);
+      AssertEqual(0, ArrayInts.ArrCount(arr));
+      
+      AssertEqual(0, list.Count);
+    }
+
+    arr.Release();
+    
+    CommonChecks(vm);
+  }
 
   [Fact]
   public void TestNativeListProxy()
@@ -878,5 +926,35 @@ public class TestArrays : BHL_TestBase
     AssertTrue(ArrayInts1.Equals(ArrayInts2));
     AssertFalse(ArrayString.Equals(ArrayInts1));
 
+  }
+  
+  [Fact]
+  public void TestValList2NativeAdapter()
+  {
+    var ArrayInts = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, itype, n) => Val.NewInt(_vm, n),
+      Types.Int
+    );
+    ArrayInts.Setup();
+    
+    var vm = new VM();
+    var arr = Val.NewObj(vm, ValList.New(vm), Types.Array);
+
+    var adapter = ArrayInts.GetAdapter(arr);
+    AssertEqual(0, adapter.Count);
+    
+    adapter.Add(10);
+    AssertEqual(1, adapter.Count);
+    AssertEqual(10, adapter.At(0));
+
+    adapter.RemoveAt(0);
+    AssertEqual(0, adapter.Count);
+    
+    arr.Release();
+    
+    CommonChecks(vm);
   }
 }
