@@ -941,9 +941,9 @@ public class TestArrays : BHL_TestBase
     ArrayInts.Setup();
     
     var vm = new VM();
-    var arr = Val.NewObj(vm, ValList.New(vm), Types.Array);
+    var lst = ValList.New(vm);
 
-    var adapter = ArrayInts.GetValListAdapter(arr);
+    var adapter = ArrayInts.GetValListAdapter(lst);
     AssertEqual(0, adapter.Count);
     
     adapter.Add(10);
@@ -953,7 +953,7 @@ public class TestArrays : BHL_TestBase
     adapter.RemoveAt(0);
     AssertEqual(0, adapter.Count);
     
-    arr.Release();
+    lst.Release();
     
     CommonChecks(vm);
   }
