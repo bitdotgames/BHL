@@ -725,7 +725,7 @@ public class TestArrays : BHL_TestBase
     var list = new List<int>();
     
     var vm = new VM();
-    var arr = ArrayInts.MakeVal(vm, list);
+    var arr = Val.NewObj(vm, list, ArrayInts);
     
     AssertEqual(0, ArrayInts.ArrCount(arr));
 
@@ -925,11 +925,10 @@ public class TestArrays : BHL_TestBase
     
     AssertTrue(ArrayInts1.Equals(ArrayInts2));
     AssertFalse(ArrayString.Equals(ArrayInts1));
-
   }
   
   [Fact]
-  public void TestValList2NativeAdapter()
+  public void TestArrayWrapperWithNativeList()
   {
     var ArrayInts = new NativeListTypeSymbol<int>(
       new Origin(),
@@ -941,19 +940,95 @@ public class TestArrays : BHL_TestBase
     ArrayInts.Setup();
     
     var vm = new VM();
-    var lst = ValList.New(vm);
 
-    var adapter = ArrayInts.GetGenericAdapter(lst);
-    AssertEqual(0, adapter.Count);
+    var arr = new ArrayWrapper<int>(vm, ArrayInts);
     
-    adapter.Add(10);
-    AssertEqual(1, adapter.Count);
-    AssertEqual(10, adapter.At(0));
+    AssertEqual(0, arr.Count);
+    
+    arr.Add(10);
+    AssertEqual(1, arr.Count);
+    AssertEqual(10, arr.At(0));
 
-    adapter.RemoveAt(0);
-    AssertEqual(0, adapter.Count);
+    arr.RemoveAt(0);
+    AssertEqual(0, arr.Count);
     
-    lst.Release();
+    arr.Add(100);
+    AssertEqual(1, arr.Count);
+    arr.Clear();
+    AssertEqual(0, arr.Count);
+    
+    arr.Dispose();
+    
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestArrayWrapperWithGenericArray()
+  {
+    var ArrayInts = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, itype, n) => Val.NewInt(_vm, n),
+      Types.Int
+    );
+    ArrayInts.Setup();
+    
+    var vm = new VM();
+
+    var arr = new ArrayWrapper<int>(vm, ArrayInts.GenericArrayType);
+    
+    AssertEqual(0, arr.Count);
+    
+    arr.Add(10);
+    AssertEqual(1, arr.Count);
+    AssertEqual(10, arr.At(0));
+
+    arr.RemoveAt(0);
+    AssertEqual(0, arr.Count);
+    
+    arr.Add(100);
+    AssertEqual(1, arr.Count);
+    arr.Clear();
+    AssertEqual(0, arr.Count);
+    
+    arr.Dispose();
+    
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestArrayWrapperCreateVal()
+  {
+    var ArrayInts = new NativeListTypeSymbol<int>(
+      new Origin(),
+      "List_int",
+      (v) => (int)v._num,
+      (_vm, itype, n) => Val.NewInt(_vm, n),
+      Types.Int
+    );
+    ArrayInts.Setup();
+    
+    var vm = new VM();
+
+    var arr = new ArrayWrapper<int>(vm, ArrayInts);
+    
+    AssertEqual(0, arr.Count);
+    
+    arr.Add(10);
+    AssertEqual(1, arr.Count);
+    AssertEqual(10, arr.At(0));
+
+    arr.RemoveAt(0);
+    AssertEqual(0, arr.Count);
+    
+    arr.Add(100);
+
+    var arr2 = new ArrayWrapper<int>(arr.Val);
+    AssertEqual(1, arr2.Count);
+    AssertEqual(100, arr2.At(0));
+    
+    arr2.Dispose();
     
     CommonChecks(vm);
   }

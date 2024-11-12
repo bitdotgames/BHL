@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
-
+  
+//TODO: implement IList as well?
 public class ValList : IList<Val>, IValRefcounted
 {
   //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
