@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace bhl {
-
+  
+//TODO: not fully implemented
 public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
   internal VM.Pool<ValList<T>> pool;
@@ -152,9 +153,14 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     throw new NotImplementedException();
   }
 
-  public void CopyTo(T[] array, int arrayidx)
+  public void CopyTo(T[] array, int start_idx)
   {
-    throw new NotImplementedException();
+    int target_size = Count - start_idx;
+    if(target_size > array.Length)
+      throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, target_size));
+
+    for (int i = start_idx, j = 0; i < Count; i++, j++)
+      array[j] = this[i];
   }
 
   public bool Remove(T item)
