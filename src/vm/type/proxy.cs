@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using bhl.marshall;
 
 namespace bhl {
@@ -36,12 +37,14 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     SetResolved(obj);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsEmpty()
   {
     return string.IsNullOrEmpty(path) && 
            resolved == null;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsNull()
   {
     return resolved == null && 
@@ -54,6 +57,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     resolved = null;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public IType Get()
   {
     if(resolved != null)

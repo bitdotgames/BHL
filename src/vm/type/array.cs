@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using bhl.marshall;
 
 namespace bhl {
 
@@ -386,10 +385,11 @@ public abstract class NativeListTypeSymbol :
 //NOTE: operates on IList<T>
 public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 {
-  internal Func<Val, T> val2native;
-  internal Func<VM, ProxyType, T, Val> native2val;
+  Func<Val, T> val2native;
+  public Func<Val, T> Val2Native => val2native;
   
-  public GenericArrayNativeTypeSymbol<T> GenericArrayType { get; } 
+  Func<VM, ProxyType, T, Val> native2val;
+  public Func<VM, ProxyType, T, Val> Native2Val => native2val;
 
   public NativeListTypeSymbol(
     Origin origin, string name, 
@@ -401,8 +401,6 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
   {
     this.val2native = val2native;
     this.native2val = native2val;
-
-    GenericArrayType = new GenericArrayNativeTypeSymbol<T>(origin, val2native, native2val, item_type);
   }
 
   protected override void DefineMembers()
@@ -467,113 +465,6 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
   public override uint ClassId()
   {
     throw new NotImplementedException();
-  }
-}
-
-//NOTE: operates on ValList which contains T
-public class GenericArrayNativeTypeSymbol<T> : GenericArrayTypeSymbol
-{
-  internal Func<Val, T> val2native;
-  internal Func<VM, ProxyType, T, Val> native2val;
-
-  public GenericArrayNativeTypeSymbol(
-    Origin origin,
-    Func<Val, T> val2native,
-    Func<VM, ProxyType, T, Val> native2val,
-    ProxyType item_type
-    )
-    : base(origin, item_type)
-  {
-    this.val2native = val2native;
-    this.native2val = native2val;
-  }
-  
-  public override void Sync(SyncContext ctx)
-  {
-    throw new NotImplementedException();
-  }
-
-  public override uint ClassId()
-  {
-    throw new NotImplementedException();
-  }
-}
-
-public struct ArrayWrapper<T> : IDisposable
-{
-  ArrayTypeSymbol type;
-  public ArrayTypeSymbol Type => type;
-  
-  Val arr;
-  public Val Val => arr;
-  
-  NativeListTypeSymbol<T> native;
-  GenericArrayNativeTypeSymbol<T> generic;
-
-  public int Count => type.ArrCount(arr); 
-
-  public ArrayWrapper(Val arr)
-  {
-    this.type = (ArrayTypeSymbol)arr.type;
-    native = type as NativeListTypeSymbol<T>;
-    generic = type as GenericArrayNativeTypeSymbol<T>;
-    if(native == null && generic == null)
-      throw new Exception("Incompatible array type: " + type?.GetType().Name);
-    
-    this.arr = arr;
-  }
-
-  public ArrayWrapper(VM vm, ArrayTypeSymbol type)
-  {
-    this.type = type;
-    
-    native = type as NativeListTypeSymbol<T>;
-    generic = type as GenericArrayNativeTypeSymbol<T>;
-    if(native == null && generic == null)
-      throw new Exception("Incompatible array type: " + type?.GetType().Name);
-    
-    arr = Val.New(vm);
-    type.ArrCreate(vm, ref arr);
-  }
-  
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public T At(int idx)
-  {
-    if(generic != null)
-      return generic.val2native(((ValList)arr._obj)[idx]);
-    else
-      return ((IList<T>)arr._obj)[idx];
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Add(T val)
-  {
-    if(generic != null)
-    {
-      var tmp = generic.native2val(arr.vm, generic.item_type, val);
-      ((ValList)arr._obj).Add(tmp);
-      //the value is copied when added, we need to release the tmp value
-      tmp.Release();
-    }
-    else
-      ((IList<T>)arr._obj).Add(val);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void RemoveAt(int idx)
-  {
-    type.ArrRemoveAt(arr, idx);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Clear()
-  {
-    type.ArrClear(arr);
-  }
-  
-  public void Dispose()
-  {
-    arr.Release();
   }
 }
 

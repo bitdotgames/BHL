@@ -928,7 +928,7 @@ public class TestArrays : BHL_TestBase
   }
   
   [Fact]
-  public void TestArrayWrapperWithNativeList()
+  public void TestValListEnumerator()
   {
     var ArrayInts = new NativeListTypeSymbol<int>(
       new Origin(),
@@ -941,95 +941,53 @@ public class TestArrays : BHL_TestBase
     
     var vm = new VM();
 
-    var arr = new ArrayWrapper<int>(vm, ArrayInts);
-    
-    AssertEqual(0, arr.Count);
-    
-    arr.Add(10);
-    AssertEqual(1, arr.Count);
-    AssertEqual(10, arr.At(0));
+    var vals = ValList.New(vm);
+    {
+      var v1 = Val.NewInt(vm, 10);
+      vals.Add(v1);
+      v1.Release();
+    }
 
-    arr.RemoveAt(0);
-    AssertEqual(0, arr.Count);
+    {
+      var v2 = Val.NewInt(vm, 20);
+      vals.Add(v2);
+      v2.Release();
+    }
+
+    var en = ValList<int>.New(vals, ArrayInts.Val2Native);
     
-    arr.Add(100);
-    AssertEqual(1, arr.Count);
-    arr.Clear();
-    AssertEqual(0, arr.Count);
+    var res = new List<int>();
+    foreach(var n in en)
+      res.Add(n);
+
+    AssertEqual(2, res.Count);
+    AssertEqual(10, res[0]);
+    AssertEqual(20, res[1]);
     
-    arr.Dispose();
+    en.Release();
     
     CommonChecks(vm);
   }
-  
+
   [Fact]
-  public void TestArrayWrapperWithGenericArray()
+  public void TestPoolList()
   {
-    var ArrayInts = new NativeListTypeSymbol<int>(
-      new Origin(),
-      "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
-      Types.Int
-    );
-    ArrayInts.Setup();
-    
-    var vm = new VM();
+    {
+      var lst = PoolList<int>.New();
+      lst.Add(10);
 
-    var arr = new ArrayWrapper<int>(vm, ArrayInts.GenericArrayType);
-    
-    AssertEqual(0, arr.Count);
-    
-    arr.Add(10);
-    AssertEqual(1, arr.Count);
-    AssertEqual(10, arr.At(0));
+      AssertEqual(1, lst.Count);
+      AssertEqual(10, lst[0]);
 
-    arr.RemoveAt(0);
-    AssertEqual(0, arr.Count);
+      lst.Release();
+    }
     
-    arr.Add(100);
-    AssertEqual(1, arr.Count);
-    arr.Clear();
-    AssertEqual(0, arr.Count);
-    
-    arr.Dispose();
-    
-    CommonChecks(vm);
-  }
-  
-  [Fact]
-  public void TestArrayWrapperCreateVal()
-  {
-    var ArrayInts = new NativeListTypeSymbol<int>(
-      new Origin(),
-      "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
-      Types.Int
-    );
-    ArrayInts.Setup();
-    
-    var vm = new VM();
-
-    var arr = new ArrayWrapper<int>(vm, ArrayInts);
-    
-    AssertEqual(0, arr.Count);
-    
-    arr.Add(10);
-    AssertEqual(1, arr.Count);
-    AssertEqual(10, arr.At(0));
-
-    arr.RemoveAt(0);
-    AssertEqual(0, arr.Count);
-    
-    arr.Add(100);
-
-    var arr2 = new ArrayWrapper<int>(arr.Val);
-    AssertEqual(1, arr2.Count);
-    AssertEqual(100, arr2.At(0));
-    
-    arr2.Dispose();
-    
-    CommonChecks(vm);
+    {
+      var lst = PoolList<int>.New();
+      
+      AssertEqual(0, lst.Count);
+      
+      lst.Release();
+    }
   }
 }

@@ -16,6 +16,9 @@
    <Compile Include="..\g\*.cs" />
    <Compile Include="..\vm\**\*.cs" />
    <Compile Include=".\*.cs" />
+   <Compile Update="..\vm\util\val_list_adapter.cs">
+     <Link>util\val_list_adapter.cs</Link>
+   </Compile>
   </ItemGroup>
 
   <ItemGroup>
