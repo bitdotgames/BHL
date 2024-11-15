@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using bhl.marshall;
 
@@ -69,6 +68,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     return resolved;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void SetResolved(IType resolved)
   {
     this.resolved = resolved;

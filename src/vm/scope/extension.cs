@@ -137,22 +137,35 @@ public static class ScopeExtensions
 
   //NOTE: the first item of the resolved path is tried to be resolved
   //      with fallback (e.g. trying the 'upper' scopes)
-  public static Symbol ResolveSymbolByPath(this IScope scope, string path)
+  public static Symbol ResolveSymbolByPath(this IScope scope, string path_str)
   {
+    var path = path_str.AsMemory();
+    
     int start_idx = 0;
-    int next_idx = path.IndexOf('.');
+    int next_idx = path.Span.IndexOf('.');
 
     while(true)
     {
-      string name = 
+      //NOTE: the code below tries to make as little allocations as possible 
+      var name = 
         next_idx == -1 ? 
-        (start_idx == 0 ? path : path.Substring(start_idx)) : 
-        path.Substring(start_idx, next_idx - start_idx);
+        (start_idx == 0 ? path : path.Slice(start_idx)) : 
+        path.Slice(start_idx, next_idx - start_idx);
 
+      var name_str = (next_idx == -1 && start_idx == 0) ? 
+        path_str : 
+        string.Create(name.Length, name,
+          (chars, buf) =>
+          {
+            for(int i = 0; i < chars.Length; ++i)
+              chars[i] = buf.Span[i];
+          }
+          );
+      
       //NOTE: for the root item let's resolve with fallback
       var symb = start_idx == 0 ? 
-        scope.ResolveWithFallback(name) : 
-        scope.ResolveRelatedOnly(name);
+        scope.ResolveWithFallback(name_str) : 
+        scope.ResolveRelatedOnly(name_str);
 
       if(symb == null)
         break;
@@ -162,7 +175,9 @@ public static class ScopeExtensions
         return symb;
 
       start_idx = next_idx + 1;
-      next_idx = path.IndexOf('.', start_idx);
+      next_idx = path.Slice(start_idx).Span.IndexOf('.');
+      if(next_idx != -1)
+        next_idx += start_idx;
 
       scope = symb as IScope;
       //we can't proceed 'deeper' if the last resolved 
