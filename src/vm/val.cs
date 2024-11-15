@@ -151,6 +151,7 @@ public class Val
   }
 
   //NOTE: doesn't affect refcounting
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void ValueCopyFrom(Val dv)
   {
     type = dv.type;
@@ -162,6 +163,7 @@ public class Val
     _refc = dv._refc;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public Val CloneValue()
   {
     var copy = Val.New(vm);
@@ -312,6 +314,7 @@ public class Val
     _refc = o as IValRefcounted;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsValueEqual(Val o)
   {
     bool res =

@@ -374,6 +374,9 @@ public partial class VM : INamedResolver
     return Start(addr, args.Count, args);
   }
 
+  //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
+  //       1) args put into stack
+  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg  
   public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);

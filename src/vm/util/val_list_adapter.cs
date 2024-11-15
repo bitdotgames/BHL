@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
   
@@ -67,6 +68,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     Release();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T At(int idx)
   {
     var res = val2native(lst[idx]);
