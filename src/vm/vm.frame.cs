@@ -22,7 +22,7 @@ public partial class VM : INamedResolver
     public List<Const> constants;
     public List<ProxyType> type_refs;
     public ValStack locals = new ValStack(MAX_LOCALS);
-    public ValStack _stack = new ValStack(MAX_STACK);
+    public ValStack stack = new ValStack(MAX_STACK);
     public int start_ip;
     public int return_ip;
     public Frame origin;
@@ -131,12 +131,12 @@ public partial class VM : INamedResolver
       }
       locals.Clear();
 
-      for(int i=_stack.Count;i-- > 0;)
+      for(int i=stack.Count;i-- > 0;)
       {
-        var val = _stack[i];
+        var val = stack[i];
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
-      _stack.Clear();
+      stack.Clear();
 
       if(defers != null)
         defers.Clear();

@@ -158,7 +158,7 @@ public partial class VM : INamedResolver
       exec.ip = frm.start_ip;
       exec.frames.Push(frm);
       exec.regions.Push(new Region(frm, frm));
-      exec.stack = frm._stack;
+      exec.stack = frm.stack;
     }
 
     internal void ExitScopes()
@@ -174,11 +174,11 @@ public partial class VM : INamedResolver
         //we need to copy 0 index frame returned values
         {
           var frame0 = exec.frames[0];
-          for(int c=0;c<frame0._stack.Count;++c)
-            result.Push(frame0._stack[c]);
+          for(int c=0;c<frame0.stack.Count;++c)
+            result.Push(frame0.stack[c]);
           //let's clear the frame's stack so that values
           //won't be released below
-          frame0._stack.Clear();
+          frame0.stack.Clear();
         }
 
         for(int i=exec.frames.Count;i-- > 0;)
@@ -390,16 +390,16 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, frame0, frame0._stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(fb, frame0, frame0.stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
       //     there's a special opcode responsible for returning the certain amount of values
-      PassArgsAndAttach(addr.fsn, fb, frame, frame0._stack, args_info, args);
+      PassArgsAndAttach(addr.fsn, fb, frame, frame0.stack, args_info, args);
     }
     else
     {
-      frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
+      frame.Init(fb, frame0, frame0.stack, addr.module, addr.ip);
 
       PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
     }
@@ -486,11 +486,11 @@ public partial class VM : INamedResolver
     for(int i = args.Count; i-- > 0;)
     {
       var arg = args[i];
-      frame._stack.Push(arg);
+      frame.stack.Push(arg);
     }
 
     //passing args info as stack variable
-    frame._stack.Push(args_info);
+    frame.stack.Push(args_info);
 
     fb.Attach(frame);
   }
@@ -621,18 +621,18 @@ public partial class VM : INamedResolver
 
       frm.Retain();
 
-      frm.Init(fb, fb_frm0, fb_frm0._stack, addr.module, addr.ip);
+      frm.Init(fb, fb_frm0, fb_frm0.stack, addr.module, addr.ip);
 
       for(int i = args.Count; i-- > 0;)
       {
         var arg = args[i];
-        frm._stack.Push(arg);
+        frm.stack.Push(arg);
       }
 
       //passing args info as stack variable
       args_info_val.Retain();
       args_info_val._num = args_info.bits;
-      frm._stack.Push(args_info_val);
+      frm.stack.Push(args_info_val);
 
       fb.Attach(frm);
 

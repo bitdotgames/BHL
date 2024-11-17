@@ -790,7 +790,7 @@ public partial class VM : INamedResolver
         {
           int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
 
-          var new_val = init_frame._stack.Pop();
+          var new_val = init_frame.stack.Pop();
           module.gvar_vals.Assign(this, var_idx, new_val);
           new_val.Release();
         }
@@ -800,7 +800,7 @@ public partial class VM : INamedResolver
           int const_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var cn = constants[const_idx];
           var cv = cn.ToVal(this);
-          init_frame._stack.Push(cv);
+          init_frame.stack.Push(cv);
         }
         break;
         case Opcodes.Add:
@@ -819,27 +819,27 @@ public partial class VM : INamedResolver
         case Opcodes.GT:
         case Opcodes.GTE:
         {
-          ExecuteBinaryOp(opcode, init_frame._stack);
+          ExecuteBinaryOp(opcode, init_frame.stack);
         }
         break;
         case Opcodes.UnaryNot:
         case Opcodes.UnaryNeg:
         {
-          ExecuteUnaryOp(opcode, init_frame._stack);
+          ExecuteUnaryOp(opcode, init_frame.stack);
         }
         break;
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
           var type = type_refs[type_idx].Get();
-          HandleNew(init_frame, init_frame._stack, type);
+          HandleNew(init_frame, init_frame.stack, type);
         }
         break;
         case Opcodes.SetAttrInplace:
         {
           int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          var val = init_frame._stack.Pop();
-          var obj = init_frame._stack.Peek();
+          var val = init_frame.stack.Pop();
+          var obj = init_frame.stack.Peek();
           var class_symb = (ClassSymbol)obj.type;
           var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
           field_symb.setter(init_frame, ref obj, val, field_symb);
@@ -848,22 +848,22 @@ public partial class VM : INamedResolver
         break;
         case Opcodes.ArrAddInplace:
         {
-          var self = init_frame._stack[init_frame._stack.Count - 2];
+          var self = init_frame.stack[init_frame.stack.Count - 2];
           self.Retain();
           var class_type = ((ArrayTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame._stack, new FuncArgsInfo(), ref status);
-          init_frame._stack.Push(self);
+          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame.stack, new FuncArgsInfo(), ref status);
+          init_frame.stack.Push(self);
         }
         break;
         case Opcodes.MapAddInplace:
         {
-          var self = init_frame._stack[init_frame._stack.Count - 3];
+          var self = init_frame.stack[init_frame.stack.Count - 3];
           self.Retain();
           var class_type = ((MapTypeSymbol)self.type);
           var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame._stack, new FuncArgsInfo(), ref status);
-          init_frame._stack.Push(self);
+          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame.stack, new FuncArgsInfo(), ref status);
+          init_frame.stack.Push(self);
         }
         break;
         default:
@@ -1047,12 +1047,12 @@ public partial class VM : INamedResolver
   {
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
     for(int i = 0; i < args_num; ++i)
-      new_frame._stack.Push(exec.stack.Pop());
-    new_frame._stack.Push(Val.NewInt(this, args_bits));
+      new_frame.stack.Push(exec.stack.Pop());
+    new_frame.stack.Push(Val.NewInt(this, args_bits));
 
     //let's remember ip to return to
     new_frame.return_ip = exec.ip;
-    exec.stack = new_frame._stack;
+    exec.stack = new_frame.stack;
     exec.frames.Push(new_frame);
     exec.regions.Push(new Region(new_frame, new_frame));
     //since ip will be incremented below we decrement it intentionally here
