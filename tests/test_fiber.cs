@@ -1225,6 +1225,59 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
+  
+  [Fact]
+  public void TestStaleFrameReferenceFuncPtrBug()
+  {
+    string bhl = @"
+    
+    func sub(int a, int b) {
+       trace((string)(b - a) + "";"")
+    }
+
+    func test() {
+      StartScriptInMgr(
+        script: coro func() { 
+          int a = 1
+          int b = 3
+          defer {
+            sub(a, b)
+          }
+
+          yield()
+        },
+        spawns : 1
+      )
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    
+    AssertEqual("", log.ToString());
+
+    ScriptMgr.instance.Tick();
+
+    //NOTE: in case of bug the defer block is going to use a stale Frame
+    //      and it will lead to origin stack pointing to the new Frame's stack!
+    var frm = VM.Frame.New(vm);
+    
+    ScriptMgr.instance.Tick();
+
+    AssertEqual("2;", log.ToString());
+    
+    AssertTrue(!ScriptMgr.instance.Busy);
+    
+    frm.Release();
+
+    CommonChecks(vm);
+  }
 
   [Fact]
   public void TestExecute()
@@ -1318,7 +1371,7 @@ public class TestFiber : BHL_TestBase
 
     public void Start(VM.Frame origin, VM.FuncPtr ptr, ValStack stack)
     {
-      var fb = origin.vm.Start(ptr, origin, stack);
+      var fb = origin.vm.Start(ptr, origin);
       origin.vm.Detach(fb);
       active.Add(fb);
     }

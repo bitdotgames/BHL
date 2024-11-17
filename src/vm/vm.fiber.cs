@@ -100,7 +100,7 @@ public partial class VM : INamedResolver
         return exec.frames[0];
       }
     }
-    public FixedStack<Val> result = new FixedStack<Val>(Frame.MAX_STACK);
+    public ValStack result = new ValStack(Frame.MAX_STACK);
 
     //TODO: get rid of this one?
     public BHS status;
@@ -390,7 +390,7 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, frame0, frame0.stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(fb, frame0.stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
       //     related to returning all result values from the call. In 'normal' flow
@@ -399,7 +399,7 @@ public partial class VM : INamedResolver
     }
     else
     {
-      frame.Init(fb, frame0, frame0.stack, addr.module, addr.ip);
+      frame.Init(fb, frame0.stack, addr.module, addr.ip);
 
       PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
     }
@@ -415,30 +415,29 @@ public partial class VM : INamedResolver
     return Start(addr, cargs_bits, new StackList<Val>(args));
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, FiberOptions opts = 0)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, FiberOptions opts = 0)
   {
-    return Start(ptr, curr_frame, curr_stack, new StackList<Val>(), opts);
+    return Start(ptr, curr_frame, new StackList<Val>(), opts);
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, ValStack curr_stack, StackList<Val> args, FiberOptions opts = 0)
+  public Fiber Start(FuncPtr ptr, Frame curr_frame, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = ptr.func_addr;
     Register(fb, curr_frame.fb, opts);
 
-    var frame = ptr.MakeFrame(this, curr_frame, curr_stack);
+    //NOTE: using Fibers's result stack as a return_stack 'scratch stack',
+    //      since by the moment of invocation the origin frame might be dead already
+    var frame = ptr.MakeFrame(this, curr_frame, fb.result);
 
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
     {
       //TODO: shouldn't be this done in ptr.MakeFrame(..)?
-      frame.Init(fb, curr_frame, curr_stack, null, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(fb, fb.result, null, null, null, null, VM.EXIT_FRAME_IP);
 
-      //NOTE: we use curr_stack not new fake frame's stack for simplicity
-      //     related to returning all result values from the call. In 'normal' flow
-      //     there's a special opcode responsible for returning the certain amount of values
-      PassArgsAndAttach(ptr.native, fb, frame, curr_stack, args_info, args);
+      PassArgsAndAttach(ptr.native, fb, frame, fb.result, args_info, args);
     }
     else
     {
@@ -621,7 +620,7 @@ public partial class VM : INamedResolver
 
       frm.Retain();
 
-      frm.Init(fb, fb_frm0, fb_frm0.stack, addr.module, addr.ip);
+      frm.Init(fb, fb_frm0.stack, addr.module, addr.ip);
 
       for(int i = args.Count; i-- > 0;)
       {

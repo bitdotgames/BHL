@@ -133,7 +133,7 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
-    public Frame MakeFrame(VM vm, Frame curr_frame, ValStack curr_stack)
+    public Frame MakeFrame(VM vm, Frame curr_frame, ValStack return_stack)
     {
       var frm = Frame.New(vm);
 
@@ -141,9 +141,9 @@ public partial class VM : INamedResolver
         return frm;
 
       if(module != null)
-        frm.Init(curr_frame.fb, curr_frame, curr_stack, module, func_ip);
+        frm.Init(curr_frame.fb, return_stack, module, func_ip);
       else
-        frm.Init(curr_frame, curr_stack, func_ip);
+        frm.Init(curr_frame, return_stack, func_ip);
 
       for(int i=0;i<upvals.Count;++i)
       {

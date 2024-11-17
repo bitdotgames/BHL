@@ -8474,7 +8474,7 @@ public class TestVM : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("Foo"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
             var fn_ptr = stack.Pop();
-            frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm, stack);
+            frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
             fn_ptr.Release();
             return null;
           },

@@ -47,7 +47,7 @@ public static class Prelude
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 
           var val_ptr = stack.Pop();
-          var fb = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm, stack);
+          var fb = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm);
           val_ptr.Release();
           stack.Push(VM.FiberRef.Encode(frm.vm, fb));
           return null;

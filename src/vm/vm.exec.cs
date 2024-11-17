@@ -92,7 +92,7 @@ public partial class VM : INamedResolver
     if(exec.ip == EXIT_FRAME_IP)
     {
       exec.ip = curr_frame.return_ip;
-      exec.stack = curr_frame.origin_stack;
+      exec.stack = curr_frame.return_stack;
       curr_frame.ExitScope(null, exec);
       curr_frame.Release();
       exec.frames.Pop();
@@ -393,7 +393,7 @@ public partial class VM : INamedResolver
 
         int stack_offset = exec.stack.Count;
         for(int i=0;i<ret_num;++i)
-          curr_frame.origin_stack.Push(exec.stack[stack_offset-ret_num+i]);
+          curr_frame.return_stack.Push(exec.stack[stack_offset-ret_num+i]);
         exec.stack.head -= ret_num;
 
         exec.ip = EXIT_FRAME_IP - 1;
@@ -505,7 +505,7 @@ public partial class VM : INamedResolver
         var func_mod = curr_frame.module._imported[import_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_mod, func_ip);
+        frm.Init(curr_frame.fb, exec.stack, func_mod, func_ip);
         Call(exec, frm, args_bits);
       }
       break;
@@ -524,7 +524,7 @@ public partial class VM : INamedResolver
         var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_symb._module, func_symb.ip_addr);
+        frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
         frm.locals.head = 1;
         frm.locals[0] = self;
@@ -564,7 +564,7 @@ public partial class VM : INamedResolver
         var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_symb._module, func_symb.ip_addr);
+        frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
         frm.locals.head = 1;
         frm.locals[0] = self;
@@ -589,7 +589,7 @@ public partial class VM : INamedResolver
         var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
         var frm = Frame.New(this);
-        frm.Init(curr_frame.fb, curr_frame, exec.stack, func_symb._module, func_symb.ip_addr);
+        frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
         frm.locals.head = 1;
         frm.locals[0] = self;

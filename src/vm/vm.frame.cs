@@ -25,8 +25,7 @@ public partial class VM : INamedResolver
     public ValStack stack = new ValStack(MAX_STACK);
     public int start_ip;
     public int return_ip;
-    public Frame origin;
-    public ValStack origin_stack;
+    public ValStack return_stack;
     public List<DeferBlock> defers;
 
     static public Frame New(VM vm)
@@ -69,12 +68,11 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
-    public void Init(Frame origin, ValStack origin_stack, int start_ip)
+    public void Init(Frame origin, ValStack return_stack, int start_ip)
     {
       Init(
         origin.fb, 
-        origin,
-        origin_stack,
+        return_stack,
         origin.module, 
         origin.constants, 
         origin.type_refs,
@@ -83,15 +81,11 @@ public partial class VM : INamedResolver
       );
     }
 
-    public void Init(
-      Fiber fb, Frame origin, 
-      ValStack origin_stack, Module module, int start_ip
-      )
+    public void Init(Fiber fb, ValStack return_stack, Module module, int start_ip)
     {
       Init(
         fb, 
-        origin,
-        origin_stack,
+        return_stack,
         module, 
         module.compiled.constants, 
         module.compiled.type_refs.all, 
@@ -102,8 +96,7 @@ public partial class VM : INamedResolver
 
     internal void Init(
       Fiber fb, 
-      Frame origin, 
-      ValStack origin_stack, 
+      ValStack return_stack, 
       Module module, 
       List<Const> constants, 
       List<ProxyType> type_refs,
@@ -111,8 +104,7 @@ public partial class VM : INamedResolver
       int start_ip)
     {
       this.fb = fb;
-      this.origin = origin;
-      this.origin_stack = origin_stack;
+      this.return_stack = return_stack;
       this.module = module;
       this.constants = constants;
       this.type_refs = type_refs;
