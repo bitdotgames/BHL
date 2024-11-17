@@ -465,7 +465,7 @@ public partial class VM : INamedResolver
 
         var frm = Frame.New(this);
         frm.Init(curr_frame, exec.stack, func_ip);
-        Call(curr_frame, exec, frm, args_bits);
+        Call(exec, frm, args_bits);
       }
       break;
       case Opcodes.CallGlobNative:
@@ -506,7 +506,7 @@ public partial class VM : INamedResolver
 
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, curr_frame, exec.stack, func_mod, func_ip);
-        Call(curr_frame, exec, frm, args_bits);
+        Call(exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethod:
@@ -529,7 +529,7 @@ public partial class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec, frm, args_bits);
+        Call(exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodNative:
@@ -569,7 +569,7 @@ public partial class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec, frm, args_bits);
+        Call(exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodIface:
@@ -594,7 +594,7 @@ public partial class VM : INamedResolver
         frm.locals.head = 1;
         frm.locals[0] = self;
 
-        Call(curr_frame, exec, frm, args_bits);
+        Call(exec, frm, args_bits);
       }
       break;
       case Opcodes.CallMethodIfaceNative:
@@ -631,7 +631,7 @@ public partial class VM : INamedResolver
         {
           var frm = ptr.MakeFrame(this, curr_frame, exec.stack);
           val_ptr.Release();
-          Call(curr_frame, exec, frm, args_bits);
+          Call(exec, frm, args_bits);
         }
       }
       break;
@@ -1043,7 +1043,7 @@ public partial class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
   
-  void Call(Frame curr_frame, ExecState exec, Frame new_frame, uint args_bits)
+  void Call(ExecState exec, Frame new_frame, uint args_bits)
   {
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
     for(int i = 0; i < args_num; ++i)
