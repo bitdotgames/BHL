@@ -401,7 +401,7 @@ public partial class VM : INamedResolver
     {
       frame.Init(fb, frame0, frame0._stack, addr.module, addr.ip);
 
-      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -443,7 +443,7 @@ public partial class VM : INamedResolver
     else
     {
       //NOTE: frame is already initialized in ptr.MakeFrame(..)
-      PassArgsAndAttach(fb, frame, frame._stack, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
     }
 
     return fb;
@@ -464,6 +464,7 @@ public partial class VM : INamedResolver
       curr_stack.Push(arg);
     }
     fb.Attach(frame);
+    //overriding exec.stack with passed curr_stack
     fb.exec.stack = curr_stack;
 
     //passing args info as argument
@@ -478,7 +479,6 @@ public partial class VM : INamedResolver
   internal static void PassArgsAndAttach(
     Fiber fb,
     Frame frame,
-    ValStack curr_stack,
     Val args_info,
     StackList <Val> args
   )
@@ -486,11 +486,11 @@ public partial class VM : INamedResolver
     for(int i = args.Count; i-- > 0;)
     {
       var arg = args[i];
-      curr_stack.Push(arg);
+      frame._stack.Push(arg);
     }
 
     //passing args info as stack variable
-    curr_stack.Push(args_info);
+    frame._stack.Push(args_info);
 
     fb.Attach(frame);
   }
