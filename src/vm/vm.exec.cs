@@ -91,14 +91,14 @@ public partial class VM : INamedResolver
 
     if(exec.ip == EXIT_FRAME_IP)
     {
-      exec.ip = curr_frame.return_ip;
-      exec.stack = curr_frame.return_stack;
       curr_frame.ExitScope(null, exec);
       curr_frame.Release();
+      
       exec.frames.Pop();
       exec.regions.Pop();
+      exec.ip = curr_frame.return_ip + 1;
+      exec.stack = curr_frame.return_stack;
       
-      ++exec.ip;
       return BHS.SUCCESS;
     }
 
