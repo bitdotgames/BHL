@@ -839,7 +839,6 @@ public partial class VM : INamedResolver
         //exec.ip is already increased
         return;
       }
-      break;
       default:
         throw new Exception("Not supported opcode in init mode: " + opcode);
     }
