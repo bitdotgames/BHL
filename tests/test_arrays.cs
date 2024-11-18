@@ -973,7 +973,7 @@ public class TestArrays : BHL_TestBase
   public void TestPoolList()
   {
     {
-      var lst = PoolList<int>.New();
+      var lst = RefcList<int>.New();
       lst.Add(10);
 
       AssertEqual(1, lst.Count);
@@ -983,7 +983,7 @@ public class TestArrays : BHL_TestBase
     }
     
     {
-      var lst = PoolList<int>.New();
+      var lst = RefcList<int>.New();
       
       AssertEqual(0, lst.Count);
       

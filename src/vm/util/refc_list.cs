@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace bhl {
 
- public class PoolList<T> : List<T>, IValRefcounted
+ public class RefcList<T> : List<T>, IValRefcounted, IDisposable
  {
-   internal VM.Pool<PoolList<T>> pool;
+   internal VM.Pool<RefcList<T>> pool;
    
    //NOTE: -1 means it's in released state,
    //      public only for quick inspection
@@ -15,22 +15,22 @@ namespace bhl {
    
    static class PoolHolder<T1>
    {
-     public static System.Threading.ThreadLocal<VM.Pool<PoolList<T1>>> pool =
-       new System.Threading.ThreadLocal<VM.Pool<PoolList<T1>>>(() =>
+     public static System.Threading.ThreadLocal<VM.Pool<RefcList<T1>>> pool =
+       new System.Threading.ThreadLocal<VM.Pool<RefcList<T1>>>(() =>
        {
-         return new VM.Pool<PoolList<T1>>();
+         return new VM.Pool<RefcList<T1>>();
        });
    }
 
-   static public PoolList<T> New()
+   static public RefcList<T> New()
    {
      var pool = PoolHolder<T>.pool.Value;
 
-     PoolList<T> list = null;
+     RefcList<T> list = null;
      if(pool.stack.Count == 0)
      {
        ++pool.miss;
-       list = new PoolList<T>();
+       list = new RefcList<T>();
      }
      else
      {
@@ -42,6 +42,12 @@ namespace bhl {
      list.pool = pool;
 
      return list;
+   }
+
+   public void Dispose()
+   {
+     --_refs;
+     Del(this);
    }
    
    public void Retain()
@@ -63,7 +69,7 @@ namespace bhl {
        Del(this);
    }
    
-   static void Del(PoolList<T> lst)
+   static void Del(RefcList<T> lst)
    {
      if(lst._refs != 0)
        throw new Exception("Freeing invalid object, refs " + lst._refs);
