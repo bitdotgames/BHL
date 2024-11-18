@@ -119,8 +119,8 @@ public partial class VM : INamedResolver
 
       fb.refs = 1;
       fb.stop_guard = false;
-      //TODO: what about releasing values?
-      fb.result.Clear();
+      if(fb.result.Count > 0)
+        throw new Exception("Fiber from cache has unclaimed result");
       fb.parent.Clear();
       fb.children.Clear();
 
@@ -572,6 +572,8 @@ public partial class VM : INamedResolver
 
       fb.func_addr = addr;
       fb.stop_guard = false;
+      if(fb.result.Count > 0)
+        throw new Exception("Fiber from cache has unclaimed result");
 
       fb.Retain();
 
