@@ -191,7 +191,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     if(targetSize > array.Length)
       throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, targetSize));
 
-    for (int i = startIndex, j = 0; i < Count; i++, j++)
+    for(int i = startIndex, j = 0; i < Count; i++, j++)
       array[j] = this[i];
   }
 

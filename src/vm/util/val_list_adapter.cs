@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace bhl {
   
-//TODO: not fully implemented
+//TODO: writing is not implemented
 public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
   internal VM.Pool<ValList<T>> pool;
@@ -75,36 +75,36 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     return res;
   }
   
- public void Retain()
- {
-   if(_refs == -1)
-     throw new Exception("Invalid state(-1)");
-   ++_refs;
-   lst.Retain();
- }
+  public void Retain()
+  {
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+    ++_refs;
+    lst.Retain();
+  }
 
- public void Release()
- {
-   if(_refs == -1)
-     throw new Exception("Invalid state(-1)");
-   if(_refs == 0)
-     throw new Exception("Double free(0)");
+  public void Release()
+  {
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+    if(_refs == 0)
+      throw new Exception("Double free(0)");
 
-   --_refs;
-   lst.Release();
-   if(_refs == 0)
-     Del(this);
- }
+    --_refs;
+    lst.Release();
+    if(_refs == 0)
+      Del(this);
+  }
  
- static void Del(ValList<T> lst)
- {
-   if(lst._refs != 0)
-     throw new Exception("Freeing invalid object, refs " + lst._refs);
+  static void Del(ValList<T> lst)
+  {
+    if(lst._refs != 0)
+      throw new Exception("Freeing invalid object, refs " + lst._refs);
 
-   lst._refs = -1;
-   
-   lst.pool.stack.Push(lst);
- } 
+    lst._refs = -1;
+    
+    lst.pool.stack.Push(lst);
+  } 
   
   public struct Enumerator<T1> : IEnumerator<T1>
   {
@@ -152,7 +152,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 
   public bool Contains(T item)
   {
-    throw new NotImplementedException();
+    return IndexOf(item) != -1;
   }
 
   public void CopyTo(T[] array, int start_idx)
@@ -161,18 +161,27 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     if(target_size > array.Length)
       throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, target_size));
 
-    for (int i = start_idx, j = 0; i < Count; i++, j++)
+    for(int i = start_idx, j = 0; i < Count; i++, j++)
       array[j] = this[i];
   }
 
   public bool Remove(T item)
   {
-    throw new NotImplementedException();
+    int idx = IndexOf(item);
+    if(idx < 0)
+      return false;
+    RemoveAt(idx);
+    return true;
   }
 
   public int IndexOf(T item)
   {
-    throw new NotImplementedException();
+    for(int i=0; i<Count; ++i)
+    {
+      if(this[i].Equals(item))
+        return i;
+    }
+    return -1;
   }
 
   public void Insert(int idx, T item)

@@ -928,7 +928,7 @@ public class TestArrays : BHL_TestBase
   }
   
   [Fact]
-  public void TestValListEnumerator()
+  public void TestValListTypedAdapater()
   {
     var ArrayInts = new NativeListTypeSymbol<int>(
       new Origin(),
@@ -954,23 +954,36 @@ public class TestArrays : BHL_TestBase
       v2.Release();
     }
 
-    var en = ValList<int>.New(vals, ArrayInts.Val2Native);
+    var vals_typed = ValList<int>.New(vals, ArrayInts.Val2Native);
+
+    AssertEqual(1, vals_typed.IndexOf(20));
+    AssertEqual(0, vals_typed.IndexOf(10));
+    AssertEqual(-1, vals_typed.IndexOf(30));
+
+    AssertTrue(vals_typed.Contains(10));
+    AssertTrue(vals_typed.Contains(20));
+    AssertFalse(vals_typed.Contains(30));
     
     var res = new List<int>();
-    foreach(var n in en)
+    foreach(var n in vals_typed)
       res.Add(n);
 
     AssertEqual(2, res.Count);
     AssertEqual(10, res[0]);
     AssertEqual(20, res[1]);
+
+    AssertTrue(vals_typed.Remove(10));
+    AssertFalse(vals_typed.Remove(30));
+    AssertEqual(-1, vals_typed.IndexOf(10));
+    AssertEqual(0, vals_typed.IndexOf(20));
     
-    en.Release();
+    vals_typed.Release();
     
     CommonChecks(vm);
   }
 
   [Fact]
-  public void TestPoolList()
+  public void TestRefcList()
   {
     {
       var lst = RefcList<int>.New();
