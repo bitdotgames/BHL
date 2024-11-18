@@ -6205,7 +6205,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewNum(vm, 3));
     AssertEqual("01234", log.ToString());
-    AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
+    AssertEqual(2, vm.frames_pool.MissCount);
     CommonChecks(vm);
   }
 
@@ -10456,14 +10456,14 @@ public class TestVM : BHL_TestBase
 
     {
       vm.Start("test");
-      AssertEqual(1/*0 frame*/+1, vm.frames_pool.MissCount);
+      AssertEqual(1, vm.frames_pool.MissCount);
       AssertEqual(0, vm.frames_pool.IdleCount);
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
+      AssertEqual(2, vm.frames_pool.MissCount);
       AssertEqual(0, vm.frames_pool.IdleCount);
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.IdleCount);
+      AssertEqual(2, vm.frames_pool.MissCount);
+      AssertEqual(2, vm.frames_pool.IdleCount);
     }
 
     //no new allocs
@@ -10471,8 +10471,8 @@ public class TestVM : BHL_TestBase
       vm.Start("test");
       vm.Tick();
       vm.Tick();
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.MissCount);
-      AssertEqual(1/*0 frame*/+2, vm.frames_pool.IdleCount);
+      AssertEqual(2, vm.frames_pool.MissCount);
+      AssertEqual(2, vm.frames_pool.IdleCount);
     }
     CommonChecks(vm);
   }

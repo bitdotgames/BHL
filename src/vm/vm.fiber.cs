@@ -95,11 +95,6 @@ public partial class VM : INamedResolver
 
     internal ExecState exec = new ExecState();
 
-    public VM.Frame frame0 {
-      get {
-        return exec.frames[0];
-      }
-    }
     public ValStack result = new ValStack(Frame.MAX_STACK);
 
     //TODO: get rid of this one?
@@ -128,9 +123,6 @@ public partial class VM : INamedResolver
       fb.result.Clear();
       fb.parent.Clear();
       fb.children.Clear();
-
-      //0 index frame used for return values consistency
-      fb.exec.frames.Push(Frame.New(vm));
 
       return fb;
     }
@@ -169,16 +161,6 @@ public partial class VM : INamedResolver
         {
           CoroutinePool.Del(exec.frames.Peek(), exec, exec.coroutine);
           exec.coroutine = null;
-        }
-
-        //we need to copy 0 index frame returned values
-        {
-          var frame0 = exec.frames[0];
-          for(int c=0;c<frame0.stack.Count;++c)
-            result.Push(frame0.stack[c]);
-          //let's clear the frame's stack so that values
-          //won't be released below
-          frame0.stack.Clear();
         }
 
         for(int i=exec.frames.Count;i-- > 0;)
@@ -235,9 +217,9 @@ public partial class VM : INamedResolver
       return stop_guard || exec.ip >= STOP_IP;
     }
 
-    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls, int offset = 0)
+    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
     {
-      for(int i=offset;i<exec.frames.Count;++i)
+      for(int i=0;i<exec.frames.Count;++i)
         calls.Add(exec.frames[i]);
     }
 
@@ -245,7 +227,7 @@ public partial class VM : INamedResolver
     {
       var calls = new List<VM.Frame>();
       int coroutine_ip = -1;
-      GetCalls(exec, calls, offset: 1/*let's skip 0 fake frame*/);
+      GetCalls(exec, calls);
       TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
 
       for(int i=0;i<calls.Count;++i)
@@ -385,21 +367,16 @@ public partial class VM : INamedResolver
 
     var frame = Frame.New(this);
 
-    var frame0 = fb.frame0;
-
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, frame0.stack, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
-      //NOTE: we use frame0's stack not new frame's stack as a hack for simplicity
-      //     related to returning all result values from the call. In 'normal' flow
-      //     there's a special opcode responsible for returning the certain amount of values
-      PassArgsAndAttach(addr.fsn, fb, frame, frame0.stack, args_info, args);
+      PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
     }
     else
     {
-      frame.Init(fb, frame0.stack, addr.module, addr.ip);
+      frame.Init(fb, fb.result, addr.module, addr.ip);
 
       PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
     }
@@ -571,7 +548,6 @@ public partial class VM : INamedResolver
     VM vm;
     //NOTE: we manually create and own these
     VM.Fiber fb;
-    VM.Frame fb_frm0;
     VM.Frame frm;
 
     Val args_info_val;
@@ -579,11 +555,6 @@ public partial class VM : INamedResolver
     public ScriptExecutor(VM vm)
     {
       this.vm = vm;
-
-      //NOTE: manually creating 0 Frame
-      fb_frm0 = new VM.Frame(vm);
-      //just for consistency with refcounting
-      fb_frm0.Retain();
 
       //NOTE: manually creating Fiber
       fb = new VM.Fiber(vm);
@@ -614,13 +585,9 @@ public partial class VM : INamedResolver
 
       fb.Retain();
 
-      fb_frm0.Retain();
-      //0 index frame used for return values consistency
-      fb.exec.frames.Push(fb_frm0);
-
       frm.Retain();
 
-      frm.Init(fb, fb_frm0.stack, addr.module, addr.ip);
+      frm.Init(fb, fb.result, addr.module, addr.ip);
 
       for(int i = args.Count; i-- > 0;)
       {
@@ -640,7 +607,6 @@ public partial class VM : INamedResolver
 
       //let's clear stuff
       frm.Clear();
-      fb_frm0.Clear();
 
       return new FiberResult(fb);
     }
