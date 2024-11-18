@@ -48,6 +48,7 @@ public partial class VM : INamedResolver
   
   //fake frame used for module's init code
   Frame init_frame;
+  ExecState init_exec = new ExecState();
 
   //special case 'null' value
   Val null_val = null;
@@ -71,9 +72,8 @@ public partial class VM : INamedResolver
 
   BHS ExecuteOnce(ExecState exec)
   {
-    var item = exec.regions.Peek();
-
-    var curr_frame = item.frame;
+    var region = exec.regions.Peek();
+    var curr_frame = region.frame;
 
 #if BHL_DEBUG
     Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
@@ -83,7 +83,7 @@ public partial class VM : INamedResolver
     if(exec.coroutine != null)
       return ExecuteCoroutine(curr_frame, exec);
 
-    if(exec.ip < item.min_ip || exec.ip > item.max_ip)
+    if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
       exec.regions.Pop();
       return BHS.SUCCESS;
@@ -733,7 +733,7 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.Block:
       {
-        var new_coroutine = VisitBlock(exec, curr_frame, item.defer_support);
+        var new_coroutine = VisitBlock(exec, curr_frame, region.defer_support);
         if(new_coroutine != null)
         {
           //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -765,113 +765,85 @@ public partial class VM : INamedResolver
     if(bytecode == null || bytecode.Length == 0)
       return;
 
-    var constants = module.compiled.constants;
-    var type_refs = module.compiled.type_refs.all;
+    init_exec.ip = 0;
+    init_exec.stack = init_frame.stack;
+    init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs.all, bytecode, 0);
+    init_exec.regions.Push(new VM.Region(init_frame, null, 0, bytecode.Length - 1));
 
-    int ip = 0;
+    while(init_exec.regions.Count > 0)
+      ExecInitCodeOnce(init_exec);
+  }
 
-    while(ip < bytecode.Length)
+  //TODO: get rid of the code duplication shared with ExecCodeOnce
+  void ExecInitCodeOnce(ExecState exec)
+  {
+    var region = exec.regions.Peek();
+    var curr_frame = region.frame;
+
+    if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
-      var opcode = (Opcodes)bytecode[ip];
-      //Util.Debug("EXEC INIT " + opcode);
-      switch(opcode)
-      {
-        //NOTE: operates on global vars
-        case Opcodes.DeclVar:
-        {
-          int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
-          int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var type = type_refs[type_idx].Get();
-
-          InitDefaultVal(type, module.gvar_vals[var_idx]);
-        }
-        break;
-        //NOTE: operates on global vars
-        case Opcodes.SetVar:
-        {
-          int var_idx = (int)Bytecode.Decode8(bytecode, ref ip);
-
-          var new_val = init_frame.stack.Pop();
-          module.gvar_vals.Assign(this, var_idx, new_val);
-          new_val.Release();
-        }
-        break;
-        case Opcodes.Constant:
-        {
-          int const_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var cn = constants[const_idx];
-          var cv = cn.ToVal(this);
-          init_frame.stack.Push(cv);
-        }
-        break;
-        case Opcodes.Add:
-        case Opcodes.Sub:
-        case Opcodes.Div:
-        case Opcodes.Mod:
-        case Opcodes.Mul:
-        case Opcodes.And:
-        case Opcodes.Or:
-        case Opcodes.BitAnd:
-        case Opcodes.BitOr:
-        case Opcodes.Equal:
-        case Opcodes.NotEqual:
-        case Opcodes.LT:
-        case Opcodes.LTE:
-        case Opcodes.GT:
-        case Opcodes.GTE:
-        {
-          ExecuteBinaryOp(opcode, init_frame.stack);
-        }
-        break;
-        case Opcodes.UnaryNot:
-        case Opcodes.UnaryNeg:
-        {
-          ExecuteUnaryOp(opcode, init_frame.stack);
-        }
-        break;
-        case Opcodes.New:
-        {
-          int type_idx = (int)Bytecode.Decode24(bytecode, ref ip);
-          var type = type_refs[type_idx].Get();
-          HandleNew(init_frame, init_frame.stack, type);
-        }
-        break;
-        case Opcodes.SetAttrInplace:
-        {
-          int fld_idx = (int)Bytecode.Decode16(bytecode, ref ip);
-          var val = init_frame.stack.Pop();
-          var obj = init_frame.stack.Peek();
-          var class_symb = (ClassSymbol)obj.type;
-          var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-          field_symb.setter(init_frame, ref obj, val, field_symb);
-          val.Release();
-        }
-        break;
-        case Opcodes.ArrAddInplace:
-        {
-          var self = init_frame.stack[init_frame.stack.Count - 2];
-          self.Retain();
-          var class_type = ((ArrayTypeSymbol)self.type);
-          var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame.stack, new FuncArgsInfo(), ref status);
-          init_frame.stack.Push(self);
-        }
-        break;
-        case Opcodes.MapAddInplace:
-        {
-          var self = init_frame.stack[init_frame.stack.Count - 3];
-          self.Retain();
-          var class_type = ((MapTypeSymbol)self.type);
-          var status = BHS.SUCCESS;
-          ((FuncSymbolNative)class_type._all_members[0]).cb(init_frame, init_frame.stack, new FuncArgsInfo(), ref status);
-          init_frame.stack.Push(self);
-        }
-        break;
-        default:
-          throw new Exception("Not supported opcode: " + opcode);
-      }
-      ++ip;
+      exec.regions.Pop();
+      return;
     }
+
+    var opcode = (Opcodes)curr_frame.bytecode[exec.ip];
+    
+    switch(opcode)
+    {
+      //NOTE: operates on global vars
+      case Opcodes.DeclVar:
+      {
+        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
+        var type = curr_frame.type_refs[type_idx].Get();
+
+        InitDefaultVal(type, curr_frame.module.gvar_vals[var_idx]);
+      }
+      break;
+      //NOTE: operates on global vars
+      case Opcodes.SetVar:
+      {
+        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
+
+        var new_val = curr_frame.stack.Pop();
+        curr_frame.module.gvar_vals.Assign(this, var_idx, new_val);
+        new_val.Release();
+      }
+      break;
+      case Opcodes.Constant:
+      case Opcodes.Add:
+      case Opcodes.Sub:
+      case Opcodes.Div:
+      case Opcodes.Mod:
+      case Opcodes.Mul:
+      case Opcodes.And:
+      case Opcodes.Or:
+      case Opcodes.BitAnd:
+      case Opcodes.BitOr:
+      case Opcodes.Equal:
+      case Opcodes.NotEqual:
+      case Opcodes.LT:
+      case Opcodes.LTE:
+      case Opcodes.GT:
+      case Opcodes.GTE:
+      case Opcodes.UnaryNot:
+      case Opcodes.UnaryNeg:
+      case Opcodes.New:
+      case Opcodes.SetAttrInplace:
+      case Opcodes.ArrAddInplace:
+      case Opcodes.MapAddInplace:
+      {
+        var status = ExecuteOnce(exec);
+        if(status == BHS.RUNNING)
+          throw new Exception("Invalid state in init mode: " + status);
+        //exec.ip is already increased
+        return;
+      }
+      break;
+      default:
+        throw new Exception("Not supported opcode in init mode: " + opcode);
+    }
+    ++exec.ip;
   }
 
   void ExecModuleInitFunc(Module module)

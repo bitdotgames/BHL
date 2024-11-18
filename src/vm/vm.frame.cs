@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -28,6 +29,7 @@ public partial class VM : INamedResolver
     public ValStack return_stack;
     public List<DeferBlock> defers;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public Frame New(VM vm)
     {
       Frame frm;
@@ -50,6 +52,7 @@ public partial class VM : INamedResolver
       return frm;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void Del(Frame frm)
     {
       if(frm.refs != 0)
@@ -68,6 +71,7 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(Frame origin, ValStack return_stack, int start_ip)
     {
       Init(
@@ -81,6 +85,7 @@ public partial class VM : INamedResolver
       );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(Fiber fb, ValStack return_stack, Module module, int start_ip)
     {
       Init(
@@ -94,6 +99,7 @@ public partial class VM : INamedResolver
       );
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Init(
       Fiber fb, 
       ValStack return_stack, 
