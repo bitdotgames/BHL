@@ -630,7 +630,7 @@ public partial class VM : INamedResolver
         }
         else
         {
-          var frm = ptr.MakeFrame(this, curr_frame, exec.stack);
+          var frm = ptr.MakeFrame(this, curr_frame.fb, exec.stack);
           val_ptr.Release();
           Call(exec, frm, args_bits);
         }

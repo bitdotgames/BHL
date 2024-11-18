@@ -133,28 +133,30 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
-    public Frame MakeFrame(VM vm, Frame curr_frame, ValStack return_stack)
+    public Frame MakeFrame(VM vm, Fiber fb, ValStack return_stack)
     {
       var frm = Frame.New(vm);
 
       if(native != null)
-        return frm;
-
-      if(module != null)
-        frm.Init(curr_frame.fb, return_stack, module, func_ip);
-      else
-        frm.Init(curr_frame, return_stack, func_ip);
-
-      for(int i=0;i<upvals.Count;++i)
       {
-        var upval = upvals[i];
-        if(upval != null)
+        frm.Init(fb, return_stack, null, null, null, null, VM.EXIT_FRAME_IP);
+      }
+      else
+      {
+        frm.Init(fb, return_stack, module, func_ip);
+
+        for(int i=0;i<upvals.Count;++i)
         {
-          frm.locals.Resize(i+1);
-          upval.RefMod(RefOp.USR_INC | RefOp.INC);
-          frm.locals[i] = upval;
+          var upval = upvals[i];
+          if(upval != null)
+          {
+            frm.locals.Resize(i+1);
+            upval.RefMod(RefOp.USR_INC | RefOp.INC);
+            frm.locals[i] = upval;
+          }
         }
       }
+
       return frm;
     }
 

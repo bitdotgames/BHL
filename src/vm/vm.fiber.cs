@@ -403,29 +403,19 @@ public partial class VM : INamedResolver
     fb.func_addr = ptr.func_addr;
     Register(fb, curr_frame.fb, opts);
 
-    //NOTE: using Fibers's result stack as a return_stack 'scratch stack',
-    //      since by the moment of invocation the origin frame might be dead already
-    var frame = ptr.MakeFrame(this, curr_frame, fb.result);
+    var frame = ptr.MakeFrame(this, fb, fb.result);
 
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
-    {
-      //TODO: shouldn't be this done in ptr.MakeFrame(..)?
-      frame.Init(fb, fb.result, null, null, null, null, VM.EXIT_FRAME_IP);
-
       PassArgsAndAttach(ptr.native, fb, frame, fb.result, args_info, args);
-    }
     else
-    {
-      //NOTE: frame is already initialized in ptr.MakeFrame(..)
       PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
-    }
 
     return fb;
   }
 
-  internal static void PassArgsAndAttach(
+  static void PassArgsAndAttach(
     FuncSymbolNative fsn,
     Fiber fb,
     Frame frame,
@@ -452,7 +442,7 @@ public partial class VM : INamedResolver
       --fb.exec.ip;
   }
 
-  internal static void PassArgsAndAttach(
+  static void PassArgsAndAttach(
     Fiber fb,
     Frame frame,
     Val args_info,
