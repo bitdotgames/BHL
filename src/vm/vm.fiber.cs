@@ -575,9 +575,11 @@ public partial class VM : INamedResolver
 
       fb.func_addr = addr;
       fb.stop_guard = false;
-      if(fb.result.Count > 0)
-        throw new Exception("Fiber from cache has unclaimed result");
-
+      while(fb.result.Count > 0)
+      {
+        var val = fb.result.Pop();
+        val.Release();
+      }
       fb.Retain();
 
       frm.Retain();
