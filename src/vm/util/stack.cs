@@ -11,6 +11,7 @@ public class FixedStack<T>
 
   public int Count
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get { return head; }
   }
 
@@ -21,6 +22,7 @@ public class FixedStack<T>
 
   public T this[int index]
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get { 
       ValidateIndex(index);
       return storage[index]; 

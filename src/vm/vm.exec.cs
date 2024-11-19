@@ -757,7 +757,7 @@ public partial class VM : INamedResolver
     return BHS.SUCCESS;
   }
   
-  void ExecuteInitCode(Module module)
+  void ExecInitCode(Module module)
   {
     var bytecode = module.compiled.initcode;
     if(bytecode == null || bytecode.Length == 0)

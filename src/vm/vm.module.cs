@@ -35,7 +35,6 @@ public partial class VM : INamedResolver
 
   public bool LoadModule(string module_name)
   {
-    //Console.WriteLine("==START LOAD " + module_name);
     if(loading_modules.Count > 0)
       throw new Exception("Already loading modules");
 
@@ -46,9 +45,12 @@ public partial class VM : INamedResolver
     if(loading_modules.Count == 0)
       return false;
 
-    //NOTE: registering modules in reverse order
+    //NOTE: initing modules in reverse order
     for(int i=loading_modules.Count;i-- > 0;)
-      FinishRegistration(loading_modules[i].loaded);
+      Init_Phase2(loading_modules[i].loaded);
+    for(int i=loading_modules.Count;i-- > 0;)
+      Init_Phase3(loading_modules[i].loaded);
+
     loading_modules.Clear();
 
     return true;
@@ -57,8 +59,9 @@ public partial class VM : INamedResolver
   //NOTE: this method is public only for testing convenience
   public void LoadModule(Module module)
   {
-    BeginRegistration(module);
-    FinishRegistration(module);
+    Init_Phase1(module);
+    Init_Phase2(module);
+    Init_Phase3(module);
   }
 
   public Module FindModule(string module_name)
@@ -89,7 +92,6 @@ public partial class VM : INamedResolver
     lm.name = module_name;
     loading_modules.Add(lm);
 
-    //NOTE: passing self as a type proxies 'resolver'
     var loaded = loader.Load(module_name, this);
 
     //if no such a module let's remove it from the loading list
@@ -99,33 +101,34 @@ public partial class VM : INamedResolver
     }
     else
     {
+      //let's add all imported modules as well
       foreach(var imported in loaded.compiled.imports)
         TryAddToLoadingList(imported);
       lm.loaded = loaded;
 
-      BeginRegistration(loaded);
+      Init_Phase1(loaded);
     }
 
     return true;
   }
 
-  void BeginRegistration(Module module)
+  void Init_Phase1(Module module)
   {
     //NOTE: for simplicity we add it to the modules at once,
     //      this is probably a bit 'smelly' but makes further
     //      symbols setup logic easier
     registered_modules[module.name] = module;
-
-    module.InitGlobalVars(this);
   }
 
-  void FinishRegistration(Module module)
+  void Init_Phase2(Module module)
   {
     module.Setup(name => FindModule(name));
+    ExecInitCode(module);
+  }
 
-    module.InitRuntimeGlobalVars();
-
-    ExecuteInitCode(module);
+  void Init_Phase3(Module module)
+  {
+    module.ImportGlobalVars();
     ExecModuleInitFunc(module);
   }
 

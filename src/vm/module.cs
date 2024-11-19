@@ -117,19 +117,12 @@ public class Module : INamedResolver
     gvar_vals.Resize(compiled.total_gvars_num);
   }
 
-  public void InitGlobalVars(VM vm)
-  {
-    //let's init all our own global variables
-    for(int g=0;g<local_gvars_num;++g)
-      gvar_vals[g] = Val.New(vm);
-  }
-
-  public void ClearGlobalVars()
+  internal void ClearGlobalVars()
   {
     for(int i=0;i<gvar_vals.Count;++i)
     {
       var val = gvar_vals[i];
-      val.Release();
+      val?.Release();
     }
     gvar_vals.Clear();
   }
@@ -180,7 +173,7 @@ public class Module : INamedResolver
     );
   }
 
-  public void InitRuntimeGlobalVars()
+  public void ImportGlobalVars()
   {
     int gvars_offset = local_gvars_num;
 
