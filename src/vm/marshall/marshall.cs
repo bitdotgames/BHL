@@ -5,6 +5,7 @@ using System.Collections.Generic;
 namespace bhl.marshall {
 public static class Marshall 
 {
+  //TODO: strings sync should use some sort of lookup table
   static public void Sync(SyncContext ctx, ref string v)
   {
     if(ctx.is_read)

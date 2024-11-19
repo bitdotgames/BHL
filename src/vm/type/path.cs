@@ -6,6 +6,7 @@ using bhl.marshall;
 
 namespace bhl {
     
+// Can be a simple name like 'Foo' but also a fully specified path like 'foo.bar.Cat', or '[]ecs.Item'
 public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallable
 {
   StackList<string> items;
@@ -39,7 +40,7 @@ public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallabl
   
   public override string ToString()
   {
-    return GetFullPath();
+    return Count == 1 ? this[0] : string.Join('.', this);
   }
 
   public void Sync(SyncContext ctx)
@@ -74,6 +75,14 @@ public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallabl
     return true;
   }
 
+  public override int GetHashCode()
+  {
+    int hc = 0;
+    for(int i=0; i<Count; ++i)
+      hc ^= this[i].GetHashCode();
+    return hc;
+  }
+
   public IEnumerator<string> GetEnumerator()
   {
     return items.GetEnumerator();
@@ -92,11 +101,6 @@ public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallabl
   public void Clear()
   {
     items.Clear();
-  }
-
-  public string GetFullPath()
-  {
-    return string.Join('.', this);
   }
 }
 
