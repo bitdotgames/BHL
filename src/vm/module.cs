@@ -106,7 +106,7 @@ public class Module : INamedResolver
     return fsymb;
   }
 
-  public INamed ResolveNamedByPath(TypePath path)
+  public INamed ResolveNamedByPath(NamePath path)
   {
     return ns.ResolveSymbolByPath(path);
   }

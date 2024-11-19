@@ -249,7 +249,7 @@ public class Types : INamedResolver
     return m;
   }
 
-  public INamed ResolveNamedByPath(TypePath path)
+  public INamed ResolveNamedByPath(NamePath path)
   {
     return ns.ResolveSymbolByPath(path);
   }

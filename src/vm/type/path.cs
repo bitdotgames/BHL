@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using bhl.marshall;
 
 namespace bhl {
-    
+
 // Can be a simple name like 'Foo' but also a fully specified path like 'foo.bar.Cat', or '[]ecs.Item'
-public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallable
+public struct NamePath : IEnumerable<string>, IEquatable<NamePath>, IMarshallable
 {
   StackList<string> items;
 
@@ -19,25 +19,25 @@ public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallabl
     get { return items[i]; }
     set { items[i] = value; }
   }
-  
-  public static implicit operator TypePath(string path)
+
+  public static implicit operator NamePath(string path)
   {
-    return new TypePath(path);
+    return new NamePath(path);
   }
-  
-  public TypePath(string path)
+
+  public NamePath(string path)
   {
     items = default;
 
     if(path.IndexOf('.') != -1)
-    { 
+    {
       foreach(var item in path.Split('.'))
         Add(item);
     }
     else
       Add(path);
   }
-  
+
   public override string ToString()
   {
     return Count == 1 ? this[0] : string.Join('.', this);
@@ -58,16 +58,16 @@ public struct TypePath : IEnumerable<string>, IEquatable<TypePath>, IMarshallabl
 
   public override bool Equals(object o)
   {
-    if(!(o is TypePath))
+    if(!(o is NamePath))
       return false;
-    return this.Equals((TypePath)o);
+    return this.Equals((NamePath)o);
   }
 
-  public bool Equals(TypePath o)
+  public bool Equals(NamePath o)
   {
     if(o.Count != Count)
       return false;
-    
+
     for(int i=0; i<o.Count; ++i)
       if(this[i] != o[i])
         return false;

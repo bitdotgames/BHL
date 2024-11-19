@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 
 namespace bhl {
-  
+
 public static class ScopeExtensions
 {
-  public struct Scope2Resolver : INamedResolver  
+  public struct Scope2Resolver : INamedResolver
   {
     IScope scope;
 
@@ -14,7 +14,7 @@ public static class ScopeExtensions
       this.scope = scope;
     }
 
-    public INamed ResolveNamedByPath(TypePath path)
+    public INamed ResolveNamedByPath(NamePath path)
     {
       return scope.ResolveSymbolByPath(path);
     }
@@ -47,14 +47,14 @@ public static class ScopeExtensions
     return scope.Resolve(name) as T;
   }
 
-  public static TypePath GetFullTypePath(this Symbol sym)
+  public static NamePath GetFullTypePath(this Symbol sym)
   {
     if(sym == null)
       return "?";
     return sym.scope.GetFullTypePath(sym.name);
   }
 
-  public static TypePath GetFullTypePath(this IType type)
+  public static NamePath GetFullTypePath(this IType type)
   {
     if(type == null)
       return "?";
@@ -64,7 +64,7 @@ public static class ScopeExtensions
       return type.ToString();
   }
 
-  public static TypePath GetFullTypePath(this IScope scope, string name)
+  public static NamePath GetFullTypePath(this IScope scope, string name)
   {
     if(name == null)
       return "?";
@@ -73,8 +73,8 @@ public static class ScopeExtensions
     if(name.IndexOf('.') != -1)
       return name;
 
-    var path = new TypePath(name);
-    
+    var path = new NamePath(name);
+
     while(scope != null)
     {
       if(scope is Namespace ns)
@@ -98,7 +98,7 @@ public static class ScopeExtensions
       else
         scope = scope.GetFallbackScope();
     }
-    
+
     //let's reverse path
     if(path.Count > 1)
     {
@@ -108,7 +108,7 @@ public static class ScopeExtensions
 
     return path;
   }
-  
+
   public static IScope GetRootScope(this Symbol sym)
   {
     return sym.scope?.GetRootScope();
@@ -117,7 +117,7 @@ public static class ScopeExtensions
   public static IScope GetRootScope(this IScope scope)
   {
     IScope tmp;
-    while((tmp = scope.GetFallbackScope()) != null) 
+    while((tmp = scope.GetFallbackScope()) != null)
       scope = tmp;
     return scope;
   }
@@ -146,13 +146,13 @@ public static class ScopeExtensions
 
   //NOTE: the first item of the resolved path is tried to be resolved
   //      with fallback (e.g. trying the 'upper' scopes)
-  public static Symbol ResolveSymbolByPath(this IScope scope, TypePath path)
+  public static Symbol ResolveSymbolByPath(this IScope scope, NamePath path)
   {
     for(int i=0; i<path.Count; ++i)
     {
       //NOTE: for the root item let's resolve with fallback
-      var symb = i == 0 ? 
-        scope.ResolveWithFallback(path[i]) : 
+      var symb = i == 0 ?
+        scope.ResolveWithFallback(path[i]) :
         scope.ResolveRelatedOnly(path[i]);
 
       //let's check if it's the last path item
@@ -160,7 +160,7 @@ public static class ScopeExtensions
         return symb;
 
       scope = symb as IScope;
-      //we can't proceed 'deeper' if the last resolved 
+      //we can't proceed 'deeper' if the last resolved
       //symbol is not a scope
       if(scope == null)
         return null;
@@ -176,13 +176,13 @@ public static class ScopeExtensions
     if(s == null)
     {
       var fallback = scope.GetFallbackScope();
-      if(fallback != null) 
+      if(fallback != null)
         s = fallback.ResolveWithFallback(name, level + 1);
     }
 
     if(s != null)
     {
-      //NOTE: in case the symbol is local to module we should 
+      //NOTE: in case the symbol is local to module we should
       //      return it only if we actually own it
       bool check_local = level == 0 && s.IsLocal();
       if(!check_local || (check_local && s.scope.GetModule() == scope.GetModule()))
@@ -346,7 +346,7 @@ public static class ScopeExtensions
   }
 
   public static ProxyType TRef(this INamedResolver self, TypeArg tn)
-  {           
+  {
     return self.T(new RefType(self.T(tn)));
   }
 
@@ -365,12 +365,12 @@ public static class ScopeExtensions
   }
 
   public static ProxyType TFunc(this INamedResolver self, bool is_coro, TypeArg ret_type, params TypeArg[] arg_types)
-  {           
+  {
     return self.TFunc(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type, arg_types);
   }
 
   public static ProxyType TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type, params TypeArg[] arg_types)
-  {           
+  {
     var sig = new FuncSignature(attribs, self.T(ret_type));
     foreach(var arg_type in arg_types)
       sig.AddArg(self.T(arg_type));
@@ -378,7 +378,7 @@ public static class ScopeExtensions
   }
 
   public static ProxyType TFunc(this INamedResolver self, TypeArg ret_type, params TypeArg[] arg_types)
-  {           
+  {
     return self.TFunc(false, ret_type, arg_types);
   }
 

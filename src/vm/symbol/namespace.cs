@@ -49,7 +49,7 @@ public class Namespace : Symbol, IScope,
       return name + " -> " + indirectness;
   }
 
-  public INamed ResolveNamedByPath(TypePath path)
+  public INamed ResolveNamedByPath(NamePath path)
   {
     return this.ResolveSymbolByPath(path);
   }

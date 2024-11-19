@@ -11,7 +11,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   
   public INamedResolver resolver;
   //NOTE: for symbols it's a full absolute path from the very top namespace
-  public TypePath path;
+  public NamePath path;
 
   public ProxyType(INamedResolver resolver, string path)
   {
@@ -77,7 +77,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       path = GetNormalizedTypePath(resolved);
   }
 
-  static TypePath GetNormalizedTypePath(IType obj)
+  static NamePath GetNormalizedTypePath(IType obj)
   {
     //for symbols full path is used
     return (obj is Symbol sym) ? sym.GetFullTypePath() : obj.GetName();

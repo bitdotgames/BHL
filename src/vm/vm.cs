@@ -102,9 +102,9 @@ public partial class VM : INamedResolver
   public struct SymbolSpec : IEquatable<SymbolSpec>
   {
     public string module;
-    public TypePath path;
+    public NamePath path;
 
-    public SymbolSpec(string module, TypePath path)
+    public SymbolSpec(string module, NamePath path)
     {
       this.module = module;
       this.path = path;
@@ -156,7 +156,7 @@ public partial class VM : INamedResolver
     null_val.Retain();
   }
 
-  public bool TryFindFuncAddr(string path, out FuncAddr addr)
+  public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)
   {
     addr = default(FuncAddr);
 
@@ -179,15 +179,15 @@ public partial class VM : INamedResolver
     return true;
   }
 
-  [Obsolete("Use TryFindFuncAddr(string path, out FuncAddr addr) instead.")]
-  public bool TryFindFuncAddr(string path, out FuncAddr addr, out FuncSymbolScript fs)
+  [Obsolete("Use TryFindFuncAddr(TypePath path, out FuncAddr addr) instead.")]
+  public bool TryFindFuncAddr(NamePath path, out FuncAddr addr, out FuncSymbolScript fs)
   {
     bool yes = TryFindFuncAddr(path, out addr);
     fs = addr.fs;
     return yes;
   }
 
-  public bool TryFindVarAddr(string path, out VarAddr addr)
+  public bool TryFindVarAddr(NamePath path, out VarAddr addr)
   {
     addr = default(VarAddr);
 
@@ -206,7 +206,7 @@ public partial class VM : INamedResolver
     return true;
   }
 
-  public INamed ResolveNamedByPath(TypePath path)
+  public INamed ResolveNamedByPath(NamePath path)
   {
     foreach(var kv in registered_modules)
     {
@@ -261,8 +261,8 @@ public partial class VM : INamedResolver
   {
     //TODO: store reference to fiber as FiberRef?
     last_fiber = fb;
-    
-    //NOTE: stale pointer guard against the fact fiber becomes stopped 
+
+    //NOTE: stale pointer guard against the fact fiber becomes stopped
     //      during execution for some reason (when stopped it's released)
     fb.Retain();
 
