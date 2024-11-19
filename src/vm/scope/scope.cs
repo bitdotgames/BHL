@@ -22,7 +22,7 @@ public interface INamed
 
 public interface INamedResolver
 {
-  INamed ResolveNamedByPath(string path);
+  INamed ResolveNamedByPath(TypePath path);
 }
 
 }

@@ -11,7 +11,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   
   public INamedResolver resolver;
   //NOTE: for symbols it's a full absolute path from the very top namespace
-  public string path;
+  public TypePath path;
 
   public ProxyType(INamedResolver resolver, string path)
   {
@@ -29,7 +29,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   public ProxyType(IType obj)
   {
     resolver = null;
-    path = null;
+    path = default;
     
     resolved = null;
     
@@ -39,20 +39,18 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsEmpty()
   {
-    return string.IsNullOrEmpty(path) && 
-           resolved == null;
+    return path.Count == 0 && resolved == null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsNull()
   {
-    return resolved == null && 
-           resolver == null && path == null;
+    return resolved == null && resolver == null && path.Count == 0;
   }
 
   public void Clear()
   {
-    path = null;
+    path = default;
     resolved = null;
   }
 
@@ -62,7 +60,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     if(resolved != null)
       return resolved;
 
-    if(!string.IsNullOrEmpty(path))
+    if(path.Count > 0)
       SetResolved(resolver.ResolveNamedByPath(path) as IType);
 
     return resolved;
@@ -76,13 +74,13 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     //      with the normalized one, this is useful for cases when comparing proxies
     //      pointing to types withing namespaces, e.g: func(fns.Item) vs func(Item)
     if(resolved != null)
-      path = GetNormalizedPath(resolved);
+      path = GetNormalizedTypePath(resolved);
   }
 
-  static string GetNormalizedPath(IType obj)
+  static TypePath GetNormalizedTypePath(IType obj)
   {
     //for symbols full path is used
-    return (obj is Symbol sym) ? sym.GetFullPath() : obj.GetName();
+    return (obj is Symbol sym) ? sym.GetFullTypePath() : obj.GetName();
   }
 
   public void Sync(marshall.SyncContext ctx)
@@ -109,9 +107,9 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 
   public override string ToString()
   {
-    if(string.IsNullOrEmpty(path))
+    if(path.Count == 0)
       Get();
-    return path;
+    return path.ToString();
   }
 
   public override bool Equals(object o)
@@ -125,7 +123,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     if(resolved != null && o.resolved != null)
       return o.resolved.Equals(resolved);
-    else if(resolver != null && o.resolver == resolver && o.path == path)
+    else if(resolver != null && o.resolver == resolver && o.path.Equals(path))
       return true;
      
     //OK nothing worked, let's resolve the type
@@ -141,8 +139,8 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     if(resolved != null)
       return resolved.GetHashCode();
-    
-    return path?.GetHashCode() ?? 0;
+
+    return path.GetHashCode();
   }
 }
 

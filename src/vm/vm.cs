@@ -102,9 +102,9 @@ public partial class VM : INamedResolver
   public struct SymbolSpec : IEquatable<SymbolSpec>
   {
     public string module;
-    public string path;
+    public TypePath path;
 
-    public SymbolSpec(string module, string path)
+    public SymbolSpec(string module, TypePath path)
     {
       this.module = module;
       this.path = path;
@@ -120,7 +120,7 @@ public partial class VM : INamedResolver
 
     public bool Equals(SymbolSpec other)
     {
-      return module == other.module && path == other.path;
+      return module == other.module && path.Equals(other.path);
     }
 
     public override bool Equals(object obj)
@@ -206,7 +206,7 @@ public partial class VM : INamedResolver
     return true;
   }
 
-  public INamed ResolveNamedByPath(string path)
+  public INamed ResolveNamedByPath(TypePath path)
   {
     foreach(var kv in registered_modules)
     {

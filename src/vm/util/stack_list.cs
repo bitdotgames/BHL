@@ -8,6 +8,11 @@ namespace bhl {
 //NOTE: StackList is passed by value since it's a struct
 public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 {
+  const int StackCapacity = 16;
+  
+  Array16<T> storage;
+  List<T> fallback;
+
   public struct Enumerator<T1> : IEnumerator<T1>
   {
     public T1 Current => target[index];
@@ -31,11 +36,6 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
     public void Dispose() { }
   }
-
-  const int CAPACITY = 16;
-
-  Array16<T> storage;
-  List<T> fallback;
 
   public void CopyTo(Array array, int index)
   {
@@ -126,7 +126,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   public void Add(T val)
   {
     Count++;
-    if(fallback == null && Count > CAPACITY)
+    if(fallback == null && Count > StackCapacity)
       Fallback();
 
     if(fallback == null)
@@ -153,8 +153,8 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
   void Fallback()
   {
-    fallback = new List<T>(2*CAPACITY);
-    for(int i=0; i<CAPACITY; ++i)
+    fallback = new List<T>(2*StackCapacity);
+    for(int i=0; i<StackCapacity; ++i)
       fallback.Add(storage[i]);
   }
 
@@ -185,13 +185,13 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     return true;
   }
 
-  public void CopyTo(T[] array, int startIndex)
+  public void CopyTo(T[] array, int start_idx)
   {
-    int targetSize = Count - startIndex;
-    if(targetSize > array.Length)
-      throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, targetSize));
+    int target_size = Count - start_idx;
+    if(target_size > array.Length)
+      throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, target_size));
 
-    for (int i = startIndex, j = 0; i < Count; i++, j++)
+    for(int i = start_idx, j = 0; i < Count; i++, j++)
       array[j] = this[i];
   }
 

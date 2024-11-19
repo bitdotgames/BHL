@@ -78,12 +78,12 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
   public string GetNativeStaticFieldGetFuncName(FieldSymbol fld)
   {
-    return "$__" + ((Symbol)this).GetFullPath() + "_get_" + fld.name;
+    return "$__" + ((Symbol)this).GetFullTypePath() + "_get_" + fld.name;
   }
 
   public string GetNativeStaticFieldSetFuncName(FieldSymbol fld)
   {
-    return "$__" + ((Symbol)this).GetFullPath() + "_set_" + fld.name;
+    return "$__" + ((Symbol)this).GetFullTypePath() + "_set_" + fld.name;
   }
 
   static public bool IsBinaryOp(string op)

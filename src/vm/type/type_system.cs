@@ -249,9 +249,9 @@ public class Types : INamedResolver
     return m;
   }
 
-  public INamed ResolveNamedByPath(string name)
+  public INamed ResolveNamedByPath(TypePath path)
   {
-    return ns.ResolveSymbolByPath(name);
+    return ns.ResolveSymbolByPath(path);
   }
 
   static void InitBuiltins() 
@@ -374,7 +374,7 @@ public class Types : INamedResolver
   {
     IType result;
     if(!table.TryGetValue(new Tuple<IType, IType>(lhs.eval_type, rhs.eval_type), out result))
-      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullTypePath() + "' and '" + rhs.eval_type.GetFullTypePath() + "'"));
     return result;
   }
 
@@ -397,7 +397,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs.eval_type)) 
     {
-      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullPath() + "' and '" + rhs.eval_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(rhs, "incompatible types: '" + lhs.eval_type.GetFullTypePath() + "' and '" + rhs.eval_type.GetFullTypePath() + "'"));
       return false;
     }
     return true;
@@ -412,7 +412,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs, rhs.eval_type)) 
     {
-      errors.Add(MakeIncompatibleTypesError(rhs, lhs.GetFullPath(), rhs.eval_type.GetFullPath()));
+      errors.Add(MakeIncompatibleTypesError(rhs, lhs.GetFullTypePath().ToString(), rhs.eval_type.GetFullTypePath().ToString()));
       return false;
     }
     return true;
@@ -422,7 +422,7 @@ public class Types : INamedResolver
   {
     if(!CanAssignTo(lhs.eval_type, rhs)) 
     {
-      errors.Add(MakeIncompatibleTypesError(lhs, lhs.eval_type.GetFullPath(), rhs.GetFullPath()));
+      errors.Add(MakeIncompatibleTypesError(lhs, lhs.eval_type.GetFullTypePath().ToString(), rhs.GetFullTypePath().ToString()));
       return false;
     }
     return true;
@@ -440,7 +440,7 @@ public class Types : INamedResolver
 
     if(!CheckCast(dest_type, from_type))
     {
-      errors.Add(new ParseError(dest, "incompatible types for casting: '" + dest_type.GetFullPath() + "' and '" + from_type.GetFullPath() + "'"));
+      errors.Add(new ParseError(dest, "incompatible types for casting: '" + dest_type.GetFullTypePath() + "' and '" + from_type.GetFullTypePath() + "'"));
       return false;
     }
     return true;

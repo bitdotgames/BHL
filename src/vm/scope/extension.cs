@@ -14,7 +14,7 @@ public static class ScopeExtensions
       this.scope = scope;
     }
 
-    public INamed ResolveNamedByPath(string path)
+    public INamed ResolveNamedByPath(TypePath path)
     {
       return scope.ResolveSymbolByPath(path);
     }
@@ -47,57 +47,66 @@ public static class ScopeExtensions
     return scope.Resolve(name) as T;
   }
 
-  public static string GetFullPath(this Symbol sym)
+  public static TypePath GetFullTypePath(this Symbol sym)
   {
     if(sym == null)
       return "?";
-    return sym.scope.GetFullPath(sym.name);
+    return sym.scope.GetFullTypePath(sym.name);
   }
 
-  public static string GetFullPath(this IType type)
+  public static TypePath GetFullTypePath(this IType type)
   {
     if(type == null)
       return "?";
     else if(type is Symbol s)
-      return s.GetFullPath();
+      return s.GetFullTypePath();
     else
       return type.ToString();
   }
 
-  public static string GetFullPath(this IScope scope, string name)
+  public static TypePath GetFullTypePath(this IScope scope, string name)
   {
     if(name == null)
       return "?";
 
+    //TODO: this looks a bit like a hack but it's needed for some types (e.g arrays) which names are fully specified
     if(name.IndexOf('.') != -1)
       return name;
 
+    var path = new TypePath(name);
+    
     while(scope != null)
     {
       if(scope is Namespace ns)
       {
         if(ns.name.Length == 0)
           break;
-        name = ns.name + '.' + name;
 
+        path.Add(ns.name);
         scope = ns.scope;
       }
       else if(scope is ClassSymbol cl)
       {
-        name = cl.name + '.' + name; 
-
+        path.Add(cl.name);
         scope = cl.scope;
       }
       else if(scope is InterfaceSymbol ifs)
       {
-        name = ifs.name + '.' + name; 
-
+        path.Add(ifs.name);
         scope = ifs.scope;
       }
       else
         scope = scope.GetFallbackScope();
     }
-    return name;
+    
+    //let's reverse path
+    if(path.Count > 1)
+    {
+      for(int i = 0; i < (path.Count / 2); ++i)
+        (path[i], path[path.Count - i - 1]) = (path[path.Count - i - 1], path[i]);
+    }
+
+    return path;
   }
   
   public static IScope GetRootScope(this Symbol sym)
@@ -137,53 +146,24 @@ public static class ScopeExtensions
 
   //NOTE: the first item of the resolved path is tried to be resolved
   //      with fallback (e.g. trying the 'upper' scopes)
-  public static Symbol ResolveSymbolByPath(this IScope scope, string path_str)
+  public static Symbol ResolveSymbolByPath(this IScope scope, TypePath path)
   {
-    var path = path_str.AsMemory();
-    
-    int start_idx = 0;
-    int next_idx = path.Span.IndexOf('.');
-
-    while(true)
+    for(int i=0; i<path.Count; ++i)
     {
-      //NOTE: the code below tries to make as little allocations as possible 
-      var name = 
-        next_idx == -1 ? 
-        (start_idx == 0 ? path : path.Slice(start_idx)) : 
-        path.Slice(start_idx, next_idx - start_idx);
-
-      var name_str = (next_idx == -1 && start_idx == 0) ? 
-        path_str : 
-        string.Create(name.Length, name,
-          (chars, buf) =>
-          {
-            for(int i = 0; i < chars.Length; ++i)
-              chars[i] = buf.Span[i];
-          }
-          );
-      
       //NOTE: for the root item let's resolve with fallback
-      var symb = start_idx == 0 ? 
-        scope.ResolveWithFallback(name_str) : 
-        scope.ResolveRelatedOnly(name_str);
-
-      if(symb == null)
-        break;
+      var symb = i == 0 ? 
+        scope.ResolveWithFallback(path[i]) : 
+        scope.ResolveRelatedOnly(path[i]);
 
       //let's check if it's the last path item
-      if(next_idx == -1)
+      if(i == path.Count - 1)
         return symb;
-
-      start_idx = next_idx + 1;
-      next_idx = path.Slice(start_idx).Span.IndexOf('.');
-      if(next_idx != -1)
-        next_idx += start_idx;
 
       scope = symb as IScope;
       //we can't proceed 'deeper' if the last resolved 
       //symbol is not a scope
       if(scope == null)
-        break;
+        return null;
     }
 
     return null;

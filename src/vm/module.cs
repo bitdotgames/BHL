@@ -106,9 +106,9 @@ public class Module : INamedResolver
     return fsymb;
   }
 
-  public INamed ResolveNamedByPath(string name)
+  public INamed ResolveNamedByPath(TypePath path)
   {
-    return ns.ResolveSymbolByPath(name);
+    return ns.ResolveSymbolByPath(path);
   }
 
   public void InitWithCompiled(CompiledModule compiled)
@@ -217,7 +217,7 @@ public class Module : INamedResolver
       return;
     
     if(fss.ip_addr == -1)
-      throw new Exception("Func " + fss.GetFullPath() + " ip_addr is not set, module '" + name + "'");
+      throw new Exception("Func " + fss.GetFullTypePath() + " ip_addr is not set, module '" + name + "'");
     
     //for faster runtime module lookups we cache it here and also it serves as a guard the symbol was setup
     fss._module = this;
