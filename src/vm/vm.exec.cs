@@ -64,9 +64,7 @@ public partial class VM : INamedResolver
   {
     var status = BHS.SUCCESS;
     while(exec.regions.Count > exec_waterline_idx && status == BHS.SUCCESS)
-    {
       status = ExecuteOnce(exec);
-    }
     return status;
   }
 
@@ -759,7 +757,7 @@ public partial class VM : INamedResolver
     return BHS.SUCCESS;
   }
   
-  void ExecInitCode(Module module)
+  void ExecuteInitCode(Module module)
   {
     var bytecode = module.compiled.initcode;
     if(bytecode == null || bytecode.Length == 0)
@@ -769,80 +767,15 @@ public partial class VM : INamedResolver
     init_exec.stack = init_frame.stack;
     init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs.all, bytecode, 0);
     init_exec.regions.Push(new VM.Region(init_frame, null, 0, bytecode.Length - 1));
+    //NOTE: here's the trick, init frame operates on global vars instead of locals
+    init_frame.locals = init_frame.module.gvar_vals;
 
     while(init_exec.regions.Count > 0)
-      ExecInitCodeOnce(init_exec);
-  }
-
-  //TODO: get rid of the code duplication shared with ExecCodeOnce
-  void ExecInitCodeOnce(ExecState exec)
-  {
-    var region = exec.regions.Peek();
-    var curr_frame = region.frame;
-
-    if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
-      exec.regions.Pop();
-      return;
+      var status = ExecuteOnce(init_exec);
+      if(status == BHS.RUNNING)
+        throw new Exception("Invalid state in init mode: " + status);
     }
-
-    var opcode = (Opcodes)curr_frame.bytecode[exec.ip];
-    
-    switch(opcode)
-    {
-      //NOTE: operates on global vars
-      case Opcodes.DeclVar:
-      {
-        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
-        int type_idx = (int)Bytecode.Decode24(curr_frame.bytecode, ref exec.ip);
-        var type = curr_frame.type_refs[type_idx].Get();
-
-        InitDefaultVal(type, curr_frame.module.gvar_vals[var_idx]);
-      }
-      break;
-      //NOTE: operates on global vars
-      case Opcodes.SetVar:
-      {
-        int var_idx = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
-
-        var new_val = curr_frame.stack.Pop();
-        curr_frame.module.gvar_vals.Assign(this, var_idx, new_val);
-        new_val.Release();
-      }
-      break;
-      case Opcodes.Constant:
-      case Opcodes.Add:
-      case Opcodes.Sub:
-      case Opcodes.Div:
-      case Opcodes.Mod:
-      case Opcodes.Mul:
-      case Opcodes.And:
-      case Opcodes.Or:
-      case Opcodes.BitAnd:
-      case Opcodes.BitOr:
-      case Opcodes.Equal:
-      case Opcodes.NotEqual:
-      case Opcodes.LT:
-      case Opcodes.LTE:
-      case Opcodes.GT:
-      case Opcodes.GTE:
-      case Opcodes.UnaryNot:
-      case Opcodes.UnaryNeg:
-      case Opcodes.New:
-      case Opcodes.SetAttrInplace:
-      case Opcodes.ArrAddInplace:
-      case Opcodes.MapAddInplace:
-      {
-        var status = ExecuteOnce(exec);
-        if(status == BHS.RUNNING)
-          throw new Exception("Invalid state in init mode: " + status);
-        //exec.ip is already increased
-        return;
-      }
-      default:
-        throw new Exception("Not supported opcode in init mode: " + opcode);
-    }
-    ++exec.ip;
   }
 
   void ExecModuleInitFunc(Module module)

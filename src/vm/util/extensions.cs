@@ -49,7 +49,7 @@ public static class Extensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static Val PopRelease(this FixedStack<Val> stack)
+  public static Val PopRelease(this ValStack stack)
   {
     var val = stack.Pop();
     val.RefMod(RefOp.DEC | RefOp.USR_DEC);
@@ -57,15 +57,15 @@ public static class Extensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static void PushRetain(this FixedStack<Val> stack, Val val)
+  public static void PushRetain(this ValStack stack, Val val)
   {
     val.RefMod(RefOp.INC | RefOp.USR_INC);
     stack.Push(val);
   }
 
-  public static void Assign(this FixedStack<Val> s, VM vm, int idx, Val val)
+  public static void Assign(this ValStack stack, VM vm, int idx, Val val)
   {
-    var curr = s[idx];
+    var curr = stack[idx];
     if(curr != null)
     {
       for(int i=0;i<curr._refs;++i)
@@ -80,7 +80,7 @@ public static class Extensions
       curr = Val.New(vm);
       curr.ValueCopyFrom(val);
       curr.RefMod(RefOp.USR_INC);
-      s[idx] = curr;
+      stack[idx] = curr;
     }
   }
 

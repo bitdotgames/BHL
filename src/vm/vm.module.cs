@@ -125,7 +125,7 @@ public partial class VM : INamedResolver
 
     module.InitRuntimeGlobalVars();
 
-    ExecInitCode(module);
+    ExecuteInitCode(module);
     ExecModuleInitFunc(module);
   }
 

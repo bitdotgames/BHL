@@ -18,7 +18,7 @@ public partial class VM : INamedResolver
     public Module module;
     public int func_ip;
     public FuncSymbolNative native;
-    public FixedStack<Val> upvals = new FixedStack<Val>(Frame.MAX_LOCALS);
+    public ValStack upvals = new ValStack(Frame.MAX_LOCALS);
 
     public FuncAddr func_addr
     {
