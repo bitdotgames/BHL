@@ -114,7 +114,7 @@ public class Module : INamedResolver
   public void InitWithCompiled(CompiledModule compiled)
   {
     this.compiled = compiled;
-    gvar_vals.Resize(compiled.total_gvars_num);
+    gvar_vals.Count = compiled.total_gvars_num;
   }
 
   internal void ClearGlobalVars()

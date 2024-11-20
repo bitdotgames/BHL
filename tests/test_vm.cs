@@ -11105,24 +11105,6 @@ public class TestVM : BHL_TestBase
       AssertEqual(st.Count, 0);
     }
     
-    //Push/Pop(repl)
-    {
-      var st = new FixedStack<int>(16); 
-      st.Push(1);
-      st.Push(10);
-
-      AssertEqual(st.Count, 2);
-      AssertEqual(1, st[0]);
-      AssertEqual(10, st[1]);
-
-      AssertEqual(10, st.Pop(0));
-      AssertEqual(st.Count, 1);
-      AssertEqual(1, st[0]);
-
-      AssertEqual(1, st.Pop(0));
-      AssertEqual(st.Count, 0);
-    }
-
     //Push/Dec
     {
       var st = new FixedStack<int>(16); 
@@ -11133,12 +11115,9 @@ public class TestVM : BHL_TestBase
       AssertEqual(1, st[0]);
       AssertEqual(10, st[1]);
 
-      st.Dec();
+      --st.Count;
       AssertEqual(st.Count, 1);
       AssertEqual(1, st[0]);
-
-      st.Dec();
-      AssertEqual(st.Count, 0);
     }
 
     //RemoveAt

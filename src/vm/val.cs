@@ -139,6 +139,7 @@ public class Val
   }
 
   //NOTE: refcount is not reset
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Reset()
   {
     type = null;
@@ -233,6 +234,7 @@ public class Val
     return dv;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetStr(string s)
   {
     Reset();
@@ -248,6 +250,7 @@ public class Val
     return dv;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetNum(long n)
   {
     Reset();
@@ -271,6 +274,7 @@ public class Val
   }
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetInt(double n)
   {
     Reset();
@@ -278,6 +282,7 @@ public class Val
     _num = n;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetFlt(double n)
   {
     Reset();
@@ -292,6 +297,7 @@ public class Val
     return dv;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBool(bool b)
   {
     Reset();
@@ -305,13 +311,30 @@ public class Val
     dv.SetObj(o, type);
     return dv;
   }
+  
+  static public Val NewObj(VM vm, IValRefcounted o, IType type)
+  {
+    Val dv = New(vm);
+    dv.SetObj(o, type);
+    return dv;
+  }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(object o, IType type)
   {
     Reset();
     this.type = type;
     _obj = o;
     _refc = o as IValRefcounted;
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObj(IValRefcounted o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+    _refc = o;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

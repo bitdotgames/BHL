@@ -70,7 +70,7 @@ public partial class VM : INamedResolver
 
   BHS ExecuteOnce(ExecState exec)
   {
-    var region = exec.regions.Peek();
+    ref var region = ref exec.regions.Peek();
     var curr_frame = region.frame;
 
 #if BHL_DEBUG
@@ -393,7 +393,7 @@ public partial class VM : INamedResolver
         int stack_offset = exec.stack.Count;
         for(int i=0;i<ret_num;++i)
           curr_frame.return_stack.Push(exec.stack[stack_offset-ret_num+i]);
-        exec.stack.head -= ret_num;
+        exec.stack.Count -= ret_num;
 
         exec.ip = EXIT_FRAME_IP - 1;
       }
@@ -525,7 +525,7 @@ public partial class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
-        frm.locals.head = 1;
+        frm.locals.Count = 1;
         frm.locals[0] = self;
 
         Call(exec, frm, args_bits);
@@ -565,7 +565,7 @@ public partial class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
-        frm.locals.head = 1;
+        frm.locals.Count = 1;
         frm.locals[0] = self;
 
         Call(exec, frm, args_bits);
@@ -590,7 +590,7 @@ public partial class VM : INamedResolver
         var frm = Frame.New(this);
         frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
 
-        frm.locals.head = 1;
+        frm.locals.Count = 1;
         frm.locals[0] = self;
 
         Call(exec, frm, args_bits);
@@ -638,7 +638,7 @@ public partial class VM : INamedResolver
       {
         int local_vars_num = (int)Bytecode.Decode8(curr_frame.bytecode, ref exec.ip);
         var args_bits = exec.stack.Pop();
-        curr_frame.locals.Resize(local_vars_num);
+        curr_frame.locals.Count = local_vars_num;
         //NOTE: we need to store arg info bits locally so that
         //      this information will be available to func
         //      args related opcodes
@@ -667,7 +667,7 @@ public partial class VM : INamedResolver
         //      initialized during Frame initialization
         //NOTE: we need to reflect the updated max amount of locals,
         //      otherwise they might not be cleared upon Frame exit
-        addr.upvals.Resize(local_idx+1);
+        addr.upvals.Count = local_idx+1;
 
         var upval = curr_frame.locals[up_idx];
         if(mode == UpvalMode.COPY)

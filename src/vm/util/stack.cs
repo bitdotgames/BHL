@@ -7,29 +7,19 @@ namespace bhl {
 public class FixedStack<T>
 {
   internal T[] storage;
-  internal int head = 0;
-
-  public int Count
-  {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get { return head; }
-  }
+  public int Count = 0;
 
   public FixedStack(int max_capacity)
   {
     storage = new T[max_capacity];
   }
 
-  public T this[int index]
+  public ref T this[int index]
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get { 
       ValidateIndex(index);
-      return storage[index]; 
-    }
-    set { 
-      ValidateIndex(index);
-      storage[index] = value; 
+      return ref storage[index]; 
     }
   }
 
@@ -37,97 +27,41 @@ public class FixedStack<T>
   [System.Diagnostics.Conditional("BHL_FRONT")]
   void ValidateIndex(int index)
   {
-    if(index < 0 || index >= head)
-      throw new Exception("Out of bounds: " + index + " vs " + head);
-  }
-
-  public bool TryGetAt(int index, out T v)
-  {
-    if(index < 0 || index >= storage.Length)
-    {
-      v = default(T);
-      return false;
-    }
-    
-    v = storage[index];
-    return true;
+    if(index < 0 || index >= Count)
+      throw new Exception("Out of bounds: " + index + " vs " + Count);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public T Push(T item)
+  public void Push(T item)
   {
-    storage[head++] = item;
-    return item;
+    storage[Count++] = item;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public T Pop()
+  public ref T Pop()
   {
-    return storage[--head];
+    return ref storage[--Count];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public T Pop(T repl)
+  public ref T Peek()
   {
-    --head;
-    T retval = storage[head];
-    storage[head] = repl;
-    return retval;
+    return ref storage[Count - 1];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public T Peek()
-  {
-    return storage[head - 1];
-  }
-
-  public void SetRelative(int offset, T item)
-  {
-    storage[head - 1 - offset] = item;
-  }
-
   public void RemoveAt(int idx)
   {
-    if(idx == (head-1))
-    {
-      Dec();
-    }
-    else
-    {
-      --head;
-      Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
-    }
-  }
-
-  public void MoveTo(int src, int dst)
-  {
-    if(src == dst)
+    if(idx == --Count)
       return;
-
-    var tmp = storage[src];
-
-    if(src > dst)
-      Array.Copy(storage, dst, storage, dst + 1, src - dst);
-    else
-      Array.Copy(storage, src + 1, storage, src, dst - src);
-
-    storage[dst] = tmp;
+    Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
   }
 
-  public void Dec()
-  {
-    --head;
-  }
-
-  public void Resize(int pos)
-  {
-    head = pos;
-  }
-
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Clear()
   {
     Array.Clear(storage, 0, storage.Length);
-    head = 0;
+    Count = 0;
   }
 }
 

@@ -150,7 +150,7 @@ public partial class VM : INamedResolver
           var upval = upvals[i];
           if(upval != null)
           {
-            frm.locals.Resize(i+1);
+            frm.locals.Count = i+1;
             upval.RefMod(RefOp.USR_INC | RefOp.INC);
             frm.locals[i] = upval;
           }
