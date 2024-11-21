@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
@@ -28,6 +27,9 @@ public class Blob<T> : IValRefcounted where T : unmanaged
        });
    }
    
+   internal Blob()
+   {}
+   
    static public Blob<T> New(ref T val)
    {
      var pool = PoolHolder<T>.pool.Value;
@@ -37,6 +39,7 @@ public class Blob<T> : IValRefcounted where T : unmanaged
      {
        ++pool.miss;
        blob = new Blob<T>();
+       blob.data = new byte[Size];
      }
      else
      {
@@ -44,13 +47,9 @@ public class Blob<T> : IValRefcounted where T : unmanaged
        blob = pool.stack.Pop();
      }
 
-     var data = ArrayPool<byte>.Shared.Rent(Size);
-     
-     ref var valRef = ref Unsafe.As<byte, T>(ref data[0]);
-     valRef = val;
+     Unsafe.As<byte, T>(ref blob.data[0]) = val;
 
      blob._refs = 1;
-     blob.data = data;
      blob.pool = pool;
 
      return blob;
@@ -83,7 +82,6 @@ public class Blob<T> : IValRefcounted where T : unmanaged
        throw new Exception("Freeing invalid object, refs " + blob._refs);
 
      blob._refs = -1;
-     ArrayPool<byte>.Shared.Return(blob.data);
      
      blob.pool.stack.Push(blob);
    } 
