@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace bhl {
 
- public class RefcList<T> : List<T>, IValRefcounted, IDisposable
- {
-   internal VM.Pool<RefcList<T>> pool;
+public class RefcList<T> : List<T>, IValRefcounted, IDisposable
+{
+   internal Pool<RefcList<T>> pool;
    
    //NOTE: -1 means it's in released state,
    //      public only for quick inspection
@@ -15,10 +15,10 @@ namespace bhl {
    
    static class PoolHolder<T1>
    {
-     public static System.Threading.ThreadLocal<VM.Pool<RefcList<T1>>> pool =
-       new System.Threading.ThreadLocal<VM.Pool<RefcList<T1>>>(() =>
+     public static System.Threading.ThreadLocal<Pool<RefcList<T1>>> pool =
+       new System.Threading.ThreadLocal<Pool<RefcList<T1>>>(() =>
        {
-         return new VM.Pool<RefcList<T1>>();
+         return new Pool<RefcList<T1>>();
        });
    }
 

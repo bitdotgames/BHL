@@ -8,7 +8,7 @@ namespace bhl {
 //TODO: writing is not implemented
 public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
-  internal VM.Pool<ValList<T>> pool;
+  internal Pool<ValList<T>> pool;
    
   Func<Val, T> val2native;
   
@@ -26,10 +26,10 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
   
   static class PoolHolder<T1>
   {
-    public static System.Threading.ThreadLocal<VM.Pool<ValList<T1>>> pool =
-      new System.Threading.ThreadLocal<VM.Pool<ValList<T1>>>(() =>
+    public static System.Threading.ThreadLocal<Pool<ValList<T1>>> pool =
+      new System.Threading.ThreadLocal<Pool<ValList<T1>>>(() =>
       {
-        return new VM.Pool<ValList<T1>>();
+        return new Pool<ValList<T1>>();
       });
   }
 

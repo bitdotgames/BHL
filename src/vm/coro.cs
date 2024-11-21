@@ -22,7 +22,7 @@ public interface IInspectableCoroutine
 
 public abstract class Coroutine : ICoroutine
 {
-  internal VM.Pool<Coroutine> pool;
+  internal Pool<Coroutine> pool;
 
   public abstract void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status);
   public virtual void Cleanup(VM.Frame frm, VM.ExecState exec) {}
@@ -33,7 +33,7 @@ public class CoroutinePool
   //TODO: add debug inspection for concrete types
   static class PoolHolder<T> where T : Coroutine
   {
-    //alternative implemenation
+    //TODO: alternative implemenation, check if it's simpler and faster?
     //[ThreadStatic]
     //static public VM.Pool<Coroutine> _pool;
     //static public VM.Pool<Coroutine> pool {
@@ -44,10 +44,10 @@ public class CoroutinePool
     //  }
     //}
 
-    public static System.Threading.ThreadLocal<VM.Pool<Coroutine>> pool =
-      new System.Threading.ThreadLocal<VM.Pool<Coroutine>>(() =>
+    public static System.Threading.ThreadLocal<Pool<Coroutine>> pool =
+      new System.Threading.ThreadLocal<Pool<Coroutine>>(() =>
       {
-        return new VM.Pool<Coroutine>();
+        return new Pool<Coroutine>();
       });
   }
 
