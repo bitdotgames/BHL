@@ -61,7 +61,7 @@ public struct DeferBlock
 
   static internal void ExitScope(List<DeferBlock> defers, VM.ExecState exec)
   {
-    if(defers == null)
+    if(defers == null || defers.Count == 0)
       return;
 
     var coro_orig = exec.coroutine;
@@ -85,7 +85,7 @@ public struct DeferBlock
 public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
-  public List<DeferBlock> defers;
+  public List<DeferBlock> defers = new List<DeferBlock>(2);
 
   public int Count {
     get {
@@ -139,8 +139,6 @@ public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 
   public void RegisterDefer(DeferBlock dfb)
   {
-    if(defers == null)
-      defers = new List<DeferBlock>();
     defers.Add(dfb);
   }
 }

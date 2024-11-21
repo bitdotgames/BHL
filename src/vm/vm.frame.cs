@@ -27,7 +27,7 @@ public partial class VM : INamedResolver
     public int start_ip;
     public int return_ip;
     public ValStack return_stack;
-    public List<DeferBlock> defers;
+    public List<DeferBlock> defers = new List<DeferBlock>(2);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public Frame New(VM vm)
@@ -135,27 +135,21 @@ public partial class VM : INamedResolver
         val.RefMod(RefOp.DEC | RefOp.USR_DEC);
       }
       stack.Clear();
-
-      if(defers != null)
-        defers.Clear();
+      defers.Clear();
     }
 
     public void RegisterDefer(DeferBlock dfb)
     {
-      if(defers == null)
-        defers = new List<DeferBlock>();
-
       defers.Add(dfb);
-      //for debug
-      //if(dfb.frm != this)
-      //  throw new Exception("INVALID DEFER BLOCK: mine " + GetHashCode() + ", other " + dfb.frm.GetHashCode() + " " + fb.GetStackTrace());
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExitScope(VM.Frame _, ExecState exec)
     {
       DeferBlock.ExitScope(defers, exec);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Retain()
     {
       //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
@@ -165,6 +159,7 @@ public partial class VM : INamedResolver
       ++refs;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Release()
     {
       //Console.WriteLine("REL " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
