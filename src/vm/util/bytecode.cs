@@ -60,7 +60,7 @@ public class Bytecode
     return val;
 #endif
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe uint Decode16(byte* p, ref int ip)
   {
