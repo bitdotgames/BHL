@@ -1,8 +1,10 @@
 //#define DEBUG_REFS
 using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace bhl {
 
@@ -27,18 +29,23 @@ public class Val
 
   //NOTE: below members are semi-public, one can use them for 
   //      fast access in case you know what you are doing
+  
   //NOTE: -1 means it's in released state
   public int _refs;
   public double _num;
   public object _obj;
-  //it's a cached version of _obj cast to IValRefcounted for less casting 
-  //in refcounting routines
+  //NOTE: it's a cached version of _obj cast to IValRefcounted for
+  //      less casting in refcounting routines
   public IValRefcounted _refc;
   //NOTE: extra values below are for efficient encoding of small structs,
-  //      e.g Vector, Color, etc
+  //      e.g Vector3, Color, etc
   public double _num2;
   public double _num3;
   public double _num4;
+
+  //NOTE: indicates that _obj is byte[] rented from pool and must be copied
+  //      and properly released
+  public int _blob_size;
 
   public double num {
     get {
@@ -147,21 +154,81 @@ public class Val
     _num2 = 0;
     _num3 = 0;
     _num4 = 0;
-    _obj = null;
     _refc = null;
+    
+    if(_blob_size > 0)
+    {
+      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _blob_size = 0;
+    }
+    
+    _obj = null;
   }
 
   //NOTE: doesn't affect refcounting
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void ValueCopyFrom(Val dv)
+  public void ValueCopyFrom(Val o)
   {
-    type = dv.type;
-    _num = dv._num;
-    _num2 = dv._num2;
-    _num3 = dv._num3;
-    _num4 = dv._num4;
-    _obj = dv._obj;
-    _refc = dv._refc;
+    type = o.type;
+    _num = o._num;
+    _num2 = o._num2;
+    _num3 = o._num3;
+    _num4 = o._num4;
+    _refc = o._refc;
+    
+    if(o._blob_size > 0)
+    {
+      CopyBlobDataFrom(o);
+    }
+    else if(_blob_size > 0)
+    {
+      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _obj = o._obj;
+      _blob_size = 0;
+    }
+    else
+      _obj = o._obj;
+  }
+
+  void CopyBlobDataFrom(Val src)
+  {
+    var src_data = (byte[])src._obj;
+    
+    if(_blob_size > 0)
+    {
+      var data = (byte[])_obj;
+
+      //let's check if our current buffer has enough capacity
+      if(data.Length >= src._blob_size)
+        Array.Copy(src_data, data, src._blob_size);
+      else
+      {
+        ArrayPool<byte>.Shared.Return(data);
+        var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size); 
+        Array.Copy(src_data, new_data, src._blob_size);
+        _obj = new_data;
+      }
+    }
+    else
+    {
+      var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size); 
+      Array.Copy(src_data, new_data, src._blob_size);
+      _obj = new_data;
+    }
+    
+    _blob_size = src._blob_size;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  bool IsBlobEqual(Val dv)
+  {
+    if(_blob_size != dv._blob_size)
+      return false;
+
+    ReadOnlySpan<byte> a = (byte[])_obj;
+    ReadOnlySpan<byte> b = (byte[])dv._obj;
+
+    return a.SequenceEqual(b);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -336,6 +403,29 @@ public class Val
     _obj = o;
     _refc = o;
   }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetBlob<T>(ref T val, IType type) where T : unmanaged
+  {
+    Reset();
+
+    int size = Marshal.SizeOf<T>();
+      
+    var data = ArrayPool<byte>.Shared.Rent(size);
+
+    Unsafe.As<byte, T>(ref data[0]) = val;
+    
+    this.type = type;
+    _blob_size = size;
+    _obj = data;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref T GetBlob<T>() where T : unmanaged
+  {
+    byte[] data = (byte[])_obj;
+    return ref Unsafe.As<byte, T>(ref data[0]);
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsValueEqual(Val o)
@@ -345,7 +435,9 @@ public class Val
       _num2 == o._num2 &&
       _num3 == o._num3 &&
       _num4 == o._num4 &&
-      (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj)
+      ((_blob_size > 0 || o._blob_size > 0) ? 
+        IsBlobEqual(o) :
+        (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
       ;
 
     return res;
