@@ -421,6 +421,12 @@ public class Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetBlob<T>(T val, IType type) where T : unmanaged
+  {
+    SetBlob(ref val, type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T GetBlob<T>() where T : unmanaged
   {
     byte[] data = (byte[])_obj;
