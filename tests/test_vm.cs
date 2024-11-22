@@ -4185,6 +4185,31 @@ public class TestVM : BHL_TestBase
     AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
+  
+  [Fact]
+  public void TestParseErrorInDoWhileBlockWithReturn()
+  {
+    string bhl = @"
+
+    func int test() 
+    {
+      string i;
+      do {
+        return i
+      } while(true)
+    }
+    ";
+    AssertError<Exception>(
+      delegate() { 
+        Compile(bhl);
+      },
+      "incompatible types: 'int' and 'string'",
+      new PlaceAssert(bhl, @"
+        return i
+---------------^"
+      )
+    );
+  }
 
   [Fact]
   public void TestBreakInDoWhile()

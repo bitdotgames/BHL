@@ -4914,7 +4914,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_AddSemanticToken(ctx.PARAL(), SemanticToken.Keyword);
 
     var block = ProcBlock(BlockType.PARAL, ctx.block()?.statement());
-    if(block.children.Count == 0)
+    if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
   }
@@ -4924,7 +4924,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_AddSemanticToken(ctx.PARAL_ALL(), SemanticToken.Keyword);
 
     var block = ProcBlock(BlockType.PARAL_ALL, ctx.block()?.statement());
-    if(block.children.Count == 0)
+    if(block == null)
       AddError(ctx, "empty paral blocks are not allowed");
     return null;
   }
@@ -5123,9 +5123,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PopBlock(ast);
 
-    return_found.Remove(PeekFuncDecl());
+    BlockResetsCurrentFunctionReturnInfo();
 
     return null;
+  }
+
+  void BlockResetsCurrentFunctionReturnInfo()
+  {
+    return_found.Remove(PeekFuncDecl());
   }
 
   public override object VisitStmDoWhile(bhlParser.StmDoWhileContext ctx)
@@ -5158,7 +5163,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PopBlock(ast);
 
-    return_found.Remove(PeekFuncDecl());
+    BlockResetsCurrentFunctionReturnInfo();
 
     return null;
   }
@@ -5222,7 +5227,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     local_scope.Exit();
     PopScope();
 
-    return_found.Remove(PeekFuncDecl());
+    BlockResetsCurrentFunctionReturnInfo();
 
     return null;
   }
@@ -5653,9 +5658,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PopScope();
 
     if(is_paral)
-      return_found.Remove(PeekFuncDecl());
+      BlockResetsCurrentFunctionReturnInfo();
 
     PopBlock(ast);
+
+    //NOTE: if there are no children, something is definitely wrong
+    //      probably due to parsing errors
+    if(ast.children.Count == 0)
+      return null;
 
     PeekAST().AddChild(ast);
     return ast;
