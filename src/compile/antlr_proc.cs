@@ -839,9 +839,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       action();
     }
-    catch(SymbolError err)
+    catch(Exception e)
     {
-      proc.errors.Add(err);
+      if(e is ICompileError ce)
+        proc.errors.Add(ce);
+      else
+        //NOTE: let's turn other exceptions into BuildErrors
+        proc.errors.Add(new BuildError(proc.module.file_path, e));
     }
   }
 

@@ -75,6 +75,8 @@ public class SyntaxError : Exception, ICompileError
 
 public class BuildError : Exception, ICompileError
 {
+  private const int MAX_EXCEPTION_STR_LEN = 1000;
+  
   public string text { get; }
   public string stack_trace { get { return StackTrace; } }
   public SourceRange range { get { return new SourceRange(); } }
@@ -87,15 +89,13 @@ public class BuildError : Exception, ICompileError
     this.file = file;
   }
 
-  private const int MAX_EXCEPTION_STACK_LEN = 700;
-
   public BuildError(string file, Exception inner)
     : base(ErrorUtils.MakeMessage(file, new SourceRange(), inner.Message), inner)
   {
-    var stack = inner.StackTrace;
-    if(stack.Length > MAX_EXCEPTION_STACK_LEN)
-      stack = stack.Substring(0, MAX_EXCEPTION_STACK_LEN) + "...";
-    this.text = inner.Message + stack;
+    var msg = inner.ToString(); //NOTE: this will include all inner exceptions stack traces as well
+    if(msg.Length > MAX_EXCEPTION_STR_LEN)
+      msg = msg.Substring(0, MAX_EXCEPTION_STR_LEN) + "...";
+    this.text = msg;
     this.file = file;
   }
 }
