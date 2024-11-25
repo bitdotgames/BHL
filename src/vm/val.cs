@@ -409,11 +409,11 @@ public class Val
   {
     Reset();
 
-    int size = Marshal.SizeOf<T>();
+    int size = Extensions.SizeOf<T>();
       
     var data = ArrayPool<byte>.Shared.Rent(size);
 
-    Unsafe.As<byte, T>(ref data[0]) = val;
+    Extensions.UnsafeAs<byte, T>(ref data[0]) = val;
     
     this.type = type;
     _blob_size = size;
@@ -430,7 +430,7 @@ public class Val
   public ref T GetBlob<T>() where T : unmanaged
   {
     byte[] data = (byte[])_obj;
-    return ref Unsafe.As<byte, T>(ref data[0]);
+    return ref Extensions.UnsafeAs<byte, T>(ref data[0]);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

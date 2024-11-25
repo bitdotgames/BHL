@@ -30,25 +30,18 @@ public abstract class Coroutine : ICoroutine
 
 public class CoroutinePool
 {
-  //TODO: add debug inspection for concrete types
+  //TODO: add debug inspection for concrete types?
   static class PoolHolder<T> where T : Coroutine
   {
-    //TODO: alternative implemenation, check if it's simpler and faster?
-    //[ThreadStatic]
-    //static public VM.Pool<Coroutine> _pool;
-    //static public VM.Pool<Coroutine> pool {
-    //  get {
-    //    if(_pool == null) 
-    //      _pool = new VM.Pool<Coroutine>(); 
-    //    return _pool;
-    //  }
-    //}
-
-    public static System.Threading.ThreadLocal<Pool<Coroutine>> pool =
-      new System.Threading.ThreadLocal<Pool<Coroutine>>(() =>
-      {
-        return new Pool<Coroutine>();
-      });
+    [ThreadStatic]
+    static public Pool<Coroutine> _pool;
+    static public Pool<Coroutine> pool {
+      get {
+        if(_pool == null) 
+          _pool = new Pool<Coroutine>(); 
+        return _pool;
+      }
+    }
   }
 
   internal int hits;
@@ -73,12 +66,12 @@ public class CoroutinePool
   }
 
 #if BHL_TEST
-  public HashSet<VM.Pool<Coroutine>> pools_tracker = new HashSet<VM.Pool<Coroutine>>(); 
+  public HashSet<Pool<Coroutine>> pools_tracker = new HashSet<Pool<Coroutine>>(); 
 #endif
 
   static public T New<T>(VM vm) where T : Coroutine, new()
   {
-    var pool = PoolHolder<T>.pool.Value;
+    var pool = PoolHolder<T>.pool;
 
     Coroutine coro = null;
     if(pool.stack.Count == 0)

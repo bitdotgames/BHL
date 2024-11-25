@@ -26,16 +26,20 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
   
   static class PoolHolder<T1>
   {
-    public static System.Threading.ThreadLocal<Pool<ValList<T1>>> pool =
-      new System.Threading.ThreadLocal<Pool<ValList<T1>>>(() =>
-      {
-        return new Pool<ValList<T1>>();
-      });
+     [ThreadStatic]
+     static public Pool<ValList<T1>> _pool;
+     public static Pool<ValList<T1>> pool {
+      get {
+        if(_pool == null) 
+          _pool = new Pool<ValList<T1>>(); 
+        return _pool;
+      }
+     }
   }
 
   static public ValList<T> New(ValList lst, Func<Val, T> val2native)
   {
-    var pool = PoolHolder<T>.pool.Value;
+    var pool = PoolHolder<T>.pool;
 
     ValList<T> vls = null;
     if(pool.stack.Count == 0)

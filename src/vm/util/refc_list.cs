@@ -14,17 +14,21 @@ public class RefcList<T> : List<T>, IValRefcounted, IDisposable
    public int refs => _refs; 
    
    static class PoolHolder<T1>
-   {
-     public static System.Threading.ThreadLocal<Pool<RefcList<T1>>> pool =
-       new System.Threading.ThreadLocal<Pool<RefcList<T1>>>(() =>
-       {
-         return new Pool<RefcList<T1>>();
-       });
+   { 
+     [ThreadStatic]
+     static public Pool<RefcList<T1>> _pool;
+     public static Pool<RefcList<T1>> pool {
+      get {
+        if(_pool == null) 
+          _pool = new Pool<RefcList<T1>>(); 
+        return _pool;
+      }
+     }
    }
 
    static public RefcList<T> New()
    {
-     var pool = PoolHolder<T>.pool.Value;
+     var pool = PoolHolder<T>.pool;
 
      RefcList<T> list = null;
      if(pool.stack.Count == 0)

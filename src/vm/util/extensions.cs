@@ -95,6 +95,27 @@ public static class Extensions
     //      these bits in the target value and 'or' the bits we want to set
     other = (byte)((other & (byte)~FuncSignatureAttrib.FuncAttribMask) | (byte)attrib);
   }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe int SizeOf<T>() where T : unmanaged
+  {
+    return sizeof(T);
+  }
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe ref T UsafeAsRef<T>(void* source) where T : unmanaged
+  {
+    return ref *(T*)source;
+  }  
+  
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static unsafe ref TTo UnsafeAs<TFrom, TTo>(ref TFrom source) where TTo : unmanaged where TFrom : unmanaged
+  {
+    fixed(void* p = &source)
+    {
+      return ref UsafeAsRef<TTo>(p);
+    }
+  }  
 }
 
 }
