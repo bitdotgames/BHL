@@ -244,6 +244,91 @@ public class TestStackTrace : BHL_TestBase
   }
   
   [Fact]
+  public void TestGetStackTraceFromCoroVirtualMethodInParal()
+  {
+    string bhl3 = @"
+    class Base 
+    {
+      coro virtual func float wow(float b) { 
+        yield() 
+        return b 
+      }
+
+      coro func test(float b) {
+        yield this.wow(b)
+      }  
+    }
+    class Foo : Base
+    {
+      coro override func float wow(float b)
+      {
+        yield() 
+        fatal_error()
+        return b
+      }
+     }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+    coro func float bar(float b)
+    {
+      Base bs = new Foo;
+
+      paral {
+        yield suspend()
+        yield bs.test(b)
+      }
+      return b
+    }
+    ";
+
+    string bhl1 = @"
+    import ""bhl2""
+    coro func float foo(float k)
+    {
+      return yield bar(k)
+    }
+
+    coro func float test(float k) 
+    {
+      return yield foo(k)
+    }
+    ";
+
+    var trace = new List<VM.TraceItem>();
+    var ts_fn = new Action<Types>((ts) => {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+            throw new NullReferenceException();
+            return null;
+          });
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(new Dictionary<string, string>() {
+        {"bhl1.bhl", bhl1},
+        {"bhl2.bhl", bhl2},
+        {"bhl3.bhl", bhl3},
+      },
+      ts_fn
+    );
+    vm.LoadModule("bhl1");
+    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    AssertTrue(vm.Tick());
+    AssertError<Exception>(
+      () => vm.Tick(), 
+@"at wow(..) in bhl3.bhl:18
+at test(..) in bhl3.bhl:10
+at bar(..) in bhl2.bhl:9
+at foo(..) in bhl1.bhl:5
+at test(..) in bhl1.bhl:10"
+    );
+  }
+  
+  [Fact]
   public void TestGetStackTraceFromInterfaceMethod()
   {
     string bhl3 = @"

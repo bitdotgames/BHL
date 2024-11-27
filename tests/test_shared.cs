@@ -883,8 +883,15 @@ public class BHL_TestBase
       err = (Exception)mex.errors[0];
     }
 
-    var idx = err.ToString().IndexOf(msg);
-    Assert.True(idx != -1, "Error message is: " + err);
+    var err_str = err.ToString();
+    var idx = err_str.IndexOf(msg);
+    if(idx == -1)
+    {
+      Console.WriteLine("Error:\n" + err_str);
+      Console.WriteLine("Expected:\n" + msg);
+    }
+
+    Assert.Contains(msg, err_str);
 
     if(place_assert != null)
     {
