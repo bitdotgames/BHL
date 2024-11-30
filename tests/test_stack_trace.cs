@@ -258,19 +258,11 @@ public class TestStackTrace : BHL_TestBase
         yield this.wow(b)
       }  
     }
-    class Foo : Base
-    {
-      coro override func float wow(float b)
-      {
-        yield() 
-        fatal_error()
-        return b
-      }
-     }
     ";
 
     string bhl2 = @"
     import ""bhl3""
+
     coro func float bar(float b)
     {
       Base bs = new Foo;
@@ -280,6 +272,16 @@ public class TestStackTrace : BHL_TestBase
         yield bs.test(b)
       }
       return b
+    }
+
+    class Foo : Base
+    {
+      coro override func float wow(float b)
+      {
+        yield() 
+        fatal_error()
+        return b
+      }
     }
     ";
 
@@ -320,9 +322,9 @@ public class TestStackTrace : BHL_TestBase
     AssertTrue(vm.Tick());
     AssertError<Exception>(
       () => vm.Tick(), 
-@"at wow(..) in bhl3.bhl:18
+@"at wow(..) in bhl2.bhl:20
 at test(..) in bhl3.bhl:10
-at bar(..) in bhl2.bhl:9
+at bar(..) in bhl2.bhl:10
 at foo(..) in bhl1.bhl:5
 at test(..) in bhl1.bhl:10"
     );

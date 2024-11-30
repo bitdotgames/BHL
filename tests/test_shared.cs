@@ -887,7 +887,7 @@ public class BHL_TestBase
     var idx = err_str.IndexOf(msg);
     if(idx == -1)
     {
-      Console.WriteLine("Error:\n" + err_str);
+      Console.WriteLine("Actual:\n" + err_str);
       Console.WriteLine("Expected:\n" + msg);
     }
 
