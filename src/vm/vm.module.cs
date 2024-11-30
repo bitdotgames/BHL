@@ -27,7 +27,7 @@ public partial class VM : INamedResolver
 
   Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module_cache = new Dictionary<SymbolSpec, ModuleSymbol>();
 
-  static int trampoline_ids_seq = -1;
+  static int trampoline_ids_seq = 0;
   FuncSymbolScript[] trampolines_cache = new FuncSymbolScript[128];
 
   public enum LoadModuleSymbolError
@@ -196,15 +196,26 @@ public partial class VM : INamedResolver
   }   
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public ref FuncSymbolScript GetFuncTrampoline(ref int trampoline_idx)
+  public FuncSymbolScript GetOrMakeFuncTrampoline(ref int trampoline_idx, string module, string path)
   {
+    //NOTE: 0 idx is assumed to be 'unassigned'
     if(trampoline_idx == 0)
       trampoline_idx = Interlocked.Increment(ref trampoline_ids_seq);
 
     if(trampolines_cache.Length <= trampoline_idx)
       Array.Resize(ref trampolines_cache, ToNextNearestPow2(trampoline_idx + 1));
 
-    return ref trampolines_cache[trampoline_idx];
+    var fs = trampolines_cache[trampoline_idx];
+    if(fs == null)
+    {
+      var err = TryLoadModuleSymbol(new SymbolSpec(module, path), out var ms);
+      if(err != 0)
+        throw new Exception($"Module '{module}' symbol '{path}' not found: {err}");
+
+      fs = (FuncSymbolScript)ms.symbol;
+      trampolines_cache[trampoline_idx] = fs;
+    }
+    return fs;
   }
 
 }
