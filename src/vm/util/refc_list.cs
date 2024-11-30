@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -13,22 +14,21 @@ public class RefcList<T> : List<T>, IValRefcounted, IDisposable
    
    public int refs => _refs; 
    
-   static class PoolHolder<T1>
-   { 
-     [ThreadStatic]
-     static public Pool<RefcList<T1>> _pool;
-     public static Pool<RefcList<T1>> pool {
-      get {
-        if(_pool == null) 
-          _pool = new Pool<RefcList<T1>>(); 
-        return _pool;
-      }
-     }
-   }
+
+  [ThreadStatic]
+  static Pool<RefcList<T>> _pool;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static Pool<RefcList<T>> GetPool()
+  {
+    if(_pool == null) 
+      _pool = new Pool<RefcList<T>>(); 
+    return _pool;
+  }
 
    static public RefcList<T> New()
    {
-     var pool = PoolHolder<T>.pool;
+     var pool = GetPool();
 
      RefcList<T> list = null;
      if(pool.stack.Count == 0)
