@@ -3,12 +3,9 @@
         <RootNamespace>bhl</RootNamespace>
         <TargetFrameworks>net8.0</TargetFrameworks>
         <DefineConstants>BHL_FRONT</DefineConstants>
+        <GenerateProgramFile>false</GenerateProgramFile>
         <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     </PropertyGroup>
-
-    <ItemGroup>
-      <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -17,11 +14,13 @@
       <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="Mono.Options" Version="6.12.0.148" />
+      <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\src\compile\bhl_front.csproj" />
       <ProjectReference Include="..\src\lsp\bhl_lsp.csproj" />
+      <ProjectReference Include="..\tests\bhl_tests.csproj" />
     </ItemGroup>
 
 </Project>

@@ -10,6 +10,10 @@ lsp:
 test:
 	cd ./tests && dotnet test
 
+.PHONY: bench
+bench:
+	cd ./bench && dotnet run -c Release --framework net8.0 -- --warmupCount 1 -f '*'
+
 .PHONY: examples
 examples:
 	cd ./example && ./run.sh
