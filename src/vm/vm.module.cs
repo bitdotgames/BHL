@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace bhl {
 
@@ -23,8 +25,10 @@ public partial class VM : INamedResolver
 
   IModuleLoader loader;
 
-  Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module = new Dictionary<SymbolSpec, ModuleSymbol>();
-  Dictionary<object, ModuleSymbol> cache_tag2module = new Dictionary<object, ModuleSymbol>();
+  Dictionary<SymbolSpec, ModuleSymbol> symbol_spec2module_cache = new Dictionary<SymbolSpec, ModuleSymbol>();
+
+  static int trampoline_ids_seq = -1;
+  FuncSymbolScript[] trampolines_cache = new FuncSymbolScript[128];
 
   public enum LoadModuleSymbolError
   {
@@ -151,18 +155,12 @@ public partial class VM : INamedResolver
       UnloadModule(key);
   }
 
-  public LoadModuleSymbolError TryLoadModuleSymbol(object cache_tag, SymbolSpec spec, out ModuleSymbol ms)
+  public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms, bool use_cache = true)
   {
-    if(cache_tag != null && cache_tag2module.TryGetValue(cache_tag, out ms))
-      return LoadModuleSymbolError.Ok;
+    ms = default;
 
-    if(symbol_spec2module.TryGetValue(spec, out ms))
-    {
-      if(cache_tag != null)
-        cache_tag2module[cache_tag] = ms;
-
+    if(use_cache && symbol_spec2module_cache.TryGetValue(spec, out ms))
       return LoadModuleSymbolError.Ok;
-    }
 
     if(!LoadModule(spec.module))
       return LoadModuleSymbolError.ModuleNotFound;
@@ -178,18 +176,37 @@ public partial class VM : INamedResolver
     ms.module = rm;
     ms.symbol = symb;
 
-    symbol_spec2module[spec] = ms;
-
-    if(cache_tag != null)
-      cache_tag2module[cache_tag] = ms;
+    if(use_cache)
+     symbol_spec2module_cache[spec] = ms;
 
     return LoadModuleSymbolError.Ok;
   }
 
-  public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms)
+  static int ToNextNearestPow2(int x) 
   {
-    return TryLoadModuleSymbol(null, spec, out ms);
+     if(x < 0)
+      return 0;
+     --x;
+     x |= x >> 1;
+     x |= x >> 2;
+     x |= x >> 4;
+     x |= x >> 8;
+     x |= x >> 16;
+     return x + 1;
+  }   
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref FuncSymbolScript GetFuncTrampoline(ref int trampoline_idx)
+  {
+    if(trampoline_idx == 0)
+      trampoline_idx = Interlocked.Increment(ref trampoline_ids_seq);
+
+    if(trampolines_cache.Length <= trampoline_idx)
+      Array.Resize(ref trampolines_cache, ToNextNearestPow2(trampoline_idx + 1));
+
+    return ref trampolines_cache[trampoline_idx];
   }
+
 }
 
 }

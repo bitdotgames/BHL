@@ -985,6 +985,7 @@ public partial class VM : INamedResolver
       return false;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static BHS ExecuteCoroutine(Frame curr_frame, ExecState exec)
   {
     var status = BHS.SUCCESS;
