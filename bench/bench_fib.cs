@@ -8,7 +8,8 @@ using bhl;
 
 public class BenchFibonacci : BHL_TestBase
 {
-  VM.Fiber fb;
+  VM vm;
+  FuncSymbolScript fs;
 
   public BenchFibonacci()
   {
@@ -27,29 +28,29 @@ public class BenchFibonacci : BHL_TestBase
       }
     }
 
-    func int test() 
+    func test() 
     {
       int x = 15 
-      return fib(x)
+      fib(x)
     }
     ";
 
-    var c = Compile(bhl);
-
-    var vm = MakeVM(c);
-    fb = vm.Start("test");
+    vm = MakeVM(bhl);
+    fs = 
+      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
   }
 
   [Benchmark]
   public void FibonacciSimple()
   {
-    fb.Tick();
+    vm.Execute(fs);
   }
 }
 
 public class BenchFibonacciImported : BHL_TestBase
 {
-  VM.Fiber fb;
+  VM vm;
+  FuncSymbolScript fs;
 
   public BenchFibonacciImported()
   {
@@ -90,14 +91,14 @@ public class BenchFibonacciImported : BHL_TestBase
     string test = @"
     import ""fib1""
 
-    func int test() 
+    func test() 
     {
       int x = 15 
-      return fib1(x)
+      fib1(x)
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    vm = MakeVM(new Dictionary<string, string>() {
         {"fib1.bhl", fib1},
         {"fib2.bhl", fib2},
         {"test.bhl", test},
@@ -105,19 +106,21 @@ public class BenchFibonacciImported : BHL_TestBase
     );
 
     vm.LoadModule("test");
-    fb = vm.Start("test");
+    fs = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
   }
 
   [Benchmark]
   public void FibonacciImported()
   {
-    fb.Tick();
+    vm.Execute(fs);
   }
 }
 
 public class BenchFibonacciMethodImported : BHL_TestBase
 {
-  VM.Fiber fb;
+  VM vm;
+  FuncSymbolScript fs;
 
   public BenchFibonacciMethodImported()
   {
@@ -174,7 +177,7 @@ public class BenchFibonacciMethodImported : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    vm = MakeVM(new Dictionary<string, string>() {
         {"fib1.bhl", fib1},
         {"fib2.bhl", fib2},
         {"test.bhl", test},
@@ -182,19 +185,21 @@ public class BenchFibonacciMethodImported : BHL_TestBase
     );
 
     vm.LoadModule("test");
-    fb = vm.Start("test");
+    fs = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
   }
 
   [Benchmark]
   public void FibonacciMethodImported()
   {
-    fb.Tick();
+    vm.Execute(fs);
   }
 }
 
 public class BenchFibonacciInterfaceImported : BHL_TestBase
 {
-  VM.Fiber fb;
+  VM vm;
+  FuncSymbolScript fs;
 
   public BenchFibonacciInterfaceImported()
   {
@@ -232,19 +237,20 @@ public class BenchFibonacciInterfaceImported : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    vm = MakeVM(new Dictionary<string, string>() {
         {"fib1.bhl", fib1},
         {"test.bhl", test},
       }
     );
 
     vm.LoadModule("test");
-    fb = vm.Start("test");
+    fs = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
   }
 
   [Benchmark]
   public void FibonacciInterfaceImported()
   {
-    fb.Tick();
+    vm.Execute(fs);
   }
 }
