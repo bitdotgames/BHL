@@ -1335,6 +1335,45 @@ public class TestFiber : BHL_TestBase
     }
   }
 
+  [Fact]
+  public void TestExecuteStartsAFiber()
+  {
+    string bhl = @"
+    func test() 
+    {
+      int i = 10
+      start(coro func() {
+        yield Doer(i)
+      })
+    }
+
+    coro func Doer(int i) 
+    {
+      trace((string)i)
+      yield()
+      i = i + 1
+      trace((string)i)
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+    var vm = MakeVM(bhl, ts_fn);
+
+    var fs = 
+      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
+
+    {
+      vm.Execute(fs);
+      vm.Tick();
+      vm.Tick();
+      AssertEqual("1011", log.ToString());
+      CommonChecks(vm);
+    }
+  }
+
   void BindStartScriptInMgr(Types ts)
   {
     {
