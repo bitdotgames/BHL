@@ -873,6 +873,8 @@ public class BHL_TestBase
 
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
+    msg = msg.Replace("\r", "");
+
     if(err == null)
       Assert.Fail("No error happened, expected: " + msg);
 
@@ -883,16 +885,15 @@ public class BHL_TestBase
       err = (Exception)mex.errors[0];
     }
 
-    var err_str = err.ToString();
+    var err_str = err.ToString().Replace("\r", "");
     var idx = err_str.IndexOf(msg);
     if(idx == -1)
     {
-      Console.Error.WriteLine("Actual:\n" + err_str);
-      Console.Error.WriteLine("Expected:\n" + msg);
-
-      Assert.Fail("Sub-string not found");
+      Console.WriteLine("Actual:\n" + err_str);
+      Console.WriteLine("Expected:\n" + msg);
     }
 
+    Assert.Contains(msg, err_str);
 
     if(place_assert != null)
     {
