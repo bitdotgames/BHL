@@ -889,9 +889,10 @@ public class BHL_TestBase
     {
       Console.WriteLine("Actual:\n" + err_str);
       Console.WriteLine("Expected:\n" + msg);
+
+      Assert.Fail("Sub-string not found");
     }
 
-    Assert.Contains(msg, err_str);
 
     if(place_assert != null)
     {
