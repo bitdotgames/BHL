@@ -873,6 +873,7 @@ public class BHL_TestBase
 
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
+    //let's normalize line endings
     msg = msg.Replace("\r", "");
 
     if(err == null)
@@ -885,6 +886,7 @@ public class BHL_TestBase
       err = (Exception)mex.errors[0];
     }
 
+    //let's normalize line endings
     var err_str = err.ToString().Replace("\r", "");
     var idx = err_str.IndexOf(msg);
     if(idx == -1)
