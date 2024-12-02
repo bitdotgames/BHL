@@ -887,8 +887,8 @@ public class BHL_TestBase
     var idx = err_str.IndexOf(msg);
     if(idx == -1)
     {
-      Console.WriteLine("Actual:\n" + err_str);
-      Console.WriteLine("Expected:\n" + msg);
+      Console.Error.WriteLine("Actual:\n" + err_str);
+      Console.Error.WriteLine("Expected:\n" + msg);
 
       Assert.Fail("Sub-string not found");
     }
