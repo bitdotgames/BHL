@@ -62,6 +62,12 @@ public partial class VM : INamedResolver
 
     public FuncSymbolNative fsn;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator FuncAddr(FuncSymbolScript fss)
+    {
+      return new FuncAddr(fss);
+    }
+
     public bool is_native
     {
       get {
@@ -79,7 +85,17 @@ public partial class VM : INamedResolver
       }
     }
 
-    public FuncSymbol FindSymbol()
+    //TODO: add ctor for FuncSymbolNative?
+    public FuncAddr(FuncSymbolScript fss)
+    {
+      module = fss._module;
+      fs = fss;
+      ip = fss.ip_addr;
+      fsn = null;
+      _symbol = fs;
+    }
+    
+    FuncSymbol FindSymbol()
     {
       if(fs != null)
         return fs;

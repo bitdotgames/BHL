@@ -567,11 +567,7 @@ public partial class VM : INamedResolver
 
     public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
-      var addr = new FuncAddr() {
-        module = fs._module,
-        fs = fs,
-        ip = fs.ip_addr
-      };
+      var addr = new FuncAddr(fs);
 
       fb.func_addr = addr;
       fb.stop_guard = false;
