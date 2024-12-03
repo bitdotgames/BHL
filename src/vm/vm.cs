@@ -126,14 +126,6 @@ public partial class VM : INamedResolver
       this.path = path;
     }
 
-    public ModuleSymbol LoadModuleSymbol(VM vm)
-    {
-      var err = vm.TryLoadModuleSymbol(this, out var ms);
-      if(err != 0)
-        throw new Exception($"Error loading symbol by spec '{this}': {err}");
-      return ms;
-    }
-
     public bool Equals(SymbolSpec other)
     {
       return module == other.module && path.Equals(other.path);

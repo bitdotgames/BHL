@@ -12,7 +12,7 @@ test:
 
 .PHONY: bench
 bench:
-	cd ./bench && dotnet run -c Release --framework net8.0 -- --warmupCount 1 -f '*'
+	cd ./bench && dotnet run -c Release --framework net8.0 -- --minIterationCount 9 --maxIterationCount 12 -f '*'
 
 .PHONY: examples
 examples:

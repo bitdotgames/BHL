@@ -6,51 +6,13 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using bhl;
 
-public class BenchFibonacci : BHL_TestBase
-{
-  VM vm;
-  FuncSymbolScript fs;
-
-  public BenchFibonacci()
-  {
-    string bhl = @"
-
-    func int fib(int x)
-    {
-      if(x == 0) {
-        return 0
-      } else {
-        if(x == 1) {
-          return 1
-        } else {
-          return fib(x - 1) + fib(x - 2)
-        }
-      }
-    }
-
-    func test() 
-    {
-      int x = 15 
-      fib(x)
-    }
-    ";
-
-    vm = MakeVM(bhl);
-    fs = 
-      (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
-  }
-
-  [Benchmark]
-  public void FibonacciSimple()
-  {
-    vm.Execute(fs);
-  }
-}
-
 public class BenchFibonacciImported : BHL_TestBase
 {
   VM vm;
-  FuncSymbolScript fs;
+  FuncSymbolScript fs_simple;
+  FuncSymbolScript fs_imported;
+  FuncSymbolScript fs_class_imported;
+  FuncSymbolScript fs_interface_imported;
 
   public BenchFibonacciImported()
   {
@@ -69,63 +31,6 @@ public class BenchFibonacciImported : BHL_TestBase
         }
       }
     }
-    ";
-
-    string fib2 = @"
-    import ""fib1""
-
-    func int fib2(int x)
-    {
-      if(x == 0) {
-        return 0
-      } else {
-        if(x == 1) {
-          return 1
-        } else {
-          return fib1(x - 1) + fib1(x - 2)
-        }
-      }
-    }
-    ";
-
-    string test = @"
-    import ""fib1""
-
-    func test() 
-    {
-      int x = 15 
-      fib1(x)
-    }
-    ";
-
-    vm = MakeVM(new Dictionary<string, string>() {
-        {"fib1.bhl", fib1},
-        {"fib2.bhl", fib2},
-        {"test.bhl", test},
-      }
-    );
-
-    vm.LoadModule("test");
-    fs = 
-      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
-  }
-
-  [Benchmark]
-  public void FibonacciImported()
-  {
-    vm.Execute(fs);
-  }
-}
-
-public class BenchFibonacciMethodImported : BHL_TestBase
-{
-  VM vm;
-  FuncSymbolScript fs;
-
-  public BenchFibonacciMethodImported()
-  {
-    string fib1 = @"
-    import ""fib2""
 
     class Fib1
     {
@@ -142,68 +47,7 @@ public class BenchFibonacciMethodImported : BHL_TestBase
         }
       }
     }
-    ";
 
-    string fib2 = @"
-    import ""fib1""
-
-    class Fib2
-    {
-      func int fib2(int x, Fib1 f1)
-      {
-        if(x == 0) {
-          return 0
-        } else {
-          if(x == 1) {
-            return 1
-          } else {
-            return f1.fib1(x - 1, this) + f1.fib1(x - 2, this)
-          }
-        }
-      }
-     }
-    ";
-
-    string test = @"
-    import ""fib1""
-    import ""fib2""
-
-    func int test() 
-    {
-      var f1 = new Fib1
-      var f2 = new Fib2
-      int x = 15 
-      return f1.fib1(x, f2)
-    }
-    ";
-
-    vm = MakeVM(new Dictionary<string, string>() {
-        {"fib1.bhl", fib1},
-        {"fib2.bhl", fib2},
-        {"test.bhl", test},
-      }
-    );
-
-    vm.LoadModule("test");
-    fs = 
-      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
-  }
-
-  [Benchmark]
-  public void FibonacciMethodImported()
-  {
-    vm.Execute(fs);
-  }
-}
-
-public class BenchFibonacciInterfaceImported : BHL_TestBase
-{
-  VM vm;
-  FuncSymbolScript fs;
-
-  public BenchFibonacciInterfaceImported()
-  {
-    string fib1 = @"
     interface IFib 
     {
       func int fib(int x, IFib f)
@@ -226,31 +70,123 @@ public class BenchFibonacciInterfaceImported : BHL_TestBase
     }
     ";
 
-    string test = @"
+    string fib2 = @"
     import ""fib1""
 
-    func int test() 
+    func int fib2(int x)
     {
-      IFib f = new Fib
+      if(x == 0) {
+        return 0
+      } else {
+        if(x == 1) {
+          return 1
+        } else {
+          return fib1(x - 1) + fib1(x - 2)
+        }
+      }
+    }
+
+    class Fib2
+    {
+      func int fib2(int x, Fib1 f1)
+      {
+        if(x == 0) {
+          return 0
+        } else {
+          if(x == 1) {
+            return 1
+          } else {
+            return f1.fib1(x - 1, this) + f1.fib1(x - 2, this)
+          }
+        }
+      }
+     }
+    ";
+
+    string test = @"
+    import ""fib1""
+    import ""fib2""
+
+    func int fib(int x)
+    {
+      if(x == 0) {
+        return 0
+      } else {
+        if(x == 1) {
+          return 1
+        } else {
+          return fib(x - 1) + fib(x - 2)
+        }
+      }
+    }
+
+    func test_simple() 
+    {
       int x = 15 
-      return f.fib(x, f)
+      fib(x)
+    }
+
+    func test_imported() 
+    {
+      int x = 15 
+      fib1(x)
+    }
+
+    func test_class_imported() 
+    {
+      int x = 15 
+      var f1 = new Fib1
+      var f2 = new Fib2
+      f1.fib1(x, f2)
+    }
+
+    func test_interface_imported() 
+    {
+      int x = 15 
+      IFib f = new Fib
+      f.fib(x, f)
     }
     ";
 
     vm = MakeVM(new Dictionary<string, string>() {
         {"fib1.bhl", fib1},
+        {"fib2.bhl", fib2},
         {"test.bhl", test},
       }
     );
 
     vm.LoadModule("test");
-    fs = 
-      (FuncSymbolScript)new VM.SymbolSpec("test", "test").LoadModuleSymbol(vm).symbol;
+    fs_simple = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test_simple").LoadFuncSymbol(vm);
+    fs_imported = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test_imported").LoadFuncSymbol(vm);
+    fs_class_imported = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test_class_imported").LoadFuncSymbol(vm);
+    fs_interface_imported = 
+      (FuncSymbolScript)new VM.SymbolSpec("test", "test_interface_imported").LoadFuncSymbol(vm);
+  }
+
+  [Benchmark]
+  public void FibonacciSimple()
+  {
+    vm.Execute(fs_simple);
+  }
+
+  [Benchmark]
+  public void FibonacciImported()
+  {
+    vm.Execute(fs_imported);
+  }
+
+  [Benchmark]
+  public void FibonacciClassImported()
+  {
+    vm.Execute(fs_class_imported);
   }
 
   [Benchmark]
   public void FibonacciInterfaceImported()
   {
-    vm.Execute(fs);
+    vm.Execute(fs_interface_imported);
   }
 }
