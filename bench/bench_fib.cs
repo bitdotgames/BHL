@@ -166,6 +166,25 @@ public class BenchFibonacciImported : BHL_TestBase
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_interface_imported").LoadFuncSymbol(vm);
   }
 
+  static int fib(int x)
+  {
+    if(x == 0) {
+      return 0;
+    } else {
+      if(x == 1) {
+        return 1;
+      } else {
+        return fib(x - 1) + fib(x - 2);
+      }
+    }
+  }
+
+  [Benchmark(Baseline = true)]
+  public void FibonacciDotNet()
+  {
+    fib(15);
+  }
+
   [Benchmark]
   public void FibonacciSimple()
   {
