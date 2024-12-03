@@ -809,16 +809,6 @@ public class BHL_TestBase
     Assert.Equal(a, b);
   }
 
-  public static void AssertEqual(uint a, uint b)
-  {
-    Assert.Equal(a, b);
-  }
-
-  public static void AssertEqual(ulong a, ulong b)
-  {
-    Assert.Equal(a, b);
-  }
-
   public static void AssertEqual(BHS a, BHS b)
   {
     Assert.Equal(a, b);

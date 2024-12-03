@@ -1334,6 +1334,69 @@ public class TestFiber : BHL_TestBase
       CommonChecks(vm);
     }
   }
+  
+  [Fact]
+  public void TestExecuteFuncTrampoline()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10
+    }
+
+    func int test2()
+    {
+      return 20
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    int trampoline1 = 0;
+    int trampoline2 = 0;
+    
+    var test_fs1 = vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "test");
+    var test2_fs1 = vm.GetOrMakeFuncTrampoline(ref trampoline2, TestModuleName, "test2");
+    
+    int trampoline1_copy = trampoline1;
+    Assert.NotEqual(0, trampoline1);
+
+    {
+      var result = vm.Execute(test_fs1);
+      AssertEqual(result.PopRelease().num, 10);
+      CommonChecks(vm);
+    }
+    
+    var test_fs2 = vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "test");
+    Assert.Equal(test_fs1, test_fs2);
+    Assert.Equal(trampoline1_copy, trampoline1);
+    
+    {
+      var result = vm.Execute(test2_fs1);
+      AssertEqual(result.PopRelease().num, 20);
+      CommonChecks(vm);
+    }
+  }
+  
+  [Fact]
+  public void TestFuncTrampolineNotFound()
+  {
+    string bhl = @"
+    func int test() 
+    {
+      return 10
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    int trampoline1 = 0;
+    
+    AssertError<Exception>(
+      () => vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "no_such_a_func"),
+      $"Module '{TestModuleName}' symbol 'no_such_a_func' not found"
+    );
+  }
 
   void BindStartScriptInMgr(Types ts)
   {
