@@ -177,4 +177,35 @@ public class TestAny : BHL_TestBase
     AssertTrue(res);
     CommonChecks(vm);
   }
+  
+  [Fact(Skip = "TODO: implement []any casting")]
+  public void TestCastArrayToAnyArray()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      Color c1 = new Color
+      c1.r = 1
+      Color c2 = new Color
+      c2.r = 10
+      []Color cs = [c1, c2]
+      []any anys = cs
+      int summ = 0
+      foreach(var a in anys) {
+        summ += ((Color)a).r
+      }
+      return summ
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      BindColor(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(11, num);
+    CommonChecks(vm);
+  }
 }
