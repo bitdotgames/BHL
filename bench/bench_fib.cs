@@ -4,8 +4,10 @@ using System.Text;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Diagnosers;
 using bhl;
 
+[EventPipeProfiler(EventPipeProfile.CpuSampling)]
 public class BenchFibonacciImported : BHL_TestBase
 {
   VM vm;
