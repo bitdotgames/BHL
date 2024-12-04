@@ -12,9 +12,11 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
    
   Func<Val, T> val2native;
   
-  ValList lst;
+  ValList val_list;
+  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
+  public List<Val> lst => val_list.lst;
 
-  public int Count => lst.Count;
+  public int Count => val_list.Count;
   
   public bool IsReadOnly => false;
 
@@ -35,7 +37,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     return _pool;
   }
 
-  static public ValList<T> New(ValList lst, Func<Val, T> val2native)
+  static public ValList<T> New(ValList val_list, Func<Val, T> val2native)
   {
     var pool = GetPool();
 
@@ -43,7 +45,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     if(pool.stack.Count == 0)
     {
       ++pool.miss;
-      vls = new ValList<T>(lst, val2native);
+      vls = new ValList<T>(val_list, val2native);
     }
     else
     {
@@ -52,16 +54,16 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     }
 
     vls._refs = 1;
-    vls.lst = lst;
+    vls.val_list = val_list;
     vls.val2native = val2native;
     vls.pool = pool;
 
     return vls;
   }
 
-  public ValList(ValList lst, Func<Val, T> val2native)
+  public ValList(ValList val_list, Func<Val, T> val2native)
   {
-    this.lst = lst;
+    this.val_list = val_list;
     this.val2native = val2native;
   }
   
@@ -73,7 +75,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public T At(int idx)
   {
-    var res = val2native(lst[idx]);
+    var res = val2native(val_list[idx]);
     return res;
   }
   
@@ -82,7 +84,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     ++_refs;
-    lst.Retain();
+    val_list.Retain();
   }
 
   public void Release()
@@ -93,7 +95,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
       throw new Exception("Double free(0)");
 
     --_refs;
-    lst.Release();
+    val_list.Release();
     if(_refs == 0)
       Del(this);
   }
@@ -149,7 +151,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 
   public void Clear()
   {
-    lst.Clear();
+    val_list.Clear();
   }
 
   public bool Contains(T item)
@@ -193,7 +195,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 
   public void RemoveAt(int idx)
   {
-    lst.RemoveAt(idx);
+    val_list.RemoveAt(idx);
   }
 
   public T this[int idx]
