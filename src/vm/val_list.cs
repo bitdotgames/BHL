@@ -44,14 +44,14 @@ public class ValList : IList<Val>, IValRefcounted
   public void RemoveAt(int idx)
   {
     var dv = lst[idx];
-    dv.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    dv.Release();
     lst.RemoveAt(idx); 
   }
 
   public void Clear()
   {
     for(int i=0;i<Count;++i)
-      lst[i].RefMod(RefOp.DEC | RefOp.USR_DEC);
+      lst[i].Release();
 
     lst.Clear();
   }
@@ -66,9 +66,9 @@ public class ValList : IList<Val>, IValRefcounted
       //NOTE: we are going to re-use the existing Value,
       //      thus we need to decrease/increase user payload
       //      refcounts properly 
-      curr.RefMod(RefOp.USR_DEC);
+      curr._refc?.Release();
       curr.ValueCopyFrom(value);
-      curr.RefMod(RefOp.USR_INC);
+      curr._refc?.Retain();
     }
   }
 

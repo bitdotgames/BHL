@@ -52,14 +52,14 @@ public static class Extensions
   public static Val PopRelease(this ValStack stack)
   {
     var val = stack.Pop();
-    val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+    val.Release();
     return val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static void PushRetain(this ValStack stack, Val val)
   {
-    val.RefMod(RefOp.INC | RefOp.USR_INC);
+    val.Retain();
     stack.Push(val);
   }
 
@@ -70,8 +70,8 @@ public static class Extensions
     {
       for(int i=0;i<curr._refs;++i)
       {
-        val.RefMod(RefOp.USR_INC);
-        curr.RefMod(RefOp.USR_DEC);
+        val._refc?.Retain();
+        curr._refc?.Release();
       }
       curr.ValueCopyFrom(val);
     }
@@ -79,7 +79,7 @@ public static class Extensions
     {
       curr = Val.New(vm);
       curr.ValueCopyFrom(val);
-      curr.RefMod(RefOp.USR_INC);
+      curr._refc?.Retain();
       stack[idx] = curr;
     }
   }

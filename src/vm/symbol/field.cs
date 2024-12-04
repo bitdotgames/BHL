@@ -80,8 +80,8 @@ public class FieldSymbolScript : FieldSymbol
     var curr = m[scope_idx];
     for(int i=0;i<curr._refs;++i)
     {
-      v.RefMod(RefOp.USR_INC);
-      curr.RefMod(RefOp.USR_DEC);
+      v._refc?.Retain();
+      curr._refc?.Release();
     }
     curr.ValueCopyFrom(v);
   }
