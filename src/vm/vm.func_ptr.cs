@@ -102,10 +102,8 @@ public partial class VM : INamedResolver
       this.native = null;
       for(int i=upvals.Count;i-- > 0;)
       {
-        var val = upvals[i];
         //NOTE: let's check if it exists
-        if(val != null)
-          val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+        upvals[i]?.Release();
       }
       upvals.Clear();
     }
@@ -151,7 +149,7 @@ public partial class VM : INamedResolver
           if(upval != null)
           {
             frm.locals.Count = i+1;
-            upval.RefMod(RefOp.USR_INC | RefOp.INC);
+            upval.Retain();
             frm.locals[i] = upval;
           }
         }

@@ -68,6 +68,18 @@ public static class VMExtensions
 
     return res;
   }
+  static public VM.ModuleSymbol LoadModuleSymbol(this VM.SymbolSpec spec, VM vm)
+  {
+    var err = vm.TryLoadModuleSymbol(spec, out var ms);
+    if(err != 0)
+      throw new Exception($"Error loading symbol by spec '{spec}': {err}");
+    return ms;
+  }
+
+  static public FuncSymbol LoadFuncSymbol(this VM.SymbolSpec spec, VM vm)
+  {
+    return (FuncSymbol)spec.LoadModuleSymbol(vm).symbol;
+  }
 }
 
 }

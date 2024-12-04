@@ -122,18 +122,12 @@ public partial class VM : INamedResolver
     internal void Clear()
     {
       for(int i=locals.Count;i-- > 0;)
-      {
-        var val = locals[i];
-        if(val != null)
-          val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      }
+        locals[i]?.Release();
       locals.Clear();
 
       for(int i=stack.Count;i-- > 0;)
-      {
-        var val = stack[i];
-        val.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      }
+        stack[i].Release();
+
       stack.Clear();
       defers.Clear();
     }

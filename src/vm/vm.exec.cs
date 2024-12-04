@@ -289,7 +289,7 @@ public partial class VM : INamedResolver
           var arg_val = exec.stack.Pop();
           var loc_var = Val.New(this);
           loc_var.ValueCopyFrom(arg_val);
-          loc_var.RefMod(RefOp.USR_INC);
+          loc_var._refc?.Retain();
           curr_frame.locals[local_idx] = loc_var;
           arg_val.Release();
         }
@@ -324,7 +324,7 @@ public partial class VM : INamedResolver
           //NOTE: we retain only the payload since we make the copy of the value
           //      and the new res already has refs = 1 while payload's refcount
           //      is not incremented
-          res.RefMod(RefOp.USR_INC);
+          res._refc?.Retain();
           exec.stack.Push(res);
           obj.Release();
         }
@@ -680,7 +680,7 @@ public partial class VM : INamedResolver
           }
           else
           {
-            upval.RefMod(RefOp.USR_INC | RefOp.INC);
+            upval.Retain();
             addr.upvals[local_idx] = upval;
           }
         }
@@ -1037,7 +1037,7 @@ public partial class VM : INamedResolver
       new_val.ValueCopyFrom(val);
       if(force_type)
         new_val.type = cast_type;
-      new_val.RefMod(RefOp.USR_INC);
+      new_val._refc?.Retain();
     }
 
     val.Release();
@@ -1055,7 +1055,7 @@ public partial class VM : INamedResolver
       new_val.ValueCopyFrom(val);
       if(force_type)
         new_val.type = cast_type;
-      new_val.RefMod(RefOp.USR_INC);
+      new_val._refc?.Retain();
       exec.stack.Push(new_val);
     }
     else

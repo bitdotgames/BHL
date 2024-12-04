@@ -1,20 +1,9 @@
 //#define DEBUG_REFS
 using System;
 using System.Buffers;
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace bhl {
-
-public struct RefOp
-{
-  public const int INC                  = 1;
-  public const int DEC                  = 2;
-  public const int USR_INC              = 4;
-  public const int USR_DEC              = 8;
-}
 
 public interface IValRefcounted
 {
@@ -236,62 +225,41 @@ public class Val
   {
     var copy = Val.New(vm);
     copy.ValueCopyFrom(this);
-    copy.RefMod(RefOp.USR_INC);
+    copy._refc?.Retain();
     return copy;
-  }
-
-  //NOTE: see RefOp for constants
-  public void RefMod(int op)
-  {
-    if(_refc != null)
-    {
-      if((op & RefOp.USR_INC) != 0)
-      {
-        _refc.Retain();
-      }
-      else if((op & RefOp.USR_DEC) != 0)
-      {
-        _refc.Release();
-      }
-    }
-
-    if((op & RefOp.INC) != 0)
-    {
-      if(_refs == -1)
-        throw new Exception("Invalid state(-1)");
-
-      ++_refs;
-#if DEBUG_REFS
-      Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
-#endif
-    } 
-    else if((op & RefOp.DEC) != 0)
-    {
-      if(_refs == -1)
-        throw new Exception("Invalid state(-1)");
-      else if(_refs == 0)
-        throw new Exception("Double free(0)");
-
-      --_refs;
-#if DEBUG_REFS
-      Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
-#endif
-
-      if(_refs == 0)
-        Del(this);
-    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Retain()
   {
-    RefMod(RefOp.USR_INC | RefOp.INC);
+    _refc?.Retain();
+
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+
+    ++_refs;
+#if DEBUG_REFS
+    Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
+#endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Release()
   {
-    RefMod(RefOp.USR_DEC | RefOp.DEC);
+    _refc?.Release();
+
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+    else if(_refs == 0)
+      throw new Exception("Double free(0)");
+
+    --_refs;
+#if DEBUG_REFS
+    Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
+#endif
+
+    if(_refs == 0)
+      Del(this);
   }
 
   static public Val NewStr(VM vm, string s)

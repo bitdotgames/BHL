@@ -94,8 +94,8 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
     var en = map.GetEnumerator();
     while(en.MoveNext())
     {
-      en.Current.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      en.Current.Value.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      en.Current.Key.Release();
+      en.Current.Value.Value.Release();
     }
     map.Clear();
   }
@@ -112,9 +112,9 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       KeyValuePair<Val,Val> curr;
       if(map.TryGetValue(k, out curr))
       {
-        curr.Value.RefMod(RefOp.USR_DEC);
+        curr.Value._refc?.Release();
         curr.Value.ValueCopyFrom(value);
-        curr.Value.RefMod(RefOp.USR_INC);
+        curr.Value._refc?.Retain();
       }
       else
       {
@@ -149,8 +149,8 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
     bool removed = map.Remove(k);
     if(existed)
     {
-      prev.Key.RefMod(RefOp.DEC | RefOp.USR_DEC);
-      prev.Value.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      prev.Key.Release();
+      prev.Value.Release();
     }
     return removed;
   }

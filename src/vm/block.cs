@@ -195,7 +195,7 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
     for(int i=stack.Count;i-- > 0;)
     {
       var val = stack[i];
-      val.RefMod(RefOp.DEC | RefOp.USR_DEC);
+      val.Release();
     }
     stack.Clear();
   }
