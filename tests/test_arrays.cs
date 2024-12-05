@@ -1155,7 +1155,7 @@ public class TestArrays : BHL_TestBase
                 c.r = i;
                 var tdv = Val.New(frm.vm);
                 tdv.SetObj(c, ts.T("Color").Get());
-                dvl.lst.Add(tdv);
+                dvl.Add(tdv);
               }
               dv0.SetObj(dvl, Types.Array);
               stack.Push(dv0);

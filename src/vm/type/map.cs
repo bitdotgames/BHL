@@ -226,11 +226,11 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     : base()
   {}
   
-  static IDictionary<Val,Val> AsDictionary(Val map)
+  static ValMap AsMap(Val map)
   {
-    var dict = map._obj as IDictionary<Val,Val>;
+    var dict = map._obj as ValMap;
     if(map._obj != null && dict == null)
-      throw new Exception("Not a IDictionary<Val,Val>: " + map._obj.GetType().Name);
+      throw new Exception("Not a ValMap: " + map._obj.GetType().Name);
     return dict;
   }
   
@@ -241,12 +241,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   
   public override int MapCount(Val map)
   {
-    return AsDictionary(map).Count;
+    return AsMap(map).Count;
   }
 
   public override IEnumerator MapGetEnumerator(Val map)
   {
-    return ((IEnumerable)AsDictionary(map)).GetEnumerator();
+    return ((IEnumerable)AsMap(map)).GetEnumerator();
   }
   
   public override bool MapEnumeratorNext(Val en)
@@ -263,31 +263,31 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   
   public override bool MapTryGet(Val map, Val key, out Val val)
   {
-    var dict = AsDictionary(map);
+    var dict = AsMap(map);
     return dict.TryGetValue(key, out val);
   }
   
   public override void MapSet(Val map, Val key, Val val)
   {
-    var dict = AsDictionary(map);
-    dict[key] = val;
+    var dict = AsMap(map);
+    dict.SetValueCopyAt(key, val);
   }
   
   public override void MapRemove(Val map, Val key)
   {
-    var dict = AsDictionary(map);
+    var dict = AsMap(map);
     dict.Remove(key);
   }
   
   public override bool MapContainsKey(Val map, Val key)
   {
-    var dict = AsDictionary(map);
+    var dict = AsMap(map);
     return dict.ContainsKey(key);
   }
   
   public override void MapClear(Val map)
   {
-    var dict = AsDictionary(map);
+    var dict = AsMap(map);
     dict.Clear();
   }
 

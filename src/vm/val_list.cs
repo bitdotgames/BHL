@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Transactions;
 
 namespace bhl {
   
@@ -10,8 +9,7 @@ namespace bhl {
 //NOTE: in case of IList implementation ValList doesn't apply owning semantics
 public class ValList : IList<Val>, IList, IValRefcounted
 {
-  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
-  public List<Val> lst = new List<Val>();
+  List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection

@@ -13,8 +13,6 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
   Func<Val, T> val2native;
   
   ValList val_list;
-  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
-  public List<Val> lst => val_list.lst;
 
   public int Count => val_list.Count;
   

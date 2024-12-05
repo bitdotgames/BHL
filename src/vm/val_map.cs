@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -9,8 +10,8 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
   //NOTE: Since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason
   //      we store the key alongside with the value in a KeyValuePair
-  //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
-  Dictionary<Val,KeyValuePair<Val, Val>> map = new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
+  Dictionary<Val,KeyValuePair<Val, Val>> map = 
+    new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
@@ -106,28 +107,32 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       return map[k].Value;
     }
     set {
-      //NOTE: we are going to re-use the existing k/v,
-      //      thus we need to decrease/increase user payload
-      //      refcounts properly 
-      KeyValuePair<Val,Val> curr;
-      if(map.TryGetValue(k, out curr))
-      {
-        curr.Value._refc?.Release();
-        curr.Value.ValueCopyFrom(value);
-        curr.Value._refc?.Retain();
-      }
-      else
-      {
-        k = k.CloneValue();
-        map[k] = new KeyValuePair<Val,Val>(k, value.CloneValue());
-      }
+      map[k] = new KeyValuePair<Val,Val>(k, value);
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetValueCopyAt(Val k, Val value)
+  {
+    //NOTE: we are going to re-use the existing k/v,
+    //      thus we need to decrease/increase user payload
+    //      refcounts properly 
+    if(map.TryGetValue(k, out var curr))
+    {
+      curr.Value._refc?.Release();
+      curr.Value.ValueCopyFrom(value);
+      curr.Value._refc?.Retain();
+    }
+    else
+    {
+      k = k.CloneValue();
+      map[k] = new KeyValuePair<Val,Val>(k, value.CloneValue());
     }
   }
 
   public bool TryGetValue(Val k, out Val v)
   {
-    KeyValuePair<Val, Val> p;
-    bool yes = map.TryGetValue(k, out p);
+    bool yes = map.TryGetValue(k, out var p);
     v = p.Value;
     return yes;
   }
@@ -144,8 +149,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public bool Remove(Val k)
   {
-    KeyValuePair<Val,Val> prev;
-    bool existed = map.TryGetValue(k, out prev);
+    bool existed = map.TryGetValue(k, out var prev);
     bool removed = map.Remove(k);
     if(existed)
     {
@@ -179,7 +183,6 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public void Retain()
   {
-    //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     ++_refs;
@@ -187,8 +190,6 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   public void Release()
   {
-    //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     if(_refs == 0)
