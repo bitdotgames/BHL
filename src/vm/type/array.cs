@@ -382,6 +382,7 @@ public abstract class NativeListTypeSymbol :
   }
 }
 
+//TODO: should it implement INativeType?
 //NOTE: operates on IList<T>
 public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 {

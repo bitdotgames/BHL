@@ -1032,6 +1032,7 @@ public partial class VM : INamedResolver
       new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
     else
     {
+      //NOTE: extra type check in case cast type is instantiable object (e.g class)
       if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
       new_val.ValueCopyFrom(val);

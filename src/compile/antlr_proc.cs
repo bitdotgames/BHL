@@ -2684,7 +2684,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Annotate(ctx).eval_type = cast_type;
 
     if(ok)
-      Types.CheckCast(Annotate(ctx), Annotate(exp), errors); 
+      Types.CheckCastIsPossible(Annotate(ctx), Annotate(exp), errors); 
 
     ast.hint_exp_type = Annotate(exp).eval_type;
 

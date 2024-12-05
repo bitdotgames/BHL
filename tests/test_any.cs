@@ -178,7 +178,7 @@ public class TestAny : BHL_TestBase
     CommonChecks(vm);
   }
   
-  [Fact(Skip = "TODO: implement []any casting")]
+  [Fact]
   public void TestCastArrayToAnyArray()
   {
     string bhl = @"
@@ -189,8 +189,30 @@ public class TestAny : BHL_TestBase
       c1.r = 1
       Color c2 = new Color
       c2.r = 10
+      Color c3 = new Color
+      c3.r = 100
+      Color c4 = new Color
+      c4.r = 1000
+
       []Color cs = [c1, c2]
-      []any anys = cs
+
+      //converting to []any
+      []any anys = ([]any)cs
+
+      //converting back to []Color
+      []Color cs2 = ([]Color)anys
+      cs2.Add(c3)
+
+      //let's try as casting
+      []Color cs3 = anys as []Color
+      cs3.Add(c4)
+
+      //let's try incompatible cast
+      []int ints = anys as []int
+      if(ints != null) {
+        ints.Add(14)
+      }
+      
       int summ = 0
       foreach(var a in anys) {
         summ += ((Color)a).r
@@ -205,7 +227,7 @@ public class TestAny : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(11, num);
+    AssertEqual(1111, num);
     CommonChecks(vm);
   }
 }

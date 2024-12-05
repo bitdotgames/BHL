@@ -275,25 +275,40 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool Is(IType type, IType dest_type) 
+  static public bool Is(IType type, IType dest_type)
   {
     if(type == null || dest_type == null)
       return false;
-    else if(type.Equals(dest_type))
+    
+    //quick shortcut
+    if(dest_type == Any)
       return true;
-    else if(type is IInstantiable ti && dest_type is IInstantiable di)
+    
+    //NOTE: using Equals() since we might deal with ephemeral types
+    if(type.Equals(dest_type))
+      return true;
+    
+    //NOTE: special case for array type checked against '[]any'
+    //NOTE: using Equals() since Array is an ephemeral type
+    if(type is ArrayTypeSymbol && dest_type.Equals(Array))
+      return true;
+    
+    if(type is IInstantiable ti && dest_type is IInstantiable di)
     {
       var tset = ti.GetAllRelatedTypesSet();
       var dset = di.GetAllRelatedTypesSet();
 
       return tset.IsSupersetOf(dset);
     }
-    else
-      return false;
+    
+    return false;
   }
 
   static public bool Is(Val val, IType dest_type) 
   {
+    //NOTE: special handling of native types - we need to go through C# type system.
+    //      Make sense only if there's C# object is present - this way we can use C# reflection
+    //      by getting the type of the object
     if(dest_type is INativeType dest_intype)
     {
       var val_type = val?.type;
@@ -322,37 +337,29 @@ public class Types : INamedResolver
       return Is(val?.type, dest_type);
   }
 
-  static public bool CheckCast(IType dest_type, IType from_type) 
+  static public bool CheckCastIsPossible(IType dest_type, IType from_type) 
   {
+    //optimization shortcut
     if(dest_type == from_type)
       return true;
 
-    //special case: we allow to cast from 'any' to any user type
-    if(dest_type == Any || from_type == Any)
-      return true;
-
+    //enum special cases
     if((from_type == Float || from_type == Int) && dest_type is EnumSymbol)
       return true;
     if((dest_type == Float || dest_type == Int) && from_type is EnumSymbol)
       return true;
-
     if(dest_type == String && from_type is EnumSymbol)
       return true;
 
-    IType cast_type = null;
-    cast_from_to.TryGetValue(new Tuple<IType, IType>(from_type, dest_type), out cast_type);
+    cast_from_to.TryGetValue(new Tuple<IType, IType>(from_type, dest_type), out var cast_type);
     if(cast_type == dest_type)
       return true;
 
-    if(IsInSameHierarchy(from_type, dest_type))
+    //going the 'heavy path', checking if types are convertible one to another
+    if(Is(from_type, dest_type) || Is(dest_type, from_type))
       return true;
     
     return false;
-  }
-
-  static public bool IsInSameHierarchy(IType a, IType b) 
-  {
-    return Is(a, b) || Is(b, a);
   }
 
   static public bool IsBinOpCompatible(IType type)
@@ -433,12 +440,12 @@ public class Types : INamedResolver
     return new ParseError(pt, "incompatible types: '" + lhs_path + "' and '" + rhs_path + "'");
   }
 
-  static public bool CheckCast(AnnotatedParseTree dest, AnnotatedParseTree from, CompileErrors errors) 
+  static public bool CheckCastIsPossible(AnnotatedParseTree dest, AnnotatedParseTree from, CompileErrors errors) 
   {
     var dest_type = dest.eval_type;
     var from_type = from.eval_type;
 
-    if(!CheckCast(dest_type, from_type))
+    if(!CheckCastIsPossible(dest_type, from_type))
     {
       errors.Add(new ParseError(dest, "incompatible types for casting: '" + dest_type.GetFullTypePath() + "' and '" + from_type.GetFullTypePath() + "'"));
       return false;
