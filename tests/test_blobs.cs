@@ -29,8 +29,8 @@ public class TestBlobs : BHL_TestBase
     Assert.Equal(b.z, orig.z);
 
     b.x = 20;
-    Assert.Equal(b.x, 20);
-    Assert.Equal(orig.x, 1);
+    Assert.Equal(20, b.x);
+    Assert.Equal(1, orig.x);
   }
   
   [Fact]
@@ -49,11 +49,11 @@ public class TestBlobs : BHL_TestBase
     var val2 = Val.New(vm);
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(20, val2.GetBlob<StructBlob>().x);
     
     val2.GetBlob<StructBlob>().x = 30;
     //original value is intact 
-    Assert.Equal(val1.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(20, val1.GetBlob<StructBlob>().x);
   }
   
   [Fact]
@@ -74,7 +74,7 @@ public class TestBlobs : BHL_TestBase
     
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(20, val2.GetBlob<StructBlob>().x);
   }
   
   [Fact]
@@ -95,7 +95,7 @@ public class TestBlobs : BHL_TestBase
     
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(20, val2.GetBlob<StructBlob>().x);
   }
   
   [Fact]

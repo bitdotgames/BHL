@@ -304,7 +304,6 @@ public class TestStackTrace : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
             throw new NullReferenceException();
-            return null;
           });
         ts.ns.Define(fn);
       }

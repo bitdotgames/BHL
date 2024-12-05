@@ -4,8 +4,9 @@ using System.Collections.Generic;
 
 namespace bhl {
   
-//TODO: implement IList as well?
-public class ValList : IList<Val>, IValRefcounted
+  
+//NOTE: in case of IList implementation ValList doesn't apply owning semantics
+public class ValList : IList<Val>, IList, IValRefcounted
 {
   //NOTE: Exposed to allow low-level optimal manipulations. Use with caution.
   public List<Val> lst = new List<Val>();
@@ -20,10 +21,16 @@ public class ValList : IList<Val>, IValRefcounted
 
   //////////////////IList//////////////////
 
+  public void CopyTo(Array array, int index)
+  {
+    throw new NotImplementedException();
+  }
+
   public int Count { get { return lst.Count; } }
 
   public bool IsFixedSize { get { return false; } }
   public bool IsReadOnly { get { return false; } }
+
   public bool IsSynchronized { get { throw new NotImplementedException(); } }
   public object SyncRoot { get { throw new NotImplementedException(); } }
 
@@ -41,11 +48,21 @@ public class ValList : IList<Val>, IValRefcounted
       Add(list[i]);
   }
 
+  public void Remove(object value)
+  {
+    lst.Remove((Val)value);
+  }
+
   public void RemoveAt(int idx)
   {
     var dv = lst[idx];
     dv.Release();
     lst.RemoveAt(idx); 
+  }
+
+  public int Add(object value)
+  {
+    return ((IList)lst).Add(value);
   }
 
   public void Clear()
@@ -54,6 +71,28 @@ public class ValList : IList<Val>, IValRefcounted
       lst[i].Release();
 
     lst.Clear();
+  }
+
+  public bool Contains(object value)
+  {
+    throw new NotImplementedException();
+  }
+
+  public int IndexOf(object value)
+  {
+    throw new NotImplementedException();
+  }
+
+  public void Insert(int index, object value)
+  {
+    throw new NotImplementedException();
+  }
+  
+  object IList.this[int index]
+  {
+    get => lst[index];
+    //NOTE: non owning version
+    set => lst[index] = (Val)value;
   }
 
   public Val this[int i]
@@ -91,9 +130,18 @@ public class ValList : IList<Val>, IValRefcounted
     return true;
   }
 
-  public void CopyTo(Val[] arr, int len)
+  public void CopyTo(Val[] array, int start_idx)
   {
-    throw new NotImplementedException();
+    int target_size = Count - start_idx;
+    if(target_size > array.Length)
+      throw new ArgumentException(string.Format("Array size {0} less target size {1}", array.Length, target_size));
+
+    for(int i = start_idx, j = 0; i < Count; i++, j++)
+    {
+      var tmp = array[j];
+      array[j] = this[i];
+      tmp?.Release();
+    }
   }
 
   public void Insert(int pos, Val dv)

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace bhl {
   
-//TODO: writing is not implemented
+//TODO: writing is not implemented yet
 public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
   internal Pool<ValList<T>> pool;

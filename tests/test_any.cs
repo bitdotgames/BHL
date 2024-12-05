@@ -31,7 +31,7 @@ public class TestAny : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    Assert.Equal(c.compiled.constants.Count, 1);
+    Assert.Equal(1, c.compiled.constants.Count);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
@@ -98,7 +98,7 @@ public class TestAny : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    Assert.Equal(res, 202);
+    Assert.Equal(202, res);
     CommonChecks(vm);
   }
   
@@ -151,7 +151,7 @@ public class TestAny : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 110);
+    Assert.Equal(110, res);
     CommonChecks(vm);
   }
   

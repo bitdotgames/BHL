@@ -31,7 +31,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 30);
+    Assert.Equal(30, res);
     CommonChecks(vm);
   }
 
@@ -62,7 +62,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 3);
+    Assert.Equal(3, res);
     CommonChecks(vm);
   }
 
@@ -83,7 +83,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
-    Assert.Equal(res, 1);
+    Assert.Equal(1, res);
     CommonChecks(vm);
   }
 
@@ -104,7 +104,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
-    Assert.Equal(res, 1);
+    Assert.Equal(1, res);
     CommonChecks(vm);
   }
 
@@ -129,9 +129,9 @@ public class TestEnum : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.Pop();
     var lst = res.obj as IList<Val>;
-    Assert.Equal(lst.Count, 2);
-    Assert.Equal(lst[0].num, 20);
-    Assert.Equal(lst[1].num, 10);
+    Assert.Equal(2, lst.Count);
+    Assert.Equal(20, lst[0].num);
+    Assert.Equal(10, lst[1].num);
     res.Release();
     CommonChecks(vm);
   }
@@ -189,7 +189,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 2);
+    Assert.Equal(2, res);
     CommonChecks(vm);
   }
 
@@ -213,7 +213,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, -2);
+    Assert.Equal(-2, res);
     CommonChecks(vm);
   }
 
@@ -240,7 +240,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 2);
+    Assert.Equal(2, res);
     CommonChecks(vm);
   }
 

@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Text;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using bhl;
 using Xunit;
 
@@ -37,7 +40,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Equal((lst.obj as IList<Val>).Count, 0);
+    Assert.Equal(0, (lst.obj as IList<Val>).Count);
     lst.Release();
     CommonChecks(vm);
   }
@@ -102,7 +105,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 1);
+    Assert.Equal(1, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -129,7 +132,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Equal((lst.obj as IList<Val>).Count, 1);
+    Assert.Equal(1, (lst.obj as IList<Val>).Count);
     lst.Release();
     CommonChecks(vm);
   }
@@ -155,7 +158,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 2);
+    Assert.Equal(2, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -287,7 +290,7 @@ public class TestArrays : BHL_TestBase
     Assert.False(vm.Tick());
     var val = fb.result.Pop();
     var lst = val.obj as IList<Val>;
-    Assert.Equal(lst.Count, 2);
+    Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "tst");
     AssertEqual(lst[1].str, "bar");
     val.Release();
@@ -357,7 +360,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 100);
+    Assert.Equal(100, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -387,7 +390,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 100);
+    Assert.Equal(100, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -408,7 +411,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 2);
+    Assert.Equal(2, res);
     CommonChecks(vm);
   }
 
@@ -490,12 +493,12 @@ public class TestArrays : BHL_TestBase
     var res = Execute(vm, "test").result.Pop();
 
     var lst = res.obj as IList<Val>;
-    Assert.Equal(lst.Count, 2);
+    Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
 
-    Assert.Equal(vm.vlsts_pool.MissCount, 1);
-    Assert.Equal(vm.vlsts_pool.IdleCount, 0);
+    Assert.Equal(1, vm.vlsts_pool.MissCount);
+    Assert.Equal(0, vm.vlsts_pool.IdleCount);
     
     res.Release();
 
@@ -530,7 +533,7 @@ public class TestArrays : BHL_TestBase
 
     vm.Stop(fb);
 
-    Assert.Equal(vm.vlsts_pool.MissCount, 2);
+    Assert.Equal(2, vm.vlsts_pool.MissCount);
     CommonChecks(vm);
   }
 
@@ -676,7 +679,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(res, 10);
+    Assert.Equal(10, res);
     CommonChecks(vm);
   }
 
@@ -1003,4 +1006,203 @@ public class TestArrays : BHL_TestBase
       lst.Release();
     }
   }
+  
+  [Fact]
+  public void TestValListOwnership()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    {
+      var dv = Val.New(vm);
+      lst.Add(dv);
+      Assert.Equal(1, dv._refs);
+
+      lst.Clear();
+      Assert.Equal(1, dv._refs);
+      dv.Release();
+    }
+
+    {
+      var dv = Val.New(vm);
+      lst.Add(dv);
+      Assert.Equal(1, dv._refs);
+
+      lst.RemoveAt(0);
+      Assert.Equal(1, dv._refs);
+
+      lst.Clear();
+      Assert.Equal(1, dv._refs);
+      dv.Release();
+    }
+
+    {
+      var dv0 = Val.New(vm);
+      var dv1 = Val.New(vm);
+      lst.Add(dv0);
+      lst.Add(dv1);
+      Assert.Equal(1, dv0._refs);
+      Assert.Equal(1, dv1._refs);
+
+      lst.RemoveAt(1);
+      Assert.Equal(1, dv0._refs);
+      Assert.Equal(1, dv1._refs);
+
+      lst.Clear();
+      Assert.Equal(1, dv0._refs);
+      Assert.Equal(1, dv1._refs);
+      dv0.Release();
+      dv1.Release();
+    }
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestValListSort()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var v1 = Val.NewInt(vm, 10);
+    lst.Add(v1);
+    v1.Release();
+    
+    var v2 = Val.NewInt(vm, 1);
+    lst.Add(v2);
+    v2.Release();
+    
+    var v3 = Val.NewInt(vm, 13);
+    lst.Add(v3);
+    v3.Release();
+
+    var sorted = lst.OrderBy(v => v.num).ToList();
+    Assert.Equal(3, sorted.Count);
+    Assert.Equal(1, sorted[0].num);
+    Assert.Equal(10, sorted[1].num);
+    Assert.Equal(13, sorted[2].num);
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestValListAsIListHasDifferentOwnershipSemantics()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var v1 = Val.NewInt(vm, 10);
+    lst.Add(v1);
+    v1.Release();
+    
+    var v2 = Val.NewInt(vm, 1);
+    lst.Add(v2);
+    v2.Release();
+
+    var ilst = (IList)lst;
+    Assert.Equal(2, ilst.Count);
+
+    //swapping items has now effect on ownership
+    (ilst[0], ilst[1]) = (ilst[1], ilst[0]);
+    Assert.Equal(1, lst[0].num);
+    Assert.Equal(10, lst[1].num);
+    
+    //removing an item still releases it
+    ilst.RemoveAt(1);
+    Assert.Equal(1, ilst.Count);
+    Assert.Equal(1, lst[0].num);
+
+    //adding an item implies ownership over it
+    ilst.Add(Val.NewInt(vm, 20));
+    Assert.Equal(2, ilst.Count);
+    Assert.Equal(1, lst[0].num);
+    Assert.Equal(20, lst[1].num);
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestReturnValListFromNativeFunc()
+  {
+    string bhl = @"
+    func []Color colors() {
+      []Color cs = get_colors()
+      return cs
+    }
+
+    func float test() 
+    {
+      var cs = colors()
+      return cs[1].r
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => {
+      
+      BindColor(ts);
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            {
+              var dv0 = Val.New(frm.vm);
+              var dvl = ValList.New(frm.vm);
+              for(int i=0;i<10;++i)
+              {
+                var c = new Color();
+                c.r = i;
+                var tdv = Val.New(frm.vm);
+                tdv.SetObj(c, ts.T("Color").Get());
+                dvl.lst.Add(tdv);
+              }
+              dv0.SetObj(dvl, Types.Array);
+              stack.Push(dv0);
+            }
+            return null;
+          }
+        );
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestValListGetEnumerator()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var dv1 = Val.NewInt(vm, 1);
+    lst.Add(dv1);
+
+    var dv2 = Val.NewInt(vm, 2);
+    lst.Add(dv2);
+
+    int c = 0;
+    foreach(var tmp in lst) 
+    {
+      ++c;
+      if(c == 1)
+        Assert.Equal(tmp.num, dv1.num);
+      else if(c == 2)
+        Assert.Equal(tmp.num, dv2.num);
+    }
+    Assert.Equal(2, c);
+  }
+
 }
