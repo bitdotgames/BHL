@@ -1086,7 +1086,43 @@ public class TestArrays : BHL_TestBase
   }
   
   [Fact]
-  public void TestValListAsIListHasDifferentOwnershipSemantics()
+  public void TestValList()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var v1 = Val.NewInt(vm, 10);
+    lst.Add(v1);
+    
+    var v2 = Val.NewInt(vm, 1);
+    lst.Add(v2);
+
+    Assert.Equal(2, lst.Count);
+
+    //swapping items has now effect on ownership
+    (lst[0], lst[1]) = (lst[1], lst[0]);
+    Assert.Equal(1, lst[0].num);
+    Assert.Equal(10, lst[1].num);
+    
+    //removing an item still releases it
+    lst.RemoveAt(1);
+    Assert.Equal(1, lst.Count);
+    Assert.Equal(1, lst[0].num);
+
+    //adding an item implies ownership over it
+    lst.Add(Val.NewInt(vm, 20));
+    Assert.Equal(2, lst.Count);
+    Assert.Equal(1, lst[0].num);
+    Assert.Equal(20, lst[1].num);
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestValListAsIList()
   {
     var vm = new VM();
 

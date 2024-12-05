@@ -872,4 +872,36 @@ public class TestMaps : BHL_TestBase
     }
   }
 
+  [Fact]
+  public void TestValMap()
+  {
+    var vm = new VM();
+
+    var map = ValMap.New(vm);
+
+    var k1 = Val.NewStr(vm, "1");
+    var k2 = Val.NewStr(vm, "2");
+
+    var v1 = Val.NewInt(vm, 10);
+    map[k1] = v1;
+    
+    var v2 = Val.NewInt(vm, 1);
+    map[k2] = v2;
+
+    Assert.Equal(2, map.Count);
+
+    //swapping items has now effect on ownership
+    (map[k1], map[k2]) = (map[k2], map[k1]);
+    Assert.Equal(1, map[k1].num);
+    Assert.Equal(10, map[k2].num);
+    
+    //removing an item still releases it
+    map.Remove(k1);
+    Assert.Equal(1, map.Count);
+    Assert.Equal(10, map[k2].num);
+
+    map.Release();
+
+    CommonChecks(vm);
+  }
 }
