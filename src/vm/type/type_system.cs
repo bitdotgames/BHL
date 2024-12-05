@@ -293,6 +293,11 @@ public class Types : INamedResolver
     if(type is ArrayTypeSymbol && dest_type.Equals(Array))
       return true;
     
+    //NOTE: special case for array type checked against '[any]any'
+    //NOTE: using Equals() since Map is an ephemeral type
+    if(type is MapTypeSymbol && dest_type.Equals(Map))
+      return true;
+    
     if(type is IInstantiable ti && dest_type is IInstantiable di)
     {
       var tset = ti.GetAllRelatedTypesSet();

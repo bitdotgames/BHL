@@ -5474,10 +5474,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         vd_val_type = predicted_map_type.val_type;
       }
 
-      if(vd_key.type().GetText() != "var")
+      if(vd_key_type.IsNull() && vd_key.type().GetText() != "var")
         vd_key_type = ParseType(vd_key.type());
 
-      if(vd_val.type().GetText() != "var")
+      if(vd_val_type.IsNull() && vd_val.type().GetText() != "var")
         vd_val_type = ParseType(vd_val.type());
 
       ProxyType key_iter_type;

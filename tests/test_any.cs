@@ -179,7 +179,7 @@ public class TestAny : BHL_TestBase
   }
   
   [Fact]
-  public void TestCastArrayToAnyArray()
+  public void TestCastNativeTypeArrayToAnyArray()
   {
     string bhl = @"
       
@@ -207,7 +207,7 @@ public class TestAny : BHL_TestBase
       []Color cs3 = anys as []Color
       cs3.Add(c4)
 
-      //let's try incompatible cast
+      //let's try some incompatible cast
       []int ints = anys as []int
       if(ints != null) {
         ints.Add(14)
@@ -228,6 +228,110 @@ public class TestAny : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test").result.PopRelease().num;
     AssertEqual(1111, num);
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestCastUserTypeArrayToAnyArray()
+  {
+    string bhl = @"
+    class Color {
+      float r
+    }
+      
+    func int test() 
+    {
+      Color c1 = new Color
+      c1.r = 1
+      Color c2 = new Color
+      c2.r = 10
+      Color c3 = new Color
+      c3.r = 100
+      Color c4 = new Color
+      c4.r = 1000
+
+      []Color cs = [c1, c2]
+
+      //converting to []any
+      []any anys = ([]any)cs
+
+      //converting back to []Color
+      []Color cs2 = ([]Color)anys
+      cs2.Add(c3)
+
+      //let's try as casting
+      []Color cs3 = anys as []Color
+      cs3.Add(c4)
+
+      //let's try some incompatible cast
+      []int ints = anys as []int
+      if(ints != null) {
+        ints.Add(14)
+      }
+      
+      int summ = 0
+      foreach(var a in anys) {
+        summ += ((Color)a).r
+      }
+      return summ
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(1111, num);
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestCastUserTypeMapToAnyMap()
+  {
+    string bhl = @"
+    class Color {
+      float r
+    }
+      
+    func int test() 
+    {
+      Color c1 = new Color
+      c1.r = 1
+      Color c2 = new Color
+      c2.r = 10
+      Color c3 = new Color
+      c3.r = 100
+      Color c4 = new Color
+      c4.r = 1000
+
+      [int]Color cs = [[1, c1], [2, c2]]
+
+      //converting to []any
+      [any]any anys = ([any]any)cs
+
+      //converting back to [int]Color
+      [int]Color cs2 = ([int]Color)anys
+      cs2.Add(3, c3)
+
+      //let's try as casting
+      [int]Color cs3 = anys as [int]Color
+      cs3.Add(4, c4)
+
+      //let's try some incompatible cast
+      [int]int ints = anys as [int]int
+      if(ints != null) {
+        ints.Add(100, 14)
+      }
+      
+      int summ = 0
+      foreach(var k, var v in anys) {
+        summ += (int)k + ((Color)v).r
+      }
+      return summ
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").result.PopRelease().num;
+    AssertEqual(10 + 1111, num);
     CommonChecks(vm);
   }
 }
