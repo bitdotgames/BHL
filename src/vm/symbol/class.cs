@@ -404,11 +404,10 @@ public class ClassSymbolScript : ClassSymbol
       {
         var mtype = vs.type.Get();
         var v = frm.vm.MakeDefaultVal(mtype);
-        //adding directly, bypassing Retain call
-        vl.lst.Add(v);
+        vl.Add(v);
       }
       else
-        vl.Add(frm.vm.Null);
+        vl.Add(frm.vm.Null.CloneValue());
     }
   }
 

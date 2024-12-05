@@ -184,11 +184,12 @@ public class GenericArrayTypeSymbol :
     : base()
   {}
     
-  static IList<Val> AsList(Val arr)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static ValList AsValList(Val arr)
   {
-    var lst = arr._obj as IList<Val>;
+    var lst = arr._obj as ValList;
     if(arr._obj != null && lst == null)
-      throw new Exception("Not an IList<Val>: " + arr.obj.GetType().Name);
+      throw new Exception("Not a ValList: " + arr.obj.GetType().Name);
     return lst;
   }
 
@@ -199,18 +200,18 @@ public class GenericArrayTypeSymbol :
 
   public override int ArrCount(Val arr)
   {
-    return AsList(arr).Count;
+    return AsValList(arr).Count;
   }
   
   public override void ArrAdd(Val arr, Val val)
   {
-    var lst = AsList(arr);
-    lst.Add(val);
+    var lst = AsValList(arr);
+    lst.Add(val.CloneValue());
   }
 
   public override int ArrIndexOf(Val arr, Val val)
   {
-    var lst = AsList(arr);
+    var lst = AsValList(arr);
 
     int idx = -1;
     for(int i=0;i<lst.Count;++i)
@@ -227,7 +228,7 @@ public class GenericArrayTypeSymbol :
 
   public override Val ArrGetAt(Val arr, int idx)
   {
-    var lst = AsList(arr);
+    var lst = AsValList(arr);
     var res = lst[idx];
     res.Retain();
     return res;
@@ -235,26 +236,26 @@ public class GenericArrayTypeSymbol :
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
-    var lst = AsList(arr);
-    lst[idx] = val;
+    var lst = AsValList(arr);
+    lst.SetValueCopyAt(idx, val);
   }
 
   public override void ArrRemoveAt(Val arr, int idx)
   {
-    var lst = AsList(arr);
+    var lst = AsValList(arr);
     lst.RemoveAt(idx); 
   }
 
   public override void ArrClear(Val arr)
   {
-    var lst = AsList(arr);
+    var lst = AsValList(arr);
     lst.Clear();
   }
   
   public override void ArrInsert(Val arr, int idx, Val val)
   {
-    var lst = AsList(arr);
-    lst.Insert(idx, val);
+    var lst = AsValList(arr);
+    lst.Insert(idx, val.CloneValue());
   }
 
   public override uint ClassId()

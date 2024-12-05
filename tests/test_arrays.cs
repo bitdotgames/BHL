@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Text;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using bhl;
 using Xunit;
@@ -948,13 +947,11 @@ public class TestArrays : BHL_TestBase
     {
       var v1 = Val.NewInt(vm, 10);
       vals.Add(v1);
-      v1.Release();
     }
 
     {
       var v2 = Val.NewInt(vm, 20);
       vals.Add(v2);
-      v2.Release();
     }
 
     var vals_typed = ValList<int>.New(vals, ArrayInts.Val2Native);
@@ -1016,7 +1013,7 @@ public class TestArrays : BHL_TestBase
 
     {
       var dv = Val.New(vm);
-      lst.Add(dv);
+      lst.Add(dv.CloneValue());
       Assert.Equal(1, dv._refs);
 
       lst.Clear();
@@ -1026,7 +1023,7 @@ public class TestArrays : BHL_TestBase
 
     {
       var dv = Val.New(vm);
-      lst.Add(dv);
+      lst.Add(dv.CloneValue());
       Assert.Equal(1, dv._refs);
 
       lst.RemoveAt(0);
@@ -1040,8 +1037,8 @@ public class TestArrays : BHL_TestBase
     {
       var dv0 = Val.New(vm);
       var dv1 = Val.New(vm);
-      lst.Add(dv0);
-      lst.Add(dv1);
+      lst.Add(dv0.CloneValue());
+      lst.Add(dv1.CloneValue());
       Assert.Equal(1, dv0._refs);
       Assert.Equal(1, dv1._refs);
 
@@ -1070,15 +1067,12 @@ public class TestArrays : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     lst.Add(v1);
-    v1.Release();
     
     var v2 = Val.NewInt(vm, 1);
     lst.Add(v2);
-    v2.Release();
     
     var v3 = Val.NewInt(vm, 13);
     lst.Add(v3);
-    v3.Release();
 
     var sorted = lst.OrderBy(v => v.num).ToList();
     Assert.Equal(3, sorted.Count);
@@ -1100,11 +1094,9 @@ public class TestArrays : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     lst.Add(v1);
-    v1.Release();
     
     var v2 = Val.NewInt(vm, 1);
     lst.Add(v2);
-    v2.Release();
 
     var ilst = (IList)lst;
     Assert.Equal(2, ilst.Count);
@@ -1203,6 +1195,11 @@ public class TestArrays : BHL_TestBase
         Assert.Equal(tmp.num, dv2.num);
     }
     Assert.Equal(2, c);
+
+    lst.Release();
+
+    CommonChecks(vm);
   }
+
 
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Transactions;
 
 namespace bhl {
   
@@ -36,10 +38,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public void Add(Val dv)
   {
-    //NOTE: we need to make a copy of the passed Val since
-    //      it can be a locally cleared afterwards variable and the same
-    //      time we need to increase the user payload refs counter
-    lst.Add(dv.CloneValue());
+   lst.Add(dv);
   }
 
   public void AddRange(IList<Val> list)
@@ -91,7 +90,6 @@ public class ValList : IList<Val>, IList, IValRefcounted
   object IList.this[int index]
   {
     get => lst[index];
-    //NOTE: non owning version
     set => lst[index] = (Val)value;
   }
 
@@ -101,14 +99,20 @@ public class ValList : IList<Val>, IList, IValRefcounted
       return lst[i];
     }
     set {
-      var curr = lst[i];
-      //NOTE: we are going to re-use the existing Value,
-      //      thus we need to decrease/increase user payload
-      //      refcounts properly 
-      curr._refc?.Release();
-      curr.ValueCopyFrom(value);
-      curr._refc?.Retain();
+      lst[i] = value;
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetValueCopyAt(int i, Val val)
+  {
+    var curr = lst[i];
+    //NOTE: we are going to re-use the existing Value,
+    //      thus we need to decrease/increase user payload
+    //      refcounts properly 
+    curr._refc?.Release();
+    curr.ValueCopyFrom(val);
+    curr._refc?.Retain();
   }
 
   public int IndexOf(Val dv)
@@ -146,7 +150,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public void Insert(int pos, Val dv)
   {
-    lst.Insert(pos, dv.CloneValue());
+    lst.Insert(pos, dv);
   }
 
   public IEnumerator<Val> GetEnumerator()
@@ -189,7 +193,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   {
     Clear();
     for(int i=0;i<lst.Count;++i)
-      Add(lst[i]);
+      Add(lst[i].CloneValue());
   }
 
   ///////////////////////////////////////
