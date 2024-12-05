@@ -799,21 +799,6 @@ public class BHL_TestBase
     Assert.Equal(a, b);
   }
   
-  public static void AssertEqual(float a, float b)
-  {
-    Assert.Equal(a, b);
-  }
-
-  public static void AssertEqual(double a, double b)
-  {
-    Assert.Equal(a, b);
-  }
-
-  public static void AssertEqual(BHS a, BHS b)
-  {
-    Assert.Equal(a, b);
-  }
-
   public static void AssertContains(string haystack, string needle)
   {
     if(haystack.IndexOf(needle) == -1)
@@ -1304,7 +1289,7 @@ public class BHL_TestBase
     for(int i=0;i<cas.Count;++i)
     {
       AssertEqual((int)cas[i].type, (int)cbs[i].type);
-      AssertEqual(cas[i].num, cbs[i].num);
+      Assert.Equal(cas[i].num, cbs[i].num);
       AssertEqual(cas[i].str, cbs[i].str);
     }
   }

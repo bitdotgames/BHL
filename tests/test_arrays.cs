@@ -102,7 +102,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 1);
+    Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -155,7 +155,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 2);
+    Assert.Equal(fb.result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -220,7 +220,7 @@ public class TestArrays : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -234,7 +234,7 @@ public class TestArrays : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -248,7 +248,7 @@ public class TestArrays : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -262,7 +262,7 @@ public class TestArrays : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -357,7 +357,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -387,7 +387,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -408,7 +408,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 2);
+    Assert.Equal(res, 2);
     CommonChecks(vm);
   }
 
@@ -456,8 +456,8 @@ public class TestArrays : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(42, Execute(vm, "test1").result.PopRelease().num);
-    AssertEqual(42, Execute(vm, "test2").result.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test1").result.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -592,7 +592,7 @@ public class TestArrays : BHL_TestBase
       });
 
       var vm = MakeVM(bhl, ts_fn);
-      AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -614,7 +614,7 @@ public class TestArrays : BHL_TestBase
       });
 
       var vm = MakeVM(bhl, ts_fn);
-      AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -642,7 +642,7 @@ public class TestArrays : BHL_TestBase
       });
 
       var vm = MakeVM(bhl, ts_fn);
-      AssertEqual(-1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -676,7 +676,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 10);
+    Assert.Equal(res, 10);
     CommonChecks(vm);
   }
 
@@ -740,7 +740,7 @@ public class TestArrays : BHL_TestBase
 
     {
       var val = ArrayInts.ArrGetAt(arr, 0);
-      AssertEqual(10, val.num);
+      Assert.Equal(10, val.num);
       val.Release();
       
       AssertEqual(10, list[0]);

@@ -123,7 +123,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 123);
+    Assert.Equal(fb.result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -153,7 +153,7 @@ public class TestVM : BHL_TestBase
     AssertFalse(vm.Tick());
     var num = fb.result.PopRelease().num;
 
-    AssertEqual(num, expected_num);
+    Assert.Equal(num, expected_num);
     CommonChecks(vm);
   }
 
@@ -347,7 +347,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
-    AssertEqual(res, 44);
+    Assert.Equal(res, 44);
     CommonChecks(vm);
   }
 
@@ -389,7 +389,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
-    AssertEqual(res, 42+43);
+    Assert.Equal(res, 42+43);
     CommonChecks(vm);
   }
 
@@ -424,7 +424,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(res, 14);
+    Assert.Equal(res, 14);
     CommonChecks(vm);
   }
 
@@ -461,7 +461,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 42)).result.PopRelease().num;
-    AssertEqual(res, 52);
+    Assert.Equal(res, 52);
     CommonChecks(vm);
   }
 
@@ -490,7 +490,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = vm.Start("test");
     vm.Tick();
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
     CommonChecks(vm);
   }
 
@@ -520,7 +520,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = vm.Start("test");
     vm.Tick();
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
     CommonChecks(vm);
   }
 
@@ -539,7 +539,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 300);
+    Assert.Equal(num, 300);
     CommonChecks(vm);
   }
 
@@ -572,7 +572,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -604,7 +604,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 42);
+    Assert.Equal(fb.result.PopRelease().num, 42);
     CommonChecks(vm);
   }
 
@@ -660,7 +660,7 @@ public class TestVM : BHL_TestBase
     var fb = Execute(vm, "test");
     var num = fb.result.PopRelease().num;
     var str = fb.result.PopRelease().str;
-    AssertEqual(num, 300);
+    Assert.Equal(num, 300);
     AssertEqual(str, "bar");
     CommonChecks(vm);
   }
@@ -684,7 +684,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
     var num = fb.result.PopRelease().num;
-    AssertEqual(num, 200);
+    Assert.Equal(num, 200);
     CommonChecks(vm);
   }
 
@@ -709,7 +709,7 @@ public class TestVM : BHL_TestBase
     var fb = Execute(vm, "test");
     var num = fb.result.PopRelease().num;
     var str = fb.result.PopRelease().str;
-    AssertEqual(num, 100);
+    Assert.Equal(num, 100);
     AssertEqual(str, "bar");
     CommonChecks(vm);
   }
@@ -739,7 +739,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "bar");
     CommonChecks(vm);
   }
@@ -764,7 +764,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "bar");
     CommonChecks(vm);
   }
@@ -793,7 +793,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "bar");
     CommonChecks(vm);
   }
@@ -1095,7 +1095,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 42);
+    Assert.Equal(fb.result.PopRelease().num, 42);
     AssertEqual(fb.result.PopRelease().str, "foo");
     CommonChecks(vm);
   }
@@ -1113,9 +1113,9 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     AssertEqual(fb.result.PopRelease().str, "foo");
-    AssertEqual(fb.result.PopRelease().num, 3);
+    Assert.Equal(fb.result.PopRelease().num, 3);
     CommonChecks(vm);
   }
 
@@ -1149,10 +1149,10 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
-    AssertEqual(fb.result.PopRelease().num, 104);
+    Assert.Equal(fb.result.PopRelease().num, 104);
     AssertEqual(fb.result.PopRelease().str, "foo");
-    AssertEqual(fb.result.PopRelease().num, 12);
-    AssertEqual(fb.result.PopRelease().num, 42.5);
+    Assert.Equal(fb.result.PopRelease().num, 12);
+    Assert.Equal(fb.result.PopRelease().num, 42.5);
     CommonChecks(vm);
   }
 
@@ -1197,7 +1197,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -1241,7 +1241,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -1292,7 +1292,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -1317,7 +1317,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -1339,7 +1339,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 2);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -1458,7 +1458,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 1);
+    Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -1491,7 +1491,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 7);
+    Assert.Equal(fb.result.PopRelease().num, 7);
     CommonChecks(vm);
   }
 
@@ -1524,7 +1524,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 1);
+    Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
   
@@ -1558,7 +1558,7 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
     double expectedNum = 2.7 % 2;
-    AssertEqual(fb.result.PopRelease().num, expectedNum);
+    Assert.Equal(fb.result.PopRelease().num, expectedNum);
     CommonChecks(vm);
   }
 
@@ -1597,7 +1597,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
+    Assert.Equal(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -1614,7 +1614,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
+    Assert.Equal(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -1700,7 +1700,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 246);
+    Assert.Equal(fb.result.PopRelease().num, 246);
     CommonChecks(vm);
   }
 
@@ -1723,7 +1723,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 45);
+    Assert.Equal(Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num, 45);
     CommonChecks(vm);
   }
 
@@ -1749,7 +1749,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 100);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -1841,7 +1841,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -1874,7 +1874,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -1963,7 +1963,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 42);
+    Assert.Equal(fb.result.PopRelease().num, 42);
     CommonChecks(vm);
   }
 
@@ -1998,7 +1998,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, -1);
+    Assert.Equal(fb.result.PopRelease().num, -1);
     CommonChecks(vm);
   }
 
@@ -2031,7 +2031,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 30);
+    Assert.Equal(fb.result.PopRelease().num, 30);
     CommonChecks(vm);
   }
 
@@ -2064,7 +2064,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 10);
+    Assert.Equal(fb.result.PopRelease().num, 10);
     CommonChecks(vm);
   }
 
@@ -2081,7 +2081,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 2);
+    Assert.Equal(fb.result.PopRelease().num, 2);
     CommonChecks(vm);
   }
 
@@ -2098,7 +2098,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 200);
+    Assert.Equal(fb.result.PopRelease().num, 200);
     CommonChecks(vm);
   }
 
@@ -2115,7 +2115,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2132,7 +2132,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num;
-    AssertEqual(num, 0);
+    Assert.Equal(num, 0);
     CommonChecks(vm);
   }
 
@@ -2149,7 +2149,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2166,7 +2166,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num;
-    AssertEqual(num, 0);
+    Assert.Equal(num, 0);
     CommonChecks(vm);
   }
 
@@ -2183,7 +2183,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2200,7 +2200,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2217,7 +2217,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2234,7 +2234,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2251,7 +2251,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2268,7 +2268,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewStr(vm, "b")).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2285,7 +2285,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
-    AssertEqual(num, 0);
+    Assert.Equal(num, 0);
     CommonChecks(vm);
   }
 
@@ -2302,7 +2302,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewStr(vm, "b")).result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2319,7 +2319,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewStr(vm, "b")).result.PopRelease().num;
-    AssertEqual(num, 0);
+    Assert.Equal(num, 0);
     CommonChecks(vm);
   }
 
@@ -2356,7 +2356,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 33930);
+    Assert.Equal(fb.result.PopRelease().num, 33930);
     CommonChecks(vm);
   }
 
@@ -2389,7 +2389,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 20);
+    Assert.Equal(fb.result.PopRelease().num, 20);
     CommonChecks(vm);
   }
 
@@ -2407,7 +2407,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 10);
+    Assert.Equal(num, 10);
     CommonChecks(vm);
   }
 
@@ -2426,7 +2426,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, -10);
+    Assert.Equal(num, -10);
     CommonChecks(vm);
   }
 
@@ -2445,7 +2445,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 10);
+    Assert.Equal(num, 10);
     CommonChecks(vm);
   }
 
@@ -2464,7 +2464,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -2599,7 +2599,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 3.1);
+    Assert.Equal(num, 3.1);
     CommonChecks(vm);
   }
 
@@ -2634,7 +2634,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 500);
+    Assert.Equal(fb.result.PopRelease().num, 500);
     CommonChecks(vm);
   }
 
@@ -2708,7 +2708,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2886,7 +2886,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 123);
+    Assert.Equal(fb.result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -2981,7 +2981,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -3008,7 +3008,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -3069,7 +3069,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(42, num);
+    Assert.Equal(42, num);
     CommonChecks(vm);
   }
 
@@ -3101,7 +3101,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(1, num);
+    Assert.Equal(1, num);
     CommonChecks(vm);
   }
   
@@ -3184,7 +3184,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 8);
+    Assert.Equal(num, 8);
     CommonChecks(vm);
   }
 
@@ -3223,7 +3223,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(1, num);
+    Assert.Equal(1, num);
     CommonChecks(vm);
   }
 
@@ -3245,7 +3245,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(41, num);
+    Assert.Equal(41, num);
     CommonChecks(vm);
   }
 
@@ -3314,7 +3314,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -3336,7 +3336,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -3389,7 +3389,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 10);
+    Assert.Equal(fb.result.PopRelease().num, 10);
     CommonChecks(vm);
   }
 
@@ -3465,7 +3465,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 20);
+    Assert.Equal(fb.result.PopRelease().num, 20);
     CommonChecks(vm);
   }
 
@@ -3488,7 +3488,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -3743,7 +3743,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(30, num);
+    Assert.Equal(30, num);
     CommonChecks(vm);
   }
 
@@ -3780,7 +3780,7 @@ public class TestVM : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+      Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
     }
   }
 
@@ -3817,7 +3817,7 @@ public class TestVM : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+      Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
     }
   }
 
@@ -3852,7 +3852,7 @@ public class TestVM : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertEqual(Execute(vm, "test").result.PopRelease().num, 10);
+      Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
     }
   }
 
@@ -3874,11 +3874,11 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       var num = Execute(vm, "test", Val.NewNum(vm, 1)).result.PopRelease().num;
-      AssertEqual(2, num);
+      Assert.Equal(2, num);
     }
     {
       var num = Execute(vm, "test", Val.NewNum(vm, 10)).result.PopRelease().num;
-      AssertEqual(3, num);
+      Assert.Equal(3, num);
     }
     CommonChecks(vm);
   }
@@ -3930,7 +3930,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -3951,7 +3951,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 100);
+    Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
 
@@ -3971,7 +3971,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -4028,7 +4028,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 70);
+    Assert.Equal(fb.result.PopRelease().num, 70);
     CommonChecks(vm);
   }
 
@@ -4056,7 +4056,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -4088,7 +4088,7 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
 
     vm.Tick();
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
 
     AssertEqual("01", log.ToString());
     CommonChecks(vm);
@@ -4142,7 +4142,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
   
@@ -4162,7 +4162,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -4182,7 +4182,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
   
@@ -4264,7 +4264,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 70);
+    Assert.Equal(fb.result.PopRelease().num, 70);
     CommonChecks(vm);
   }
 
@@ -4292,7 +4292,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 0);
+    Assert.Equal(fb.result.PopRelease().num, 0);
     CommonChecks(vm);
   }
 
@@ -4369,7 +4369,7 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
 
     vm.Tick();
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
 
     AssertEqual("01", log.ToString());
     CommonChecks(vm);
@@ -4464,7 +4464,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 7);
+    Assert.Equal(fb.result.PopRelease().num, 7);
     CommonChecks(vm);
   }
 
@@ -4496,7 +4496,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 4);
+    Assert.Equal(fb.result.PopRelease().num, 4);
     CommonChecks(vm);
   }
 
@@ -4524,7 +4524,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 5);
+    Assert.Equal(fb.result.PopRelease().num, 5);
     CommonChecks(vm);
   }
 
@@ -4556,7 +4556,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 4);
+    Assert.Equal(fb.result.PopRelease().num, 4);
     CommonChecks(vm);
   }
 
@@ -4910,7 +4910,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 4);
+    Assert.Equal(fb.result.PopRelease().num, 4);
     CommonChecks(vm);
   }
 
@@ -5453,7 +5453,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 9);
+    Assert.Equal(fb.result.PopRelease().num, 9);
     CommonChecks(vm);
   }
 
@@ -5533,7 +5533,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 10);
+    Assert.Equal(fb.result.PopRelease().num, 10);
     CommonChecks(vm);
   }
 
@@ -5564,7 +5564,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 1);
+    Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -5587,7 +5587,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 3);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 3);
     CommonChecks(vm);
   }
   
@@ -5619,7 +5619,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 1);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -5650,7 +5650,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 3);
+    Assert.Equal(fb.result.PopRelease().num, 3);
     CommonChecks(vm);
   }
 
@@ -5682,7 +5682,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 1);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -5795,7 +5795,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 1);
+    Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
 
@@ -5820,7 +5820,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 125);
+    Assert.Equal(fb.result.PopRelease().num, 125);
     CommonChecks(vm);
   }
 
@@ -5866,7 +5866,7 @@ public class TestVM : BHL_TestBase
       ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(10 + 1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10 + 1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
   
@@ -5889,7 +5889,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10+1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -5908,7 +5908,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(10+1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10+1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -5989,7 +5989,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(14, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(14, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -6014,8 +6014,8 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(6, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
-    AssertEqual(8, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(8, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -6046,8 +6046,8 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(9+12, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
-    AssertEqual(12+15, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
+    Assert.Equal(9+12, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(12+15, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -6068,8 +6068,8 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(3+8, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
-    AssertEqual(4+10, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
+    Assert.Equal(3+8, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(4+10, Execute(vm, "test", Val.NewNum(vm, 4)).result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -6099,7 +6099,7 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    AssertEqual(3*2 + 3*10, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(3*2 + 3*10, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
     AssertEqual("whathey", log.ToString());
     CommonChecks(vm);
   }
@@ -6596,7 +6596,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 12);
+    Assert.Equal(fb.result.PopRelease().num, 12);
     CommonChecks(vm);
   }
 
@@ -6622,7 +6622,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -6760,7 +6760,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 24);
+    Assert.Equal(num, 24);
     CommonChecks(vm);
   }
 
@@ -6782,7 +6782,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 66);
+    Assert.Equal(num, 66);
     CommonChecks(vm);
   }
 
@@ -6809,7 +6809,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 25);
+    Assert.Equal(num, 25);
     CommonChecks(vm);
   }
 
@@ -6836,7 +6836,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 28);
+    Assert.Equal(num, 28);
     CommonChecks(vm);
   }
 
@@ -6937,7 +6937,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, -3);
+    Assert.Equal(num, -3);
     CommonChecks(vm);
   }
 
@@ -6961,7 +6961,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -7006,7 +7006,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 4);
+    Assert.Equal(num, 4);
     CommonChecks(vm);
   }
 
@@ -7030,7 +7030,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -7083,7 +7083,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 3);
+    Assert.Equal(num, 3);
     CommonChecks(vm);
   }
 
@@ -7112,7 +7112,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 8);
+    Assert.Equal(num, 8);
     CommonChecks(vm);
   }
 
@@ -7135,7 +7135,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 6);
+    Assert.Equal(num, 6);
     CommonChecks(vm);
   }
 
@@ -7173,7 +7173,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 6);
+    Assert.Equal(num, 6);
     CommonChecks(vm);
   }
 
@@ -7196,7 +7196,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 6);
+    Assert.Equal(num, 6);
     CommonChecks(vm);
   }
 
@@ -7219,7 +7219,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 4);
+    Assert.Equal(num, 4);
     CommonChecks(vm);
   }
 
@@ -7297,8 +7297,8 @@ public class TestVM : BHL_TestBase
     var fb = Execute(vm, "test", Val.NewNum(vm, 3));
     var num1 = fb.result.PopRelease().num;
     var num2 = fb.result.PopRelease().num;
-    AssertEqual(num1, 12);
-    AssertEqual(num2, 11);
+    Assert.Equal(num1, 12);
+    Assert.Equal(num2, 11);
     CommonChecks(vm);
   }
 
@@ -7355,7 +7355,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 11);
+    Assert.Equal(num, 11);
     CommonChecks(vm);
   }
 
@@ -7380,7 +7380,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 32);
+    Assert.Equal(num, 32);
     CommonChecks(vm);
   }
 
@@ -7410,7 +7410,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 32);
+    Assert.Equal(num, 32);
     CommonChecks(vm);
   }
 
@@ -7438,7 +7438,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -7504,7 +7504,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 5);
+    Assert.Equal(num, 5);
     CommonChecks(vm);
   }
 
@@ -7537,7 +7537,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(2, num);
+    Assert.Equal(2, num);
     CommonChecks(vm);
   }
 
@@ -7577,7 +7577,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 10);
+    Assert.Equal(num, 10);
     CommonChecks(vm);
   }
 
@@ -7642,7 +7642,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7666,7 +7666,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7691,7 +7691,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7717,7 +7717,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 1);
+    Assert.Equal(num, 1);
     CommonChecks(vm);
   }
 
@@ -7746,7 +7746,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7775,7 +7775,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7797,7 +7797,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, -98);
+    Assert.Equal(num, -98);
     CommonChecks(vm);
   }
 
@@ -7817,12 +7817,12 @@ public class TestVM : BHL_TestBase
     {
       var fb = vm.Start(addr);
       AssertFalse(vm.Tick());
-      AssertEqual(fb.result.PopRelease().num, 123);
+      Assert.Equal(fb.result.PopRelease().num, 123);
     }
     {
       var fb = vm.Start(addr);
       AssertFalse(vm.Tick());
-      AssertEqual(fb.result.PopRelease().num, 123);
+      Assert.Equal(fb.result.PopRelease().num, 123);
     }
     CommonChecks(vm);
   }
@@ -7862,14 +7862,14 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertEqual(fb.status, BHS.NONE);
+    Assert.Equal(fb.status, BHS.NONE);
     vm.Detach(fb);
-    AssertEqual(fb.status, BHS.NONE);
+    Assert.Equal(fb.status, BHS.NONE);
     AssertFalse(vm.Tick());
-    AssertEqual(fb.status, BHS.NONE);
+    Assert.Equal(fb.status, BHS.NONE);
     AssertTrue(vm.Tick(fb));
     AssertFalse(vm.Tick(fb));
-    AssertEqual(fb.result.PopRelease().num, 123);
+    Assert.Equal(fb.result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -7925,7 +7925,7 @@ public class TestVM : BHL_TestBase
     var args_inf = new FuncArgsInfo();
     args_inf.UseDefaultArg(0, true);
     var num = Execute(vm, "test", args_inf).result.PopRelease().num;
-    AssertEqual(num, 42);
+    Assert.Equal(num, 42);
     CommonChecks(vm);
   }
 
@@ -7947,7 +7947,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num;
-    AssertEqual(num, 3);
+    Assert.Equal(num, 3);
     CommonChecks(vm);
   }
 
@@ -7969,7 +7969,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    AssertEqual(num, 2);
+    Assert.Equal(num, 2);
     CommonChecks(vm);
   }
 
@@ -7992,7 +7992,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 5);
+    Assert.Equal(fb.result.PopRelease().num, 5);
     CommonChecks(vm);
   }
 
@@ -8123,7 +8123,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -8156,7 +8156,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -8199,7 +8199,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = vm.Start("test");
     AssertFalse(vm.Tick());
-    AssertEqual(BHS.FAILURE, fb.status);
+    Assert.Equal(BHS.FAILURE, fb.status);
     CommonChecks(vm);
   }
 
@@ -8639,7 +8639,7 @@ public class TestVM : BHL_TestBase
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
     AssertEqual("", log.ToString());
     CommonChecks(vm);
   }
@@ -8696,7 +8696,7 @@ public class TestVM : BHL_TestBase
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
     AssertEqual("", log.ToString());
     CommonChecks(vm);
   }
@@ -8755,7 +8755,7 @@ public class TestVM : BHL_TestBase
     AssertTrue(vm.Tick());
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
-    AssertEqual(fb.status, BHS.FAILURE);
+    Assert.Equal(fb.status, BHS.FAILURE);
     AssertEqual("", log.ToString());
     CommonChecks(vm);
   }
@@ -9267,8 +9267,8 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    AssertEqual(Execute(vm, "test1").result.PopRelease().num, 100500);
-    AssertEqual(Execute(vm, "test2").result.PopRelease().num, 100500);
+    Assert.Equal(Execute(vm, "test1").result.PopRelease().num, 100500);
+    Assert.Equal(Execute(vm, "test2").result.PopRelease().num, 100500);
     AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 0)).result.PopRelease().str, "default value");
     AssertEqual(Execute(vm, "test3", Val.NewNum(vm, 2)).result.PopRelease().str, "second value");
 
@@ -9316,7 +9316,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
 
-    AssertEqual(Execute(vm, "test1").result.PopRelease().num, 0);
+    Assert.Equal(Execute(vm, "test1").result.PopRelease().num, 0);
 
     Execute(vm, "test2");
     AssertEqual("012012011223", log.ToString());
@@ -9708,7 +9708,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
 
-    AssertEqual(Execute(vm, "test1").result.PopRelease().num, 0);
+    Assert.Equal(Execute(vm, "test1").result.PopRelease().num, 0);
 
     Execute(vm, "test2");
     AssertEqual("32103210", log.ToString());
@@ -10198,7 +10198,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 8);
+    Assert.Equal(res, 8);
     CommonChecks(vm);
   }
 
@@ -10226,7 +10226,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 2);
+    Assert.Equal(res, 2);
     CommonChecks(vm);
   }
 
@@ -10254,7 +10254,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 3);
+    Assert.Equal(res, 3);
     CommonChecks(vm);
   }
 
@@ -10282,7 +10282,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 2);
+    Assert.Equal(res, 2);
     CommonChecks(vm);
   }
 
@@ -10323,7 +10323,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 1);
+    Assert.Equal(res, 1);
     CommonChecks(vm);
   }
 
@@ -10347,7 +10347,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
-    AssertEqual(res, 60);
+    Assert.Equal(res, 60);
     CommonChecks(vm);
   }
 
@@ -10398,7 +10398,7 @@ public class TestVM : BHL_TestBase
 
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
-    AssertEqual(fb.result.PopRelease().num, 123);
+    Assert.Equal(fb.result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -10415,7 +10415,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3), Val.NewNum(vm, 7)).result.PopRelease().num; 
-    AssertEqual(num, 7);
+    Assert.Equal(num, 7);
     CommonChecks(vm);
   }
 
@@ -10432,7 +10432,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test", Val.NewNum(vm, 3), Val.NewNum(vm, 7)).result.PopRelease().num; 
-    AssertEqual(num, 3);
+    Assert.Equal(num, 3);
     CommonChecks(vm);
   }
 
@@ -10456,8 +10456,8 @@ public class TestVM : BHL_TestBase
 
     AssertTrue(vm.Tick());
     AssertFalse(vm.Tick());
-    AssertEqual(fb1.result.PopRelease().num, 123);
-    AssertEqual(fb2.result.PopRelease().num, 123);
+    Assert.Equal(fb1.result.PopRelease().num, 123);
+    Assert.Equal(fb2.result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -10516,7 +10516,7 @@ public class TestVM : BHL_TestBase
 
     var vm = new VM();
     vm.LoadModule(c);
-    AssertEqual(Execute(vm, "test").result.PopRelease().num, 123);
+    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 123);
     CommonChecks(vm);
   }
 
@@ -10558,10 +10558,10 @@ public class TestVM : BHL_TestBase
 
     var vm = new VM(ts, loader);
     AssertTrue(vm.LoadModule("bhl1"));
-    AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
+    Assert.Equal(Execute(vm, "bhl1").result.PopRelease().num, 23);
 
     AssertTrue(vm.LoadModule("bhl1"));
-    AssertEqual(Execute(vm, "bhl1").result.PopRelease().num, 23);
+    Assert.Equal(Execute(vm, "bhl1").result.PopRelease().num, 23);
     CommonChecks(vm);
   }
 
@@ -10617,7 +10617,7 @@ public class TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
-    AssertEqual(0, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10652,7 +10652,7 @@ public class TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
-    AssertEqual(20, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(20, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10685,7 +10685,7 @@ public class TestVM : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
-    AssertEqual(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10703,7 +10703,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(-10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(-10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10725,7 +10725,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10746,7 +10746,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(200, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(200, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10773,7 +10773,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(101, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(101, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10893,7 +10893,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(200, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(200, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10918,7 +10918,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(101, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(101, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -10964,7 +10964,7 @@ public class TestVM : BHL_TestBase
       var vm = MakeVM(bhl);
       AssertTrue(vm.TryFindVarAddr("foo", out var addr));
       addr.val.num = 100;
-      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -10985,9 +10985,9 @@ public class TestVM : BHL_TestBase
 
       var vm = MakeVM(bhl);
       AssertTrue(vm.TryFindVarAddr("what.foo", out var addr));
-      AssertEqual(10, addr.val.num);
+      Assert.Equal(10, addr.val.num);
       addr.val.num = 100;
-      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -11015,11 +11015,11 @@ public class TestVM : BHL_TestBase
 
       vm.LoadModule("bar");
       AssertTrue(vm.TryFindVarAddr("bar", out var addr));
-      AssertEqual(1, addr.val.num);
+      Assert.Equal(1, addr.val.num);
       addr.val.num = 100;
 
       vm.LoadModule("test");
-      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -11053,11 +11053,11 @@ public class TestVM : BHL_TestBase
 
       vm.LoadModule("test");
       AssertTrue(vm.TryFindVarAddr("N.bar", out var addr));
-      AssertEqual(1, addr.val.num);
+      Assert.Equal(1, addr.val.num);
       addr.val.num = 100;
 
       vm.LoadModule("test");
-      AssertEqual(100, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -11285,7 +11285,7 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -11307,9 +11307,9 @@ public class TestVM : BHL_TestBase
     {
       ++c;
       if(c == 1)
-        AssertEqual(tmp.num, dv1.num);
+        Assert.Equal(tmp.num, dv1.num);
       else if(c == 2)
-        AssertEqual(tmp.num, dv2.num);
+        Assert.Equal(tmp.num, dv2.num);
     }
     AssertEqual(2, c);
   }

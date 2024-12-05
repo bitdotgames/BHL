@@ -587,8 +587,8 @@ public class TestOperatorOverload : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
-    AssertEqual(21, res.r);
-    AssertEqual(32, res.g);
+    Assert.Equal(21, res.r);
+    Assert.Equal(32, res.g);
     CommonChecks(vm);
   }
 
@@ -632,8 +632,8 @@ public class TestOperatorOverload : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
-    AssertEqual(2, res.r);
-    AssertEqual(4, res.g);
+    Assert.Equal(2, res.r);
+    Assert.Equal(4, res.g);
     CommonChecks(vm);
   }
 
@@ -702,8 +702,8 @@ public class TestOperatorOverload : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = (Color)Execute(vm, "test").result.PopRelease().obj;
-    AssertEqual(21, res.r);
-    AssertEqual(42, res.g);
+    Assert.Equal(21, res.r);
+    Assert.Equal(42, res.g);
     CommonChecks(vm);
   }
 

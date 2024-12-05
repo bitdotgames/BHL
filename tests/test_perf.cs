@@ -42,7 +42,7 @@ public class TestPerf : BHL_TestBase
       var fb = vm.Start("test");
       AssertFalse(vm.Tick());
       stopwatch.Stop();
-      AssertEqual(fb.result.PopRelease().num, 610);
+      Assert.Equal(fb.result.PopRelease().num, 610);
       Console.WriteLine("fib ticks: {0}", stopwatch.ElapsedTicks);
     }
 
@@ -51,7 +51,7 @@ public class TestPerf : BHL_TestBase
       var fb = vm.Start("test");
       AssertFalse(vm.Tick());
       stopwatch.Stop();
-      AssertEqual(fb.result.PopRelease().num, 610);
+      Assert.Equal(fb.result.PopRelease().num, 610);
       Console.WriteLine("fib ticks2: {0}", stopwatch.ElapsedTicks);
     }
 

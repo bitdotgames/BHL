@@ -94,7 +94,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual(2, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -114,7 +114,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    AssertEqual(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
