@@ -20,7 +20,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -38,7 +38,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -56,7 +56,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -74,7 +74,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -338,7 +338,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -354,7 +354,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 }

@@ -67,11 +67,11 @@ public class TestLSPInitShutdownExit : TestLSPShared
   [Fact]
   public async Task _4()
   {
-    AssertFalse(srv.going_to_exit);
+    Assert.False(srv.going_to_exit);
     AssertEqual(
       await srv.Handle(new Request(1, "exit").ToJson()),
       string.Empty
     );
-    AssertTrue(srv.going_to_exit);
+    Assert.True(srv.going_to_exit);
   }
 }

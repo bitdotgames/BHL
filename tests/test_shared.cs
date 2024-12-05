@@ -768,18 +768,18 @@ public class BHL_TestBase
     vm.UnloadModules();
 
     if(check_frames)
-      AssertEqual(0, vm.frames_pool.BusyCount);
+      Assert.Equal(0, vm.frames_pool.BusyCount);
     //for extra debug
     if(vm.vals_pool.BusyCount != 0)
       Console.WriteLine(vm.vals_pool.Dump());
 
-    AssertEqual(0, vm.vals_pool.BusyCount);
-    AssertEqual(0, vm.vlsts_pool.BusyCount);
-    AssertEqual(0, vm.fptrs_pool.BusyCount);
+    Assert.Equal(0, vm.vals_pool.BusyCount);
+    Assert.Equal(0, vm.vlsts_pool.BusyCount);
+    Assert.Equal(0, vm.fptrs_pool.BusyCount);
     if(check_fibers)
-      AssertEqual(0, vm.fibers_pool.BusyCount);
+      Assert.Equal(0, vm.fibers_pool.BusyCount);
     if(check_coros)
-      AssertEqual(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
+      Assert.Equal(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }
 
   public static string TestDirPath()
@@ -794,11 +794,6 @@ public class BHL_TestBase
     return (p == 4) || (p == 6) || (p == 128);
   }
 
-  public static void AssertEqual<T>(T a, T b) where T : class
-  {
-    Assert.Equal(a, b);
-  }
-  
   public static void AssertContains(string haystack, string needle)
   {
     if(haystack.IndexOf(needle) == -1)
@@ -814,21 +809,6 @@ public class BHL_TestBase
     }
 
     Assert.Equal(a, b);
-  }
-
-  public static void AssertEqual(int a, int b)
-  {
-    Assert.Equal(a, b);
-  }
-
-  public static void AssertTrue(bool cond, string msg = "")
-  {
-    Assert.True(cond, msg);
-  }
-
-  public static void AssertFalse(bool cond, string msg = "")
-  {
-    Assert.False(cond, msg);
   }
 
   public void AssertError<T>(Action action, string msg, PlaceAssert place_assert = null) where T : Exception
@@ -1285,10 +1265,10 @@ public class BHL_TestBase
 
   public static void AssertEqual(List<Const> cas, List<Const> cbs)
   {
-    AssertEqual(cas.Count, cbs.Count);
+    Assert.Equal(cas.Count, cbs.Count);
     for(int i=0;i<cas.Count;++i)
     {
-      AssertEqual((int)cas[i].type, (int)cbs[i].type);
+      Assert.Equal((int)cas[i].type, (int)cbs[i].type);
       Assert.Equal(cas[i].num, cbs[i].num);
       AssertEqual(cas[i].str, cbs[i].str);
     }

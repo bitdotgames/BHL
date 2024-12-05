@@ -24,13 +24,13 @@ public class TestBlobs : BHL_TestBase
     val.SetBlob(ref orig, null);
 
     ref var b = ref val.GetBlob<StructBlob>();
-    AssertEqual(b.x, orig.x);
-    AssertEqual(b.y, orig.y);
-    AssertEqual(b.z, orig.z);
+    Assert.Equal(b.x, orig.x);
+    Assert.Equal(b.y, orig.y);
+    Assert.Equal(b.z, orig.z);
 
     b.x = 20;
-    AssertEqual(b.x, 20);
-    AssertEqual(orig.x, 1);
+    Assert.Equal(b.x, 20);
+    Assert.Equal(orig.x, 1);
   }
   
   [Fact]
@@ -49,11 +49,11 @@ public class TestBlobs : BHL_TestBase
     var val2 = Val.New(vm);
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    AssertEqual(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
     
     val2.GetBlob<StructBlob>().x = 30;
     //original value is intact 
-    AssertEqual(val1.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(val1.GetBlob<StructBlob>().x, 20);
   }
   
   [Fact]
@@ -74,7 +74,7 @@ public class TestBlobs : BHL_TestBase
     
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    AssertEqual(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
   }
   
   [Fact]
@@ -95,7 +95,7 @@ public class TestBlobs : BHL_TestBase
     
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
-    AssertEqual(val2.GetBlob<StructBlob>().x, 20);
+    Assert.Equal(val2.GetBlob<StructBlob>().x, 20);
   }
   
   [Fact]
@@ -112,7 +112,7 @@ public class TestBlobs : BHL_TestBase
     var val2 = Val.New(vm);
     val2.SetBlob(ref orig, null);
     
-    AssertTrue(val1.IsValueEqual(val2));
+    Assert.True(val1.IsValueEqual(val2));
   }
   
   [Fact]
@@ -132,7 +132,7 @@ public class TestBlobs : BHL_TestBase
     val1.GetBlob<StructBlob>().x = 20;
     val2.GetBlob<StructBlob>().x = 20;
     
-    AssertTrue(val1.IsValueEqual(val2));
+    Assert.True(val1.IsValueEqual(val2));
   }
   
   [Fact]
@@ -151,7 +151,7 @@ public class TestBlobs : BHL_TestBase
     
     val1.GetBlob<StructBlob>().x = 20;
     
-    AssertFalse(val1.IsValueEqual(val2));
+    Assert.False(val1.IsValueEqual(val2));
   }
   
   [Fact]
@@ -167,7 +167,7 @@ public class TestBlobs : BHL_TestBase
     
     var val2 = Val.NewInt(vm, 10);
     
-    AssertFalse(val1.IsValueEqual(val2));
+    Assert.False(val1.IsValueEqual(val2));
   }
   
   [Fact]
@@ -183,6 +183,6 @@ public class TestBlobs : BHL_TestBase
     
     var val2 = Val.NewObj(vm, /*using orig!*/ orig, null);
     
-    AssertFalse(val1.IsValueEqual(val2));
+    Assert.False(val1.IsValueEqual(val2));
   }
 }

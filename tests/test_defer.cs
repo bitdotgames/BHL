@@ -44,7 +44,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("foobar", log.ToString());
     CommonChecks(vm);
   }
@@ -473,7 +473,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("foobar", log.ToString());
     CommonChecks(vm);
   }
@@ -503,7 +503,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("fooheybar", log.ToString());
     CommonChecks(vm);
   }
@@ -548,7 +548,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("foofoo2foo1testtest2test1", log.ToString());
     CommonChecks(vm);
   }
@@ -617,7 +617,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("barfoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -654,7 +654,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("4231", log.ToString());
     CommonChecks(vm);
   }
@@ -689,7 +689,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("iffoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -724,7 +724,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("elsefoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -964,7 +964,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("whilewhilefoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -997,7 +997,7 @@ public class TestDefer : BHL_TestBase
     var fb = vm.Start("test");
 
     for(int i=0;i<5;++i)
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
     //...will be running forever, well, we assume that :)
 
     //NOTE: on the first tick we yield() is executed and 
@@ -1073,7 +1073,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("whilewhilefoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1104,7 +1104,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1216,9 +1216,9 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1267,10 +1267,10 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("542361", log.ToString());
     CommonChecks(vm);
   }
@@ -1301,7 +1301,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1336,9 +1336,9 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("wowbarfoohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1388,12 +1388,12 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
     //TODO: VM.Tick() returns BHS.SUCCESS when all fibers exited 
     //      regardless of their individual exit status
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("54231", log.ToString());
     CommonChecks(vm);
   }
@@ -1425,7 +1425,7 @@ public class TestDefer : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("lmb1lmb2foohey", log.ToString());
     CommonChecks(vm);
   }
@@ -1472,13 +1472,13 @@ public class TestDefer : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("1", log.ToString());
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("1342", log.ToString());
     vm.Stop(fb);
     AssertEqual("134250", log.ToString());
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     CommonChecks(vm);
   }
 
@@ -1529,12 +1529,12 @@ public class TestDefer : BHL_TestBase
 
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
     vm.Stop(fb);
     AssertEqual("12", log.ToString());
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     CommonChecks(vm);
   }
 

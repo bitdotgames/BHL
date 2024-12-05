@@ -20,8 +20,8 @@ public class TestLSPBasic : TestLSPShared
       AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
       AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, code.CalcByteIndex(4, 0));
-      AssertEqual(-1, code.CalcByteIndex(100, 1));
+      Assert.Equal(-1, code.CalcByteIndex(4, 0));
+      Assert.Equal(-1, code.CalcByteIndex(100, 1));
     }
     
     [Fact]
@@ -37,8 +37,8 @@ public class TestLSPBasic : TestLSPShared
       AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
       AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, code.CalcByteIndex(4, 0));
-      AssertEqual(-1, code.CalcByteIndex(100, 1));
+      Assert.Equal(-1, code.CalcByteIndex(4, 0));
+      Assert.Equal(-1, code.CalcByteIndex(100, 1));
     }
 
     [Fact]
@@ -54,8 +54,8 @@ public class TestLSPBasic : TestLSPShared
       AssertEqual("h", bhl[code.CalcByteIndex(2, 1)].ToString());
       AssertEqual("}", bhl[code.CalcByteIndex(3, 0)].ToString());
 
-      AssertEqual(-1, code.CalcByteIndex(4, 0));
-      AssertEqual(-1, code.CalcByteIndex(100, 1));
+      Assert.Equal(-1, code.CalcByteIndex(4, 0));
+      Assert.Equal(-1, code.CalcByteIndex(100, 1));
     }
   }
 
@@ -88,8 +88,8 @@ public class TestLSPBasic : TestLSPShared
 
     {
       var pos = code.GetIndexPosition(bhl.Length);
-      AssertEqual(-1, pos.line);
-      AssertEqual(-1, pos.column);
+      Assert.Equal(-1, pos.line);
+      Assert.Equal(-1, pos.column);
     }
   }
 
@@ -101,8 +101,8 @@ public class TestLSPBasic : TestLSPShared
         return null;
       }
     );
-    AssertTrue(fn.origin.source_file.EndsWith("test_lsp_basic.cs"));
-    AssertTrue(fn.origin.source_range.start.line > 0);
+    Assert.True(fn.origin.source_file.EndsWith("test_lsp_basic.cs"));
+    Assert.True(fn.origin.source_range.start.line > 0);
   }
 
   public class TestRpcResponseErrors : TestLSPShared

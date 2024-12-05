@@ -129,7 +129,7 @@ public class TestEnum : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.Pop();
     var lst = res.obj as IList<Val>;
-    AssertEqual(lst.Count, 2);
+    Assert.Equal(lst.Count, 2);
     Assert.Equal(lst[0].num, 20);
     Assert.Equal(lst[1].num, 10);
     res.Release();
@@ -166,7 +166,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().bval;
-    AssertTrue(res);
+    Assert.True(res);
   }
 
   [Fact]
@@ -369,7 +369,7 @@ public class TestEnum : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      Assert.True(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 

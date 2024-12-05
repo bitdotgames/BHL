@@ -50,8 +50,8 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -101,8 +101,8 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -155,7 +155,7 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -216,7 +216,7 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -349,8 +349,8 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -380,8 +380,8 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -442,7 +442,7 @@ public class TestParal : BHL_TestBase
     var vm = MakeVM(bhl);
     vm.Start("test");
     for(int i=0;i<99;i++)
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
   }
 
   [Fact]
@@ -468,9 +468,9 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -588,9 +588,9 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
 
     AssertEqual("", log.ToString());
     CommonChecks(vm);
@@ -633,9 +633,9 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
 
     AssertEqual("", log.ToString());
     CommonChecks(vm);

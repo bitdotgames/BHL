@@ -59,26 +59,26 @@ public class TestStackTrace : BHL_TestBase
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(4, trace[0].line);
+    Assert.Equal(4, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
   
   [Fact]
@@ -138,26 +138,26 @@ public class TestStackTrace : BHL_TestBase
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    Assert.Equal(6, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(6, trace[1].line);
+    Assert.Equal(6, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
   
   [Fact]
@@ -221,26 +221,26 @@ public class TestStackTrace : BHL_TestBase
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(10, trace[0].line);
+    Assert.Equal(10, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(6, trace[1].line);
+    Assert.Equal(6, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
   
   [Fact]
@@ -319,7 +319,7 @@ public class TestStackTrace : BHL_TestBase
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
     AssertError<Exception>(
       () => vm.Tick(), 
 @"at wow(..) in bhl2.bhl:20
@@ -391,26 +391,26 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(10, trace[0].line);
+    Assert.Equal(10, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(6, trace[1].line);
+    Assert.Equal(6, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
 
   [Fact]
@@ -468,22 +468,22 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(3, trace.Count);
+    Assert.Equal(3, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(4, trace[0].line);
+    Assert.Equal(4, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("test", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(11, trace[2].line);
+    Assert.Equal(11, trace[2].line);
   }
 
   [Fact]
@@ -527,18 +527,18 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    AssertEqual(1, info.Count);
+    Assert.Equal(1, info.Count);
 
     var trace = info[fb];
-    AssertEqual(2, trace.Count);
+    Assert.Equal(2, trace.Count);
 
     AssertEqual("bar", trace[0].func);
     AssertEqual("bhl2.bhl", trace[0].file);
-    AssertEqual(8, trace[0].line);
+    Assert.Equal(8, trace[0].line);
 
     AssertEqual("test", trace[1].func);
     AssertEqual("bhl1.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
   }
 
   [Fact]
@@ -605,26 +605,26 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    AssertEqual(1, info.Count);
+    Assert.Equal(1, info.Count);
 
     var trace = info[fb];
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(4, trace[0].line);
+    Assert.Equal(4, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
 
   [Fact]
@@ -687,26 +687,26 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 3);
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(9, trace[0].line);
+    Assert.Equal(9, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
 
   [Fact]
@@ -769,25 +769,25 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
-    AssertTrue(vm.Tick());
+    Assert.True(vm.Tick());
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(9, trace[0].line);
+    Assert.Equal(9, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
 
   [Fact]
@@ -846,25 +846,25 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     vm.Start("test", Val.NewNum(vm, 3));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
 
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    Assert.Equal(6, trace[0].line);
 
     AssertEqual("bar", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(5, trace[1].line);
+    Assert.Equal(5, trace[1].line);
 
     AssertEqual("foo", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(5, trace[2].line);
+    Assert.Equal(5, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(10, trace[3].line);
+    Assert.Equal(10, trace[3].line);
   }
 
   [Fact]
@@ -929,29 +929,29 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
 
-    AssertEqual(5, trace.Count);
+    Assert.Equal(5, trace.Count);
 
     AssertEqual("hey", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(4, trace[0].line);
+    Assert.Equal(4, trace[0].line);
 
     AssertEqual("wow", trace[1].func);
     AssertEqual("bhl3.bhl", trace[1].file);
-    AssertEqual(11, trace[1].line);
+    Assert.Equal(11, trace[1].line);
 
     AssertEqual("bar", trace[2].func);
     AssertEqual("bhl2.bhl", trace[2].file);
-    AssertEqual(6, trace[2].line);
+    Assert.Equal(6, trace[2].line);
 
     AssertEqual("foo", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(5, trace[3].line);
+    Assert.Equal(5, trace[3].line);
 
     AssertEqual("test", trace[4].func);
     AssertEqual("bhl1.bhl", trace[4].file);
-    AssertEqual(10, trace[4].line);
+    Assert.Equal(10, trace[4].line);
   }
 
   [Fact]
@@ -1039,26 +1039,26 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    AssertEqual(1, info.Count);
+    Assert.Equal(1, info.Count);
 
     var trace = info[fb];
-    AssertEqual(4, trace.Count);
+    Assert.Equal(4, trace.Count);
 
     AssertEqual("problem", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    Assert.Equal(6, trace[0].line);
 
     AssertEqual("wow", trace[1].func);
     AssertEqual("bhl3.bhl", trace[1].file);
-    AssertEqual(16, trace[1].line);
+    Assert.Equal(16, trace[1].line);
 
     AssertEqual("chase", trace[2].func);
     AssertEqual("bhl2.bhl", trace[2].file);
-    AssertEqual(11, trace[2].line);
+    Assert.Equal(11, trace[2].line);
 
     AssertEqual("test", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(6, trace[3].line);
+    Assert.Equal(6, trace[3].line);
   }
 
   [Fact]
@@ -1143,22 +1143,22 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    AssertEqual(1, info.Count);
+    Assert.Equal(1, info.Count);
 
     var trace = info[fb];
-    AssertEqual(3, trace.Count);
+    Assert.Equal(3, trace.Count);
 
     AssertEqual("problem", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(6, trace[0].line);
+    Assert.Equal(6, trace[0].line);
 
     AssertEqual("chase", trace[1].func);
     AssertEqual("bhl2.bhl", trace[1].file);
-    AssertEqual(13, trace[1].line);
+    Assert.Equal(13, trace[1].line);
 
     AssertEqual("test", trace[2].func);
     AssertEqual("bhl1.bhl", trace[2].file);
-    AssertEqual(6, trace[2].line);
+    Assert.Equal(6, trace[2].line);
   }
 
   [Fact]
@@ -1223,29 +1223,29 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
 
-    AssertEqual(5, trace.Count);
+    Assert.Equal(5, trace.Count);
 
     AssertEqual("hey", trace[0].func);
     AssertEqual("bhl3.bhl", trace[0].file);
-    AssertEqual(4, trace[0].line);
+    Assert.Equal(4, trace[0].line);
 
     AssertEqual("wow", trace[1].func);
     AssertEqual("bhl3.bhl", trace[1].file);
-    AssertEqual(11, trace[1].line);
+    Assert.Equal(11, trace[1].line);
 
     AssertEqual("bar", trace[2].func);
     AssertEqual("bhl2.bhl", trace[2].file);
-    AssertEqual(6, trace[2].line);
+    Assert.Equal(6, trace[2].line);
 
     AssertEqual("foo", trace[3].func);
     AssertEqual("bhl1.bhl", trace[3].file);
-    AssertEqual(5, trace[3].line);
+    Assert.Equal(5, trace[3].line);
 
     AssertEqual("test", trace[4].func);
     AssertEqual("bhl1.bhl", trace[4].file);
-    AssertEqual(10, trace[4].line);
+    Assert.Equal(10, trace[4].line);
   }
 
   [Fact]
@@ -1315,33 +1315,33 @@ at test(..) in bhl1.bhl:10"
     );
     vm.LoadModule("bhl1");
     vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
 
-    AssertEqual(6, trace.Count);
+    Assert.Equal(6, trace.Count);
 
     AssertEqual("?", trace[0].func);
     AssertEqual("bhl1.bhl", trace[0].file);
-    AssertEqual(12, trace[0].line);
+    Assert.Equal(12, trace[0].line);
 
     AssertEqual("hey", trace[1].func);
     AssertEqual("bhl3.bhl", trace[1].file);
-    AssertEqual(4, trace[1].line);
+    Assert.Equal(4, trace[1].line);
 
     AssertEqual("wow", trace[2].func);
     AssertEqual("bhl3.bhl", trace[2].file);
-    AssertEqual(11, trace[2].line);
+    Assert.Equal(11, trace[2].line);
 
     AssertEqual("bar", trace[3].func);
     AssertEqual("bhl2.bhl", trace[3].file);
-    AssertEqual(6, trace[3].line);
+    Assert.Equal(6, trace[3].line);
 
     AssertEqual("foo", trace[4].func);
     AssertEqual("bhl1.bhl", trace[4].file);
-    AssertEqual(5, trace[4].line);
+    Assert.Equal(5, trace[4].line);
 
     AssertEqual("test", trace[5].func);
     AssertEqual("bhl1.bhl", trace[5].file);
-    AssertEqual(10, trace[5].line);
+    Assert.Equal(10, trace[5].line);
   }
 
   [Fact]

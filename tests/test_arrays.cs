@@ -35,9 +35,9 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    AssertEqual((lst.obj as IList<Val>).Count, 0);
+    Assert.Equal((lst.obj as IList<Val>).Count, 0);
     lst.Release();
     CommonChecks(vm);
   }
@@ -56,7 +56,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual(fb.result.PopRelease().str, "test");
     CommonChecks(vm);
   }
@@ -101,7 +101,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 1);
     CommonChecks(vm);
   }
@@ -127,9 +127,9 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    AssertEqual((lst.obj as IList<Val>).Count, 1);
+    Assert.Equal((lst.obj as IList<Val>).Count, 1);
     lst.Release();
     CommonChecks(vm);
   }
@@ -154,7 +154,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 2);
     CommonChecks(vm);
   }
@@ -284,10 +284,10 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     var val = fb.result.Pop();
     var lst = val.obj as IList<Val>;
-    AssertEqual(lst.Count, 2);
+    Assert.Equal(lst.Count, 2);
     AssertEqual(lst[0].str, "tst");
     AssertEqual(lst[1].str, "bar");
     val.Release();
@@ -356,7 +356,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
@@ -386,7 +386,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 100);
     CommonChecks(vm);
   }
@@ -490,12 +490,12 @@ public class TestArrays : BHL_TestBase
     var res = Execute(vm, "test").result.Pop();
 
     var lst = res.obj as IList<Val>;
-    AssertEqual(lst.Count, 2);
+    Assert.Equal(lst.Count, 2);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
 
-    AssertEqual(vm.vlsts_pool.MissCount, 1);
-    AssertEqual(vm.vlsts_pool.IdleCount, 0);
+    Assert.Equal(vm.vlsts_pool.MissCount, 1);
+    Assert.Equal(vm.vlsts_pool.IdleCount, 0);
     
     res.Release();
 
@@ -530,7 +530,7 @@ public class TestArrays : BHL_TestBase
 
     vm.Stop(fb);
 
-    AssertEqual(vm.vlsts_pool.MissCount, 2);
+    Assert.Equal(vm.vlsts_pool.MissCount, 2);
     CommonChecks(vm);
   }
 
@@ -727,15 +727,15 @@ public class TestArrays : BHL_TestBase
     var vm = new VM();
     var arr = Val.NewObj(vm, list, ArrayInts);
     
-    AssertEqual(0, ArrayInts.ArrCount(arr));
+    Assert.Equal(0, ArrayInts.ArrCount(arr));
 
     {
       var val = Val.NewInt(vm, 10);
       ArrayInts.ArrAdd(arr, val);
       val.Release();
       
-      AssertEqual(1, ArrayInts.ArrCount(arr));
-      AssertEqual(1, list.Count);
+      Assert.Equal(1, ArrayInts.ArrCount(arr));
+      Assert.Equal(1, list.Count);
     }
 
     {
@@ -743,14 +743,14 @@ public class TestArrays : BHL_TestBase
       Assert.Equal(10, val.num);
       val.Release();
       
-      AssertEqual(10, list[0]);
+      Assert.Equal(10, list[0]);
     }
 
     {
       ArrayInts.ArrRemoveAt(arr, 0);
-      AssertEqual(0, ArrayInts.ArrCount(arr));
+      Assert.Equal(0, ArrayInts.ArrCount(arr));
       
-      AssertEqual(0, list.Count);
+      Assert.Equal(0, list.Count);
     }
 
     arr.Release();
@@ -898,8 +898,8 @@ public class TestArrays : BHL_TestBase
       ); 
     ArrayString.Setup();
     
-    AssertTrue(ArrayInts1.Equals(ArrayInts2));
-    AssertFalse(ArrayString.Equals(ArrayInts1));
+    Assert.True(ArrayInts1.Equals(ArrayInts2));
+    Assert.False(ArrayString.Equals(ArrayInts1));
   }
   
   [Fact]
@@ -923,8 +923,8 @@ public class TestArrays : BHL_TestBase
       ); 
     ArrayString.Setup();
     
-    AssertTrue(ArrayInts1.Equals(ArrayInts2));
-    AssertFalse(ArrayString.Equals(ArrayInts1));
+    Assert.True(ArrayInts1.Equals(ArrayInts2));
+    Assert.False(ArrayString.Equals(ArrayInts1));
   }
   
   [Fact]
@@ -956,26 +956,26 @@ public class TestArrays : BHL_TestBase
 
     var vals_typed = ValList<int>.New(vals, ArrayInts.Val2Native);
 
-    AssertEqual(1, vals_typed.IndexOf(20));
-    AssertEqual(0, vals_typed.IndexOf(10));
-    AssertEqual(-1, vals_typed.IndexOf(30));
+    Assert.Equal(1, vals_typed.IndexOf(20));
+    Assert.Equal(0, vals_typed.IndexOf(10));
+    Assert.Equal(-1, vals_typed.IndexOf(30));
 
-    AssertTrue(vals_typed.Contains(10));
-    AssertTrue(vals_typed.Contains(20));
-    AssertFalse(vals_typed.Contains(30));
+    Assert.True(vals_typed.Contains(10));
+    Assert.True(vals_typed.Contains(20));
+    Assert.False(vals_typed.Contains(30));
     
     var res = new List<int>();
     foreach(var n in vals_typed)
       res.Add(n);
 
-    AssertEqual(2, res.Count);
-    AssertEqual(10, res[0]);
-    AssertEqual(20, res[1]);
+    Assert.Equal(2, res.Count);
+    Assert.Equal(10, res[0]);
+    Assert.Equal(20, res[1]);
 
-    AssertTrue(vals_typed.Remove(10));
-    AssertFalse(vals_typed.Remove(30));
-    AssertEqual(-1, vals_typed.IndexOf(10));
-    AssertEqual(0, vals_typed.IndexOf(20));
+    Assert.True(vals_typed.Remove(10));
+    Assert.False(vals_typed.Remove(30));
+    Assert.Equal(-1, vals_typed.IndexOf(10));
+    Assert.Equal(0, vals_typed.IndexOf(20));
     
     vals_typed.Release();
     
@@ -989,8 +989,8 @@ public class TestArrays : BHL_TestBase
       var lst = RefcList<int>.New();
       lst.Add(10);
 
-      AssertEqual(1, lst.Count);
-      AssertEqual(10, lst[0]);
+      Assert.Equal(1, lst.Count);
+      Assert.Equal(10, lst[0]);
 
       lst.Release();
     }
@@ -998,7 +998,7 @@ public class TestArrays : BHL_TestBase
     {
       var lst = RefcList<int>.New();
       
-      AssertEqual(0, lst.Count);
+      Assert.Equal(0, lst.Count);
       
       lst.Release();
     }

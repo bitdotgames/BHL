@@ -35,7 +35,7 @@ public class TestMaps : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      Assert.True(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -47,7 +47,7 @@ public class TestMaps : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      Assert.False(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
   }
@@ -379,7 +379,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      Assert.False(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -395,7 +395,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      Assert.True(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -412,7 +412,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      Assert.False(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -429,7 +429,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+      Assert.True(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -446,7 +446,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      AssertFalse(Execute(vm, "test").result.PopRelease().bval);
+      Assert.False(Execute(vm, "test").result.PopRelease().bval);
       CommonChecks(vm);
     }
   }
@@ -468,7 +468,7 @@ public class TestMaps : BHL_TestBase
       var result =  Execute(vm, "test").result;
       bool ok = result.PopRelease().bval;
       var num = result.PopRelease().num;
-      AssertFalse(ok);
+      Assert.False(ok);
       Assert.Equal(0, num);
       CommonChecks(vm);
     }
@@ -488,7 +488,7 @@ public class TestMaps : BHL_TestBase
       var result =  Execute(vm, "test").result;
       bool ok = result.PopRelease().bval;
       var num = result.PopRelease().num;
-      AssertFalse(ok);
+      Assert.False(ok);
       Assert.Equal(0, num);
       CommonChecks(vm);
     }
@@ -512,7 +512,7 @@ public class TestMaps : BHL_TestBase
     var result =  Execute(vm, "test").result;
     bool ok = result.PopRelease().bval;
     var num = result.PopRelease().num;
-    AssertTrue(ok);
+    Assert.True(ok);
     Assert.Equal(14, num);
     CommonChecks(vm);
   }

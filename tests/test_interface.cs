@@ -16,7 +16,7 @@ public class TestInterface : BHL_TestBase
 
       var vm = MakeVM(bhl);
       var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-      AssertTrue(symb != null);
+      Assert.True(symb != null);
     }
 
     {
@@ -26,7 +26,7 @@ public class TestInterface : BHL_TestBase
 
       var vm = MakeVM(bhl);
       var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-      AssertTrue(symb != null);
+      Assert.True(symb != null);
     }
 
     {
@@ -37,7 +37,7 @@ public class TestInterface : BHL_TestBase
 
       var vm = MakeVM(bhl);
       var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-      AssertTrue(symb != null);
+      Assert.True(symb != null);
     }
   }
 
@@ -52,13 +52,13 @@ public class TestInterface : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-    AssertTrue(symb != null);
+    Assert.True(symb != null);
     var hey = symb.FindMethod("hey").signature;
-    AssertTrue(hey != null);
-    AssertEqual(2, hey.arg_types.Count);
-    AssertEqual(Types.Int, hey.arg_types[0].Get());
-    AssertEqual(Types.Float, hey.arg_types[1].Get());
-    AssertEqual(Types.Void, hey.ret_type.Get());
+    Assert.True(hey != null);
+    Assert.Equal(2, hey.arg_types.Count);
+    Assert.Equal(Types.Int, hey.arg_types[0].Get());
+    Assert.Equal(Types.Float, hey.arg_types[1].Get());
+    Assert.Equal(Types.Void, hey.ret_type.Get());
   }
 
   [Fact]
@@ -76,23 +76,23 @@ public class TestInterface : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-    AssertTrue(symb != null);
+    Assert.True(symb != null);
 
     var hey = symb.FindMethod("hey").signature;
-    AssertTrue(hey != null);
-    AssertEqual(2, hey.arg_types.Count);
-    AssertEqual(Types.Int, hey.arg_types[0].Get());
-    AssertEqual(Types.Float, hey.arg_types[1].Get());
-    AssertEqual(Types.Bool, hey.ret_type.Get());
+    Assert.True(hey != null);
+    Assert.Equal(2, hey.arg_types.Count);
+    Assert.Equal(Types.Int, hey.arg_types[0].Get());
+    Assert.Equal(Types.Float, hey.arg_types[1].Get());
+    Assert.Equal(Types.Bool, hey.ret_type.Get());
 
     var bar = symb.FindMethod("bar").signature;
-    AssertTrue(bar != null);
-    AssertEqual(1, bar.arg_types.Count);
-    AssertEqual(Types.String, bar.arg_types[0].Get());
+    Assert.True(bar != null);
+    Assert.Equal(1, bar.arg_types.Count);
+    Assert.Equal(Types.String, bar.arg_types[0].Get());
     var tuple = (TupleType)bar.ret_type.Get();
-    AssertEqual(2, tuple.Count);
+    Assert.Equal(2, tuple.Count);
     AssertEqual("Bar", tuple[0].ToString());
-    AssertEqual(Types.Int, tuple[1].Get());
+    Assert.Equal(Types.Int, tuple[1].Get());
   }
 
   [Fact]
@@ -116,42 +116,42 @@ public class TestInterface : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       var symb = vm.ResolveNamedByPath("Foo") as InterfaceSymbolScript;
-      AssertTrue(symb != null);
-      AssertEqual(1, symb.inherits.Count);
+      Assert.True(symb != null);
+      Assert.Equal(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
-      AssertEqual(1, symb.Count());
+      Assert.Equal(1, symb.Count());
 
       var hey = symb.FindMethod("hey").signature;
-      AssertTrue(hey != null);
-      AssertEqual(2, hey.arg_types.Count);
-      AssertEqual(Types.Int, hey.arg_types[0].Get());
-      AssertEqual(Types.Float, hey.arg_types[1].Get());
-      AssertEqual(Types.Bool, hey.ret_type.Get());
+      Assert.True(hey != null);
+      Assert.Equal(2, hey.arg_types.Count);
+      Assert.Equal(Types.Int, hey.arg_types[0].Get());
+      Assert.Equal(Types.Float, hey.arg_types[1].Get());
+      Assert.Equal(Types.Bool, hey.ret_type.Get());
 
       var bar = symb.FindMethod("bar").signature;
-      AssertTrue(bar != null);
-      AssertEqual(1, bar.arg_types.Count);
-      AssertEqual(Types.String, bar.arg_types[0].Get());
+      Assert.True(bar != null);
+      Assert.Equal(1, bar.arg_types.Count);
+      Assert.Equal(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
-      AssertEqual(2, tuple.Count);
+      Assert.Equal(2, tuple.Count);
       AssertEqual("Bar", tuple[0].ToString());
-      AssertEqual(Types.Int, tuple[1].Get());
+      Assert.Equal(Types.Int, tuple[1].Get());
     }
 
     {
       var symb = vm.ResolveNamedByPath("Wow") as InterfaceSymbolScript;
-      AssertTrue(symb != null);
-      AssertEqual(0, symb.inherits.Count);
-      AssertEqual(1, symb.Count());
+      Assert.True(symb != null);
+      Assert.Equal(0, symb.inherits.Count);
+      Assert.Equal(1, symb.Count());
 
       var bar = symb.FindMethod("bar").signature;
-      AssertTrue(bar != null);
-      AssertEqual(1, bar.arg_types.Count);
-      AssertEqual(Types.String, bar.arg_types[0].Get());
+      Assert.True(bar != null);
+      Assert.Equal(1, bar.arg_types.Count);
+      Assert.Equal(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
-      AssertEqual(2, tuple.Count);
+      Assert.Equal(2, tuple.Count);
       AssertEqual("Bar", tuple[0].ToString());
-      AssertEqual(Types.Int, tuple[1].Get());
+      Assert.Equal(Types.Int, tuple[1].Get());
     }
   }
 
@@ -421,8 +421,8 @@ public class TestInterface : BHL_TestBase
       ";
       var vm = MakeVM(bhl);
       var symb = vm.ResolveNamedByPath("Foo") as ClassSymbol;
-      AssertTrue(symb != null);
-      AssertEqual(1, symb.implements.Count);
+      Assert.True(symb != null);
+      Assert.Equal(1, symb.implements.Count);
       AssertEqual("IFoo", symb.implements[0].GetName());
     }
 
@@ -677,7 +677,7 @@ public class TestInterface : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -701,7 +701,7 @@ public class TestInterface : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 

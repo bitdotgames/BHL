@@ -194,7 +194,7 @@ public class TestErrors : BHL_TestBase
     }
     catch(CompileErrorsException m)
     {
-      AssertEqual(2, m.errors.Count);
+      Assert.Equal(2, m.errors.Count);
 
       AssertError((Exception)m.errors[0],
         "matching 'return' statement not found",
@@ -244,7 +244,7 @@ public class TestErrors : BHL_TestBase
     }
     catch(CompileErrorsException m)
     {
-      AssertEqual(2, m.errors.Count);
+      Assert.Equal(2, m.errors.Count);
 
       AssertError((Exception)m.errors[0],
         "return value is missing",
@@ -291,13 +291,13 @@ public class TestErrors : BHL_TestBase
     {}
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
-    AssertEqual(2, lines.Length);
+    Assert.Equal(2, lines.Length);
 
-    AssertTrue(lines[0].Contains("{\"error\": \"matching 'return' statement not found\","));
-    AssertTrue(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
+    Assert.True(lines[0].Contains("{\"error\": \"matching 'return' statement not found\","));
+    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
 
-    AssertTrue(lines[1].Contains("{\"error\": \"incompatible types: 'void' and 'int'\","));
-    AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
+    Assert.True(lines[1].Contains("{\"error\": \"incompatible types: 'void' and 'int'\","));
+    Assert.True(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
   }
 
   [Fact]
@@ -336,10 +336,10 @@ public class TestErrors : BHL_TestBase
     {}
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
-    AssertEqual(2, lines.Length);
+    Assert.Equal(2, lines.Length);
 
-    AssertTrue(lines[0].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 10"));
-    AssertTrue(lines[1].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12"));
+    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 10"));
+    Assert.True(lines[1].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12"));
   }
   
   [Fact]
@@ -377,13 +377,13 @@ public class TestErrors : BHL_TestBase
     {}
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
-    AssertEqual(5, lines.Length);
+    Assert.Equal(5, lines.Length);
 
-    AssertTrue(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
-    AssertTrue(lines[1].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 13"));
-    AssertTrue(lines[2].Contains("bhl1.bhl\", \"line\": 7, \"column\" : 13"));
-    AssertTrue(lines[3].Contains("bhl2.bhl\", \"line\": 4, \"column\" : 13"));
-    AssertTrue(lines[4].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 13"));
+    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
+    Assert.True(lines[1].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 13"));
+    Assert.True(lines[2].Contains("bhl1.bhl\", \"line\": 7, \"column\" : 13"));
+    Assert.True(lines[3].Contains("bhl2.bhl\", \"line\": 4, \"column\" : 13"));
+    Assert.True(lines[4].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 13"));
   }
 
   [Fact(Skip = "TODO: not implemented yet")]
@@ -419,7 +419,7 @@ public class TestErrors : BHL_TestBase
     }
     catch(CompileErrorsException m)
     {
-      AssertEqual(2 + 2, m.errors.Count);
+      Assert.Equal(2 + 2, m.errors.Count);
 
       AssertError((Exception)m.errors[0],
         "no viable alternative at input '(",
@@ -501,10 +501,10 @@ public class TestErrors : BHL_TestBase
 //    var proc = Parse(bhl, new Types(), show_ast: true);
 //
 //    var test = (FuncSymbol)proc.result.module.ns.Resolve("test");
-//    AssertTrue(test != null);
+//    Assert.True(test != null);
 //
 //    var foo = (ClassSymbol)proc.result.module.ns.Resolve("Foo");
-//    AssertTrue(foo != null);
+//    Assert.True(foo != null);
 //
 //    proc.result.errors.Dump();
 //

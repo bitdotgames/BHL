@@ -19,7 +19,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     AssertEqual("test", fb.FuncAddr.symbol.name);
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 10);
     CommonChecks(vm);
   }
@@ -37,7 +37,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     fb.Retain();
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 6);
     fb.Release();
     CommonChecks(vm);
@@ -60,7 +60,7 @@ public class TestFiber : BHL_TestBase
     args[1] = Val.NewNum(vm, b);
     args[2] = Val.NewNum(vm, c);
     var fb = vm.Start("test", new StackList<Val>(args));
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     Assert.Equal(fb.result.PopRelease().num, 6);
     CommonChecks(vm);
   }
@@ -84,24 +84,24 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
 
-    AssertEqual(0, fb.Children.Count);
+    Assert.Equal(0, fb.Children.Count);
 
     vm.Tick(fb);
 
-    AssertEqual(2, fb.Children.Count);
-    AssertEqual(fb, fb.Children[0].Get().Parent.Get());
-    AssertEqual(fb, fb.Children[1].Get().Parent.Get());
+    Assert.Equal(2, fb.Children.Count);
+    Assert.Equal(fb, fb.Children[0].Get().Parent.Get());
+    Assert.Equal(fb, fb.Children[1].Get().Parent.Get());
 
     vm.Tick(fb);
 
-    AssertTrue(fb.IsStopped());
-    AssertFalse(fb.Children[0].Get().IsStopped());
-    AssertFalse(fb.Children[1].Get().IsStopped());
+    Assert.True(fb.IsStopped());
+    Assert.False(fb.Children[0].Get().IsStopped());
+    Assert.False(fb.Children[1].Get().IsStopped());
 
     vm.StopChildren(fb);
 
-    AssertTrue(fb.Children[0].Get().IsStopped());
-    AssertTrue(fb.Children[1].Get().IsStopped());
+    Assert.True(fb.Children[0].Get().IsStopped());
+    Assert.True(fb.Children[1].Get().IsStopped());
 
     vm.Tick(fb);
 
@@ -129,7 +129,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
 
-    AssertTrue(fb.Tick());
+    Assert.True(fb.Tick());
 
     fb.Stop(true);
 
@@ -406,8 +406,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("done", log.ToString());
     CommonChecks(vm);
   }
@@ -449,8 +449,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("1340", log.ToString());
     CommonChecks(vm);
   }
@@ -493,8 +493,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("1340", log.ToString());
     CommonChecks(vm);
   }
@@ -538,8 +538,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("1340", log.ToString());
     CommonChecks(vm);
   }
@@ -583,8 +583,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("3140", log.ToString());
     CommonChecks(vm);
   }
@@ -641,8 +641,8 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("3140", log.ToString());
     CommonChecks(vm);
   }
@@ -720,9 +720,9 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     vm.Start("test");
-    AssertTrue(vm.Tick());
-    AssertTrue(vm.Tick());
-    AssertFalse(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.True(vm.Tick());
+    Assert.False(vm.Tick());
     AssertEqual("3140", log.ToString());
     CommonChecks(vm);
   }
@@ -746,26 +746,26 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       vm.Start("test");
-      AssertEqual(1, vm.fibers_pool.MissCount);
-      AssertEqual(0, vm.fibers_pool.IdleCount);
+      Assert.Equal(1, vm.fibers_pool.MissCount);
+      Assert.Equal(0, vm.fibers_pool.IdleCount);
       vm.Tick();
       vm.Start("test");
-      AssertEqual(2, vm.fibers_pool.MissCount);
-      AssertEqual(0, vm.fibers_pool.IdleCount);
+      Assert.Equal(2, vm.fibers_pool.MissCount);
+      Assert.Equal(0, vm.fibers_pool.IdleCount);
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.MissCount);
-      AssertEqual(1, vm.fibers_pool.IdleCount);
+      Assert.Equal(2, vm.fibers_pool.MissCount);
+      Assert.Equal(1, vm.fibers_pool.IdleCount);
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.MissCount);
-      AssertEqual(2, vm.fibers_pool.IdleCount);
+      Assert.Equal(2, vm.fibers_pool.MissCount);
+      Assert.Equal(2, vm.fibers_pool.IdleCount);
     }
     //no new allocs
     {
       vm.Start("test");
       vm.Tick();
       vm.Tick();
-      AssertEqual(2, vm.fibers_pool.MissCount);
-      AssertEqual(2, vm.fibers_pool.IdleCount);
+      Assert.Equal(2, vm.fibers_pool.MissCount);
+      Assert.Equal(2, vm.fibers_pool.IdleCount);
     }
     CommonChecks(vm);
   }
@@ -799,27 +799,27 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
 
     {
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      AssertEqual(0, cs.Count); 
+      Assert.Equal(0, cs.Count); 
     }
 
     {
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
       AssertEqual("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      AssertEqual(0, cs.Count); 
+      Assert.Equal(0, cs.Count); 
     }
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -856,32 +856,32 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
 
     {
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      AssertEqual(1, cs.Count); 
+      Assert.Equal(1, cs.Count); 
       
       //let's check func addresses, however since it's a lambda, there's no
       //actual func symbol and we simply check if instruction pointer is valid
-      AssertTrue(cs[0].FuncAddr.ip > -1);
+      Assert.True(cs[0].FuncAddr.ip > -1);
     }
 
     {
-      AssertTrue(vm.Tick());
+      Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
       AssertEqual("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      AssertEqual(2, cs.Count); 
-      AssertTrue(cs[0] != cs[1]);
+      Assert.Equal(2, cs.Count); 
+      Assert.True(cs[0] != cs[1]);
     }
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -913,17 +913,17 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(3, cs.Count); 
-    AssertTrue(cs[0] != cs[1]);
-    AssertTrue(cs[1] != cs[2]);
-    AssertTrue(cs[0] != cs[2]);
+    Assert.Equal(3, cs.Count); 
+    Assert.True(cs[0] != cs[1]);
+    Assert.True(cs[1] != cs[2]);
+    Assert.True(cs[0] != cs[2]);
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -959,17 +959,17 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(2, cs.Count); 
-    AssertTrue(cs[0] != cs[1]);
+    Assert.Equal(2, cs.Count); 
+    Assert.True(cs[0] != cs[1]);
 
     AssertEqual("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1011,16 +1011,16 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(0, cs.Count); 
+    Assert.Equal(0, cs.Count); 
 
     AssertEqual("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1057,26 +1057,26 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
 
     {
-      AssertFalse(vm.Tick());
+      Assert.False(vm.Tick());
       ScriptMgr.instance.Tick();
 
       var cs = ScriptMgr.instance.active;
-      AssertEqual(2, cs.Count);
+      Assert.Equal(2, cs.Count);
       AssertEqual("say_here", cs[0].FuncAddr.symbol.name);
       AssertEqual("say_here", cs[1].FuncAddr.symbol.name);
     }
 
     {
-      AssertFalse(vm.Tick());
+      Assert.False(vm.Tick());
       ScriptMgr.instance.Tick();
       
       AssertEqual("HERE;HERE;", log.ToString());
       
       var cs = ScriptMgr.instance.active;
-      AssertEqual(0, cs.Count);
+      Assert.Equal(0, cs.Count);
     }
 
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1113,17 +1113,17 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(2, cs.Count); 
-    AssertTrue(cs[0] != cs[1]);
+    Assert.Equal(2, cs.Count); 
+    Assert.True(cs[0] != cs[1]);
 
     AssertEqual("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1158,19 +1158,19 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(3, cs.Count); 
-    AssertTrue(cs[0] != cs[1]);
-    AssertTrue(cs[1] != cs[2]);
-    AssertTrue(cs[0] != cs[2]);
+    Assert.Equal(3, cs.Count); 
+    Assert.True(cs[0] != cs[1]);
+    Assert.True(cs[1] != cs[2]);
+    Assert.True(cs[0] != cs[2]);
 
     AssertEqual("1;2;3;", log.ToString());
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1207,19 +1207,19 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    AssertFalse(vm.Tick());
+    Assert.False(vm.Tick());
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    AssertEqual(3, cs.Count); 
-    AssertTrue(cs[0] != cs[1]);
-    AssertTrue(cs[1] != cs[2]);
-    AssertTrue(cs[0] != cs[2]);
+    Assert.Equal(3, cs.Count); 
+    Assert.True(cs[0] != cs[1]);
+    Assert.True(cs[1] != cs[2]);
+    Assert.True(cs[0] != cs[2]);
 
     AssertEqual("2;2;2;", log.ToString());
 
     ScriptMgr.instance.Stop();
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
 
     vm.Stop();
 
@@ -1272,7 +1272,7 @@ public class TestFiber : BHL_TestBase
 
     AssertEqual("2;", log.ToString());
     
-    AssertTrue(!ScriptMgr.instance.Busy);
+    Assert.True(!ScriptMgr.instance.Busy);
     
     frm.Release();
 

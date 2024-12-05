@@ -23,7 +23,7 @@ public class TestNull : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    AssertTrue(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result.PopRelease().bval);
     CommonChecks(vm);
   }
 
