@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using bhl;
 using Xunit;
 
@@ -285,6 +286,50 @@ public class TestAny : BHL_TestBase
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
     Assert.Equal(1111, num);
+    CommonChecks(vm);
+  }
+  
+  [Fact]
+  public void TestUserlandSort()
+  {
+    string bhl = @"
+    
+    func Sort([]any arr, func bool(int, int) cmp) 
+    {
+      int len = arr.Count
+      for(int i = 1; i <= len - 1; i++) {
+        for(int j = 0; j < len - i; j++) {
+          if(cmp(j, j + 1)) {
+            var temp = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = temp;
+          }
+        }
+      }
+    }
+      
+    func test() 
+    {
+      []int ints = [10, 100, 1]
+      Sort(ints, func bool(int a, int b) { return ints[b] > ints[a] })
+      foreach(var i in ints) {
+        trace(i + "";"")
+      }
+      
+      Sort(ints, func bool(int a, int b) { return ints[a] > ints[b] })
+      foreach(var i in ints) {
+        trace(i + "","")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("100;10;1;1,10,100,", log.ToString());
     CommonChecks(vm);
   }
 
