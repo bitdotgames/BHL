@@ -811,6 +811,11 @@ public class BHL_TestBase
     Assert.Equal(a, b);
   }
 
+  public void AssertError(Action action, string msg, PlaceAssert place_assert = null)
+  {
+    AssertError<Exception>(action, msg, place_assert);
+  }
+
   public void AssertError<T>(Action action, string msg, PlaceAssert place_assert = null) where T : Exception
   {
     Exception err = null;

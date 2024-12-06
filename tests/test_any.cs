@@ -287,6 +287,26 @@ public class TestAny : BHL_TestBase
     Assert.Equal(1111, num);
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestNeedExplicitCastForAnyArray()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      []int cs
+      []any anys
+
+      cs = anys
+
+    }
+    ";
+
+    AssertError(() => MakeVM(bhl),
+    "incompatible types: '[]int' and '[]any'"
+    );
+  }
   
   [Fact]
   public void TestCastUserTypeMapToAnyMap()
@@ -343,5 +363,25 @@ public class TestAny : BHL_TestBase
     var num = Execute(vm, "test").result.PopRelease().num;
     Assert.Equal(10 + 1111, num);
     CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestNeedExplicitCastForAnyMap()
+  {
+    string bhl = @"
+      
+    func int test() 
+    {
+      [string]int cs
+      [any]any anys
+
+      cs = anys
+
+    }
+    ";
+
+    AssertError(() => MakeVM(bhl),
+    "incompatible types: '[string]int' and '[any]any'"
+    );
   }
 }
