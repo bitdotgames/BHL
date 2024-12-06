@@ -311,6 +311,7 @@ public class TestAny : BHL_TestBase
     func test() 
     {
       []int ints = [10, 100, 1]
+
       Sort(ints, func bool(int a, int b) { return ints[b] > ints[a] })
       foreach(var i in ints) {
         trace(i + "";"")
@@ -380,7 +381,7 @@ public class TestAny : BHL_TestBase
 
       //implicit casting to [any]any
       anys = cs
-      anys.Add(2, c2)
+      anys[2] = c2
 
       //converting back to [int]Color
       [int]Color cs2 = ([int]Color)anys

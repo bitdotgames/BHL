@@ -1615,18 +1615,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return name_symb;
   }
 
-  void AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
+  bool AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
   {
     if(type is ArrayTypeSymbol arr_type)
     {
       var arr_exp = arracc.exp();
       if(!TryVisit(arr_exp))
-        return;
+        return true;
 
       if(Annotate(arr_exp).eval_type != Types.Int)
       {
         AddError(arr_exp, "array index expression is not of type int");
-        return;
+        return false;
       }
 
       type = arr_type.item_type.Get();
@@ -1638,14 +1638,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       var arr_exp = arracc.exp();
       if(!TryVisit(arr_exp))
-        return;
+        return false;
 
-      if(Annotate(arr_exp).eval_type == null ||
-         !Annotate(arr_exp).eval_type.Equals(map_type.key_type.Get()))
-      {
-        AddError(arr_exp, "not compatible map key types");
-        return;
-      }
+      if(!types.CheckAssign(map_type.key_type.Get(), Annotate(arr_exp), errors))
+        return false;
 
       type = map_type.val_type.Get();
 
@@ -1655,8 +1651,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     else
     {
       AddError(arracc, "accessing not an array/map type '" + type?.GetName() + "'");
-      return;
+      return false;
     }
+
+    return true;
   }
 
   class NormCallArg
