@@ -65,7 +65,7 @@ public class TestTypeCasts : BHL_TestBase
       ;
     AssertEqual(c, expected);
 
-    Assert.Equal(1, c.compiled.constants.Count);
+    Assert.Single(c.compiled.constants);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");

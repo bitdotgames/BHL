@@ -74,27 +74,27 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(foo.name, "foo");
       Assert.Equal(foo.type.Get(), Types.Int);
       Assert.Equal(foo.scope, ns);
-      Assert.Equal(foo.scope_idx, 0);
+      Assert.Equal(0, foo.scope_idx);
 
       var bar = (VariableSymbol)ns.Resolve("bar");
       AssertEqual(bar.name, "bar");
       Assert.Equal(bar.type.Get(), Types.String);
       Assert.Equal(bar.scope, ns);
-      Assert.Equal(bar.scope_idx, 1);
+      Assert.Equal(1, bar.scope_idx);
 
       var wow = (VariableSymbol)ns.Resolve("wow");
       AssertEqual(wow.name, "wow");
       AssertEqual(wow.type.Get().GetName(), ns.TArr(Types.Bool).Get().GetName());
       Assert.Equal(((GenericArrayTypeSymbol)wow.type.Get()).item_type.Get(), Types.Bool);
       Assert.Equal(wow.scope, ns);
-      Assert.Equal(wow.scope_idx, 2);
+      Assert.Equal(2, wow.scope_idx);
 
       var hey = (VariableSymbol)ns.Resolve("hey");
       AssertEqual(hey.name, "hey");
       AssertEqual(hey.type.Get().GetName(), ns.TMap(Types.String, Types.Int).Get().GetName());
       Assert.Equal(((GenericMapTypeSymbol)hey.type.Get()).key_type.Get(), Types.String);
       Assert.Equal(hey.scope, ns);
-      Assert.Equal(hey.scope_idx, 3);
+      Assert.Equal(3, hey.scope_idx);
 
       var Test = (FuncSymbolScript)ns.Resolve("Test");
       AssertEqual(Test.name, "Test");
@@ -117,7 +117,7 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Make.name, "Make");
       Assert.True(Make.attribs.HasFlag(FuncAttrib.Coro));
       Assert.Equal(Make.scope, ns);
-      Assert.Equal(1, Make.signature.arg_types.Count);
+      Assert.Single(Make.signature.arg_types);
       Assert.Equal(1, Make.GetTotalArgsNum());
       AssertEqual("bar", Make.GetArg(0).name);
       Assert.False(Make.GetArg(0).is_ref);
@@ -133,12 +133,12 @@ public class TestMarshall : BHL_TestBase
       Assert.Equal(Foo.scope, ns);
       Assert.True(Foo.super_class == null);
       AssertEqual(Foo.name, "Foo");
-      Assert.Equal(Foo.Count(), 2);
+      Assert.Equal(2, Foo.Count());
       var Foo_Int = Foo.Resolve("Int") as FieldSymbolScript;
       Assert.Equal(Foo_Int.scope, Foo);
       AssertEqual(Foo_Int.name, "Int");
       Assert.Equal(Foo_Int.type.Get(), Types.Int);
-      Assert.Equal(Foo_Int.scope_idx, 0);
+      Assert.Equal(0, Foo_Int.scope_idx);
       var Foo_Hey = Foo.Resolve("Hey") as FuncSymbolScript;
       Assert.Equal(Foo_Hey.scope, Foo);
       AssertEqual(Foo_Hey.name, "Hey");
@@ -152,12 +152,12 @@ public class TestMarshall : BHL_TestBase
       Assert.Equal(Bar.scope, ns);
       Assert.Equal(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      Assert.Equal(Bar.Count(), 2/*from parent*/+2);
+      Assert.Equal(2/*from parent*/+2, Bar.Count());
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       Assert.Equal(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");
       Assert.Equal(Bar_Float.type.Get(), Types.Float);
-      Assert.Equal(Bar_Float.scope_idx, 2);
+      Assert.Equal(2, Bar_Float.scope_idx);
       var Bar_What = Bar.Resolve("What") as FuncSymbolScript;
       AssertEqual(Bar_What.name, "What");
       AssertEqual(Bar_What.GetReturnType().GetName(), ns.T(Types.Bool, Types.Bool).Get().GetName());
@@ -169,13 +169,13 @@ public class TestMarshall : BHL_TestBase
       var Enum = (EnumSymbolScript)ns.Resolve("Enum");
       Assert.Equal(Enum.scope, ns);
       AssertEqual(Enum.name, "Enum");
-      Assert.Equal(Enum.Count(), 2);
+      Assert.Equal(2, Enum.Count());
       Assert.Equal(((EnumItemSymbol)Enum.Resolve("Type1")).owner, Enum);
       Assert.Equal(Enum.Resolve("Type1").scope, Enum);
-      Assert.Equal(((EnumItemSymbol)Enum.Resolve("Type1")).val, 1);
+      Assert.Equal(1, ((EnumItemSymbol)Enum.Resolve("Type1")).val);
       Assert.Equal(((EnumItemSymbol)Enum.Resolve("Type2")).owner, Enum);
       Assert.Equal(Enum.Resolve("Type2").scope, Enum);
-      Assert.Equal(((EnumItemSymbol)Enum.Resolve("Type2")).val, 2);
+      Assert.Equal(2, ((EnumItemSymbol)Enum.Resolve("Type2")).val);
     }
   }
   

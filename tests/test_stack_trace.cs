@@ -526,7 +526,7 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    Assert.Equal(1, info.Count);
+    Assert.Single(info);
 
     var trace = info[fb];
     Assert.Equal(2, trace.Count);
@@ -604,7 +604,7 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    Assert.Equal(1, info.Count);
+    Assert.Single(info);
 
     var trace = info[fb];
     Assert.Equal(4, trace.Count);
@@ -1038,7 +1038,7 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    Assert.Equal(1, info.Count);
+    Assert.Single(info);
 
     var trace = info[fb];
     Assert.Equal(4, trace.Count);
@@ -1142,7 +1142,7 @@ at test(..) in bhl1.bhl:10"
       vm.GetStackTrace(info);
     }
 
-    Assert.Equal(1, info.Count);
+    Assert.Single(info);
 
     var trace = info[fb];
     Assert.Equal(3, trace.Count);

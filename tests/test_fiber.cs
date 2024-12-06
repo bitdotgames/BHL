@@ -84,7 +84,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
 
-    Assert.Equal(0, fb.Children.Count);
+    Assert.Empty(fb.Children);
 
     vm.Tick(fb);
 
@@ -805,7 +805,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Equal(0, cs.Count); 
+      Assert.Empty(cs); 
     }
 
     {
@@ -815,7 +815,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Equal(0, cs.Count); 
+      Assert.Empty(cs); 
     }
 
     ScriptMgr.instance.Stop();
@@ -862,7 +862,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Equal(1, cs.Count); 
+      Assert.Single(cs); 
       
       //let's check func addresses, however since it's a lambda, there's no
       //actual func symbol and we simply check if instruction pointer is valid
@@ -1015,7 +1015,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(0, cs.Count); 
+    Assert.Empty(cs); 
 
     AssertEqual("HERE;HERE;", log.ToString());
 
@@ -1073,7 +1073,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;HERE;", log.ToString());
       
       var cs = ScriptMgr.instance.active;
-      Assert.Equal(0, cs.Count);
+      Assert.Empty(cs);
     }
 
     Assert.True(!ScriptMgr.instance.Busy);

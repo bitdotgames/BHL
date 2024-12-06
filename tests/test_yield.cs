@@ -520,7 +520,7 @@ public class TestYield : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 1);
+    Assert.Equal(1, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 

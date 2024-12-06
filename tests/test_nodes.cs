@@ -64,41 +64,41 @@ public class TestNodes : BHL_TestBase
     t1.mock_status = BHS.RUNNING;
     t2.mock_status = BHS.RUNNING;
 
-    Assert.Equal(s.Run(), BHS.RUNNING);
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 1);
-    Assert.Equal(t1.deinits, 0);
-    Assert.Equal(t1.defers, 0);
-    Assert.Equal(t2.inits, 0);
-    Assert.Equal(t2.execs, 0);
-    Assert.Equal(t2.deinits, 0);
-    Assert.Equal(t2.defers, 0);
+    Assert.Equal(BHS.RUNNING, s.Run());
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(1, t1.execs);
+    Assert.Equal(0, t1.deinits);
+    Assert.Equal(0, t1.defers);
+    Assert.Equal(0, t2.inits);
+    Assert.Equal(0, t2.execs);
+    Assert.Equal(0, t2.deinits);
+    Assert.Equal(0, t2.defers);
 
     t1.mock_status = BHS.SUCCESS;
     t2.mock_status = BHS.RUNNING;
 
-    Assert.Equal(s.Run(), BHS.RUNNING);
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 2);
-    Assert.Equal(t1.deinits, 1);
-    Assert.Equal(t1.defers, 0);
-    Assert.Equal(t2.inits, 1);
-    Assert.Equal(t2.execs, 1);
-    Assert.Equal(t2.deinits, 0);
-    Assert.Equal(t2.defers, 0);
+    Assert.Equal(BHS.RUNNING, s.Run());
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(2, t1.execs);
+    Assert.Equal(1, t1.deinits);
+    Assert.Equal(0, t1.defers);
+    Assert.Equal(1, t2.inits);
+    Assert.Equal(1, t2.execs);
+    Assert.Equal(0, t2.deinits);
+    Assert.Equal(0, t2.defers);
 
     t1.mock_status = BHS.SUCCESS;
     t2.mock_status = BHS.SUCCESS;
 
-    Assert.Equal(s.Run(), BHS.SUCCESS);
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 2);
-    Assert.Equal(t1.deinits, 1);
-    Assert.Equal(t1.defers, 1);
-    Assert.Equal(t2.inits, 1);
-    Assert.Equal(t2.execs, 2);
-    Assert.Equal(t2.deinits, 1);
-    Assert.Equal(t2.defers, 1);
+    Assert.Equal(BHS.SUCCESS, s.Run());
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(2, t1.execs);
+    Assert.Equal(1, t1.deinits);
+    Assert.Equal(1, t1.defers);
+    Assert.Equal(1, t2.inits);
+    Assert.Equal(2, t2.execs);
+    Assert.Equal(1, t2.deinits);
+    Assert.Equal(1, t2.defers);
   }
 
   [Fact]
@@ -113,38 +113,38 @@ public class TestNodes : BHL_TestBase
     t1.mock_status = BHS.RUNNING;
     t2.mock_status = BHS.RUNNING;
 
-    Assert.Equal(s.Run(), BHS.RUNNING);
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 1);
-    Assert.Equal(t1.deinits, 0);
-    Assert.Equal(t1.defers, 0);
-    Assert.Equal(t2.inits, 0);
-    Assert.Equal(t2.execs, 0);
-    Assert.Equal(t2.deinits, 0);
-    Assert.Equal(t2.defers, 0);
+    Assert.Equal(BHS.RUNNING, s.Run());
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(1, t1.execs);
+    Assert.Equal(0, t1.deinits);
+    Assert.Equal(0, t1.defers);
+    Assert.Equal(0, t2.inits);
+    Assert.Equal(0, t2.execs);
+    Assert.Equal(0, t2.deinits);
+    Assert.Equal(0, t2.defers);
 
     t1.mock_status = BHS.SUCCESS;
     t2.mock_status = BHS.RUNNING;
 
-    Assert.Equal(s.Run(), BHS.RUNNING);
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 2);
-    Assert.Equal(t1.deinits, 1);
-    Assert.Equal(t1.defers, 0);
-    Assert.Equal(t2.inits, 1);
-    Assert.Equal(t2.execs, 1);
-    Assert.Equal(t2.deinits, 0);
-    Assert.Equal(t2.defers, 0);
+    Assert.Equal(BHS.RUNNING, s.Run());
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(2, t1.execs);
+    Assert.Equal(1, t1.deinits);
+    Assert.Equal(0, t1.defers);
+    Assert.Equal(1, t2.inits);
+    Assert.Equal(1, t2.execs);
+    Assert.Equal(0, t2.deinits);
+    Assert.Equal(0, t2.defers);
 
     s.Stop();
-    Assert.Equal(t1.inits, 1);
-    Assert.Equal(t1.execs, 2);
-    Assert.Equal(t1.deinits, 1);
-    Assert.Equal(t1.defers, 1);
-    Assert.Equal(t2.inits, 1);
-    Assert.Equal(t2.execs, 1);
-    Assert.Equal(t2.deinits, 1);
-    Assert.Equal(t2.defers, 1);
+    Assert.Equal(1, t1.inits);
+    Assert.Equal(2, t1.execs);
+    Assert.Equal(1, t1.deinits);
+    Assert.Equal(1, t1.defers);
+    Assert.Equal(1, t2.inits);
+    Assert.Equal(1, t2.execs);
+    Assert.Equal(1, t2.deinits);
+    Assert.Equal(1, t2.defers);
   }
 
   [Fact]
@@ -154,21 +154,21 @@ public class TestNodes : BHL_TestBase
     t.mock_status = BHS.RUNNING;
     var d = new DecoratorTestNode(t);
 
-    Assert.Equal(d.Run(), BHS.RUNNING);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 1);
-    Assert.Equal(t.deinits, 0);
-    Assert.Equal(t.defers, 0);
+    Assert.Equal(BHS.RUNNING, d.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(1, t.execs);
+    Assert.Equal(0, t.deinits);
+    Assert.Equal(0, t.defers);
 
     t.mock_status = BHS.SUCCESS;
-    Assert.Equal(d.Run(), BHS.SUCCESS);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 2);
-    Assert.Equal(t.deinits, 1);
-    Assert.Equal(t.defers, 0);
+    Assert.Equal(BHS.SUCCESS, d.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(2, t.execs);
+    Assert.Equal(1, t.deinits);
+    Assert.Equal(0, t.defers);
 
     d.Defer();
-    Assert.Equal(t.defers, 1);
+    Assert.Equal(1, t.defers);
   }
 
   public class TestEvents
@@ -208,28 +208,28 @@ public class TestNodes : BHL_TestBase
     var t = new TestNode();
     t.mock_status = BHS.RUNNING;
 
-    Assert.Equal(t.Run(), BHS.RUNNING);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 1);
-    Assert.Equal(t.deinits, 0);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.RUNNING);
+    Assert.Equal(BHS.RUNNING, t.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(1, t.execs);
+    Assert.Equal(0, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.RUNNING, t.last_status);
 
     t.mock_status = BHS.SUCCESS;
-    Assert.Equal(t.Run(), BHS.SUCCESS);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 2);
-    Assert.Equal(t.deinits, 1);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.SUCCESS);
+    Assert.Equal(BHS.SUCCESS, t.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(2, t.execs);
+    Assert.Equal(1, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.SUCCESS, t.last_status);
 
     //run again
-    Assert.Equal(t.Run(), BHS.SUCCESS);
-    Assert.Equal(t.inits, 2);
-    Assert.Equal(t.execs, 3);
-    Assert.Equal(t.deinits, 2);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.SUCCESS);
+    Assert.Equal(BHS.SUCCESS, t.Run());
+    Assert.Equal(2, t.inits);
+    Assert.Equal(3, t.execs);
+    Assert.Equal(2, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.SUCCESS, t.last_status);
   }
 
   [Fact]
@@ -238,28 +238,28 @@ public class TestNodes : BHL_TestBase
     var t = new TestNode();
     t.mock_status = BHS.RUNNING;
 
-    Assert.Equal(t.Run(), BHS.RUNNING);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 1);
-    Assert.Equal(t.deinits, 0);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.RUNNING);
+    Assert.Equal(BHS.RUNNING, t.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(1, t.execs);
+    Assert.Equal(0, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.RUNNING, t.last_status);
 
     t.mock_status = BHS.FAILURE;
-    Assert.Equal(t.Run(), BHS.FAILURE);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 2);
-    Assert.Equal(t.deinits, 1);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.FAILURE);
+    Assert.Equal(BHS.FAILURE, t.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(2, t.execs);
+    Assert.Equal(1, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.FAILURE, t.last_status);
 
     //run again
-    Assert.Equal(t.Run(), BHS.FAILURE);
-    Assert.Equal(t.inits, 2);
-    Assert.Equal(t.execs, 3);
-    Assert.Equal(t.deinits, 2);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.FAILURE);
+    Assert.Equal(BHS.FAILURE, t.Run());
+    Assert.Equal(2, t.inits);
+    Assert.Equal(3, t.execs);
+    Assert.Equal(2, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.FAILURE, t.last_status);
   }
 
   [Fact]
@@ -268,18 +268,18 @@ public class TestNodes : BHL_TestBase
     var t = new TestNode();
     t.mock_status = BHS.RUNNING;
 
-    Assert.Equal(t.Run(), BHS.RUNNING);
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 1);
-    Assert.Equal(t.deinits, 0);
-    Assert.Equal(t.defers, 0);
-    Assert.Equal(t.last_status, BHS.RUNNING);
+    Assert.Equal(BHS.RUNNING, t.Run());
+    Assert.Equal(1, t.inits);
+    Assert.Equal(1, t.execs);
+    Assert.Equal(0, t.deinits);
+    Assert.Equal(0, t.defers);
+    Assert.Equal(BHS.RUNNING, t.last_status);
 
     t.Stop();
-    Assert.Equal(t.inits, 1);
-    Assert.Equal(t.execs, 1);
-    Assert.Equal(t.deinits, 1);
-    Assert.Equal(t.defers, 1);
-    Assert.Equal(t.last_status, BHS.NONE);
+    Assert.Equal(1, t.inits);
+    Assert.Equal(1, t.execs);
+    Assert.Equal(1, t.deinits);
+    Assert.Equal(1, t.defers);
+    Assert.Equal(BHS.NONE, t.last_status);
   }
 }

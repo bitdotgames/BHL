@@ -1,9 +1,5 @@
 using System;
-using System.IO;
-using System.Text;
-using System.Collections.Generic;
 using bhl;
-using bhl.marshall;
 using Xunit;
 
 public class TestPerf : BHL_TestBase
@@ -42,7 +38,7 @@ public class TestPerf : BHL_TestBase
       var fb = vm.Start("test");
       Assert.False(vm.Tick());
       stopwatch.Stop();
-      Assert.Equal(fb.result.PopRelease().num, 610);
+      Assert.Equal(610, fb.result.PopRelease().num);
       Console.WriteLine("fib ticks: {0}", stopwatch.ElapsedTicks);
     }
 
@@ -51,7 +47,7 @@ public class TestPerf : BHL_TestBase
       var fb = vm.Start("test");
       Assert.False(vm.Tick());
       stopwatch.Stop();
-      Assert.Equal(fb.result.PopRelease().num, 610);
+      Assert.Equal(610, fb.result.PopRelease().num);
       Console.WriteLine("fib ticks2: {0}", stopwatch.ElapsedTicks);
     }
 

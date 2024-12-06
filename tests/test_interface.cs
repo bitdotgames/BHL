@@ -87,7 +87,7 @@ public class TestInterface : BHL_TestBase
 
     var bar = symb.FindMethod("bar").signature;
     Assert.True(bar != null);
-    Assert.Equal(1, bar.arg_types.Count);
+    Assert.Single(bar.arg_types);
     Assert.Equal(Types.String, bar.arg_types[0].Get());
     var tuple = (TupleType)bar.ret_type.Get();
     Assert.Equal(2, tuple.Count);
@@ -119,7 +119,7 @@ public class TestInterface : BHL_TestBase
       Assert.True(symb != null);
       Assert.Equal(1, symb.inherits.Count);
       AssertEqual("Wow", symb.inherits[0].name);
-      Assert.Equal(1, symb.Count());
+      Assert.Single(symb);
 
       var hey = symb.FindMethod("hey").signature;
       Assert.True(hey != null);
@@ -130,7 +130,7 @@ public class TestInterface : BHL_TestBase
 
       var bar = symb.FindMethod("bar").signature;
       Assert.True(bar != null);
-      Assert.Equal(1, bar.arg_types.Count);
+      Assert.Single(bar.arg_types);
       Assert.Equal(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
       Assert.Equal(2, tuple.Count);
@@ -142,11 +142,11 @@ public class TestInterface : BHL_TestBase
       var symb = vm.ResolveNamedByPath("Wow") as InterfaceSymbolScript;
       Assert.True(symb != null);
       Assert.Equal(0, symb.inherits.Count);
-      Assert.Equal(1, symb.Count());
+      Assert.Single(symb);
 
       var bar = symb.FindMethod("bar").signature;
       Assert.True(bar != null);
-      Assert.Equal(1, bar.arg_types.Count);
+      Assert.Single(bar.arg_types);
       Assert.Equal(Types.String, bar.arg_types[0].Get());
       var tuple = (TupleType)bar.ret_type.Get();
       Assert.Equal(2, tuple.Count);

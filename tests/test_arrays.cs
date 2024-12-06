@@ -39,7 +39,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Equal(0, (lst.obj as IList<Val>).Count);
+    Assert.Empty((lst.obj as IList<Val>));
     lst.Release();
     CommonChecks(vm);
   }
@@ -131,7 +131,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Equal(1, (lst.obj as IList<Val>).Count);
+    Assert.Single((lst.obj as IList<Val>));
     lst.Release();
     CommonChecks(vm);
   }
@@ -737,7 +737,7 @@ public class TestArrays : BHL_TestBase
       val.Release();
       
       Assert.Equal(1, ArrayInts.ArrCount(arr));
-      Assert.Equal(1, list.Count);
+      Assert.Single(list);
     }
 
     {
@@ -752,7 +752,7 @@ public class TestArrays : BHL_TestBase
       ArrayInts.ArrRemoveAt(arr, 0);
       Assert.Equal(0, ArrayInts.ArrCount(arr));
       
-      Assert.Equal(0, list.Count);
+      Assert.Empty(list);
     }
 
     arr.Release();
@@ -960,9 +960,9 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(0, vals_typed.IndexOf(10));
     Assert.Equal(-1, vals_typed.IndexOf(30));
 
-    Assert.True(vals_typed.Contains(10));
-    Assert.True(vals_typed.Contains(20));
-    Assert.False(vals_typed.Contains(30));
+    Assert.Contains(10, vals_typed);
+    Assert.Contains(20, vals_typed);
+    Assert.DoesNotContain(30, vals_typed);
     
     var res = new List<int>();
     foreach(var n in vals_typed)
@@ -989,7 +989,7 @@ public class TestArrays : BHL_TestBase
       var lst = RefcList<int>.New();
       lst.Add(10);
 
-      Assert.Equal(1, lst.Count);
+      Assert.Single(lst);
       Assert.Equal(10, lst[0]);
 
       lst.Release();
@@ -998,7 +998,7 @@ public class TestArrays : BHL_TestBase
     {
       var lst = RefcList<int>.New();
       
-      Assert.Equal(0, lst.Count);
+      Assert.Empty(lst);
       
       lst.Release();
     }
@@ -1026,7 +1026,7 @@ public class TestArrays : BHL_TestBase
     
     //removing an item still releases it
     lst.RemoveAt(1);
-    Assert.Equal(1, lst.Count);
+    Assert.Single(lst);
     Assert.Equal(1, lst[0].num);
 
     //adding an item implies ownership over it
@@ -1128,7 +1128,7 @@ public class TestArrays : BHL_TestBase
     
     //removing an item still releases it
     ilst.RemoveAt(1);
-    Assert.Equal(1, ilst.Count);
+    Assert.Single(ilst);
     Assert.Equal(1, lst[0].num);
 
     //adding an item implies ownership over it

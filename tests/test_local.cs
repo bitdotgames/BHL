@@ -21,7 +21,7 @@ public class TestLocal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
+    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -257,7 +257,7 @@ public class TestLocal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
+    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 

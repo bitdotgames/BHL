@@ -293,11 +293,11 @@ public class TestErrors : BHL_TestBase
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(2, lines.Length);
 
-    Assert.True(lines[0].Contains("{\"error\": \"matching 'return' statement not found\","));
-    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
+    Assert.Contains("{\"error\": \"matching 'return' statement not found\",", lines[0]);
+    Assert.Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9", lines[0]);
 
-    Assert.True(lines[1].Contains("{\"error\": \"incompatible types: 'void' and 'int'\","));
-    Assert.True(lines[1].Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13"));
+    Assert.Contains("{\"error\": \"incompatible types: 'void' and 'int'\",", lines[1]);
+    Assert.Contains("bhl1.bhl\", \"line\": 8, \"column\" : 13", lines[1]);
   }
 
   [Fact]
@@ -338,8 +338,8 @@ public class TestErrors : BHL_TestBase
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(2, lines.Length);
 
-    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 10"));
-    Assert.True(lines[1].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12"));
+    Assert.Contains("bhl1.bhl\", \"line\": 6, \"column\" : 10", lines[0]);
+    Assert.Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12", lines[1]);
   }
   
   [Fact]
@@ -379,11 +379,11 @@ public class TestErrors : BHL_TestBase
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(5, lines.Length);
 
-    Assert.True(lines[0].Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9"));
-    Assert.True(lines[1].Contains("bhl1.bhl\", \"line\": 6, \"column\" : 13"));
-    Assert.True(lines[2].Contains("bhl1.bhl\", \"line\": 7, \"column\" : 13"));
-    Assert.True(lines[3].Contains("bhl2.bhl\", \"line\": 4, \"column\" : 13"));
-    Assert.True(lines[4].Contains("bhl2.bhl\", \"line\": 5, \"column\" : 13"));
+    Assert.Contains("bhl1.bhl\", \"line\": 2, \"column\" : 9", lines[0]);
+    Assert.Contains("bhl1.bhl\", \"line\": 6, \"column\" : 13", lines[1]);
+    Assert.Contains("bhl1.bhl\", \"line\": 7, \"column\" : 13", lines[2]);
+    Assert.Contains("bhl2.bhl\", \"line\": 4, \"column\" : 13", lines[3]);
+    Assert.Contains("bhl2.bhl\", \"line\": 5, \"column\" : 13", lines[4]);
   }
 
   [Fact(Skip = "TODO: not implemented yet")]

@@ -30,18 +30,18 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       Assert.True(foo != null);
-      Assert.Equal(0, foo.Count());
+      Assert.Empty(foo);
     }
 
     {
       var locals = GetLocalSymbols(ns1);
-      Assert.Equal(1, locals.Count);
+      Assert.Single(locals);
       AssertEqual("foo", locals[0].name);
     }
     
     {
       var locals = GetLocalSymbols(ns2);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
 
@@ -130,7 +130,7 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       Assert.True(foo != null);
-      Assert.Equal(1, foo.Count());
+      Assert.Single(foo);
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       Assert.True(foo_sub != null);
@@ -144,11 +144,11 @@ public class TestNamespace : BHL_TestBase
 
       var bar = ns2.Resolve("bar") as Namespace;
       Assert.True(bar != null);
-      Assert.Equal(0, bar.Count());
+      Assert.Empty(bar);
 
       var wow = ns2.Resolve("wow") as Namespace;
       Assert.True(wow != null);
-      Assert.Equal(0, wow.Count());
+      Assert.Empty(wow);
     }
 
     AssertEqual("foo", ns2.ResolveNamedByPath("foo").GetName());
@@ -263,22 +263,22 @@ public class TestNamespace : BHL_TestBase
     {
       var foo = ns2.Resolve("foo") as Namespace;
       Assert.True(foo != null);
-      Assert.Equal(1, foo.Count());
+      Assert.Single(foo);
 
       var foo_sub = foo.Resolve("foo_sub") as Namespace;
       Assert.True(foo_sub != null);
-      Assert.Equal(1, foo_sub.Count());
+      Assert.Single(foo_sub);
 
       var cl_wow = foo_sub.Resolve("Wow") as ClassSymbol;
       Assert.True(cl_wow != null);
 
       var bar = ns2.Resolve("bar") as Namespace;
       Assert.True(bar != null);
-      Assert.Equal(0, bar.Count());
+      Assert.Empty(bar);
 
       var wow = ns2.Resolve("wow") as Namespace;
       Assert.True(wow != null);
-      Assert.Equal(0, wow.Count());
+      Assert.Empty(wow);
     }
 
     AssertEqual("foo", ns2.ResolveNamedByPath("foo").GetName());
@@ -392,7 +392,7 @@ public class TestNamespace : BHL_TestBase
     
     {
       var locals = GetLocalSymbols(ns3);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
   
@@ -507,7 +507,7 @@ public class TestNamespace : BHL_TestBase
     
     {
       var locals = GetLocalSymbols(ns4);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
 
@@ -714,13 +714,13 @@ public class TestNamespace : BHL_TestBase
     
     {
       var locals = GetLocalSymbols(ns2);
-      Assert.Equal(1, locals.Count);
+      Assert.Single(locals);
       AssertEqual("Bar", locals[0].name);
     }
     
     {
       var locals = GetLocalSymbols(ns3);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
   
@@ -808,7 +808,7 @@ public class TestNamespace : BHL_TestBase
 
     {
       var locals = GetLocalSymbols(ns3);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
   
@@ -890,18 +890,18 @@ public class TestNamespace : BHL_TestBase
     
     {
       var locals = GetLocalSymbols(ns2);
-      Assert.Equal(1, locals.Count);
+      Assert.Single(locals);
       AssertEqual("Bar", locals[0].name);
     }
     
     {
       var locals = GetLocalSymbols(ns3);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
     
     {
       var locals = GetLocalSymbols(ns4);
-      Assert.Equal(0, locals.Count);
+      Assert.Empty(locals);
     }
   }
 
@@ -990,12 +990,12 @@ public class TestNamespace : BHL_TestBase
 
     var foo = vm.ResolveNamedByPath("foo") as Namespace;
     Assert.True(foo != null);
-    Assert.Equal(1, foo.Count());
+    Assert.Single(foo);
     Assert.True(foo.Resolve("test") is FuncSymbol);
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     Assert.True(bar != null);
-    Assert.Equal(1, bar.Count());
+    Assert.Single(bar);
     Assert.True(foo.Resolve("test") is FuncSymbol);
   }
 
@@ -1035,7 +1035,7 @@ public class TestNamespace : BHL_TestBase
 
     var bar = vm.ResolveNamedByPath("bar") as Namespace;
     Assert.True(bar != null);
-    Assert.Equal(1, bar.Count());
+    Assert.Single(bar);
     Assert.True(bar.Resolve("test") is FuncSymbol);
   }
 
@@ -1218,7 +1218,7 @@ public class TestNamespace : BHL_TestBase
     var vm = MakeVM(bhl);
 
     var cm = vm.FindModule("");
-    Assert.Equal(cm.ns.members.Count, 1);
+    Assert.Equal(1, cm.ns.members.Count);
     Assert.True(cm.ns.members[0] is Namespace);
     AssertEqual(cm.ns.members[0].name, "bar");
     CommonChecks(vm);
@@ -1359,21 +1359,21 @@ public class TestNamespace : BHL_TestBase
     var vm = MakeVM(bhl);
     var m = vm.FindModule("");
     Assert.True(m.ns.module != null);
-    Assert.Equal(m.ns.members.Count, 1);
+    Assert.Equal(1, m.ns.members.Count);
 
     var bar = m.ns.members[0] as Namespace;
     Assert.True(bar != null);
     AssertEqual(bar.name, "bar");
     Assert.True(bar.module == m.ns.module);
-    Assert.Equal(bar.members.Count, 2);
+    Assert.Equal(2, bar.members.Count);
 
     var foo = bar.members[1] as Namespace;
     Assert.True(foo != null);
     AssertEqual(foo.name, "foo");
     Assert.True(foo.module == m.ns.module);
-    Assert.Equal(foo.members.Count, 1);
+    Assert.Equal(1, foo.members.Count);
 
-    Assert.Equal(m.gvar_index.Count, 2);
+    Assert.Equal(2, m.gvar_index.Count);
     AssertEqual(m.gvar_index[0].name, "A");
     AssertEqual(m.gvar_index[1].name, "B");
 

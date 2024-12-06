@@ -101,7 +101,7 @@ public class TestLSPBasic : TestLSPShared
         return null;
       }
     );
-    Assert.True(fn.origin.source_file.EndsWith("test_lsp_basic.cs"));
+    Assert.EndsWith("test_lsp_basic.cs", fn.origin.source_file);
     Assert.True(fn.origin.source_range.start.line > 0);
   }
 
