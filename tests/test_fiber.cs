@@ -20,7 +20,7 @@ public class TestFiber : BHL_TestBase
     var fb = vm.Start("test");
     AssertEqual("test", fb.FuncAddr.symbol.name);
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 10);
+    Assert.Equal(10, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
   
@@ -38,7 +38,7 @@ public class TestFiber : BHL_TestBase
     var fb = vm.Start("test");
     fb.Retain();
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 6);
+    Assert.Equal(6, fb.result.PopRelease().num);
     fb.Release();
     CommonChecks(vm);
   }
@@ -61,7 +61,7 @@ public class TestFiber : BHL_TestBase
     args[2] = Val.NewNum(vm, c);
     var fb = vm.Start("test", new StackList<Val>(args));
     Assert.False(vm.Tick());
-    Assert.Equal(fb.result.PopRelease().num, 6);
+    Assert.Equal(6, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -159,7 +159,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
-    Assert.Equal(num, 20);
+    Assert.Equal(20, num);
     CommonChecks(vm);
   }
   
@@ -187,7 +187,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "mult2",Val.NewInt(vm, 10)).result.PopRelease().num;
-    Assert.Equal(num, 20);
+    Assert.Equal(20, num);
     CommonChecks(vm);
   }
   
@@ -215,7 +215,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "mult2").result.PopRelease().num;
-    Assert.Equal(num, 2);
+    Assert.Equal(2, num);
     CommonChecks(vm);
   }
   
@@ -1296,13 +1296,13 @@ public class TestFiber : BHL_TestBase
 
     {
       var result = vm.Execute(fs);
-      Assert.Equal(result.PopRelease().num, 10);
+      Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
 
     {
       var result = vm.Execute(fs);
-      Assert.Equal(result.PopRelease().num, 10);
+      Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -1324,13 +1324,13 @@ public class TestFiber : BHL_TestBase
 
     {
       var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 10), Val.NewInt(vm, 20)));
-      Assert.Equal(result.PopRelease().num, 10);
+      Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
 
     {
       var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 2), Val.NewInt(vm, 1)));
-      Assert.Equal(result.PopRelease().num, -1);
+      Assert.Equal(-1, result.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -1363,7 +1363,7 @@ public class TestFiber : BHL_TestBase
 
     {
       var result = vm.Execute(test_fs1);
-      Assert.Equal(result.PopRelease().num, 10);
+      Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
     
@@ -1373,7 +1373,7 @@ public class TestFiber : BHL_TestBase
     
     {
       var result = vm.Execute(test2_fs1);
-      Assert.Equal(result.PopRelease().num, 20);
+      Assert.Equal(20, result.PopRelease().num);
       CommonChecks(vm);
     }
   }

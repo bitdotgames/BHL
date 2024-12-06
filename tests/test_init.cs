@@ -24,7 +24,7 @@ public class TestInit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 10);
+    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -46,7 +46,7 @@ public class TestInit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 0);
+    Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -70,7 +70,7 @@ public class TestInit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(Execute(vm, "test").result.PopRelease().num, 0);
+    Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
