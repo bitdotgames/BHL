@@ -1005,87 +1005,6 @@ public class TestArrays : BHL_TestBase
   }
   
   [Fact]
-  public void TestValListOwnership()
-  {
-    var vm = new VM();
-
-    var lst = ValList.New(vm);
-
-    {
-      var dv = Val.New(vm);
-      lst.Add(dv.CloneValue());
-      Assert.Equal(1, dv._refs);
-
-      lst.Clear();
-      Assert.Equal(1, dv._refs);
-      dv.Release();
-    }
-
-    {
-      var dv = Val.New(vm);
-      lst.Add(dv.CloneValue());
-      Assert.Equal(1, dv._refs);
-
-      lst.RemoveAt(0);
-      Assert.Equal(1, dv._refs);
-
-      lst.Clear();
-      Assert.Equal(1, dv._refs);
-      dv.Release();
-    }
-
-    {
-      var dv0 = Val.New(vm);
-      var dv1 = Val.New(vm);
-      lst.Add(dv0.CloneValue());
-      lst.Add(dv1.CloneValue());
-      Assert.Equal(1, dv0._refs);
-      Assert.Equal(1, dv1._refs);
-
-      lst.RemoveAt(1);
-      Assert.Equal(1, dv0._refs);
-      Assert.Equal(1, dv1._refs);
-
-      lst.Clear();
-      Assert.Equal(1, dv0._refs);
-      Assert.Equal(1, dv1._refs);
-      dv0.Release();
-      dv1.Release();
-    }
-
-    lst.Release();
-
-    CommonChecks(vm);
-  }
-  
-  [Fact]
-  public void TestValListSort()
-  {
-    var vm = new VM();
-
-    var lst = ValList.New(vm);
-
-    var v1 = Val.NewInt(vm, 10);
-    lst.Add(v1);
-    
-    var v2 = Val.NewInt(vm, 1);
-    lst.Add(v2);
-    
-    var v3 = Val.NewInt(vm, 13);
-    lst.Add(v3);
-
-    var sorted = lst.OrderBy(v => v.num).ToList();
-    Assert.Equal(3, sorted.Count);
-    Assert.Equal(1, sorted[0].num);
-    Assert.Equal(10, sorted[1].num);
-    Assert.Equal(13, sorted[2].num);
-
-    lst.Release();
-
-    CommonChecks(vm);
-  }
-  
-  [Fact]
   public void TestValList()
   {
     var vm = new VM();
@@ -1120,6 +1039,71 @@ public class TestArrays : BHL_TestBase
 
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestValListOwnership()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    {
+      var dv = Val.New(vm);
+      dv.Retain();
+      lst.Add(dv);
+      Assert.Equal(2, dv._refs);
+
+      lst.Clear();
+      Assert.Equal(1, dv._refs);
+      dv.Release();
+    }
+
+    {
+      var dv = Val.New(vm);
+      dv.Retain();
+      lst.Add(dv);
+      Assert.Equal(2, dv._refs);
+
+      lst.RemoveAt(0);
+      Assert.Equal(1, dv._refs);
+
+      lst.Clear();
+      dv.Release();
+    }
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+  
+
+  [Fact]
+  public void TestValListSort()
+  {
+    var vm = new VM();
+
+    var lst = ValList.New(vm);
+
+    var v1 = Val.NewInt(vm, 10);
+    lst.Add(v1);
+    
+    var v2 = Val.NewInt(vm, 1);
+    lst.Add(v2);
+    
+    var v3 = Val.NewInt(vm, 13);
+    lst.Add(v3);
+
+    var sorted = lst.OrderBy(v => v.num).ToList();
+    Assert.Equal(3, sorted.Count);
+    Assert.Equal(1, sorted[0].num);
+    Assert.Equal(10, sorted[1].num);
+    Assert.Equal(13, sorted[2].num);
+
+    lst.Release();
+
+    CommonChecks(vm);
+  }
+  
 
   [Fact]
   public void TestValListAsIList()

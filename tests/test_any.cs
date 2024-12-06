@@ -250,16 +250,21 @@ public class TestAny : BHL_TestBase
       Color c4 = new Color
       c4.r = 1000
 
-      []Color cs = [c1, c2]
+      []Color cs = []
 
-      //converting to []any
+      //casting to []any explicitely
       []any anys = ([]any)cs
+      anys.Add(c1)
 
-      //converting back to []Color
+      //casting implicitely
+      anys = cs
+      anys.Add(c2)
+
+      //casting back to []Color
       []Color cs2 = ([]Color)anys
       cs2.Add(c3)
 
-      //let's try as casting
+      //let's try 'as' casting
       []Color cs3 = anys as []Color
       cs3.Add(c4)
 
@@ -302,10 +307,15 @@ public class TestAny : BHL_TestBase
       Color c4 = new Color
       c4.r = 1000
 
-      [int]Color cs = [[1, c1], [2, c2]]
+      [int]Color cs = []
 
-      //converting to []any
+      //casting to [any]any
       [any]any anys = ([any]any)cs
+      anys.Add(1, c1)
+
+      //implicit casting to [any]any
+      anys = cs
+      anys.Add(2, c2)
 
       //converting back to [int]Color
       [int]Color cs2 = ([int]Color)anys
