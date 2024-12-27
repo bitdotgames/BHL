@@ -385,6 +385,14 @@ public class Val
     _obj = o;
     _refc = o as IValRefcounted;
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObjNoRefc(object o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+  }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(IValRefcounted o, IType type)
