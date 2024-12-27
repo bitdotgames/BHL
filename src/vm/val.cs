@@ -287,7 +287,7 @@ public class Val
 
   static public Val NewStr(VM vm, string s)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetStr(s);
     return dv;
   }
@@ -303,7 +303,7 @@ public class Val
 
   static public Val NewNum(VM vm, long n)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetNum(n);
     return dv;
   }
@@ -319,14 +319,14 @@ public class Val
   //NOTE: it's caller's responsibility to ensure 'int precision'
   static public Val NewInt(VM vm, double n)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetInt(n);
     return dv;
   }
 
   static public Val NewFlt(VM vm, double n)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetFlt(n);
     return dv;
   }
@@ -350,7 +350,7 @@ public class Val
 
   static public Val NewBool(VM vm, bool b)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetBool(b);
     return dv;
   }
@@ -365,14 +365,14 @@ public class Val
 
   static public Val NewObj(VM vm, object o, IType type)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetObj(o, type);
     return dv;
   }
   
   static public Val NewObj(VM vm, IValRefcounted o, IType type)
   {
-    Val dv = New(vm);
+    Val dv = NewNoReset(vm);
     dv.SetObj(o, type);
     return dv;
   }
