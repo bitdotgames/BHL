@@ -89,13 +89,6 @@ public class Val
     Val dv;
     if(vm.vals_pool.stack.Count == 0)
     {
-      //for debug
-      //if(vm.vals_pool.miss > 200)
-      //{
-      //  if(vm.last_fiber != null)
-      //    Util.Debug(vm.last_fiber.GetStackTrace());
-      //}
-
       ++vm.vals_pool.miss;
       dv = new Val(vm);
 #if DEBUG_REFS
@@ -118,6 +111,36 @@ public class Val
     }
     dv._refs = 1;
     dv.Reset();
+    return dv;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public Val NewNoReset(VM vm)
+  {
+    Val dv;
+    if(vm.vals_pool.stack.Count == 0)
+    {
+      ++vm.vals_pool.miss;
+      dv = new Val(vm);
+#if DEBUG_REFS
+      vm.vals_pool.debug_track.Add(
+        new VM.ValPool.Tracking() {
+          v = dv,
+          stack_trace = Environment.StackTrace
+        }
+      );
+      Console.WriteLine("NEW: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+    }
+    else
+    {
+      ++vm.vals_pool.hits;
+      dv = vm.vals_pool.stack.Pop();
+#if DEBUG_REFS
+      Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
+#endif
+    }
+    dv._refs = 1;
     return dv;
   }
 
