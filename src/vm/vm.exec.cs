@@ -120,7 +120,7 @@ public partial class VM : INamedResolver
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
 
-          var cast_type = curr_frame.type_refs[cast_type_idx].Get();
+          var cast_type = curr_frame.type_refs[cast_type_idx];
 
           HandleTypeCast(exec, cast_type, force_type);
         }
@@ -129,7 +129,7 @@ public partial class VM : INamedResolver
         {
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
-          var as_type = curr_frame.type_refs[cast_type_idx].Get();
+          var as_type = curr_frame.type_refs[cast_type_idx];
 
           HandleTypeAs(exec, as_type, force_type);
         }
@@ -137,7 +137,7 @@ public partial class VM : INamedResolver
         case Opcodes.TypeIs:
         {
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var as_type = curr_frame.type_refs[cast_type_idx].Get();
+          var as_type = curr_frame.type_refs[cast_type_idx];
 
           HandleTypeIs(exec, as_type);
         }
@@ -145,7 +145,7 @@ public partial class VM : INamedResolver
         case Opcodes.Typeof:
         {
           int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx].Get();
+          var type = curr_frame.type_refs[type_idx];
 
           exec.stack.Push(Val.NewObj(this, type, Types.Type));
         }
@@ -304,7 +304,7 @@ public partial class VM : INamedResolver
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
           int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx].Get();
+          var type = curr_frame.type_refs[type_idx];
 
           var curr = curr_frame.locals[local_idx];
           //NOTE: handling case when variables are 're-declared' within the nested loop
@@ -585,7 +585,7 @@ public partial class VM : INamedResolver
           var self = exec.stack[self_idx];
           exec.stack.RemoveAt(self_idx);
 
-          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx].Get();
+          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
           var class_type = (ClassSymbol)self.type;
           var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
@@ -604,7 +604,7 @@ public partial class VM : INamedResolver
           int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx].Get();
+          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
           var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
           BHS status;
@@ -747,7 +747,7 @@ public partial class VM : INamedResolver
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx].Get();
+          var type = curr_frame.type_refs[type_idx];
           HandleNew(curr_frame, exec.stack, type);
         }
         break;
@@ -769,7 +769,7 @@ public partial class VM : INamedResolver
 
     init_exec.ip = 0;
     init_exec.stack = init_frame.stack;
-    init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs.all, bytecode, 0);
+    init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs_resolved, bytecode, 0);
     init_exec.regions.Push(new VM.Region(init_frame, null, 0, bytecode.Length - 1));
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;

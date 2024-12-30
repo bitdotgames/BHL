@@ -21,7 +21,7 @@ public partial class VM : INamedResolver
 
     public byte[] bytecode;
     public List<Const> constants;
-    public List<ProxyType> type_refs;
+    public IType[] type_refs;
     public ValStack locals = new ValStack(MAX_LOCALS);
     public ValStack stack = new ValStack(MAX_STACK);
     public int start_ip;
@@ -93,7 +93,7 @@ public partial class VM : INamedResolver
         return_stack,
         module, 
         module.compiled.constants, 
-        module.compiled.type_refs.all, 
+        module.compiled.type_refs_resolved, 
         module.compiled.bytecode, 
         start_ip
       );
@@ -105,7 +105,7 @@ public partial class VM : INamedResolver
       ValStack return_stack, 
       Module module, 
       List<Const> constants, 
-      List<ProxyType> type_refs,
+      IType[] type_refs,
       byte[] bytecode, 
       int start_ip)
     {

@@ -56,6 +56,19 @@ public class CompiledModule
   public byte[] bytecode;
   public List<Const> constants;
   public TypeRefIndex type_refs;
+  IType[] _type_refs_resolved;
+  public IType[] type_refs_resolved
+  {
+    get {
+      if(_type_refs_resolved == null)
+      {
+        _type_refs_resolved = new IType[type_refs.Count];
+        for (int i = 0; i < type_refs.Count; ++i)
+          _type_refs_resolved[i] = type_refs.all[i].Get();
+      }
+      return _type_refs_resolved;
+    }
+  } 
   public Ip2SrcLine ip2src_line;
   public int init_func_idx = -1;
 

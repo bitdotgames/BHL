@@ -7,7 +7,7 @@ namespace bhl {
 public class TypeRefIndex
 {
   internal List<ProxyType> all = new List<ProxyType>();
-
+  
   public int Count {
     get {
       return all.Count;
