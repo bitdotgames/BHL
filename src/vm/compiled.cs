@@ -54,7 +54,7 @@ public class CompiledModule
   public int total_gvars_num;
   public byte[] initcode;
   public byte[] bytecode;
-  public List<Const> constants;
+  public Const[] constants;
   public TypeRefIndex type_refs;
   IType[] _type_refs_resolved;
   public IType[] type_refs_resolved
@@ -76,7 +76,7 @@ public class CompiledModule
     int init_func_idx,
     List<string> imports,
     int total_gvars_num,
-    List<Const> constants,
+    Const[] constants,
     TypeRefIndex type_refs,
     byte[] initcode,
     byte[] bytecode,
@@ -97,7 +97,7 @@ public class CompiledModule
       -1,
       new List<string>(),
       0,
-      new List<Const>(),
+      Array.Empty<Const>(),
       new TypeRefIndex(),
       new byte[0],
       new byte[0],
@@ -128,7 +128,6 @@ public class CompiledModule
     int total_gvars_num = 0;
     int local_gvars_num = 0;
     byte[] constant_bytes = null;
-    var constants = new List<Const>();
     var type_refs = new TypeRefIndex();
     List<int> type_refs_offsets = new List<int>();
     byte[] type_refs_bytes = null;
@@ -201,8 +200,10 @@ public class CompiledModule
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 
+    var constants = new Const[constants_len];
+    
     if(constants_len > 0)
-      ReadConstants(symb_factory, constant_bytes, constants);
+      ReadConstants(constant_bytes, constants);
 
     var compiled = new CompiledModule(
         init_func_idx,
@@ -220,7 +221,7 @@ public class CompiledModule
     return module;
   }
 
-  static void ReadConstants(SymbolFactory symb_factory, byte[] constant_bytes, List<Const> constants)
+  static void ReadConstants(byte[] constant_bytes, Const[] constants)
   {
     var src = new MemoryStream(constant_bytes); 
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
@@ -242,7 +243,7 @@ public class CompiledModule
         else
           throw new Exception("Unknown type: " + cn_type);
 
-        constants.Add(cn);
+        constants[i] = cn;
       }
     }
   }
@@ -313,12 +314,12 @@ public class CompiledModule
     }
   }
   
-  static byte[] WriteConstants(List<Const> constants)
+  static byte[] WriteConstants(Const[] constants)
   {
     var dst = new MemoryStream();
     using(BinaryWriter w = new BinaryWriter(dst, System.Text.Encoding.UTF8))
     {
-      w.Write(constants.Count);
+      w.Write(constants.Length);
       foreach(var cn in constants)
       {
         w.Write((byte)cn.type);

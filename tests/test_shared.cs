@@ -704,7 +704,7 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, string str)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Length;++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.STR && cn.str == str)
@@ -715,7 +715,7 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, int num)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Length;++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.INT && cn.num == num)
@@ -726,7 +726,7 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, double num)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Length;++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.FLT && cn.num == num)
@@ -737,7 +737,7 @@ public class BHL_TestBase
 
   public static int ConstIdx(bhl.Module module, bool v)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Length;++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
@@ -753,7 +753,7 @@ public class BHL_TestBase
 
   public static int ConstNullIdx(bhl.Module module)
   {
-    for(int i=0;i<module.compiled.constants.Count;++i)
+    for(int i=0;i<module.compiled.constants.Length;++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.NIL)

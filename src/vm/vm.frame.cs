@@ -20,7 +20,7 @@ public partial class VM : INamedResolver
     public Module module;
 
     public byte[] bytecode;
-    public List<Const> constants;
+    public Const[] constants;
     public IType[] type_refs;
     public ValStack locals = new ValStack(MAX_LOCALS);
     public ValStack stack = new ValStack(MAX_STACK);
@@ -104,7 +104,7 @@ public partial class VM : INamedResolver
       Fiber fb, 
       ValStack return_stack, 
       Module module, 
-      List<Const> constants, 
+      Const[] constants, 
       IType[] type_refs,
       byte[] bytecode, 
       int start_ip)

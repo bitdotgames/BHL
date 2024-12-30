@@ -219,7 +219,7 @@ public class ModuleCompiler : AST_Visitor
         init_func_idx,
         imports, 
         interim.gvar_index.Count,
-        constants, 
+        constants.ToArray(), 
         type_refs,
         init_bytes,
         code_bytes,
