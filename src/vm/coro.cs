@@ -9,11 +9,6 @@ public interface ICoroutine
   void Cleanup(VM.Frame frm, VM.ExecState exec);
 }
 
-public interface IBranchyCoroutine : ICoroutine
-{
-  void Attach(ICoroutine branch);
-}
-
 public interface IInspectableCoroutine 
 {
   int Count { get; }

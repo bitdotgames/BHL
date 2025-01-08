@@ -191,7 +191,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   }
 }
 
-public class ParalBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
+public class ParalBlock : Coroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -250,14 +250,9 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
     branches.Clear();
     DeferBlock.ExitScope(defers, exec);
   }
-
-  public void Attach(ICoroutine coro)
-  {
-    branches.Add((Coroutine)coro);
-  }
 }
 
-public class ParalAllBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
+public class ParalAllBlock : Coroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -331,16 +326,6 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
       CoroutinePool.Del(frm, exec, branches[i]);
     branches.Clear();
     DeferBlock.ExitScope(defers, exec);
-  }
-
-  public void Attach(ICoroutine coro)
-  {
-    branches.Add((Coroutine)coro);
-  }
-
-  public void RegisterDefer(DeferBlock dfb)
-  {
-    defers.Add(dfb);
   }
 }
 
