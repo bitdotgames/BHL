@@ -733,7 +733,7 @@ public partial class VM : INamedResolver
         break;
         case Opcodes.Block:
         {
-          var new_coroutine = VisitBlock(exec, curr_frame, region.defer_support);
+          var new_coroutine = ProcBlockOpcode(exec, curr_frame, region.defer_support);
           if(new_coroutine != null)
           {
             //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -878,25 +878,41 @@ public partial class VM : INamedResolver
     l_operand.Release();
   }
   
-  Coroutine VisitBlock(ExecState exec, Frame curr_frame, IDeferSupport defer_support)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  Coroutine ProcBlockOpcode(
+    ExecState exec, 
+    Frame curr_frame, 
+    IDeferSupport defer_scope
+  )
   {
-    int block_size;
-    var block_coro = TryMakeBlockCoroutine(ref exec.ip, curr_frame, exec, out block_size, defer_support);
+    var (block_coro, block_paral, block_defer_scope) = _ProcBlockOpcode(
+      ref exec.ip, 
+      curr_frame, exec, 
+      out var block_size, 
+      defer_scope,
+      null
+      );
 
-    if(block_coro is IBranchyCoroutine bi)
+    //NOTE: let's process paral block (add branches and defers)
+    if(block_paral != null)
     {
       int tmp_ip = exec.ip;
       while(tmp_ip < (exec.ip + block_size))
       {
         ++tmp_ip;
 
-        int tmp_size;
-        var branch = TryMakeBlockCoroutine(ref tmp_ip, curr_frame, exec, out tmp_size, (IDeferSupport)block_coro);
+        var (branch_coro, _, _) = _ProcBlockOpcode(
+          ref tmp_ip, 
+          curr_frame, 
+          exec, 
+          out var tmp_size, 
+          block_defer_scope,
+          block_paral
+          );
 
-        //NOTE: branch == null is a special case for defer {..} block
-        if(branch != null)
+        if(branch_coro != null)
         {
-          bi.Attach(branch);
+          block_paral.Attach(branch_coro);
           tmp_ip += tmp_size;
         }
       }
@@ -904,45 +920,52 @@ public partial class VM : INamedResolver
     return block_coro;
   }
   
-  Coroutine TryMakeBlockCoroutine(ref int ip, Frame curr_frame, ExecState exec, out int size, IDeferSupport defer_support)
+  (Coroutine, IBranchyCoroutine, IDeferSupport) _ProcBlockOpcode(
+    ref int ip, 
+    Frame curr_frame, 
+    ExecState exec, 
+    out int size, 
+    IDeferSupport defer_scope,
+    IBranchyCoroutine paral_scope
+    )
   {
     var type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
 
     if(type == BlockType.SEQ)
     {
-      if(defer_support is IBranchyCoroutine)
+      if(paral_scope != null)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
-        return br;
+        return (br, null, br);
       }
       else
       {
         var seq = CoroutinePool.New<SeqBlock>(this);
         seq.Init(curr_frame, exec.stack, ip + 1, ip + size);
-        return seq;
+        return (seq, null, seq);
       }
     }
     else if(type == BlockType.PARAL)
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return paral;
+      return (paral, paral, paral);
     }
     else if(type == BlockType.PARAL_ALL)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return paral;
+      return (paral, paral, paral);
     }
     else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
-      defer_support.RegisterDefer(d);
+      defer_scope.RegisterDefer(d);
       //NOTE: we need to skip defer block
       ip += size;
-      return null;
+      return (null, null, null);
     }
     else
       throw new Exception("Not supported block type: " + type);
