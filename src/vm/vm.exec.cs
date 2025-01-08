@@ -23,13 +23,17 @@ public partial class VM : INamedResolver
   public struct Region
   {
     public Frame frame;
-    public IDeferSupport defer_support;
+    public List<DeferBlock> defer_support;
     //NOTE: if current ip is not within *inclusive* range of these values
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
-    public Region(Frame frame, IDeferSupport defer_support, int min_ip = -1, int max_ip = STOP_IP)
+    public Region(
+      Frame frame, 
+      List<DeferBlock> defer_support, 
+      int min_ip = -1, 
+      int max_ip = STOP_IP)
     {
       this.frame = frame;
       this.defer_support = defer_support;
@@ -166,7 +170,7 @@ public partial class VM : INamedResolver
         case Opcodes.ArrIdx:
         {
           var self = exec.stack[exec.stack.Count - 2];
-          var class_type = ((ArrayTypeSymbol)self.type);
+          var class_type = (ArrayTypeSymbol)self.type;
 
           int idx = (int)exec.stack.PopRelease().num;
           var arr = exec.stack.Pop();
@@ -180,7 +184,7 @@ public partial class VM : INamedResolver
         case Opcodes.ArrIdxW:
         {
           var self = exec.stack[exec.stack.Count - 2];
-          var class_type = ((ArrayTypeSymbol)self.type);
+          var class_type = (ArrayTypeSymbol)self.type;
 
           int idx = (int)exec.stack.PopRelease().num;
           var arr = exec.stack.Pop();
@@ -196,7 +200,7 @@ public partial class VM : INamedResolver
         {
           var self = exec.stack[exec.stack.Count - 2];
           self.Retain();
-          var class_type = ((ArrayTypeSymbol)self.type);
+          var class_type = (ArrayTypeSymbol)self.type;
           var status = BHS.SUCCESS;
           //NOTE: Add must be at 0 index
           ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
@@ -206,7 +210,7 @@ public partial class VM : INamedResolver
         case Opcodes.MapIdx:
         {
           var self = exec.stack[exec.stack.Count - 2];
-          var class_type = ((MapTypeSymbol)self.type);
+          var class_type = (MapTypeSymbol)self.type;
 
           var key = exec.stack.Pop();
           var map = exec.stack.Pop();
@@ -221,7 +225,7 @@ public partial class VM : INamedResolver
         case Opcodes.MapIdxW:
         {
           var self = exec.stack[exec.stack.Count - 2];
-          var class_type = ((MapTypeSymbol)self.type);
+          var class_type = (MapTypeSymbol)self.type;
 
           var key = exec.stack.Pop();
           var map = exec.stack.Pop();
@@ -238,7 +242,7 @@ public partial class VM : INamedResolver
         {
           var self = exec.stack[exec.stack.Count - 3];
           self.Retain();
-          var class_type = ((MapTypeSymbol)self.type);
+          var class_type = (MapTypeSymbol)self.type;
           var status = BHS.SUCCESS;
           //NOTE: Add must be at 0 index
           ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
@@ -883,14 +887,14 @@ public partial class VM : INamedResolver
   Coroutine ProcBlockOpcode(
     ExecState exec, 
     Frame curr_frame, 
-    IDeferSupport defer_scope
+    List<DeferBlock> defer_support
   )
   {
-    var (block_coro, block_paral_branches, block_defer_scope) = _ProcBlockOpcode(
+    var (block_coro, block_paral_branches, block_defer_support) = _ProcBlockOpcode(
       ref exec.ip, 
       curr_frame, exec, 
       out var block_size, 
-      defer_scope,
+      defer_support,
       false
       );
 
@@ -907,7 +911,7 @@ public partial class VM : INamedResolver
           curr_frame, 
           exec, 
           out var tmp_size, 
-          block_defer_scope,
+          block_defer_support,
           true
           );
 
@@ -921,12 +925,12 @@ public partial class VM : INamedResolver
     return block_coro;
   }
   
-  (Coroutine, List<Coroutine>, IDeferSupport) _ProcBlockOpcode(
+  (Coroutine, List<Coroutine>, List<DeferBlock>) _ProcBlockOpcode(
     ref int ip, 
     Frame curr_frame, 
     ExecState exec, 
     out int size, 
-    IDeferSupport defer_scope,
+    List<DeferBlock> defer_support,
     bool is_paral
     )
   {
@@ -939,31 +943,31 @@ public partial class VM : INamedResolver
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
-        return (br, null, br);
+        return (br, null, br.defers);
       }
       else
       {
         var seq = CoroutinePool.New<SeqBlock>(this);
         seq.Init(curr_frame, exec.stack, ip + 1, ip + size);
-        return (seq, null, seq);
+        return (seq, null, seq.defers);
       }
     }
     else if(type == BlockType.PARAL)
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches, paral);
+      return (paral, paral.branches, paral.defers);
     }
     else if(type == BlockType.PARAL_ALL)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches, paral);
+      return (paral, paral.branches, paral.defers);
     }
     else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
-      defer_scope.RegisterDefer(d);
+      defer_support.Add(d);
       //NOTE: we need to skip the defer block
       ip += size;
       return (null, null, null);
@@ -983,7 +987,7 @@ public partial class VM : INamedResolver
     new_frame.return_ip = exec.ip;
     exec.stack = new_frame.stack;
     exec.frames.Push(new_frame);
-    exec.regions.Push(new Region(new_frame, new_frame));
+    exec.regions.Push(new Region(new_frame, new_frame.defers));
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = new_frame.start_ip - 1;
   }

@@ -61,7 +61,7 @@ public struct DeferBlock
 
   static internal void ExitScope(List<DeferBlock> defers, VM.ExecState exec)
   {
-    if(defers == null || defers.Count == 0)
+    if(defers.Count == 0)
       return;
 
     var coro_orig = exec.coroutine;
@@ -102,7 +102,7 @@ public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
   {
     exec.stack = stack;
     exec.ip = min_ip;
-    exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
+    exec.regions.Push(new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip));
   }
 
   public override void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
@@ -149,7 +149,7 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
   public int max_ip;
   public ValStack stack = new ValStack(VM.Frame.MAX_STACK);
   public VM.ExecState exec = new VM.ExecState();
-  public List<DeferBlock> defers;
+  public List<DeferBlock> defers = new List<DeferBlock>(1);
 
   public int Count {
     get {
@@ -168,7 +168,7 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
     this.max_ip = max_ip;
     exec.ip = min_ip;
     exec.stack = stack;
-    exec.regions.Push(new VM.Region(frm, this, min_ip: min_ip, max_ip: max_ip));
+    exec.regions.Push(new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip));
   }
 
   public override void Tick(VM.Frame frm, VM.ExecState ext_exec, ref BHS status)
@@ -202,8 +202,6 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 
   public void RegisterDefer(DeferBlock dfb)
   {
-    if(defers == null)
-      defers = new List<DeferBlock>();
     defers.Add(dfb);
   }
 }
@@ -214,7 +212,7 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
   public int max_ip;
   public int i;
   public List<Coroutine> branches = new List<Coroutine>();
-  public List<DeferBlock> defers;
+  public List<DeferBlock> defers = new List<DeferBlock>(1);
 
   public int Count {
     get {
@@ -233,8 +231,7 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
     this.max_ip = max_ip;
     i = 0;
     branches.Clear();
-    if(defers != null)
-      defers.Clear();
+    defers.Clear();
   }
 
   public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
@@ -276,8 +273,6 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
 
   public void RegisterDefer(DeferBlock dfb)
   {
-    if(defers == null)
-      defers = new List<DeferBlock>();
     defers.Add(dfb);
   }
 }
@@ -288,7 +283,7 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspe
   public int max_ip;
   public int i;
   public List<Coroutine> branches = new List<Coroutine>();
-  public List<DeferBlock> defers;
+  public List<DeferBlock> defers = new List<DeferBlock>(1);
 
   public int Count {
     get {
@@ -307,8 +302,7 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspe
     this.max_ip = max_ip;
     i = 0;
     branches.Clear();
-    if(defers != null)
-      defers.Clear();
+    defers.Clear();
   }
 
   public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
@@ -366,8 +360,6 @@ public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspe
 
   public void RegisterDefer(DeferBlock dfb)
   {
-    if(defers == null)
-      defers = new List<DeferBlock>();
     defers.Add(dfb);
   }
 }

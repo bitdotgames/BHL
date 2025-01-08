@@ -152,7 +152,7 @@ public partial class VM : INamedResolver
       frm.fb = this;
       exec.ip = frm.start_ip;
       exec.frames.Push(frm);
-      exec.regions.Push(new Region(frm, frm));
+      exec.regions.Push(new Region(frm, frm.defers));
       exec.stack = frm.stack;
     }
 
