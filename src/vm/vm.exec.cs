@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace bhl {
@@ -885,16 +886,16 @@ public partial class VM : INamedResolver
     IDeferSupport defer_scope
   )
   {
-    var (block_coro, block_paral, block_defer_scope) = _ProcBlockOpcode(
+    var (block_coro, block_paral_branches, block_defer_scope) = _ProcBlockOpcode(
       ref exec.ip, 
       curr_frame, exec, 
       out var block_size, 
       defer_scope,
-      null
+      false
       );
 
     //NOTE: let's process paral block (add branches and defers)
-    if(block_paral != null)
+    if(block_paral_branches != null)
     {
       int tmp_ip = exec.ip;
       while(tmp_ip < (exec.ip + block_size))
@@ -907,12 +908,12 @@ public partial class VM : INamedResolver
           exec, 
           out var tmp_size, 
           block_defer_scope,
-          block_paral
+          true
           );
 
         if(branch_coro != null)
         {
-          block_paral.Attach(branch_coro);
+          block_paral_branches.Add(branch_coro);
           tmp_ip += tmp_size;
         }
       }
@@ -920,13 +921,13 @@ public partial class VM : INamedResolver
     return block_coro;
   }
   
-  (Coroutine, IBranchyCoroutine, IDeferSupport) _ProcBlockOpcode(
+  (Coroutine, List<Coroutine>, IDeferSupport) _ProcBlockOpcode(
     ref int ip, 
     Frame curr_frame, 
     ExecState exec, 
     out int size, 
     IDeferSupport defer_scope,
-    IBranchyCoroutine paral_scope
+    bool is_paral
     )
   {
     var type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
@@ -934,7 +935,7 @@ public partial class VM : INamedResolver
 
     if(type == BlockType.SEQ)
     {
-      if(paral_scope != null)
+      if(is_paral)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
         br.Init(curr_frame, ip + 1, ip + size);
@@ -951,19 +952,19 @@ public partial class VM : INamedResolver
     {
       var paral = CoroutinePool.New<ParalBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral, paral);
+      return (paral, paral.branches, paral);
     }
     else if(type == BlockType.PARAL_ALL)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(this);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral, paral);
+      return (paral, paral.branches, paral);
     }
     else if(type == BlockType.DEFER)
     {
       var d = new DeferBlock(curr_frame, ip + 1, ip + size);
       defer_scope.RegisterDefer(d);
-      //NOTE: we need to skip defer block
+      //NOTE: we need to skip the defer block
       ip += size;
       return (null, null, null);
     }
