@@ -6,7 +6,7 @@ namespace bhl {
 
 public partial class VM : INamedResolver
 {
-  public class Frame : IDeferSupport
+  public class Frame
   {
     public const int MAX_LOCALS = 64;
     public const int MAX_STACK = 32;
@@ -130,11 +130,6 @@ public partial class VM : INamedResolver
 
       stack.Clear();
       defers.Clear();
-    }
-
-    public void RegisterDefer(DeferBlock dfb)
-    {
-      defers.Add(dfb);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

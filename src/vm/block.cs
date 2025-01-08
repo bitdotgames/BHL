@@ -16,11 +16,6 @@ public enum BlockType
   DOWHILE   = 10,
 }
 
-public interface IDeferSupport
-{
-  void RegisterDefer(DeferBlock cb);
-}
-
 public struct DeferBlock
 {
   public VM.Frame frm;
@@ -82,7 +77,7 @@ public struct DeferBlock
   }
 }
 
-public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
+public class SeqBlock : Coroutine, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers = new List<DeferBlock>(2);
@@ -136,14 +131,9 @@ public class SeqBlock : Coroutine, IDeferSupport, IInspectableCoroutine
 
     DeferBlock.ExitScope(defers, exec);
   }
-
-  public void RegisterDefer(DeferBlock dfb)
-  {
-    defers.Add(dfb);
-  }
 }
 
-public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
+public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -199,14 +189,9 @@ public class ParalBranchBlock : Coroutine, IDeferSupport, IInspectableCoroutine
     }
     stack.Clear();
   }
-
-  public void RegisterDefer(DeferBlock dfb)
-  {
-    defers.Add(dfb);
-  }
 }
 
-public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
+public class ParalBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
@@ -270,14 +255,9 @@ public class ParalBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspecta
   {
     branches.Add((Coroutine)coro);
   }
-
-  public void RegisterDefer(DeferBlock dfb)
-  {
-    defers.Add(dfb);
-  }
 }
 
-public class ParalAllBlock : Coroutine, IBranchyCoroutine, IDeferSupport, IInspectableCoroutine
+public class ParalAllBlock : Coroutine, IBranchyCoroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
