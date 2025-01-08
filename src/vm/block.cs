@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
 
@@ -54,6 +55,7 @@ public struct DeferBlock
     return status;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static internal void ExitScope(List<DeferBlock> defers, VM.ExecState exec)
   {
     if(defers.Count == 0)
@@ -77,6 +79,7 @@ public struct DeferBlock
   }
 }
 
+//TODO: do we actually need this one?
 public class SeqBlock : Coroutine, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
