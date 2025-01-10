@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl {
   
@@ -20,6 +21,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 
   public Symbol this[int index]
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get {
       return list[index];
     }
