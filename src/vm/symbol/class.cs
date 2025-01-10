@@ -29,7 +29,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   internal SymbolsStorage members;
 
   //all 'flattened' members including all parents
-  internal SymbolsStorage _all_members;
+  internal Symbol[] _all_members;
 
   // we want to prevent resolving of attributes and methods at some point
   // since they might collide with types. For example:
@@ -65,8 +65,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   //NOTE: only once the class is Setup we have valid members iterator
   public IEnumerator<Symbol> GetEnumerator()
   {
-    return _all_members?.GetEnumerator() ??
-           Enumerable.Empty<Symbol>().GetEnumerator();
+    if (_all_members != null)
+      return ((IEnumerable<Symbol>)_all_members).GetEnumerator();
+    return Enumerable.Empty<Symbol>().GetEnumerator();
   }
 
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -247,16 +248,17 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     if (_all_members != null)
       return;
 
-    _all_members = new SymbolsStorage(this);
-
-    DoSetupMembers(this);
+    var all_members = new SymbolsStorage(this);
+    DoSetupMembers(this, all_members);
+    
+    _all_members = all_members.list.ToArray();
   }
 
-  void DoSetupMembers(ClassSymbol curr_class)
+  void DoSetupMembers(ClassSymbol curr_class, SymbolsStorage all_members)
   {
     var super_class = curr_class.super_class;
     if (super_class != null)
-      DoSetupMembers(super_class);
+      DoSetupMembers(super_class, all_members);
 
     for (int i = 0; i < curr_class.members.Count; ++i)
     {
@@ -269,7 +271,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       //NOTE: we need to recalculate attribute index taking account all 
       //      parent classes
       if (sym is IScopeIndexed si && !sym.IsStatic())
-        si.scope_idx = _all_members.Count;
+        si.scope_idx = all_members.Count;
 
       if (sym is FuncSymbolScript fss)
       {
@@ -281,7 +283,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
           var vsym = new FuncSymbolVirtual(fss);
           vsym.AddOverride(curr_class, fss);
-          _all_members.Add(vsym);
+          all_members.Add(vsym);
         }
         else if (fss.attribs.HasFlag(FuncAttrib.Override))
         {
@@ -289,17 +291,17 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
             throw new SymbolError(sym,
               "virtual methods are not allowed to have default arguments in class '" + name + "'");
 
-          var vsym = _all_members.Find(sym.name) as FuncSymbolVirtual;
+          var vsym = all_members.Find(sym.name) as FuncSymbolVirtual;
           if (vsym == null)
             throw new SymbolError(sym, "no base virtual method to override in class '" + name + "'");
 
           vsym.AddOverride(curr_class, fss);
         }
         else
-          _all_members.Add(fss);
+          all_members.Add(fss);
       }
       else
-        _all_members.Add(sym);
+        all_members.Add(sym);
     }
   }
 
@@ -311,7 +313,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
     //virtual methods lookup table
     _vtable = new Dictionary<int, FuncSymbol>();
 
-    for (int i = 0; i < _all_members.Count; ++i)
+    for (int i = 0; i < _all_members.Length; ++i)
     {
       if (_all_members[i] is FuncSymbolVirtual fssv)
         _vtable[i] = fssv.GetTopOverride();
@@ -392,7 +394,7 @@ public class ClassSymbolScript : ClassSymbol
     var vl = ValList.New(frm.vm);
     data.SetObj(vl, type);
 
-    for (int i = 0; i < _all_members.Count; ++i)
+    for (int i = 0; i < _all_members.Length; ++i)
     {
       var m = _all_members[i];
       //NOTE: Members contain all kinds of symbols: methods and attributes,
