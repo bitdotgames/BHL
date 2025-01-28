@@ -59,7 +59,7 @@ public class TaskManager
   {
     //protecting against situation when
     //someone has called Stop() already
-    if(_tasks.Count > 0)
+    if(_tasks.Count > i)
       _tasks.RemoveAt(i);
   }
 
