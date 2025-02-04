@@ -5665,8 +5665,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PopBlock(ast);
 
     //NOTE: if there are no children, something is definitely wrong
-    //      probably due to parsing errors
-    if(ast.children.Count == 0)
+    //      probably due to parsing errors, also we explicitely disallow
+    //      empty paral branches
+    if((sts.Length > 0 || is_paral) && ast.children.Count == 0)
       return null;
 
     PeekAST().AddChild(ast);

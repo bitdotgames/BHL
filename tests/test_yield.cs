@@ -912,4 +912,30 @@ public class TestYield : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestYieldTrueInWhile()
+  {
+    string bhl = @"
+    coro func bool True() 
+    {
+      yield()
+      return true
+    }
+
+    coro func test() 
+    {
+      while(yield True()) 
+      {
+      }
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    vm.Start("test");
+
+    for(int i=0;i<10;++i)
+      Assert.True(vm.Tick());
+    vm.Stop();
+    CommonChecks(vm);
+  }
 }
