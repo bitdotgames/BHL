@@ -162,6 +162,14 @@ public partial class VM : INamedResolver
     //      still we need to retain it so that it's never
     //      accidentally released when pushed/popped
     null_val.Retain();
+
+    true_val = new Val(this);
+    true_val.SetBool(true);
+    true_val.Retain();
+
+    false_val = new Val(this);
+    false_val.SetBool(false);
+    false_val.Retain();
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)

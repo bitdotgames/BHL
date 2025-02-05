@@ -917,15 +917,11 @@ public class TestYield : BHL_TestBase
   public void TestYieldTrueInWhile()
   {
     string bhl = @"
-    coro func bool True() 
-    {
-      yield()
-      return true
-    }
+    import ""std""
 
     coro func test() 
     {
-      while(yield True()) 
+      while(yield std.NextTrue()) 
       {
         trace(""."")
       }
@@ -951,18 +947,14 @@ public class TestYield : BHL_TestBase
   public void TestYieldTrueInDoWhile()
   {
     string bhl = @"
-    coro func bool True() 
-    {
-      yield()
-      return true
-    }
+    import ""std""
 
     coro func test() 
     {
       do
       {
         trace(""."")
-      }while(yield True()) 
+      }while(yield std.NextTrue()) 
     }
     ";
 

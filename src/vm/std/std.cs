@@ -4,6 +4,27 @@ namespace bhl {
 
 public static class std 
 {
+  class CoroutineNextTrue : Coroutine
+  {
+    bool first_time = true;
+  
+    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    {
+      if(first_time)
+      {
+        status = BHS.RUNNING;
+        first_time = false;
+      }
+      else
+        exec.stack.Push(frm.vm.True);
+    }
+  
+    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+    {
+      first_time = true;
+    }
+  }
+
   static public Module MakeModule(Types ts)
   {
     var m = new Module(ts, "std");
@@ -20,6 +41,16 @@ public static class std
           return null;
         }, 
         new FuncArgSymbol("o", ts.T("any"))
+      );
+      std.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
+        { 
+          return CoroutinePool.New<CoroutineNextTrue>(frm.vm);
+        }
       );
       std.Define(fn);
     }

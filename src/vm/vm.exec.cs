@@ -63,6 +63,22 @@ public partial class VM : INamedResolver
       return null_val;
     }
   }
+
+  Val true_val = null;
+  public Val True {
+    get {
+      true_val.Retain();
+      return true_val;
+    }
+  }
+
+  Val false_val = null;
+  public Val False {
+    get {
+      false_val.Retain();
+      return false_val;
+    }
+  }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
