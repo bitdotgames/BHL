@@ -193,7 +193,7 @@ public class Types : INamedResolver
           var t = (IType)ctx._obj;
           v.SetStr(t.GetName());
         },
-        null
+        null //no setter
       );
       Type.Define(fld);
     }
@@ -203,6 +203,18 @@ public class Types : INamedResolver
   static void SetupClassFiberRef()
   {
     static_module.ns.Define(FiberRef);
+
+    {
+      var fld = new FieldSymbol(new Origin(), "IsRunning", Bool, 
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+        {
+          var fb_ref = new VM.FiberRef(ctx);
+          v.SetBool(fb_ref.IsRunning);
+        },
+        null //no setter
+      );
+      FiberRef.Define(fld);
+    }
     
     FiberRef.Setup();
   }

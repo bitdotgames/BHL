@@ -456,6 +456,36 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
+  public void TestFiberRefIsRunning()
+  {
+    string bhl = @"
+    coro func test()
+    {
+      var fb = start(coro func() {
+        yield()
+        yield()
+      })
+
+      trace(""1: "" + fb.IsRunning + "";"")
+      yield()
+      stop(fb)
+      trace(""2: "" + fb.IsRunning + "";"")
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => {
+      BindTrace(ts, log);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+
+    Execute(vm, "test");
+    AssertEqual("1: 1;2: 0;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestDoubleStopFiberFromScript()
   {
     string bhl = @"

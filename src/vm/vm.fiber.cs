@@ -11,6 +11,8 @@ public partial class VM : INamedResolver
     int id;
     Fiber fiber;
 
+    public bool IsRunning  => !(Get()?.IsStopped() ?? true);
+
     public FiberRef(Fiber fiber)
     {
       this.id = (fiber?.id ?? 0);
