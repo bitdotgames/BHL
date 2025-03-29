@@ -206,6 +206,8 @@ public class UriJsonConverter : JsonConverter
   public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
   {
     string path = (string)reader.Value;
+    if(path == null)
+      return null;
     var uri = Uri.Decode(path);
     return uri;
   }
