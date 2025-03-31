@@ -392,6 +392,11 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.UnaryBitNot
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.DeclVar,
         1 /*local idx*/, 3 /*type idx*/
       )
@@ -1604,6 +1609,9 @@ public class ModuleCompiler : AST_Visitor
       break;
       case EnumUnaryOp.NEG:
         Emit(Opcodes.UnaryNeg);
+      break;
+      case EnumUnaryOp.BIT_NOT:
+        Emit(Opcodes.UnaryBitNot);
       break;
       default:
         throw new Exception("Not supported unary type: " + ast.type);

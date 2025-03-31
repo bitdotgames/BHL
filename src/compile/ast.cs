@@ -147,6 +147,7 @@ public enum EnumUnaryOp
 {
   NEG = 1,
   NOT = 2,
+  BIT_NOT = 3
 }
 
 public class AST_UnaryOpExp : AST_Tree 

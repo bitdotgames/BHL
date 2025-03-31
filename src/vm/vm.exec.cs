@@ -286,6 +286,7 @@ public partial class VM : INamedResolver
         break;
         case Opcodes.UnaryNot:
         case Opcodes.UnaryNeg:
+        case Opcodes.UnaryBitNot:
         {
           ExecuteUnaryOp(opcode, exec.stack);
         }
@@ -830,6 +831,9 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.UnaryNeg:
         stack.Push(Val.NewFlt(this, operand * -1));
+      break;
+      case Opcodes.UnaryBitNot:
+        stack.Push(Val.NewNum(this, ~((int)operand)));
       break;
     }
   }

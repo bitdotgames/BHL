@@ -543,6 +543,14 @@ public class Types : INamedResolver
     return a.eval_type;
   }
 
+  public IType CheckBitNot(AnnotatedParseTree a, CompileErrors errors) 
+  {
+    if(a.eval_type != Int)
+      errors.Add(new ParseError(a, "must be int type"));
+
+    return Int;
+  }
+
   public IType CheckBitOp(AnnotatedParseTree lhs, AnnotatedParseTree rhs, CompileErrors errors) 
   {
     if(lhs.eval_type != Int) 

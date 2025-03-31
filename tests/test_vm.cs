@@ -284,6 +284,38 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestReturnBinaryNot()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return ~0
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+      .EmitThen(Opcodes.UnaryBitNot)
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    Assert.Single(c.compiled.constants);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(-1, fb.result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestReturnStringConstant()
   {
     string bhl = @"

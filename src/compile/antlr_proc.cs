@@ -2803,7 +2803,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.operatorUnary(), SemanticToken.Keyword);
 
-    EnumUnaryOp type = ctx.operatorUnary().NOT() != null ? EnumUnaryOp.NOT : EnumUnaryOp.NEG;
+    EnumUnaryOp type = ctx.operatorUnary().GetText() switch
+    {
+      "-" => EnumUnaryOp.NEG,
+      "!" => EnumUnaryOp.NOT,
+      "~" => EnumUnaryOp.BIT_NOT,
+      _ => throw new Exception("Unexpected token")
+    };
 
     var ast = new AST_UnaryOpExp(type);
     var exp = ctx.exp(); 
@@ -2813,9 +2819,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(ok)
     {
-      Annotate(ctx).eval_type = type == EnumUnaryOp.NEG ? 
-        types.CheckUnaryMinus(Annotate(exp), errors) : 
-        types.CheckLogicalNot(Annotate(exp), errors);
+      if(type == EnumUnaryOp.NOT)
+        Annotate(ctx).eval_type = types.CheckLogicalNot(Annotate(exp), errors);
+      else if(type == EnumUnaryOp.NEG)
+        Annotate(ctx).eval_type = types.CheckUnaryMinus(Annotate(exp), errors);
+      else if(type == EnumUnaryOp.BIT_NOT)
+        Annotate(ctx).eval_type = types.CheckBitNot(Annotate(exp), errors);
+      else  
+        throw new Exception("Unexpected token");
     }
 
     PeekAST().AddChild(ast);

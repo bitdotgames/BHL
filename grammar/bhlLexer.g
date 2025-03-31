@@ -40,6 +40,7 @@ LOR : '||' ;
 LAND : '&&' ;
 BOR : '|' ;
 BAND : '&' ;
+BNOT : '~' ;
 INC : '++' ;
 DEC : '--' ;
 SINC : '+=' ;

@@ -342,7 +342,7 @@ operatorMulDivMod
   ;
 
 operatorUnary
-  : NOT | MINUS
+  : NOT | MINUS | BNOT
   ;
 
 number
