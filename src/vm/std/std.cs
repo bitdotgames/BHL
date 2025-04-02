@@ -46,6 +46,22 @@ public static class std
     }
 
     {
+      var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var type = (IType)stack.PopRelease()._obj;
+          var o = stack.Pop();
+          stack.Push(Val.NewBool(frm.vm, Types.Is(o, type)));
+          o.Release();
+          return null;
+        },
+        new FuncArgSymbol("o", ts.T("any")),
+        new FuncArgSymbol("type", ts.T(Types.Type))
+      );
+      std.Define(fn);
+    }
+
+    {
       var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
         { 

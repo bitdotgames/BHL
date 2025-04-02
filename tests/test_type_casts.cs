@@ -1844,6 +1844,54 @@ public class TestTypeCasts : BHL_TestBase
     }
   }
 
+  public class TestIsType : BHL_TestBase
+  {
+    [Fact]
+    public void _1()
+    {
+      string bhl = @"
+      import ""std""
+
+      class Foo {
+      }
+
+      func bool test()
+      {
+        Foo foo = {}
+        return std.Is(foo, typeof(Foo))
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Assert.True(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+
+    [Fact]
+    public void _2()
+    {
+      string bhl = @"
+      import ""std""
+
+      class Foo {
+      }
+
+      class Bar {
+      }
+
+      func bool test()
+      {
+        Bar bar = {}
+        return std.Is(bar, typeof(Foo))
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Assert.False(Execute(vm, "test").result.PopRelease().bval);
+      CommonChecks(vm);
+    }
+  }
+
   [Fact]
   public void TestMissingTypePropertyIsNotConfusedWithTypeFunc1()
   {
