@@ -2,6 +2,10 @@
 build:
 	dotnet build bhl.csproj
 
+.PHONY: clean
+clean:
+	dotnet clean bhl.csproj
+
 .PHONY: lsp
 lsp:
 	dotnet publish bhl.csproj
