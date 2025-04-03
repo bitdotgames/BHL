@@ -4,6 +4,10 @@ NET=net8.0
 build:
 	dotnet build --framework $(NET) bhl.csproj
 
+.PHONY: publish
+publish:
+	dotnet publish --framework $(NET) bhl.csproj
+
 .PHONY: clean
 clean:
 	dotnet clean bhl.csproj
@@ -11,10 +15,15 @@ clean:
 	rm -rf ./bin
 	rm -rf ./build
 	rm -rf ./tmp
+	rm -rf ./src/vm/obj
+	rm -rf ./src/vm/bin
+	rm -rf ./src/compile/obj
+	rm -rf ./src/compile/bin
+	rm -rf ./src/lsp/obj
+	rm -rf ./src/lsp/bin
 
 .PHONY: lsp
-lsp:
-	dotnet publish --framework $(NET) bhl.csproj
+lsp: publish
 
 .PHONY: test
 test:

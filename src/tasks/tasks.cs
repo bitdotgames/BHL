@@ -55,7 +55,8 @@ public static partial class Tasks
     bool force,
     string[] srcs,
     string result,
-    List<string> defines
+    List<string> defines,
+    string framework = "net8.0"
   )
   {
     var files = new List<string>();
@@ -92,7 +93,8 @@ public static partial class Tasks
       files,
       deps,
       pkgs,
-      defines
+      defines,
+      framework
     );
 
     string result_dll = result + "/" + Path.GetFileName(result);
@@ -112,7 +114,7 @@ public static partial class Tasks
         tm.NeedToRegen(result_dll, files) ||
         tm.NeedToRegen(result_dll, deps))
     {
-      string args = "build --no-restore --framework net8.0 " + csproj_file + " -o " + result;
+      string args = "build --no-restore --framework " + framework + " " + csproj_file + " -o " + result;
       try
       {
         //let's try building without restore since it's faster
@@ -133,7 +135,8 @@ public static partial class Tasks
     List<string> files,
     List<string> deps,
     List<string> pkgs,
-    List<string> defines
+    List<string> defines,
+    string framework
   )
   {
     string csproj_header = @$"
@@ -142,6 +145,7 @@ public static partial class Tasks
   <AssemblyName>{name}</AssemblyName>
   <OutputType>Library</OutputType>
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  <TargetFramework>{framework}</TargetFramework>
   <DefineConstants>{string.Join(';', defines)}</DefineConstants>
 </PropertyGroup>  
  ";
