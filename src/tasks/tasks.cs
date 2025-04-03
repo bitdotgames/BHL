@@ -112,15 +112,16 @@ public static partial class Tasks
         tm.NeedToRegen(result_dll, files) ||
         tm.NeedToRegen(result_dll, deps))
     {
+      string args = "build --no-restore --framework net8.0 " + csproj_file + " -o " + result;
       try
       {
         //let's try building without restore since it's faster
-        tm.Shell("dotnet", "build --no-restore " + csproj_file + " -o " + result);
+        tm.Shell("dotnet", args);
       }
       catch (Exception)
       {
         //..and if it doesn't work let's try the 'normal' build
-        tm.Shell("dotnet", "build " + csproj_file + " -o " + result);
+        tm.Shell("dotnet", args.Replace("--no-restore", ""));
       }
     }
 
@@ -140,7 +141,6 @@ public static partial class Tasks
 <PropertyGroup>
   <AssemblyName>{name}</AssemblyName>
   <OutputType>Library</OutputType>
-  <TargetFramework>netstandard2.1</TargetFramework>
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   <DefineConstants>{string.Join(';', defines)}</DefineConstants>
 </PropertyGroup>  

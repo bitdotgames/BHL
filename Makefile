@@ -1,22 +1,28 @@
+NET=net8.0
+
 .PHONY: build
 build:
-	dotnet build bhl.csproj
+	dotnet build --framework $(NET) bhl.csproj
 
 .PHONY: clean
 clean:
 	dotnet clean bhl.csproj
+	rm -rf ./obj
+	rm -rf ./bin
+	rm -rf ./build
+	rm -rf ./tmp
 
 .PHONY: lsp
 lsp:
-	dotnet publish bhl.csproj
+	dotnet publish --framework $(NET) bhl.csproj
 
 .PHONY: test
 test:
-	cd ./tests && dotnet test
+	cd ./tests && dotnet test --framework $(NET)
 
 .PHONY: bench
 bench:
-	cd ./bench && dotnet run -c Release --framework net8.0 -- --minIterationCount 9 --maxIterationCount 12 -f '*'
+	cd ./bench && dotnet run -c Release --framework $(NET) -- --minIterationCount 9 --maxIterationCount 12 -f '*'
 
 .PHONY: examples
 examples:
@@ -24,6 +30,7 @@ examples:
 
 .PHONY: geng
 geng:
+	rm -rf ./tmp
 	mkdir -p ./tmp
 	cp ./grammar/bhlPreprocLexer.g ./tmp/
 	cp ./grammar/bhlPreprocParser.g ./tmp/
