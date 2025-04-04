@@ -34,6 +34,11 @@ public class IncludePath
     this.items.AddRange(items);
   }
 
+  public override string ToString()
+  {
+    return string.Join(',', items);
+  }
+
   public void Add(string path)
   {
     items.Add(BuildUtils.NormalizeFilePath(path));
@@ -82,7 +87,7 @@ public class IncludePath
 
     if(norm_path.Length == 0)
     {
-      throw new Exception("File path '" + full_path + "' was not normalized");
+      throw new Exception("File path '" + full_path + "' was not normalized, inc.path: " + this);
     }
     return norm_path;
   }
