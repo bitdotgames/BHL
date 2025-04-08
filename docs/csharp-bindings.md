@@ -121,11 +121,53 @@ cl.Define(new FuncSymbolNative(new Origin(), "staticMethod",
 ));
 ```
 
+## Global Variables
+
+Global variables can be bound using `VarSymbolNative`:
+
+```csharp
+// C# side
+static int _globalCounter = 0;
+
+var counter = new VarSymbolNative(new Origin(), "counter", ts.T("int"),
+    delegate(VM.Frame frm, ValStack stack) {
+        stack.Push(Val.NewInt(frm.vm, _globalCounter));
+        return null;
+    }
+);
+ts.ns.Define(counter);
+
+// Bind function to modify global
+var increment = new FuncSymbolNative(new Origin(), "increment", ts.T("void"),
+    delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
+        _globalCounter++;
+        return null;
+    }
+);
+ts.ns.Define(increment);
+```
+
+In BHL, global variables are accessed using the `static` keyword:
+
+```bhl
+static int value = counter  // Get current count
+increment()  // Increment counter
+```
+
 ## Important Rules
 
 1. **Class Setup**
    - Always call `cl.Setup()` after defining all members
    - Define all fields and methods before using the class
+
+2. **Memory Management**
+   - Use `PopRelease()` to properly manage stack values
+   - Clean up resources in destructors when needed
+
+3. **Type Safety**
+   - Always validate types before casting
+   - Use proper type conversion methods
+   - Handle null values appropriately
 
 ## Common Patterns
 
@@ -174,6 +216,8 @@ delegate(VM.Frame frm, Val ctx, Val[] args, ref Val ret) {
 ```
 
 For information about the standard library and built-in modules, see [Standard Library](standard-library.md).
+
+For information about using the BHL VM from C# code, see [VM Usage](vm-usage.md).
 
 ## Example Usage in BHL
 
