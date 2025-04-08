@@ -11,13 +11,22 @@ enum State {
     Idle = 0
     Running = 1
     Paused = 2
-    Stopped = -1  // Negative values are allowed
+    Stopped = -1
+}
+
+// Negative values are fully supported
+enum Status {
+    Success = 1
+    Warning = 0
+    Error = -1
+    Critical = -2
 }
 ```
 
 Key points:
 - Each enum value must be unique
-- Values can be positive or negative integers
+- Values can be any integer (positive, zero, or negative)
+- Negative values are fully supported and commonly used for error states
 - Duplicate keys or values are not allowed
 - Enum names must be unique (cannot conflict with classes or other enums)
 

@@ -1,5 +1,35 @@
 # Core Language Features
 
+## Type System
+
+BHL features a strong, static type system:
+
+- All variables must have a type
+- Type checking occurs at compile time
+- Explicit type conversion when required
+- Support for user-defined types
+
+## Operators
+
+### Arithmetic Operators
+- `+` Addition
+- `-` Subtraction
+- `*` Multiplication
+- `/` Division
+
+### Comparison Operators
+- `==` Equal to
+- `!=` Not equal to
+- `>` Greater than
+- `<` Less than
+- `>=` Greater than or equal to
+- `<=` Less than or equal to
+
+### Logical Operators
+- `&&` Logical AND
+- `||` Logical OR
+- `!` Logical NOT
+
 ## Basic Types
 
 BHL provides several built-in types:
@@ -178,45 +208,3 @@ string lastChar = text.At(length - 1) // "d"
 int position = text.IndexOf("World")  // Returns 6
 int notFound = text.IndexOf("xyz")   // Returns -1
 ```
-for(var item in array) {
-    // code
-}
-```
-
-## Type System
-
-BHL features a strong, static type system:
-
-- All variables must have a type
-- Type checking occurs at compile time
-- Explicit type conversion when required
-- Support for user-defined types
-
-## Operators
-
-### Arithmetic Operators
-- `+` Addition
-- `-` Subtraction
-- `*` Multiplication
-- `/` Division
-
-### Comparison Operators
-- `==` Equal to
-- `!=` Not equal to
-- `>` Greater than
-- `<` Less than
-- `>=` Greater than or equal to
-- `<=` Less than or equal to
-
-### Logical Operators
-- `&&` Logical AND
-- `||` Logical OR
-- `!` Logical NOT
-
-## Best Practices
-
-1. Always initialize variables before use
-2. Use meaningful variable names
-3. Follow consistent indentation
-4. Use appropriate types for data
-5. Comment code when necessary
