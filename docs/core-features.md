@@ -208,3 +208,40 @@ string lastChar = text.At(length - 1) // "d"
 int position = text.IndexOf("World")  // Returns 6
 int notFound = text.IndexOf("xyz")   // Returns -1
 ```
+
+## Enums
+
+Enums in BHL provide a way to define a set of named constants. They help make code more readable and maintainable.
+
+```bhl
+enum ErrorCode {
+    None = 0,
+    NotFound = 404,
+    ServerError = 500
+}
+
+// Using explicit values
+ErrorCode status = ErrorCode.NotFound
+```
+
+### Type Safety
+Enums provide type safety - you can't assign values from one enum type to another:
+```bhl
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+Direction dir = Color.Red  // Compilation error
+```
+
+### Type Conversion
+```bhl
+// Convert enum to int
+ErrorCode err = ErrorCode.NotFound
+int code = int(err)  // Returns 404
+
+// Convert int to enum (be careful with invalid values)
+ErrorCode fromInt = ErrorCode(404)  // Returns ErrorCode.NotFound
+```
