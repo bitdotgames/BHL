@@ -69,6 +69,138 @@ sum(...numbers)     // Same as sum(1, 2, 3)
 4. Must maintain type consistency
 5. Can be used with async functions and coroutines
 
+## Parameter Passing
+
+BHL supports both pass-by-value and pass-by-reference parameter passing:
+
+### Pass by Value (Default)
+By default, parameters are passed by value:
+- For primitive types (int, float, bool), a copy of the value is passed
+- For objects and arrays, a copy of the reference is passed
+
+### Pass by Reference
+Use the `ref` keyword to pass parameters by reference, allowing functions to modify the original variables:
+
+```bhl
+func void modify(ref float x, float y) {
+    x = 20.0    // Modifies the original variable
+    y = 30.0    // Only modifies local copy
+}
+
+func test() {
+    float a = 10.0
+    float b = 15.0
+    modify(ref a, b)
+    // a is now 20.0
+    // b is still 15.0
+}
+```
+
+### Named Arguments with Ref
+You can also use named arguments with ref parameters:
+
+```bhl
+func void process(ref float value, float factor) {
+    value *= factor
+}
+
+func test() {
+    float x = 5.0
+    process(value: ref x, factor: 2.0)
+    // x is now 10.0
+}
+```
+
+### Important Rules for Ref Parameters
+1. The `ref` keyword is required both in function declaration and at the call site
+2. Ref parameters can be combined with regular value parameters
+3. Ref parameters can be used with nested function calls
+4. Variables must be initialized before being passed as ref parameters
+
+## Named Arguments
+
+BHL supports named arguments when calling functions. This allows you to specify arguments by their parameter name rather than just by position:
+
+```bhl
+func int calculate(float a, float b) {
+    return a + b
+}
+
+// Regular positional arguments
+calculate(5.0, 3.0)
+
+// Named arguments - order doesn't matter
+calculate(b: 3.0, a: 5.0)
+
+// Mix positional and named arguments
+calculate(5.0, b: 3.0)
+```
+
+Named arguments are particularly useful when:
+- A function has many parameters
+- You want to skip optional parameters
+- You want to make the code more readable by explicitly naming the arguments
+- Working with reference parameters
+
+### Named Arguments with Ref Parameters
+
+When using reference parameters, the `ref` keyword must come after the parameter name:
+
+```bhl
+func void modify(ref float value, float factor) {
+    value *= factor
+}
+
+func test() {
+    float x = 5.0
+    modify(value: ref x, factor: 2.0)
+}
+```
+
+## Default Arguments
+
+BHL supports default values for function parameters. When a parameter has a default value, it becomes optional when calling the function:
+
+```bhl
+// Function with default arguments
+func float calculate(float base, float multiplier = 1.0, float offset = 0.0) {
+    return base * multiplier + offset
+}
+
+// Different ways to call the function
+calculate(10.0)               // Uses default values: multiplier=1.0, offset=0.0
+calculate(10.0, 2.0)          // Uses default value: offset=0.0
+calculate(10.0, 2.0, 5.0)     // Specifies all values
+
+// Using named arguments with defaults
+calculate(base: 10.0, offset: 5.0)  // Uses default value: multiplier=1.0
+```
+
+### Rules for Default Arguments
+
+1. Default arguments must be at the end of the parameter list
+```bhl
+// CORRECT
+func foo(float a, float b = 1.0, float c = 2.0) { }
+
+// ERROR: Non-default parameter after default ones
+func bar(float a = 1.0, float b) { }  // Will not compile
+```
+
+2. Default values can be expressions, including function calls
+```bhl
+func float getDefault() { return 42.0 }
+func float process(float value = getDefault()) { return value }
+```
+
+3. Reference parameters cannot have default values
+```bhl
+// ERROR: ref parameters cannot have defaults
+func modify(ref float value = 10.0) { }  // Will not compile
+```
+
+4. There is a limit on the number of default arguments a function can have (currently 26)
+
 ## Lambda Functions
 
 ### Basic Lambda Syntax
@@ -257,5 +389,3 @@ class MyClass {
 }
 static func process() { }  // Error: name conflict
 ```
-
-
