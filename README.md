@@ -249,7 +249,6 @@ Located in `example/bindings/`, this example shows:
 - Using coroutines (`coro func`) for asynchronous behavior
 - Parallel execution with `paral` blocks
 - State management and event handling
-- Function composition with selectors
 
 The example implements a simple AI behavior system with:
 ```bhl
@@ -276,13 +275,6 @@ coro func Unit() {
   }
 }
 ```
-
-This demonstrates:
-- Coroutines for managing long-running tasks
-- Parallel execution of state changes and behavior selection
-- Reference parameters for state management
-- Composition of behaviors using selector pattern
-- Proper cleanup with defer statements
 
 ## Quick Build
 
