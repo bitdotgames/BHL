@@ -74,6 +74,30 @@ var total = 100    // Inferred as int
 var message = "Hi" // Inferred as string
 ```
 
+### Global Variables
+
+Global variables in BHL are variables declared at the module level. They have the following characteristics:
+
+```bhl
+// Basic global variable declaration
+int globalCount = 10
+string appName = "MyApp"
+
+// Global object and array variables
+MyClass instance = new MyClass()
+[]int numbers = new []int
+
+// Global variables can be imported and used across modules
+// See [Imports](imports.md) for more details
+```
+
+Key features of global variables:
+- Must be initialized at declaration
+- Can be of any type (primitive, object, array)
+- Can be imported and used across modules
+- Function calls are not allowed in global context
+- Local variables take precedence over global variables with the same name
+
 ### Static Variables
 ```bhl
 // Module-level static variables
