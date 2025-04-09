@@ -1,6 +1,6 @@
 # BHL Language Documentation
 
-BHL is a strongly-typed programming language implemented in .NET, designed for game development scenarios. It's a language that provides a balance between simplicity and power, making it ideal for gameplay logic scripting. Think of it as of glue between C# and gameplay logic. Currently it's in beta state and targets only C# platform. Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development built with [Unity](https://unity.com/).
+BHL is a strongly-typed programming language implemented in .NET, designed for game development scenarios. It's a language that provides a balance between simplicity and power, making it ideal for gameplay logic scripting. Think of it as of glue between C# and gameplay logic. Currently it's in beta state and targets only C# platform (while it's planned to target other platforms like C++). Nonetheless it has been battle tested in the real world projects and heavily used by BIT.GAMES for mobile games development built with [Unity](https://unity.com/).
 
 This documentation provides a comprehensive guide to the language features and usage.
 
@@ -111,8 +111,10 @@ This documentation provides a comprehensive guide to the language features and u
 
 ## Contributing
 
-For information about contributing to BHL, please see our [Contributing Guide](CONTRIBUTING.md).
+Contributions are welcome! You can contribute to BHL by:
+- Opening issues on GitHub to report bugs or suggest features
+- Submitting pull requests with improvements
 
 ## License
 
-[License information here]
+BHL is licensed under the MIT License. 
