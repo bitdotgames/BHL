@@ -148,19 +148,112 @@ string stateStr = (string)State.FINISHED  // "3"
 [int]Color typedMap = ([int]Color)anyMap
 ```
 
+## The 'any' Type
+
+The `any` type in BHL is a dynamic type that can hold values of any other type. It provides flexibility when working with values of different types while maintaining type safety through explicit casting.
+
+### Declaration and Null Values
+
+```bhl
+// Declaring any variables
+any value
+any initialized = null
+
+// Checking for null
+if(value == null) {
+    // value is null
+}
+```
+
+### Working with any Type
+
+```bhl
+// Casting class instances to any
+Color color = new Color
+color.r = 10
+color.g = 20
+
+any value = (any)color
+Color restored = (Color)value
+
+// Using 'as' operator for safe casting
+Color safeColor = value as Color
+if(safeColor != null) {
+    // Cast succeeded
+}
+```
+
+### Collections with any
+
+```bhl
+// Creating arrays of any type
+[]any mixedArray = ["string", 42, true]
+
+// Dynamic array initialization
+var dynamicArray = new []any [
+    "hello",
+    1,
+    new []any[10, "nested"],
+    200
+]
+
+// Maps using any type
+[any]any flexibleMap = []
+
+// Casting typed maps to any maps
+[int]Color colorMap = []
+[any]any anyMap = ([any]any)colorMap
+```
+
+### Functions with any
+
+```bhl
+// Function accepting any type
+func void ProcessValue(any value) {
+    if(value as string != null) {
+        // Handle string
+    } else if(value as int != null) {
+        // Handle integer
+    }
+}
+
+// Generic sorting example
+func Sort([]any arr, func bool(int, int) cmp) {
+    int len = arr.Count
+    for(int i = 1; i <= len - 1; i++) {
+        for(int j = 0; j < len - i; j++) {
+            if(cmp(j, j + 1)) {
+                var temp = arr[j]
+                arr[j] = arr[j + 1]
+                arr[j + 1] = temp
+            }
+        }
+    }
+}
+
+// Using the generic sort
+[]int numbers = [10, 100, 1]
+Sort(numbers, func bool(int a, int b) { 
+    return numbers[a] > numbers[b] 
+})
+```
+
 ## Important Considerations
 
 1. Type Safety
    - Always check types before casting when working with unknown types
    - Use `as` operator for safe casting when possible
    - Handle null cases when using safe casting
+   - Explicit casting required for collections and complex types
 
 2. Performance
    - Primitive type casts are optimized
    - Complex object casts may have runtime overhead
    - String concatenation with implicit casts creates temporary objects
+   - Any type operations may have additional overhead
 
 3. Common Pitfalls
    - Cannot cast between unrelated classes
    - Array casts require compatible element types
    - Enum casts require valid enum values
+   - Always validate types when working with any

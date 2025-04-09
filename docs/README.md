@@ -15,49 +15,42 @@ BHL is a strongly-typed programming language implemented in .NET, designed for b
    - Operators
    - Control Flow
 
-3. [Type Casting](type-casting.md)
-   - Basic Type Casting
-   - String Conversions
-   - Class Type Casting
-   - Safe Casting
-   - Collection Casting
+3. [Functions](functions.md)
+   - Basic Functions
+   - Function Pointers
+   - Static Functions
+   - Lambda Functions
+   - Coroutines
 
-4. [Any Type](any-type.md)
-   - Basic Usage
-   - Type Casting
-   - Collections
-   - Type Safety
+4. [Pseudo Parallel Execution](pseudo-parallel.md)
+    - Basic Parallel Blocks
+    - Control Flow
+    - Nested Execution
 
-5. [Object-Oriented Programming](oop.md)
+6. [Object-Oriented Programming](oop.md)
    - Classes
    - Inheritance
    - Interfaces
    - Members and Methods
 
-6. [Functions](functions.md)
-   - Function Declaration
-   - Parameters and Return Types
-   - Lambda Functions
-   - Closures
-   - Async Functions
+7. [Type Casting](type-casting.md)
+   - Basic Type Casting
+   - String Conversions
+   - Class Type Casting
+   - Safe Casting
+   - Collection Casting
+   - The 'any' Type
 
-7. [Collections](collections.md)
+8. [Collections](collections.md)
    - Arrays
-   - Lists
    - Collection Operations
    - Memory Management
 
-8. [Maps](maps.md)
+9. [Maps](maps.md)
    - Map Declaration
    - Map Operations
    - Iterating Maps
    - Memory Management
-
-9. [Error Handling](error-handling.md)
-   - Compilation Errors
-   - Runtime Errors
-   - Error Reporting
-   - Best Practices
 
 10. [Namespaces](namespaces.md)
     - Namespace Declaration
@@ -66,61 +59,50 @@ BHL is a strongly-typed programming language implemented in .NET, designed for b
     - Namespace Resolution
     - Type Safety
 
-11. [Parallel Execution](parallel.md)
-    - Basic Parallel Blocks
-    - Control Flow
-    - Nested Execution
-    - Coroutines Integration
-
-12. [Fibers](fibers.md)
+11. [Fibers](fibers.md)
     - Basic Concepts
     - Fiber Hierarchy
     - Function Pointers
     - Advanced Features
     - Best Practices
 
-13. [Advanced Features](advanced-features.md)
+12. [Advanced Features](advanced-features.md)
     - Imports
     - Type System
     - .NET Interoperability
 
-14. [C# Bindings](csharp-bindings.md)
+13. [C# Bindings](csharp-bindings.md)
     - Native Class Bindings
     - Fields and Methods
     - Error Handling
     - Best Practices
 
-15. [Standard Library](standard-library.md)
+14. [Standard Library](standard-library.md)
     - Core Module (std)
     - IO Module (std/io)
     - Custom Modules
 
-16. [Defer Statement](defer.md)
+15. [Defer Statement](defer.md)
     - Basic Usage
     - Key Features
     - Best Practices
 
-17. [Imports](imports.md)
+16. [Imports](imports.md)
     - Module System
     - Import Rules
     - Best Practices
 
-18. [Static Functions](static-functions.md)
-    - Module-level Functions
-    - Scope Rules
-    - Best Practices
-
-19. [Operator Overloading](operator-overloading.md)
+17. [Operator Overloading](operator-overloading.md)
     - Supported Operators
     - Implementation Rules
     - Common Patterns
 
-20. [Enums](enums.md)
+18. [Enums](enums.md)
     - Definition and Usage
     - Type Conversion Rules
     - Common Issues
 
-21. [Yield](yield.md)
+19. [Yield](yield.md)
     - Coroutine Basics
     - Yield Variants
     - Common Patterns

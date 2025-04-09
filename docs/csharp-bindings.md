@@ -217,8 +217,6 @@ delegate(VM.Frame frm, Val ctx, Val[] args, ref Val ret) {
 
 For information about the standard library and built-in modules, see [Standard Library](standard-library.md).
 
-For information about using the BHL VM from C# code, see [VM Usage](vm-usage.md).
-
 ## Example Usage in BHL
 
 After binding, the C# class can be used in BHL like this:
