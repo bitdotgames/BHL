@@ -132,18 +132,3 @@ func createVector() {
     v.y = 2
 }
 ```
-
-## Common Issues
-
-### 1. Invalid Imports
-```bhl
-// This will fail - module doesn't exist
-import "nonexistent"
-```
-
-### 2. Duplicate Imports
-```bhl
-// This will fail - duplicate import
-import "module"
-import "/module"
-```
