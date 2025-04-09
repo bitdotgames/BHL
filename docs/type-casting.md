@@ -251,9 +251,3 @@ Sort(numbers, func bool(int a, int b) {
    - Complex object casts may have runtime overhead
    - String concatenation with implicit casts creates temporary objects
    - Any type operations may have additional overhead
-
-3. Common Pitfalls
-   - Cannot cast between unrelated classes
-   - Array casts require compatible element types
-   - Enum casts require valid enum values
-   - Always validate types when working with any

@@ -16,6 +16,7 @@ This documentation provides a comprehensive guide to the language features and u
    - Variables and Constants
    - Operators
    - Control Flow
+   - Enums
 
 3. [Functions](functions.md)
    - Basic Functions
@@ -61,53 +62,43 @@ This documentation provides a comprehensive guide to the language features and u
     - Namespace Resolution
     - Type Safety
 
-11. [Fibers](fibers.md)
+11. [Defer Statement](defer.md)
+    - Basic Usage
+    - Key Features
+    - Best Practices
+
+13. [Imports](imports.md)
+    - Module System
+    - Import Rules
+    - Best Practices
+
+14. [Operator Overloading](operator-overloading.md)
+    - Supported Operators
+    - Implementation Rules
+    - Common Patterns
+
+15. [Yield](yield.md)
+    - Coroutine Basics
+    - Yield Variants
+    - Common Patterns
+
+16. [Fibers](fibers.md)
     - Basic Concepts
     - Fiber Hierarchy
     - Function Pointers
     - Advanced Features
     - Best Practices
 
-12. [Advanced Features](advanced-features.md)
-    - Imports
-    - Type System
-    - .NET Interoperability
-
-13. [C# Bindings](csharp-bindings.md)
-    - Native Class Bindings
-    - Fields and Methods
-    - Error Handling
-    - Best Practices
-
-14. [Standard Library](standard-library.md)
+17. [Standard Library](standard-library.md)
     - Core Module (std)
     - IO Module (std/io)
     - Custom Modules
 
-15. [Defer Statement](defer.md)
-    - Basic Usage
-    - Key Features
+18. [C# Bindings](csharp-bindings.md)
+    - Native Class Bindings
+    - Fields and Methods
+    - Error Handling
     - Best Practices
-
-16. [Imports](imports.md)
-    - Module System
-    - Import Rules
-    - Best Practices
-
-17. [Operator Overloading](operator-overloading.md)
-    - Supported Operators
-    - Implementation Rules
-    - Common Patterns
-
-18. [Enums](enums.md)
-    - Definition and Usage
-    - Type Conversion Rules
-    - Common Issues
-
-19. [Yield](yield.md)
-    - Coroutine Basics
-    - Yield Variants
-    - Common Patterns
 
 ## Contributing
 
