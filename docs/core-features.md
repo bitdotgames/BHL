@@ -88,8 +88,8 @@ MyClass instance = new MyClass()
 []int numbers = new []int
 
 // Global variables can be imported and used across modules
-// See [Imports](imports.md) for more details
 ```
+See [Imports](imports.md) for more details
 
 Key features of global variables:
 - Must be initialized at declaration
