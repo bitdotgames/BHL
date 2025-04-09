@@ -237,7 +237,54 @@ Found new target 902! Approaching it.
 ...
 ```
 
-Please note that while BHL works fine under Windows the example assumes you are using \*nix platform.     
+Please note that while BHL works fine under Windows, the example script assumes you are using \*nix platform.
+
+## Examples
+
+BHL comes with example code in the `example` directory that demonstrates key language features:
+
+### Bindings Example
+Located in `example/bindings/`, this example shows:
+- How to integrate BHL with C# code through bindings
+- Using coroutines (`coro func`) for asynchronous behavior
+- Parallel execution with `paral` blocks
+- State management and event handling
+- Function composition with selectors
+
+The example implements a simple AI behavior system with:
+```bhl
+coro func Unit() {
+  Trace("Unit starts...")
+  int state = 0
+  int target_id = 0
+
+  paral {
+    yield RandomStateChanger(ref state)
+    while(true) {
+      paral {
+        yield StateChanged(ref state)
+        yield Selector(
+          [
+            coro func bool() { return yield AttackTarget(ref target_id) },
+            coro func bool() { return yield FindTarget(ref target_id) },
+            coro func bool() { return yield Idle() }
+          ]
+        )
+      }
+      yield()
+    }
+  }
+}
+```
+
+This demonstrates:
+- Coroutines for managing long-running tasks
+- Parallel execution of state changes and behavior selection
+- Reference parameters for state management
+- Composition of behaviors using selector pattern
+- Proper cleanup with defer statements
+
+## Quick Build
 
 
 ## Building
