@@ -1,4 +1,4 @@
-# **B**e**H**avior **L**anguage
+# **B**ehaviour **H**ighlevel **L**anguage
 
 ![CI](https://github.com/bitdotgames/bhl/workflows/CI/badge.svg?branch=master&event=push)
 
@@ -22,6 +22,10 @@ Please note that BHL is in beta state and currently targets only C# platform. No
 * Passing arguments to function by *ref* like in C#
 * Multiple returned values like in Golang
 * Strict control over memory allocations 
+
+## Documentation
+
+For comprehensive documentation of all BHL features and usage, see the [language documentation](docs/README.md).
 
 ## Quick example
 
@@ -248,7 +252,7 @@ You can view all available build tasks with the following command:
 
 ## Tests
 
-For now there is no any documentation for BHL except presentation slides. However, there are many [unit tests](test.cs) which cover all BHL features.
+There are many [unit tests](test.cs) which cover all BHL features.
 
 You can run unit tests by executing the following command:
 
