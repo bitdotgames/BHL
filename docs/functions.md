@@ -14,7 +14,7 @@ func void PrintMessage(string msg) {
 }
 ```
 
-## Variadic Functions
+## Function Variadic Arguments
 
 BHL supports variadic functions that can accept a variable number of arguments:
 
