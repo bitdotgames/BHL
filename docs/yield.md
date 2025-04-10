@@ -51,23 +51,38 @@ coro func basic() {
 
 ### 2. Yield While
 
-Repeatedly yields while a condition is true:
+`yield while` pauses execution while a condition is true. It's commonly used in parallel blocks for synchronization:
 
 ```bhl
-import "std"
+coro func test() {
+    int i = 0
+    paral {
+        // First branch: wait until i reaches 3
+        yield while(i < 3)
 
-coro func example() {
-    // Yields on each tick, continues loop if condition is true
-    while(yield std.NextTrue()) {
-        trace("Tick")
+        // Second branch: increment i
+        while(true) {
+            i = i + 1
+            yield()
+        }
     }
+    return i
 }
 
-// Also works with do-while
-coro func example2() {
-    do {
-        trace("Tick")
-    } while(yield std.NextTrue())
+// Multiple yield whiles in parallel
+coro func test2() {
+    int i = 0
+    paral {
+        yield while(i < 5)  // First condition
+        while(true) {
+            yield while(i < 7)  // Second condition
+        }
+        while(true) {
+            i = i + 1
+            yield()
+        }
+    }
+    return i
 }
 ```
 

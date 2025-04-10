@@ -137,40 +137,47 @@ coro func ComplexControl() {
 
 ## Control Flow
 
-### Breaking from Parallel Blocks
+### Parallel Block Completion
 
-You can use `break` to exit a parallel block:
+Parallel blocks have specific completion behavior:
+
+1. For `paral` blocks:
+   - When any branch completes its execution, the entire parallel block completes
+   - Other branches are terminated at that point
 
 ```bhl
 coro func test() {
     paral {
         {
-            if(condition) {
-                break
-            }
+            yield wait(1.0)
+            trace("Branch 1 done")  // This will print
         }
         {
-            yield suspend()
+            yield wait(2.0)  // This branch won't complete
+            trace("Branch 2 done")  // This will never print
         }
     }
+    trace("After paral")  // Prints after 1 second
 }
 ```
 
-### Returning from Parallel Blocks
-
-Return statements work within parallel blocks:
+2. For `paral_all` blocks:
+   - All branches must complete their execution before the block completes
+   - The block only finishes when every branch has finished
 
 ```bhl
-func int test() {
-    paral {
+coro func test() {
+    paral_all {
         {
-            return 1  // Returns immediately
+            yield wait(1.0)
+            trace("Branch 1 done")  // Prints after 1 second
         }
         {
-            DoSomething()
+            yield wait(2.0)
+            trace("Branch 2 done")  // Prints after 2 seconds
         }
     }
-    return 0  // Never reached if parallel block returns
+    trace("After paral_all")  // Prints after 2 seconds
 }
 ```
 
