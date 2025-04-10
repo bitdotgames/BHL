@@ -14,6 +14,50 @@ func void PrintMessage(string msg) {
 }
 ```
 
+## Multiple Return Values
+
+BHL functions can return multiple values of different types using comma-separated return types and values:
+
+```bhl
+// Function returning multiple values
+func float,string,int GetValues() {
+    return 100,"foo",3
+}
+
+// Assigning multiple return values
+func test() {
+    float num
+    string str
+    int val
+    num,str,val = GetValues()
+    // num = 100, str = "foo", val = 3
+}
+```
+
+### Important Rules
+
+1. The number of return values must match the number of variables in assignment
+2. Return types must match the variable types exactly
+3. Return values are assigned in order from left to right
+4. All return values must be consumed (assigned to variables)
+5. Type mismatches will cause compilation errors
+
+### Common Patterns
+
+```bhl
+// Returning multiple values of same type
+func float,float GetCoordinates() {
+    return 300,100
+}
+
+// Using subset of return values
+float x,float y = GetCoordinates()
+
+// Mixing with existing variables
+string s
+float a,s = GetStringAndNumber()  // s is reused
+```
+
 ## Function Variadic Arguments
 
 BHL supports variadic functions that can accept a variable number of arguments:
