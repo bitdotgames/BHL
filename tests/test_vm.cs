@@ -3936,6 +3936,50 @@ public class TestVM : BHL_TestBase
       func int test() {
        []int ints = [1, 2]
        foreach(var i in ints) {
+          if(i == 1) {
+            return 20
+          }
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+      func int test() {
+       []int ints = [1, 2]
+       foreach(var i in ints) {
+          if(i == 1) {
+            return 20
+          } else {
+            return 20
+          }
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+      func int test() {
+       []int ints = [1, 2]
+       foreach(var i in ints) {
           return 10
         }
        return 1
