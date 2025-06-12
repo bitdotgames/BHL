@@ -3876,6 +3876,66 @@ public class TestVM : BHL_TestBase
       string bhl = @"
       func int test() {
        for(int i=0;i<10;i++) {
+          if(i == 1) {
+            continue
+          }
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+      func int test() {
+       for(int i=0;i<10;i++) {
+          return 10
+        }
+       return 1
+      }
+      ";
+
+      var vm = MakeVM(bhl);
+      Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    }
+  }
+
+  [Fact]
+  public void TestNonMatchingReturnInForeach()
+  {
+    {
+      string bhl = @"
+      func int test() {
+       []int ints = [1, 2]
+       foreach(var i in ints) {
+          if(i == 1) {
+            continue
+          }
+          return 10
+        }
+      }
+      ";
+
+      AssertError<Exception>(
+        delegate() { 
+          Compile(bhl);
+        },
+        "matching 'return' statement not found"
+      );
+    }
+
+    {
+      string bhl = @"
+      func int test() {
+       []int ints = [1, 2]
+       foreach(var i in ints) {
           return 10
         }
        return 1

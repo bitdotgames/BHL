@@ -5611,6 +5611,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     local_scope.Exit();
     PopScope();
 
+    BlockResetsCurrentFunctionReturnInfo();
+
     return null;
   }
 
