@@ -3192,9 +3192,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     AST_Literal ast = null;
 
-    LSP_AddSemanticToken(ctx.number(), SemanticToken.Number);
-
     var number = ctx.number();
+
+    LSP_AddSemanticToken(number, SemanticToken.Number);
+
     var int_num = number.INT();
     var flt_num = number.FLOAT();
     var hex_num = number.HEX();
@@ -5883,6 +5884,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var interval = tree.SourceInterval;
     var a = tokens.Get(interval.a);
     var b = tokens.Get(interval.b);
+
+    //let's ignore any invalid stuff
+    if(a.Line <= 0 || b.Line <= 0 || 
+        a.Column <= 0 || b.Column <= 0)
+      return;
 
     if(a.Line != b.Line)
       throw new Exception("Multiline semantic tokens not supported");
