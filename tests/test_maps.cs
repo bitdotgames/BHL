@@ -897,7 +897,7 @@ public class TestMaps : BHL_TestBase
     
     //removing an item still releases it
     map.Remove(k1);
-    Assert.Equal(1, map.Count);
+    Assert.Single(map);
     Assert.Equal(10, map[k2].num);
 
     map.Release();

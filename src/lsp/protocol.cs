@@ -1037,7 +1037,9 @@ public class CompletionClientCapabilities
    * The client supports the following `CompletionItem` specific
    * capabilities.
    */
+#nullable enable
   public CompletionItemCapability? completionItem;
+#nullable disable
   
   //public completionItemKind?: {
   //    /**
@@ -1907,7 +1909,9 @@ public class CompletionItem
    * A human-readable string with additional information
    * about this item, like type or symbol information.
    */
+#nullable enable
   public string? detail;
+#nullable disable
 
   /**
    * A human-readable string that represents a doc-comment.
@@ -2002,7 +2006,9 @@ public class CompletionItem
    * 
    *  @since 3.16.0 additional type `InsertReplaceEdit`
    */
+#nullable enable
   public EitherType<TextEdit, InsertReplaceEdit>? textEdit;
+#nullable disable
 
   /**
    *  An optional array of additional text edits that are applied when
@@ -2028,7 +2034,9 @@ public class CompletionItem
    * * *Note* that additional modifications to the current document should be
    * * described with the additionalTextEdits-property.
    */
+#nullable enable
   public Command? command;
+#nullable disable
 
   /**
    * A data entry field that is preserved on a completion item between
