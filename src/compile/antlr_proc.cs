@@ -2590,6 +2590,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public override object VisitExpYieldCall(bhlParser.ExpYieldCallContext ctx)
   {
+    LSP_AddSemanticToken(ctx.YIELD(), SemanticToken.Keyword);
+
     var exp_type = ProcFuncCallExp(ctx, ctx.chainExp(), yielded: true);
     Annotate(ctx).eval_type = exp_type;
     return null;
