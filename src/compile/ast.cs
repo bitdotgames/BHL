@@ -177,6 +177,8 @@ public enum EnumBinaryOp
   NQ = 13,
   BIT_OR = 14,
   BIT_AND = 15,
+  BIT_SHR = 16,
+  BIT_SHL = 17,
 }
 
 public class AST_BinaryOpExp  : AST_Tree 

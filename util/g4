@@ -1,2 +1,21 @@
-export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"
-java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool $*
+#!/bin/bash
+
+ANTLR=4.13.1
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+DOWNLOAD_URL="https://www.antlr.org/download/antlr-$ANTLR-complete.jar"
+JAR=$DIR/antlr-$ANTLR-complete.jar
+
+if [ ! -f "$JAR" ]; then
+    echo "ANTLR jar not found. Downloading..."
+    wget "$DOWNLOAD_URL" -O "$JAR"
+    
+    if [ $? -eq 0 ]; then
+        echo "Download completed successfully."
+    else
+        echo "Download failed. Please check your internet connection and the URL."
+        exit 1
+    fi
+fi
+
+export CLASSPATH=".:$JAR:$CLASSPATH"
+java -Xmx500M -cp "$JAR:$CLASSPATH" $*

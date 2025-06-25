@@ -41,6 +41,8 @@ LAND : '&&' ;
 BOR : '|' ;
 BAND : '&' ;
 BNOT : '~' ;
+SHR : '>>' ;
+SHL : '<<' ;
 INC : '++' ;
 DEC : '--' ;
 SINC : '+=' ;

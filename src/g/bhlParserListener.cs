@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from bhlParser.g by ANTLR 4.13.1
+// Generated from ./grammar/bhlParser.g by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162

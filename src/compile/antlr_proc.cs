@@ -3107,7 +3107,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.operatorBitwise(), SemanticToken.Operator);
 
-    var ast = new AST_BinaryOpExp(ctx.operatorBitwise().BOR() != null ? EnumBinaryOp.BIT_OR : EnumBinaryOp.BIT_AND, ctx.Start.Line);
+    EnumBinaryOp op = default;
+    if(ctx.operatorBitwise().BOR() != null)
+      op = EnumBinaryOp.BIT_OR;
+    else if(ctx.operatorBitwise().BAND() != null)
+      op = EnumBinaryOp.BIT_AND;
+    else if(ctx.operatorBitwise().SHR() != null)
+      op = EnumBinaryOp.BIT_SHR;
+    else if(ctx.operatorBitwise().SHL() != null)
+      op = EnumBinaryOp.BIT_SHL;
+    else 
+      throw new Exception("Unexpected token");
+
+    var ast = new AST_BinaryOpExp(op, ctx.Start.Line);
     var exp_0 = ctx.exp(0);
     var exp_1 = ctx.exp(1);
 

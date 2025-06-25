@@ -15,6 +15,7 @@ BenchmarkDotNet.Artifacts/
 *.bhc
 *.meta
 *.sln.DotSettings.user
+util/antlr*.jar
 
 .idea
 .dotnet

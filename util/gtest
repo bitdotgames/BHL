@@ -1,8 +1,1 @@
-mkdir -p tmp
-cp ../bhl.g tmp/
-cp test.bhl tmp/
-cp g4 tmp/
-cp grun tmp/
-cd tmp
-export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"
-./g4 bhl.g && javac bhl*.java && ./grun bhl program -tree < test.bhl
+./g4 org.antlr.v4.Tool $1 && javac bhl*.java && ./g4 org.antlr.v4.gui.TestRig bhl program -tree < $2

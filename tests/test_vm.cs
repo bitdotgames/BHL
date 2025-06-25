@@ -1528,6 +1528,72 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestBitShiftRight()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 2 >> 1
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .EmitThen(Opcodes.BitShr)
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    Assert.Equal(2, c.compiled.constants.Length);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(1, fb.result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBitShiftLeft()
+  {
+    string bhl = @"
+    func int test()
+    {
+      return 1 << 2
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected = 
+      new ModuleCompiler()
+      .UseCode()
+      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
+      .EmitThen(Opcodes.BitShl)
+      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+      .EmitThen(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    Assert.Equal(2, c.compiled.constants.Length);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(4, fb.result.PopRelease().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestMod()
   {
     string bhl = @"

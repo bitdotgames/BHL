@@ -318,7 +318,7 @@ assignExp
   ;
   
 operatorBitwise
-  : BOR | BAND
+  : BOR | BAND | SHR | SHL
   ;
 
 operatorIncDec

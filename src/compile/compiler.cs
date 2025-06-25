@@ -327,6 +327,16 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.BitShr
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.BitShl
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Mod
       )
     );
@@ -1546,6 +1556,14 @@ public class ModuleCompiler : AST_Visitor
       case EnumBinaryOp.BIT_OR:
         VisitChildren(ast);
         Emit(Opcodes.BitOr, null, ast.line_num);
+      break;
+      case EnumBinaryOp.BIT_SHR:
+        VisitChildren(ast);
+        Emit(Opcodes.BitShr, null, ast.line_num);
+      break;
+      case EnumBinaryOp.BIT_SHL:
+        VisitChildren(ast);
+        Emit(Opcodes.BitShl, null, ast.line_num);
       break;
       case EnumBinaryOp.MOD:
         VisitChildren(ast);

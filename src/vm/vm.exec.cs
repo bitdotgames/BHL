@@ -274,6 +274,8 @@ public partial class VM : INamedResolver
         case Opcodes.Or:
         case Opcodes.BitAnd:
         case Opcodes.BitOr:
+        case Opcodes.BitShr:
+        case Opcodes.BitShl:
         case Opcodes.Equal:
         case Opcodes.NotEqual:
         case Opcodes.LT:
@@ -893,6 +895,12 @@ public partial class VM : INamedResolver
       break;
       case Opcodes.BitOr:
         stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
+      break;
+      case Opcodes.BitShr:
+        stack.Push(Val.NewNum(this, (int)l_operand._num >> (int)r_operand._num));
+      break;
+      case Opcodes.BitShl:
+        stack.Push(Val.NewNum(this, (int)l_operand._num << (int)r_operand._num));
       break;
       case Opcodes.Mod:
         stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));

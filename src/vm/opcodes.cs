@@ -71,6 +71,10 @@ public enum Opcodes
   ArrIdxW               = 84,
   ArrAddInplace         = 85,  //TODO: used for json alike array initialization,   
                                //      can be replaced with more low-level opcodes?
+
+  BitShr                = 86,
+  BitShl                = 87,
+                               
   MapIdx                = 91,
   MapIdxW               = 92,
   MapAddInplace         = 93,  //TODO: used for json alike array initialization,   
