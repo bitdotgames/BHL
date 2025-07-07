@@ -140,6 +140,7 @@ public partial class VM : INamedResolver
       fb.refs = -1;
 
       fb.Clear();
+      fb.vm.fibers.Remove(fb);
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
