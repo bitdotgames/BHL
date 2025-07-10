@@ -342,6 +342,7 @@ public partial class VM : INamedResolver
 
   int fibers_ids = 0;
   List<Fiber> fibers = new List<Fiber>();
+  public IReadOnlyList<Fiber> Fibers => fibers;
   public Fiber last_fiber = null;
 
   [Flags]

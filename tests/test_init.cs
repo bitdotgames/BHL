@@ -125,6 +125,25 @@ public class TestInit : BHL_TestBase
   }
 
   [Fact]
+  public void TestInitFuncFiberIsDetached()
+  {
+    string bhl = @"
+    static func init()
+    {
+    }
+
+    func test()
+    {
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(0, vm.Fibers.Count);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestSeveralModulesInit()
   {
     string file_foo = @"
