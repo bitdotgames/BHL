@@ -817,7 +817,7 @@ public partial class VM : INamedResolver
       fs = fs,
       ip = fs.ip_addr
     };
-    var fb = Start(addr);
+    var fb = Start(addr, 0, default, FiberOptions.Detach);
     if(Tick(fb))
       throw new Exception("Module '" + module.name + "' init function is still running");
   }
