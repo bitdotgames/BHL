@@ -9,7 +9,7 @@ public class BHL_TestBase
 {
   public const string TestModuleName = "";
 
-  protected void BindMin(Types ts)
+  protected static void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
@@ -40,7 +40,7 @@ public class BHL_TestBase
     }
   }
 
-  public void BindIntStruct(Types ts)
+  public static void BindIntStruct(Types ts)
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
@@ -762,7 +762,7 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
+  public static void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
   {
     //forced cleanup of module globals
     vm.UnloadModules();
