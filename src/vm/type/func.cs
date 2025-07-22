@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace bhl {
@@ -57,23 +58,30 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     Update();
   }
 
+  [ThreadStatic] static StringBuilder _signature_buf;
+
   void Update()
   {
-    string buf = 
-      "func " + ret_type + "("; 
-    if(attribs.HasFlag(FuncSignatureAttrib.Coro))
-      buf = "coro " + buf;
+    if(_signature_buf == null)
+      _signature_buf = new StringBuilder();
+
+    _signature_buf.Append("func ");
+    _signature_buf.Append(ret_type.ToString());
+    _signature_buf.Append('(');
+    if((attribs & FuncSignatureAttrib.Coro) != 0)
+      _signature_buf.Insert(0, "coro ");
     for(int i=0;i<arg_types.Count;++i)
     {
       if(i > 0)
-        buf += ",";
-      if(attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == arg_types.Count-1)
-        buf += "...";
-      buf += arg_types[i];
+        _signature_buf.Append(',');
+      if((attribs & FuncSignatureAttrib.VariadicArgs) != 0 && i == arg_types.Count-1)
+        _signature_buf.Append("...");
+      _signature_buf.Append(arg_types[i].ToString());
     }
-    buf += ")";
+    _signature_buf.Append(')');
 
-    name = buf;
+    name = _signature_buf.ToString();
+    _signature_buf.Clear();
   }
 
   public uint ClassId()
