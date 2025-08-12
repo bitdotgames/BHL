@@ -15,6 +15,7 @@
 //
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Text;
 
@@ -22,9 +23,10 @@ namespace bhl.MsgPack
 {
 	public class MsgPackReader
 	{
-		Stream _strm;
+		readonly Stream _strm;
 		byte[] _tmp0 = new byte[8];
 		byte[] _tmp1 = new byte[8];
+		readonly byte[] _singleByte = new byte[1];
 
 		Encoding _encoding = Encoding.UTF8;
 		//Decoder _decoder = Encoding.UTF8.GetDecoder ();
@@ -83,7 +85,9 @@ namespace bhl.MsgPack
 
 		public bool IsRaw ()
 		{
-			return this.Type == TypePrefixes.FixRaw || this.Type == TypePrefixes.Raw16 || this.Type == TypePrefixes.Raw32;
+			return this.Type == TypePrefixes.FixRaw || this.Type == TypePrefixes.Raw8 || this.Type == TypePrefixes.Raw16 || this.Type == TypePrefixes.Raw32 ||
+			                                           this.Type == TypePrefixes.Bin8 || this.Type == TypePrefixes.Bin16 || this.Type == TypePrefixes.Bin32
+			;
 		}
 
 		public bool IsArray ()
@@ -99,7 +103,7 @@ namespace bhl.MsgPack
 		public bool Read ()
 		{
 			byte[] tmp0 = _tmp0, tmp1 = _tmp1;
-			int x = _strm.ReadByte ();
+			int x = ReadStreamByteNoAlloc();
 			if (x < 0)
 				return false; // EOS
 			
@@ -162,7 +166,7 @@ namespace bhl.MsgPack
 					ValueUnsigned = (uint)ValueSigned;
 					break;
 				case TypePrefixes.UInt8:
-					x = _strm.ReadByte ();
+					x = ReadStreamByteNoAlloc();
 					if (x < 0)
 						throw new FormatException ();
 					ValueUnsigned = (uint)x;
@@ -183,7 +187,7 @@ namespace bhl.MsgPack
 					ValueUnsigned64 = ((ulong)tmp0[0] << 56) | ((ulong)tmp0[1] << 48) | ((ulong)tmp0[2] << 40) | ((ulong)tmp0[3] << 32) | ((ulong)tmp0[4] << 24) | ((ulong)tmp0[5] << 16) | ((ulong)tmp0[6] << 8) | (ulong)tmp0[7];
 					break;
 				case TypePrefixes.Int8:
-					x = _strm.ReadByte ();
+					x = ReadStreamByteNoAlloc();
 					if (x < 0)
 						throw new FormatException ();
 					ValueSigned = (sbyte)x;
@@ -210,7 +214,14 @@ namespace bhl.MsgPack
 				case TypePrefixes.FixMap:
 					Length = (uint)(x & 0xf);
 					break;
+				case TypePrefixes.Raw8:
+				case TypePrefixes.Bin8:
+					if (_strm.Read (tmp0, 0, 1) != 1)
+						throw new FormatException ();
+					Length = (uint)tmp0[0];
+					break;
 				case TypePrefixes.Raw16:
+				case TypePrefixes.Bin16:
 				case TypePrefixes.Array16:
 				case TypePrefixes.Map16:
 					if (_strm.Read (tmp0, 0, 2) != 2)
@@ -218,6 +229,7 @@ namespace bhl.MsgPack
 					Length = ((uint)tmp0[0] << 8) | (uint)tmp0[1];
 					break;
 				case TypePrefixes.Raw32:
+				case TypePrefixes.Bin32:
 				case TypePrefixes.Array32:
 				case TypePrefixes.Map32:
 					if (_strm.Read (tmp0, 0, 4) != 4)
@@ -242,17 +254,33 @@ namespace bhl.MsgPack
 
 		public string ReadRawString (byte[] buf)
 		{
-			if (this.Length < buf.Length) {
-				if (ReadValueRaw (buf, 0, (int)this.Length) != this.Length)
+			int length = (int)this.Length;
+			if (length < buf.Length) {
+				if (ReadValueRaw (buf, 0, length) != length)
 					throw new FormatException ();
-				return _encoding.GetString (buf, 0, (int)this.Length);
+				return _encoding.GetString (buf, 0, length);
 			}
 
 			// Poor implementation
-			byte[] tmp = new byte[(int)this.Length];
-			if (ReadValueRaw (tmp, 0, tmp.Length) != tmp.Length)
-				throw new FormatException ();
-			return _encoding.GetString (tmp);
+			byte[] tmp = ArrayPool<byte>.Shared.Rent(length);
+			try
+			{
+				if (ReadValueRaw (tmp, 0, length) != length)
+					throw new FormatException ();
+				return _encoding.GetString (tmp, 0, length);
+			}
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(tmp);
+			}
+		}
+
+		int ReadStreamByteNoAlloc() 
+		{
+			int bytesRead = _strm.Read(_singleByte, 0, 1);
+			if(bytesRead < 1)
+				return -1;
+			return _singleByte[0];
 		}
 	}
 }
