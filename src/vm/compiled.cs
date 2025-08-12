@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.IO;
 using System.Collections.Generic;
 using bhl.marshall;
@@ -40,6 +41,12 @@ public class Ip2SrcLine
         return Search(ip, mid + 1, r);
     }
     return -1;
+  }
+
+  public void EnsureCapacity(int capacity)
+  {
+    ips.Capacity = capacity;
+    lines.Capacity = capacity;
   }
 }
 
@@ -158,10 +165,12 @@ public class CompiledModule
         type_refs_offsets.Add(r.ReadInt32());
 
       int type_refs_len = r.ReadInt32();
-      type_refs_bytes = r.ReadBytes(type_refs_len);
+      type_refs_bytes = ArrayPool<byte>.Shared.Rent(type_refs_len);
+      r.Read(type_refs_bytes, 0, type_refs_len);
 
       int symb_len = r.ReadInt32();
-      symb_bytes = r.ReadBytes(symb_len);
+      symb_bytes = ArrayPool<byte>.Shared.Rent(symb_len);
+      r.Read(symb_bytes, 0, symb_len);
 
       int initcode_len = r.ReadInt32();
       if(initcode_len > 0)
@@ -173,12 +182,16 @@ public class CompiledModule
 
       constants_len = r.ReadInt32();
       if(constants_len > 0)
-        constant_bytes = r.ReadBytes(constants_len);
+      {
+        constant_bytes = ArrayPool<byte>.Shared.Rent(constants_len);
+        r.Read(constant_bytes, 0, constants_len);
+      }
 
       total_gvars_num = r.ReadInt32();
       local_gvars_num = r.ReadInt32();
 
       int ip2src_line_len = r.ReadInt32();
+      ip2src_line.EnsureCapacity(ip2src_line_len);
       for(int i=0;i<ip2src_line_len;++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
@@ -200,10 +213,18 @@ public class CompiledModule
     module.ns.Link(types.ns);
     module.local_gvars_mark = local_gvars_num;
 
-    var constants = new Const[constants_len];
-    
+    Const[] constants;
+
     if(constants_len > 0)
-      ReadConstants(constant_bytes, constants);
+    {
+      ReadConstants(constant_bytes, out constants);
+      ArrayPool<byte>.Shared.Return(constant_bytes);
+    }
+    else
+      constants = Array.Empty<Const>();
+    
+    ArrayPool<byte>.Shared.Return(symb_bytes);
+    ArrayPool<byte>.Shared.Return(type_refs_bytes);
 
     var compiled = new CompiledModule(
         init_func_idx,
@@ -221,12 +242,13 @@ public class CompiledModule
     return module;
   }
 
-  static void ReadConstants(byte[] constant_bytes, Const[] constants)
+  static void ReadConstants(byte[] constant_bytes, out Const[] constants)
   {
     var src = new MemoryStream(constant_bytes); 
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
     {
       int constants_num = r.ReadInt32();
+      constants = new Const[constants_num];
       for(int i=0;i<constants_num;++i)
       {
         Const cn = null;
