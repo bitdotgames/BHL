@@ -23,9 +23,10 @@ namespace bhl.MsgPack
 {
 	public class MsgPackReader
 	{
-		Stream _strm;
+		readonly Stream _strm;
 		byte[] _tmp0 = new byte[8];
 		byte[] _tmp1 = new byte[8];
+		readonly byte[] _singleByte = new byte[1];
 
 		Encoding _encoding = Encoding.UTF8;
 		//Decoder _decoder = Encoding.UTF8.GetDecoder ();
@@ -273,8 +274,6 @@ namespace bhl.MsgPack
 				ArrayPool<byte>.Shared.Return(tmp);
 			}
 		}
-
-		[ThreadStatic] static byte[] _singleByte = new byte[1];
 
 		int ReadStreamByteNoAlloc() 
 		{
