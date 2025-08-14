@@ -13,6 +13,7 @@ FOR %%f in (%BHL_DLL%) do set BHL_DLL_T=%%~tf
 IF %BHL_DLL_T:~0, 10% LSS %VERS_T:~0, 10% GOTO :BUILD
 
 :BUILD
+dotnet clean %DIR%\bhl.csproj
 dotnet publish %DIR%\bhl.csproj || GOTO :ERROR
 
 :RUN

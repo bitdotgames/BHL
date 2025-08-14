@@ -114,6 +114,14 @@ public static partial class Tasks
         tm.NeedToRegen(result_dll, files) ||
         tm.NeedToRegen(result_dll, deps))
     {
+      try
+      {
+        //let's clean stuff for sure
+        tm.Shell("dotnet", "clean --framework " + framework + " " + csproj_file);
+      }
+      catch (Exception)
+      {}
+
       string args = "build --no-restore --framework " + framework + " " + csproj_file + " -o " + result;
       try
       {
