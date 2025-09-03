@@ -7,6 +7,8 @@ using Antlr4.Runtime.Atn;
 using Mono.Options;
 using ThreadTask = System.Threading.Tasks.Task;
 
+#pragma warning disable CS8981
+
 namespace bhl {
     
 public static partial class Tasks

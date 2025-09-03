@@ -85,8 +85,13 @@ public static class ErrorUtils
 
   public static void OutputError(string file, int line, int char_pos, string text)
   {
-    Console.Error.WriteLine(ShowErrorPlace(File.ReadAllText(file), new SourceRange(line, char_pos)));
-    Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": " + text);
+    if(File.Exists(file))
+    {
+      Console.Error.WriteLine(ShowErrorPlace(File.ReadAllText(file), new SourceRange(line, char_pos)));
+      Console.Error.WriteLine("bhl: " + file + ":" + line + ":" + char_pos + ": " + text);
+    }
+    else //it can be a generic error non related to any source .bhl file
+      Console.Error.WriteLine(text);
   }
 }
 

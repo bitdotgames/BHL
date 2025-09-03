@@ -5,6 +5,8 @@ using Mono.Options;
 using bhl.lsp;
 using ThreadTask = System.Threading.Tasks.Task;
 
+#pragma warning disable CS8981
+
 namespace bhl {
 
 public static partial class Tasks

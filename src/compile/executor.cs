@@ -197,7 +197,7 @@ public class CompilationExecutor
 
     try
     {
-      pipeline.RunAsync(conf, default);
+      await pipeline.RunAsync(conf, default);
     }
     catch (TooManyErrorsException)
     {}

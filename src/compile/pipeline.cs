@@ -18,7 +18,7 @@ public interface IPipelineStage<TIn, TOut> :  IPipelineStageBase
 public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TOut>>
 {
   private readonly Func<TIn, CancellationToken, Task<TOut>> _worker;
-  private readonly IProgress<(int done, int total)>? _progress;
+  private readonly IProgress<(int done, int total)> _progress;
 
   private readonly string _name;
   public string Name => _name;
@@ -26,7 +26,7 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
   public ParallelStage(
       string name,
       Func<TIn, CancellationToken, Task<TOut>> worker,
-      IProgress<(int, int)>? progress = null)
+      IProgress<(int, int)> progress = null)
   {
     _name = name;
     _worker = worker;
@@ -123,7 +123,7 @@ public class Pipeline<TIn, TOut>
     {
       var sw = Stopwatch.StartNew();
       dynamic _stage = stage;
-      current = await _stage.RunAsync((dynamic)current, token);
+      current = await _stage.Run((dynamic)current, token);
       sw.Stop();
       _logger.Log(1, $"{stage.Name} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
