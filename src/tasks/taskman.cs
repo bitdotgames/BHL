@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
   
@@ -92,7 +93,7 @@ public class Taskman
     return null;
   }
 
-  public void Run(string[] args)
+  public ThreadTask Run(string[] args)
   {
     if(args.Length == 0)
       throw new Exception("No task specified");
@@ -105,22 +106,22 @@ public class Taskman
 
     var task_args = args.ToList();
     task_args.RemoveAt(0);
-    Invoke(task, task_args.ToArray());
+    return Invoke(task, task_args.ToArray());
   }
 
-  public void Invoke(Task task, string[] task_args)
+  public async ThreadTask Invoke(Task task, string[] task_args)
   {
     if(invoked.Contains(task))
       return;
     invoked.Add(task);
 
     foreach(var dep in task.Deps)
-      Invoke(dep, new string[] { });
+      await Invoke(dep, new string[] { });
 
     Echo($"***** BHL '{task.Name}' start *****");
     var sw = new Stopwatch();
     sw.Start();
-    task.func.Invoke(null, new object[] { this, task_args });
+    await ((ThreadTask)task.func.Invoke(null, new object[] { this, task_args }));
     var elapsed = Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2);
     Echo($"***** BHL '{task.Name}' done({elapsed} sec.) *****");
   }

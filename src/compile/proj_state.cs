@@ -17,6 +17,8 @@ public class ProjectCompilationStateBundle
 
   public Types types;
   
+  public List<CompilationExecutor.ParseWorker> parse_workers;
+  
   public Dictionary<string, InterimParseResult> file2parsed = new Dictionary<string, InterimParseResult>();
   
   public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();

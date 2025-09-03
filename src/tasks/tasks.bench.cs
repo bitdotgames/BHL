@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Atn;
 using Mono.Options;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
     
@@ -19,7 +20,7 @@ public static partial class Tasks
   }
   
   [Task]
-  public static void bench(Taskman tm, string[] args)
+  public static ThreadTask bench(Taskman tm, string[] args)
   {
     if (args.Length == 0)
       throw new Exception("No arguments");
@@ -59,6 +60,8 @@ public static partial class Tasks
 
     foreach (var file in files)
       BenchFile(file, iterations, defines, profile, fast);
+    
+    return ThreadTask.CompletedTask;
   }
 
   static void BenchFile(

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Mono.Options;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
 
@@ -16,7 +17,7 @@ public static partial class Tasks
   }
 
   [Task]
-  public static void run(Taskman tm, string[] args)
+  public static async ThreadTask run(Taskman tm, string[] args)
   {
     var files = new List<string>();
 
@@ -67,7 +68,7 @@ public static partial class Tasks
     conf.postproc = new EmptyPostProcessor();
 
     var cmp = new CompilationExecutor();
-    var errors = cmp.Exec(conf);
+    var errors = await cmp.Exec(conf);
 
     if(errors.Count > 0)
     {

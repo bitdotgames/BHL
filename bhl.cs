@@ -1,20 +1,21 @@
 using System.Reflection;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
 
 public static class BHLBuild
 {
-  public static void Main(string[] args)
+  public static async ThreadTask Main(string[] args)
   {
     var tm = new Taskman(typeof(Tasks));
     try
     {
-      tm.Run(args);
+      await tm.Run(args);
     }
-    catch (TargetInvocationException e)
+    catch(TargetInvocationException e)
     {
-      if (e.InnerException is ShellException)
-        System.Environment.Exit((e.InnerException as ShellException).code);
+      if(e.InnerException is ShellException se)
+        System.Environment.Exit(se.code);
       else
         throw;
     }

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using Mono.Options;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
 
@@ -17,7 +18,7 @@ public static partial class Tasks
   }
 
   [Task]
-  public static void compile(Taskman tm, string[] args)
+  public static ThreadTask compile(Taskman tm, string[] args)
   {
     string proj_file;
     var runtime_args = GetProjectArg(args, out proj_file);
@@ -63,10 +64,10 @@ public static partial class Tasks
       runtime_args.Add($"--postproc-dll={postproc_dll_path}");
     }
 
-    _compile(tm, runtime_args.ToArray());
+    return _compile(tm, runtime_args.ToArray());
   }
   
-  static void _compile(Taskman tm, string[] args)
+  static async ThreadTask _compile(Taskman tm, string[] args)
   {
     var files = new List<string>();
 
@@ -175,7 +176,7 @@ public static partial class Tasks
     conf.postproc = postproc;
 
     var cmp = new CompilationExecutor();
-    var errors = cmp.Exec(conf);
+    var errors = await cmp.Exec(conf);
     if(errors.Count > 0)
     {
       if(string.IsNullOrEmpty(proj.error_file))

@@ -3,13 +3,14 @@ using System.Text;
 using System.Threading;
 using Mono.Options;
 using bhl.lsp;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
 
 public static partial class Tasks
 {
   [Task]
-  static public void lsp(Taskman tm, string[] args)
+  public static async ThreadTask lsp(Taskman tm, string[] args)
   {
     string log_file_path = "";
 
@@ -44,7 +45,7 @@ public static partial class Tasks
     try
     {
       srv.AttachAllServices();
-      srv.Start(cts.Token).GetAwaiter().GetResult();
+      await srv.Start(cts.Token);
     }
     catch (Exception e)
     {

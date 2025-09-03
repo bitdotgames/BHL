@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Mono.Options;
+using ThreadTask = System.Threading.Tasks.Task;
 
 namespace bhl {
   
@@ -21,13 +22,14 @@ public static partial class Tasks
   const int ERROR_EXIT_CODE = 2;
   
   [Task(verbose: false)]
-  public static void version(Taskman tm, string[] args)
+  public static ThreadTask version(Taskman tm, string[] args)
   {
     Console.WriteLine(bhl.Version.Name);
+    return ThreadTask.CompletedTask;
   }
   
   [Task(verbose: false)]
-  public static void help(Taskman tm, string[] args)
+  public static ThreadTask help(Taskman tm, string[] args)
   {
     Console.WriteLine("BHL build tool version " + bhl.Version.Name + "\n");
     Console.WriteLine("Available tasks:");
@@ -37,10 +39,12 @@ public static partial class Tasks
     
     foreach(var t in tasks)
       Console.WriteLine(" " + t.Name);
+    
+    return ThreadTask.CompletedTask;
   }
 
   [Task]
-  public static void clean(Taskman tm, string[] args)
+  public static ThreadTask clean(Taskman tm, string[] args)
   {
     //touching version file which is used for detection of bhl dll
     //'staleness' in top level scripts
@@ -48,6 +52,8 @@ public static partial class Tasks
     
     //invoking dotnet clean to remove all build products
     tm.TryShell("dotnet",$"clean {BHL_ROOT}/bhl.csproj");
+    
+    return ThreadTask.CompletedTask;
   }
 
   public static string DotnetBuildLibrary(

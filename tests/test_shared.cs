@@ -940,7 +940,7 @@ public class BHL_TestBase
   //NOTE: returns stream of bhl compiled data
   static public Stream CompileFiles(CompilationExecutor exec, CompileConf conf)
   {
-    var errors = exec.Exec(conf);
+    var errors = exec.Exec(conf).GetAwaiter().GetResult();
     if(errors.Count > 0)
     {
       if(conf.proj.verbosity > 0)
