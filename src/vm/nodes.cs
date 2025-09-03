@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 
+#pragma warning disable CS8981
+
 namespace bhl {
 
 public enum BHS

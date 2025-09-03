@@ -21,7 +21,8 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
   private readonly IProgress<(int done, int total)> _progress;
 
   private readonly string _name;
-  public string Name => _name;
+  private int _total_workers;
+  public string Name => Format(_name);
 
   public ParallelStage(
       string name,
@@ -33,16 +34,21 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
     _progress = progress;
   }
 
+  string Format(string name)
+  {
+    return name.Replace("%workers%", _total_workers.ToString());
+  }
+
   public async Task<List<TOut>> Run(IEnumerable<TIn> inputs, CancellationToken token)
   {
     var input_list = inputs.ToList();
-    int total = input_list.Count;
+    _total_workers = input_list.Count;
     int completed = 0;
 
     var tasks = input_list.Select(async item =>
     {
       var result = await _worker(item, token);
-      _progress?.Report((Interlocked.Increment(ref completed), total));
+      _progress?.Report((Interlocked.Increment(ref completed), _total_workers));
       return result;
     });
 

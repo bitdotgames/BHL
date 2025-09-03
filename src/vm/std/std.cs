@@ -1,5 +1,7 @@
 using System;
 
+#pragma warning disable CS8981
+
 namespace bhl {
 
 public static class std 

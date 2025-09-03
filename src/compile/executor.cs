@@ -106,7 +106,7 @@ public class CompilationExecutor
         MakeParseWorkers
       )
       .Parallel<ParseWorker, ParseWorker>(
-        "BHL parse (workers: %d)",
+        "BHL parse (workers: %workers%)",
         async (worker, token) =>
         {
           await Task.Run(worker.Parse, token);
@@ -118,11 +118,11 @@ public class CompilationExecutor
       )
       //let's create the processed bundle containing already compiled cached modules
       .Transform<List<ParseWorker>, ProjectCompilationStateBundle>(
-        "BHL bundle",
+        "BHL bundle parse result",
         (workers) => MakeStateBundle(conf, workers, errors)
       )
       .Transform<ProjectCompilationStateBundle, ProjectCompilationStateBundle>(
-        "BHL proc",
+        "BHL make AST",
         (bundle) =>
         {
           ANTLR_Processor.ProcessAll(bundle);
@@ -137,7 +137,7 @@ public class CompilationExecutor
         (bundle) => MakeCompilerWorkers(conf, bundle)
       )
       .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
-        "BHL compile process (workers: %d)",
+        "BHL compile proc AST (workers: %workers%)",
         async (worker, token) =>
         {
           await Task.Run(worker.Phase1_ProcessAST, token);
@@ -151,7 +151,7 @@ public class CompilationExecutor
           return workers;
         })
       .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
-        "BHL compile write (workers: %d)",
+        "BHL compile write (workers: %workers%)",
         async (worker, token) =>
         {
           await Task.Run(worker.Phase2_WriteByteCode, token);
