@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace bhl {
 public interface IPipelineStageBase
 {
-  public string Name { get; }
+  public string Title { get; }
 }
 public interface IPipelineStage<TIn, TOut> :  IPipelineStageBase
 { 
@@ -20,23 +20,23 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
   private readonly Func<TIn, CancellationToken, Task<TOut>> _worker;
   private readonly IProgress<(int done, int total)> _progress;
 
-  private readonly string _name;
+  private readonly string _title;
   private int _total_workers;
-  public string Name => Format(_name);
+  public string Title => FormatTitle(_title);
 
   public ParallelStage(
-      string name,
+      string title,
       Func<TIn, CancellationToken, Task<TOut>> worker,
       IProgress<(int, int)> progress = null)
   {
-    _name = name;
+    _title = title;
     _worker = worker;
     _progress = progress;
   }
 
-  string Format(string name)
+  string FormatTitle(string title)
   {
-    return name.Replace("%workers%", _total_workers.ToString());
+    return title?.Replace("%workers%", _total_workers.ToString());
   }
 
   public async Task<List<TOut>> Run(IEnumerable<TIn> inputs, CancellationToken token)
@@ -58,14 +58,14 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
 
 public class TransformStage<TIn, TOut> : IPipelineStage<TIn, TOut>
 {
-  private readonly string _name;
-  public string Name => _name;
+  private readonly string _title;
+  public string Title => _title;
   
   private readonly Func<TIn, TOut> _action;
 
-  public TransformStage(string name, Func<TIn, TOut> action)
+  public TransformStage(string title, Func<TIn, TOut> action)
   {
-    _name = name;
+    _title = title;
     _action = action;
   }
 
@@ -78,14 +78,14 @@ public class TransformStage<TIn, TOut> : IPipelineStage<TIn, TOut>
 
 public class TransformAsyncStage<TIn, TOut> : IPipelineStage<TIn, TOut>
 {
-  private readonly string _name;
-  public string Name => _name;
+  private readonly string _title;
+  public string Title => _title;
   
   private readonly Func<TIn, CancellationToken, Task<TOut>> _action;
 
-  public TransformAsyncStage(string name, Func<TIn, CancellationToken, Task<TOut>> action)
+  public TransformAsyncStage(string title, Func<TIn, CancellationToken, Task<TOut>> action)
   {
-    _name = name;
+    _title = title;
     _action = action;
   }
 
@@ -104,11 +104,11 @@ public class Pipeline<TIn, TOut>
   }
   
   public Pipeline<TIn, TOut> Parallel<TPIn, TPOut>(
-    string name,
+    string title,
     Func<TPIn, CancellationToken, Task<TPOut>> worker
   )
   {
-    _stages.Add(new ParallelStage<TPIn, TPOut>(name, worker));
+    _stages.Add(new ParallelStage<TPIn, TPOut>(title, worker));
     return this;
   }
   
@@ -131,7 +131,8 @@ public class Pipeline<TIn, TOut>
       dynamic _stage = stage;
       current = await _stage.Run((dynamic)current, token);
       sw.Stop();
-      _logger.Log(1, $"{stage.Name} done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      if(!string.IsNullOrEmpty(stage.Title))
+        _logger.Log(1, $"{stage.Title} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     return (TOut)current;

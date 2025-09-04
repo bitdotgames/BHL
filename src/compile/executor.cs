@@ -102,7 +102,7 @@ public class CompilationExecutor
 
     var pipeline = new Pipeline<CompileConf, List<ProcAndCompileWorker>>(conf.logger)
       .Transform<CompileConf, List<ParseWorker>>(
-        "BHL make parse workers",
+        null,
         MakeParseWorkers
       )
       .Parallel<ParseWorker, ParseWorker>(
@@ -112,15 +112,13 @@ public class CompilationExecutor
           await Task.Run(worker.Parse, token);
           return worker;
         })
-      .Transform<List<ParseWorker>, List<ParseWorker>>(
-        "BHL parse finalize",
-        (workers) => ProcessParseWorkers(workers, errors)
-      )
-      //let's create the processed bundle containing already compiled cached modules
       .Transform<List<ParseWorker>, ProjectCompilationStateBundle>(
-        "BHL bundle parse result",
-        (workers) => MakeStateBundle(conf, workers, errors)
-      )
+        "BHL parse finalize",
+        (workers) =>
+        {
+          ProcessParseWorkers(workers, errors);
+          return MakeStateBundle(conf, workers, errors);
+        })
       .Transform<ProjectCompilationStateBundle, ProjectCompilationStateBundle>(
         "BHL make AST",
         (bundle) =>
@@ -133,11 +131,11 @@ public class CompilationExecutor
         }
       )
       .Transform<ProjectCompilationStateBundle, List<ProcAndCompileWorker>>(
-        "BHL make compile workers",
+        null,
         (bundle) => MakeCompilerWorkers(conf, bundle)
       )
       .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
-        "BHL compile proc AST (workers: %workers%)",
+        "BHL compile AST (workers: %workers%)",
         async (worker, token) =>
         {
           await Task.Run(worker.Phase1_ProcessAST, token);
