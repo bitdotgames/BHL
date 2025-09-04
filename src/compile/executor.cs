@@ -185,7 +185,7 @@ public class CompilationExecutor
           return workers;
         })
       .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL postproc",
+        "BHL postproc finalize",
         (workers) =>
         {
           conf.postproc.Tally();
