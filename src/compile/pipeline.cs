@@ -36,7 +36,7 @@ public class ParallelStage<TIn, TOut> : IPipelineStage<IEnumerable<TIn>, List<TO
 
   string FormatTitle(string title)
   {
-    return title?.Replace("%workers%", _total_workers.ToString());
+    return title.Replace("%workers%", _total_workers.ToString());
   }
 
   public async Task<List<TOut>> Run(IEnumerable<TIn> inputs, CancellationToken token)
@@ -131,8 +131,7 @@ public class Pipeline<TIn, TOut>
       dynamic _stage = stage;
       current = await _stage.Run((dynamic)current, token);
       sw.Stop();
-      if(!string.IsNullOrEmpty(stage.Title))
-        _logger.Log(1, $"{stage.Title} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+      _logger.Log(1, $"{stage.Title} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
     }
 
     return (TOut)current;

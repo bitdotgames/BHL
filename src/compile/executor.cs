@@ -102,7 +102,7 @@ public class CompilationExecutor
 
     var pipeline = new Pipeline<CompileConf, List<ProcAndCompileWorker>>(conf.logger)
       .Transform<CompileConf, List<ParseWorker>>(
-        null,
+        "BHL parse init",
         MakeParseWorkers
       )
       .Parallel<ParseWorker, ParseWorker>(
@@ -119,20 +119,18 @@ public class CompilationExecutor
           ProcessParseWorkers(workers, errors);
           return MakeStateBundle(conf, workers, errors);
         })
-      .Transform<ProjectCompilationStateBundle, ProjectCompilationStateBundle>(
-        "BHL make AST",
+      .Transform<ProjectCompilationStateBundle, List<ProcAndCompileWorker>>(
+        "BHL parsed -> AST",
         (bundle) =>
         {
+          //TODO: can it be made parallel?
           ANTLR_Processor.ProcessAll(bundle);
           //NOTE: let's add processors errors to the all errors but continue execution
-          foreach (var kv in bundle.file2proc)
+          foreach(var kv in bundle.file2proc)
             errors.AddRange(kv.Value.result.errors);
-          return bundle;
+
+          return MakeCompilerWorkers(conf, bundle);
         }
-      )
-      .Transform<ProjectCompilationStateBundle, List<ProcAndCompileWorker>>(
-        null,
-        (bundle) => MakeCompilerWorkers(conf, bundle)
       )
       .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
         "BHL compile AST (workers: %workers%)",
@@ -156,9 +154,12 @@ public class CompilationExecutor
           return worker;
         })
       .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL check symbols",
+        "BHL compile finalize",
         (workers) =>
         {
+          foreach(var w in workers)
+            errors.AddRange(w.errors);
+
           if(errors.Count > 0)
             throw new TooManyErrorsException();
 
