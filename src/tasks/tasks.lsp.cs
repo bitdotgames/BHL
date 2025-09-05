@@ -2,7 +2,10 @@ using System;
 using System.Text;
 using System.Threading;
 using Mono.Options;
+using Microsoft.Extensions.Logging;
 using bhl.lsp;
+using Serilog;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
@@ -24,34 +27,31 @@ public static partial class Tasks
     
     p.Parse(args);
 
-    ILogWriter log_writer = 
-      string.IsNullOrEmpty(log_file_path) ? 
-        (ILogWriter)new ConsoleLogger() : 
-        (ILogWriter)new FileLogger(log_file_path);
-
-    var logger = new Logger(1, log_writer);
+    var logger_conf = new LoggerConfiguration()
+      .Enrich.FromLogContext()
+      .MinimumLevel.Verbose();
+    
+    if (!string.IsNullOrEmpty(log_file_path))
+      logger_conf = logger_conf.WriteTo.File(log_file_path/*, rollingInterval: RollingInterval.Day*/);
+    else
+      logger_conf = logger_conf.WriteTo.Console();
+    
+    Log.Logger = logger_conf.CreateLogger();
 
     var workspace = new Workspace();
 
-    Console.OutputEncoding = new UTF8Encoding();
-
-    var stdin = Console.OpenStandardInput();
-    var stdout = Console.OpenStandardOutput();
-    
-    var connection = new ConnectionStdIO(logger, stdout, stdin);
-    
-    var srv = new Server(logger, connection, workspace);
-
     var cts = new CancellationTokenSource();
-    
+
+    var server = await Server.CreateAsync(Log.Logger, workspace, cts.Token);
+    //server.AttachAllServices();
+
     try
     {
-      srv.AttachAllServices();
-      await srv.Start(cts.Token);
+      await server.WaitForExit;
     }
     catch (Exception e)
     {
-      logger.Log(0, e.Message);
+      Log.Logger.Error(e.Message);
       Environment.Exit(-1);
     }
   }

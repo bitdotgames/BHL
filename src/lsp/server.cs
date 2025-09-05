@@ -2,10 +2,17 @@ using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 using Newtonsoft.Json.Linq;
+using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp.proto;
+using Microsoft.Extensions.DependencyInjection;
+using ILogger = Serilog.ILogger;
 
 namespace bhl.lsp {
 
@@ -14,7 +21,6 @@ public class Server
   public IConnection connection { get; private set; }
   public Logger logger { get; private set; }
   public Workspace workspace { get; private set; }
-
   public ServerCapabilities capabilities { get; private set; } = new ServerCapabilities();
 
   public struct ServiceMethod
@@ -298,6 +304,108 @@ public class Server
     }
 
     return null;
+  }
+
+  public static async Task<LanguageServer> CreateAsync(ILogger logger, Workspace workspace, CancellationToken ct)
+  {
+    Console.OutputEncoding = new UTF8Encoding();
+
+    IObserver<WorkDoneProgressReport> work_done = null;
+    
+    var server = await LanguageServer.From(options => options
+      .WithInput(Console.OpenStandardInput())
+      .WithOutput(Console.OpenStandardOutput())
+      .ConfigureLogging(
+        x => x
+          .AddSerilog(logger)
+          .AddLanguageProtocolLogging()
+          .SetMinimumLevel(LogLevel.Trace)
+      )
+      .WithServices(services => 
+        services
+          .AddSingleton(workspace)
+          .AddSingleton(logger)
+        )
+      .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
+      .WithHandler<SemanticTokensHandler>()
+      .OnInitialize(async (server, request, token) =>
+      {
+        var ts = new Types();
+        ProjectConf proj = null;
+        
+        if(request.WorkspaceFolders != null)
+        {
+          logger.Debug("WorkspaceFolders");
+          foreach(var wf in request.WorkspaceFolders)
+          {
+            proj = ProjectConf.TryReadFromDir(wf.Uri.Path);
+            if(proj != null)
+              break;
+          }
+        }
+        else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
+        {
+          logger.Debug("RootUri");
+          proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
+        }
+        else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
+        {
+          logger.Debug("RootPath");
+          proj = ProjectConf.TryReadFromDir(request.RootPath);
+        }                                                                         
+        else
+          logger.Error("No root path specified");
+
+        if(proj == null)
+          proj = new ProjectConf();
+        
+        proj.LoadBindings().Register(ts);
+    
+        workspace.Init(ts, proj);
+
+        //TODO: run it in background?
+        workspace.IndexFiles();
+        
+        var manager = server.WorkDoneManager.For(
+          request, new WorkDoneProgressBegin
+          {
+            Title = "Server is starting...",
+            Percentage = 10,
+          }
+        );
+        work_done = manager;
+        
+        await Task.Delay(500).ConfigureAwait(false);
+        
+        manager.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
+      })
+      .OnInitialized(
+        async (server, request, response, token) =>
+        {
+          work_done.OnNext(
+            new WorkDoneProgressReport
+            {
+              Percentage = 40,
+              Message = "loading almost done",
+            }
+          );
+
+          await Task.Delay(500).ConfigureAwait(false);
+
+          work_done.OnNext(
+            new WorkDoneProgressReport
+            {
+              Message = "loading done",
+              Percentage = 100,
+            }
+          );
+          work_done.OnCompleted();
+        }
+      )
+    , 
+    ct
+    );
+    return server;
   }
 }
 

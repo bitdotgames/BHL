@@ -244,7 +244,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public SemanticToken type_idx;
     public SemanticModifier mods;
   }
-  List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
+  public List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
+  
   List<uint> encoded_semantic_tokens = new List<uint>();
 
   static CommonTokenStream Stream2Tokens(Stream s, ErrorHandlers handlers)

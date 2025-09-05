@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace bhl.lsp {
 
@@ -100,7 +101,7 @@ public class Workspace
     else
       return LoadDocument(uri);
   }
-
+  
   public BHLDocument LoadDocument(proto.Uri uri)
   {
     byte[] buffer = File.ReadAllBytes(uri.path);
