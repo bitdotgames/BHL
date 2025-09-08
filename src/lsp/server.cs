@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -12,7 +13,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp.proto;
 using Microsoft.Extensions.DependencyInjection;
-using ILogger = Serilog.ILogger;
 
 namespace bhl.lsp {
 
@@ -306,27 +306,26 @@ public class Server
     return null;
   }
 
-  public static async Task<LanguageServer> CreateAsync(ILogger logger, Workspace workspace, CancellationToken ct)
+  public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output, Workspace workspace, CancellationToken ct)
   {
     Console.OutputEncoding = new UTF8Encoding();
 
     IObserver<WorkDoneProgressReport> work_done = null;
     
     var server = await LanguageServer.From(options => options
-      .WithInput(Console.OpenStandardInput())
-      .WithOutput(Console.OpenStandardOutput())
+      .WithInput(input)
+      .WithOutput(output)
       .ConfigureLogging(
         x => x
           .AddSerilog(logger)
           .AddLanguageProtocolLogging()
           .SetMinimumLevel(LogLevel.Trace)
       )
+      .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
       .WithServices(services => 
         services
           .AddSingleton(workspace)
-          .AddSingleton(logger)
         )
-      .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
       .WithHandler<SemanticTokensHandler>()
       .OnInitialize(async (server, request, token) =>
       {

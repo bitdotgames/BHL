@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using ILogger = Serilog.ILogger;
+using Microsoft.Extensions.Logging;
 
 namespace bhl.lsp {
 public class SemanticTokensHandler : SemanticTokensHandlerBase
@@ -11,10 +11,11 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
   private readonly ILogger _logger;
   private readonly Workspace _workspace;
 
-  public SemanticTokensHandler(ILogger logger, Workspace workspace)
+  public SemanticTokensHandler(ILogger<SemanticTokensHandler> logger, Workspace workspace)
   {
       _logger = logger;
       _workspace = workspace;
+      _logger.LogDebug("SemanticTokensHandler added");
   }
 
   public override async Task<SemanticTokens?> Handle(
