@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using bhl.marshall;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class TypeRefIndex
 {
   internal List<ProxyType> all = new List<ProxyType>();
-  
-  public int Count {
-    get {
-      return all.Count;
-    }
+
+  public int Count
+  {
+    get { return all.Count; }
   }
 
   bool TryAdd(ProxyType v)
@@ -21,6 +21,7 @@ public class TypeRefIndex
       all.Add(v);
       return true;
     }
+
     return false;
   }
 
@@ -28,7 +29,7 @@ public class TypeRefIndex
   {
     if(!TryAdd(v))
       return;
-    
+
     if(v.Get() is ITypeRefIndexable itr)
       itr.IndexTypeRefs(this);
   }
@@ -45,13 +46,13 @@ public class TypeRefIndex
     else if(s is ITypeRefIndexable itr)
       itr.IndexTypeRefs(this);
   }
-  
+
   public void Index(IList<ProxyType> vs)
   {
     foreach(var v in vs)
       Index(v);
   }
-  
+
   public void Index(IList<Symbol> vs)
   {
     foreach(var v in vs)
@@ -79,9 +80,9 @@ public class TypeRefIndex
   public void SetAt(int idx, ProxyType v)
   {
     //let's fill the gap if any
-    for(int i=all.Count-1; i <= idx; ++i)
+    for(int i = all.Count - 1; i <= idx; ++i)
       all.Add(new ProxyType());
-        
+
     all[idx] = v;
   }
 
@@ -90,7 +91,7 @@ public class TypeRefIndex
     return idx >= 0 && idx < all.Count && !all[idx].IsNull();
   }
 }
-  
+
 public class TypeSet<T> : IMarshallable where T : class, IType
 {
   //TODO: since TypeProxy implements custom Equals we could use HashSet here
@@ -98,14 +99,13 @@ public class TypeSet<T> : IMarshallable where T : class, IType
 
   public int Count
   {
-    get {
-      return list.Count;
-    }
+    get { return list.Count; }
   }
 
   public T this[int index]
   {
-    get {
+    get
+    {
       var tp = list[index];
       var s = (T)tp.Get();
       if(s == null)
@@ -115,7 +115,8 @@ public class TypeSet<T> : IMarshallable where T : class, IType
   }
 
   public TypeSet()
-  {}
+  {
+  }
 
   public bool Add(T t)
   {
@@ -135,10 +136,10 @@ public class TypeSet<T> : IMarshallable where T : class, IType
     list.Clear();
   }
 
-  public void Sync(SyncContext ctx) 
+  public void Sync(SyncContext ctx)
   {
     Marshall.SyncTypeRefs(ctx, list);
   }
 }
-    
+
 }

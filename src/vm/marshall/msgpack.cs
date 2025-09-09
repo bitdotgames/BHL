@@ -1,10 +1,10 @@
-
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 
-namespace bhl.marshall {
-  
+namespace bhl.marshall
+{
+
 public class MsgPackDataWriter : IWriter
 {
   Stream stream;
@@ -13,7 +13,7 @@ public class MsgPackDataWriter : IWriter
 
   public Stream Stream => stream;
 
-  public MsgPackDataWriter(Stream stream) 
+  public MsgPackDataWriter(Stream stream)
   {
     Reset(stream);
   }
@@ -26,11 +26,11 @@ public class MsgPackDataWriter : IWriter
     space.Push(1);
   }
 
-  void DecSpace() 
+  void DecSpace()
   {
     if(space.Count == 0)
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
-    
+
     int left = space.Pop();
     //special 'unspecified' case
     if(left != -1)
@@ -39,10 +39,11 @@ public class MsgPackDataWriter : IWriter
       if(left < 0)
         throw new Error(ErrorCode.NO_RESERVED_SPACE);
     }
+
     space.Push(left);
   }
 
-  public void BeginContainer(int size) 
+  public void BeginContainer(int size)
   {
     DecSpace();
     space.Push(size);
@@ -53,11 +54,11 @@ public class MsgPackDataWriter : IWriter
       io.WriteArrayHeader(size);
   }
 
-  public void EndContainer() 
+  public void EndContainer()
   {
     if(space.Count <= 1)
       throw new Error(ErrorCode.NO_RESERVED_SPACE);
-    
+
     int left = space.Pop();
     //special 'unspecifed' case 
     if(left == -1)
@@ -65,76 +66,76 @@ public class MsgPackDataWriter : IWriter
     if(left != 0)
       throw new Error(ErrorCode.DANGLING_DATA, "Not written items amount: " + left);
   }
-  
-  public void WriteI8(sbyte v) 
-  {
-    io.Write(v);
-    DecSpace();
-  }
- 
-  public void WriteU8(byte v) 
-  {
-    io.Write(v);
-    DecSpace();
-  }
-  
-  public void WriteI16(short v) 
+
+  public void WriteI8(sbyte v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteU16(ushort v) 
+  public void WriteU8(byte v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteI32(int v) 
+  public void WriteI16(short v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteU32(uint v) 
+  public void WriteU16(ushort v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteU64(ulong v) 
+  public void WriteI32(int v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteI64(long v) 
+  public void WriteU32(uint v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteBool(bool v) 
+  public void WriteU64(ulong v)
+  {
+    io.Write(v);
+    DecSpace();
+  }
+
+  public void WriteI64(long v)
+  {
+    io.Write(v);
+    DecSpace();
+  }
+
+  public void WriteBool(bool v)
   {
     io.Write(v ? 1 : 0);
     DecSpace();
   }
 
-  public void WriteFloat(float v) 
+  public void WriteFloat(float v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteDouble(double v) 
+  public void WriteDouble(double v)
   {
     io.Write(v);
     DecSpace();
   }
 
-  public void WriteString(string v) 
+  public void WriteString(string v)
   {
-    if(v == null) 
+    if(v == null)
       io.Write("");
     else
       io.Write(v);
@@ -148,11 +149,11 @@ public class MsgPackDataWriter : IWriter
   }
 }
 
-public class MsgPackDataReader : IReader 
+public class MsgPackDataReader : IReader
 {
   Stream stream;
   bhl.MsgPack.MsgPackReader io;
-  
+
   public Stream Stream => stream;
 
   struct StructPos
@@ -168,9 +169,9 @@ public class MsgPackDataReader : IReader
   }
 
   Stack<StructPos> structs_pos = new Stack<StructPos>();
-  
-  public MsgPackDataReader(Stream _stream) 
-  { 
+
+  public MsgPackDataReader(Stream _stream)
+  {
     Reset(_stream);
   }
 
@@ -189,13 +190,13 @@ public class MsgPackDataReader : IReader
 
   void Next()
   {
-    if(!io.Read()) 
+    if(!io.Read())
       throw new Error(ErrorCode.IO_READ);
-    
+
     MoveSpaceCursor();
   }
 
-  int NextInt() 
+  int NextInt()
   {
     Next();
 
@@ -204,13 +205,13 @@ public class MsgPackDataReader : IReader
     else if(io.IsUnsigned())
       return (int)io.ValueUnsigned;
     else
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
   }
-   
-  bool NextBool() 
+
+  bool NextBool()
   {
     Next();
-    
+
     if(io.IsUnsigned())
       return io.ValueUnsigned != 0;
     else if(io.IsSigned())
@@ -218,10 +219,10 @@ public class MsgPackDataReader : IReader
     else if(io.IsBoolean())
       return (bool)io.ValueBoolean;
     else
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
   }
 
-  long NextLong() 
+  long NextLong()
   {
     Next();
 
@@ -234,67 +235,67 @@ public class MsgPackDataReader : IReader
     else if(io.IsSigned64())
       return io.ValueSigned64;
     else
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
   }
-  
-  public void ReadI8(ref sbyte v) 
+
+  public void ReadI8(ref sbyte v)
   {
     v = (sbyte)NextInt();
   }
-  
-  public void ReadI16(ref short v) 
+
+  public void ReadI16(ref short v)
   {
     v = (short)NextInt();
   }
-  
-  public void ReadI32(ref int v) 
+
+  public void ReadI32(ref int v)
   {
     v = NextInt();
   }
-  
-  public void ReadU8(ref byte v) 
+
+  public void ReadU8(ref byte v)
   {
     v = (byte)NextInt();
   }
-  
-  public void ReadU16(ref ushort v) 
+
+  public void ReadU16(ref ushort v)
   {
     v = (ushort)NextInt();
   }
-  
-  public void ReadU32(ref uint v) 
+
+  public void ReadU32(ref uint v)
   {
     v = (uint)NextInt();
   }
 
-  public void ReadU64(ref ulong v) 
+  public void ReadU64(ref ulong v)
   {
     v = (ulong)NextLong();
   }
 
-  public void ReadI64(ref long v) 
+  public void ReadI64(ref long v)
   {
     v = NextLong();
   }
 
-  public void ReadBool(ref bool v) 
+  public void ReadBool(ref bool v)
   {
     v = NextBool();
   }
 
-  public void ReadFloat(ref float v) 
+  public void ReadFloat(ref float v)
   {
     Next();
 
-    if(io.IsUnsigned()) 
+    if(io.IsUnsigned())
     {
       v = io.ValueUnsigned;
-    } 
-    else if(io.IsSigned()) 
+    }
+    else if(io.IsSigned())
     {
       v = io.ValueSigned;
-    } 
-    else 
+    }
+    else
     {
       switch(io.Type)
       {
@@ -311,24 +312,24 @@ public class MsgPackDataReader : IReader
           v = (float) tmp;
           break;
         default:
-          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
       }
     }
   }
 
-  public void ReadDouble(ref double v) 
+  public void ReadDouble(ref double v)
   {
     Next();
 
-    if(io.IsUnsigned()) 
+    if(io.IsUnsigned())
     {
       v = io.ValueUnsigned;
-    } 
-    else if(io.IsSigned()) 
+    }
+    else if(io.IsSigned())
     {
       v = io.ValueSigned;
-    } 
-    else 
+    }
+    else
     {
       switch(io.Type)
       {
@@ -342,38 +343,38 @@ public class MsgPackDataReader : IReader
           v = (double)io.ValueUnsigned64;
           break;
         case bhl.MsgPack.TypePrefixes.Int64:
-          v = (double)io.ValueSigned64;    
+          v = (double)io.ValueSigned64;
           break;
         default:
-          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+          throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
       }
     }
   }
 
-  public void ReadRawBegin(ref int vlen) 
+  public void ReadRawBegin(ref int vlen)
   {
     Next();
 
-    if(!io.IsRaw()) 
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+    if(!io.IsRaw())
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
 
     vlen = (int)io.Length;
   }
 
-  public void ReadRawEnd(byte[] v) 
+  public void ReadRawEnd(byte[] v)
   {
-    if(!io.IsRaw()) 
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+    if(!io.IsRaw())
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
 
     io.ReadValueRaw(v, 0, (int)io.Length);
   }
 
-  public void ReadString(ref string v) 
+  public void ReadString(ref string v)
   {
     Next();
 
-    if(!io.IsRaw()) 
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+    if(!io.IsRaw())
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
 
     var strbuf = ArrayPool<byte>.Shared.Rent((int)io.Length);
     io.ReadValueRaw(strbuf, 0, (int)io.Length);
@@ -381,9 +382,9 @@ public class MsgPackDataReader : IReader
     ArrayPool<byte>.Shared.Return(strbuf);
   }
 
-  public int BeginContainer() 
+  public int BeginContainer()
   {
-    if(!io.Read()) 
+    if(!io.Read())
       throw new Error(ErrorCode.IO_READ);
 
     if(!io.IsArray())
@@ -395,18 +396,18 @@ public class MsgPackDataReader : IReader
         return -1;
       }
       else
-        throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+        throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
     }
 
     int len = (int)io.Length;
     structs_pos.Push(new StructPos(len));
     return len;
-  } 
+  }
 
-  public void GetArraySize(ref int v) 
+  public void GetArraySize(ref int v)
   {
     if(!io.IsArray())
-      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type); 
+      throw new Error(ErrorCode.TYPE_MISMATCH, "Got type: " + io.Type);
 
     v = (int)io.Length;
   }
@@ -428,13 +429,13 @@ public class MsgPackDataReader : IReader
 
       return;
     }
-    
-    uint array_len = io.Length; 
-    for(uint i=0; i<array_len; ++i)
+
+    uint array_len = io.Length;
+    for(uint i = 0; i < array_len; ++i)
       SkipField();
   }
 
-  void SkipTrailingFields() 
+  void SkipTrailingFields()
   {
     while(SpaceLeft() > -1)
     {
@@ -443,7 +444,7 @@ public class MsgPackDataReader : IReader
     }
   }
 
-  public void EndContainer() 
+  public void EndContainer()
   {
     SkipTrailingFields();
     structs_pos.Pop();

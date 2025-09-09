@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.Text;
 using bhl;
 using Xunit;
@@ -14,12 +14,12 @@ public class TestMaps : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseInit()
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TMap("string", "int")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-    ;
+    var expected =
+        new ModuleCompiler()
+          .UseInit()
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TMap("string", "int")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+      ;
 
     AssertEqual(c, expected);
   }
@@ -189,14 +189,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"[k, v] expected",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
       [string]int m = [""hey""]
 ----------------------^"
-       )
+        )
       );
     }
 
@@ -206,14 +204,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"[k, v] expected",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
       [string]int m = [""hey"", 1]
 ----------------------^"
-       )
+        )
       );
     }
 
@@ -223,14 +219,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"[k, v] expected",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
       [string]int m = [[""hey""]]
 -----------------------^"
-       )
+        )
       );
     }
 
@@ -240,14 +234,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"[k, v] expected",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
       [string]int m = [[""hey"", 1], [""hey""]]
 -----------------------------------^" /*taking into account ""*/
-       )
+        )
       );
     }
 
@@ -257,14 +249,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"incompatible types: 'string' and 'int'",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
       [string]int m = [[1, ""hey""]]
 ------------------------^"
-       )
+        )
       );
     }
   }
@@ -557,9 +547,7 @@ public class TestMaps : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -581,14 +569,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"incompatible types: '[]int' and '[string]int'",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
         foreach(int v in m) {
 -------------------------^"
-       )
+        )
       );
     }
 
@@ -603,14 +589,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"incompatible types: '[int]int' and '[]int'",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
         foreach(int k,int v in m) {
 -------------------------------^"
-       )
+        )
       );
     }
 
@@ -625,14 +609,12 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         @"incompatible types: '[int]string' and '[string]int'",
-       new PlaceAssert(bhl, @"
+        new PlaceAssert(bhl, @"
         foreach(int k,string v in m) {
 ----------------------------------^"
-       )
+        )
       );
     }
   }
@@ -764,7 +746,8 @@ public class TestMaps : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindLog(ts);
     });
@@ -810,9 +793,7 @@ public class TestMaps : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -836,9 +817,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "type 'Foo' not found",
         new PlaceAssert(bhl, @"
       func [Foo]int fetch() {
@@ -860,9 +839,7 @@ public class TestMaps : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "type 'Foo' not found",
         new PlaceAssert(bhl, @"
       func [int]Foo fetch() {
@@ -884,7 +861,7 @@ public class TestMaps : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     map[k1] = v1;
-    
+
     var v2 = Val.NewInt(vm, 1);
     map[k2] = v2;
 
@@ -894,7 +871,7 @@ public class TestMaps : BHL_TestBase
     (map[k1], map[k2]) = (map[k2], map[k1]);
     Assert.Equal(1, map[k1].num);
     Assert.Equal(10, map[k2].num);
-    
+
     //removing an item still releases it
     map.Remove(k1);
     Assert.Single(map);

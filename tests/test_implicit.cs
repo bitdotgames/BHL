@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
@@ -70,15 +70,13 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "void expression type",
       new PlaceAssert(bhl, @"
       var what = foo()
 ---------------^"
-       )
-     );
+      )
+    );
   }
 
   [Fact]
@@ -131,15 +129,13 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "expression is not of array type",
       new PlaceAssert(bhl, @"
       foreach(var n in 1) {
 -----------------------^"
-       )
-     );
+      )
+    );
   }
 
   [Fact]
@@ -153,9 +149,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "can't determine type of [..] expression",
       new PlaceAssert(bhl, @"
       foreach(var n in [1,2,3]) {
@@ -183,9 +177,7 @@ public class TestImplicit : BHL_TestBase
 
       var log = new StringBuilder();
 
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
@@ -209,10 +201,8 @@ public class TestImplicit : BHL_TestBase
       ";
 
       var log = new StringBuilder();
-      
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
@@ -237,9 +227,7 @@ public class TestImplicit : BHL_TestBase
 
       var log = new StringBuilder();
 
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
@@ -259,9 +247,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "can't determine type of [..] expression",
       new PlaceAssert(bhl, @"
       foreach(var k,var v in [[1, ""a""], [2, ""b""]]) {
@@ -327,14 +313,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "unexpected expression",
-        new PlaceAssert(bhl, @"
+      new PlaceAssert(bhl, @"
       var bar = null
 ------^"
-     )
+      )
     );
   }
 
@@ -348,14 +332,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "unexpected expression",
-        new PlaceAssert(bhl, @"
+      new PlaceAssert(bhl, @"
       var a
 ------^"
-     )
+      )
     );
   }
 
@@ -368,14 +350,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'var'",
       new PlaceAssert(bhl, @"
     class var {
 ----------^"
-     )
+      )
     );
   }
 
@@ -391,14 +371,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'int' and 'string'",
-        new PlaceAssert(bhl, @"
+      new PlaceAssert(bhl, @"
         return a == s
 --------------------^"
-     )
+      )
     );
   }
 
@@ -413,14 +391,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "unexpected expression",
       new PlaceAssert(bhl, @"
     var a = 10
 ----^"
-     )
+      )
     );
   }
 
@@ -435,14 +411,12 @@ public class TestImplicit : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
-          "unexpected expression",
-          new PlaceAssert(bhl, @"
+        delegate() { Compile(bhl); },
+        "unexpected expression",
+        new PlaceAssert(bhl, @"
         func var test() {
 -------------^"
-       )
+        )
       );
     }
 
@@ -454,16 +428,14 @@ public class TestImplicit : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "unexpected expression",
         new PlaceAssert(bhl, @"
         func int test(int a, var b) {
 -----------------------------^"
-       )
+        )
       );
-     }
+    }
   }
 
   [Fact]
@@ -476,14 +448,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "unexpected expression",
       new PlaceAssert(bhl, @"
         []var ns = []
 ----------^"
-     )
+      )
     );
   }
 
@@ -497,14 +467,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "unexpected expression",
       new PlaceAssert(bhl, @"
         var foo
 --------^"
-       )
+      )
     );
   }
 
@@ -519,14 +487,12 @@ public class TestImplicit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'FOO' not resolved",
       new PlaceAssert(bhl, @"
       var a = FOO()
 --------------^"
-       )
+      )
     );
   }
 }

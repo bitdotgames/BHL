@@ -19,9 +19,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"unexpected expression",
       new PlaceAssert(bhl, @"
       func() {}
@@ -48,26 +46,26 @@ public class TestLambda : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      //dummy
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      //test
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      //lambda
-      .EmitThen(Opcodes.Lambda, new int[] { 9 })
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          //dummy
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Return)
+          //test
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          //lambda
+          .EmitThen(Opcodes.Lambda, new int[] { 9 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -110,9 +108,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() {
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "type doesn't support member access via '.'",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }.foo 
@@ -133,9 +129,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() {
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "accessing not an array/map type",
       new PlaceAssert(bhl, @"
       return func bool(int a) { return a > 2 }[10] 
@@ -301,9 +295,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "default argument values not allowed for lambdas",
       new PlaceAssert(bhl, @"
       var p = func int(int c, int b = 1) {
@@ -311,8 +303,8 @@ public class TestLambda : BHL_TestBase
       )
     );
   }
-  
-  
+
+
   [Fact]
   public void TestLambdaCallAsVarInFalseCondition()
   {
@@ -385,27 +377,27 @@ public class TestLambda : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      //dummy
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      //test
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      //lambda
-      .EmitThen(Opcodes.Lambda, new int[] { 7 })
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
-      .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          //dummy
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Return)
+          //test
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          //lambda
+          .EmitThen(Opcodes.Lambda, new int[] { 7 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -436,36 +428,36 @@ public class TestLambda : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      //dummy
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      //test
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
-      //lambda
-      .EmitThen(Opcodes.Lambda, new int[] { 19 })
-      .EmitThen(Opcodes.InitFrame, new int[] { 3+1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 5) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
-      .EmitThen(Opcodes.UseUpval, new int[] { 1, 2, 0 })
-      .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          //dummy
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Return)
+          //test
+          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.SetVar, new int[] { 1 })
+          //lambda
+          .EmitThen(Opcodes.Lambda, new int[] { 19 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 3 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 5) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
+          .EmitThen(Opcodes.UseUpval, new int[] { 1, 2, 0 })
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -498,37 +490,37 @@ public class TestLambda : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      //dummy
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      //test
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      //lambda
-      .EmitThen(Opcodes.Lambda, new int[] { 41 })
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Lambda, new int[] { 13 })
-      .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
-      .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-      .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          //dummy
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Return)
+          //test
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          //lambda
+          .EmitThen(Opcodes.Lambda, new int[] { 41 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Lambda, new int[] { 13 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -619,7 +611,7 @@ public class TestLambda : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").result.PopRelease().num;
-    Assert.Equal(3+20, num);
+    Assert.Equal(3 + 20, num);
     CommonChecks(vm);
   }
 
@@ -763,14 +755,12 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'float,string' and 'string,string'",
       new PlaceAssert(bhl, @"
       return func string,string () 
 -------------^"
-        )
+      )
     );
   }
 
@@ -787,14 +777,12 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'string' and 'string,string'",
       new PlaceAssert(bhl, @"
       return func string,string () 
 -------------^"
-        )
+      )
     );
   }
 
@@ -833,9 +821,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -859,9 +845,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -888,9 +872,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
@@ -923,9 +905,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", Val.NewNum(vm, 3));
@@ -952,9 +932,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -989,9 +967,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1017,14 +993,12 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'a'",
       new PlaceAssert(bhl, @"
           float a = a 
 ----------------^"
-     )
+      )
     );
   }
 
@@ -1054,9 +1028,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1081,9 +1053,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1111,9 +1081,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1146,9 +1114,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1186,9 +1152,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1240,9 +1204,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1262,9 +1224,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"no viable alternative at input 'func() []'",
       new PlaceAssert(bhl, @"
       func() [] { 
@@ -1285,9 +1245,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"symbol 'i' not resolved",
       new PlaceAssert(bhl, @"
       func() [i] { 
@@ -1309,9 +1267,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"symbol 'i' is already included",
       new PlaceAssert(bhl, @"
       func() [i, i] { 
@@ -1336,9 +1292,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1364,9 +1318,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -1563,9 +1515,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'a'",
       new PlaceAssert(typeof(ParseError), bhl, @"
         int a = 20
@@ -1573,5 +1523,4 @@ public class TestLambda : BHL_TestBase
       )
     );
   }
-
 }

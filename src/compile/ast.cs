@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
-namespace bhl {
+namespace bhl
+{
 
 public abstract class AST_Visitor
 {
@@ -103,7 +104,7 @@ public abstract class AST_Visitor
       DoVisit(_30);
     else if(ast is AST_Yield _31)
       DoVisit(_31);
-    else 
+    else
       throw new Exception("Not known type: " + ast.GetType().Name);
   }
 
@@ -112,28 +113,30 @@ public abstract class AST_Visitor
     if(ast == null)
       return;
     var children = ast.children;
-    for(int i=0;i<children.Count;++i)
+    for(int i = 0; i < children.Count; ++i)
       Visit(children[i]);
   }
 }
 
 public interface IAST
-{}
+{
+}
 
 public abstract class AST_Tree : IAST
 {
   public List<IAST> children = new List<IAST>();
 }
 
-public class AST_Interim : AST_Tree 
-{}
+public class AST_Interim : AST_Tree
+{
+}
 
 public class AST_Import : IAST
 {
   public List<string> module_names = new List<string>();
 }
 
-public class AST_Module : AST_Tree 
+public class AST_Module : AST_Tree
 {
   public string name;
 
@@ -143,14 +146,14 @@ public class AST_Module : AST_Tree
   }
 }
 
-public enum EnumUnaryOp 
+public enum EnumUnaryOp
 {
   NEG = 1,
   NOT = 2,
   BIT_NOT = 3
 }
 
-public class AST_UnaryOpExp : AST_Tree 
+public class AST_UnaryOpExp : AST_Tree
 {
   public EnumUnaryOp type = new EnumUnaryOp();
 
@@ -160,7 +163,7 @@ public class AST_UnaryOpExp : AST_Tree
   }
 }
 
-public enum EnumBinaryOp 
+public enum EnumBinaryOp
 {
   AND = 1,
   OR = 2,
@@ -181,7 +184,7 @@ public enum EnumBinaryOp
   BIT_SHL = 17,
 }
 
-public class AST_BinaryOpExp  : AST_Tree 
+public class AST_BinaryOpExp  : AST_Tree
 {
   public EnumBinaryOp type = new EnumBinaryOp();
   public int line_num;
@@ -213,7 +216,7 @@ public class AST_Dec : IAST
   }
 }
 
-public class AST_New : AST_Tree 
+public class AST_New : AST_Tree
 {
   public IType type;
   public int line_num;
@@ -225,7 +228,7 @@ public class AST_New : AST_Tree
   }
 }
 
-public class AST_FuncDecl : AST_Tree 
+public class AST_FuncDecl : AST_Tree
 {
   public FuncSymbolScript symbol;
   public int last_line_num;
@@ -276,7 +279,7 @@ public class AST_UpVal : IAST
   }
 }
 
-public class AST_LambdaDecl : AST_FuncDecl 
+public class AST_LambdaDecl : AST_FuncDecl
 {
   public int local_vars_num;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
@@ -288,7 +291,7 @@ public class AST_LambdaDecl : AST_FuncDecl
   }
 }
 
-public class AST_TypeCast : AST_Tree 
+public class AST_TypeCast : AST_Tree
 {
   public IType type;
   public bool force_type;
@@ -303,7 +306,7 @@ public class AST_TypeCast : AST_Tree
   }
 }
 
-public class AST_TypeAs : AST_Tree 
+public class AST_TypeAs : AST_Tree
 {
   public IType type;
   public bool force_type;
@@ -317,7 +320,7 @@ public class AST_TypeAs : AST_Tree
   }
 }
 
-public class AST_TypeIs : AST_Tree 
+public class AST_TypeIs : AST_Tree
 {
   public IType type;
   public int line_num;
@@ -329,7 +332,7 @@ public class AST_TypeIs : AST_Tree
   }
 }
 
-public enum EnumCall 
+public enum EnumCall
 {
   VAR             = 1,
   VARW            = 2,
@@ -350,31 +353,35 @@ public enum EnumCall
   GVARW           = 51,
 }
 
-public class AST_Call  : AST_Tree 
+public class AST_Call  : AST_Tree
 {
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symb;
   public ITerminalNode node;
-  public int symb_idx {
-    get {
-      return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1;
-    }
+
+  public int symb_idx
+  {
+    get { return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1; }
   }
-  public Module module {
-    get {
+
+  public Module module
+  {
+    get
+    {
       if(symb == null)
         return null;
       var ns = symb.scope.GetNamespace();
       return ns == null ? null : ns.module;
     }
   }
+
   public uint cargs_bits;
 
   public AST_Call(
-    EnumCall type, 
-    int line_num, 
-    Symbol symb, 
+    EnumCall type,
+    int line_num,
+    Symbol symb,
     uint cargs_bits = 0,
     ITerminalNode node = null
   )
@@ -387,7 +394,7 @@ public class AST_Call  : AST_Tree
   }
 }
 
-public class AST_Return  : AST_Tree 
+public class AST_Return  : AST_Tree
 {
   public int num;
   public int line_num;
@@ -409,7 +416,8 @@ public class AST_Typeof : IAST
 }
 
 public class AST_Break : IAST
-{}
+{
+}
 
 public class AST_Continue : IAST
 {
@@ -443,7 +451,7 @@ public class AST_Literal : IAST
   }
 }
 
-public class AST_VarDecl : AST_Tree 
+public class AST_VarDecl : AST_Tree
 {
   public string name = "";
   public IType type;
@@ -453,12 +461,14 @@ public class AST_VarDecl : AST_Tree
 
   public AST_VarDecl(VariableSymbol symb, bool is_ref = false)
     : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
-  {}
+  {
+  }
 
   //class static field version
   public AST_VarDecl(FieldSymbol symb, int global_idx)
     : this(symb.name, false, false, symb.type.Get(), global_idx)
-  {}
+  {
+  }
 
   public AST_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
   {
@@ -470,7 +480,7 @@ public class AST_VarDecl : AST_Tree
   }
 }
 
-public class AST_Block : AST_Tree 
+public class AST_Block : AST_Tree
 {
   public BlockType type = new BlockType();
 
@@ -480,7 +490,7 @@ public class AST_Block : AST_Tree
   }
 }
 
-public class AST_JsonObj : AST_Tree 
+public class AST_JsonObj : AST_Tree
 {
   public IType type;
   public int line_num;
@@ -492,7 +502,7 @@ public class AST_JsonObj : AST_Tree
   }
 }
 
-public class AST_JsonArr : AST_Tree 
+public class AST_JsonArr : AST_Tree
 {
   public IType type;
   public int line_num;
@@ -505,9 +515,10 @@ public class AST_JsonArr : AST_Tree
 }
 
 public class AST_JsonArrAddItem : IAST
-{}
+{
+}
 
-public class AST_JsonMap : AST_Tree 
+public class AST_JsonMap : AST_Tree
 {
   public IType type;
   public int line_num;
@@ -520,9 +531,10 @@ public class AST_JsonMap : AST_Tree
 }
 
 public class AST_JsonMapAddItem : IAST
-{}
+{
+}
 
-public class AST_JsonPair : AST_Tree 
+public class AST_JsonPair : AST_Tree
 {
   public IType scope_type;
   public string name;
@@ -539,7 +551,8 @@ public class AST_JsonPair : AST_Tree
 }
 
 public class AST_PopValue : IAST
-{}
+{
+}
 
 public class AST_Dumper : AST_Visitor
 {
@@ -579,7 +592,7 @@ public class AST_Dumper : AST_Visitor
     Console.Write(node.symbol.name);
     if(node.upvals.Count > 0)
       Console.Write(" USE:");
-    for(int i=0;i<node.upvals.Count;++i)
+    for(int i = 0; i < node.upvals.Count; ++i)
       Console.Write(" " + node.upvals[i].name + "(" + node.upvals[i].mode + ")");
     VisitChildren(node);
     Console.Write(")");
@@ -639,7 +652,7 @@ public class AST_Dumper : AST_Visitor
     Console.Write(node.symbol.name + " " + node.symbol.scope_idx);
     Console.Write(")");
   }
-  
+
   public override void DoVisit(AST_Dec node)
   {
     Console.Write("(DEC ");
@@ -770,7 +783,7 @@ public static class AST_Extensions
 {
   public static void Append(this AST_Tree dst, AST_Tree src)
   {
-    for(int i=0;i<src.children.Count;++i)
+    for(int i = 0; i < src.children.Count; ++i)
     {
       dst.children.Add(src.children[i]);
     }
@@ -807,7 +820,7 @@ public static class AST_Extensions
   {
     if(b is AST_Tree c)
     {
-      for(int i=0;i<c.children.Count;++i)
+      for(int i = 0; i < c.children.Count; ++i)
         self.AddChild(c.children[i]);
     }
   }
@@ -836,12 +849,13 @@ public static class AST_Extensions
       return 0;
 
     int num = 0;
-    for(int i=0;i<fparams.children.Count;++i)
+    for(int i = 0; i < fparams.children.Count; ++i)
     {
       var fc = fparams.children[i].GetChildren();
       if(fc != null && fc.Count > 0)
         ++num;
     }
+
     return num;
   }
 

@@ -5,7 +5,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public interface IConnection
 {
@@ -16,14 +17,14 @@ public interface IConnection
 public class ConnectionStdIO : IConnection
 {
   const int SeparatorLen = 2;
-  
+
   private readonly Logger logger;
   private readonly Stream input;
   private readonly Stream output;
 
   private byte[] buffer = new byte[1024];
   private int buffer_available_len = 0;
-  
+
   public ConnectionStdIO(Logger logger, Stream output, Stream input)
   {
     this.logger = logger;
@@ -37,11 +38,11 @@ public class ConnectionStdIO : IConnection
     int content_len = 0;
 
     var header_bytes = await ReadToSeparator(ct);
-    
+
     while(header_bytes.Length != 0)
     {
       //logger.Log(2, "HEADER BYTES: " + header_bytes.Length);
-      
+
       string header_line = Encoding.ASCII.GetString(header_bytes);
       //logger.Log(2, "HEADER LINE: '" + header_line + "'");
       int position = header_line.IndexOf(": ", StringComparison.Ordinal);
@@ -49,19 +50,19 @@ public class ConnectionStdIO : IConnection
       {
         string key = header_line.Substring(0, position);
         string value = header_line.Substring(position + 2);
-        
+
         //logger.Log(2, "HEADER: '" + key  + "' '" + value + "'");
-        
+
         if(string.Equals(key, "Content-Length", StringComparison.Ordinal))
           int.TryParse(value, out content_len);
       }
-      
+
       header_bytes = await ReadToSeparator(ct);
     }
-    
+
     if(content_len == 0)
       return string.Empty;
-    
+
     var bytes = await ReadBytes(content_len, ct);
     return Encoding.UTF8.GetString(bytes);
   }
@@ -71,7 +72,7 @@ public class ConnectionStdIO : IConnection
     while(true)
     {
       //logger.Log(2, "BUF CAP " + buffer.Length + " AVAIL " + buffer_available_len);
-      
+
       if(buffer_available_len > 0)
       {
         int separator_pos = FindSeparatorPos(new Span<byte>(buffer, 0, buffer_available_len));
@@ -79,7 +80,7 @@ public class ConnectionStdIO : IConnection
         {
           var result = new byte[separator_pos];
           Buffer.BlockCopy(buffer, 0, result, 0, result.Length);
-          
+
           int buffer_leftover_pos = separator_pos + SeparatorLen;
           int buffer_leftover = buffer_available_len - buffer_leftover_pos;
           //logger.Log(2, "SEPARATOR " + separator_pos + " LEFTOVER " + buffer_leftover + " PREV " + buffer_available_len + " RES " + result.Length);
@@ -114,7 +115,7 @@ public class ConnectionStdIO : IConnection
     var result = new byte[total_len];
 
     FillFromAvailableBuffer(ref total_len, result);
-    
+
     while(total_len > 0)
     {
       int read_len = await input.ReadAsync(result, result.Length - total_len, total_len, ct);
@@ -132,7 +133,7 @@ public class ConnectionStdIO : IConnection
   {
     if(buffer_available_len == 0)
       return;
-    
+
     if(result_len <= buffer_available_len)
     {
       //logger.Log(2, "AVALABLE FULL " + result_len + " VS " + buffer_available_len);
@@ -157,14 +158,14 @@ public class ConnectionStdIO : IConnection
   {
     for(int i = 0; i < bytes.Length - 1; ++i)
     {
-      if(bytes[i] == 13/* \r */ && 
-         bytes[i + 1] == 10/* \n */)
+      if(bytes[i] == 13 /* \r */ &&
+         bytes[i + 1] == 10 /* \n */)
         return i;
     }
 
     return -1;
   }
-  
+
   public async Task Write(string json, CancellationToken ct)
   {
     var utf8 = Encoding.UTF8.GetBytes(json);
@@ -174,7 +175,7 @@ public class ConnectionStdIO : IConnection
       writer.Write("\r\n");
       writer.Flush();
     }
-      
+
     await output.WriteAsync(utf8, 0, utf8.Length, ct);
     await output.FlushAsync(ct);
   }

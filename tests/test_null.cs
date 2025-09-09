@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.Text;
 using bhl;
 using Xunit;
@@ -17,9 +17,7 @@ public class TestNull : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindIntStruct(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.True(Execute(vm, "test").result.PopRelease().bval);
@@ -55,7 +53,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindIntStruct(ts);
     });
@@ -83,7 +82,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStringClass(ts);
     });
@@ -111,7 +111,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStringClass(ts);
     });
@@ -137,7 +138,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
     });
@@ -160,9 +162,7 @@ public class TestNull : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'int' and 'null'",
       new PlaceAssert(bhl, @"
       return 0 == null
@@ -200,7 +200,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
     });
@@ -226,7 +227,8 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
     });
@@ -262,9 +264,7 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -293,14 +293,11 @@ public class TestNull : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
   }
-
 }

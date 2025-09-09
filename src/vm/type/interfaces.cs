@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using bhl.marshall;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public interface IType : INamed
-{}
+{
+}
 
 public interface ITyped
 {
@@ -24,10 +26,12 @@ public interface ITypeRefIndexable
 
 // Denotes types which are created 'on the fly'
 public interface IEphemeralType : IType, ITypeRefIndexable, IMarshallableGeneric
-{}
+{
+}
 
-public interface IInstantiable : IType, IScope 
+public interface IInstantiable : IType, IScope
 {
   HashSet<IInstantiable> GetAllRelatedTypesSet();
 }
+
 }

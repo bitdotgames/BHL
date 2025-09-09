@@ -3,11 +3,15 @@ using System.Runtime.CompilerServices;
 using System;
 using System.IO;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class Bytecode
 {
-  public ushort Position { get { return (ushort)stream.Position; } }
+  public ushort Position
+  {
+    get { return (ushort)stream.Position; }
+  }
 
   MemoryStream stream = new MemoryStream();
 
@@ -28,7 +32,7 @@ public class Bytecode
   {
     return bytecode[++ip];
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe byte Decode8(byte* bytecode, ref int ip)
   {
@@ -39,14 +43,14 @@ public class Bytecode
   public static ushort Decode16(byte[] bytecode, ref int ip)
   {
 #if UNSAFE_BITOPS
-    unsafe 
+    unsafe
     {
       fixed(byte* p = bytecode)
       {
         ushort val = (ushort)
-        ((uint)p[ip+1] | 
-         ((uint)p[ip+2]) << 8
-         );
+          ((uint)p[ip + 1] |
+           ((uint)p[ip + 2]) << 8
+          );
         ip += 2;
         return val;
       }
@@ -64,10 +68,10 @@ public class Bytecode
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe uint Decode16(byte* p, ref int ip)
   {
-    uint val = 
-    ((uint)p[ip+1] | 
-     ((uint)p[ip+2]) << 8
-     );
+    uint val =
+      ((uint)p[ip + 1] |
+       ((uint)p[ip + 2]) << 8
+      );
     ip += 2;
     return val;
   }
@@ -76,15 +80,15 @@ public class Bytecode
   public static uint Decode24(byte[] bytecode, ref int ip)
   {
 #if UNSAFE_BITOPS
-    unsafe 
+    unsafe
     {
       fixed(byte* p = bytecode)
       {
         uint val =
-        ((uint)p[ip+1]         | 
-         ((uint)p[ip+2]) << 8  |
-         ((uint)p[ip+3]) << 16
-         );
+          ((uint)p[ip + 1]         |
+           ((uint)p[ip + 2]) << 8  |
+           ((uint)p[ip + 3]) << 16
+          );
         ip += 3;
         return val;
       }
@@ -104,10 +108,10 @@ public class Bytecode
   public static unsafe uint Decode24(byte* p, ref int ip)
   {
     uint val =
-    ((uint)p[ip+1]         | 
-     ((uint)p[ip+2]) << 8  |
-     ((uint)p[ip+3]) << 16
-     );
+      ((uint)p[ip + 1]         |
+       ((uint)p[ip + 2]) << 8  |
+       ((uint)p[ip + 3]) << 16
+      );
     ip += 3;
     return val;
   }
@@ -116,16 +120,16 @@ public class Bytecode
   public static uint Decode32(byte[] bytecode, ref int ip)
   {
 #if UNSAFE_BITOPS
-    unsafe 
+    unsafe
     {
       fixed(byte* p = bytecode)
       {
         uint val = (uint)
-        ((uint)p[ip+1]         | 
-         ((uint)p[ip+2]) << 8  |
-         ((uint)p[ip+3]) << 16 |
-         ((uint)p[ip+4]) << 24
-         );
+          ((uint)p[ip + 1]         |
+           ((uint)p[ip + 2]) << 8  |
+           ((uint)p[ip + 3]) << 16 |
+           ((uint)p[ip + 4]) << 24
+          );
         ip += 4;
         return val;
       }
@@ -141,18 +145,18 @@ public class Bytecode
     return val;
 #endif
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe uint Decode32(byte* p, ref int ip)
   {
-     uint val =
-     ((uint)p[ip+1]         | 
-      ((uint)p[ip+2]) << 8  |
-      ((uint)p[ip+3]) << 16 |
-      ((uint)p[ip+4]) << 24
+    uint val =
+      ((uint)p[ip + 1]         |
+       ((uint)p[ip + 2]) << 8  |
+       ((uint)p[ip + 3]) << 16 |
+       ((uint)p[ip + 4]) << 24
       );
-     ip += 4;
-     return val;
+    ip += 4;
+    return val;
   }
 
   public static uint Decode(byte[] bytecode, int num_bytes, ref int ip)
@@ -163,16 +167,16 @@ public class Bytecode
     uint val = 0;
 
     if(num_bytes >= 1)
-      val |= (uint)bytecode[ip+1];
+      val |= (uint)bytecode[ip + 1];
 
     if(num_bytes >= 2)
-      val |= ((uint)bytecode[ip+2]) << 8;
+      val |= ((uint)bytecode[ip + 2]) << 8;
 
     if(num_bytes >= 3)
-      val |= ((uint)bytecode[ip+3]) << 16;
+      val |= ((uint)bytecode[ip + 3]) << 16;
 
     if(num_bytes == 4)
-      val |= ((uint)bytecode[ip+4]) << 24;
+      val |= ((uint)bytecode[ip + 4]) << 24;
 
     ip += num_bytes;
 

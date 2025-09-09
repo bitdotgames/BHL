@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-namespace bhl {
+namespace bhl
+{
 
 public static class Hash
 {
@@ -79,7 +80,10 @@ public sealed class Crc32 : HashAlgorithm
     return hashBuffer;
   }
 
-  public override int HashSize { get { return 32; } }
+  public override int HashSize
+  {
+    get { return 32; }
+  }
 
   public static UInt32 Compute(byte[] buffer, int buffer_len)
   {

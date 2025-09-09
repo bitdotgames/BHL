@@ -1,18 +1,18 @@
+namespace bhl
+{
 
-namespace bhl {
-  
 public class SymbolFactory : marshall.IFactory
 {
   public Types types;
   public INamedResolver resolver;
 
-  public SymbolFactory(Types types, INamedResolver resolver) 
+  public SymbolFactory(Types types, INamedResolver resolver)
   {
     this.types = types;
-    this.resolver = resolver; 
+    this.resolver = resolver;
   }
 
-  public marshall.IMarshallableGeneric CreateById(uint id) 
+  public marshall.IMarshallableGeneric CreateById(uint id)
   {
     switch(id)
     {
@@ -29,19 +29,19 @@ public class SymbolFactory : marshall.IFactory
       case VoidSymbol.CLASS_ID:
         return Types.Void;
       case VariableSymbol.CLASS_ID:
-        return new VariableSymbol(); 
+        return new VariableSymbol();
       case GlobalVariableSymbol.CLASS_ID:
-        return new GlobalVariableSymbol(); 
+        return new GlobalVariableSymbol();
       case FuncArgSymbol.CLASS_ID:
-        return new FuncArgSymbol(); 
+        return new FuncArgSymbol();
       case FieldSymbolScript.CLASS_ID:
-        return new FieldSymbolScript(); 
+        return new FieldSymbolScript();
       case GenericArrayTypeSymbol.CLASS_ID:
-        return new GenericArrayTypeSymbol(); 
+        return new GenericArrayTypeSymbol();
       case NativeListTypeSymbol.CLASS_ID:
-        return new GenericArrayTypeSymbol(); 
+        return new GenericArrayTypeSymbol();
       case GenericMapTypeSymbol.CLASS_ID:
-        return new GenericMapTypeSymbol(); 
+        return new GenericMapTypeSymbol();
       case ClassSymbolScript.CLASS_ID:
         return new ClassSymbolScript();
       case InterfaceSymbolScript.CLASS_ID:

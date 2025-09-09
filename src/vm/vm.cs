@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
 public partial class VM : INamedResolver
 {
@@ -70,15 +71,15 @@ public partial class VM : INamedResolver
 
     public bool is_native
     {
-      get {
-        return fsn != null;
-      }
+      get { return fsn != null; }
     }
 
     FuncSymbol _symbol;
+
     public FuncSymbol symbol
     {
-      get {
+      get
+      {
         if(_symbol == null)
           _symbol = FindSymbol();
         return _symbol;
@@ -94,7 +95,7 @@ public partial class VM : INamedResolver
       fsn = null;
       _symbol = fs;
     }
-    
+
     FuncSymbol FindSymbol()
     {
       if(fs != null)
@@ -183,7 +184,8 @@ public partial class VM : INamedResolver
     var fss = fs as FuncSymbolScript;
     registered_modules.TryGetValue(((Namespace)fs.scope).module.name, out var module);
 
-    addr = new FuncAddr() {
+    addr = new FuncAddr()
+    {
       module = module,
 
       fs = fss,
@@ -213,7 +215,8 @@ public partial class VM : INamedResolver
 
     var cm = registered_modules[((Namespace)vs.scope).module.name];
 
-    addr = new VarAddr() {
+    addr = new VarAddr()
+    {
       module = cm,
       vs = vs,
       val = cm.gvar_vals[vs.scope_idx]
@@ -230,12 +233,13 @@ public partial class VM : INamedResolver
       if(s != null)
         return s;
     }
+
     return null;
   }
 
   public void Stop()
   {
-    for(int i=fibers.Count;i-- > 0;)
+    for(int i = fibers.Count; i-- > 0;)
     {
       Stop(fibers[i]);
       fibers.RemoveAt(i);
@@ -244,7 +248,7 @@ public partial class VM : INamedResolver
 
   public void GetStackTrace(Dictionary<Fiber, List<TraceItem>> info)
   {
-    for(int i=0;i<fibers.Count;++i)
+    for(int i = 0; i < fibers.Count; ++i)
     {
       var fb = fibers[i];
       var trace = new List<TraceItem>();
@@ -260,10 +264,10 @@ public partial class VM : INamedResolver
 
   public bool Tick(List<Fiber> fibers)
   {
-    for(int i=0;i<fibers.Count;++i)
+    for(int i = 0; i < fibers.Count; ++i)
       Tick(fibers[i]);
 
-    for(int i=fibers.Count;i-- > 0;)
+    for(int i = fibers.Count; i-- > 0;)
     {
       if(fibers[i].IsStopped())
         fibers.RemoveAt(i);
@@ -308,9 +312,12 @@ public partial class VM : INamedResolver
         fb.GetStackTrace(trace);
       }
       catch(Exception)
-      {}
+      {
+      }
+
       throw new Error(trace, e);
     }
+
     return !fb.IsStopped();
   }
 }

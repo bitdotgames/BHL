@@ -3,17 +3,19 @@ using System.IO;
 using System.Collections.Generic;
 using System.Buffers;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface IUserBindings
 {
   void Register(Types ts);
 }
 
-public class EmptyUserBindings : IUserBindings 
+public class EmptyUserBindings : IUserBindings
 {
   public void Register(Types ts)
-  {}
+  {
+  }
 }
 
 public enum ModuleBinaryFormat
@@ -75,7 +77,7 @@ public class ModuleLoader : IModuleLoader
 
     int num_entries = 0;
     reader.ReadI32(ref num_entries);
-    
+
     //TODO: don't store binary blobs alongside entries
     while(num_entries-- > 0)
     {
@@ -102,7 +104,7 @@ public class ModuleLoader : IModuleLoader
   }
 
   public Module Load(
-    string module_name, 
+    string module_name,
     INamedResolver resolver
   )
   {
@@ -118,8 +120,8 @@ public class ModuleLoader : IModuleLoader
     mod_stream.SetData(res, 0, res_len);
 
     var cm = CompiledModule.FromStream(
-      types, 
-      mod_stream, 
+      types,
+      mod_stream,
       resolver
     );
 

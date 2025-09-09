@@ -21,9 +21,10 @@ public class TestOperatorOverload : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
-      
+
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -70,9 +71,7 @@ public class TestOperatorOverload : BHL_TestBase
       );
 
       AssertError<Exception>(
-        delegate() { 
-          cl.Define(op);
-        },
+        delegate() { cl.Define(op); },
         "operator overload must be static"
       );
     }
@@ -85,9 +84,7 @@ public class TestOperatorOverload : BHL_TestBase
       );
 
       AssertError<Exception>(
-        delegate() { 
-          cl.Define(op);
-        },
+        delegate() { cl.Define(op); },
         "operator overload must have exactly 2 arguments"
       );
     }
@@ -101,9 +98,7 @@ public class TestOperatorOverload : BHL_TestBase
       );
 
       AssertError<Exception>(
-        delegate() { 
-          cl.Define(op);
-        },
+        delegate() { cl.Define(op); },
         "operator overload return value can't be void"
       );
     }
@@ -121,7 +116,8 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var cl = BindColor(ts);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0, null,
         new FuncArgSymbol("c", ts.T("Color")),
@@ -131,9 +127,7 @@ public class TestOperatorOverload : BHL_TestBase
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'float' and 'string'",
       new PlaceAssert(bhl, @"
       return c1 * ""hey""
@@ -141,7 +135,7 @@ public class TestOperatorOverload : BHL_TestBase
       )
     );
   }
-  
+
   [Fact]
   public void TestPlusNotOverloadedForNativeClass()
   {
@@ -155,14 +149,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       Color c3 = c1 + c2
@@ -184,14 +174,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       Color c3 = c1 - c2
@@ -213,14 +199,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       Color c3 = c1 * c2
@@ -242,14 +224,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       Color c3 = c1 / c2
@@ -271,14 +249,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
@@ -300,14 +274,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       bool r = c1 >= c2
@@ -329,14 +299,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
@@ -358,14 +324,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"operator is not overloaded",
       new PlaceAssert(bhl, @"
       bool r = c1 > c2
@@ -386,14 +348,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be numeric type",
       new PlaceAssert(bhl, @"
       Color c2 = -c1
@@ -415,14 +373,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be int type",
       new PlaceAssert(bhl, @"
       int a = c2 & c1
@@ -444,14 +398,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be int type",
       new PlaceAssert(bhl, @"
       int a = c2 | c1
@@ -473,14 +423,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be bool type",
       new PlaceAssert(bhl, @"
       bool a = c2 && c1
@@ -502,14 +448,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be bool type",
       new PlaceAssert(bhl, @"
       bool a = c2 || c1
@@ -530,14 +472,10 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"must be bool type",
       new PlaceAssert(bhl, @"
       bool a = !c1
@@ -560,8 +498,8 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -605,8 +543,8 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -651,49 +589,49 @@ public class TestOperatorOverload : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var cl = BindColor(ts, call_setup: false);
       {
         var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-        {
-          var k = (float)stack.PopRelease().num;
-          var c = (Color)stack.PopRelease().obj;
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var k = (float)stack.PopRelease().num;
+            var c = (Color)stack.PopRelease().obj;
 
-          var newc = new Color();
-          newc.r = c.r * k;
-          newc.g = c.g * k;
+            var newc = new Color();
+            newc.r = c.r * k;
+            newc.g = c.g * k;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
-          stack.Push(v);
+            var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+            stack.Push(v);
 
-          return null;
-        },
-        new FuncArgSymbol("c", ts.T("Color")),
-        new FuncArgSymbol("k", ts.T("float"))
+            return null;
+          },
+          new FuncArgSymbol("c", ts.T("Color")),
+          new FuncArgSymbol("k", ts.T("float"))
         );
         cl.Define(op);
       }
-      
+
       {
         var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-        {
-          var o = (Color)stack.PopRelease().obj;
-          var c = (Color)stack.PopRelease().obj;
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var o = (Color)stack.PopRelease().obj;
+            var c = (Color)stack.PopRelease().obj;
 
-          var newc = new Color();
-          newc.r = c.r + o.r;
-          newc.g = c.g + o.g;
+            var newc = new Color();
+            newc.r = c.r + o.r;
+            newc.g = c.g + o.g;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
-          stack.Push(v);
+            var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+            stack.Push(v);
 
-          return null;
-        },
-        new FuncArgSymbol("c", ts.T("Color")),
-        new FuncArgSymbol("r", ts.T("Color"))
+            return null;
+          },
+          new FuncArgSymbol("c", ts.T("Color")),
+          new FuncArgSymbol("r", ts.T("Color"))
         );
         cl.Define(op);
       }
@@ -727,9 +665,10 @@ public class TestOperatorOverload : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
-      
+
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -754,5 +693,4 @@ public class TestOperatorOverload : BHL_TestBase
     AssertEqual(log.ToString(), "YES");
     CommonChecks(vm);
   }
-
 }

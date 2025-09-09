@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-namespace bhl {
+namespace bhl
+{
 
 using marshall;
 
@@ -13,13 +14,13 @@ public class CompileConf
   public ProjectConf proj;
   public Logger logger;
   public Types ts;
-  public string args = ""; 
+  public string args = "";
   public List<string> files = new List<string>();
   public string self_file = "";
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings bindings = new EmptyUserBindings();
 }
- 
+
 public class CompilationExecutor
 {
   const byte COMPILE_FMT = 2;
@@ -46,7 +47,8 @@ public class CompilationExecutor
 
     sw.Stop();
 
-    conf.logger.Log(1, $"BHL all done(hits/miss/errs: {cache_hits}/{cache_miss}/{errors.Count}) ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
+    conf.logger.Log(1,
+      $"BHL all done(hits/miss/errs: {cache_hits}/{cache_miss}/{errors.Count}) ({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec)");
 
     if(errors.Count > 0)
     {
@@ -56,7 +58,7 @@ public class CompilationExecutor
         foreach(var err in errors)
           err_str += ErrorUtils.ToJson(err) + "\n";
         err_str = err_str.Trim();
-        
+
         if(conf.proj.error_file == "-")
           Console.Error.WriteLine(err_str);
         else
@@ -66,7 +68,7 @@ public class CompilationExecutor
 
     return errors;
   }
-  
+
   async Task _Exec(CompileConf conf, CompileErrors errors)
   {
     if(!CheckModuleNamesCollision(conf, errors))
@@ -78,7 +80,7 @@ public class CompilationExecutor
     if(!string.IsNullOrEmpty(conf.proj.error_file))
       File.Delete(conf.proj.error_file);
 
-    var res_dir = Path.GetDirectoryName(conf.proj.result_file); 
+    var res_dir = Path.GetDirectoryName(conf.proj.result_file);
     if(res_dir.Length > 0)
       Directory.CreateDirectory(res_dir);
 
@@ -86,8 +88,8 @@ public class CompilationExecutor
 
     var args_changed = CheckArgsSignatureFile(conf);
 
-    if(conf.proj.use_cache && 
-       !args_changed && 
+    if(conf.proj.use_cache &&
+       !args_changed &&
        !BuildUtils.NeedToRegen(conf.proj.result_file, conf.files)
       )
     {
@@ -101,97 +103,97 @@ public class CompilationExecutor
     conf.bindings.Register(conf.ts);
 
     var pipeline = new Pipeline<CompileConf, List<ProcAndCompileWorker>>(conf.logger)
-      .Transform<CompileConf, List<ParseWorker>>(
-        "BHL parse init",
-        MakeParseWorkers
-      )
-      .Parallel<ParseWorker, ParseWorker>(
-        "BHL parse (workers: %workers%)",
-        async (worker, token) =>
-        {
-          await Task.Run(worker.Parse, token);
-          return worker;
-        })
-      .Transform<List<ParseWorker>, ProjectCompilationStateBundle>(
-        "BHL parse finalize",
-        (workers) =>
-        {
-          ProcessParseWorkers(workers, errors);
-          return MakeStateBundle(conf, workers, errors);
-        })
-      .Transform<ProjectCompilationStateBundle, List<ProcAndCompileWorker>>(
-        "BHL parsed -> AST",
-        (bundle) =>
-        {
-          //TODO: can it be made parallel?
-          ANTLR_Processor.ProcessAll(bundle);
-          //NOTE: let's add processors errors to the all errors but continue execution
-          foreach(var kv in bundle.file2proc)
-            errors.AddRange(kv.Value.result.errors);
-
-          return MakeCompilerWorkers(conf, bundle);
-        }
-      )
-      .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
-        "BHL compile AST (workers: %workers%)",
-        async (worker, token) =>
-        {
-          await Task.Run(worker.Phase1_ProcessAST, token);
-          return worker;
-        })
-      .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL compile patch",
-        (workers) =>
-        {
-          Patch(workers);
-          return workers;
-        })
-      .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
-        "BHL compile write (workers: %workers%)",
-        async (worker, token) =>
-        {
-          await Task.Run(worker.Phase2_WriteByteCode, token);
-          return worker;
-        })
-      .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL compile finalize",
-        (workers) =>
-        {
-          foreach(var w in workers)
-            errors.AddRange(w.errors);
-
-          if(errors.Count > 0)
-            throw new TooManyErrorsException();
-
-          var check_err = CheckUniqueSymbols(workers);
-          if(check_err != null)
+        .Transform<CompileConf, List<ParseWorker>>(
+          "BHL parse init",
+          MakeParseWorkers
+        )
+        .Parallel<ParseWorker, ParseWorker>(
+          "BHL parse (workers: %workers%)",
+          async (worker, token) =>
           {
-            errors.Add(check_err);
-            throw new TooManyErrorsException();
+            await Task.Run(worker.Parse, token);
+            return worker;
+          })
+        .Transform<List<ParseWorker>, ProjectCompilationStateBundle>(
+          "BHL parse finalize",
+          (workers) =>
+          {
+            ProcessParseWorkers(workers, errors);
+            return MakeStateBundle(conf, workers, errors);
+          })
+        .Transform<ProjectCompilationStateBundle, List<ProcAndCompileWorker>>(
+          "BHL parsed -> AST",
+          (bundle) =>
+          {
+            //TODO: can it be made parallel?
+            ANTLR_Processor.ProcessAll(bundle);
+            //NOTE: let's add processors errors to the all errors but continue execution
+            foreach(var kv in bundle.file2proc)
+              errors.AddRange(kv.Value.result.errors);
+
+            return MakeCompilerWorkers(conf, bundle);
           }
+        )
+        .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
+          "BHL compile AST (workers: %workers%)",
+          async (worker, token) =>
+          {
+            await Task.Run(worker.Phase1_ProcessAST, token);
+            return worker;
+          })
+        .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
+          "BHL compile patch",
+          (workers) =>
+          {
+            Patch(workers);
+            return workers;
+          })
+        .Parallel<ProcAndCompileWorker, ProcAndCompileWorker>(
+          "BHL compile write (workers: %workers%)",
+          async (worker, token) =>
+          {
+            await Task.Run(worker.Phase2_WriteByteCode, token);
+            return worker;
+          })
+        .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
+          "BHL compile finalize",
+          (workers) =>
+          {
+            foreach(var w in workers)
+              errors.AddRange(w.errors);
 
-          return workers;
-        })
-      .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL write to file",
-        (workers) =>
-        {
-          string tmp_res_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".tmp";
-          
-          WriteCompilationResultToFile(conf, workers, tmp_res_file);
+            if(errors.Count > 0)
+              throw new TooManyErrorsException();
 
-          if(File.Exists(conf.proj.result_file))
-            File.Delete(conf.proj.result_file);
-          File.Move(tmp_res_file, conf.proj.result_file);
-          return workers;
-        })
-      .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
-        "BHL postproc finalize",
-        (workers) =>
-        {
-          conf.postproc.Tally();
-          return workers;
-        })
+            var check_err = CheckUniqueSymbols(workers);
+            if(check_err != null)
+            {
+              errors.Add(check_err);
+              throw new TooManyErrorsException();
+            }
+
+            return workers;
+          })
+        .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
+          "BHL write to file",
+          (workers) =>
+          {
+            string tmp_res_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".tmp";
+
+            WriteCompilationResultToFile(conf, workers, tmp_res_file);
+
+            if(File.Exists(conf.proj.result_file))
+              File.Delete(conf.proj.result_file);
+            File.Move(tmp_res_file, conf.proj.result_file);
+            return workers;
+          })
+        .Transform<List<ProcAndCompileWorker>, List<ProcAndCompileWorker>>(
+          "BHL postproc finalize",
+          (workers) =>
+          {
+            conf.postproc.Tally();
+            return workers;
+          })
       ;
 
     try
@@ -199,48 +201,51 @@ public class CompilationExecutor
       await pipeline.RunAsync(conf, default);
     }
     catch (TooManyErrorsException)
-    {}
+    {
+    }
   }
-  
-  public class TooManyErrorsException : Exception {}
+
+  public class TooManyErrorsException : Exception
+  {
+  }
 
   static ANTLR_Processor ParseIfNeededAndMakeProcessor(
-    CompileConf conf, 
-    string file, 
+    CompileConf conf,
+    string file,
     ProjectCompilationStateBundle.InterimParseResult interim)
   {
-     var file_module = new Module(
-       conf.ts,
-       conf.proj.inc_path.FilePath2ModuleName(file), 
-       file
-     );
-     
-     var err_hub = CompileErrorsHub.MakeStandard(file);
-     
-     var parsed = interim.parsed;
-     if(parsed == null)
-       parsed = ANTLR_Processor.Parse(
-         file_module,
-         err_hub,
-         new HashSet<string>(conf.proj.defines),
-         out var _
-       );
-     
-     var proc = new ANTLR_Processor(
-       parsed,
-       file_module, 
-       interim.imports_maybe, 
-       conf.ts, 
-       err_hub.errors
-     );
-     return proc;
+    var file_module = new Module(
+      conf.ts,
+      conf.proj.inc_path.FilePath2ModuleName(file),
+      file
+    );
+
+    var err_hub = CompileErrorsHub.MakeStandard(file);
+
+    var parsed = interim.parsed;
+    if(parsed == null)
+      parsed = ANTLR_Processor.Parse(
+        file_module,
+        err_hub,
+        new HashSet<string>(conf.proj.defines),
+        out var _
+      );
+
+    var proc = new ANTLR_Processor(
+      parsed,
+      file_module,
+      interim.imports_maybe,
+      conf.ts,
+      err_hub.errors
+    );
+    return proc;
   }
 
   ProjectCompilationStateBundle MakeStateBundle(
-    CompileConf conf, 
+    CompileConf conf,
     List<ParseWorker> parse_workers,
     CompileErrors errors
-    )
+  )
   {
     var proc_bundle = new ProjectCompilationStateBundle(conf.ts);
     proc_bundle.parse_workers = parse_workers;
@@ -256,8 +261,8 @@ public class CompilationExecutor
     foreach(var kv in proc_bundle.file2parsed)
     {
       if(kv.Value.cached == null &&
-          //NOTE: no need to process a file if it contains parsing errors
-          !errors.FileHasAnyErrors(kv.Key))
+         //NOTE: no need to process a file if it contains parsing errors
+         !errors.FileHasAnyErrors(kv.Key))
       {
         proc_bundle.file2proc.Add(kv.Key, ParseIfNeededAndMakeProcessor(conf, kv.Key, kv.Value));
       }
@@ -274,7 +279,7 @@ public class CompilationExecutor
 
           kv.Value.parsed = proc.parsed;
           kv.Value.cached = null;
-          
+
           cache_hits--;
           cache_miss++;
         }
@@ -284,7 +289,8 @@ public class CompilationExecutor
     return proc_bundle;
   }
 
-  bool ValidateParseCache(ProjectCompilationStateBundle proc_bundle, ProjectCompilationStateBundle.InterimParseResult interim)
+  bool ValidateParseCache(ProjectCompilationStateBundle proc_bundle,
+    ProjectCompilationStateBundle.InterimParseResult interim)
   {
     return true;
   }
@@ -305,6 +311,7 @@ public class CompilationExecutor
       else
         module2file.Add(module, file);
     }
+
     return !has_collision;
   }
 
@@ -312,14 +319,16 @@ public class CompilationExecutor
   {
     var parse_workers = new List<ParseWorker>();
 
-    int files_per_worker = conf.files.Count < conf.proj.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.proj.max_threads);
+    int files_per_worker = conf.files.Count < conf.proj.max_threads
+      ? conf.files.Count
+      : (int)Math.Ceiling((float)conf.files.Count / (float)conf.proj.max_threads);
 
     int idx = 0;
     int wid = 0;
 
     while(idx < conf.files.Count)
     {
-      int count = (idx + files_per_worker) > conf.files.Count ? (conf.files.Count - idx) : files_per_worker; 
+      int count = (idx + files_per_worker) > conf.files.Count ? (conf.files.Count - idx) : files_per_worker;
 
       var pw = new ParseWorker();
       pw.conf = conf;
@@ -342,7 +351,7 @@ public class CompilationExecutor
       cache_hits += pw.cache_hits;
       cache_miss += pw.cache_miss;
       cache_errs += pw.cache_errs;
-      
+
       errors.AddRange(pw.errors);
     }
 
@@ -353,14 +362,16 @@ public class CompilationExecutor
   {
     var parse_workers = new List<ParseWorker>();
 
-    int files_per_worker = conf.files.Count < conf.proj.max_threads ? conf.files.Count : (int)Math.Ceiling((float)conf.files.Count / (float)conf.proj.max_threads);
+    int files_per_worker = conf.files.Count < conf.proj.max_threads
+      ? conf.files.Count
+      : (int)Math.Ceiling((float)conf.files.Count / (float)conf.proj.max_threads);
 
     int idx = 0;
     int wid = 0;
 
     while(idx < conf.files.Count)
     {
-      int count = (idx + files_per_worker) > conf.files.Count ? (conf.files.Count - idx) : files_per_worker; 
+      int count = (idx + files_per_worker) > conf.files.Count ? (conf.files.Count - idx) : files_per_worker;
 
       var pw = new ParseWorker();
       pw.conf = conf;
@@ -375,9 +386,9 @@ public class CompilationExecutor
 
     return parse_workers;
   }
-  
+
   static List<ProcAndCompileWorker> MakeCompilerWorkers(
-    CompileConf conf, 
+    CompileConf conf,
     ProjectCompilationStateBundle proc_bundle
   )
   {
@@ -397,6 +408,7 @@ public class CompilationExecutor
 
       compiler_workers.Add(cw);
     }
+
     return compiler_workers;
   }
 
@@ -405,7 +417,7 @@ public class CompilationExecutor
     foreach(var w in compiler_workers)
     {
       var failed_files = new List<string>();
-      
+
       foreach(var kv in w.file2compiler)
       {
         try
@@ -415,7 +427,7 @@ public class CompilationExecutor
         catch(Exception e)
         {
           failed_files.Add(kv.Key);
-          
+
           if(e is ICompileError ie)
             w.errors.Add(ie);
           else
@@ -441,6 +453,7 @@ public class CompilationExecutor
       if(check_err != null)
         return check_err;
     }
+
     return null;
   }
 
@@ -457,13 +470,13 @@ public class CompilationExecutor
       mwriter.Write(total_modules);
 
       //NOTE: we'd like to write file binary modules in the same order they were added
-      for(int file_idx=0; file_idx < conf.files.Count; ++file_idx)
+      for(int file_idx = 0; file_idx < conf.files.Count; ++file_idx)
       {
         var file = conf.files[file_idx];
 
         foreach(var cw in compiler_workers)
         {
-          if(file_idx >= cw.start && file_idx < cw.start + cw.count) 
+          if(file_idx >= cw.start && file_idx < cw.start + cw.count)
           {
             var path = cw.file2interim[file].module_path;
             var compiled_file = cw.file2interim[file].compiled_file;
@@ -490,7 +503,8 @@ public class CompilationExecutor
   static bool CheckArgsSignatureFile(CompileConf conf)
   {
     var tmp_args_file = conf.proj.tmp_dir + "/" + Path.GetFileName(conf.proj.result_file) + ".args";
-    bool changed = !File.Exists(tmp_args_file) || (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
+    bool changed = !File.Exists(tmp_args_file) ||
+                   (File.Exists(tmp_args_file) && File.ReadAllText(tmp_args_file) != conf.args);
     if(changed)
       File.WriteAllText(tmp_args_file, conf.args);
     return changed;
@@ -510,8 +524,11 @@ public class CompilationExecutor
 
       var conflict = ns.TryLink(file_ns);
       if(!conflict.Ok && !conflict.other.IsLocal() && !conflict.local.IsLocal())
-        return new SymbolError(conflict.local, "symbol '" + conflict.other.GetFullTypePath() + "' is already declared in module '" + (conflict.other.scope as Namespace)?.module.name + "'");
+        return new SymbolError(conflict.local,
+          "symbol '" + conflict.other.GetFullTypePath() + "' is already declared in module '" +
+          (conflict.other.scope as Namespace)?.module.name + "'");
     }
+
     return null;
   }
 
@@ -521,7 +538,10 @@ public class CompilationExecutor
     public int id;
     public int start;
     public int count;
-    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+
+    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim =
+      new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+
     public CompileErrors errors = new CompileErrors();
     public int cache_hits;
     public int cache_miss;
@@ -532,7 +552,7 @@ public class CompilationExecutor
     {
       try
       {
-        for(int i = start;i<(start + count);++i)
+        for(int i = start; i < (start + count); ++i)
           Parse_At(i);
       }
       catch(Exception e)
@@ -548,8 +568,8 @@ public class CompilationExecutor
 
     void Parse_At(int i)
     {
-      current_file = conf.files[i]; 
-      
+      current_file = conf.files[i];
+
       using(var sfs = File.OpenRead(current_file))
       {
         var imports_maybe = GetMaybeImports(current_file, sfs);
@@ -589,13 +609,13 @@ public class CompilationExecutor
           //var sw = Stopwatch.StartNew();
 
           interim.parsed = ANTLR_Processor.Parse(
-            new Module(conf.ts, interim.module_path), 
-            sfs, 
+            new Module(conf.ts, interim.module_path),
+            sfs,
             CompileErrorsHub.MakeStandard(current_file, errors),
             defines: new HashSet<string>(conf.proj.defines),
             preproc_parsed: out var _
           );
-          
+
           //sw.Stop();
           //conf.logger.Log(0, $"BHL parse file done {current_file} ({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec)");
           ++cache_miss;
@@ -613,6 +633,7 @@ public class CompilationExecutor
         imports = ParseMaybeImports(conf.proj.inc_path, file, fsf);
         WriteImportsCache(file, imports);
       }
+
       return imports;
     }
 
@@ -668,6 +689,7 @@ public class CompilationExecutor
             }
             else
               break;
+
             import_idx = line.IndexOf("import", q2_idx + 1);
           }
           else
@@ -680,7 +702,7 @@ public class CompilationExecutor
       return imps;
     }
   }
-  
+
   public class ProcAndCompileWorker
   {
     public CompileConf conf;
@@ -690,7 +712,10 @@ public class CompilationExecutor
     public int count;
     public IFrontPostProcessor postproc;
     public CompileErrors errors = new CompileErrors();
-    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim = new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+
+    public Dictionary<string, ProjectCompilationStateBundle.InterimParseResult> file2interim =
+      new Dictionary<string, ProjectCompilationStateBundle.InterimParseResult>();
+
     public Dictionary<string, ANTLR_Processor> file2proc = new Dictionary<string, ANTLR_Processor>();
     public Dictionary<string, ModuleCompiler> file2compiler = new Dictionary<string, ModuleCompiler>();
     public Dictionary<string, Module> file2module = new Dictionary<string, Module>();
@@ -700,7 +725,7 @@ public class CompilationExecutor
     {
       try
       {
-        for(int i = start;i<(start + count);++i)
+        for(int i = start; i < (start + count); ++i)
           ProcessAST_At(i);
       }
       catch(Exception e)
@@ -730,14 +755,14 @@ public class CompilationExecutor
 
     void ProcessAST_At(int i)
     {
-      current_file = conf.files[i]; 
+      current_file = conf.files[i];
 
       var interim = file2interim[current_file];
 
       if(interim.cached == null)
       {
         //NOTE: add ModuleCompiler only if there were no errors in corresponding processor
-        if(file2proc.TryGetValue(current_file, out var proc) && 
+        if(file2proc.TryGetValue(current_file, out var proc) &&
            !HasAnyRelatedErrors(proc))
         {
           var proc_result = postproc.Patch(proc.result, current_file);
@@ -752,7 +777,7 @@ public class CompilationExecutor
 
     void WriteByteCode_At(int i)
     {
-      current_file = conf.files[i]; 
+      current_file = conf.files[i];
 
       var interim = file2interim[current_file];
 
@@ -796,10 +821,11 @@ public class CompilationExecutor
 
         if(seen.Contains(import_proc))
           continue;
-        
+
         if(HasAnyRelatedErrors(import_proc, seen))
           return true;
       }
+
       return false;
     }
   }
@@ -832,9 +858,9 @@ public class CompilationExecutor
 
   public static void AddFilesFromDir(string dir, List<string> files)
   {
-    DirWalk(dir, 
-      delegate(string file) 
-      { 
+    DirWalk(dir,
+      delegate(string file)
+      {
         if(TestFile(file))
           files.Add(file);
       }

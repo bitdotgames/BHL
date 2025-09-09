@@ -3,8 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-    
+namespace bhl
+{
+
 public class FuncArgSymbol : VariableSymbol
 {
   new public const uint CLASS_ID = 19;
@@ -21,12 +22,14 @@ public class FuncArgSymbol : VariableSymbol
   //func bindings)
   public FuncArgSymbol(string name, ProxyType type, bool is_ref = false)
     : this(new Origin(), name, type, is_ref)
-  {}
+  {
+  }
 
   //marshall factory version
   public FuncArgSymbol()
     : this(null, "", new ProxyType())
-  {}
+  {
+  }
 
   public override void Sync(marshall.SyncContext ctx)
   {
@@ -49,7 +52,7 @@ public struct FuncArgsInfo
   public const int ARGS_NUM_BITS = 6;
   public const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
   public const int MAX_ARGS = (int)ARGS_NUM_MASK;
-  public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS; 
+  public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS;
 
   public uint bits;
 
@@ -66,17 +69,17 @@ public struct FuncArgsInfo
   {
     this.bits = bits;
   }
-  
+
   //NOTE: setting only amount of arguments, bits will be calculated
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FuncArgsInfo(int num_args)
   {
     bits = 0;
-    
+
     if(!SetArgsNum(num_args))
       throw new Exception("Not supported amount of arguments: " + num_args);
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint GetBits(int num_args)
   {
@@ -92,7 +95,7 @@ public struct FuncArgsInfo
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool HasDefaultUsedArgs()
-  {              
+  {
     return (bits & ~ARGS_NUM_MASK) > 0;
   }
 
@@ -106,7 +109,7 @@ public struct FuncArgsInfo
   public int CountUsedDefaultArgs()
   {
     int c = 0;
-    for(int i=0;i<MAX_DEFAULT_ARGS;++i)
+    for(int i = 0; i < MAX_DEFAULT_ARGS; ++i)
       if(IsDefaultArgUsed(i))
         ++c;
     return c;
@@ -124,7 +127,7 @@ public struct FuncArgsInfo
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IncArgsNum()
   {
-    uint num = bits & ARGS_NUM_MASK; 
+    uint num = bits & ARGS_NUM_MASK;
     ++num;
     if(num > MAX_ARGS)
       return false;
@@ -139,7 +142,7 @@ public struct FuncArgsInfo
   {
     if(idx >= MAX_DEFAULT_ARGS)
       return false;
-    uint mask = 1u << (idx + ARGS_NUM_BITS); 
+    uint mask = 1u << (idx + ARGS_NUM_BITS);
     if(flag)
       bits |= mask;
     else
@@ -161,6 +164,7 @@ public enum FuncSignatureAttrib : byte
   None           = 0,
   Coro           = 1,
   VariadicArgs   = 2,
+
   //it's a mask which includes all enum bits, 
   //can be used e.g to convert FuncAttrib into FuncSignatureAttrib
   FuncAttribMask = 3
@@ -178,15 +182,16 @@ public enum FuncAttrib : byte
   Static       = 16,
 }
 
-public abstract class FuncSymbol : Symbol, ITyped, IScope, 
+public abstract class FuncSymbol : Symbol, ITyped, IScope,
   IScopeIndexed, IModuleIndexed, IEnumerable<Symbol>
 {
   FuncSignature _signature;
-  public FuncSignature signature {
-    get {
-      return _signature;
-    }
-    set {
+
+  public FuncSignature signature
+  {
+    get { return _signature; }
+    set
+    {
       _signature = value;
       //NOTE: a bit ugly, we set func attributes once the signature changes
       _signature.attribs.SetFuncAttrib(ref _attribs);
@@ -201,31 +206,28 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   internal FuncSymbolVirtual _virtual;
 
   int _module_idx = -1;
-  public int module_idx {
-    get {
-      return _module_idx;
-    }
-    set {
-      _module_idx = value;
-    }
+
+  public int module_idx
+  {
+    get { return _module_idx; }
+    set { _module_idx = value; }
   }
 
   int _scope_idx = -1;
-  public int scope_idx {
-    get {
-      return _scope_idx;
-    }
-    set {
-      _scope_idx = value;
-    }
+
+  public int scope_idx
+  {
+    get { return _scope_idx; }
+    set { _scope_idx = value; }
   }
 
   protected byte _attribs = 0;
-  public FuncAttrib attribs {
-    get {
-      return (FuncAttrib)_attribs;
-    }
-    set {
+
+  public FuncAttrib attribs
+  {
+    get { return (FuncAttrib)_attribs; }
+    set
+    {
       _attribs = (byte)value;
       signature.attribs = value.ToFuncSignatureAttrib();
     }
@@ -233,9 +235,9 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public FuncSymbol(
     Origin origin,
-    string name, 
+    string name,
     FuncSignature sig
-  ) 
+  )
     : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
@@ -247,7 +249,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     return signature;
   }
 
-  public virtual Symbol Resolve(string name) 
+  public virtual Symbol Resolve(string name)
   {
     return members.Find(name);
   }
@@ -257,7 +259,11 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     members.Add(sym);
   }
 
-  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    return members.GetEnumerator();
+  }
+
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   internal struct EnforceThisForInstanceMembersScope : IScope
@@ -272,7 +278,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     public Symbol Resolve(string name)
     {
       var symb = cs.Resolve(name);
-      
+
       //NOTE: instance members must be called via 'this'
       if(symb is VariableSymbol vs && vs.scope is ClassSymbol && !vs.IsStatic())
         return null;
@@ -293,15 +299,15 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     }
   }
 
-  public IScope GetFallbackScope() 
-  { 
+  public IScope GetFallbackScope()
+  {
     //NOTE: If declared as a class method we force the fallback
     //      scope to be special wrapper scope. This way we
     //      force the class members to be prefixed with 'this.'
     if(scope is ClassSymbolScript cs)
       return new EnforceThisForInstanceMembersScope(cs);
     else
-      return this.scope; 
+      return this.scope;
   }
 
   public IType GetReturnType()
@@ -309,9 +315,17 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     return signature.ret_type.Get();
   }
 
-  public int GetTotalArgsNum() { return signature.arg_types.Count; }
+  public int GetTotalArgsNum()
+  {
+    return signature.arg_types.Count;
+  }
+
   public abstract int GetDefaultArgsNum();
-  public int GetRequiredArgsNum() { return GetTotalArgsNum() - GetDefaultArgsNum(); } 
+
+  public int GetRequiredArgsNum()
+  {
+    return GetTotalArgsNum() - GetDefaultArgsNum();
+  }
 
   public bool HasDefaultArgAt(int i)
   {
@@ -323,7 +337,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   public FuncArgSymbol TryGetArg(int idx)
   {
     idx += GetThisArgOffset();
-    if(idx < 0 || idx >= members.Count) 
+    if(idx < 0 || idx >= members.Count)
       return null;
     return (FuncArgSymbol)members[idx];
   }
@@ -343,8 +357,9 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   int GetThisArgOffset()
   {
-    return (scope is ClassSymbolScript && !attribs.HasFlag(FuncAttrib.Static)) 
-      ? 1 : 0;
+    return (scope is ClassSymbolScript && !attribs.HasFlag(FuncAttrib.Static))
+      ? 1
+      : 0;
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
@@ -364,18 +379,19 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public override string ToString()
   {
-    string buf = 
-      "func " + signature.ret_type + " " + name +"("; 
+    string buf =
+      "func " + signature.ret_type + " " + name + "(";
     if(signature.attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
-    for(int i=0;i<signature.arg_types.Count;++i)
+    for(int i = 0; i < signature.arg_types.Count; ++i)
     {
       if(i > 0)
         buf += ",";
-      if(signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == signature.arg_types.Count-1)
+      if(signature.attribs.HasFlag(FuncSignatureAttrib.VariadicArgs) && i == signature.arg_types.Count - 1)
         buf += "...";
       buf += signature.arg_types[i] + " " + members[i].name;
     }
+
     buf += ")";
 
     return buf;
@@ -384,7 +400,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
 public class FuncSymbolScript : FuncSymbol
 {
-  public const uint CLASS_ID = 13; 
+  public const uint CLASS_ID = 13;
 
   //cached value of Module, it's set upon module loading in VM and 
   internal Module _module;
@@ -402,7 +418,7 @@ public class FuncSymbolScript : FuncSymbol
     string name,
     int default_args_num = 0,
     int ip_addr = -1
-  ) 
+  )
     : base(origin, name, sig)
   {
     this.name = name;
@@ -413,7 +429,8 @@ public class FuncSymbolScript : FuncSymbol
   //symbol factory version
   public FuncSymbolScript()
     : base(null, null, new FuncSignature())
-  {}
+  {
+  }
 
   public void ReserveThisArgument(ClassSymbolScript class_scope)
   {
@@ -421,7 +438,7 @@ public class FuncSymbolScript : FuncSymbol
     Define(this_symb);
   }
 
-  public override void Define(Symbol sym) 
+  public override void Define(Symbol sym)
   {
     if(!(sym is FuncArgSymbol))
       throw new Exception("Only func arguments allowed, got: " + sym.GetType().Name);
@@ -431,7 +448,10 @@ public class FuncSymbolScript : FuncSymbol
     base.Define(sym);
   }
 
-  public override int GetDefaultArgsNum() { return default_args_num; }
+  public override int GetDefaultArgsNum()
+  {
+    return default_args_num;
+  }
 
   public override uint ClassId()
   {
@@ -453,7 +473,7 @@ public class FuncSymbolVirtual : FuncSymbol
   protected int default_args_num;
 
   public List<FuncSymbol> overrides = new List<FuncSymbol>();
-  public List<ProxyType> owners = new List<ProxyType>(); 
+  public List<ProxyType> owners = new List<ProxyType>();
 
   public FuncSymbolVirtual(Origin origin, string name, FuncSignature signature, int default_args_num = 0)
     : base(origin, name, signature)
@@ -461,23 +481,26 @@ public class FuncSymbolVirtual : FuncSymbol
     this.default_args_num = default_args_num;
   }
 
-  public FuncSymbolVirtual(FuncSymbolScript proto) 
+  public FuncSymbolVirtual(FuncSymbolScript proto)
     : this(proto.origin, proto.name, proto.signature, proto.default_args_num)
   {
     //NOTE: directly adding arguments avoiding Define
-    for(int m=0;m<proto.members.Count;++m)
+    for(int m = 0; m < proto.members.Count; ++m)
       members.Add(proto.members[m]);
     this.origin = proto.origin;
   }
 
-  public override int GetDefaultArgsNum() { return default_args_num; }
+  public override int GetDefaultArgsNum()
+  {
+    return default_args_num;
+  }
 
   public override uint ClassId()
   {
     throw new NotImplementedException();
   }
 
-  public override void Define(Symbol sym) 
+  public override void Define(Symbol sym)
   {
     throw new NotImplementedException();
   }
@@ -487,7 +510,8 @@ public class FuncSymbolVirtual : FuncSymbol
     //NOTE: we call fs.signature(signature) but not signature.Equals(fs.signature) on purpose,
     //      since we want to allow 'non-coro' functions to be a subset(compatible) of 'coro' ones
     if(!fs.signature.Equals(signature))
-      throw new SymbolError(fs, "virtual method signatures don't match, base: '" + signature + "', override: '" + fs.signature + "'");
+      throw new SymbolError(fs,
+        "virtual method signatures don't match, base: '" + signature + "', override: '" + fs.signature + "'");
 
     fs._virtual = this;
 
@@ -497,57 +521,61 @@ public class FuncSymbolVirtual : FuncSymbol
 
   public FuncSymbol FindOverride(ClassSymbol owner)
   {
-    for(int i=0;i<owners.Count;++i)
+    for(int i = 0; i < owners.Count; ++i)
     {
       if(owners[i].Get() == owner)
         return overrides[i];
     }
+
     return null;
   }
 
   public FuncSymbol GetTopOverride()
   {
-    return overrides[overrides.Count-1];
+    return overrides[overrides.Count - 1];
   }
 }
 
 public class FuncSymbolNative : FuncSymbol
 {
-  public delegate Coroutine Cb(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status); 
+  public delegate Coroutine Cb(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status);
+
   public Cb cb;
 
   int default_args_num;
 
   public FuncSymbolNative(
     Origin cinfo,
-    string name, 
-    ProxyType ret_type, 
+    string name,
+    ProxyType ret_type,
     Cb cb,
     params FuncArgSymbol[] args
-  ) 
+  )
     : this(cinfo, name, ret_type, 0, cb, args)
-  {}
+  {
+  }
 
   public FuncSymbolNative(
     Origin cinfo,
-    string name, 
-    ProxyType ret_type, 
+    string name,
+    ProxyType ret_type,
     int def_args_num,
     Cb cb,
     params FuncArgSymbol[] args
-  ) 
+  )
     : this(cinfo, name, FuncAttrib.None, ret_type, def_args_num, cb, args)
-  {}
+  {
+  }
 
   public FuncSymbolNative(
     Origin origin,
-    string name, 
+    string name,
     FuncAttrib attribs,
-    ProxyType ret_type, 
+    ProxyType ret_type,
     int default_args_num,
     Cb cb,
     params FuncArgSymbol[] args
-  ) 
+  )
     : base(origin, name, new FuncSignature(attribs.ToFuncSignatureAttrib(), ret_type))
   {
     this.attribs = attribs;
@@ -562,9 +590,12 @@ public class FuncSymbolNative : FuncSymbol
     }
   }
 
-  public override int GetDefaultArgsNum() { return default_args_num; }
+  public override int GetDefaultArgsNum()
+  {
+    return default_args_num;
+  }
 
-  public override void Define(Symbol sym) 
+  public override void Define(Symbol sym)
   {
     throw new Exception("Defining symbols here is not allowed");
   }
@@ -597,13 +628,13 @@ public class LambdaSymbol : FuncSymbolScript
   Dictionary<VariableSymbol, UpvalMode> captures;
 
   public LambdaSymbol(
-    AnnotatedParseTree parsed, 
+    AnnotatedParseTree parsed,
     string name,
     FuncSignature sig,
     List<AST_UpVal> upvals,
     Dictionary<VariableSymbol, UpvalMode> captures,
     List<FuncSymbolScript> fdecl_stack
-  ) 
+  )
     : base(parsed, sig, name, 0, -1)
   {
     this.upvals = upvals;
@@ -622,14 +653,14 @@ public class LambdaSymbol : FuncSymbolScript
     this._current_scope.DefineWithoutEnclosingChecks(local);
 
     var upval = new AST_UpVal(
-      local.name, 
-      local.scope_idx, 
+      local.name,
+      local.scope_idx,
       src.scope_idx,
       //TODO: should be the line of its usage              
       //(in case of 'this' there's no associated parse tree, 
       // so we pass a line number)
       src.origin.source_line
-    ); 
+    );
     upval.mode = DetectCaptureMode(src);
     upvals.Add(upval);
 
@@ -643,7 +674,7 @@ public class LambdaSymbol : FuncSymbolScript
     return m;
   }
 
-  public override Symbol Resolve(string name) 
+  public override Symbol Resolve(string name)
   {
     var s = base.Resolve(name);
     if(s != null)
@@ -658,7 +689,7 @@ public class LambdaSymbol : FuncSymbolScript
     if(my_idx == -1)
       return null;
 
-    for(int i=my_idx;i-- > 0;)
+    for(int i = my_idx; i-- > 0;)
     {
       var fdecl = fdecl_stack[i];
 
@@ -669,7 +700,7 @@ public class LambdaSymbol : FuncSymbolScript
         //checking if it's a variable and not a global one
         if(res is VariableSymbol vs && !(vs.scope is Namespace))
         {
-          var local = AssignUpValues(vs, i+1, my_idx);
+          var local = AssignUpValues(vs, i + 1, my_idx);
           //NOTE: returning local instead of an original variable since we need 
           //      proper index of the local variable in the local frame
           return local;
@@ -682,11 +713,12 @@ public class LambdaSymbol : FuncSymbolScript
 
   int FindMyIdxInStack()
   {
-    for(int i=0;i<fdecl_stack.Count;++i)
+    for(int i = 0; i < fdecl_stack.Count; ++i)
     {
       if(fdecl_stack[i] == this)
         return i;
     }
+
     return -1;
   }
 
@@ -694,7 +726,7 @@ public class LambdaSymbol : FuncSymbolScript
   {
     VariableSymbol most_nested = null;
     //now let's put this result into all nested lambda scopes 
-    for(int j=from_idx;j<=to_idx;++j)
+    for(int j = from_idx; j <= to_idx; ++j)
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)
       {
@@ -704,8 +736,10 @@ public class LambdaSymbol : FuncSymbolScript
           most_nested = vs;
       }
     }
+
     return most_nested;
   }
 }
 #endif
+
 }

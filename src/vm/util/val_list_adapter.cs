@@ -3,35 +3,35 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 //TODO: writing is not implemented yet
 public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
   internal Pool<ValList<T>> pool;
-   
+
   Func<Val, T> val2native;
-  
+
   ValList val_list;
 
   public int Count => val_list.Count;
-  
+
   public bool IsReadOnly => false;
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
   internal int _refs;
-   
-  public int refs => _refs; 
-  
-  [ThreadStatic]
-  static Pool<ValList<T>> _pool;
+
+  public int refs => _refs;
+
+  [ThreadStatic] static Pool<ValList<T>> _pool;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static Pool<ValList<T>> GetPool()
   {
-    if(_pool == null) 
-      _pool = new Pool<ValList<T>>(); 
+    if(_pool == null)
+      _pool = new Pool<ValList<T>>();
     return _pool;
   }
 
@@ -64,7 +64,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     this.val_list = val_list;
     this.val2native = val2native;
   }
-  
+
   public void Dispose()
   {
     Release();
@@ -76,7 +76,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     var res = val2native(val_list[idx]);
     return res;
   }
-  
+
   public void Retain()
   {
     if(_refs == -1)
@@ -97,17 +97,17 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     if(_refs == 0)
       Del(this);
   }
- 
+
   static void Del(ValList<T> lst)
   {
     if(lst._refs != 0)
       throw new Exception("Freeing invalid object, refs " + lst._refs);
 
     lst._refs = -1;
-    
+
     lst.pool.stack.Push(lst);
-  } 
-  
+  }
+
   public struct Enumerator<T1> : IEnumerator<T1>
   {
     public T1 Current => target.At(idx);
@@ -129,9 +129,11 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 
     object IEnumerator.Current => Current;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
   }
-  
+
   public IEnumerator<T> GetEnumerator()
   {
     return new Enumerator<T>(this);
@@ -178,11 +180,12 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 
   public int IndexOf(T item)
   {
-    for(int i=0; i<Count; ++i)
+    for(int i = 0; i < Count; ++i)
     {
       if(this[i].Equals(item))
         return i;
     }
+
     return -1;
   }
 
@@ -202,5 +205,5 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     set => throw new NotImplementedException();
   }
 }
-    
+
 }

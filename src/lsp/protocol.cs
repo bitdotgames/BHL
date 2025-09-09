@@ -4,7 +4,8 @@ using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace bhl.lsp.proto {
+namespace bhl.lsp.proto
+{
 
 public class SelectorTypeJsonConverter : JsonConverter
 {
@@ -26,11 +27,11 @@ public class SelectorTypeJsonConverter : JsonConverter
       writer.WriteNull();
       return;
     }
-    
+
     var jsonObject = JToken.FromObject(obj, serializer);
     jsonObject.WriteTo(writer);
   }
-  
+
   public override bool CanRead => false;
 
   public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
@@ -224,7 +225,8 @@ public class Uri
   public string path;
 
   public Uri()
-  {}
+  {
+  }
 
   public Uri(string path)
   {
@@ -234,7 +236,7 @@ public class Uri
   public static Uri Decode(string path)
   {
     //let's skip the 'file://' part and extra slashes for Windows 
-    string tmp = path.Substring(7); 
+    string tmp = path.Substring(7);
     if(System.IO.Path.DirectorySeparatorChar == '\\')
       tmp = tmp.TrimStart('\\', '/');
 
@@ -300,7 +302,7 @@ public class CompletionOptions : WorkDoneProgressOptions
    * make up identifiers don't need to be listed here.
    */
   public string[] triggerCharacters;
-  
+
   /**
    * The list of all possible characters that commit a completion. This field
    * can be used if clients don't support individual commit characters per
@@ -313,7 +315,7 @@ public class CompletionOptions : WorkDoneProgressOptions
    * @since 3.2.0
    */
   public string[] allCommitCharacters;
-  
+
   /**
    * The server provides support to resolve additional
    * information for a completion item.
@@ -785,7 +787,7 @@ public class HoverClientCapabilities
    * Client supports the follow content formats if the content
    * property refers to a `literal of type MarkupContent`.
    * The order describes the preferred format of the client.
-   * 
+   *
    * MarkupKind = 'plaintext' | 'markdown';
    */
   public string[] contentFormat;
@@ -888,52 +890,52 @@ public class SemanticTokensClientCapabilities
   public bool? augmentsSyntaxTokens;
 }
 
-public class PublishDiagnosticsClientCapabilities 
+public class PublishDiagnosticsClientCapabilities
 {
   /**
    * Whether the clients accepts diagnostics with related information.
    */
   public bool relatedInformation;
 
-  public class TagSupport 
+  public class TagSupport
   {
-		/**
-		 * The tags supported by the client.
-		 */
-		public DiagnosticTag[] valueSet;
+    /**
+     * The tags supported by the client.
+     */
+    public DiagnosticTag[] valueSet;
   }
 
-	/**
-	 * Client supports the tag property to provide meta data about a diagnostic.
-	 * Clients supporting tags have to handle unknown tags gracefully.
-	 *
-	 * @since 3.15.0
-	 */
-	public TagSupport tagSupport;
+  /**
+   * Client supports the tag property to provide meta data about a diagnostic.
+   * Clients supporting tags have to handle unknown tags gracefully.
+   *
+   * @since 3.15.0
+   */
+  public TagSupport tagSupport;
 
-	/**
-	 * Whether the client interprets the version property of the
-	 * `textDocument/publishDiagnostics` notification's parameter.
-	 *
-	 * @since 3.15.0
-	 */
-	public bool versionSupport;
+  /**
+   * Whether the client interprets the version property of the
+   * `textDocument/publishDiagnostics` notification's parameter.
+   *
+   * @since 3.15.0
+   */
+  public bool versionSupport;
 
-	/**
-	 * Client supports a codeDescription property
-	 *
-	 * @since 3.16.0
-	 */
-	public bool codeDescriptionSupport;
+  /**
+   * Client supports a codeDescription property
+   *
+   * @since 3.16.0
+   */
+  public bool codeDescriptionSupport;
 
-	/**
-	 * Whether code action supports the `data` property which is
-	 * preserved between a `textDocument/publishDiagnostics` and
-	 * `textDocument/codeAction` request.
-	 *
-	 * @since 3.16.0
-	 */
-	public bool dataSupport;
+  /**
+   * Whether code action supports the `data` property which is
+   * preserved between a `textDocument/publishDiagnostics` and
+   * `textDocument/codeAction` request.
+   *
+   * @since 3.16.0
+   */
+  public bool dataSupport;
 }
 
 public class CompletionClientCapabilities
@@ -960,77 +962,77 @@ public class CompletionClientCapabilities
      */
     public bool? commitCharactersSupport;
 
-      /**
-       * Client supports the follow content formats for the documentation
-       * property. The order describes the preferred format of the client.
-       */
-      //documentationFormat ?: MarkupKind[];
+    /**
+     * Client supports the follow content formats for the documentation
+     * property. The order describes the preferred format of the client.
+     */
+    //documentationFormat ?: MarkupKind[];
 
-      /**
-       * Client supports the deprecated property on a completion item.
-       */
-      public bool? deprecatedSupport;
+    /**
+     * Client supports the deprecated property on a completion item.
+     */
+    public bool? deprecatedSupport;
 
-      /**
-       * Client supports the preselect property on a completion item.
-       */
-      public bool? preselectSupport;
-      
-      /**
-       * Client supports the tag property on a completion item. Clients
-       * supporting tags have to handle unknown tags gracefully. Clients
-       * especially need to preserve unknown tags when sending a completion
-       * item back to the server in a resolve call.
-       *
-       * @since 3.15.0
-       */
-      //public tagSupport?: {
-      //    /**
-      //     * The tags supported by the client.
-      //     */
-      //    valueSet: CompletionItemTag[];
-      //};
+    /**
+     * Client supports the preselect property on a completion item.
+     */
+    public bool? preselectSupport;
 
-      /**
-       * Client supports insert replace edit to control different behavior if
-       * a completion item is inserted in the text or should replace text.
-       *
-       * @since 3.16.0
-       */
-      public bool? insertReplaceSupport;
-      
-      /**
-       * Indicates which properties a client can resolve lazily on a
-       * completion item. Before version 3.16.0 only the predefined properties
-       * `documentation` and `detail` could be resolved lazily.
-       *
-       * @since 3.16.0
-       */
-      //resolveSupport?: {
-      //    /**
-      //     * The properties that a client can resolve lazily.
-      //     */
-      //    properties: string[];
-      //};
-      
-      /**
-       * The client supports the `insertTextMode` property on
-       * a completion item to override the whitespace handling mode
-       * as defined by the client (see `insertTextMode`).
-       *
-       * @since 3.16.0
-       */
-      //insertTextModeSupport?: {
-      //    valueSet: InsertTextMode[];
-      //};
+    /**
+     * Client supports the tag property on a completion item. Clients
+     * supporting tags have to handle unknown tags gracefully. Clients
+     * especially need to preserve unknown tags when sending a completion
+     * item back to the server in a resolve call.
+     *
+     * @since 3.15.0
+     */
+    //public tagSupport?: {
+    //    /**
+    //     * The tags supported by the client.
+    //     */
+    //    valueSet: CompletionItemTag[];
+    //};
 
-     /**
-      * The client has support for completion item label
-      * details (see also `CompletionItemLabelDetails`).
-      *
-      * @since 3.17.0
-      */
-      public bool? labelDetailsSupport;
+    /**
+     * Client supports insert replace edit to control different behavior if
+     * a completion item is inserted in the text or should replace text.
+     *
+     * @since 3.16.0
+     */
+    public bool? insertReplaceSupport;
+
+    /**
+     * Indicates which properties a client can resolve lazily on a
+     * completion item. Before version 3.16.0 only the predefined properties
+     * `documentation` and `detail` could be resolved lazily.
+     *
+     * @since 3.16.0
+     */
+    //resolveSupport?: {
+    //    /**
+    //     * The properties that a client can resolve lazily.
+    //     */
+    //    properties: string[];
+    //};
+
+    /**
+     * The client supports the `insertTextMode` property on
+     * a completion item to override the whitespace handling mode
+     * as defined by the client (see `insertTextMode`).
+     *
+     * @since 3.16.0
+     */
+    //insertTextModeSupport?: {
+    //    valueSet: InsertTextMode[];
+    //};
+
+    /**
+     * The client has support for completion item label
+     * details (see also `CompletionItemLabelDetails`).
+     *
+     * @since 3.17.0
+     */
+    public bool? labelDetailsSupport;
   }
 
   /**
@@ -1040,7 +1042,7 @@ public class CompletionClientCapabilities
 #nullable enable
   public CompletionItemCapability? completionItem;
 #nullable disable
-  
+
   //public completionItemKind?: {
   //    /**
   //     * The completion item kind values the client supports. When this
@@ -1060,7 +1062,7 @@ public class CompletionClientCapabilities
    * `textDocument/completion` request.
    */
   public bool? contextSupport;
-  
+
   /**
    * The client's default when the completion item doesn't provide a
    * `insertTextMode` property.
@@ -1068,7 +1070,7 @@ public class CompletionClientCapabilities
    * @since 3.17.0
    */
   //insertTextMode?: InsertTextMode;
-  
+
   /**
    * The client supports the following `CompletionList` specific
    * capabilities.
@@ -1147,7 +1149,7 @@ public class TextDocumentClientCapabilities
    * notification.
    */
   public PublishDiagnosticsClientCapabilities publishDiagnostics;
-  
+
   /**
    * Capabilities specific to the `textDocument/completion` request.
    */
@@ -1575,10 +1577,11 @@ public class Position
   public static implicit operator Position(SourcePos pos)
   {
     //NOTE: in LSP line is 0 based
-    return new Position() { 
-      line = (uint)(pos.line-1), 
-      character = (uint)pos.column 
-    }; 
+    return new Position()
+    {
+      line = (uint)(pos.line - 1),
+      character = (uint)pos.column
+    };
   }
 }
 
@@ -1596,7 +1599,7 @@ public class Range
 
   public static implicit operator Range(SourceRange range)
   {
-    return new Range() { start = range.start, end = range.end }; 
+    return new Range() { start = range.start, end = range.end };
   }
 }
 
@@ -1862,7 +1865,7 @@ public class Command
 }
 
 public class CompletionList
-{ 
+{
   /**
   * This list is not complete. Further typing should result in recomputing
   * this list.
@@ -1949,7 +1952,7 @@ public class CompletionItem
   /**
    *  A string that should be inserted into a document when selecting
    *  this completion. When `falsy` the label is used.
-   * 
+   *
    *  The `insertText` is subject to interpretation by the client side.
    *  Some tools might not take the string literally. For example
    *  VS Code when code complete is requested in this example
@@ -1985,10 +1988,10 @@ public class CompletionItem
   /**
    *  An edit which is applied to a document when selecting this completion.
    *  When an edit is provided the value of `insertText` is ignored.
-   * 
+   *
    *  *Note:* The range of the edit must be a single line range and it must
    *  contain the position at which completion has been requested.
-   * 
+   *
    *  Most editors support two different operations when accepting a completion
    *  item. One is to insert a completion text and the other is to replace an
    *  existing text with a completion text. Since this can usually not be
@@ -1996,14 +1999,14 @@ public class CompletionItem
    *  signal support for `InsertReplaceEdits` via the
    *  `textDocument.completion.insertReplaceSupport` client capability
    *  property.
-   * 
+   *
    *  *Note 1:* The text edit's range as well as both ranges from an insert
    *  replace edit must be a [single line] and they must contain the position
    *  at which completion has been requested.
    *  *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
    *  must be a prefix of the edit's replace range, that means it must be
    *  contained and starting at the same position.
-   * 
+   *
    *  @since 3.16.0 additional type `InsertReplaceEdit`
    */
 #nullable enable
@@ -2014,7 +2017,7 @@ public class CompletionItem
    *  An optional array of additional text edits that are applied when
    *  selecting this completion. Edits must not overlap (including the same
    *  insert position) with the main edit nor with themselves.
-   * 
+   *
    *  Additional text edits should be used to change text unrelated to the
    *  current cursor position (for example adding an import statement at the
    *  top of the file if the completion item will insert an unqualified type).
@@ -2789,44 +2792,44 @@ public class SemanticTokensParams : WorkDoneProgressParams
 public class DiagnosticOptions : WorkDoneProgressParams
 {
   /**
-	 * An optional identifier under which the diagnostics are
-	 * managed by the client.
-	 */
-	public string identifier;
+   * An optional identifier under which the diagnostics are
+   * managed by the client.
+   */
+  public string identifier;
 
-	/**
-	 * Whether the language has inter file dependencies meaning that
-	 * editing code in one file can result in a different diagnostic
-	 * set in another file. Inter file dependencies are common for
-	 * most programming languages and typically uncommon for linters.
-	 */
-	public bool interFileDependencies;
+  /**
+   * Whether the language has inter file dependencies meaning that
+   * editing code in one file can result in a different diagnostic
+   * set in another file. Inter file dependencies are common for
+   * most programming languages and typically uncommon for linters.
+   */
+  public bool interFileDependencies;
 
-	/**
-	 * The server provides support for workspace diagnostics as well.
-	 */
-	public bool workspaceDiagnostics;
+  /**
+   * The server provides support for workspace diagnostics as well.
+   */
+  public bool workspaceDiagnostics;
 }
 
 public class PublishDiagnosticParams
 {
   /**
-	 * The URI for which diagnostic information is reported.
-	 */
-	public Uri uri;
+   * The URI for which diagnostic information is reported.
+   */
+  public Uri uri;
 
-	/**
-	 * Optional the version number of the document the diagnostics are published
-	 * for.
-	 *
-	 * @since 3.15.0
-	 */
-	public int? version;
+  /**
+   * Optional the version number of the document the diagnostics are published
+   * for.
+   *
+   * @since 3.15.0
+   */
+  public int? version;
 
-	/**
-	 * An array of diagnostic information items.
-	 */
-	public List<Diagnostic> diagnostics;
+  /**
+   * An array of diagnostic information items.
+   */
+  public List<Diagnostic> diagnostics;
 }
 
 public class SemanticTokens

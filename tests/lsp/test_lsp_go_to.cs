@@ -77,7 +77,7 @@ public class TestLSPGoToDefinition : TestLSPShared
   public TestLSPGoToDefinition()
   {
     var ws = new Workspace();
-  
+
     srv = new Server(NoLogger(), NoConnection(), ws);
     srv.AttachService(new bhl.lsp.TextDocumentGoToService(srv));
 
@@ -102,7 +102,7 @@ public class TestLSPGoToDefinition : TestLSPShared
       GoToDefinitionRsp(uri1, "func float test1(float k)", end_line_offset: 3)
     );
   }
-  
+
   [Fact]
   public async Task _2()
   {
@@ -111,7 +111,7 @@ public class TestLSPGoToDefinition : TestLSPShared
       GoToDefinitionRsp(uri1, "func test2() //test2", end_line_offset: 4)
     );
   }
-  
+
   [Fact]
   public async Task _3()
   {
@@ -192,7 +192,7 @@ public class TestLSPGoToDefinition : TestLSPShared
       GoToDefinitionRsp(uri2, "func ErrorCodes test4() //test4", end_line_offset: 7)
     );
   }
-  
+
   [Fact]
   public async Task _11_1()
   {
@@ -225,7 +225,9 @@ public class TestLSPGoToDefinition : TestLSPShared
   {
     var rsp = await srv.Handle(GoToDefinitionReq(uri2, "EST() //native call"));
     AssertContains(rsp, "test_lsp_go_to.cs");
-    AssertContains(rsp, "\"start\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1},\"end\":{\"line\":"+(fn_TEST.origin.source_range.start.line-1)+",\"character\":1}}");
+    AssertContains(rsp,
+      "\"start\":{\"line\":" + (fn_TEST.origin.source_range.start.line - 1) + ",\"character\":1},\"end\":{\"line\":" +
+      (fn_TEST.origin.source_range.start.line - 1) + ",\"character\":1}}");
   }
 
   [Fact]

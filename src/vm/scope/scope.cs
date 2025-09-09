@@ -1,5 +1,5 @@
-
-namespace bhl {
+namespace bhl
+{
 
 public interface IScope
 {

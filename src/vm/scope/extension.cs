@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
 public static class ScopeExtensions
 {
@@ -131,6 +132,7 @@ public static class ScopeExtensions
         return ns;
       tmp = tmp.GetFallbackScope();
     } while(tmp != null);
+
     return null;
   }
 
@@ -148,12 +150,10 @@ public static class ScopeExtensions
   //      with fallback (e.g. trying the 'upper' scopes)
   public static Symbol ResolveSymbolByPath(this IScope scope, NamePath path)
   {
-    for(int i=0; i<path.Count; ++i)
+    for(int i = 0; i < path.Count; ++i)
     {
       //NOTE: for the root item let's resolve with fallback
-      var symb = i == 0 ?
-        scope.ResolveWithFallback(path[i]) :
-        scope.ResolveRelatedOnly(path[i]);
+      var symb = i == 0 ? scope.ResolveWithFallback(path[i]) : scope.ResolveRelatedOnly(path[i]);
 
       //let's check if it's the last path item
       if(i == path.Count - 1)
@@ -213,6 +213,7 @@ public static class ScopeExtensions
         if(s != null)
           return s;
       }
+
       return null;
     }
     else
@@ -220,7 +221,7 @@ public static class ScopeExtensions
   }
 
   public static FuncSymbolScript FindEnclosingFuncSymbol(this IScope scope)
-	{
+  {
     var fallback = scope;
     while(fallback != null)
     {
@@ -228,8 +229,9 @@ public static class ScopeExtensions
         return fss;
       fallback = fallback.GetFallbackScope();
     }
+
     return null;
-	}
+  }
 
   public static string DumpMembers(this IScope scope, int level = 0)
   {
@@ -247,17 +249,19 @@ public static class ScopeExtensions
         if(scope is FuncSymbol)
           str += m.name + " : " + ((ITyped)m).GetIType().GetName() + ", ";
         else if(m is IScope s)
-          str += s.DumpMembers(level+1) + "\n";
+          str += s.DumpMembers(level + 1) + "\n";
         else if(m is ITyped typed)
-          str += new String(' ', level+1) + m.name + " : " + typed.GetIType()?.GetName() + "(" + m.GetType().Name + ")\n";
+          str += new String(' ', level + 1) + m.name + " : " + typed.GetIType()?.GetName() + "(" + m.GetType().Name +
+                 ")\n";
         else
-          str += new String(' ', level+1) + m.name + " : " + m.GetType().Name + "\n";
+          str += new String(' ', level + 1) + m.name + " : " + m.GetType().Name + "\n";
       }
     }
+
     if(scope is FuncSymbol)
       str += ")";
     else
-    str += new String(' ', level) + "}";
+      str += new String(' ', level) + "}";
     return str;
   }
 
@@ -369,7 +373,8 @@ public static class ScopeExtensions
     return self.TFunc(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type, arg_types);
   }
 
-  public static ProxyType TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type, params TypeArg[] arg_types)
+  public static ProxyType TFunc(this INamedResolver self, FuncSignatureAttrib attribs, TypeArg ret_type,
+    params TypeArg[] arg_types)
   {
     var sig = new FuncSignature(attribs, self.T(ret_type));
     foreach(var arg_type in arg_types)

@@ -1,7 +1,7 @@
+namespace bhl
+{
 
-namespace bhl {
-  
-public abstract class Symbol : INamed, ITypeRefIndexable, marshall.IMarshallableGeneric 
+public abstract class Symbol : INamed, ITypeRefIndexable, marshall.IMarshallableGeneric
 {
   public string name;
 
@@ -11,10 +11,10 @@ public abstract class Symbol : INamed, ITypeRefIndexable, marshall.IMarshallable
   // Information about origin where symbol is defined: file and line, parse tree
   public Origin origin;
 
-  public Symbol(Origin origin, string name) 
-  { 
+  public Symbol(Origin origin, string name)
+  {
     this.origin = origin;
-    this.name = name; 
+    this.name = name;
   }
 
   public string GetName()
@@ -22,7 +22,7 @@ public abstract class Symbol : INamed, ITypeRefIndexable, marshall.IMarshallable
     return name;
   }
 
-  public override string ToString() 
+  public override string ToString()
   {
     return name;
   }

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using bhl.marshall;
 
-namespace bhl {
+namespace bhl
+{
 
 // Can be a simple name like 'Foo' but also a fully specified path like 'foo.bar.Cat', or '[]ecs.Item'
 public struct NamePath : IEnumerable<string>, IEquatable<NamePath>, IMarshallable
@@ -45,15 +46,15 @@ public struct NamePath : IEnumerable<string>, IEquatable<NamePath>, IMarshallabl
 
   public void Sync(SyncContext ctx)
   {
-     int count = Count;
-     Marshall.Sync(ctx, ref count);
-     for(int i = 0; i < count; ++i)
-     {
-       string item = ctx.is_read ? "" : this[i];
-       Marshall.Sync(ctx, ref item);
-       if(ctx.is_read)
-         Add(item);
-     }
+    int count = Count;
+    Marshall.Sync(ctx, ref count);
+    for(int i = 0; i < count; ++i)
+    {
+      string item = ctx.is_read ? "" : this[i];
+      Marshall.Sync(ctx, ref item);
+      if(ctx.is_read)
+        Add(item);
+    }
   }
 
   public override bool Equals(object o)
@@ -68,7 +69,7 @@ public struct NamePath : IEnumerable<string>, IEquatable<NamePath>, IMarshallabl
     if(o.Count != Count)
       return false;
 
-    for(int i=0; i<o.Count; ++i)
+    for(int i = 0; i < o.Count; ++i)
       if(this[i] != o[i])
         return false;
 
@@ -78,7 +79,7 @@ public struct NamePath : IEnumerable<string>, IEquatable<NamePath>, IMarshallabl
   public override int GetHashCode()
   {
     int hc = 0;
-    for(int i=0; i<Count; ++i)
+    for(int i = 0; i < Count; ++i)
       hc ^= this[i].GetHashCode();
     return hc;
   }

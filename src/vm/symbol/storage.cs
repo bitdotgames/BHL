@@ -3,28 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 {
   internal IScope scope;
+
   internal List<Symbol> list = new List<Symbol>();
+
   //NOTE: used for lookup by name
   Dictionary<string, int> name2idx = new Dictionary<string, int>();
 
   public int Count
   {
-    get {
-      return list.Count;
-    }
+    get { return list.Count; }
   }
 
   public Symbol this[int index]
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get {
-      return list[index];
-    }
+    get { return list[index]; }
   }
 
   public SymbolsStorage(IScope scope)
@@ -50,7 +49,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
   public void Add(Symbol s)
   {
     if(Find(s.name) != null)
-      throw new SymbolError(s, "already defined symbol '" + s.name + "'"); 
+      throw new SymbolError(s, "already defined symbol '" + s.name + "'");
 
     //only assingning scope if it's not assigned yet
     if(s.scope == null)
@@ -60,7 +59,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
       si.scope_idx = list.Count;
 
     list.Add(s);
-    name2idx.Add(s.name, list.Count-1);
+    name2idx.Add(s.name, list.Count - 1);
   }
 
   public void RemoveAt(int index)
@@ -98,7 +97,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
     int idx = IndexOf(what);
     if(idx == -1)
       return false;
-    
+
     list[idx] = subst;
 
     name2idx.Remove(what.name);
@@ -114,17 +113,18 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
       if(s.scope == scope)
         s.scope = null;
     }
+
     list.Clear();
     name2idx.Clear();
   }
 
-  public void Sync(marshall.SyncContext ctx) 
+  public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.SyncGeneric(ctx, list);
 
     if(ctx.is_read)
     {
-      for(int idx=0;idx<list.Count;++idx)
+      for(int idx = 0; idx < list.Count; ++idx)
       {
         var tmp = list[idx];
         tmp.scope = scope;
@@ -135,7 +135,7 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
 
   public void UnionWith(SymbolsStorage o)
   {
-    for(int i=0;i<o.Count;++i)
+    for(int i = 0; i < o.Count; ++i)
       Add(o[i]);
   }
 
@@ -143,7 +143,8 @@ public class SymbolsStorage : marshall.IMarshallable, IEnumerable<Symbol>
   {
     return list.GetEnumerator();
   }
+
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }
-    
+
 }

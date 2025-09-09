@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentSemanticTokensService : IService
 {
@@ -11,7 +12,7 @@ public class TextDocumentSemanticTokensService : IService
   {
     this.workspace = srv.workspace;
   }
-  
+
   public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
   {
     if(cc.textDocument?.semanticTokens != null)

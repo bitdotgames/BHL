@@ -1,15 +1,20 @@
 using System;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class RefType : IEphemeralType, IEquatable<RefType>
 {
   public const uint CLASS_ID = 17;
 
-  public ProxyType subj; 
+  public ProxyType subj;
 
   string name;
-  public string GetName() { return name; }
+
+  public string GetName()
+  {
+    return name;
+  }
 
   public RefType(ProxyType subj)
   {
@@ -19,7 +24,8 @@ public class RefType : IEphemeralType, IEquatable<RefType>
 
   //marshall factory version
   public RefType()
-  {}
+  {
+  }
 
   public uint ClassId()
   {
@@ -35,7 +41,7 @@ public class RefType : IEphemeralType, IEquatable<RefType>
   {
     refs.Index(subj);
   }
-  
+
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.SyncTypeRef(ctx, ref subj);
@@ -63,7 +69,7 @@ public class RefType : IEphemeralType, IEquatable<RefType>
   {
     return name.GetHashCode();
   }
-  
+
   public override string ToString()
   {
     return name;

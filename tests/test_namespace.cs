@@ -38,7 +38,7 @@ public class TestNamespace : BHL_TestBase
       Assert.Single(locals);
       AssertEqual("foo", locals[0].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Empty(locals);
@@ -123,7 +123,7 @@ public class TestNamespace : BHL_TestBase
 
       bar {
       }
-      
+
       [ns1 { wow { } }]
     }
     */
@@ -165,7 +165,7 @@ public class TestNamespace : BHL_TestBase
     Assert.True(ns2.ResolveNamedByPath("foo..") == null);
     Assert.True(ns2.ResolveNamedByPath("foo.bar") == null);
     Assert.True(ns2.ResolveNamedByPath(".foo.foo_sub..") == null);
-    
+
     {
       var locals = GetLocalSymbols(ns1);
       Assert.Equal(4, locals.Count);
@@ -256,7 +256,7 @@ public class TestNamespace : BHL_TestBase
 
       bar {
       }
-      
+
       [ ns1 { wow {} } ]
     }
     */
@@ -294,7 +294,7 @@ public class TestNamespace : BHL_TestBase
     Assert.True(ns2.ResolveNamedByPath("foo..") == null);
     Assert.True(ns2.ResolveNamedByPath("foo.bar") == null);
     Assert.True(ns2.ResolveNamedByPath(".foo.foo_sub..") == null);
-    
+
     {
       var locals = GetLocalSymbols(ns1);
       Assert.Equal(4, locals.Count);
@@ -303,7 +303,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("Wow", locals[2].name);
       AssertEqual("wow", locals[3].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Equal(3, locals.Count);
@@ -312,7 +312,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("bar", locals[2].name);
     }
   }
-  
+
   [Fact]
   public void TestMultipleLink()
   {
@@ -346,7 +346,7 @@ public class TestNamespace : BHL_TestBase
       foo {
         sub2 {
           class Hey {}
-        } 
+        }
       }
     }
     */
@@ -367,7 +367,7 @@ public class TestNamespace : BHL_TestBase
     var ns3 = new Namespace(m);
     ns3.Link(ns2);
     ns3.Link(ns1);
-    
+
     AssertEqual("foo", ns3.ResolveNamedByPath("foo").GetName());
     AssertEqual("sub2", ns3.ResolveNamedByPath("foo.sub2").GetName());
     AssertEqual("sub1", ns3.ResolveNamedByPath("foo.sub1").GetName());
@@ -381,7 +381,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub1", locals[1].name);
       AssertEqual("Wow", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Equal(3, locals.Count);
@@ -389,13 +389,13 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub2", locals[1].name);
       AssertEqual("Hey", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns3);
       Assert.Empty(locals);
     }
   }
-  
+
   [Fact]
   public void TestMultipleLink2()
   {
@@ -429,7 +429,7 @@ public class TestNamespace : BHL_TestBase
       foo {
         sub2 {
           class Hey {}
-        } 
+        }
       }
     }
     */
@@ -446,13 +446,13 @@ public class TestNamespace : BHL_TestBase
 
       ns2.Define(foo);
     }
-    
+
     /*
     {
       foo {
         sub2 {
           class Wow {}
-        } 
+        }
       }
     }
     */
@@ -474,7 +474,7 @@ public class TestNamespace : BHL_TestBase
     ns4.Link(ns2);
     ns4.Link(ns1);
     ns4.Link(ns3);
-    
+
     AssertEqual("foo", ns4.ResolveNamedByPath("foo").GetName());
     AssertEqual("sub2", ns4.ResolveNamedByPath("foo.sub2").GetName());
     AssertEqual("sub1", ns4.ResolveNamedByPath("foo.sub1").GetName());
@@ -488,7 +488,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub1", locals[1].name);
       AssertEqual("Wow", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Equal(3, locals.Count);
@@ -496,7 +496,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub2", locals[1].name);
       AssertEqual("Hey", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns3);
       Assert.Equal(3, locals.Count);
@@ -504,7 +504,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub2", locals[1].name);
       AssertEqual("Wow", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns4);
       Assert.Empty(locals);
@@ -542,7 +542,7 @@ public class TestNamespace : BHL_TestBase
     AssertEqual("Foo", ns1.ResolveNamedByPath("foo.sub1.Foo").GetName());
 
     /*
-    import "ns1" 
+    import "ns1"
     {
       foo {
         sub2 {
@@ -554,24 +554,24 @@ public class TestNamespace : BHL_TestBase
     var ns2 = new Namespace(m);
     {
       var foo = new Namespace(m, "foo");
-      
+
       var sub2 = new Namespace(m, "sub2");
 
       var cl = new ClassSymbolNative(new Origin(), "Bar");
       sub2.Define(cl);
-      
+
       foo.Define(sub2);
 
       ns2.Define(foo);
     }
 
     ns2.Link(ns1);
-    
+
     AssertEqual("Foo", ns2.ResolveNamedByPath("foo.sub1.Foo").GetName());
     AssertEqual("Bar", ns2.ResolveNamedByPath("foo.sub2.Bar").GetName());
 
     /*
-    import "ns2" 
+    import "ns2"
     {
       foo {
         sub3 {
@@ -583,12 +583,12 @@ public class TestNamespace : BHL_TestBase
     var ns3 = new Namespace(m);
     {
       var foo = new Namespace(m, "foo");
-      
+
       var sub3 = new Namespace(m, "sub3");
 
       var cl = new ClassSymbolNative(new Origin(), "Wow");
       sub3.Define(cl);
-      
+
       foo.Define(sub3);
 
       ns3.Define(foo);
@@ -599,7 +599,7 @@ public class TestNamespace : BHL_TestBase
     AssertEqual("Wow", ns3.ResolveNamedByPath("foo.sub3.Wow").GetName());
     AssertEqual("Bar", ns3.ResolveNamedByPath("foo.sub2.Bar").GetName());
     Assert.True(ns3.ResolveNamedByPath("foo.sub1.Foo") == null);
-    
+
     {
       var locals = GetLocalSymbols(ns1);
       Assert.Equal(3, locals.Count);
@@ -615,7 +615,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub2", locals[1].name);
       AssertEqual("Bar", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns3);
       Assert.Equal(3, locals.Count);
@@ -624,7 +624,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("Wow", locals[2].name);
     }
   }
-  
+
   [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace2()
   {
@@ -654,7 +654,7 @@ public class TestNamespace : BHL_TestBase
     }
 
     /*
-    import "ns1" 
+    import "ns1"
     {
       class Bar { }
     }
@@ -670,7 +670,7 @@ public class TestNamespace : BHL_TestBase
     /*
     {
       class Bar { }
-      
+
       * foo {
         [->foo]
         * sub1 {
@@ -682,7 +682,7 @@ public class TestNamespace : BHL_TestBase
     */
 
     /*
-    import "ns2" 
+    import "ns2"
     */
     var ns3 = new Namespace(m);
 
@@ -711,19 +711,19 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub1", locals[1].name);
       AssertEqual("Foo", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Single(locals);
       AssertEqual("Bar", locals[0].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns3);
       Assert.Empty(locals);
     }
   }
-  
+
   [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace3()
   {
@@ -753,10 +753,10 @@ public class TestNamespace : BHL_TestBase
     }
 
     /*
-    import "ns1" 
+    import "ns1"
     {
       class Bar { }
-      
+
       foo {
         class Hey { }
       }
@@ -767,11 +767,11 @@ public class TestNamespace : BHL_TestBase
       var cl = new ClassSymbolNative(new Origin(), "Bar");
 
       ns2.Define(cl);
-      
+
       var foo = new Namespace(m, "foo");
       var cl2 = new ClassSymbolNative(new Origin(), "Hey");
       foo.Define(cl2);
-      
+
       ns2.Define(foo);
     }
 
@@ -797,7 +797,7 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub1", locals[1].name);
       AssertEqual("Foo", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Equal(3, locals.Count);
@@ -811,7 +811,7 @@ public class TestNamespace : BHL_TestBase
       Assert.Empty(locals);
     }
   }
-  
+
   [Fact]
   public void TestLinkNamespaceWithOtherLinkedNamespace4()
   {
@@ -841,7 +841,7 @@ public class TestNamespace : BHL_TestBase
     }
 
     /*
-    import "ns1" 
+    import "ns1"
     {
       class Bar { }
     }
@@ -854,20 +854,20 @@ public class TestNamespace : BHL_TestBase
     }
 
     ns2.Link(ns1);
-    
+
     /*
-    import "ns2" 
+    import "ns2"
     {
     }
     */
     var ns3 = new Namespace(m);
-    
+
     ns3.Link(ns2);
 
     /*
-    import "ns2" 
-    import "ns3" 
-    import "ns1" 
+    import "ns2"
+    import "ns3"
+    import "ns1"
     */
     var ns4 = new Namespace(m);
 
@@ -879,7 +879,7 @@ public class TestNamespace : BHL_TestBase
     AssertEqual("sub1", ns4.ResolveNamedByPath("foo.sub1").GetName());
     AssertEqual("Foo", ns4.ResolveNamedByPath("foo.sub1.Foo").GetName());
     AssertEqual("Bar", ns4.ResolveNamedByPath("Bar").GetName());
-    
+
     {
       var locals = GetLocalSymbols(ns1);
       Assert.Equal(3, locals.Count);
@@ -887,18 +887,18 @@ public class TestNamespace : BHL_TestBase
       AssertEqual("sub1", locals[1].name);
       AssertEqual("Foo", locals[2].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns2);
       Assert.Single(locals);
       AssertEqual("Bar", locals[0].name);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns3);
       Assert.Empty(locals);
     }
-    
+
     {
       var locals = GetLocalSymbols(ns4);
       Assert.Empty(locals);
@@ -964,7 +964,6 @@ public class TestNamespace : BHL_TestBase
 
     var conflict = ns2.TryLink(ns1);
     AssertEqual("Wow", conflict.local.name);
-
   }
 
   [Fact]
@@ -1173,9 +1172,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'test'",
       new PlaceAssert(bhl, @"
         func bool test()
@@ -1273,13 +1270,15 @@ public class TestNamespace : BHL_TestBase
   [Fact]
   public void TestMixNativeAndUserland()
   {
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              stack.Push(Val.NewInt(frm.vm, 1)); 
-              return null;
-            }
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            stack.Push(Val.NewInt(frm.vm, 1));
+            return null;
+          }
         );
         ts.ns.Nest("bar").Define(fn);
       }
@@ -1289,7 +1288,7 @@ public class TestNamespace : BHL_TestBase
     namespace bar {
     }
     ";
-    
+
     var files = new List<string>();
     NewTestFile("test.bhl", test_bhl, ref files);
 
@@ -1309,22 +1308,25 @@ public class TestNamespace : BHL_TestBase
   [Fact]
   public void TestMixNativeAndUserlandWithCall()
   {
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              stack.Push(Val.NewInt(frm.vm, 1)); 
-              return null;
-            }
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            stack.Push(Val.NewInt(frm.vm, 1));
+            return null;
+          }
         );
         ts.ns.Nest("foo").Define(fn);
       }
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              stack.Push(Val.NewInt(frm.vm, 10)); 
-              return null;
-            }
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            stack.Push(Val.NewInt(frm.vm, 10));
+            return null;
+          }
         );
         //NOTE: let's mix namespace defined natively and the one in bhl code
         ts.ns.Nest("bar").Define(fn);
@@ -1338,7 +1340,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-    
+
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(11, Execute(vm, "bar.test").result.PopRelease().num);
     CommonChecks(vm);
@@ -1466,7 +1468,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1736,8 +1739,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
 
     func int Foo() {
@@ -1750,7 +1753,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -1786,7 +1790,7 @@ public class TestNamespace : BHL_TestBase
       return p1() + p2()
     }
     ";
-      
+
     var vm = MakeVM(bhl);
     Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
@@ -1806,8 +1810,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
 
     class Garbage {
@@ -1826,7 +1830,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -1847,8 +1852,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     func int test() 
     {
@@ -1858,7 +1863,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -1881,8 +1887,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     namespace foo {
       class B { 
@@ -1900,7 +1906,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -1925,8 +1932,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     namespace foo {
       class B { 
@@ -1943,7 +1950,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -1964,8 +1972,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
 
     class Foo : foo.IFoo {
@@ -1981,7 +1989,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -2017,7 +2026,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3}
@@ -2039,8 +2049,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     namespace foo {
       func void Foo() {
       }
@@ -2048,8 +2058,10 @@ public class TestNamespace : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
           }
@@ -2084,9 +2096,9 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-      
-  string bhl3 = @"
+
+
+    string bhl3 = @"
     import ""bhl1""  
     import ""bhl2""  
 
@@ -2098,7 +2110,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3}
@@ -2134,16 +2147,14 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'ecs.Entity' and 'ecs.sub.Entity'",
       new PlaceAssert(bhl, @"
         Entity es = sub.fetch()
 ---------------^"
       )
     );
-   }
+  }
 
   [Fact]
   public void TestIncompatibleTypesArrays()
@@ -2168,16 +2179,14 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: '[]ecs.Entity' and '[]ecs.sub.Entity'",
       new PlaceAssert(bhl, @"
         []Entity es = sub.fetch()
 -----------------^"
       )
     );
-   }
+  }
 
   [Fact]
   public void TestImportSeveralNestedNamespacesWithSameLastName()
@@ -2195,8 +2204,8 @@ public class TestNamespace : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
 
     func int test() 
@@ -2206,7 +2215,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -2216,7 +2226,7 @@ public class TestNamespace : BHL_TestBase
     Assert.Equal(120, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestImproperResolvingBug()
   {
@@ -2231,16 +2241,14 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'Test' not resolved",
       new PlaceAssert(bhl, @"
          Pilots.Test()
 ----------------^"
       )
     );
-   }
+  }
 
   static List<Symbol> GetLocalSymbols(Namespace ns)
   {

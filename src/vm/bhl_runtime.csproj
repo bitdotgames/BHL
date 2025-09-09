@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <AssemblyName>bhl_runtime</AssemblyName>
-        <OutputType>Library</OutputType>
-        <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-        <RootNamespace>bhl</RootNamespace>
-        <TargetFrameworks>net8.0</TargetFrameworks>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyName>bhl_runtime</AssemblyName>
+    <OutputType>Library</OutputType>
+    <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
+    <RootNamespace>bhl</RootNamespace>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
 </Project>

@@ -6,15 +6,17 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl {
+namespace bhl
+{
 
 public static partial class Tasks
 {
   public static void compile_usage(string msg = "")
   {
     Console.WriteLine("Usage:");
-    Console.WriteLine("bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " + 
-                     "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
+    Console.WriteLine(
+      "bhl compile [--proj=<bhl.proj file>] [--dir=<src dirs separated with ;>] [--files=<file>] [--result=<result file>] " +
+      "[--tmp-dir=<tmp dir>] [--error=<err file>] [--bindings-dll=<bindings dll path>] [--postproc-dll=<postproc dll path>] [-d] [--deterministic] [--module-fmt=<1,2>]");
     Console.WriteLine(msg);
     Environment.Exit(1);
   }
@@ -68,43 +70,68 @@ public static partial class Tasks
 
     return _compile(tm, runtime_args.ToArray());
   }
-  
+
   static async ThreadTask _compile(Taskman tm, string[] args)
   {
     var files = new List<string>();
 
     var proj = new ProjectConf();
 
-    var p = new OptionSet() {
-      { "p|proj=", "project config file",
-        v => { 
-          proj = ProjectConf.ReadFromFile(v);
-        } },
-      { "dir=", "source directories separated by ;",
-        v => proj.src_dirs.AddRange(v.Split(';')) },
-      { "files=", "file containing all source files list",
-        v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None)) },
-      { "result=", "resulting file",
-        v => proj.result_file = v },
-      { "tmp-dir=", "tmp dir",
-        v => proj.tmp_dir = v },
-      { "C", "don't use cache",
-        v => proj.use_cache = v == null },
-      { "bindings-dll=", "bindings dll file path",
-        v => proj.bindings_dll = v },
-      { "postproc-dll=", "postprocess dll file path",
-        v => proj.postproc_dll = v },
-      { "error=", "error file",
-        v => proj.error_file = v },
-      { "deterministic", "deterministic build (sorts files by name)",
-        v => proj.deterministic = v != null },
-      { "threads=", "number of threads",
-          v => proj.max_threads = int.Parse(v) },
-      { "d", "debug verbosity level",
-        v => proj.verbosity = v != null ? 2 : 1 },
-      { "module-fmt=", "binary module format",
-        v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v) }
-     };
+    var p = new OptionSet()
+    {
+      {
+        "p|proj=", "project config file",
+        v => { proj = ProjectConf.ReadFromFile(v); }
+      },
+      {
+        "dir=", "source directories separated by ;",
+        v => proj.src_dirs.AddRange(v.Split(';'))
+      },
+      {
+        "files=", "file containing all source files list",
+        v => files.AddRange(File.ReadAllText(v).Split(new string[] { "\r\n", "\n" }, StringSplitOptions.None))
+      },
+      {
+        "result=", "resulting file",
+        v => proj.result_file = v
+      },
+      {
+        "tmp-dir=", "tmp dir",
+        v => proj.tmp_dir = v
+      },
+      {
+        "C", "don't use cache",
+        v => proj.use_cache = v == null
+      },
+      {
+        "bindings-dll=", "bindings dll file path",
+        v => proj.bindings_dll = v
+      },
+      {
+        "postproc-dll=", "postprocess dll file path",
+        v => proj.postproc_dll = v
+      },
+      {
+        "error=", "error file",
+        v => proj.error_file = v
+      },
+      {
+        "deterministic", "deterministic build (sorts files by name)",
+        v => proj.deterministic = v != null
+      },
+      {
+        "threads=", "number of threads",
+        v => proj.max_threads = int.Parse(v)
+      },
+      {
+        "d", "debug verbosity level",
+        v => proj.verbosity = v != null ? 2 : 1
+      },
+      {
+        "module-fmt=", "binary module format",
+        v => proj.module_fmt = (ModuleBinaryFormat)int.Parse(v)
+      }
+    };
 
     var extra = new List<string>();
     try
@@ -118,12 +145,12 @@ public static partial class Tasks
 
     if(Environment.GetEnvironmentVariable("BHL_VERBOSE") != null)
       int.TryParse(Environment.GetEnvironmentVariable("BHL_VERBOSE"), out proj.verbosity);
-    
-    var logger = new Logger(proj.verbosity, new ConsoleLogger()); 
+
+    var logger = new Logger(proj.verbosity, new ConsoleLogger());
 
     files.AddRange(extra);
 
-    for(int i=0;i<proj.src_dirs.Count;++i)
+    for(int i = 0; i < proj.src_dirs.Count; ++i)
       if(!Directory.Exists(proj.src_dirs[i]))
         compile_usage("Source directory not found: " + proj.src_dirs[i]);
 
@@ -155,12 +182,12 @@ public static partial class Tasks
 
     if(files.Count == 0)
     {
-      for(int i=0;i<proj.src_dirs.Count;++i)
+      for(int i = 0; i < proj.src_dirs.Count; ++i)
         CompilationExecutor.AddFilesFromDir(proj.src_dirs[i], files);
     }
     else
     {
-      for(int i=files.Count;i-- > 0;)
+      for(int i = files.Count; i-- > 0;)
       {
         if(string.IsNullOrEmpty(files[i]))
           files.RemoveAt(i);
@@ -186,10 +213,11 @@ public static partial class Tasks
         foreach(var err in errors)
           ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
       }
+
       Environment.Exit(ERROR_EXIT_CODE);
     }
   }
-  
+
   public static List<string> GetProjectArg(string[] args, out string proj_file)
   {
     string _proj_file = "";

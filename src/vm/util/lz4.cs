@@ -5,7 +5,8 @@
 using System;
 using System.IO;
 
-namespace bhl {
+namespace bhl
+{
 
 public class Lz4DecoderStream : Stream
 {
@@ -17,7 +18,8 @@ public class Lz4DecoderStream : Stream
   }
 
   public Lz4DecoderStream()
-  {}
+  {
+  }
 
   public Lz4DecoderStream( Stream input, long inputLength = long.MaxValue )
   {
@@ -32,9 +34,9 @@ public class Lz4DecoderStream : Stream
     this.input = input;
 
     phase = DecodePhase.ReadToken;
-    
+
     decodeBufferPos = 0;
-    
+
     litLen = 0;
     matLen = 0;
     matDst = 0;
@@ -81,7 +83,7 @@ public class Lz4DecoderStream : Stream
 
   private DecodePhase phase;
 
-  public int DecodeBufLen 
+  public int DecodeBufLen
   {
     get { return decodeBuffer.Length; }
   }
@@ -141,23 +143,23 @@ public class Lz4DecoderStream : Stream
 #endif
     switch( phase )
     {
-    case DecodePhase.ReadToken:
-      goto readToken;
+      case DecodePhase.ReadToken:
+        goto readToken;
 
-    case DecodePhase.ReadExLiteralLength:
-      goto readExLiteralLength;
+      case DecodePhase.ReadExLiteralLength:
+        goto readExLiteralLength;
 
-    case DecodePhase.CopyLiteral:
-      goto copyLiteral;
+      case DecodePhase.CopyLiteral:
+        goto copyLiteral;
 
-    case DecodePhase.ReadOffset:
-      goto readOffset;
+      case DecodePhase.ReadOffset:
+        goto readOffset;
 
-    case DecodePhase.ReadExMatchLength:
-      goto readExMatchLength;
+      case DecodePhase.ReadExMatchLength:
+        goto readExMatchLength;
 
-    case DecodePhase.CopyMatch:
-      goto copyMatch;
+      case DecodePhase.CopyMatch:
+        goto copyMatch;
     }
 
   readToken:
@@ -173,7 +175,7 @@ public class Lz4DecoderStream : Stream
 #endif
 
       tok = ReadByteCore();
-      
+
 #if LOCAL_SHADOW
       inBufPos = this.inBufPos;
       inBufEnd = this.inBufEnd;
@@ -189,17 +191,17 @@ public class Lz4DecoderStream : Stream
     //Log.Debug("READ TOKEN " + tok + " " + litLen + " " + matLen);
     switch( litLen )
     {
-    case 0:
-      phase = DecodePhase.ReadOffset;
-      goto readOffset;
+      case 0:
+        phase = DecodePhase.ReadOffset;
+        goto readOffset;
 
-    case 0xF:
-      phase = DecodePhase.ReadExLiteralLength;
-      goto readExLiteralLength;
+      case 0xF:
+        phase = DecodePhase.ReadExLiteralLength;
+        goto readExLiteralLength;
 
-    default:
-      phase = DecodePhase.CopyLiteral;
-      goto copyLiteral;
+      default:
+        phase = DecodePhase.CopyLiteral;
+        goto copyLiteral;
     }
 
   readExLiteralLength:
@@ -215,7 +217,7 @@ public class Lz4DecoderStream : Stream
       this.inBufPos = inBufPos;
 #endif
       exLitLen = ReadByteCore();
-#if LOCAL_SHADOW        
+#if LOCAL_SHADOW
       inBufPos = this.inBufPos;
       inBufEnd = this.inBufEnd;
 #endif

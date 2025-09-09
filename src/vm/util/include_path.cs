@@ -1,33 +1,29 @@
-
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class IncludePath
 {
   List<string> items = new List<string>();
 
-  public int Count {
-    get {
-      return items.Count;
-    }
+  public int Count
+  {
+    get { return items.Count; }
   }
 
   public string this[int i]
   {
-    get {
-      return items[i];
-    }
+    get { return items[i]; }
 
-    set {
-      items[i] = value;
-    }
+    set { items[i] = value; }
   }
 
   public IncludePath()
-  {}
+  {
+  }
 
   public IncludePath(IList<string> items)
   {
@@ -70,7 +66,7 @@ public class IncludePath
   string _FilePath2ModuleName(string full_path)
   {
     string norm_path = "";
-    for(int i=0;i<items.Count;++i)
+    for(int i = 0; i < items.Count; ++i)
     {
       var inc_path = items[i];
       if(full_path.IndexOf(inc_path) == 0)
@@ -78,7 +74,7 @@ public class IncludePath
         norm_path = full_path.Substring(inc_path.Length);
         norm_path = norm_path.Replace('\\', '/');
         //stripping .bhl extension
-        norm_path = norm_path.Substring(0, norm_path.Length-4);
+        norm_path = norm_path.Substring(0, norm_path.Length - 4);
         //stripping initial /
         norm_path = norm_path.TrimStart('/', '\\');
         break;
@@ -89,6 +85,7 @@ public class IncludePath
     {
       throw new Exception("File path '" + full_path + "' was not normalized, inc.path: " + this);
     }
+
     return norm_path;
   }
 
@@ -106,12 +103,13 @@ public class IncludePath
 
   public string TryIncludePaths(string path)
   {
-    for(int i=0;i<this.Count;++i)
+    for(int i = 0; i < this.Count; ++i)
     {
       var file_path = BuildUtils.NormalizeFilePath(this[i] + "/" + path  + ".bhl");
       if(File.Exists(file_path))
         return file_path;
     }
+
     return null;
   }
 }

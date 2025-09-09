@@ -1,7 +1,8 @@
 using System;
 using System.IO;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface ILogWriter
 {
@@ -11,8 +12,13 @@ public interface ILogWriter
 
 public class NoLogger : ILogWriter
 {
-  public void Write(DateTime time, int level, string msg) {}
-  public void Error(DateTime time, string msg) {}
+  public void Write(DateTime time, int level, string msg)
+  {
+  }
+
+  public void Error(DateTime time, string msg)
+  {
+  }
 }
 
 public class ConsoleLogger : ILogWriter
@@ -43,7 +49,7 @@ public class FileLogger : ILogWriter
   {
     using(StreamWriter w = File.AppendText(file_path))
     {
-      w.WriteLine("[LOG "+level+"] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
+      w.WriteLine("[LOG " + level + "] [" + time.ToString("yyyy-MM-dd HH:mm:ss.f") + "] " + msg);
     }
   }
 
@@ -72,7 +78,7 @@ public class Logger
 
     current = this;
   }
-  
+
   public void Log(int level, string msg)
   {
     if(level > max_level)

@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentSignatureHelpService : IService
 {
@@ -41,9 +42,12 @@ public class TextDocumentSignatureHelpService : IService
         {
           var ps = GetSignatureParams(symb);
 
-          return Task.FromResult(new RpcResult(new SignatureHelp() {
-              signatures = new SignatureInformation[] {
-                new SignatureInformation() {
+          return Task.FromResult(new RpcResult(new SignatureHelp()
+            {
+              signatures = new SignatureInformation[]
+              {
+                new SignatureInformation()
+                {
                   label = symb.ToString(),
                   parameters = ps,
                   activeParameter = 0
@@ -56,7 +60,7 @@ public class TextDocumentSignatureHelpService : IService
         }
       }
     }
-    
+
     return Task.FromResult(new RpcResult(null));
   }
 
@@ -66,7 +70,8 @@ public class TextDocumentSignatureHelpService : IService
 
     foreach(var s in symb)
     {
-      ps.Add(new ParameterInformation() {
+      ps.Add(new ParameterInformation()
+      {
         label = (s as VariableSymbol).type.Get() + " " + s,
         documentation = ""
       });

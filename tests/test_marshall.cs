@@ -28,12 +28,14 @@ public class TestMarshall : BHL_TestBase
 
       ns.Define(new VariableSymbol(new Origin(), "hey", ns.TMap(Types.String, Types.Int)));
 
-      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
+      var Test = new FuncSymbolScript(new Origin(),
+        new FuncSignature(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("s", Types.String));
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       ns.Define(Test);
 
-      var Make = new FuncSymbolScript(new Origin(), new FuncSignature(FuncSignatureAttrib.Coro, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
+      var Make = new FuncSymbolScript(new Origin(),
+        new FuncSignature(FuncSignatureAttrib.Coro, ns.TArr(Types.String), ns.T("Bar")), "Make", 3, 15);
       Make.Define(new FuncArgSymbol("bar", ns.T("Bar")));
       ns.Define(Make);
 
@@ -41,12 +43,13 @@ public class TestMarshall : BHL_TestBase
       ns.Define(Foo);
       Foo.Define(new FieldSymbolScript(new Origin(), "Int", Types.Int));
       Foo.Define(new FuncSymbolScript(new Origin(), new FuncSignature(Types.Void), "Hey", 0, 3));
-      
+
       var Bar = new ClassSymbolScript(new Origin(), "Bar");
       Bar.SetSuperClassAndInterfaces(Foo);
       ns.Define(Bar);
       Bar.Define(new FieldSymbolScript(new Origin(), "Float", Types.Float));
-      Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Bool,Types.Bool), Types.Int), "What", 1, 1));
+      Bar.Define(new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Bool, Types.Bool), Types.Int), "What",
+        1, 1));
 
       var Enum = new EnumSymbolScript(new Origin(), "Enum");
       Enum.TryAddItem(null, "Type1", 1);
@@ -61,7 +64,7 @@ public class TestMarshall : BHL_TestBase
 
       s.Position = 0;
       var m = CompiledModule.FromStream(ts, s);
-      
+
       //NOTE: right after un-marshalling module must be setup explicitly
       m.Setup(name => null);
 
@@ -100,7 +103,8 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Test.name, "Test");
       Assert.False(Test.attribs.HasFlag(FuncAttrib.Coro));
       Assert.Equal(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(), Test.signature.ToString());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(),
+        Test.signature.ToString());
       Assert.Equal(1, Test.default_args_num);
       Assert.Equal(2, Test.local_vars_num);
       Assert.Equal(155, Test.ip_addr);
@@ -152,7 +156,7 @@ public class TestMarshall : BHL_TestBase
       Assert.Equal(Bar.scope, ns);
       Assert.Equal(Bar.super_class, Foo);
       AssertEqual(Bar.name, "Bar");
-      Assert.Equal(2/*from parent*/+2, Bar.Count());
+      Assert.Equal(2 /*from parent*/ + 2, Bar.Count());
       var Bar_Float = Bar.Resolve("Float") as FieldSymbolScript;
       Assert.Equal(Bar_Float.scope, Bar);
       AssertEqual(Bar_Float.name, "Float");
@@ -178,7 +182,7 @@ public class TestMarshall : BHL_TestBase
       Assert.Equal(2, ((EnumItemSymbol)Enum.Resolve("Type2")).val);
     }
   }
-  
+
   [Fact]
   public void TestSerializeModuleSymbolsTypeEdgeCase()
   {
@@ -190,7 +194,8 @@ public class TestMarshall : BHL_TestBase
       var ns = m.ns;
       ns.Link(ts.ns);
 
-      var Test = new FuncSymbolScript(new Origin(), new FuncSignature(ns.T(Types.Int,Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
+      var Test = new FuncSymbolScript(new Origin(),
+        new FuncSignature(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)), "Test", 1, 155);
       Test.Define(new FuncArgSymbol("s", Types.String));
       Test.Define(new FuncArgSymbol("a", Types.Int, is_ref: true));
       ns.Define(Test);
@@ -203,7 +208,7 @@ public class TestMarshall : BHL_TestBase
 
       s.Position = 0;
       var m = CompiledModule.FromStream(ts, s);
-      
+
       //NOTE: right after un-marshalling module must be setup explicitly
       m.Setup(name => null);
 
@@ -216,7 +221,8 @@ public class TestMarshall : BHL_TestBase
       AssertEqual(Test.name, "Test");
       Assert.False(Test.attribs.HasFlag(FuncAttrib.Coro));
       Assert.Equal(Test.scope, ns);
-      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(), Test.signature.ToString());
+      AssertEqual(ns.TFunc(ns.T(Types.Int, Types.Float), Types.String, ns.TRef(Types.Int)).ToString(),
+        Test.signature.ToString());
       Assert.Equal(1, Test.default_args_num);
       Assert.Equal(2, Test.local_vars_num);
       Assert.Equal(155, Test.ip_addr);

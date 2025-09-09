@@ -1,6 +1,6 @@
+namespace bhl
+{
 
-namespace bhl {
-  
 public class Origin
 {
 #if BHL_FRONT
@@ -9,8 +9,10 @@ public class Origin
   public string native_file_path;
   public int native_line;
 
-  public string source_file { 
-    get {
+  public string source_file
+  {
+    get
+    {
 #if BHL_FRONT
       if(parsed != null)
         return parsed.file;
@@ -19,14 +21,15 @@ public class Origin
     }
   }
 
-  public int source_line {
-    get {
-      return source_range.start.line; 
-    }
+  public int source_line
+  {
+    get { return source_range.start.line; }
   }
 
-  public SourceRange source_range {
-    get {
+  public SourceRange source_range
+  {
+    get
+    {
 #if BHL_FRONT
       if(parsed != null)
         return parsed.range;
@@ -48,8 +51,10 @@ public class Origin
 #endif
 
   public Origin(
-    [System.Runtime.CompilerServices.CallerFilePath] string file_path = "",
-    [System.Runtime.CompilerServices.CallerLineNumber] int line = 0
+    [System.Runtime.CompilerServices.CallerFilePath]
+    string file_path = "",
+    [System.Runtime.CompilerServices.CallerLineNumber]
+    int line = 0
   )
   {
     this.native_file_path = file_path;

@@ -48,7 +48,7 @@ public class TestLSPFindRefs : TestLSPShared
 
   interface IFoo {} //interface IFoo
   ";
-  
+
   string bhl2 = @"
   import ""bhl1""
 
@@ -149,7 +149,7 @@ public class TestLSPFindRefs : TestLSPShared
       )
     );
   }
-  
+
   [Fact]
   public async Task ref_enum_Item()
   {
@@ -162,7 +162,7 @@ public class TestLSPFindRefs : TestLSPShared
       )
     );
   }
-  
+
   [Fact]
   public async Task ref_interface_IFoo()
   {

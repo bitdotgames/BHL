@@ -83,9 +83,7 @@ public class TestInit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(bhl);
-      },
+      delegate() { MakeVM(bhl); },
       "module 'init' function can't be a coroutine"
     );
   }
@@ -99,9 +97,7 @@ public class TestInit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(bhl);
-      },
+      delegate() { MakeVM(bhl); },
       "module 'init' function can't have any arguments"
     );
   }
@@ -117,9 +113,7 @@ public class TestInit : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(bhl);
-      },
+      delegate() { MakeVM(bhl); },
       "module 'init' function must be void"
     );
   }
@@ -176,7 +170,8 @@ public class TestInit : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"foo.bhl", file_foo},
         {"bar.bhl", file_bar},

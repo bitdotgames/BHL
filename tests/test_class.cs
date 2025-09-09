@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
@@ -22,17 +22,17 @@ public class TestClass : BHL_TestBase
 
       var c = Compile(bhl);
 
-      var expected = 
-        new ModuleCompiler()
-        .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-        .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
-        .EmitThen(Opcodes.SetVar, new int[] { 0 })
-        .EmitThen(Opcodes.GetVar, new int[] { 0 })
-        .EmitThen(Opcodes.Constant, new int[] { 0 })
-        .EmitThen(Opcodes.NotEqual)
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-        .EmitThen(Opcodes.Return)
+      var expected =
+          new ModuleCompiler()
+            .UseCode()
+            .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+            .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+            .EmitThen(Opcodes.SetVar, new int[] { 0 })
+            .EmitThen(Opcodes.GetVar, new int[] { 0 })
+            .EmitThen(Opcodes.Constant, new int[] { 0 })
+            .EmitThen(Opcodes.NotEqual)
+            .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+            .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -76,14 +76,10 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindFoo(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindFoo(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     class Foo {}
@@ -100,7 +96,7 @@ public class TestClass : BHL_TestBase
       return i
     }
     ";
-      
+
     string bhl2 = @"
     import ""bhl1""  
 
@@ -119,7 +115,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -139,7 +136,7 @@ public class TestClass : BHL_TestBase
       return i
     }
     ";
-      
+
     string bhl2 = @"
     import ""bhl1""  
 
@@ -157,7 +154,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -200,9 +198,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "self inheritance is not allowed",
       new PlaceAssert(bhl, @"
     class Foo : Foo {}
@@ -234,49 +230,47 @@ public class TestClass : BHL_TestBase
 
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
-    var ts_fn = new Action<Types>((ts) => {
-      fn = BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { fn = BindTrace(ts, log); });
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -345,9 +339,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -369,9 +361,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -394,9 +384,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -423,15 +411,12 @@ public class TestClass : BHL_TestBase
       BindColor(ts);
 
       var cl = new ClassSymbolNative(new Origin(), "ColorNested", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new ColorNested(), type);
-        }
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new ColorNested(), type); }
       );
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol(new Origin(), "c", ts.T("Color"), 
+      cl.Define(new FieldSymbol(new Origin(), "c", ts.T("Color"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
@@ -440,7 +425,7 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
-          cn.c = (Color)v.obj; 
+          cn.c = (Color)v.obj;
           ctx.SetObj(cn, ctx.type);
         }
       ));
@@ -474,9 +459,7 @@ public class TestClass : BHL_TestBase
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "constructor is not defined",
       new PlaceAssert(bhl, @"
       Foo f = new Foo
@@ -506,9 +489,7 @@ public class TestClass : BHL_TestBase
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "constructor is not defined",
       new PlaceAssert(bhl, @"
       Foo f = {}
@@ -532,15 +513,15 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-         //dummy
+        delegate(VM.Frame frm, ref Val v, IType type)
+        {
+          //dummy
         }
       );
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"), 
+      cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
         null, //no getter
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -551,9 +532,7 @@ public class TestClass : BHL_TestBase
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "get operation is not defined",
       new PlaceAssert(bhl, @"
       return f.x
@@ -578,18 +557,18 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-         //dummy
+        delegate(VM.Frame frm, ref Val v, IType type)
+        {
+          //dummy
         }
       );
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"), 
+      cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
         delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
         {
-         //dummy
+          //dummy
         },
         null //no setter
       ));
@@ -597,9 +576,7 @@ public class TestClass : BHL_TestBase
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "set operation is not defined",
       new PlaceAssert(bhl, @"
       f.x = 10
@@ -626,9 +603,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -646,8 +621,8 @@ public class TestClass : BHL_TestBase
       string Str
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     func test() 
     {
@@ -660,11 +635,10 @@ public class TestClass : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       },
@@ -673,7 +647,7 @@ public class TestClass : BHL_TestBase
 
     vm.LoadModule("bhl2");
     Execute(vm, "test");
-    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -710,7 +684,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -738,8 +713,10 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
           }
@@ -854,9 +831,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "type 'Foo' not found",
       new PlaceAssert(bhl, @"
     func []Foo fetch() {
@@ -1049,9 +1024,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindFail(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindFail(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.Count);
@@ -1076,9 +1049,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "method pointers not supported",
       new PlaceAssert(bhl, @"
       func() ptr = f.foo
@@ -1129,9 +1100,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "invalid assignment",
       new PlaceAssert(bhl, @"
       f.foo = null
@@ -1279,24 +1248,24 @@ public class TestClass : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -1418,9 +1387,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "no base class",
       new PlaceAssert(bhl, @"
         return base.a
@@ -1446,9 +1413,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'b' not resolved",
       new PlaceAssert(bhl, @"
         return base.b
@@ -1474,9 +1439,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "keyword 'base' is reserved",
       new PlaceAssert(bhl, @"
         int base = 1
@@ -1636,9 +1599,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'a' not resolved",
       new PlaceAssert(bhl, @"
           a = 1
@@ -1719,9 +1680,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'b'",
       new PlaceAssert(bhl, @"
       int b
@@ -1744,9 +1703,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "accessing instance attribute as static is forbidden",
       new PlaceAssert(bhl, @"
       return Foo.a
@@ -1770,9 +1727,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "accessing static field on instance is forbidden",
       new PlaceAssert(bhl, @"
       return foo.a
@@ -2161,9 +2116,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"already defined symbol 'getA'",
       new PlaceAssert(bhl, @"
       func int getA() {
@@ -2488,9 +2441,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -2519,9 +2470,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "already defined symbol 'x'",
       new PlaceAssert(bhl, @"
       int x
@@ -2541,14 +2490,10 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "extending native classes is not supported",
       new PlaceAssert(bhl, @"
     class ColorA : Color 
@@ -2569,9 +2514,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "the keyword 'this' is reserved",
       new PlaceAssert(bhl, @"
         int this
@@ -2596,9 +2539,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "the keyword 'this' is reserved",
       new PlaceAssert(bhl, @"
         func bool this()
@@ -2619,23 +2560,21 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindBar(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindBar(ts); });
 
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstNullIdx(c) })
-      .EmitThen(Opcodes.NotEqual)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstNullIdx(c) })
+          .EmitThen(Opcodes.NotEqual)
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2664,50 +2603,51 @@ public class TestClass : BHL_TestBase
     var log = new StringBuilder();
 
     FuncSymbolNative fn = null;
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       fn = BindTrace(ts, log);
       BindBar(ts);
     });
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.SetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -2725,9 +2665,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -2746,9 +2684,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 10)).result.PopRelease().num;
@@ -2775,14 +2711,10 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "symbol is not a function",
       new PlaceAssert(bhl, @"
       c.r()
@@ -2801,23 +2733,21 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo");
         ts.ns.Define(cl);
 
         cl.Define(new FieldSymbol(new Origin(), "sub", ts.T("Bar"),
-          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-          {}, null
+          delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld) { }, null
         ));
         cl.Setup();
       }
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "type 'Bar' not found",
       new PlaceAssert(bhl, @"
       var native = foo.sub
@@ -2862,7 +2792,8 @@ public class TestClass : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
     });
@@ -2883,8 +2814,8 @@ public class TestClass : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     class B { 
       func int b() {
@@ -2899,7 +2830,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -2920,8 +2852,8 @@ public class TestClass : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     namespace b {
       class B { 
@@ -2932,7 +2864,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl3 = @"
+    string bhl3 = @"
     import ""bhl1""  
     import ""bhl2""  
 
@@ -2950,7 +2882,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3}
@@ -2972,8 +2905,8 @@ public class TestClass : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
     namespace b {
       class B { 
@@ -2984,7 +2917,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl3 = @"
+    string bhl3 = @"
     import ""bhl1""  
     import ""bhl2""  
 
@@ -3002,7 +2935,8 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3}
@@ -3101,9 +3035,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "no base virtual method to override",
         new PlaceAssert(bhl, @"
         override func int getA() {
@@ -3127,9 +3059,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "no base virtual method to override",
         new PlaceAssert(bhl, @"
         override func int getA() {
@@ -3153,9 +3083,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "already defined symbol 'getA'",
         new PlaceAssert(bhl, @"
         virtual func int getA() {
@@ -3179,9 +3107,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "virtual method signatures don't match, base",
         new PlaceAssert(bhl, @"
         override func float getA() {
@@ -3199,9 +3125,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "virtual methods are not allowed to have default arguments",
         new PlaceAssert(bhl, @"
         virtual func void getA(int b, int a = 1) {
@@ -3224,9 +3148,7 @@ public class TestClass : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "virtual methods are not allowed to have default arguments",
         new PlaceAssert(bhl, @"
         override func void getA(int b, int a = 1) {
@@ -3376,7 +3298,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl2 = @"
+    string bhl2 = @"
     import ""bhl1""  
 
     class Bar : Foo {
@@ -3409,18 +3331,19 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
     );
-    
+
     vm.LoadModule("bhl2");
     Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
     Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestImportedClassVirtualMethodsSupportFromCachedModule()
   {
@@ -3447,11 +3370,11 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string garbage = @"
+    string garbage = @"
     class Interim { }
   ";
 
-  string bhl_2 = @"
+    string bhl_2 = @"
     import ""bhl_1""  
 
     namespace Unit.Pilot {
@@ -3490,12 +3413,12 @@ public class TestClass : BHL_TestBase
     ";
 
     var files = MakeFiles(new Dictionary<string, string>()
-      {
-        { "bhl_2.bhl", bhl_2 },
-        { "garbage.bhl", garbage },
-        { "bhl_1.bhl", bhl_1 },
-      });
-    
+    {
+      { "bhl_2.bhl", bhl_2 },
+      { "garbage.bhl", garbage },
+      { "bhl_1.bhl", bhl_1 },
+    });
+
     {
       var vm = MakeVM(files);
       vm.LoadModule("bhl_2");
@@ -3503,7 +3426,7 @@ public class TestClass : BHL_TestBase
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
       CommonChecks(vm);
     }
-    
+
     {
       //NOTE: 'touching' garbage file so that any compilation actually occurs.
       //       This garbage file is not included by any of modules in question.
@@ -3518,7 +3441,7 @@ public class TestClass : BHL_TestBase
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestImportedClassVirtualMethodsSupportFromCachedModule2()
   {
@@ -3547,11 +3470,11 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string interim = @"
+    string interim = @"
     class Interim { }
   ";
 
-  string bhl_2 = @"
+    string bhl_2 = @"
     import ""bhl_1""  
 
     namespace Unit.Pilot {
@@ -3590,12 +3513,12 @@ public class TestClass : BHL_TestBase
     ";
 
     var files = MakeFiles(new Dictionary<string, string>()
-      {
-        { "bhl_2.bhl", bhl_2 },
-        { "interim.bhl", interim },
-        { "bhl_1.bhl", bhl_1 },
-      });
-    
+    {
+      { "bhl_2.bhl", bhl_2 },
+      { "interim.bhl", interim },
+      { "bhl_1.bhl", bhl_1 },
+    });
+
     {
       var vm = MakeVM(files);
       vm.LoadModule("bhl_2");
@@ -3603,7 +3526,7 @@ public class TestClass : BHL_TestBase
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
       CommonChecks(vm);
     }
-    
+
     {
       //NOTE: 'touching' interim file
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
@@ -3618,7 +3541,7 @@ public class TestClass : BHL_TestBase
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestImportedClassStaticMethodsSupportFromCachedModule()
   {
@@ -3637,7 +3560,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl_2 = @"
+    string bhl_2 = @"
     import ""bhl_1""  
 
     func int test()
@@ -3647,18 +3570,18 @@ public class TestClass : BHL_TestBase
     ";
 
     var files = MakeFiles(new Dictionary<string, string>()
-      {
-        { "bhl_2.bhl", bhl_2 },
-        { "bhl_1.bhl", bhl_1 },
-      });
-    
+    {
+      { "bhl_2.bhl", bhl_2 },
+      { "bhl_1.bhl", bhl_1 },
+    });
+
     {
       var vm = MakeVM(files);
       vm.LoadModule("bhl_2");
       Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
     }
-    
+
     {
       System.IO.File.SetLastWriteTimeUtc(files[0], DateTime.UtcNow.AddSeconds(1));
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
@@ -3695,7 +3618,7 @@ public class TestClass : BHL_TestBase
       }
   ";
 
-  string bhl2 = @"
+    string bhl2 = @"
     import ""bhl1""  
 
     namespace foo {
@@ -3719,12 +3642,13 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
     );
-    
+
     vm.LoadModule("bhl2");
     Assert.Equal(100, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
@@ -3758,7 +3682,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl2 = @"
+    string bhl2 = @"
     import ""bhl1""  
 
     class Bar : fns.Foo {
@@ -3781,12 +3705,13 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
     );
-    
+
     vm.LoadModule("bhl2");
     Assert.Equal(100 + 1000, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
@@ -3879,9 +3804,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "improper usage of attribute",
       new PlaceAssert(bhl, @"
     override func int getA() {
@@ -3904,7 +3827,7 @@ public class TestClass : BHL_TestBase
     }
   ";
 
-  string bhl2 = @"
+    string bhl2 = @"
     import ""bhl1""  
     namespace b {
       class B {
@@ -3921,12 +3844,13 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
     );
-    
+
     vm.LoadModule("bhl2");
     Assert.Equal(2, Execute(vm, "test1").result.PopRelease().num);
     CommonChecks(vm);
@@ -4004,23 +3928,28 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public class VirtFoo {
+  public class VirtFoo
+  {
     public int a;
     public int b;
 
-    public virtual int getA() {
+    public virtual int getA()
+    {
       return a;
     }
 
-    public int getB() {
+    public int getB()
+    {
       return b;
     }
   }
 
-  public class VirtBar : VirtFoo {
+  public class VirtBar : VirtFoo
+  {
     public int new_a;
 
-    public override int getA() {
+    public override int getA()
+    {
       return new_a;
     }
   }
@@ -4029,10 +3958,7 @@ public class TestClass : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new VirtFoo(), type);
-        },
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new VirtFoo(), type); },
         typeof(VirtFoo)
       );
       ts.ns.Define(cl);
@@ -4046,7 +3972,7 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
-          f.a = (int)v.num; 
+          f.a = (int)v.num;
           ctx.SetObj(f, ctx.type);
         }
       ));
@@ -4060,7 +3986,7 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
-          f.b = (int)v.num; 
+          f.b = (int)v.num;
           ctx.SetObj(f, ctx.type);
         }
       ));
@@ -4095,10 +4021,7 @@ public class TestClass : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new VirtBar(), type);
-        },
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new VirtBar(), type); },
         typeof(VirtBar)
       );
 
@@ -4111,7 +4034,7 @@ public class TestClass : BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var b = (VirtBar)ctx.obj;
-          b.new_a = (int)v.num; 
+          b.new_a = (int)v.num;
           ctx.SetObj(b, ctx.type);
         }
       ));
@@ -4144,9 +4067,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindVirtualFooBar(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindVirtualFooBar(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
@@ -4489,7 +4410,7 @@ public class TestClass : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42+10+20, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42 + 10 + 20, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -4522,14 +4443,15 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(42+10+20, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42 + 10 + 20, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -4551,9 +4473,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "calling static method on instance is forbidden",
       new PlaceAssert(bhl, @"
       return b.foo()
@@ -4579,9 +4499,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "calling instance method as static is forbidden",
       new PlaceAssert(bhl, @"
       return Bar.foo()
@@ -4603,9 +4521,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'this' not resolved",
       new PlaceAssert(bhl, @"
         return this.a
@@ -4618,7 +4534,10 @@ public class TestClass : BHL_TestBase
   {
     public static int static_bar;
 
-    public static int static_foo(int n) { return n; }
+    public static int static_foo(int n)
+    {
+      return n;
+    }
   }
 
   [Fact]
@@ -4633,10 +4552,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new NativeFoo(), type);
-        }
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); }
       );
       ts.ns.Define(cl);
 
@@ -4647,7 +4563,7 @@ public class TestClass : BHL_TestBase
           stack.Push(Val.NewInt(frm.vm, NativeFoo.static_foo(n)));
           return null;
         },
-        new FuncArgSymbol("int", ts.T("int")) 
+        new FuncArgSymbol("int", ts.T("int"))
       );
       cl.Define(m);
       cl.Setup();
@@ -4695,9 +4611,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "mismatched input '='",
       new PlaceAssert(bhl, @"
       static int foo = 42
@@ -4720,9 +4634,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "not a coro function",
       new PlaceAssert(bhl, @"
         yield this.cb()
@@ -4751,7 +4663,8 @@ public class TestClass : BHL_TestBase
       return a.Bar.foo
     }
     ";
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -4794,7 +4707,8 @@ public class TestClass : BHL_TestBase
       return a.A + A + B + a.Bar.foo
     }
     ";
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl0.bhl", bhl0},
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -4802,7 +4716,7 @@ public class TestClass : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(10+20+30+42, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10 + 20 + 30 + 42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -4823,15 +4737,9 @@ public class TestClass : BHL_TestBase
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo");
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol(new Origin(), "static_bar", FieldAttrib.Static, ts.T("int"), 
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          v.SetInt(NativeFoo.static_bar);
-        },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          NativeFoo.static_bar = (int)v.num;
-        }
+      cl.Define(new FieldSymbol(new Origin(), "static_bar", FieldAttrib.Static, ts.T("int"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld) { v.SetInt(NativeFoo.static_bar); },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld) { NativeFoo.static_bar = (int)v.num; }
       ));
       cl.Setup();
     });
@@ -4843,22 +4751,27 @@ public class TestClass : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public class A {
+  public class A
+  {
     public int a;
     public int a2;
   }
-  public class B : A {
+
+  public class B : A
+  {
     public int b;
     public int b2;
   }
-  public class C : B {
+
+  public class C : B
+  {
     public int c;
   }
 
   public class TestNestedNativeClassesIrrelevantOrder : BHL_TestBase
   {
     Action<Types> ts_fn;
-    
+
     public TestNestedNativeClassesIrrelevantOrder()
     {
       ts_fn = new Action<Types>((ts) =>
@@ -5035,9 +4948,7 @@ public class TestClass : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol usage is not valid",
       new PlaceAssert(bhl, @"
       test1(Bar)

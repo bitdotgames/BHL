@@ -1,16 +1,18 @@
 using System;
 using System.Collections.Generic;
+
 //NOTE: removing related warnings due to CLSCompliant annotations in ANTLR generated code
 [assembly: CLSCompliant(false)]
 
-namespace bhl {
+namespace bhl
+{
 
 public class ModuleCompiler : AST_Visitor
 {
   AST_Tree ast;
   Module interim;
   Module result;
-  
+
   Types ts
   {
     get { return interim.ts;  }
@@ -30,11 +32,11 @@ public class ModuleCompiler : AST_Visitor
 
   Stack<List<AST_Block>> func_ctrl_blocks = new Stack<List<AST_Block>>();
 
-  List<AST_Block> ctrl_blocks {
-    get {
-      return func_ctrl_blocks.Peek();
-    }
+  List<AST_Block> ctrl_blocks
+  {
+    get { return func_ctrl_blocks.Peek(); }
   }
+
   Stack<AST_Block> loop_blocks = new Stack<AST_Block>();
 
   internal struct BlockJump
@@ -42,6 +44,7 @@ public class ModuleCompiler : AST_Visitor
     internal AST_Block block;
     internal Instruction jump_op;
   }
+
   List<BlockJump> non_patched_breaks = new List<BlockJump>();
   List<BlockJump> non_patched_continues = new List<BlockJump>();
   Dictionary<AST_Block, Instruction> continue_jump_markers = new Dictionary<AST_Block, Instruction>();
@@ -52,6 +55,7 @@ public class ModuleCompiler : AST_Visitor
     internal Instruction dst;
     internal int operand_idx;
   }
+
   List<Offset> offsets = new List<Offset>();
 
   internal struct Patch
@@ -59,6 +63,7 @@ public class ModuleCompiler : AST_Visitor
     internal Instruction inst;
     internal System.Action<Instruction> cb;
   }
+
   List<Patch> patches = new List<Patch>();
 
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
@@ -66,7 +71,8 @@ public class ModuleCompiler : AST_Visitor
   public class Definition
   {
     public Opcodes name { get; }
-     //each array item represents the size of the operand in bytes
+
+    //each array item represents the size of the operand in bytes
     public int[] operand_width { get; }
     public int size { get; }
 
@@ -75,8 +81,8 @@ public class ModuleCompiler : AST_Visitor
       this.name = name;
       this.operand_width = operand_width;
 
-      size = 1;//op itself
-      for(int i=0;i<operand_width.Length;++i)
+      size = 1; //op itself
+      for(int i = 0; i < operand_width.Length; ++i)
         size += operand_width[i];
     }
   }
@@ -86,7 +92,9 @@ public class ModuleCompiler : AST_Visitor
     public Definition def { get; }
     public Opcodes op { get; }
     public int[] operands { get; }
+
     public int line_num;
+
     //It's set automatically during final code traversal
     //and reflects an actual absolute instruction byte position in
     //a module. Used for post patching of jump instructions.
@@ -111,17 +119,17 @@ public class ModuleCompiler : AST_Visitor
         case 1:
           if(op_val < sbyte.MinValue || op_val > sbyte.MaxValue)
             throw new Exception("Operand value(1 byte) is out of bounds: " + op_val);
-        break;
+          break;
         case 2:
           if(op_val < short.MinValue || op_val > short.MaxValue)
             throw new Exception("Operand value(2 bytes) is out of bounds: " + op_val);
-        break;
+          break;
         case 3:
           if(op_val < -8388607 || op_val > 8388607)
             throw new Exception("Operand value(3 bytes) is out of bounds: " + op_val);
-        break;
+          break;
         case 4:
-        break;
+          break;
         default:
           throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
       }
@@ -130,12 +138,12 @@ public class ModuleCompiler : AST_Visitor
 
       return this;
     }
-    
+
     public void Write(Bytecode code)
     {
       code.Write8((uint)op);
 
-      for(int i=0;i<operands.Length;++i)
+      for(int i = 0; i < operands.Length; ++i)
       {
         int op_val = operands[i];
         int width = def.operand_width[i];
@@ -143,16 +151,16 @@ public class ModuleCompiler : AST_Visitor
         {
           case 1:
             code.Write8((uint)op_val);
-          break;
+            break;
           case 2:
             code.Write16((uint)op_val);
-          break;
+            break;
           case 3:
             code.Write24((uint)op_val);
-          break;
+            break;
           case 4:
             code.Write32((uint)op_val);
-          break;
+            break;
           default:
             throw new Exception("Not supported operand width: " + width + " for opcode:" + op);
         }
@@ -217,9 +225,9 @@ public class ModuleCompiler : AST_Visitor
     interim.InitWithCompiled(
       new CompiledModule(
         init_func_idx,
-        imports, 
+        imports,
         interim.gvar_index.Count,
-        constants.ToArray(), 
+        constants.ToArray(),
         type_refs,
         init_bytes,
         code_bytes,
@@ -244,7 +252,7 @@ public class ModuleCompiler : AST_Visitor
   int GetCodeSize()
   {
     int size = 0;
-    for(int i=0;i<head.Count;++i)
+    for(int i = 0; i < head.Count; ++i)
       size += head[i].def.size;
     return size;
   }
@@ -253,7 +261,7 @@ public class ModuleCompiler : AST_Visitor
   {
     int pos = 0;
     bool found = false;
-    for(int i=0;i<head.Count;++i)
+    for(int i = 0; i < head.Count; ++i)
     {
       var tmp = head[i];
       pos += tmp.def.size;
@@ -263,6 +271,7 @@ public class ModuleCompiler : AST_Visitor
         break;
       }
     }
+
     if(!found)
       throw new Exception("Instruction was not found: " + inst.op);
     return pos;
@@ -281,8 +290,9 @@ public class ModuleCompiler : AST_Visitor
       if(cn.Equals(new_cn))
         return i;
     }
+
     constants.Add(new_cn);
-    return constants.Count-1;
+    return constants.Count - 1;
   }
 
   int AddTypeRef(IType itype)
@@ -302,7 +312,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.Constant,
-        3/*const idx*/
+        3 /*const idx*/
       )
     );
     DeclareOpcode(
@@ -432,13 +442,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetGVar,
-        3/*idx*/
+        3 /*idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetGVar,
-        3/*idx*/
+        3 /*idx*/
       )
     );
     DeclareOpcode(
@@ -450,139 +460,139 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetAttr,
-        2/*member idx*/
+        2 /*member idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.SetAttrInplace,
-        2/*member idx*/
+        2 /*member idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetAttr,
-        2/*member idx*/
+        2 /*member idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.RefAttr,
-        2/*member idx*/
+        2 /*member idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncLocalPtr,
-        3/*func idx*/
+        3 /*func idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncPtr,
-        2/*imported module idx*/, 3/*func idx*/
+        2 /*imported module idx*/, 3 /*func idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncNativePtr,
-        2/*imported module idx*/, 3/*func idx*/
+        2 /*imported module idx*/, 3 /*func idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.LastArgToTop,
-        4/*args bits*/
+        4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetFuncPtrFromVar,
-        1/*local idx*/
+        1 /*local idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallLocal,
-        3/*func ip*/, 4/*args bits*/
+        3 /*func ip*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallGlobNative,
-        3/*func idx*/, 4/*args bits*/
+        3 /*func idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallNative,
-        2/*imported module idx*/, 3/*module's func idx*/, 4/*args bits*/
+        2 /*imported module idx*/, 3 /*module's func idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Call,
-        2/*imported module idx*/, 3/*module's func idx*/, 4/*args bits*/
+        2 /*imported module idx*/, 3 /*module's func idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethod,
-        2/*class member idx*/, 4/*args bits*/
+        2 /*class member idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodNative,
-        2/*class member idx*/, 4/*args bits*/
+        2 /*class member idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodIface,
-        2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
+        2 /*class member idx*/, 3 /*type idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodIfaceNative,
-        2/*class member idx*/, 3/*type idx*/, 4/*args bits*/
+        2 /*class member idx*/, 3 /*type idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallMethodVirt,
-        2/*class member idx*/, 4/*args bits*/
+        2 /*class member idx*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.CallFuncPtr,
-        4/*args bits*/
+        4 /*args bits*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Lambda,
-        2/*rel.offset skip lambda pos*/
+        2 /*rel.offset skip lambda pos*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.UseUpval,
-        1/*upval src idx*/, 1/*local dst idx*/, 1/*flags*/
+        1 /*upval src idx*/, 1 /*local dst idx*/, 1 /*flags*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.InitFrame,
-        1/*total local vars*/
+        1 /*total local vars*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Block,
-        1/*type*/, 2/*len*/
+        1 /*type*/, 2 /*len*/
       )
     );
     DeclareOpcode(
@@ -593,7 +603,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.ReturnVal,
-        1/*returned amount*/
+        1 /*returned amount*/
       )
     );
     DeclareOpcode(
@@ -615,67 +625,67 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.JumpZ,
-        2/*rel.offset*/
+        2 /*rel.offset*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.JumpPeekZ,
-        2/*rel.offset*/
+        2 /*rel.offset*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.JumpPeekNZ,
-        2/*rel.offset*/
+        2 /*rel.offset*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.DefArg,
-        1/*local scope idx*/, 2/*jump out of def.arg calc pos*/
+        1 /*local scope idx*/, 2 /*jump out of def.arg calc pos*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.New,
-        3/*type idx*/
+        3 /*type idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.TypeCast,
-        3/*type idx*/, 1/*force type*/
+        3 /*type idx*/, 1 /*force type*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.TypeAs,
-        3/*type idx*/, 1/*force type*/
+        3 /*type idx*/, 1 /*force type*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.TypeIs,
-        3/*type idx*/
+        3 /*type idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Typeof,
-        3/*type idx*/
+        3 /*type idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Inc,
-        1/*local idx*/
+        1 /*local idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.Dec,
-        1/*local idx*/
+        1 /*local idx*/
       )
     );
     DeclareOpcode(
@@ -719,19 +729,19 @@ public class ModuleCompiler : AST_Visitor
   {
     Definition def;
     if(!opcode_decls.TryGetValue((byte)op, out def))
-       throw new Exception("No such opcode definition: " + op);
+      throw new Exception("No such opcode definition: " + op);
     return def;
   }
 
   Instruction Peek()
   {
-    return head[head.Count-1];
+    return head[head.Count - 1];
   }
 
   void Pop()
   {
-    RemovePatchLater(head[head.Count-1]);
-    head.RemoveAt(head.Count-1);
+    RemovePatchLater(head[head.Count - 1]);
+    head.RemoveAt(head.Count - 1);
   }
 
   Instruction Emit(Opcodes op, int[] operands = null, int line_num = 0)
@@ -739,7 +749,7 @@ public class ModuleCompiler : AST_Visitor
     var inst = new Instruction(op);
     if(inst.operands.Length != (operands == null ? 0 : operands.Length))
       throw new Exception("Invalid operands amount for opcode:" + op);
-    for(int i=0;i<operands?.Length;++i)
+    for(int i = 0; i < operands?.Length; ++i)
       inst.SetOperand(i, operands[i]);
     inst.line_num = line_num;
     head.Add(inst);
@@ -759,13 +769,13 @@ public class ModuleCompiler : AST_Visitor
     //condition
     Visit(ast.children[idx]);
     var jump_op = Emit(Opcodes.JumpZ, new int[] { 0 });
-    Visit(ast.children[idx+1]);
+    Visit(ast.children[idx + 1]);
     return jump_op;
   }
 
   void PatchBreaks(AST_Block block)
   {
-    for(int i=non_patched_breaks.Count;i-- > 0;)
+    for(int i = non_patched_breaks.Count; i-- > 0;)
     {
       var npb = non_patched_breaks[i];
       if(npb.block == block)
@@ -778,7 +788,7 @@ public class ModuleCompiler : AST_Visitor
 
   void PatchContinues(AST_Block block)
   {
-    for(int i=non_patched_continues.Count;i-- > 0;)
+    for(int i = non_patched_continues.Count; i-- > 0;)
     {
       var npc = non_patched_continues[i];
       if(npc.block == block)
@@ -787,14 +797,16 @@ public class ModuleCompiler : AST_Visitor
         non_patched_continues.RemoveAt(i);
       }
     }
+
     continue_jump_markers.Clear();
   }
 
   void PatchLater(Instruction inst, System.Action<Instruction> cb)
   {
-    patches.Add(new Patch() {
-        inst = inst,
-        cb = cb
+    patches.Add(new Patch()
+    {
+      inst = inst,
+      cb = cb
     });
   }
 
@@ -812,7 +824,8 @@ public class ModuleCompiler : AST_Visitor
 
   void AddOffsetFromTo(Instruction src, Instruction dst, int operand_idx = 0)
   {
-    offsets.Add(new Offset() {
+    offsets.Add(new Offset()
+    {
       src = src,
       dst = dst,
       operand_idx = operand_idx
@@ -831,14 +844,14 @@ public class ModuleCompiler : AST_Visitor
   {
     //1. let's calculate absolute positions of all instructions
     int pos = 0;
-    for(int i=0;i<code.Count;++i)
+    for(int i = 0; i < code.Count; ++i)
     {
       pos += code[i].def.size;
-      code[i].pos = pos; 
+      code[i].pos = pos;
     }
 
     //2. let's patch jump candidates
-    for(int i=0;i<offsets.Count;++i)
+    for(int i = 0; i < offsets.Count; ++i)
     {
       var jp = offsets[i];
       if(jp.dst.pos <= 0)
@@ -855,7 +868,7 @@ public class ModuleCompiler : AST_Visitor
 
   public void Compile_PatchInstructions()
   {
-    for(int i=0;i<patches.Count;++i)
+    for(int i = 0; i < patches.Count; ++i)
     {
       var p = patches[i];
       p.cb(p.inst);
@@ -868,24 +881,24 @@ public class ModuleCompiler : AST_Visitor
   {
     {
       var bytecode = new Bytecode();
-      for(int i=0;i<init.Count;++i)
+      for(int i = 0; i < init.Count; ++i)
         init[i].Write(bytecode);
       init_bytes = bytecode.GetBytes();
     }
 
     {
       var bytecode = new Bytecode();
-      for(int i=0;i<code.Count;++i)
+      for(int i = 0; i < code.Count; ++i)
         code[i].Write(bytecode);
       code_bytes = bytecode.GetBytes();
     }
 
     ip2src_line = new Ip2SrcLine();
     int pos = 0;
-    for(int i=0;i<code.Count;++i)
+    for(int i = 0; i < code.Count; ++i)
     {
       pos += code[i].def.size;
-      ip2src_line.Add(pos-1, code[i].line_num);
+      ip2src_line.Add(pos - 1, code[i].line_num);
     }
   }
 
@@ -894,8 +907,7 @@ public class ModuleCompiler : AST_Visitor
     var fs = curr_scope.Resolve("init") as FuncSymbol;
     if(fs == null)
       return -1;
-    return fs.scope == curr_scope && fs.attribs.HasFlag(FuncAttrib.Static) ? 
-        fs.scope_idx : -1;
+    return fs.scope == curr_scope && fs.attribs.HasFlag(FuncAttrib.Static) ? fs.scope_idx : -1;
   }
 
   public override void DoVisit(AST_Interim ast)
@@ -910,7 +922,7 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Import ast)
   {
-    for(int i=0;i<ast.module_names.Count;++i)
+    for(int i = 0; i < ast.module_names.Count; ++i)
     {
       if(!imports.Contains(ast.module_names[i]))
         imports.Add(ast.module_names[i]);
@@ -922,13 +934,13 @@ public class ModuleCompiler : AST_Visitor
     UseCode();
 
     var fsymb = ast.symbol;
-    
+
     func_decls.Push(fsymb);
 
     fsymb.ip_addr = GetCodeSize();
 
-    Emit(Opcodes.InitFrame, 
-      new int[] { fsymb.local_vars_num + 1/*cargs bits*/ }, 
+    Emit(Opcodes.InitFrame,
+      new int[] { fsymb.local_vars_num + 1 /*cargs bits*/ },
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
@@ -944,8 +956,8 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    Emit(Opcodes.InitFrame, 
-      new int[] { ast.local_vars_num + 1/*cargs bits*/ },
+    Emit(Opcodes.InitFrame,
+      new int[] { ast.local_vars_num + 1 /*cargs bits*/ },
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
@@ -953,7 +965,7 @@ public class ModuleCompiler : AST_Visitor
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
-      Emit(Opcodes.UseUpval, new int[]{(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
+      Emit(Opcodes.UseUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -993,7 +1005,7 @@ public class ModuleCompiler : AST_Visitor
         Instruction last_jmp_op = null;
         int i = 0;
         //NOTE: amount of children is even if there's no 'else'
-        for(;i < ast.children.Count; i += 2)
+        for(; i < ast.children.Count; i += 2)
         {
           //break if there's only 'else leftover' left
           if((i + 2) > ast.children.Count)
@@ -1013,17 +1025,19 @@ public class ModuleCompiler : AST_Visitor
           else
             AddOffsetFromTo(if_op, Peek());
         }
+
         //check fo 'else leftover'
         if(i != ast.children.Count)
         {
           Visit(ast.children[i]);
           AddOffsetFromTo(last_jmp_op, Peek());
         }
-      break;
+
+        break;
       case BlockType.WHILE:
       {
         if(ast.children.Count != 2)
-         throw new Exception("Unexpected amount of children (must be 2)");
+          throw new Exception("Unexpected amount of children (must be 2)");
 
         loop_blocks.Push(ast);
 
@@ -1043,11 +1057,11 @@ public class ModuleCompiler : AST_Visitor
 
         loop_blocks.Pop();
       }
-      break;
+        break;
       case BlockType.DOWHILE:
       {
         if(ast.children.Count != 2)
-         throw new Exception("Unexpected amount of children (must be 2)");
+          throw new Exception("Unexpected amount of children (must be 2)");
 
         loop_blocks.Push(ast);
 
@@ -1070,57 +1084,57 @@ public class ModuleCompiler : AST_Visitor
 
         loop_blocks.Pop();
       }
-      break;
+        break;
       case BlockType.FUNC:
       {
         func_ctrl_blocks.Push(new List<AST_Block>());
         VisitChildren(ast);
         func_ctrl_blocks.Pop();
       }
-      break;
+        break;
       case BlockType.SEQ:
       case BlockType.PARAL:
       case BlockType.PARAL_ALL:
       {
         VisitControlBlock(ast);
       }
-      break;
+        break;
       case BlockType.DEFER:
       {
         VisitDefer(ast);
       }
-      break;
+        break;
       default:
-        throw new Exception("Not supported block type: " + ast.type); 
+        throw new Exception("Not supported block type: " + ast.type);
     }
   }
 
   void VisitControlBlock(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count - 1] : null;
 
     bool parent_is_paral =
       parent_block != null &&
       (parent_block.type == BlockType.PARAL ||
        parent_block.type == BlockType.PARAL_ALL);
 
-    bool is_paral = 
-      ast.type == BlockType.PARAL || 
+    bool is_paral =
+      ast.type == BlockType.PARAL ||
       ast.type == BlockType.PARAL_ALL;
 
     ctrl_blocks.Add(ast);
 
-    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0 /*patched later*/});
 
-    for(int i=0;i<ast.children.Count;++i)
+    for(int i = 0; i < ast.children.Count; ++i)
     {
       var child = ast.children[i];
 
       //NOTE: let's automatically wrap all children with sequence if 
       //      they are inside paral block
-      if(is_paral && 
-          (!(child is AST_Block child_block) || 
-           (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
+      if(is_paral &&
+         (!(child is AST_Block child_block) ||
+          (child_block.type != BlockType.SEQ && child_block.type != BlockType.DEFER)))
       {
         var seq_child = new AST_Block(BlockType.SEQ);
         seq_child.children.Add(child);
@@ -1131,27 +1145,27 @@ public class ModuleCompiler : AST_Visitor
       Visit(child);
     }
 
-    ctrl_blocks.RemoveAt(ctrl_blocks.Count-1);
+    ctrl_blocks.RemoveAt(ctrl_blocks.Count - 1);
 
-    bool need_block = 
-      is_paral || 
-      parent_is_paral || 
-      ctrl_block_has_defers.Contains(ast) || 
+    bool need_block =
+      is_paral ||
+      parent_is_paral ||
+      ctrl_block_has_defers.Contains(ast) ||
       HasOffsetsTo(block_op);
 
     if(need_block)
       AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
     else
-      head.Remove(block_op); 
+      head.Remove(block_op);
   }
 
   void VisitDefer(AST_Block ast)
   {
-    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count-1] : null;
+    var parent_block = ctrl_blocks.Count > 0 ? ctrl_blocks[ctrl_blocks.Count - 1] : null;
     if(parent_block != null)
       ctrl_block_has_defers.Add(parent_block);
 
-    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0/*patched later*/});
+    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0 /*patched later*/});
     VisitChildren(ast);
     AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
   }
@@ -1212,19 +1226,19 @@ public class ModuleCompiler : AST_Visitor
   }
 
   public override void DoVisit(AST_Call ast)
-  {  
+  {
     switch(ast.type)
     {
       case EnumCall.VARW:
       {
         Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.VAR:
       {
         Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.GVAR:
       {
         //NOTE: native static fields are implemented as native functions
@@ -1239,7 +1253,7 @@ public class ModuleCompiler : AST_Visitor
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
           Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.GVARW:
       {
         //NOTE: native static fields are implemented as native functions
@@ -1254,7 +1268,7 @@ public class ModuleCompiler : AST_Visitor
           //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
           Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.FUNC:
       {
         VisitChildren(ast);
@@ -1272,13 +1286,14 @@ public class ModuleCompiler : AST_Visitor
           var fsymb = (FuncSymbolScript)ast.symb;
           var fmod = fsymb.GetModule();
           Pop();
-          var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
+          var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits},
+            ast.line_num);
           //imports list is filled later so we need to take that into account
           PatchLater(call_op, (inst) =>
           {
-             inst.operands[1] = fsymb.ip_addr;
-             if(inst.operands[1] == -1)
-               throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
+            inst.operands[1] = fsymb.ip_addr;
+            if(inst.operands[1] == -1)
+              throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
           });
         }
         else if(instr.op == Opcodes.GetFuncNativePtr)
@@ -1288,12 +1303,13 @@ public class ModuleCompiler : AST_Visitor
           if(instr.operands[0] == 0)
             Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
           else
-            Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
+            Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits},
+              ast.line_num);
         }
         else
           Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.MVAR:
       {
         if(ast.symb_idx == -1)
@@ -1303,7 +1319,7 @@ public class ModuleCompiler : AST_Visitor
 
         Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.MVARW:
       {
         if(ast.symb_idx == -1)
@@ -1313,7 +1329,7 @@ public class ModuleCompiler : AST_Visitor
 
         Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.MFUNC:
       {
         var instance_type = ast.symb.scope as IInstantiable;
@@ -1322,14 +1338,17 @@ public class ModuleCompiler : AST_Visitor
 
         var mfunc = ast.symb as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + instance_type.GetName() + "' by index " + ast.symb_idx);
+          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + instance_type.GetName() +
+                              "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
-        
+
         if(instance_type is InterfaceSymbolScript)
-          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodIface, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
+            ast.line_num);
         else if(instance_type is InterfaceSymbolNative)
-          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits}, ast.line_num);
+          Emit(Opcodes.CallMethodIfaceNative, new int[] {ast.symb_idx, AddTypeRef(instance_type), (int)ast.cargs_bits},
+            ast.line_num);
         else
         {
           if(mfunc is FuncSymbolScript)
@@ -1345,7 +1364,7 @@ public class ModuleCompiler : AST_Visitor
             throw new Exception("Unsupported type: " + mfunc.GetType().Name);
         }
       }
-      break;
+        break;
       case EnumCall.MVARREF:
       {
         if(ast.symb_idx == -1)
@@ -1355,53 +1374,53 @@ public class ModuleCompiler : AST_Visitor
 
         Emit(Opcodes.RefAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.ARR_IDX:
       {
         Emit(Opcodes.ArrIdx, null, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.ARR_IDXW:
       {
         Emit(Opcodes.ArrIdxW, null, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.MAP_IDX:
       {
         Emit(Opcodes.MapIdx, null, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.MAP_IDXW:
       {
         Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.LMBD:
       {
         VisitChildren(ast);
         Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.GetFuncPtrFromVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.FUNC_MVAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
-      break;
+        break;
       case EnumCall.GET_ADDR:
       {
         EmitGetFuncAddr(ast);
       }
-      break;
+        break;
       default:
         throw new Exception("Not supported call: " + ast.type);
     }
@@ -1418,7 +1437,7 @@ public class ModuleCompiler : AST_Visitor
       var fmod = func_symb.GetModule();
       int func_idx = fmod.nfunc_index.IndexOf(func_symb_native);
       if(func_idx == -1)
-        throw new Exception("Not found function '"+ func_symb.name + "' index in module '" +  fmod.name + "'");
+        throw new Exception("Not found function '" + func_symb.name + "' index in module '" +  fmod.name + "'");
       var get_ptr_op = Emit(Opcodes.GetFuncNativePtr, new int[] { 0, func_idx }, ast.line_num);
       TrySetFuncInstructionImportModule(get_ptr_op, fmod);
       return get_ptr_op;
@@ -1432,7 +1451,8 @@ public class ModuleCompiler : AST_Visitor
         var fmod = func_symb_script.GetModule();
         int func_idx = fmod.func_index.IndexOf(func_symb_script);
         if(func_idx == -1)
-          throw new Exception("Not found function '"+ func_symb_script.name + "' index in module '" +  fmod.name + "'");
+          throw new Exception("Not found function '" + func_symb_script.name + "' index in module '" +  fmod.name +
+                              "'");
         return Emit(Opcodes.GetFuncLocalPtr, new int[] { func_idx }, ast.line_num);
       }
       else
@@ -1440,7 +1460,8 @@ public class ModuleCompiler : AST_Visitor
         var fmod = func_symb_script.GetModule();
         int func_idx = fmod.func_index.IndexOf(func_symb_script);
         if(func_idx == -1)
-          throw new Exception("Not found function '" + func_symb_script.name + "' index in module '" +  fmod.name + "'");
+          throw new Exception("Not found function '" + func_symb_script.name + "' index in module '" +  fmod.name +
+                              "'");
         int mod_idx = imports.IndexOf(fmod.name);
         if(mod_idx == -1)
           throw new Exception("Not found module '" + fmod.name + "' imported index");
@@ -1453,9 +1474,9 @@ public class ModuleCompiler : AST_Visitor
   //      for built-in native functions we don't do that
   void TrySetFuncInstructionImportModule(Instruction inst_op, Module mod)
   {
-    if(inst_op.operands[1] == -1) 
+    if(inst_op.operands[1] == -1)
       throw new Exception("Invalid func index for module '" +  mod.name + "'");
-    
+
     //if module is not global it must be imported
     if(ts.IsImported(mod))
     {
@@ -1484,10 +1505,11 @@ public class ModuleCompiler : AST_Visitor
   {
     var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
     non_patched_breaks.Add(
-      new BlockJump() 
-        { block = loop_blocks.Peek(), 
-          jump_op = jump_op
-        }
+      new BlockJump()
+      {
+        block = loop_blocks.Peek(),
+        jump_op = jump_op
+      }
     );
   }
 
@@ -1502,10 +1524,11 @@ public class ModuleCompiler : AST_Visitor
     {
       var jump_op = Emit(Opcodes.Jump, new int[] { 0 /*patched later*/});
       non_patched_continues.Add(
-        new BlockJump() 
-          { block = loop_block, 
-            jump_op = jump_op
-          }
+        new BlockJump()
+        {
+          block = loop_block,
+          jump_op = jump_op
+        }
       );
     }
   }
@@ -1539,7 +1562,7 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.And, null, ast.line_num);
         AddOffsetFromTo(jump_op, Peek());
       }
-      break;
+        break;
       case EnumBinaryOp.OR:
       {
         Visit(ast.children[0]);
@@ -1548,69 +1571,69 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.Or, null, ast.line_num);
         AddOffsetFromTo(jump_op, Peek());
       }
-      break;
+        break;
       case EnumBinaryOp.BIT_AND:
         VisitChildren(ast);
         Emit(Opcodes.BitAnd, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.BIT_OR:
         VisitChildren(ast);
         Emit(Opcodes.BitOr, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.BIT_SHR:
         VisitChildren(ast);
         Emit(Opcodes.BitShr, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.BIT_SHL:
         VisitChildren(ast);
         Emit(Opcodes.BitShl, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.MOD:
         VisitChildren(ast);
         Emit(Opcodes.Mod, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.ADD:
       {
         VisitChildren(ast);
         Emit(Opcodes.Add, null, ast.line_num);
       }
-      break;
+        break;
       case EnumBinaryOp.SUB:
         VisitChildren(ast);
         Emit(Opcodes.Sub, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.DIV:
         VisitChildren(ast);
         Emit(Opcodes.Div, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.MUL:
         VisitChildren(ast);
         Emit(Opcodes.Mul, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.EQ:
         VisitChildren(ast);
         Emit(Opcodes.Equal, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.NQ:
         VisitChildren(ast);
         Emit(Opcodes.NotEqual, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
         Emit(Opcodes.LT, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.LTE:
         VisitChildren(ast);
         Emit(Opcodes.LTE, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.GT:
         VisitChildren(ast);
         Emit(Opcodes.GT, null, ast.line_num);
-      break;
+        break;
       case EnumBinaryOp.GTE:
         VisitChildren(ast);
         Emit(Opcodes.GTE, null, ast.line_num);
-      break;
+        break;
       default:
         throw new Exception("Not supported binary type: " + ast.type);
     }
@@ -1624,13 +1647,13 @@ public class ModuleCompiler : AST_Visitor
     {
       case EnumUnaryOp.NOT:
         Emit(Opcodes.UnaryNot);
-      break;
+        break;
       case EnumUnaryOp.NEG:
         Emit(Opcodes.UnaryNeg);
-      break;
+        break;
       case EnumUnaryOp.BIT_NOT:
         Emit(Opcodes.UnaryBitNot);
-      break;
+        break;
       default:
         throw new Exception("Not supported unary type: " + ast.type);
     }
@@ -1640,7 +1663,7 @@ public class ModuleCompiler : AST_Visitor
   {
     //checking of there are default args
     if(ast.is_func_arg && ast.children.Count > 0)
-    {                  
+    {
       var fsymb = func_decls.Peek();
       int symb_idx = (int)ast.symb_idx;
       //let's take into account 'this' special case, which is 
@@ -1685,7 +1708,7 @@ public class ModuleCompiler : AST_Visitor
 
     Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
 
-    for(int i=0;i<ast.children.Count;++i)
+    for(int i = 0; i < ast.children.Count; ++i)
     {
       var c = ast.children[i];
 
@@ -1714,7 +1737,7 @@ public class ModuleCompiler : AST_Visitor
 
     Emit(Opcodes.New, new int[] { AddTypeRef(ast.type) }, ast.line_num);
 
-    for(int i=0;i<ast.children.Count;++i)
+    for(int i = 0; i < ast.children.Count; ++i)
     {
       var c = ast.children[i];
 

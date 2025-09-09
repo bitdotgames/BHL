@@ -2,7 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
 public abstract class MapTypeSymbol : ClassSymbol
 {
@@ -12,11 +13,12 @@ public abstract class MapTypeSymbol : ClassSymbol
   public ClassSymbol enumerator_type = new ClassSymbolNative(new Origin(), "Enumerator");
 
   //marshall factory version
-  public MapTypeSymbol()     
+  public MapTypeSymbol()
     : base(null, null)
-  {}
+  {
+  }
 
-  public MapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)     
+  public MapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)
     : base(origin, "[" + key_type + "]" + val_type)
   {
     this.key_type = key_type;
@@ -74,7 +76,8 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "TryGet", new ProxyType(new TupleType(Types.Bool, val_type)), BindTryGet,
+      var fn = new FuncSymbolNative(new Origin(), "TryGet", new ProxyType(new TupleType(Types.Bool, val_type)),
+        BindTryGet,
         new FuncArgSymbol("key", key_type)
       );
       this.Define(fn);
@@ -92,61 +95,62 @@ public abstract class MapTypeSymbol : ClassSymbol
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "Current", new ProxyType(new TupleType(key_type, val_type)), BindEnumeratorCurrent);
+      var fn = new FuncSymbolNative(new Origin(), "Current", new ProxyType(new TupleType(key_type, val_type)),
+        BindEnumeratorCurrent);
       enumerator_type.Define(fn);
     }
   }
-  
+
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
     refs.Index(key_type);
     refs.Index(val_type);
   }
-  
+
   void BindCreateMap(VM.Frame frm, ref Val v, IType type)
   {
     MapCreate(frm.vm, ref v);
   }
-  
+
   void BindGetCount(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetNum(MapCount(ctx));
   }
-  
+
   Coroutine BindAdd(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var val = stack.Pop();
     var key = stack.Pop();
     var map = stack.Pop();
-    
+
     MapSet(map, key, val);
-    
+
     key.Release();
     val.Release();
     map.Release();
     return null;
   }
-  
+
   Coroutine BindContains(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var key = stack.Pop();
     var map = stack.Pop();
 
     bool yes = MapContainsKey(map, key);
-    
+
     key.Release();
     map.Release();
     stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
-  
+
   Coroutine BindTryGet(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var key = stack.Pop();
     var map = stack.Pop();
 
     bool yes = MapTryGet(map, key, out var val);
-    
+
     key.Release();
     map.Release();
     if(yes)
@@ -156,34 +160,34 @@ public abstract class MapTypeSymbol : ClassSymbol
     stack.Push(Val.NewBool(frame.vm, yes));
     return null;
   }
-  
+
   Coroutine BindRemove(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var key = stack.Pop();
     var map = stack.Pop();
-    
+
     MapRemove(map, key);
-    
+
     key.Release();
     map.Release();
     return null;
   }
-  
+
   Coroutine BindClear(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var map = stack.Pop();
 
     MapClear(map);
-    
+
     map.Release();
     return null;
   }
-  
+
   void BindGetEnumerator(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetObj(MapGetEnumerator(ctx), enumerator_type);
   }
-  
+
   void BindEnumeratorNext(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetBool(MapEnumeratorNext(ctx));
@@ -192,9 +196,9 @@ public abstract class MapTypeSymbol : ClassSymbol
   Coroutine BindEnumeratorCurrent(VM.Frame frame, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var en = stack.Pop();
-    
+
     MapEnumeratorCurrent(en, out var key, out var val);
-    
+
     stack.PushRetain(val);
     stack.PushRetain(key);
     en.Release();
@@ -215,17 +219,19 @@ public abstract class MapTypeSymbol : ClassSymbol
 
 public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymbol>, IEphemeralType
 {
-  public const uint CLASS_ID = 21; 
-  
-  public GenericMapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)     
+  public const uint CLASS_ID = 21;
+
+  public GenericMapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)
     : base(origin, key_type, val_type)
-  {}
-    
+  {
+  }
+
   //marshall factory version
   public GenericMapTypeSymbol()
     : base()
-  {}
-  
+  {
+  }
+
   static ValMap AsMap(Val map)
   {
     var dict = map._obj as ValMap;
@@ -233,12 +239,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
       throw new Exception("Not a ValMap: " + map._obj.GetType().Name);
     return dict;
   }
-  
+
   public override void MapCreate(VM vm, ref Val map)
   {
     map.SetObj(ValMap.New(vm), this);
   }
-  
+
   public override int MapCount(Val map)
   {
     return AsMap(map).Count;
@@ -248,43 +254,43 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   {
     return ((IEnumerable)AsMap(map)).GetEnumerator();
   }
-  
+
   public override bool MapEnumeratorNext(Val en)
   {
     return ((IEnumerator)en._obj).MoveNext();
   }
-  
+
   public override void MapEnumeratorCurrent(Val en, out Val key, out Val val)
   {
     var _en = (ValMap.Enumerator)en._obj;
-    key = (Val)_en.Key; 
-    val = (Val)_en.Value; 
+    key = (Val)_en.Key;
+    val = (Val)_en.Value;
   }
-  
+
   public override bool MapTryGet(Val map, Val key, out Val val)
   {
     var dict = AsMap(map);
     return dict.TryGetValue(key, out val);
   }
-  
+
   public override void MapSet(Val map, Val key, Val val)
   {
     var dict = AsMap(map);
     dict.SetValueCopyAt(key, val);
   }
-  
+
   public override void MapRemove(Val map, Val key)
   {
     var dict = AsMap(map);
     dict.Remove(key);
   }
-  
+
   public override bool MapContainsKey(Val map, Val key)
   {
     var dict = AsMap(map);
     return dict.ContainsKey(key);
   }
-  
+
   public override void MapClear(Val map)
   {
     var dict = AsMap(map);
@@ -295,7 +301,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   {
     return CLASS_ID;
   }
-  
+
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.SyncTypeRef(ctx, ref key_type);
@@ -323,7 +329,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
       return false;
     if(ReferenceEquals(this, o))
       return true;
-    return key_type.Equals(o.key_type) && 
+    return key_type.Equals(o.key_type) &&
            val_type.Equals(o.val_type);
   }
 

@@ -39,18 +39,21 @@ public class TestStackTrace : BHL_TestBase
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -80,7 +83,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual("bhl1.bhl", trace[3].file);
     Assert.Equal(10, trace[3].line);
   }
-  
+
   [Fact]
   public void TestGetStackTraceFromMethod()
   {
@@ -118,18 +121,21 @@ public class TestStackTrace : BHL_TestBase
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -159,7 +165,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual("bhl1.bhl", trace[3].file);
     Assert.Equal(10, trace[3].line);
   }
-  
+
   [Fact]
   public void TestGetStackTraceFromVirtualMethod()
   {
@@ -201,18 +207,21 @@ public class TestStackTrace : BHL_TestBase
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -242,7 +251,7 @@ public class TestStackTrace : BHL_TestBase
     AssertEqual("bhl1.bhl", trace[3].file);
     Assert.Equal(10, trace[3].line);
   }
-  
+
   [Fact]
   public void TestGetStackTraceFromCoroVirtualMethodInParal()
   {
@@ -299,17 +308,20 @@ public class TestStackTrace : BHL_TestBase
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             throw new NullReferenceException();
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -320,15 +332,15 @@ public class TestStackTrace : BHL_TestBase
     var fb = vm.Start("test", Val.NewNum(vm, 3));
     Assert.True(vm.Tick());
     AssertError<Exception>(
-      () => vm.Tick(), 
-@"at wow(..) in bhl2.bhl:20
+      () => vm.Tick(),
+      @"at wow(..) in bhl2.bhl:20
 at test(..) in bhl3.bhl:10
 at bar(..) in bhl2.bhl:10
 at foo(..) in bhl1.bhl:5
 at test(..) in bhl1.bhl:10"
     );
   }
-  
+
   [Fact]
   public void TestGetStackTraceFromInterfaceMethod()
   {
@@ -370,18 +382,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -447,18 +462,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -507,14 +525,15 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
     );
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
-    
+
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
 
     try
@@ -573,10 +592,12 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             //emulating null reference
             frm = null;
             frm.fb = null;
@@ -586,7 +607,8 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -666,18 +688,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -748,18 +773,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -825,18 +853,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -908,18 +939,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1002,10 +1036,12 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             //emulating null reference
             frm = null;
             frm.fb = null;
@@ -1015,7 +1051,8 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1030,7 +1067,7 @@ at test(..) in bhl1.bhl:10"
     var fb = vm.Start("test");
     try
     {
-      for(int i=0;i<10;++i)
+      for(int i = 0; i < 10; ++i)
         vm.Tick();
     }
     catch(Exception)
@@ -1105,10 +1142,12 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             //emulating null reference
             frm.fb.GetStackTrace();
             frm = null;
@@ -1119,7 +1158,8 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1134,7 +1174,7 @@ at test(..) in bhl1.bhl:10"
     var fb = vm.Start("test");
     try
     {
-      for(int i=0;i<10;++i)
+      for(int i = 0; i < 10; ++i)
         vm.Tick();
     }
     catch(Exception)
@@ -1202,18 +1242,21 @@ at test(..) in bhl1.bhl:10"
     ";
 
     var trace = new List<VM.TraceItem>();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1294,18 +1337,21 @@ at test(..) in bhl1.bhl:10"
 
     var trace = new List<VM.TraceItem>();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            frm.fb.GetStackTrace(trace); 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            frm.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -1361,18 +1407,14 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
     vm.Tick();
 
     AssertError<Exception>(
-      delegate() {
-        vm.Stop();
-      },
+      delegate() { vm.Stop(); },
       "at wow(..) in .bhl:6"
     );
   }
@@ -1397,7 +1439,8 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
@@ -1414,9 +1457,7 @@ at test(..) in bhl1.bhl:10"
     vm.Tick();
 
     AssertError<Exception>(
-      delegate() {
-        vm.Stop();
-      },
+      delegate() { vm.Stop(); },
       "at wow(..) in .bhl:5"
     );
   }
@@ -1441,7 +1482,8 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
         {
@@ -1458,11 +1500,8 @@ at test(..) in bhl1.bhl:10"
     vm.Tick();
 
     AssertError<Exception>(
-      delegate() {
-        vm.Stop();
-      },
+      delegate() { vm.Stop(); },
       "at wow(..) in .bhl:5"
     );
   }
-
 }

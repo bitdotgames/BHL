@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentFindReferencesService : IService
 {
@@ -44,7 +45,8 @@ public class TextDocumentFindReferencesService : IService
             if(an_kv.Value.lsp_symbol == symb)
             {
               var range = (bhl.lsp.proto.Range)an_kv.Value.range;
-              var loc = new Location {
+              var loc = new Location
+              {
                 uri = new proto.Uri(kv.Key),
                 range = range
               };
@@ -54,8 +56,8 @@ public class TextDocumentFindReferencesService : IService
         }
 
         //2. sorting by file name
-        refs.Sort(
-          (a, b) => {
+        refs.Sort((a, b) =>
+          {
             if(a.uri.path == b.uri.path)
               return a.range.start.line.CompareTo(b.range.start.line);
             else
@@ -66,7 +68,8 @@ public class TextDocumentFindReferencesService : IService
         //3. adding definition for native symbol (if any)
         if(symb is FuncSymbolNative)
         {
-          refs.Add(new Location {
+          refs.Add(new Location
+          {
             uri = new proto.Uri(symb.origin.source_file),
             range = (bhl.lsp.proto.Range)symb.origin.source_range
           });

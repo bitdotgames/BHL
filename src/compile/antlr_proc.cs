@@ -6,7 +6,8 @@ using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
-namespace bhl {
+namespace bhl
+{
 
 public class ANTLR_Parsed
 {
@@ -33,15 +34,15 @@ public class ANTLR_Parsed
     return sb.ToString();
   }
 
-  public static void PrintTree(IParseTree root, System.Text.StringBuilder sb, int offset, IList<String> rule_names) 
+  public static void PrintTree(IParseTree root, System.Text.StringBuilder sb, int offset, IList<String> rule_names)
   {
     for(int i = 0; i < offset; i++)
       sb.Append("  ");
-    
-    sb.Append(Trees.GetNodeText(root, rule_names)).Append(" ("+root.GetType().Name+")").Append("\n");
-    if(root is ParserRuleContext prc) 
+
+    sb.Append(Trees.GetNodeText(root, rule_names)).Append(" (" + root.GetType().Name + ")").Append("\n");
+    if(root is ParserRuleContext prc)
     {
-      if(prc.children != null) 
+      if(prc.children != null)
       {
         foreach(var child in prc.children)
         {
@@ -62,16 +63,14 @@ public class AnnotatedParseTree
   public IType eval_type;
   public Symbol lsp_symbol;
 
-  public SourceRange range { 
-    get { 
-      return new SourceRange(tree.SourceInterval, tokens);
-    } 
+  public SourceRange range
+  {
+    get { return new SourceRange(tree.SourceInterval, tokens); }
   }
 
-  public string file { 
-    get { 
-      return module.file_path;
-    } 
+  public string file
+  {
+    get { return module.file_path; }
   }
 }
 
@@ -114,7 +113,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   Namespace ns;
 
   ITokenStream tokens;
-  public Dictionary<IParseTree, AnnotatedParseTree> annotated_nodes { get; private set; } = new Dictionary<IParseTree, AnnotatedParseTree>();
+
+  public Dictionary<IParseTree, AnnotatedParseTree> annotated_nodes { get; private set; } =
+    new Dictionary<IParseTree, AnnotatedParseTree>();
 
   class ParserPass
   {
@@ -214,10 +215,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   List<ParserPass> passes = new List<ParserPass>();
 
   Stack<IScope> scopes = new Stack<IScope>();
-  IScope curr_scope {
-    get {
-      return scopes.Peek();
-    }
+
+  IScope curr_scope
+  {
+    get { return scopes.Peek(); }
   }
 
   HashSet<FuncSymbol> return_found = new HashSet<FuncSymbol>();
@@ -244,8 +245,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public SemanticToken type_idx;
     public SemanticModifier mods;
   }
+
   public List<SemanticTokenNode> semantic_tokens = new List<SemanticTokenNode>();
-  
+
   List<uint> encoded_semantic_tokens = new List<uint>();
 
   static CommonTokenStream Stream2Tokens(Stream s, ErrorHandlers handlers)
@@ -262,19 +264,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   public static bhlParser Stream2Parser(
-      Module module,
-      CompileErrorsHub err_hub,
-      Stream src, 
-      //can be null
-      HashSet<string> defines,
-      out ANTLR_Parsed preproc_parsed,
-      out CommonTokenStream tokens
-    )
+    Module module,
+    CompileErrorsHub err_hub,
+    Stream src,
+    //can be null
+    HashSet<string> defines,
+    out ANTLR_Parsed preproc_parsed,
+    out CommonTokenStream tokens
+  )
   {
     src = ANTLR_Preprocessor.ProcessStream(
-      module, 
+      module,
       err_hub,
-      src, 
+      src,
       defines,
       out preproc_parsed
     );
@@ -294,37 +296,37 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //can be null
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
-    )
+  )
   {
     using(var sfs = File.OpenRead(module.file_path))
     {
       return Parse(
-        module, 
-        sfs, 
+        module,
+        sfs,
         err_hub,
         defines,
         preproc_parsed: out preproc_parsed
       );
     }
   }
-  
+
   public static ANTLR_Parsed Parse(
-    Module module, 
-    Stream src, 
+    Module module,
+    Stream src,
     CompileErrorsHub err_hub,
     //can be null
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
-    )
+  )
   {
     var parser = Stream2Parser(
-      module, 
+      module,
       err_hub,
-      src, 
-      defines, 
-      out preproc_parsed, 
+      src,
+      defines,
+      out preproc_parsed,
       out var tokens
-      );
+    );
 
     //NOTE: parsing happens here 
     var parsed = new ANTLR_Parsed(parser, ParseFastWithFallback(tokens, parser));
@@ -332,39 +334,39 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   public static ANTLR_Processor ParseAndMakeProcessor(
-    Module module, 
-    FileImports imports_maybe, 
-    Stream src, 
-    Types ts, 
+    Module module,
+    FileImports imports_maybe,
+    Stream src,
+    Types ts,
     CompileErrorsHub err_hub,
     //can be null
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
-    )
+  )
   {
     var parsed = Parse(
-      module, 
-      src, 
+      module,
+      src,
       err_hub,
-      defines, 
+      defines,
       out preproc_parsed
     );
 
     return new ANTLR_Processor(
-      parsed, 
-      module, 
-      imports_maybe, 
-      ts, 
+      parsed,
+      module,
+      imports_maybe,
+      ts,
       err_hub.errors
     );
   }
 
   public static bhlParser.ProgramContext ParseFastWithFallback(CommonTokenStream tokens, bhlParser parser)
   {
-    var orig_mode = parser.Interpreter.PredictionMode; 
+    var orig_mode = parser.Interpreter.PredictionMode;
     var orig_err_listeners = parser.ErrorListeners;
     var orig_err_handler = parser.ErrorHandler;
-    
+
     parser.Interpreter.PredictionMode = PredictionMode.SLL;
     parser.RemoveErrorListeners();
     parser.ErrorHandler = new BailErrorStrategy();
@@ -386,12 +388,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   public ANTLR_Processor(
-      ANTLR_Parsed parsed, 
-      Module module, 
-      FileImports imports_maybe, 
-      Types types,
-      CompileErrors errors
-    )
+    ANTLR_Parsed parsed,
+    Module module,
+    FileImports imports_maybe,
+    Types types,
+    CompileErrors errors
+  )
   {
     this.parsed = parsed;
     this.tokens = parsed.tokens;
@@ -408,19 +410,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PushScope(ns);
   }
 
-  void AddError(Origin origin, string msg) 
+  void AddError(Origin origin, string msg)
   {
     AddError(origin.parsed.tree, msg);
   }
 
-  void AddError(IParseTree place, string msg) 
+  void AddError(IParseTree place, string msg)
   {
     try
     {
       errors.Add(new ParseError(module, place, tokens, msg));
     }
     catch(Exception)
-    {}
+    {
+    }
   }
 
   void PushBlock(AST_Block block)
@@ -433,6 +436,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       blocks = new List<AST_Block>();
       func2blocks[fsymb] = blocks;
     }
+
     blocks.Add(block);
   }
 
@@ -456,6 +460,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(block.type == type)
           ++c;
     }
+
     return c;
   }
 
@@ -466,13 +471,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     func2blocks.TryGetValue(fsymb, out blocks);
     if(blocks != null)
     {
-      for(int i=blocks.Count;i-- > 0;)
+      for(int i = blocks.Count; i-- > 0;)
       {
         var block = blocks[i];
         if(block.type == type)
           return i;
       }
     }
+
     return -1;
   }
 
@@ -498,7 +504,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   void PopScope()
   {
     if(curr_scope is FuncSymbolScript)
-      func_decl_stack.RemoveAt(func_decl_stack.Count-1);
+      func_decl_stack.RemoveAt(func_decl_stack.Count - 1);
     scopes.Pop();
   }
 
@@ -560,6 +566,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       annotated_nodes.Add(t, at);
     }
+
     return at;
   }
 
@@ -575,8 +582,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     SemanticTokenNode prev = null;
     foreach(var token in semantic_tokens)
     {
-      int diff_line = token.line - (prev?.line??1);
-      int diff_column = diff_line != 0 ? token.column : token.column - prev?.column??0;
+      int diff_line = token.line - (prev?.line ?? 1);
+      int diff_column = diff_line != 0 ? token.column : token.column - prev?.column ?? 0;
 
       // line
       encoded_semantic_tokens.Add((uint)diff_line);
@@ -611,7 +618,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     VisitProgram((bhlParser.ProgramContext)parsed.parse_tree);
     PopAST();
 
-    for(int p=0;p<passes.Count;++p)
+    for(int p = 0; p < passes.Count; ++p)
     {
       var pass = passes[p];
 
@@ -635,7 +642,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_LinkImports1(ProjectCompilationStateBundle proc_bundle)
   {
-    var already_imported = new HashSet<Module>(); 
+    var already_imported = new HashSet<Module>();
 
     //NOTE: getting a copy of keys since we might modify the dictionary during traversal
     var keys = new List<bhlParser.MimportContext>(raw_imports_parsed.Keys);
@@ -723,7 +730,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_ParseTypes1()
   {
-    for(int p=0;p<passes.Count;++p)
+    for(int p = 0; p < passes.Count; ++p)
     {
       var pass = passes[p];
 
@@ -743,7 +750,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_ParseTypes2()
   {
-    for(int p=0;p<passes.Count;++p)
+    for(int p = 0; p < passes.Count; ++p)
     {
       var pass = passes[p];
 
@@ -756,7 +763,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopScope();
     }
 
-    for(int p=0;p<passes.Count;++p)
+    for(int p = 0; p < passes.Count; ++p)
     {
       var pass = passes[p];
 
@@ -772,7 +779,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   internal void Phase_ParseFuncBodies()
   {
-    for(int p=0;p<passes.Count;++p)
+    for(int p = 0; p < passes.Count; ++p)
     {
       var pass = passes[p];
 
@@ -797,41 +804,41 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       WrapError(kv.Value, () => kv.Value.Phase_Outline());
 
     var name2module = proc_bundle.GroupModulesByName();
-    
+
     SetupCachedModules(
-      name2module, 
-      proc_bundle, 
-      Module.SetupFlags.Namespaces | 
-      Module.SetupFlags.Imports | 
+      name2module,
+      proc_bundle,
+      Module.SetupFlags.Namespaces |
+      Module.SetupFlags.Imports |
       Module.SetupFlags.Gvars
-      );
+    );
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_LinkImports1(proc_bundle));
-    
+
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_LinkImports2(proc_bundle));
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes1());
-    
+
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseTypes2());
-    
+
     //NOTE: we may setup cached module classes only when processed classes
     //      are also setup
     SetupCachedModules(
-      name2module, 
-      proc_bundle, 
+      name2module,
+      proc_bundle,
       Module.SetupFlags.Funcs |
       Module.SetupFlags.Classes
-      );
+    );
 
     foreach(var kv in proc_bundle.file2proc)
       WrapError(kv.Value, () => kv.Value.Phase_ParseFuncBodies());
 
     foreach(var kv in proc_bundle.file2proc)
-      WrapError(kv.Value, () => kv.Value.Phase_SetResult()); 
+      WrapError(kv.Value, () => kv.Value.Phase_SetResult());
   }
 
   static void WrapError(ANTLR_Processor proc, Action action)
@@ -851,10 +858,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   static void SetupCachedModules(
-    Dictionary<string, Module> name2module, 
+    Dictionary<string, Module> name2module,
     ProjectCompilationStateBundle proc_bundle,
     Module.SetupFlags flags
-    )
+  )
   {
     if(proc_bundle.file2cached == null)
       return;
@@ -887,7 +894,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var name = ctx.NORMALSTRING().GetText();
     //removing quotes
-    name = name.Substring(1, name.Length-2);
+    name = name.Substring(1, name.Length - 2);
 
     raw_imports_parsed[ctx] = name;
   }
@@ -897,7 +904,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     passes.Add(new ParserPass(ast, scope, ctx));
   }
 
-	IType ProcFuncCallExp(
+  IType ProcFuncCallExp(
     ParserRuleContext ctx,
     bhlParser.ChainExpContext exp,
     bool yielded = false
@@ -930,10 +937,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     if(ret_type == null || ret_type == Types.Void)
       return;
-    
+
     //let's pop unused returned value
     var ret_type_arr = new TypeAsArr(ret_type);
-    for(int i=0;i<ret_type_arr.Count;++i)
+    for(int i = 0; i < ret_type_arr.Count; ++i)
       PeekAST().AddChild(new AST_PopValue());
   }
 
@@ -944,10 +951,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var ret_type = ProcFuncCallExp(ctx, ctx.chainExp());
       ProcPopNonConsumed(ret_type);
     }
-    else 
+    else
     {
       ProcExpModifyOp(ctx, ctx.chainExp(), ctx.modifyOp());
     }
+
     return null;
   }
 
@@ -971,11 +979,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   bool ProcExpChain(
     ExpChain chain,
-    ref IType curr_type, 
+    ref IType curr_type,
     bool write = false,
     bool yielded = false,
     IScope root_scope = null
-   )
+  )
   {
     if(root_scope == null)
       root_scope = chain.IsGlobalNs ? ns : curr_scope;
@@ -983,13 +991,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(chain.lmb_ctx != null)
     {
       if(!ProcLambdaCall(
-        chain.ctx,
-        chain.lmb_ctx,
-        chain.items,
-        ref curr_type,
-        write,
-        yielded
-      ))
+           chain.ctx,
+           chain.lmb_ctx,
+           chain.items,
+           ref curr_type,
+           write,
+           yielded
+         ))
         return false;
     }
     else
@@ -1014,13 +1022,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(root_name != null)
       {
         if(!ProcChainStartingName(
-          chain,
-          root_name, 
-          ref curr_name, 
-          ref scope,
-          ref curr_type,
-          ref chain_offset
-        ))
+             chain,
+             root_name,
+             ref curr_name,
+             ref scope,
+             ref curr_type,
+             ref chain_offset
+           ))
         {
           PopAST();
           return false;
@@ -1030,14 +1038,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       Symbol curr_symb = null;
 
       if(!ProcChainItems(
-          chain.items, 
-          chain_offset,
-          ref curr_name,
-          ref scope,
-          ref curr_type,
-          ref curr_symb,
-          write
-        ))
+           chain.items,
+           chain_offset,
+           ref curr_name,
+           ref scope,
+           ref curr_type,
+           ref curr_symb,
+           write
+         ))
       {
         PopAST();
         return false;
@@ -1047,26 +1055,26 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(curr_name != null)
       {
         curr_symb = ProcChainItem(
-          scope, 
-          curr_name, 
-          null, 
-          null, 
-          ref curr_type, 
-          curr_name.Symbol.Line, 
-          write, 
-          is_leftover: true, 
+          scope,
+          curr_name,
+          null,
+          null,
+          ref curr_type,
+          curr_name.Symbol.Line,
+          write,
+          is_leftover: true,
           is_root: chain.items.Count == 0
         );
       }
 
       if(!CheckExpClassFunctionReadWrite(
-          chain, 
-          curr_name, 
-          scope, 
-          curr_type, 
-          curr_symb,
-          write
-        ))
+           chain,
+           curr_name,
+           scope,
+           curr_type,
+           curr_symb,
+           write
+         ))
       {
         PopAST();
         return false;
@@ -1076,9 +1084,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopAST();
 
       ValidateChainCall(
-        chain.ctx, 
+        chain.ctx,
         0,
-        chain_ast.children, 
+        chain_ast.children,
         yielded
       );
 
@@ -1087,12 +1095,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return true;
   }
-  
+
   bool CheckExpClassFunctionReadWrite(
-    ExpChain chain, 
-    ITerminalNode curr_name, 
-    IScope scope, 
-    IType curr_type, 
+    ExpChain chain,
+    ITerminalNode curr_name,
+    IScope scope,
+    IType curr_type,
     Symbol curr_symb,
     bool write
   )
@@ -1104,16 +1112,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         //NOTE: allowing only static method pointers
         if(!m.attribs.HasFlag(FuncAttrib.Static))
         {
-          AddError(chain.items.At(chain.items.Count-1), "method pointers not supported");
+          AddError(chain.items.At(chain.items.Count - 1), "method pointers not supported");
           return false;
         }
       }
       else
       {
-        AddError(chain.items.At(chain.items.Count-1), "invalid assignment");
+        AddError(chain.items.At(chain.items.Count - 1), "invalid assignment");
         return false;
       }
     }
+
     return true;
   }
 
@@ -1124,18 +1133,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ref IScope scope,
     ref IType curr_type,
     ref int chain_offset
-   )
+  )
   {
     var name_symb = scope.ResolveWithFallback(curr_name.GetText());
 
     TryProcessClassBaseCall(
-      ref curr_name, 
-      ref scope, 
-      ref name_symb, 
-      ref chain_offset, 
-      chain.items, 
+      ref curr_name,
+      ref scope,
+      ref name_symb,
+      ref chain_offset,
+      chain.items,
       root_name.Symbol.Line
-     );
+    );
 
     if(name_symb == null)
     {
@@ -1144,12 +1153,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     TryApplyNamespaceOffset(
-      ref curr_name, 
-      ref scope, 
-      ref name_symb, 
-      ref chain_offset, 
+      ref curr_name,
+      ref scope,
+      ref name_symb,
+      ref chain_offset,
       chain.items
-     );
+    );
 
     if(name_symb is IType)
       curr_type = (IType)name_symb;
@@ -1168,33 +1177,33 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   bool ProcChainItems(
-    ExpChainItems chain_items, 
-    int chain_offset, 
-    ref ITerminalNode curr_name, 
-    ref IScope scope, 
-    ref IType curr_type, 
+    ExpChainItems chain_items,
+    int chain_offset,
+    ref ITerminalNode curr_name,
+    ref IScope scope,
+    ref IType curr_type,
     ref Symbol curr_symb,
     bool write
-    )
+  )
   {
-    for(int c=chain_offset;c<chain_items.Count;++c)
+    for(int c = chain_offset; c < chain_items.Count; ++c)
     {
       var item = chain_items.At(c);
       var cargs = item as bhlParser.CallArgsContext;
       var macc = item as bhlParser.MemberAccessContext;
       var arracc = item as bhlParser.ArrAccessContext;
-      bool is_last = c == chain_items.Count-1;
+      bool is_last = c == chain_items.Count - 1;
 
       if(cargs != null)
       {
         curr_symb = ProcChainItem(
-          scope, 
-          curr_name, 
-          cargs, 
-          null, 
-          ref curr_type, 
-          cargs.Start.Line, 
-          write: false, 
+          scope,
+          curr_name,
+          cargs,
+          null,
+          ref curr_type,
+          cargs.Start.Line,
+          write: false,
           is_root: chain_offset == 0
         );
         curr_name = null;
@@ -1202,13 +1211,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       else if(arracc != null)
       {
         curr_symb = ProcChainItem(
-          scope, 
-          curr_name, 
-          null, 
-          arracc, 
-          ref curr_type, 
-          arracc.Start.Line, 
-          write: write && is_last, 
+          scope,
+          curr_name,
+          null,
+          arracc,
+          ref curr_type,
+          arracc.Start.Line,
+          write: write && is_last,
           is_root: c == chain_offset
         );
         curr_name = null;
@@ -1218,13 +1227,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         Symbol macc_name_symb = null;
         if(curr_name != null)
           macc_name_symb = ProcChainItem(
-            scope, 
-            curr_name, 
-            null, 
-            null, 
-            ref curr_type, 
-            macc.Start.Line, 
-            write: false, 
+            scope,
+            curr_name,
+            null,
+            null,
+            ref curr_type,
+            macc.Start.Line,
+            write: false,
             is_root: c == chain_offset
           );
 
@@ -1244,15 +1253,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         var macc_name_class_symb = macc_name_symb as ClassSymbol;
         var tmp_macc_symb = scope.ResolveWithFallback(macc.NAME().GetText());
 
-        if(macc_name_class_symb == null && tmp_macc_symb is FuncSymbol macc_fs && 
+        if(macc_name_class_symb == null && tmp_macc_symb is FuncSymbol macc_fs &&
            macc_fs.attribs.HasFlag(FuncAttrib.Static))
         {
           AddError(macc, "calling static method on instance is forbidden");
           return false;
         }
 
-        if(macc_name_class_symb != null && tmp_macc_symb is FuncSymbol macc_fs2 && 
-          !macc_fs2.attribs.HasFlag(FuncAttrib.Static))
+        if(macc_name_class_symb != null && tmp_macc_symb is FuncSymbol macc_fs2 &&
+           !macc_fs2.attribs.HasFlag(FuncAttrib.Static))
         {
           AddError(macc, "calling instance method as static is forbidden");
           return false;
@@ -1281,11 +1290,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return true;
   }
-  
+
   void ValidateChainCall(
-    ParserRuleContext ctx, 
+    ParserRuleContext ctx,
     int offset,
-    List<IAST> chain_ast, 
+    List<IAST> chain_ast,
     bool yielded
   )
   {
@@ -1296,12 +1305,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC)
         {
           if(call.symb is FuncSymbol fs)
-            ValidateFuncCall(call, chain_ast.Count-1 == i, fs.signature, yielded);
+            ValidateFuncCall(call, chain_ast.Count - 1 == i, fs.signature, yielded);
         }
         else if(call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR)
         {
           if(call.symb is VariableSymbol vs)
-            ValidateFuncCall(call, chain_ast.Count-1 == i, vs.type.Get() as FuncSignature, yielded);
+            ValidateFuncCall(call, chain_ast.Count - 1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
     }
@@ -1309,8 +1318,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void ValidateFuncCall(
     AST_Call call,
-    bool is_last, 
-    FuncSignature fsig, 
+    bool is_last,
+    FuncSignature fsig,
     bool yielded
   )
   {
@@ -1333,7 +1342,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return;
       }
     }
-    else 
+    else
     {
       if(fsig.attribs.HasFlag(FuncSignatureAttrib.Coro))
       {
@@ -1344,11 +1353,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   void TryProcessClassBaseCall(
-    ref ITerminalNode curr_name, 
-    ref IScope scope, 
-    ref Symbol name_symb, 
-    ref int chain_offset, 
-    ExpChainItems chain_items, 
+    ref ITerminalNode curr_name,
+    ref IScope scope,
+    ref Symbol name_symb,
+    ref int chain_offset,
+    ExpChainItems chain_items,
     int line
   )
   {
@@ -1361,20 +1370,22 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
       else
       {
-        name_symb = cs.super_class; 
+        name_symb = cs.super_class;
         scope = cs.super_class;
         if(chain_items.Count <= chain_offset)
         {
           AddError(curr_name, "bad base call");
           return;
         }
+
         var macc = chain_items.At(chain_offset) as bhlParser.MemberAccessContext;
         if(macc == null)
         {
           AddError(chain_items.At(chain_offset), "bad base call");
           return;
         }
-        curr_name = macc.NAME(); 
+
+        curr_name = macc.NAME();
         ++chain_offset;
 
         PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, PeekFuncDecl().Resolve("this")));
@@ -1384,10 +1395,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   void TryApplyNamespaceOffset(
-    ref ITerminalNode curr_name, 
-    ref IScope scope, 
-    ref Symbol name_symb, 
-    ref int chain_offset, 
+    ref ITerminalNode curr_name,
+    ref IScope scope,
+    ref Symbol name_symb,
+    ref int chain_offset,
     ExpChainItems chain_items
   )
   {
@@ -1402,13 +1413,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(chain_items.At(chain_offset), "bad chain call");
           return;
         }
+
         name_symb = scope.ResolveWithFallback(macc.NAME().GetText());
         if(name_symb == null)
         {
           AddError(macc.NAME(), "symbol '" + macc.NAME().GetText() + "' not resolved");
           return;
         }
-        curr_name = macc.NAME(); 
+
+        curr_name = macc.NAME();
         ++chain_offset;
         if(name_symb is Namespace name_ns)
           scope = name_ns;
@@ -1419,16 +1432,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   Symbol ProcChainItem(
-    IScope scope, 
-    ITerminalNode name, 
-    bhlParser.CallArgsContext cargs, 
-    bhlParser.ArrAccessContext arracc, 
-    ref IType type, 
-    int line, 
+    IScope scope,
+    ITerminalNode name,
+    bhlParser.CallArgsContext cargs,
+    bhlParser.ArrAccessContext arracc,
+    ref IType type,
+    int line,
     bool write,
     bool is_leftover = false,
     bool is_root = false
-    )
+  )
   {
     AST_Call ast = null;
 
@@ -1436,9 +1449,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(name != null)
     {
-      name_symb = is_root ? 
-        scope.ResolveWithFallback(name.GetText()) : 
-        scope.ResolveRelatedOnly(name.GetText());
+      name_symb = is_root ? scope.ResolveWithFallback(name.GetText()) : scope.ResolveRelatedOnly(name.GetText());
 
       if(name_symb == null)
       {
@@ -1486,16 +1497,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? 
-            EnumCall.MFUNC : EnumCall.FUNC, 
-            line, 
+          ast = new AST_Call(
+            scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? EnumCall.MFUNC : EnumCall.FUNC,
+            line,
             func_symb,
             0,
             name
           );
           //NOTE: let's mark func calls native and useland with different colors
-          LSP_AddSemanticToken(name, 
-              func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);
+          LSP_AddSemanticToken(name,
+            func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);
           AddCallArgs(func_symb, cargs, ref ast);
           type = func_symb.GetReturnType();
         }
@@ -1522,10 +1533,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return name_symb;
           }
 
-          ast = new AST_Call(fld_symb != null && !is_global ? 
-            (is_write ? EnumCall.MVARW : EnumCall.MVAR) : 
-            (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)), 
-            line, 
+          ast = new AST_Call(
+            fld_symb != null && !is_global
+              ? (is_write ? EnumCall.MVARW : EnumCall.MVAR)
+              : (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)),
+            line,
             var_symb,
             0,
             name
@@ -1538,7 +1550,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
               AddError(name, "getting native class field by 'ref' not supported");
               return name_symb;
             }
-            ast.type = EnumCall.MVARREF; 
+
+            ast.type = EnumCall.MVARREF;
           }
           else if(fld_symb != null && scope is ClassSymbolNative)
           {
@@ -1570,6 +1583,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             AddError(name, "symbol usage is not valid");
             return name_symb;
           }
+
           type = enum_symb;
         }
         else if(enum_item != null)
@@ -1599,7 +1613,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(cargs, "no func to call");
         return name_symb;
       }
-      
+
       ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.ret_type.Get();
@@ -1666,14 +1680,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   void AddCallArgs(FuncSymbol func_symb, bhlParser.CallArgsContext cargs, ref AST_Call call)
-  {     
+  {
     int total_args_num = func_symb.GetTotalArgsNum();
     int default_args_num = func_symb.GetDefaultArgsNum();
     int required_args_num = total_args_num - default_args_num;
     var args_info = new FuncArgsInfo();
 
     var norm_cargs = new List<NormCallArg>(total_args_num);
-    for(int i=0;i<total_args_num;++i)
+    for(int i = 0; i < total_args_num; ++i)
     {
       var arg = new NormCallArg();
       arg.orig = func_symb.TryGetArg(i);
@@ -1682,15 +1696,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(func_symb.origin, "bad signature");
         return;
       }
-      norm_cargs.Add(arg); 
+
+      norm_cargs.Add(arg);
     }
 
     var variadic_args = new List<bhlParser.CallArgContext>();
     if(func_symb.attribs.HasFlag(FuncAttrib.VariadicArgs))
-      norm_cargs[total_args_num-1].variadic = true;
+      norm_cargs[total_args_num - 1].variadic = true;
 
     //1. filling normalized call args
-    for(int ci=0;ci<cargs.callArgsList()?.callArg().Length;++ci)
+    for(int ci = 0; ci < cargs.callArgsList()?.callArg().Length; ++ci)
     {
       var ca = cargs.callArgsList().callArg()[ci];
       var ca_name = ca.NAME();
@@ -1727,7 +1742,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PushAST(call);
     IParseTree prev_ca = null;
     //2. traversing normalized args
-    for(int i=0;i<norm_cargs.Count;++i)
+    for(int i = 0; i < norm_cargs.Count; ++i)
     {
       var na = norm_cargs[i];
 
@@ -1749,8 +1764,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           {
             //NOTE: for func native symbols we assume default arguments  
             //      are specified manually in bindings
-            if(func_symb is FuncSymbolNative || 
-              (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
+            if(func_symb is FuncSymbolNative ||
+               (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
             {
               int default_arg_idx = i - required_args_num;
               if(!args_info.UseDefaultArg(default_arg_idx, true))
@@ -1812,7 +1827,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           PushCallByRef(is_ref);
           PushJsonType(func_arg_type);
           PushAST(new AST_Interim());
-          
+
           if(!TryVisit(na.ca))
           {
             PopAST();
@@ -1824,7 +1839,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(is_ref)
           {
             if(!(na.ca.exp() is bhlParser.ExpChainContext ca_chain_exp) ||
-                !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsVarAccess)) 
+               !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsVarAccess))
             {
               AddError(na.ca, "expression is not passable by 'ref'");
               PopAST();
@@ -1885,6 +1900,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             PopAST();
             return;
           }
+
           var varg_ast = new AST_JsonArr(varg_arr_type, cargs.Start.Line);
 
           PushAST(varg_ast);
@@ -1895,12 +1911,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             if(!TryVisit(vca))
               break;
             //the last item is added implicitely
-            if(vidx+1 < variadic_args.Count)
+            if(vidx + 1 < variadic_args.Count)
               varg_ast.AddChild(new AST_JsonArrAddItem());
 
             if(!types.CheckAssign(varg_type, Annotate(vca), errors))
               break;
           }
+
           PopJsonType();
           PopAddAST();
         }
@@ -1913,14 +1930,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   void AddCallArgs(FuncSignature func_type, bhlParser.CallArgsContext cargs, ref AST_Call call)
-  {     
+  {
     var func_args = func_type.arg_types;
-    int ca_len = cargs.callArgsList() == null ? 0 : cargs.callArgsList().callArg().Length; 
+    int ca_len = cargs.callArgsList() == null ? 0 : cargs.callArgsList().callArg().Length;
     IParseTree prev_ca = null;
     PushAST(call);
-    for(int i=0;i<func_args.Count;++i)
+    for(int i = 0; i < func_args.Count; ++i)
     {
-      var arg_type_ref = func_args[i]; 
+      var arg_type_ref = func_args[i];
 
       if(i == ca_len)
       {
@@ -1968,6 +1985,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       prev_ca = ca;
     }
+
     PopAST();
 
     if(ca_len != func_args.Count)
@@ -1982,21 +2000,22 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(cargs, "max arguments reached");
       return;
     }
+
     call.cargs_bits = args_info.bits;
   }
 
   static bool HasFuncCalls(AST_Tree ast)
   {
-    if(ast is AST_Call call && 
-        (call.type == EnumCall.FUNC || 
-         call.type == EnumCall.MFUNC ||
-         call.type == EnumCall.FUNC_VAR ||
-         call.type == EnumCall.FUNC_MVAR ||
-         call.type == EnumCall.LMBD
-         ))
+    if(ast is AST_Call call &&
+       (call.type == EnumCall.FUNC ||
+        call.type == EnumCall.MFUNC ||
+        call.type == EnumCall.FUNC_VAR ||
+        call.type == EnumCall.FUNC_MVAR ||
+        call.type == EnumCall.LMBD
+       ))
       return true;
-    
-    for(int i=0;i<ast.children.Count;++i)
+
+    for(int i = 0; i < ast.children.Count; ++i)
     {
       if(ast.children[i] is AST_Tree sub)
       {
@@ -2004,16 +2023,17 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return true;
       }
     }
+
     return false;
   }
 
   IParseTree FindNextCallArg(bhlParser.CallArgsContext cargs, IParseTree curr)
   {
-    for(int i=0;i<cargs.callArgsList()?.callArg().Length;++i)
+    for(int i = 0; i < cargs.callArgsList()?.callArg().Length; ++i)
     {
       var ch = cargs.callArgsList().callArg()[i];
-      if(ch == curr && (i+1) < cargs.callArgsList().callArg().Length)
-        return cargs.callArgsList().callArg()[i+1];
+      if(ch == curr && (i + 1) < cargs.callArgsList().callArg().Length)
+        return cargs.callArgsList().callArg()[i + 1];
     }
 
     //NOTE: graceful fallback
@@ -2027,7 +2047,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var arg_types = new List<ProxyType>();
     if(types_ctx != null)
     {
-      for(int i=0;i<types_ctx.refType().Length;++i)
+      for(int i = 0; i < types_ctx.refType().Length; ++i)
       {
         var ref_type = types_ctx.refType()[i];
         var arg_type = ParseType(ref_type.type());
@@ -2036,6 +2056,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           LSP_AddSemanticToken(ref_type.REF(), SemanticToken.Keyword);
           arg_type = curr_scope.R().TRef(arg_type);
         }
+
         arg_types.Add(arg_type);
       }
     }
@@ -2050,13 +2071,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return ParseFuncSignature(ctx.CORO() != null, ctx.retType(), ctx.types());
   }
 
-  FuncSignature ParseFuncSignature(bool is_coro, ProxyType ret_type, bhlParser.FuncParamsContext fparams, out int default_args_num)
+  FuncSignature ParseFuncSignature(bool is_coro, ProxyType ret_type, bhlParser.FuncParamsContext fparams,
+    out int default_args_num)
   {
     default_args_num = 0;
     var sig = new FuncSignature(is_coro ? FuncSignatureAttrib.Coro : 0, ret_type);
     if(fparams != null)
     {
-      for(int i=0;i<fparams.funcParamDeclare().Length;++i)
+      for(int i = 0; i < fparams.funcParamDeclare().Length; ++i)
       {
         var tp = new ProxyType();
 
@@ -2076,7 +2098,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             if(vd.REF() != null)
               AddError(vd.REF(), "pass by ref not allowed");
 
-            if(i != fparams.funcParamDeclare().Length-1)
+            if(i != fparams.funcParamDeclare().Length - 1)
               AddError(vd, "variadic argument must be last");
 
             if(vd.assignExp() != null)
@@ -2092,6 +2114,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         sig.AddArg(tp);
       }
     }
+
     return sig;
   }
 
@@ -2111,7 +2134,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     else if(parsed.type().Length > 1)
     {
       var tuple = new TupleType();
-      for(int i=0;i<parsed.type().Length;++i)
+      for(int i = 0; i < parsed.type().Length; ++i)
         tuple.Add(ParseType(parsed.type()[i]));
       tp = curr_scope.R().T(tuple);
     }
@@ -2150,6 +2173,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(ctx, "type '" + tp + "' not found");
         return tp;
       }
+
       tp = curr_scope.R().TArr(tp);
     }
     else if(ctx.mapType() != null)
@@ -2159,12 +2183,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(ctx, "type '" + tp + "' not found");
         return tp;
       }
+
       var ktp = curr_scope.R().T(ctx.mapType().nsName().GetText());
       if(ktp.Get() == null)
       {
         AddError(ctx, "type '" + ktp + "' not found");
         return tp;
       }
+
       tp = curr_scope.R().TMap(ktp, tp);
     }
 
@@ -2180,15 +2206,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(ctx.nsName() != null && resolved is Symbol symb)
       LSP_SetSymbol(ctx.nsName().dotName().NAME(), symb);
 
-   return tp;
+    return tp;
   }
 
   AST_Tree ProcLambda(
-     ParserRuleContext ctx, 
-     bhlParser.FuncLambdaContext lmb_ctx, 
-     ref IType curr_type,
-     bool yielded = false
-   )
+    ParserRuleContext ctx,
+    bhlParser.FuncLambdaContext lmb_ctx,
+    ref IType curr_type,
+    bool yielded = false
+  )
   {
     LSP_AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
     LSP_AddSemanticToken(lmb_ctx.CORO(), SemanticToken.Keyword);
@@ -2204,7 +2230,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
-      Annotate(ctx), 
+      Annotate(ctx),
       func_name,
       ParseFuncSignature(lmb_ctx.CORO() != null, tp, lmb_ctx.funcParams()),
       upvals,
@@ -2253,7 +2279,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var sym2mode = new Dictionary<VariableSymbol, UpvalMode>();
     if(capture_list == null)
       return sym2mode;
-    
+
     foreach(var captured in capture_list.NAME())
     {
       var var_symb = curr_scope.ResolveWithFallback(captured.GetText()) as VariableSymbol;
@@ -2274,8 +2300,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   bool ProcLambdaCall(
-    ParserRuleContext ctx, 
-    bhlParser.FuncLambdaContext lmb_ctx, 
+    ParserRuleContext ctx,
+    bhlParser.FuncLambdaContext lmb_ctx,
     ExpChainItems chain_items,
     ref IType curr_type,
     bool write,
@@ -2283,8 +2309,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   )
   {
     var ast = ProcLambda(
-      ctx, 
-      lmb_ctx, 
+      ctx,
+      lmb_ctx,
       ref curr_type,
       yielded
     );
@@ -2298,23 +2324,23 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Symbol curr_symb = null;
 
     if(!ProcChainItems(
-      chain_items,
-      0,
-      ref curr_name,
-      ref scope, 
-      ref curr_type,
-      ref curr_symb,
-      write
-    ))
+         chain_items,
+         0,
+         ref curr_name,
+         ref scope,
+         ref curr_type,
+         ref curr_symb,
+         write
+       ))
     {
       PopAST();
       return false;
     }
 
     ValidateChainCall(
-      ctx, 
+      ctx,
       1,
-      interim.children, 
+      interim.children,
       yielded
     );
 
@@ -2324,7 +2350,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return true;
   }
-  
+
   public override object VisitCallArg(bhlParser.CallArgContext ctx)
   {
     var exp = ctx.exp();
@@ -2359,10 +2385,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    if(!(curr_type is ClassSymbol) || 
-        (curr_type is ArrayTypeSymbol) ||
-        (curr_type is MapTypeSymbol)
-        )
+    if(!(curr_type is ClassSymbol) ||
+       (curr_type is ArrayTypeSymbol) ||
+       (curr_type is MapTypeSymbol)
+      )
     {
       AddError(ctx, "type '" + curr_type + "' can't be specified with {..}");
       return null;
@@ -2380,11 +2406,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PushAST(ast);
     var pairs = ctx.jsonPair();
-    for(int i=0;i<pairs.Length;++i)
+    for(int i = 0; i < pairs.Length; ++i)
     {
-      var pair = pairs[i]; 
+      var pair = pairs[i];
       TryVisit(pair);
     }
+
     PopAST();
 
     PeekAST().AddChild(ast);
@@ -2414,19 +2441,21 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(ctx,  "type '" + arr_type.item_type + "' not found");
         return null;
       }
+
       PushJsonType(orig_type);
 
       var ast = new AST_JsonArr(arr_type, ctx.Start.Line);
 
       PushAST(ast);
       var vals = ctx.jsonValue();
-      for(int i=0;i<vals.Length;++i)
+      for(int i = 0; i < vals.Length; ++i)
       {
         TryVisit(vals[i]);
         //the last item is added implicitely
-        if(i+1 < vals.Length)
+        if(i + 1 < vals.Length)
           ast.AddChild(new AST_JsonArrAddItem());
       }
+
       PopAST();
 
       PopJsonType();
@@ -2443,17 +2472,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(ctx,  "type '" + map_type.key_type + "' not found");
         return null;
       }
+
       var val_type = map_type.val_type.Get();
       if(val_type == null)
       {
         AddError(ctx,  "type '" + map_type.val_type + "' not found");
         return null;
       }
+
       var ast = new AST_JsonMap(curr_type, ctx.Start.Line);
 
       PushAST(ast);
       var vals = ctx.jsonValue();
-      for(int i=0;i<vals.Length;++i)
+      for(int i = 0; i < vals.Length; ++i)
       {
         var val = vals[i].exp() as bhlParser.ExpJsonArrContext;
         if(val?.jsonArray()?.jsonValue()?.Length != 2)
@@ -2471,9 +2502,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         PopJsonType();
 
         //the last item is added implicitely
-        if(i+1 < vals.Length)
+        if(i + 1 < vals.Length)
           ast.AddChild(new AST_JsonMapAddItem());
       }
+
       PopAST();
 
 
@@ -2481,6 +2513,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       PeekAST().AddChild(ast);
     }
+
     return null;
   }
 
@@ -2497,7 +2530,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     var name_str = ctx.NAME().GetText();
-    
+
     var member = scoped_symb.ResolveWithFallback(name_str) as VariableSymbol;
     if(member == null)
     {
@@ -2511,7 +2544,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PushJsonType(member.type.Get());
 
-    var jval = ctx.jsonValue(); 
+    var jval = ctx.jsonValue();
     PushAST(ast);
     TryVisit(jval);
     PopAST();
@@ -2560,7 +2593,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return null;
   }
-  
+
   //TODO: this is almost a copy paste of the code above, it's used 
   //      when we need to traverse chainExp rule when it is not a part of
   //      #ExpChain 
@@ -2573,13 +2606,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return null;
   }
-  
+
   public override object VisitExpLambda(bhlParser.ExpLambdaContext ctx)
   {
     IType curr_type = null;
     var ast = ProcLambda(
-      ctx, 
-      ctx.funcLambda(), 
+      ctx,
+      ctx.funcLambda(),
       ref curr_type
     );
 
@@ -2636,7 +2669,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     if(ctx.newExp().type().nsName() != null)
-     LSP_SetSymbol(ctx.newExp().type().nsName().dotName().NAME(), cl as Symbol);
+      LSP_SetSymbol(ctx.newExp().type().nsName().dotName().NAME(), cl as Symbol);
 
     if (ctx.newExp().jsonObject() != null)
     {
@@ -2685,7 +2718,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Annotate(ctx).eval_type = cast_type;
 
     if(ok)
-      Types.CheckCastIsPossible(Annotate(ctx), Annotate(exp), errors); 
+      Types.CheckCastIsPossible(Annotate(ctx), Annotate(exp), errors);
 
     ast.hint_exp_type = Annotate(exp).eval_type;
 
@@ -2752,8 +2785,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //      userland classes roughly equals 'static casting' in C++. We do that only in some
     //      edge cases, e.g. when calling 'base' virtual class method implementation from the 
     //      overriden one 
-    return cast_type is ClassSymbolNative || 
-      cast_type is InterfaceSymbolNative;
+    return cast_type is ClassSymbolNative ||
+           cast_type is InterfaceSymbolNative;
   }
 
   public override object VisitExpAs(bhlParser.ExpAsContext ctx)
@@ -2815,7 +2848,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     };
 
     var ast = new AST_UnaryOpExp(type);
-    var exp = ctx.exp(); 
+    var exp = ctx.exp();
     PushAST(ast);
     bool ok = TryVisit(exp);
     PopAST();
@@ -2828,7 +2861,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         Annotate(ctx).eval_type = types.CheckUnaryMinus(Annotate(exp), errors);
       else if(type == EnumUnaryOp.BIT_NOT)
         Annotate(ctx).eval_type = types.CheckBitNot(Annotate(exp), errors);
-      else  
+      else
         throw new Exception("Unexpected token");
     }
 
@@ -2838,8 +2871,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   bool ProcExpModifyOp(
-    ParserRuleContext ctx, 
-    bhlParser.ChainExpContext chain_ctx, 
+    ParserRuleContext ctx,
+    bhlParser.ChainExpContext chain_ctx,
     bhlParser.ModifyOpContext op_ctx
   )
   {
@@ -2881,12 +2914,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
     else if(op_ctx.operatorIncDec() != null)
       return ProcPostIncDec(ctx, chain_ctx, op_ctx.operatorIncDec());
-    else if(op_ctx.assignExp() != null) 
+    else if(op_ctx.assignExp() != null)
     {
       var vproxy = new VarsOrDeclsProxy(new bhlParser.ChainExpContext[] { chain_ctx });
       return ProcDeclOrAssign(vproxy, op_ctx.assignExp(), op_ctx.Start.Line);
     }
-    
+
     return true;
   }
 
@@ -2894,7 +2927,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.operatorAddSub(), SemanticToken.Operator);
 
-    var op = ctx.operatorAddSub().GetText(); 
+    var op = ctx.operatorAddSub().GetText();
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
@@ -2905,7 +2938,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.operatorMulDivMod(), SemanticToken.Operator);
 
-    var op = ctx.operatorMulDivMod().GetText(); 
+    var op = ctx.operatorMulDivMod().GetText();
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
@@ -2913,26 +2946,31 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   bhlParser.ExpContext _one_literal_exp;
-  bhlParser.ExpContext one_literal_exp {
-    get {
+
+  bhlParser.ExpContext one_literal_exp
+  {
+    get
+    {
       //TODO: make expression AST on the fly somehow?
       //exp = new bhlParser.ExpLiteralNumContext("1");
       if(_one_literal_exp == null)
       {
         _one_literal_exp = Stream2Parser(
-          new Module(types), 
+          new Module(types),
           CompileErrorsHub.MakeEmpty(),
-          new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")), 
+          new MemoryStream(System.Text.Encoding.UTF8.GetBytes("1")),
           defines: null,
           preproc_parsed: out var _,
           tokens: out var __
         ).exp();
       }
+
       return _one_literal_exp;
     }
   }
 
-  bool ProcPostIncDec(ParserRuleContext ctx, bhlParser.ChainExpContext chain_exp, bhlParser.OperatorIncDecContext inc_dec)
+  bool ProcPostIncDec(ParserRuleContext ctx, bhlParser.ChainExpContext chain_exp,
+    bhlParser.OperatorIncDecContext inc_dec)
   {
     LSP_AddSemanticToken(inc_dec, SemanticToken.Operator);
 
@@ -2954,6 +2992,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopAST();
       return false;
     }
+
     PopAST();
 
     if(!Types.IsNumeric(curr_type))
@@ -2978,12 +3017,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     return true;
   }
-  
+
   public override object VisitExpCompare(bhlParser.ExpCompareContext ctx)
   {
     LSP_AddSemanticToken(ctx.operatorComparison(), SemanticToken.Operator);
 
-    var op = ctx.operatorComparison().GetText(); 
+    var op = ctx.operatorComparison().GetText();
 
     ProcBinOp(ctx, op, ctx.exp(0), ctx.exp(1));
 
@@ -3047,21 +3086,21 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
-      for(int i=0;i<ast.children.Count;++i)
+      for(int i = 0; i < ast.children.Count; ++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_func, 2/*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_func, 2 /*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
     else if(
-      op_type == EnumBinaryOp.EQ || 
+      op_type == EnumBinaryOp.EQ ||
       op_type == EnumBinaryOp.NQ
     )
       Annotate(ctx).eval_type = types.CheckEqBinOp(ann_lhs, ann_rhs, errors);
     else if(
-      op_type == EnumBinaryOp.GT || 
+      op_type == EnumBinaryOp.GT ||
       op_type == EnumBinaryOp.GTE ||
-      op_type == EnumBinaryOp.LT || 
+      op_type == EnumBinaryOp.LT ||
       op_type == EnumBinaryOp.LTE
     )
       Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
@@ -3076,9 +3115,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PeekAST().AddChild(ast);
 
     //NOTE: adding implicit casting to int of the result of the division product of two ints 
-    if(op_type == EnumBinaryOp.DIV && 
-        ann_lhs.eval_type == Types.Int && 
-        ann_rhs.eval_type == Types.Int
+    if(op_type == EnumBinaryOp.DIV &&
+       ann_lhs.eval_type == Types.Int &&
+       ann_rhs.eval_type == Types.Int
       )
       PeekAST().AddChild(new AST_TypeCast(Types.Int, force_type: true, line_num: ctx.Start.Line));
   }
@@ -3088,19 +3127,22 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return Types.IsNumeric(type) || type == Types.Bool || type is EnumSymbol;
   }
 
-  bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, int ops_edge_idx, AnnotatedParseTree ann_lhs, AnnotatedParseTree ann_rhs, bool lhs_self_op)
+  bool CheckImplicitCastToString(ParserRuleContext ctx, AST_Tree ast, int ops_edge_idx, AnnotatedParseTree ann_lhs,
+    AnnotatedParseTree ann_rhs, bool lhs_self_op)
   {
     //NOTE: only if it's NOT a 'left-side' modifying operation (e.g i += "foo")
     if(!lhs_self_op && SupportsImplictCastToString(ann_lhs.eval_type) && ann_rhs.eval_type == Types.String)
     {
-      ast.children.Insert(ops_edge_idx, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
+      ast.children.Insert(ops_edge_idx, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line));
       return true;
     }
     else if(ann_lhs.eval_type == Types.String && SupportsImplictCastToString(ann_rhs.eval_type))
     {
-      ast.children.Insert(ast.children.Count, new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line)); 
+      ast.children.Insert(ast.children.Count,
+        new AST_TypeCast(Types.String, force_type: false, line_num: ctx.Start.Line));
       return true;
     }
+
     return false;
   }
 
@@ -3117,7 +3159,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       op = EnumBinaryOp.BIT_SHR;
     else if(ctx.operatorBitwise().SHL() != null)
       op = EnumBinaryOp.BIT_SHL;
-    else 
+    else
       throw new Exception("Unexpected token");
 
     var ast = new AST_BinaryOpExp(op, ctx.Start.Line);
@@ -3245,7 +3287,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   public override object VisitExpLiteralFalse(bhlParser.ExpLiteralFalseContext ctx)
   {
     LSP_AddSemanticToken(ctx.FALSE(), SemanticToken.Keyword);
-      
+
     Annotate(ctx).eval_type = Types.Bool;
 
     var ast = new AST_Literal(ConstType.BOOL);
@@ -3289,7 +3331,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var ast = new AST_Literal(ConstType.STR);
     ast.sval = ctx.@string().NORMALSTRING().GetText();
     //removing quotes
-    ast.sval = ast.sval.Substring(1, ast.sval.Length-2);
+    ast.sval = ast.sval.Substring(1, ast.sval.Length - 2);
     //replacing extra slashes by quotes
     ast.sval = ast.sval.Replace("\\\"", "\"");
     //adding convenience support for newlines and tabs
@@ -3307,8 +3349,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(func_decl_stack.Count == 0)
       return null;
 
-    return func_decl_stack[func_decl_stack.Count-1];
+    return func_decl_stack[func_decl_stack.Count - 1];
   }
+
   void PushJsonType(IType type)
   {
     json_type_stack.Push(type);
@@ -3347,7 +3390,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   static bool HasErrors(IParseTree tree)
   {
-    for(int i=0;i<tree.ChildCount;++i)
+    for(int i = 0; i < tree.ChildCount; ++i)
       if(tree.GetChild(i) is ErrorNodeImpl)
         return true;
     return false;
@@ -3376,11 +3419,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(ctx, "return statement is not in function");
       return null;
     }
-    
+
     return_found.Add(func_symb);
 
     var ret_ast = new AST_Return(ctx.Start.Line);
-    
+
     if(ret_val != null)
     {
       int explen = ret_val.exp().Length;
@@ -3438,7 +3481,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         //NOTE: we traverse expressions in reversed order so that returned
         //      values are properly placed on a stack
-        for(int i=explen;i-- > 0;)
+        for(int i = explen; i-- > 0;)
         {
           var exp = ret_val.exp()[i];
           if(!TryVisit(exp))
@@ -3450,7 +3493,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
 
         //type checking is in proper order
-        for(int i=0;i<explen;++i)
+        for(int i = 0; i < explen; ++i)
         {
           var exp = ret_val.exp()[i];
           if(!types.CheckAssign(fmret_type[i].Get(), Annotate(exp), errors))
@@ -3475,6 +3518,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(ctx, "return value is missing");
         return null;
       }
+
       Annotate(ctx).eval_type = Types.Void;
       PeekAST().AddChild(ret_ast);
     }
@@ -3536,30 +3580,35 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       TryVisit(nsdecl);
       return;
     }
+
     var vdecl = ctx.varDeclareOptAssign();
     if(vdecl != null)
     {
-      AddPass(vdecl, curr_scope, PeekAST()); 
+      AddPass(vdecl, curr_scope, PeekAST());
       return;
     }
+
     var fndecl = ctx.funcDecl();
     if(fndecl != null)
     {
       AddPass(fndecl, curr_scope, PeekAST());
       return;
     }
+
     var cldecl = ctx.classDecl();
     if(cldecl != null)
     {
       AddPass(cldecl, curr_scope, PeekAST());
       return;
     }
+
     var ifacedecl = ctx.interfaceDecl();
     if(ifacedecl != null)
     {
       AddPass(ifacedecl, curr_scope, PeekAST());
       return;
     }
+
     var edecl = ctx.enumDecl();
     if(edecl != null)
     {
@@ -3575,14 +3624,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     LSP_AddSemanticToken(pass.func_ctx.FUNC(), SemanticToken.Keyword);
     LSP_AddSemanticToken(pass.func_ctx.NAME(), SemanticToken.Function, SemanticModifier.Definition);
-    
+
     foreach(var attr in pass.func_ctx.funcAttribs())
       LSP_AddSemanticToken(attr, SemanticToken.Keyword);
 
     string name = pass.func_ctx.NAME().GetText();
 
     var func_ann = Annotate(pass.func_ctx);
-    pass.func_symb = new FuncSymbolScript(func_ann, new FuncSignature(), name); 
+    pass.func_symb = new FuncSymbolScript(func_ann, new FuncSignature(), name);
 
     foreach(var attr in pass.func_ctx.funcAttribs())
     {
@@ -3630,7 +3679,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     pass.func_symb.signature = ParseFuncSignature(
       pass.func_symb.attribs.HasFlag(FuncAttrib.Coro),
-      ParseType(pass.func_ctx.retType()), 
+      ParseType(pass.func_ctx.retType()),
       pass.func_ctx.funcParams()
     );
   }
@@ -3649,8 +3698,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   void ValidateModuleInitFunc(ParserPass pass)
   {
-    if(pass.func_symb.attribs.HasFlag(FuncAttrib.Static) && 
-        pass.func_symb.name == "init")
+    if(pass.func_symb.attribs.HasFlag(FuncAttrib.Static) &&
+       pass.func_symb.name == "init")
     {
       if(pass.func_symb.attribs.HasFlag(FuncAttrib.Coro))
         AddError(pass.func_symb.origin, "module 'init' function can't be a coroutine");
@@ -3691,7 +3740,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PopScope();
   }
 
-  void ParseFuncBlock(ParserRuleContext ctx, bhlParser.FuncBlockContext block_ctx, bhlParser.RetTypeContext ret_ctx, AST_FuncDecl func_ast)
+  void ParseFuncBlock(ParserRuleContext ctx, bhlParser.FuncBlockContext block_ctx, bhlParser.RetTypeContext ret_ctx,
+    AST_FuncDecl func_ast)
   {
     PushAST(func_ast.block());
     TryVisit(block_ctx);
@@ -3761,7 +3811,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(pass.iface_ctx?.NAME() == null)
       return;
 
-    for(int i=0;i<pass.iface_ctx.interfaceBlock()?.interfaceMembers()?.interfaceMember().Length;++i)
+    for(int i = 0; i < pass.iface_ctx.interfaceBlock()?.interfaceMembers()?.interfaceMember().Length; ++i)
     {
       var ib = pass.iface_ctx.interfaceBlock().interfaceMembers().interfaceMember()[i];
 
@@ -3780,13 +3830,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         var sig = ParseFuncSignature(fd.CORO() != null, ParseType(fd.retType()), fd.funcParams(), out default_args_num);
         if(default_args_num != 0)
         {
-          AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num], "default argument value is not allowed in this context");
+          AddError(fd.funcParams().funcParamDeclare()[sig.arg_types.Count - default_args_num],
+            "default argument value is not allowed in this context");
           return;
         }
 
         var func_symb = new FuncSymbolScript(
-          null, 
-          sig, 
+          null,
+          sig,
           fd.NAME().GetText()
         );
         if(!pass.iface_symb.TryDefine(func_symb, out SymbolError err))
@@ -3819,9 +3870,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(pass.iface_ctx.extensions() != null)
     {
       var inherits = new List<InterfaceSymbol>();
-      for(int i=0;i<pass.iface_ctx.extensions().nsName().Length;++i)
+      for(int i = 0; i < pass.iface_ctx.extensions().nsName().Length; ++i)
       {
-        var ext_name = pass.iface_ctx.extensions().nsName()[i]; 
+        var ext_name = pass.iface_ctx.extensions().nsName()[i];
         var ext = ns.ResolveSymbolByPath(ext_name.GetText());
         if(ext is InterfaceSymbol ifs)
         {
@@ -3845,6 +3896,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           return;
         }
       }
+
       if(inherits.Count > 0)
         pass.iface_symb.SetInherits(inherits);
     }
@@ -3857,7 +3909,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     string name = ctx?.dotName()?.NAME()?.GetText();
     if(name == null)
       return null;
-    
+
     //NOTE: traversing nested namespaces named like 'Foo.Bar'
     int dot_name_idx = 0;
     do
@@ -3887,13 +3939,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         break;
       name = ctx.dotName().memberAccess()[dot_name_idx].NAME().GetText();
       ++dot_name_idx;
-      
     } while(true);
 
     foreach(var decl in ctx.decl())
       ProcessDecl(decl);
 
-    for(int i = 0; i <= dot_name_idx; ++i) 
+    for(int i = 0; i <= dot_name_idx; ++i)
       PopScope();
 
     return null;
@@ -3906,6 +3957,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(p.ns != null && p.ns_full_path == full_path)
         return p.ns;
     }
+
     return null;
   }
 
@@ -3925,13 +3977,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(pass.class_ctx.NAME(), err.Message);
       return;
     }
-    
+
     LSP_SetSymbol(pass.class_ctx.NAME(), pass.class_symb);
 
     pass.class_ast = new AST_ClassDecl(pass.class_symb);
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
+    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fldd = cm.fldDeclare();
@@ -3955,7 +4007,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         var fld_symb = new FieldSymbolScript(Annotate(vd), vd.NAME().GetText(), new ProxyType());
 
-        for(int f=0;f<fldd.fldAttribs().Length;++f)
+        for(int f = 0; f < fldd.fldAttribs().Length; ++f)
         {
           var attr = fldd.fldAttribs()[f];
           var attr_type = FieldAttrib.None;
@@ -3986,12 +4038,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
 
         var func_symb = new FuncSymbolScript(
-            Annotate(fd), 
-            new FuncSignature(),
-            fd.NAME().GetText()
-          );
+          Annotate(fd),
+          new FuncSignature(),
+          fd.NAME().GetText()
+        );
 
-        for(int f=0;f<fd.funcAttribs().Length;++f)
+        for(int f = 0; f < fd.funcAttribs().Length; ++f)
         {
           var attr = fd.funcAttribs()[f];
           var attr_type = FuncAttrib.None;
@@ -4058,7 +4110,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     pass.class_symb._resolve_only_decl_members = true;
 
     //class members
-    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
+    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fldd = cm.fldDeclare();
@@ -4085,15 +4137,15 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           break;
 
         func_symb.signature = ParseFuncSignature(
-          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].CORO() != null, 
-          ParseType(fd.retType()), 
+          fd.funcAttribs().Length > 0 && fd.funcAttribs()[0].CORO() != null,
+          ParseType(fd.retType()),
           fd.funcParams()
         );
-        
+
         var func_ast = pass.class_ast.FindFuncDecl(func_symb);
         ParseFuncParams(fd, func_ast);
 
-        Annotate(fd).eval_type = func_symb.GetReturnType(); 
+        Annotate(fd).eval_type = func_symb.GetReturnType();
       }
     }
 
@@ -4111,9 +4163,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var implements = new List<InterfaceSymbol>();
       ClassSymbol super_class = null;
 
-      for(int i=0;i<pass.class_ctx.extensions().nsName().Length;++i)
+      for(int i = 0; i < pass.class_ctx.extensions().nsName().Length; ++i)
       {
-        var ext_name = pass.class_ctx.extensions().nsName()[i]; 
+        var ext_name = pass.class_ctx.extensions().nsName()[i];
 
         LSP_AddSemanticToken(ext_name.dotName().NAME(), SemanticToken.Class);
 
@@ -4175,12 +4227,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
 
     pass.class_symb.Setup();
-    
+
     //NOTE: let's declare static class variables as module global variables 
     //      so that they are properly initialized upon module loading
-    for(int m=0;m<pass.class_symb.members.Count;++m)
+    for(int m = 0; m < pass.class_symb.members.Count; ++m)
     {
-      if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static)) 
+      if(pass.class_symb.members[m] is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static))
         pass.class_ast.AddChild(new AST_VarDecl(fld, module.gvar_index.IndexOf(fld)));
     }
   }
@@ -4191,7 +4243,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
 
     //class methods bodies
-    for(int i=0;i<pass.class_ctx.classBlock()?.classMembers()?.classMember().Length;++i)
+    for(int i = 0; i < pass.class_ctx.classBlock()?.classMembers()?.classMember().Length; ++i)
     {
       var cm = pass.class_ctx.classBlock().classMembers().classMember()[i];
       var fd = cm.funcDecl();
@@ -4206,7 +4258,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         var func_ast = pass.class_ast.FindFuncDecl((FuncSymbolScript)func_symb);
         if(func_ast == null)
-          throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name + "'");
+          throw new Exception("Method '" + func_symb.name + "' decl not found for class '" + pass.class_symb.name +
+                              "'");
 
         PushScope(func_symb);
         ParseFuncBlock(fd, fd.funcBlock(), fd.retType(), func_ast);
@@ -4242,10 +4295,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(ctx.NAME(), err.Message);
       return null;
     }
-    
+
     LSP_SetSymbol(ctx.NAME(), symb);
 
-    for(int i=0;i<ctx.enumBlock()?.enumMember()?.Length;++i)
+    for(int i = 0; i < ctx.enumBlock()?.enumMember()?.Length; ++i)
     {
       var em = ctx.enumBlock().enumMember()[i];
       if(em.NAME() == null || em.INT() == null)
@@ -4257,10 +4310,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var em_name = em.NAME().GetText();
       int em_val = 0;
       if(!int.TryParse(
-          em.INT().GetText(), 
-          System.Globalization.NumberStyles.Integer, 
-          System.Globalization.CultureInfo.InvariantCulture, 
-          out em_val)
+           em.INT().GetText(),
+           System.Globalization.NumberStyles.Integer,
+           System.Globalization.CultureInfo.InvariantCulture,
+           out em_val)
         )
       {
         AddError(em, "invalid value");
@@ -4323,10 +4376,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return;
     }
 
-    AST_Tree ast = assign_exp != null ? 
+    AST_Tree ast = assign_exp != null
+      ?
       //NOTE: we're in the global 'init' code, we use VARW instead of GVARW
-      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME()) : 
-      (AST_Tree)new AST_VarDecl(pass.gvar_symb);
+      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME())
+      : (AST_Tree)new AST_VarDecl(pass.gvar_symb);
 
     if(exp_ast != null)
       PeekAST().AddChild(exp_ast);
@@ -4345,9 +4399,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var fparams = ctx.funcParamDeclare();
     bool found_default_arg = false;
 
-    for(int i=0;i<fparams.Length;++i)
+    for(int i = 0; i < fparams.Length; ++i)
     {
-      var fp = fparams[i]; 
+      var fp = fparams[i];
 
       if(fp.NAME() == null)
       {
@@ -4396,8 +4450,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     bhlParser.VarDeclareOrChainExpContext[] vdeclsorexps;
     bhlParser.ChainExpContext[] exps;
 
-    public int Count { 
-      get {
+    public int Count
+    {
+      get
+      {
         if(vdecls != null)
           return vdecls.Length;
         else if(vodecls != null)
@@ -4481,7 +4537,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
            exps[i].chainExpItem().Length == 0)
           return exps[i].name().NAME();
       }
-      
+
       return null;
     }
 
@@ -4508,8 +4564,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     IType type;
 
-    public int Count {
-      get {
+    public int Count
+    {
+      get
+      {
         if(type is TupleType tt)
           return tt.Count;
         return 1;
@@ -4521,7 +4579,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       this.type = type;
     }
 
-    public IType At(int i) 
+    public IType At(int i)
     {
       if(type is TupleType tt)
         return tt[i].Get();
@@ -4537,7 +4595,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var var_ast = PeekAST();
     int var_assign_insert_idx = var_ast.children.Count;
 
-    for(int i=0;i<vproxy.Count;++i)
+    for(int i = 0; i < vproxy.Count; ++i)
     {
       VariableSymbol var_symb = null;
       AnnotatedParseTree var_ann = null;
@@ -4563,14 +4621,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
         var vd_name = vproxy.LocalNameAt(i);
         var var_decl_ast = ProcDeclVar(
-          curr_scope, 
-          vd_name, 
+          curr_scope,
+          vd_name,
           //NOTE: in case of 'var' let's temporarily declare var as 'any',
           //      below we'll setup the proper type
-          is_auto_var ? Types.Any : ParseType(vd_type), 
+          is_auto_var ? Types.Any : ParseType(vd_type),
           vd_type,
-          is_ref: false, 
-          func_arg: false, 
+          is_ref: false,
+          func_arg: false,
           write: assign_exp != null,
           symb: out var_symb
         );
@@ -4638,25 +4696,27 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(assign_exp != null)
       {
         if(!ProcAssignToVar(
-          var_ast, 
-          var_assign_insert_idx,
-          var_ann,
-          is_decl,
-          is_auto_var,
-          var_symb,
-          i,
-          vproxy.Count,
-          assign_exp
-        ))
+             var_ast,
+             var_assign_insert_idx,
+             var_ann,
+             is_decl,
+             is_auto_var,
+             var_symb,
+             i,
+             vproxy.Count,
+             assign_exp
+           ))
           return false;
       }
     }
+
     return true;
   }
 
   static VariableSymbol DisableVar(SymbolsStorage members, VariableSymbol disabled_symbol)
   {
-    var subst_symbol = new VariableSymbol(disabled_symbol.origin.parsed, "#$"+disabled_symbol.name, disabled_symbol.type);
+    var subst_symbol =
+      new VariableSymbol(disabled_symbol.origin.parsed, "#$" + disabled_symbol.name, disabled_symbol.type);
     members.Replace(disabled_symbol, subst_symbol);
     return subst_symbol;
   }
@@ -4725,11 +4785,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     VariableSymbol vd_symb;
     var decl_ast = ProcDeclVar(
-      curr_scope, 
-      name, 
-      ctx.type(), 
-      is_ref, 
-      func_arg: true, 
+      curr_scope,
+      name,
+      ctx.type(),
+      is_ref,
+      func_arg: true,
       write: false,
       symb: out vd_symb
     );
@@ -4747,37 +4807,37 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   }
 
   AST_Tree ProcDeclVar(
-    IScope curr_scope, 
-    ITerminalNode name, 
-    bhlParser.TypeContext tp_ctx, 
-    bool is_ref, 
-    bool func_arg, 
+    IScope curr_scope,
+    ITerminalNode name,
+    bhlParser.TypeContext tp_ctx,
+    bool is_ref,
+    bool func_arg,
     bool write,
     out VariableSymbol symb
   )
   {
     var tp = ParseType(tp_ctx);
     return ProcDeclVar(
-      curr_scope, 
-      name, 
-      tp, 
-      tp_ctx, 
-      is_ref, 
-      func_arg, 
+      curr_scope,
+      name,
+      tp,
+      tp_ctx,
+      is_ref,
+      func_arg,
       write,
       out symb
     );
   }
 
   AST_Tree ProcDeclVar(
-    IScope curr_scope, 
-    ITerminalNode name, 
-    ProxyType tp, 
+    IScope curr_scope,
+    ITerminalNode name,
+    ProxyType tp,
     bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery 
-    bool is_ref, 
-    bool func_arg, 
+    bool is_ref,
+    bool func_arg,
     bool write,
-    out VariableSymbol symb 
+    out VariableSymbol symb
   )
   {
     LSP_AddSemanticToken(name, SemanticToken.Variable);
@@ -4792,7 +4852,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    var var_ann = Annotate(name); 
+    var var_ann = Annotate(name);
     var_ann.eval_type = tp.Get();
 
     if(tp_ctx?.nsName() != null)
@@ -4804,9 +4864,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return null;
     }
 
-    symb = func_arg ? 
-      (VariableSymbol) new FuncArgSymbol(var_ann, name.GetText(), tp, is_ref) :
-      new VariableSymbol(var_ann, name.GetText(), tp);
+    symb = func_arg
+      ? (VariableSymbol) new FuncArgSymbol(var_ann, name.GetText(), tp, is_ref)
+      : new VariableSymbol(var_ann, name.GetText(), tp);
 
     if(!curr_scope.TryDefine(symb, out SymbolError err))
     {
@@ -4825,7 +4885,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   bool ProcAssignToVar(
     AST_Tree ast_dest,
     int ast_insert_idx,
-    AnnotatedParseTree var_ann, 
+    AnnotatedParseTree var_ann,
     bool is_decl,
     bool is_auto_var,
     VariableSymbol var_symb,
@@ -4837,8 +4897,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: look forward at expression and push json type 
     //      if it's a json-init-expression
     bool pop_json_type = false;
-    if((assign_exp.exp() is bhlParser.ExpJsonObjContext || 
-      assign_exp.exp() is bhlParser.ExpJsonArrContext))
+    if((assign_exp.exp() is bhlParser.ExpJsonObjContext ||
+        assign_exp.exp() is bhlParser.ExpJsonArrContext))
     {
       if(vars_num != 1)
       {
@@ -4871,11 +4931,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(!ok)
         return false;
 
-      for(int s=assign_ast.children.Count;s-- > 0;)
+      for(int s = assign_ast.children.Count; s-- > 0;)
         ast_dest.children.Insert(ast_insert_idx, assign_ast.children[s]);
     }
 
-    var assign_type = new TypeAsArr(Annotate(assign_exp).eval_type); 
+    var assign_type = new TypeAsArr(Annotate(assign_exp).eval_type);
 
     //NOTE: declaring disabled symbol again
     if(subst_symb != null)
@@ -4920,7 +4980,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         AddError(assign_exp, "void expression type");
         return false;
       }
-      var_symb.type = new ProxyType(auto_type); 
+
+      var_symb.type = new ProxyType(auto_type);
     }
 
     return types.CheckAssign(var_ann, assign_type.At(var_idx), errors);
@@ -4967,6 +5028,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddError(ctx, "nested defers are not allowed");
       return null;
     }
+
     ProcBlock(BlockType.DEFER, ctx.block()?.statement());
     return null;
   }
@@ -5030,7 +5092,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return_found.Remove(func_symb);
 
     var else_if = ctx.elseIf();
-    for(int i=0;i<else_if.Length;++i)
+    for(int i = 0; i < else_if.Length; ++i)
     {
       var item = else_if[i];
 
@@ -5146,7 +5208,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PopAST();
     if(!ok)
       return null;
-    ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
+    ast.children[ast.children.Count - 1].AddChild(new AST_Continue(jump_marker: true));
 
     PeekAST().AddChild(ast);
 
@@ -5176,7 +5238,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     PopAST();
     if(!ok)
       return null;
-    ast.children[ast.children.Count-1].AddChild(new AST_Continue(jump_marker: true));
+    ast.children[ast.children.Count - 1].AddChild(new AST_Continue(jump_marker: true));
 
     var cond = new AST_Block(BlockType.SEQ);
     PushAST(cond);
@@ -5213,7 +5275,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var local_scope = new LocalScope(is_paral: false, fallback: curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
-    
+
     var for_pre = ctx.forExp().forPreIter();
     if(for_pre != null)
       ProcForPreStatements(for_pre, ctx.Start.Line);
@@ -5247,6 +5309,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ProcForPostStatements(for_post_iter, ctx.Start.Line);
       PopAST();
     }
+
     PopAST();
 
     PeekAST().AddChild(ast);
@@ -5338,7 +5401,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   {
     LSP_AddSemanticToken(ctx.FOREACH(), SemanticToken.Keyword);
     LSP_AddSemanticToken(ctx.foreachExp().IN(), SemanticToken.Keyword);
-    
+
     var local_scope = new LocalScope(false, curr_scope);
     PushScope(local_scope);
     local_scope.Enter();
@@ -5355,7 +5418,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       // ...
       // $foreach_cnt++
       //}
-    
+
       var vod = ctx.foreachExp().varOrDeclare()[0];
       var vd = vod.varDeclare();
       ProxyType iter_type;
@@ -5369,6 +5432,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(vod.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
+
         iter_type = iter_symb.type;
       }
       else
@@ -5382,18 +5446,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             AddError(ctx.foreachExp().exp(), "expression is not of array type");
             goto Bail;
           }
+
           vd_type = predicted_arr_type.item_type;
         }
         else
           vd_type = ParseType(vd.type());
 
         iter_ast_decl = ProcDeclVar(
-          curr_scope, 
-          vd.NAME(), 
+          curr_scope,
+          vd.NAME(),
           vd_type,
           vd.type(),
-          is_ref: false, 
-          func_arg: false, 
+          is_ref: false,
+          func_arg: false,
           write: false,
           symb: out iter_symb
         );
@@ -5401,6 +5466,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           goto Bail;
         iter_type = iter_symb.type;
       }
+
       var arr_type = (ArrayTypeSymbol)curr_scope.R().TArr(iter_type).Get();
 
       PushJsonType(arr_type);
@@ -5495,6 +5561,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(ctx.foreachExp().exp(), "expression is not of map type");
           goto Bail;
         }
+
         vd_key_type = predicted_map_type.key_type;
         vd_val_type = predicted_map_type.val_type;
       }
@@ -5516,19 +5583,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(vod_key.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
+
         key_iter_type = key_iter_symb.type;
       }
       else
       {
         key_iter_ast_decl = ProcDeclVar(
-          curr_scope, 
-          vd_key.NAME(), 
-          vd_key_type, 
+          curr_scope,
+          vd_key.NAME(),
+          vd_key_type,
           vd_key.type(),
-          is_ref: false, 
-          func_arg: false, 
+          is_ref: false,
+          func_arg: false,
           write: false,
-          symb: out key_iter_symb 
+          symb: out key_iter_symb
         );
         if(key_iter_ast_decl == null)
           goto Bail;
@@ -5546,17 +5614,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           AddError(vod_val.NAME(), "symbol is not a valid variable");
           goto Bail;
         }
+
         val_iter_type = val_iter_symb.type;
       }
       else
       {
         val_iter_ast_decl = ProcDeclVar(
-          curr_scope, 
-          vd_val.NAME(), 
-          vd_val_type, 
+          curr_scope,
+          vd_val.NAME(),
+          vd_val_type,
           vd_val.type(),
-          is_ref: false, 
-          func_arg: false, 
+          is_ref: false,
+          func_arg: false,
           write: false,
           symb: out val_iter_symb
         );
@@ -5564,6 +5633,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           goto Bail;
         val_iter_type = val_iter_symb.type;
       }
+
       var map_type = (MapTypeSymbol)curr_scope.R().TMap(key_iter_type, val_iter_type).Get();
 
       PushJsonType(map_type);
@@ -5610,7 +5680,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       //prepending filling of k/v
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, val_iter_symb));
       block.children.Insert(0, new AST_Call(EnumCall.VARW, ctx.Start.Line, key_iter_symb));
-      block.children.Insert(0, new AST_Call(EnumCall.MFUNC, ctx.Start.Line, map_type.enumerator_type.Resolve("Current")));
+      block.children.Insert(0,
+        new AST_Call(EnumCall.MFUNC, ctx.Start.Line, map_type.enumerator_type.Resolve("Current")));
       block.children.Insert(0, new AST_Call(EnumCall.VAR, ctx.Start.Line, map_tmp_en_symb));
 
       block.AddChild(new AST_Continue(jump_marker: true));
@@ -5645,8 +5716,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(sts == null)
       return null;
 
-    bool is_paral = 
-      type == BlockType.PARAL || 
+    bool is_paral =
+      type == BlockType.PARAL ||
       type == BlockType.PARAL_ALL;
 
     var local_scope = new LocalScope(is_paral, curr_scope);
@@ -5672,17 +5743,19 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(tmp.children.Count > 1)
         {
           var seq = new AST_Block(BlockType.SEQ);
-          for(int c=0;c<tmp.children.Count;++c)
+          for(int c = 0; c < tmp.children.Count; ++c)
             seq.AddChild(tmp.children[c]);
           ast.AddChild(seq);
         }
         else if(tmp.children.Count > 0)
           ast.AddChild(tmp.children[0]);
+
         tmp.children.Clear();
       }
       else
         TryVisit(st);
     }
+
     PopAST();
 
     local_scope.Exit();
@@ -5705,11 +5778,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public struct ExpChainItems
   {
-    bhlParser.ChainExpItemContext[] items_arr; 
+    bhlParser.ChainExpItemContext[] items_arr;
     List<ParserRuleContext> items_lst;
 
-    public int Count {
-      get {
+    public int Count
+    {
+      get
+      {
         if(items_lst != null)
           return items_lst.Count;
         return items_arr == null ? 0 : items_arr.Length;
@@ -5721,7 +5796,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       items_arr = items;
       items_lst = null;
     }
-    
+
     public ParserRuleContext At(int i)
     {
       if(items_lst != null)
@@ -5743,6 +5818,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             items_lst.Add(_Get(item));
         }
       }
+
       items_lst.Add(ctx);
     }
 
@@ -5789,31 +5865,34 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     public bhlParser.NameContext name_ctx;
     public bhlParser.ExpContext paren_exp_ctx;
     public bhlParser.FuncLambdaContext lmb_ctx;
-    public ExpChainItems items; 
+    public ExpChainItems items;
 
     public bool Incomplete { get ; private set; }
 
-    public bool IsGlobalNs { 
-      get { 
-        return name_ctx?.GLOBAL() != null; 
-      } 
+    public bool IsGlobalNs
+    {
+      get { return name_ctx?.GLOBAL() != null; }
     }
 
-    public bool IsFuncCall {
-      get { 
-        return items.Count > 0 && 
-          items.At(items.Count-1) is bhlParser.CallArgsContext;
-      } 
+    public bool IsFuncCall
+    {
+      get
+      {
+        return items.Count > 0 &&
+               items.At(items.Count - 1) is bhlParser.CallArgsContext;
+      }
     }
 
-    public bool IsVarAccess {
-      get { 
-        return 
-          (items.Count == 0 && name_ctx != null) || 
-          (items.Count > 0 && 
-          (items.At(items.Count-1) is bhlParser.MemberAccessContext || 
-           items.At(items.Count-1) is bhlParser.ArrAccessContext));
-      } 
+    public bool IsVarAccess
+    {
+      get
+      {
+        return
+          (items.Count == 0 && name_ctx != null) ||
+          (items.Count > 0 &&
+           (items.At(items.Count - 1) is bhlParser.MemberAccessContext ||
+            items.At(items.Count - 1) is bhlParser.ArrAccessContext));
+      }
     }
 
     public ExpChain(ParserRuleContext ctx, bhlParser.ChainExpContext chain)
@@ -5851,6 +5930,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       Visit(tree);
       return true;
     }
+
     return false;
   }
 
@@ -5861,7 +5941,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       //we need to find the 'most top one'
       var top = vs._upvalue;
       while(top._upvalue != null)
-        top = top._upvalue; 
+        top = top._upvalue;
       ann.lsp_symbol = top;
     }
     else
@@ -5878,17 +5958,18 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(token == null)
       return;
 
-    semantic_tokens.Add(new SemanticTokenNode() { 
+    semantic_tokens.Add(new SemanticTokenNode()
+    {
       idx = token.Symbol.StartIndex,
       line = token.Symbol.Line,
       column = token.Symbol.Column,
       len = token.Symbol.StopIndex - token.Symbol.StartIndex + 1,
-      type_idx = idx, 
+      type_idx = idx,
       mods = mods
     });
     encoded_semantic_tokens.Clear();
   }
-  
+
   void LSP_AddSemanticToken(IParseTree tree, SemanticToken idx, SemanticModifier mods = 0)
   {
     if(tree == null)
@@ -5899,19 +5980,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var b = tokens.Get(interval.b);
 
     //let's ignore any invalid stuff
-    if(a.Line <= 0 || b.Line <= 0 || 
-        a.Column <= 0 || b.Column <= 0)
+    if(a.Line <= 0 || b.Line <= 0 ||
+       a.Column <= 0 || b.Column <= 0)
       return;
 
     if(a.Line != b.Line)
       throw new Exception("Multiline semantic tokens not supported");
 
-    semantic_tokens.Add(new SemanticTokenNode() { 
+    semantic_tokens.Add(new SemanticTokenNode()
+    {
       idx = a.StartIndex,
       line = a.Line,
       column = a.Column,
       len = b.StopIndex - a.StartIndex +  1,
-      type_idx = idx, 
+      type_idx = idx,
       mods = mods
     });
   }
@@ -5942,7 +6024,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   public static class SemanticTokens
   {
-    public static string[] token_types = 
+    public static string[] token_types =
     {
       "class",
       "function",
@@ -5956,7 +6038,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       "parameter"
     };
 
-    public static string[] modifiers = 
+    public static string[] modifiers =
     {
       "declaration",   // 1
       "definition",    // 2

@@ -269,7 +269,7 @@ public class TestStrings : BHL_TestBase
     AssertEqual("My name is \"Bar\", hello", Execute(vm, "test").result.PopRelease().str);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestStrConcat()
   {

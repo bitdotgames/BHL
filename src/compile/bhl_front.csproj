@@ -1,30 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-      <AssemblyName>bhl_front</AssemblyName>
-      <OutputType>Library</OutputType>
-      <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-      <RootNamespace>bhl</RootNamespace>
-      <TargetFrameworks>net8.0</TargetFrameworks>
-      <DefineConstants>BHL_FRONT</DefineConstants>
-      <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-      <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-      <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-      <NoWarn>CS8981</NoWarn>
+    <AssemblyName>bhl_front</AssemblyName>
+    <OutputType>Library</OutputType>
+    <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
+    <RootNamespace>bhl</RootNamespace>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <DefineConstants>BHL_FRONT</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>CS8981</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-   <Compile Include="..\g\*.cs" />
-   <Compile Include="..\vm\**\*.cs" />
-   <Compile Include=".\*.cs" />
-   <Compile Update="..\vm\util\val_list_adapter.cs">
-     <Link>util\val_list_adapter.cs</Link>
-   </Compile>
+    <Compile Include="..\g\*.cs"/>
+    <Compile Include="..\vm\**\*.cs"/>
+    <Compile Include=".\*.cs"/>
+    <Compile Update="..\vm\util\val_list_adapter.cs">
+      <Link>util\val_list_adapter.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="lz4net" Version="1.0.15.93" />
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1"/>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    <PackageReference Include="lz4net" Version="1.0.15.93"/>
   </ItemGroup>
 </Project>

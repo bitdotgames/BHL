@@ -1,5 +1,5 @@
-
-namespace bhl {
+namespace bhl
+{
 
 public enum Opcodes
 {
@@ -56,7 +56,7 @@ public enum Opcodes
   LTE                   = 61,
   GT                    = 62,
   GTE                   = 63,
-  DefArg                = 64, 
+  DefArg                = 64,
   TypeCast              = 65,
   TypeAs                = 66,
   TypeIs                = 67,
@@ -70,15 +70,15 @@ public enum Opcodes
   ArrIdx                = 83,
   ArrIdxW               = 84,
   ArrAddInplace         = 85,  //TODO: used for json alike array initialization,   
-                               //      can be replaced with more low-level opcodes?
+  //      can be replaced with more low-level opcodes?
 
   BitShr                = 86,
   BitShl                = 87,
-                               
+
   MapIdx                = 91,
   MapIdxW               = 92,
   MapAddInplace         = 93,  //TODO: used for json alike array initialization,   
-  
+
   Nop                   = 99,
 }
 

@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.Text;
 using bhl;
 using Xunit;
@@ -54,7 +54,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(3*1 + 3*2 + 3*3, Execute(vm, "test1").result.PopRelease().num);
+    Assert.Equal(3 * 1 + 3 * 2 + 3 * 3, Execute(vm, "test1").result.PopRelease().num);
     Assert.Equal(0, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -81,7 +81,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(30+1+2+3, Execute(vm, "test1").result.PopRelease().num);
+    Assert.Equal(30 + 1 + 2 + 3, Execute(vm, "test1").result.PopRelease().num);
     Assert.Equal(10, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
@@ -133,14 +133,12 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "incompatible types",
         new PlaceAssert(bhl, @"
         sum(1, ""foo"", 2)
 ---------------^"
-       )
+        )
       );
     }
 
@@ -155,14 +153,12 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "incompatible types",
         new PlaceAssert(bhl, @"
         sum(""foo"", 2)
 ------------^"
-       )
+        )
       );
     }
 
@@ -177,14 +173,12 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "incompatible types",
         new PlaceAssert(bhl, @"
         sum(1, ""foo"")
 ---------------^"
-       )
+        )
       );
     }
   }
@@ -198,9 +192,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "default argument is not allowed",
       new PlaceAssert(bhl, @"
     func sum(...[]int ns = [1, 2]) {
@@ -218,9 +210,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "variadic argument must be last",
       new PlaceAssert(bhl, @"
     func sum(...[]int ns, int a) {
@@ -238,9 +228,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "pass by ref not allowed",
       new PlaceAssert(bhl, @"
     func sum(ref ...[]int ns) {
@@ -252,21 +240,19 @@ public class TestVariadic : BHL_TestBase
   [Fact]
   public void TestNoRefAllowed2()
   {
-     string bhl = @"
+    string bhl = @"
      func sum(...[]ref int ns) {
      }
      ";
 
-     AssertError<Exception>(
-       delegate() { 
-         Compile(bhl);
-       },
-       "extraneous input 'ref'",
-       new PlaceAssert(bhl, @"
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "extraneous input 'ref'",
+      new PlaceAssert(bhl, @"
      func sum(...[]ref int ns) {
 -------------------^"
-       )
-     );
+      )
+    );
   }
 
   [Fact]
@@ -282,9 +268,7 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "not variadic argument",
         new PlaceAssert(bhl, @"
         sum(...1)
@@ -303,9 +287,7 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "not variadic argument",
         new PlaceAssert(bhl, @"
         sum(...[])
@@ -324,9 +306,7 @@ public class TestVariadic : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "incompatible types",
         new PlaceAssert(bhl, @"
         sum(0, ...1)
@@ -362,9 +342,7 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -385,20 +363,21 @@ public class TestVariadic : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "sum", FuncAttrib.VariadicArgs, Types.Int, 0,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            var ns = stack.Pop();
-            var vs = (ValList)ns._obj;
-            int sum = 0;
-            for(int i=0;i<vs.Count;++i)
-              sum += (int)vs[i].num;
-            ns.Release();
-            stack.Push(Val.NewInt(frm.vm, sum));
-            return null;
-          }, 
-          new FuncArgSymbol("ns", ts.TArr("int"))
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var ns = stack.Pop();
+          var vs = (ValList)ns._obj;
+          int sum = 0;
+          for(int i = 0; i < vs.Count; ++i)
+            sum += (int)vs[i].num;
+          ns.Release();
+          stack.Push(Val.NewInt(frm.vm, sum));
+          return null;
+        },
+        new FuncArgSymbol("ns", ts.TArr("int"))
       );
       ts.ns.Define(fn);
     });

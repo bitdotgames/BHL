@@ -23,15 +23,15 @@ public class TestArrays : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) }) 
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -137,7 +137,7 @@ public class TestArrays : BHL_TestBase
   }
 
   [Fact]
-  public void TestTmpArrayCount() 
+  public void TestTmpArrayCount()
   {
     string bhl = @"
     func []int mkarray()
@@ -325,9 +325,7 @@ public class TestArrays : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -434,7 +432,7 @@ public class TestArrays : BHL_TestBase
     AssertEqual(res, "foo");
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestInsert()
   {
@@ -498,7 +496,7 @@ public class TestArrays : BHL_TestBase
 
     Assert.Equal(1, vm.vlsts_pool.MissCount);
     Assert.Equal(0, vm.vlsts_pool.IdleCount);
-    
+
     res.Release();
 
     CommonChecks(vm);
@@ -526,8 +524,8 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    
-    for(int i=0;i<3;++i)
+
+    for(int i = 0; i < 3; ++i)
       vm.Tick();
 
     vm.Stop(fb);
@@ -563,9 +561,7 @@ public class TestArrays : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
@@ -589,9 +585,7 @@ public class TestArrays : BHL_TestBase
       }
       ";
 
-      var ts_fn = new Action<Types>((ts) => {
-        BindColor(ts);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -611,9 +605,7 @@ public class TestArrays : BHL_TestBase
       }
       ";
 
-      var ts_fn = new Action<Types>((ts) => {
-        BindColor(ts);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
@@ -639,9 +631,7 @@ public class TestArrays : BHL_TestBase
       }
       ";
 
-      var ts_fn = new Action<Types>((ts) => {
-        BindColor(ts);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
       Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
@@ -672,9 +662,7 @@ public class TestArrays : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -701,7 +689,8 @@ public class TestArrays : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindColor(ts);
       BindFoo(ts);
     });
@@ -711,7 +700,7 @@ public class TestArrays : BHL_TestBase
     AssertEqual(res, "2102030");
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestNativeListTypeSymbolBasicOperations()
   {
@@ -725,17 +714,17 @@ public class TestArrays : BHL_TestBase
     ArrayInts.Setup();
 
     var list = new List<int>();
-    
+
     var vm = new VM();
     var arr = Val.NewObj(vm, list, ArrayInts);
-    
+
     Assert.Equal(0, ArrayInts.ArrCount(arr));
 
     {
       var val = Val.NewInt(vm, 10);
       ArrayInts.ArrAdd(arr, val);
       val.Release();
-      
+
       Assert.Equal(1, ArrayInts.ArrCount(arr));
       Assert.Single(list);
     }
@@ -744,19 +733,19 @@ public class TestArrays : BHL_TestBase
       var val = ArrayInts.ArrGetAt(arr, 0);
       Assert.Equal(10, val.num);
       val.Release();
-      
+
       Assert.Equal(10, list[0]);
     }
 
     {
       ArrayInts.ArrRemoveAt(arr, 0);
       Assert.Equal(0, ArrayInts.ArrCount(arr));
-      
+
       Assert.Empty(list);
     }
 
     arr.Release();
-    
+
     CommonChecks(vm);
   }
 
@@ -778,17 +767,18 @@ public class TestArrays : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ArrayInts = new NativeListTypeSymbol<int>(
-        new Origin(), 
+        new Origin(),
         "List_int",
         (v) => (int)v._num,
         (_vm, itype, n) => Val.NewInt(_vm, n),
         Types.Int
-        ); 
+      );
       ArrayInts.Setup();
       ts.ns.Define(ArrayInts);
-      
+
       BindTrace(ts, log);
     });
 
@@ -814,14 +804,15 @@ public class TestArrays : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ArrayInts = new NativeListTypeSymbol<int>(
-        new Origin(), 
+        new Origin(),
         "List_int",
         (v) => (int)v._num,
         (_vm, itype, n) => Val.NewInt(_vm, n),
         Types.Int
-        ); 
+      );
       ArrayInts.Setup();
       ts.ns.Define(ArrayInts);
 
@@ -850,14 +841,15 @@ public class TestArrays : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ArrayInts = new NativeListTypeSymbol<int>(
-        new Origin(), 
+        new Origin(),
         "List_int",
         (v) => (int)v._num,
         (_vm, itype, n) => Val.NewInt(_vm, n),
         Types.Int
-        ); 
+      );
       ArrayInts.Setup();
       ts.ns.Define(ArrayInts);
 
@@ -869,66 +861,66 @@ public class TestArrays : BHL_TestBase
     AssertEqual(log.ToString(), "100;200;");
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestNativeListEquality()
   {
     var ArrayInts1 = new NativeListTypeSymbol<int>(
-      new Origin(), 
+      new Origin(),
       "List_int",
       (v) => (int)v._num,
       (_vm, itype, n) => Val.NewInt(_vm, n),
       Types.Int
-      ); 
+    );
     ArrayInts1.Setup();
-    
+
     var ArrayInts2 = new NativeListTypeSymbol<int>(
-      new Origin(), 
+      new Origin(),
       "List_int",
       (v) => (int)v._num,
       (_vm, itype, n) => Val.NewInt(_vm, n),
       Types.Int
-      ); 
+    );
     ArrayInts2.Setup();
-    
+
     var ArrayString = new NativeListTypeSymbol<string>(
-      new Origin(), 
+      new Origin(),
       "List_string",
       (v) => v.str,
       (_vm, itype, n) => Val.NewStr(_vm, n),
       Types.String
-      ); 
+    );
     ArrayString.Setup();
-    
+
     Assert.True(ArrayInts1.Equals(ArrayInts2));
     Assert.False(ArrayString.Equals(ArrayInts1));
   }
-  
+
   [Fact]
   public void TestGenericArrayEquality()
   {
     var ArrayInts1 = new GenericArrayTypeSymbol(
-      new Origin(), 
+      new Origin(),
       Types.Int
-      ); 
+    );
     ArrayInts1.Setup();
-    
+
     var ArrayInts2 = new GenericArrayTypeSymbol(
-      new Origin(), 
+      new Origin(),
       Types.Int
-      ); 
+    );
     ArrayInts2.Setup();
-    
+
     var ArrayString = new GenericArrayTypeSymbol(
-      new Origin(), 
+      new Origin(),
       Types.String
-      ); 
+    );
     ArrayString.Setup();
-    
+
     Assert.True(ArrayInts1.Equals(ArrayInts2));
     Assert.False(ArrayString.Equals(ArrayInts1));
   }
-  
+
   [Fact]
   public void TestValListTypedAdapater()
   {
@@ -940,7 +932,7 @@ public class TestArrays : BHL_TestBase
       Types.Int
     );
     ArrayInts.Setup();
-    
+
     var vm = new VM();
 
     var vals = ValList.New(vm);
@@ -963,7 +955,7 @@ public class TestArrays : BHL_TestBase
     Assert.Contains(10, vals_typed);
     Assert.Contains(20, vals_typed);
     Assert.DoesNotContain(30, vals_typed);
-    
+
     var res = new List<int>();
     foreach(var n in vals_typed)
       res.Add(n);
@@ -976,9 +968,9 @@ public class TestArrays : BHL_TestBase
     Assert.False(vals_typed.Remove(30));
     Assert.Equal(-1, vals_typed.IndexOf(10));
     Assert.Equal(0, vals_typed.IndexOf(20));
-    
+
     vals_typed.Release();
-    
+
     CommonChecks(vm);
   }
 
@@ -994,16 +986,16 @@ public class TestArrays : BHL_TestBase
 
       lst.Release();
     }
-    
+
     {
       var lst = RefcList<int>.New();
-      
+
       Assert.Empty(lst);
-      
+
       lst.Release();
     }
   }
-  
+
   [Fact]
   public void TestValList()
   {
@@ -1013,7 +1005,7 @@ public class TestArrays : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     lst.Add(v1);
-    
+
     var v2 = Val.NewInt(vm, 1);
     lst.Add(v2);
 
@@ -1023,7 +1015,7 @@ public class TestArrays : BHL_TestBase
     (lst[0], lst[1]) = (lst[1], lst[0]);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(10, lst[1].num);
-    
+
     //removing an item still releases it
     lst.RemoveAt(1);
     Assert.Single(lst);
@@ -1075,7 +1067,7 @@ public class TestArrays : BHL_TestBase
 
     CommonChecks(vm);
   }
-  
+
 
   [Fact]
   public void TestValListSort()
@@ -1086,10 +1078,10 @@ public class TestArrays : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     lst.Add(v1);
-    
+
     var v2 = Val.NewInt(vm, 1);
     lst.Add(v2);
-    
+
     var v3 = Val.NewInt(vm, 13);
     lst.Add(v3);
 
@@ -1103,7 +1095,7 @@ public class TestArrays : BHL_TestBase
 
     CommonChecks(vm);
   }
-  
+
 
   [Fact]
   public void TestValListAsIList()
@@ -1114,7 +1106,7 @@ public class TestArrays : BHL_TestBase
 
     var v1 = Val.NewInt(vm, 10);
     lst.Add(v1);
-    
+
     var v2 = Val.NewInt(vm, 1);
     lst.Add(v2);
 
@@ -1125,7 +1117,7 @@ public class TestArrays : BHL_TestBase
     (ilst[0], ilst[1]) = (ilst[1], ilst[0]);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(10, lst[1].num);
-    
+
     //removing an item still releases it
     ilst.RemoveAt(1);
     Assert.Single(ilst);
@@ -1158,8 +1150,8 @@ public class TestArrays : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindColor(ts);
 
       {
@@ -1169,7 +1161,7 @@ public class TestArrays : BHL_TestBase
             {
               var dv0 = Val.New(frm.vm);
               var dvl = ValList.New(frm.vm);
-              for(int i=0;i<10;++i)
+              for(int i = 0; i < 10; ++i)
               {
                 var c = new Color();
                 c.r = i;
@@ -1177,6 +1169,7 @@ public class TestArrays : BHL_TestBase
                 tdv.SetObj(c, ts.T("Color").Get());
                 dvl.Add(tdv);
               }
+
               dv0.SetObj(dvl, Types.Array);
               stack.Push(dv0);
             }
@@ -1206,7 +1199,7 @@ public class TestArrays : BHL_TestBase
     lst.Add(dv2);
 
     int c = 0;
-    foreach(var tmp in lst) 
+    foreach(var tmp in lst)
     {
       ++c;
       if(c == 1)
@@ -1214,12 +1207,11 @@ public class TestArrays : BHL_TestBase
       else if(c == 2)
         Assert.Equal(tmp.num, dv2.num);
     }
+
     Assert.Equal(2, c);
 
     lst.Release();
 
     CommonChecks(vm);
   }
-
-
 }

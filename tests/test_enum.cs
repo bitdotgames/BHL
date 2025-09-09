@@ -25,9 +25,7 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnumState(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -52,7 +50,8 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var en = new EnumSymbolNative(new Origin(), "NativeEnum", typeof(NativeEnum));
       ts.ns.Define(en);
 
@@ -77,9 +76,7 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnumState(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
@@ -98,9 +95,7 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnumState(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
@@ -122,9 +117,7 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnumState(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.Pop();
@@ -147,18 +140,20 @@ public class TestEnum : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindEnumState(ts);
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             var n = stack.PopRelease().num;
             stack.Push(Val.NewBool(frm.vm, n == 20));
             return null;
           },
           new FuncArgSymbol("state", ts.T("EnumState"))
-          );
+        );
 
         ts.ns.Define(fn);
       }
@@ -258,9 +253,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"duplicate key 'A'",
       new PlaceAssert(bhl, @"
       A = 10
@@ -283,9 +276,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"duplicate value '1'",
       new PlaceAssert(bhl, @"
       C = 1
@@ -312,9 +303,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     enum Foo
@@ -340,9 +329,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"already defined symbol 'Foo'",
       new PlaceAssert(bhl, @"
     class Foo
@@ -435,9 +422,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"incompatible types: 'Foo' and 'int'",
       new PlaceAssert(bhl, @"
       Foo foo = 1
@@ -461,9 +446,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"incompatible types: 'float' and 'Foo'",
       new PlaceAssert(bhl, @"
       float b = Foo.B
@@ -471,5 +454,4 @@ public class TestEnum : BHL_TestBase
       )
     );
   }
-
 }

@@ -2,34 +2,38 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 {
-  public const uint CLASS_ID = 14; 
+  public const uint CLASS_ID = 14;
 
   //full type name
   string name;
 
   public ProxyType ret_type;
+
   //TODO: include arg names as well since we support named args?
   public List<ProxyType> arg_types = new List<ProxyType>();
 
   byte _attribs = 0;
-  public FuncSignatureAttrib attribs {
-    get {
-      return (FuncSignatureAttrib)_attribs;
-    }
-    set {
-      _attribs = (byte)value;
-    }
+
+  public FuncSignatureAttrib attribs
+  {
+    get { return (FuncSignatureAttrib)_attribs; }
+    set { _attribs = (byte)value; }
   }
 
-  public string GetName() { return name; }
+  public string GetName()
+  {
+    return name;
+  }
 
   public FuncSignature(ProxyType ret_type, params ProxyType[] arg_types)
     : this(0, ret_type, arg_types)
-  {}
+  {
+  }
 
   public FuncSignature(FuncSignatureAttrib attribs, ProxyType ret_type, params ProxyType[] arg_types)
   {
@@ -50,7 +54,8 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 
   //symbol factory version
   public FuncSignature()
-  {}
+  {
+  }
 
   public void AddArg(ProxyType arg_type)
   {
@@ -70,14 +75,15 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     _signature_buf.Append('(');
     if((attribs & FuncSignatureAttrib.Coro) != 0)
       _signature_buf.Insert(0, "coro ");
-    for(int i=0;i<arg_types.Count;++i)
+    for(int i = 0; i < arg_types.Count; ++i)
     {
       if(i > 0)
         _signature_buf.Append(',');
-      if((attribs & FuncSignatureAttrib.VariadicArgs) != 0 && i == arg_types.Count-1)
+      if((attribs & FuncSignatureAttrib.VariadicArgs) != 0 && i == arg_types.Count - 1)
         _signature_buf.Append("...");
       _signature_buf.Append(arg_types[i].ToString());
     }
+
     _signature_buf.Append(')');
 
     name = _signature_buf.ToString();
@@ -124,7 +130,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
       return false;
     if(arg_types.Count != o.arg_types.Count)
       return false;
-    for(int i=0;i<arg_types.Count;++i)
+    for(int i = 0; i < arg_types.Count; ++i)
       if(!arg_types[i].Equals(o.arg_types[i]))
         return false;
     return true;
@@ -135,7 +141,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     return name.GetHashCode();
   }
 
-  public override string ToString() 
+  public override string ToString()
   {
     return name;
   }

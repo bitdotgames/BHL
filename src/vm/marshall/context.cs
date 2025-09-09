@@ -1,8 +1,8 @@
-
 using System.Collections.Generic;
 
-namespace bhl.marshall {
-    
+namespace bhl.marshall
+{
+
 public struct SyncContext
 {
   public bool is_read;
@@ -15,7 +15,8 @@ public struct SyncContext
 
   public static SyncContext NewReader(IReader reader, IFactory factory = null, TypeRefIndex refs = null)
   {
-    var ctx = new SyncContext() {
+    var ctx = new SyncContext()
+    {
       is_read = true,
       reader = reader,
       writer = null,
@@ -27,15 +28,16 @@ public struct SyncContext
 
   public static SyncContext NewWriter(IWriter writer, IFactory factory = null, TypeRefIndex refs = null)
   {
-    var ctx = new SyncContext() {
+    var ctx = new SyncContext()
+    {
       is_read = false,
       reader = null,
       writer = writer,
       factory = factory,
       type_refs = refs ?? new TypeRefIndex()
-      
     };
     return ctx;
   }
 }
+
 }

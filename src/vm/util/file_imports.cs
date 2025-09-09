@@ -1,14 +1,16 @@
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class FileImports : marshall.IMarshallable
 {
   public List<string> import_paths = new List<string>();
   public List<string> file_paths = new List<string>();
 
   public FileImports()
-  {}
+  {
+  }
 
   public FileImports(Dictionary<string, string> imps)
   {
@@ -37,16 +39,17 @@ public class FileImports : marshall.IMarshallable
     return file_paths[idx];
   }
 
-  public void Reset() 
+  public void Reset()
   {
     import_paths.Clear();
     file_paths.Clear();
   }
-  
-  public void IndexTypeRefs(TypeRefIndex refs)
-  {}
 
-  public void Sync(marshall.SyncContext ctx) 
+  public void IndexTypeRefs(TypeRefIndex refs)
+  {
+  }
+
+  public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, import_paths);
     marshall.Marshall.Sync(ctx, file_paths);

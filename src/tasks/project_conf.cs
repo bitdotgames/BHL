@@ -2,8 +2,9 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 //NOTE: representing only part of the original ProjectConf
 public class ProjectConfPartial
 {
@@ -18,10 +19,12 @@ public class ProjectConfPartial
   [JsonIgnore] public string proj_file = "";
 
   public List<string> bindings_sources = new List<string>();
+
   //NOTE: this is rather a path to directory containing dll
   public string bindings_dll = "";
 
   public List<string> postproc_sources = new List<string>();
+
   //NOTE: this is rather a path to directory containing dll
   public string postproc_dll = "";
 

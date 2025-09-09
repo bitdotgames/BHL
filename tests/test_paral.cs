@@ -30,21 +30,21 @@ public class TestParal : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-      .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -79,23 +79,23 @@ public class TestParal : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-      .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 42})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 42})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -130,26 +130,26 @@ public class TestParal : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-      .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 54})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 54})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 26})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 26})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
-            .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-              .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
-            .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
-              .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-              .EmitThen(Opcodes.SetVar, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -185,32 +185,32 @@ public class TestParal : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-      .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 74})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 74})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 46})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 46})
           .EmitThen(Opcodes.Lambda, new int[] { 29 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
-            .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
-              .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
-                .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
-              .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
-                .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-                .EmitThen(Opcodes.SetVar, new int[] { 0 })
-            .EmitThen(Opcodes.Return)
-            .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
-            .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
-            .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-        .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
+          .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
+          .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -410,9 +410,7 @@ public class TestParal : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
@@ -441,7 +439,7 @@ public class TestParal : BHL_TestBase
 
     var vm = MakeVM(bhl);
     vm.Start("test");
-    for(int i=0;i<99;i++)
+    for(int i = 0; i < 99; i++)
       Assert.True(vm.Tick());
   }
 
@@ -499,9 +497,7 @@ public class TestParal : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(152, Execute(vm, "test").result.PopRelease().num);
@@ -542,9 +538,7 @@ public class TestParal : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
@@ -581,7 +575,8 @@ public class TestParal : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindFail(ts);
     });
@@ -626,7 +621,8 @@ public class TestParal : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindFail(ts);
     });
@@ -819,7 +815,7 @@ public class TestParal : BHL_TestBase
     Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestParalAllNestedReturn()
   {
@@ -869,9 +865,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -890,14 +884,12 @@ public class TestParal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"empty paral blocks are not allowed",
       new PlaceAssert(bhl, @"
       paral {
 ------^"
-     )
+      )
     );
   }
 
@@ -912,14 +904,12 @@ public class TestParal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"empty paral blocks are not allowed",
       new PlaceAssert(bhl, @"
       paral_all {
 ------^"
-     )
+      )
     );
   }
 }

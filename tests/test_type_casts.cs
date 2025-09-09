@@ -20,14 +20,14 @@ public class TestTypeCasts : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("int")), 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, true) })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("int")), 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -54,14 +54,14 @@ public class TestTypeCasts : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 1 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 1 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -88,16 +88,16 @@ public class TestTypeCasts : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -124,16 +124,16 @@ public class TestTypeCasts : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "") })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -173,9 +173,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'string' and 'int'",
       new PlaceAssert(bhl, @"
       return ""foo"" - k
@@ -367,9 +365,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindMin(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindMin(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -499,16 +495,16 @@ public class TestTypeCasts : BHL_TestBase
     var c = Compile(bhl);
 
     var ts = new Types();
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.TypeIs, new int[] { TypeIdx(c, ts.T("int")) })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.TypeIs, new int[] { TypeIdx(c, ts.T("int")) })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -614,19 +610,19 @@ public class TestTypeCasts : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1+1 /*args info*/ })
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.TypeAs, new int[] { TypeIdx(c, c.ns.T("Foo")), 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.TypeAs, new int[] { TypeIdx(c, c.ns.T("Foo")), 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -656,15 +652,17 @@ public class TestTypeCasts : BHL_TestBase
     Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   public interface INativeFoo
-  {}
+  {
+  }
 
   public class NativeFoo : INativeFoo
   {
     public int foo = 10;
   }
-  public class NativeBar : NativeFoo 
+
+  public class NativeBar : NativeFoo
   {
     public int bar = 100;
   }
@@ -758,7 +756,7 @@ public class TestTypeCasts : BHL_TestBase
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestIsForClassImplementingNativeInterface()
   {
@@ -769,24 +767,22 @@ public class TestTypeCasts : BHL_TestBase
       }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { 
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ifs = new InterfaceSymbolNative(
-          new Origin(),
-          "IFoo", 
-          null,
-          typeof(INativeFoo)
+        new Origin(),
+        "IFoo",
+        null,
+        typeof(INativeFoo)
       );
       ts.ns.Define(ifs);
       ifs.Setup();
 
       var cl = new ClassSymbolNative(
-        new Origin(), 
-        "Foo", 
-        new List<ProxyType>(){ ts.T("IFoo") },
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new NativeFoo(), type);
-        },
+        new Origin(),
+        "Foo",
+        new List<ProxyType>() { ts.T("IFoo") },
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       ts.ns.Define(cl);
@@ -798,8 +794,13 @@ public class TestTypeCasts : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public interface INativeWow {}
-  public class NativeWow : INativeWow {}
+  public interface INativeWow
+  {
+  }
+
+  public class NativeWow : INativeWow
+  {
+  }
 
   [Fact]
   public void TestIsForClassImplementingNativeInterfaceReturnedAsInterface()
@@ -811,28 +812,27 @@ public class TestTypeCasts : BHL_TestBase
       }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { 
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ifs = new InterfaceSymbolNative(
-          new Origin(),
-          "IWow", 
-          null,
-          typeof(INativeWow)
+        new Origin(),
+        "IWow",
+        null,
+        typeof(INativeWow)
       );
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>(){ ts.T("IWow") },
+      var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>() { ts.T("IWow") },
         native_type: typeof(NativeWow),
-        creator: delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new NativeWow(), type);
-        }
+        creator: delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeWow(), type); }
       );
       ts.ns.Define(cl);
       cl.Setup();
 
-      var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"), 
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
+      var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"),
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
           stack.Push(Val.NewObj(frm.vm, new NativeWow(), ts.T("IWow").Get()));
           return null;
         }
@@ -1014,13 +1014,11 @@ public class TestTypeCasts : BHL_TestBase
 
     var vm = MakeVM(bhl);
     AssertError<Exception>(
-      delegate() { 
-        Execute(vm, "test");
-      },
+      delegate() { Execute(vm, "test"); },
       "Invalid type cast: type 'Bar' can't be cast to 'Foo'"
     );
   }
-  
+
   [Fact]
   public void TestBadCastInRuntimeForNativeClass()
   {
@@ -1032,21 +1030,20 @@ public class TestTypeCasts : BHL_TestBase
       Color c = (Color)o
     }
     ";
-    
-    var ts_fn = new Action<Types>((ts) => {
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindFoo(ts);
       BindColor(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
     AssertError<Exception>(
-      delegate() { 
-        Execute(vm, "test");
-      },
+      delegate() { Execute(vm, "test"); },
       "Invalid type cast: type '[native] Foo' can't be cast to '[native] Color'"
     );
   }
-  
+
   [Fact]
   public void TestBadCastInRuntimeForNativeClassMixedWithUserClass()
   {
@@ -1060,16 +1057,12 @@ public class TestTypeCasts : BHL_TestBase
       Color c = (Color)o
     }
     ";
-    
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     AssertError<Exception>(
-      delegate() { 
-        Execute(vm, "test");
-      },
+      delegate() { Execute(vm, "test"); },
       "Invalid type cast: type 'Bar' can't be cast to '[native] Color'"
     );
   }
@@ -1087,16 +1080,12 @@ public class TestTypeCasts : BHL_TestBase
       Bar b = (Bar)o
     }
     ";
-    
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     AssertError<Exception>(
-      delegate() { 
-        Execute(vm, "test");
-      },
+      delegate() { Execute(vm, "test"); },
       "Invalid type cast: type '[native] Color' can't be cast to 'Bar'"
     );
   }
@@ -1115,9 +1104,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -1139,9 +1126,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
@@ -1166,9 +1151,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -1188,24 +1171,20 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindColor(ts);
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(null, type);
-          }
+          delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
     });
 
     AssertError<Exception>(
-       delegate() {
-         Compile(bhl, ts_fn);
-       },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'Foo' and 'Color'",
       new PlaceAssert(bhl, @"
       Foo tmp = new Color
@@ -1225,24 +1204,20 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindColor(ts);
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(null, type);
-          }
+          delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
     });
 
     AssertError<Exception>(
-       delegate() {
-         Compile(bhl, ts_fn);
-       },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types for casting",
       new PlaceAssert(bhl, @"
       Foo tmp = (Foo)new Color
@@ -1503,9 +1478,7 @@ public class TestTypeCasts : BHL_TestBase
       ";
 
       var log = new StringBuilder();
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Execute(vm, "test");
@@ -1666,7 +1639,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42+24, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42 + 24, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1753,9 +1726,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "type 'Foo' not found",
       new PlaceAssert(bhl, @"
       Type t = typeof(Foo)
@@ -1907,9 +1878,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     AssertError<Exception>(
-       delegate() {
-         Compile(bhl);
-       },
+      delegate() { Compile(bhl); },
       "symbol 'type' not resolved",
       new PlaceAssert(bhl, @"
       foo.type = 1
@@ -1936,9 +1905,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     AssertError<Exception>(
-       delegate() {
-         Compile(bhl);
-       },
+      delegate() { Compile(bhl); },
       "symbol 'type' not resolved",
       new PlaceAssert(bhl, @"
       return foo().type == 1
@@ -1967,9 +1934,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnum(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -1988,9 +1953,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnum(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().num;
@@ -2009,9 +1972,7 @@ public class TestTypeCasts : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindEnum(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindEnum(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().str;
@@ -2081,13 +2042,13 @@ public class TestTypeCasts : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -2121,7 +2082,7 @@ public class TestTypeCasts : BHL_TestBase
       return ((PlayerState_AbilityBase)GetShootArrowState()) != null
     }
     ";
-    
+
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.PopRelease().bval;
     Assert.True(res);

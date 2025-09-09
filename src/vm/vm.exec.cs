@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public enum UpvalMode
 {
   STRONG = 0,
   COPY   = 1
 }
-    
+
 public partial class VM : INamedResolver
 {
   //NOTE: why -2? we reserve some space before int.MaxValue so that
@@ -19,20 +20,22 @@ public partial class VM : INamedResolver
   public const int EXIT_FRAME_IP = STOP_IP - 1;
 
   public delegate void ClassCreator(VM.Frame frm, ref Val res, IType type);
-  
+
   public struct Region
   {
     public Frame frame;
+
     public List<DeferBlock> defer_support;
+
     //NOTE: if current ip is not within *inclusive* range of these values
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
 
     public Region(
-      Frame frame, 
-      List<DeferBlock> defer_support, 
-      int min_ip = -1, 
+      Frame frame,
+      List<DeferBlock> defer_support,
+      int min_ip = -1,
       int max_ip = STOP_IP)
     {
       this.frame = frame;
@@ -50,36 +53,45 @@ public partial class VM : INamedResolver
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
     public ValStack stack;
   }
-  
+
   //fake frame used for module's init code
   Frame init_frame;
   ExecState init_exec = new ExecState();
 
   //special case 'null' value
   Val null_val = null;
-  public Val Null {
-    get {
+
+  public Val Null
+  {
+    get
+    {
       null_val.Retain();
       return null_val;
     }
   }
 
   Val true_val = null;
-  public Val True {
-    get {
+
+  public Val True
+  {
+    get
+    {
       true_val.Retain();
       return true_val;
     }
   }
 
   Val false_val = null;
-  public Val False {
-    get {
+
+  public Val False
+  {
+    get
+    {
       false_val.Retain();
       return false_val;
     }
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
   {
@@ -118,7 +130,7 @@ public partial class VM : INamedResolver
       exec.stack = curr_frame.return_stack;
 
       curr_frame.Release();
-      
+
       return BHS.SUCCESS;
     }
 
@@ -135,7 +147,7 @@ public partial class VM : INamedResolver
           var cv = cn.ToVal(this);
           exec.stack.Push(cv);
         }
-        break;
+          break;
         case Opcodes.TypeCast:
         {
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -145,7 +157,7 @@ public partial class VM : INamedResolver
 
           HandleTypeCast(exec, cast_type, force_type);
         }
-        break;
+          break;
         case Opcodes.TypeAs:
         {
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -154,7 +166,7 @@ public partial class VM : INamedResolver
 
           HandleTypeAs(exec, as_type, force_type);
         }
-        break;
+          break;
         case Opcodes.TypeIs:
         {
           int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -162,7 +174,7 @@ public partial class VM : INamedResolver
 
           HandleTypeIs(exec, as_type);
         }
-        break;
+          break;
         case Opcodes.Typeof:
         {
           int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -170,19 +182,19 @@ public partial class VM : INamedResolver
 
           exec.stack.Push(Val.NewObj(this, type, Types.Type));
         }
-        break;
+          break;
         case Opcodes.Inc:
         {
           int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
           ++curr_frame.locals[var_idx]._num;
         }
-        break;
+          break;
         case Opcodes.Dec:
         {
           int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
           --curr_frame.locals[var_idx]._num;
         }
-        break;
+          break;
         case Opcodes.ArrIdx:
         {
           var self = exec.stack[exec.stack.Count - 2];
@@ -196,7 +208,7 @@ public partial class VM : INamedResolver
           exec.stack.Push(res);
           arr.Release();
         }
-        break;
+          break;
         case Opcodes.ArrIdxW:
         {
           var self = exec.stack[exec.stack.Count - 2];
@@ -211,7 +223,7 @@ public partial class VM : INamedResolver
           val.Release();
           arr.Release();
         }
-        break;
+          break;
         case Opcodes.ArrAddInplace:
         {
           var self = exec.stack[exec.stack.Count - 2];
@@ -222,7 +234,7 @@ public partial class VM : INamedResolver
           ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
           exec.stack.Push(self);
         }
-        break;
+          break;
         case Opcodes.MapIdx:
         {
           var self = exec.stack[exec.stack.Count - 2];
@@ -237,7 +249,7 @@ public partial class VM : INamedResolver
           key.Release();
           map.Release();
         }
-        break;
+          break;
         case Opcodes.MapIdxW:
         {
           var self = exec.stack[exec.stack.Count - 2];
@@ -253,7 +265,7 @@ public partial class VM : INamedResolver
           val.Release();
           map.Release();
         }
-        break;
+          break;
         case Opcodes.MapAddInplace:
         {
           var self = exec.stack[exec.stack.Count - 3];
@@ -264,7 +276,7 @@ public partial class VM : INamedResolver
           ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
           exec.stack.Push(self);
         }
-        break;
+          break;
         case Opcodes.Add:
         case Opcodes.Sub:
         case Opcodes.Div:
@@ -285,20 +297,20 @@ public partial class VM : INamedResolver
         {
           ExecuteBinaryOp(opcode, exec.stack);
         }
-        break;
+          break;
         case Opcodes.UnaryNot:
         case Opcodes.UnaryNeg:
         case Opcodes.UnaryBitNot:
         {
           ExecuteUnaryOp(opcode, exec.stack);
         }
-        break;
+          break;
         case Opcodes.GetVar:
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
           exec.stack.PushRetain(curr_frame.locals[local_idx]);
         }
-        break;
+          break;
         case Opcodes.SetVar:
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -306,7 +318,7 @@ public partial class VM : INamedResolver
           curr_frame.locals.Assign(this, local_idx, new_val);
           new_val.Release();
         }
-        break;
+          break;
         case Opcodes.ArgVar:
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -317,13 +329,13 @@ public partial class VM : INamedResolver
           curr_frame.locals[local_idx] = loc_var;
           arg_val.Release();
         }
-        break;
+          break;
         case Opcodes.ArgRef:
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
           curr_frame.locals[local_idx] = exec.stack.Pop();
         }
-        break;
+          break;
         case Opcodes.DeclVar:
         {
           int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -336,7 +348,7 @@ public partial class VM : INamedResolver
             curr.Release();
           curr_frame.locals[local_idx] = MakeDefaultVal(type);
         }
-        break;
+          break;
         case Opcodes.GetAttr:
         {
           int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -352,7 +364,7 @@ public partial class VM : INamedResolver
           exec.stack.Push(res);
           obj.Release();
         }
-        break;
+          break;
         case Opcodes.RefAttr:
         {
           int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -364,7 +376,7 @@ public partial class VM : INamedResolver
           exec.stack.PushRetain(res);
           obj.Release();
         }
-        break;
+          break;
         case Opcodes.SetAttr:
         {
           int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -377,7 +389,7 @@ public partial class VM : INamedResolver
           val.Release();
           obj.Release();
         }
-        break;
+          break;
         case Opcodes.SetAttrInplace:
         {
           int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -388,14 +400,14 @@ public partial class VM : INamedResolver
           field_symb.setter(curr_frame, ref obj, val, field_symb);
           val.Release();
         }
-        break;
+          break;
         case Opcodes.GetGVar:
         {
           int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
           exec.stack.PushRetain(curr_frame.module.gvar_vals[var_idx]);
         }
-        break;
+          break;
         case Opcodes.SetGVar:
         {
           int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -404,26 +416,26 @@ public partial class VM : INamedResolver
           curr_frame.module.gvar_vals.Assign(this, var_idx, new_val);
           new_val.Release();
         }
-        break;
+          break;
         case Opcodes.Nop:
-        break;
+          break;
         case Opcodes.Return:
         {
           exec.ip = EXIT_FRAME_IP - 1;
         }
-        break;
+          break;
         case Opcodes.ReturnVal:
         {
           int ret_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
 
           int stack_offset = exec.stack.Count;
-          for(int i=0;i<ret_num;++i)
-            curr_frame.return_stack.Push(exec.stack[stack_offset-ret_num+i]);
+          for(int i = 0; i < ret_num; ++i)
+            curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
           exec.stack.Count -= ret_num;
 
           exec.ip = EXIT_FRAME_IP - 1;
         }
-        break;
+          break;
         case Opcodes.GetFuncLocalPtr:
         {
           int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -434,7 +446,7 @@ public partial class VM : INamedResolver
           ptr.Init(curr_frame.module, func_symb.ip_addr);
           exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
         }
-        break;
+          break;
         case Opcodes.GetFuncPtr:
         {
           int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -447,7 +459,7 @@ public partial class VM : INamedResolver
           ptr.Init(func_mod, func_symb.ip_addr);
           exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
         }
-        break;
+          break;
         case Opcodes.GetFuncNativePtr:
         {
           int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -455,14 +467,14 @@ public partial class VM : INamedResolver
 
           //NOTE: using convention where built-in global module is always at index 0
           //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
+          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx - 1];
           var nfunc_symb = func_mod.nfunc_index.index[func_idx];
 
           var ptr = FuncPtr.New(this);
           ptr.Init(nfunc_symb);
           exec.stack.Push(Val.NewObj(this, ptr, nfunc_symb.signature));
         }
-        break;
+          break;
         case Opcodes.GetFuncPtrFromVar:
         {
           int local_var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -470,7 +482,7 @@ public partial class VM : INamedResolver
           val.Retain();
           exec.stack.Push(val);
         }
-        break;
+          break;
         case Opcodes.LastArgToTop:
         {
           //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
@@ -482,7 +494,7 @@ public partial class VM : INamedResolver
           exec.stack.RemoveAt(arg_idx);
           exec.stack.Push(arg);
         }
-        break;
+          break;
         case Opcodes.CallLocal:
         {
           int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -492,7 +504,7 @@ public partial class VM : INamedResolver
           frm.Init(curr_frame, exec.stack, func_ip);
           Call(exec, frm, args_bits);
         }
-        break;
+          break;
         case Opcodes.CallGlobNative:
         {
           int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
@@ -504,7 +516,7 @@ public partial class VM : INamedResolver
           if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
             return status;
         }
-        break;
+          break;
         case Opcodes.CallNative:
         {
           int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -513,14 +525,14 @@ public partial class VM : INamedResolver
 
           //NOTE: using convention where built-in global module is always at index 0
           //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx-1];
+          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx - 1];
           var nfunc_symb = func_mod.nfunc_index[func_idx];
 
           BHS status;
           if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
             return status;
         }
-        break;
+          break;
         case Opcodes.Call:
         {
           int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -533,7 +545,7 @@ public partial class VM : INamedResolver
           frm.Init(curr_frame.fb, exec.stack, func_mod, func_ip);
           Call(exec, frm, args_bits);
         }
-        break;
+          break;
         case Opcodes.CallMethod:
         {
           int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -556,7 +568,7 @@ public partial class VM : INamedResolver
 
           Call(exec, frm, args_bits);
         }
-        break;
+          break;
         case Opcodes.CallMethodNative:
         {
           int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -573,7 +585,7 @@ public partial class VM : INamedResolver
           if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
             return status;
         }
-        break;
+          break;
         case Opcodes.CallMethodVirt:
         {
           int virt_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -596,7 +608,7 @@ public partial class VM : INamedResolver
 
           Call(exec, frm, args_bits);
         }
-        break;
+          break;
         case Opcodes.CallMethodIface:
         {
           int iface_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -621,7 +633,7 @@ public partial class VM : INamedResolver
 
           Call(exec, frm, args_bits);
         }
-        break;
+          break;
         case Opcodes.CallMethodIfaceNative:
         {
           int iface_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -635,7 +647,7 @@ public partial class VM : INamedResolver
           if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
             return status;
         }
-        break;
+          break;
         case Opcodes.CallFuncPtr:
         {
           uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
@@ -647,7 +659,8 @@ public partial class VM : INamedResolver
           if(ptr.native != null)
           {
             BHS status;
-            bool return_status = CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
+            bool return_status =
+              CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
             val_ptr.Release();
             if(return_status)
               return status;
@@ -659,7 +672,7 @@ public partial class VM : INamedResolver
             Call(exec, frm, args_bits);
           }
         }
-        break;
+          break;
         case Opcodes.InitFrame:
         {
           int local_vars_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -668,19 +681,19 @@ public partial class VM : INamedResolver
           //NOTE: we need to store arg info bits locally so that
           //      this information will be available to func
           //      args related opcodes
-          curr_frame.locals[local_vars_num-1] = args_bits;
+          curr_frame.locals[local_vars_num - 1] = args_bits;
         }
-        break;
+          break;
         case Opcodes.Lambda:
         {
           short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
           var ptr = FuncPtr.New(this);
-          ptr.Init(curr_frame, exec.ip+1);
-          exec.stack.Push(Val.NewObj(this, ptr, Types.Any/*TODO: should be a FuncPtr type*/));
+          ptr.Init(curr_frame, exec.ip + 1);
+          exec.stack.Push(Val.NewObj(this, ptr, Types.Any /*TODO: should be a FuncPtr type*/));
 
           exec.ip += offset;
         }
-        break;
+          break;
         case Opcodes.UseUpval:
         {
           int up_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
@@ -693,7 +706,7 @@ public partial class VM : INamedResolver
           //      initialized during Frame initialization
           //NOTE: we need to reflect the updated max amount of locals,
           //      otherwise they might not be cleared upon Frame exit
-          addr.upvals.Count = local_idx+1;
+          addr.upvals.Count = local_idx + 1;
 
           var upval = curr_frame.locals[up_idx];
           if(mode == UpvalMode.COPY)
@@ -708,25 +721,25 @@ public partial class VM : INamedResolver
             addr.upvals[local_idx] = upval;
           }
         }
-        break;
+          break;
         case Opcodes.Pop:
         {
           exec.stack.PopRelease();
         }
-        break;
+          break;
         case Opcodes.Jump:
         {
           short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
           exec.ip += offset;
         }
-        break;
+          break;
         case Opcodes.JumpZ:
         {
           int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
           if(exec.stack.PopRelease().bval == false)
             exec.ip += offset;
         }
-        break;
+          break;
         case Opcodes.JumpPeekZ:
         {
           int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -734,7 +747,7 @@ public partial class VM : INamedResolver
           if(v.bval == false)
             exec.ip += offset;
         }
-        break;
+          break;
         case Opcodes.JumpPeekNZ:
         {
           int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -742,19 +755,19 @@ public partial class VM : INamedResolver
           if(v.bval == true)
             exec.ip += offset;
         }
-        break;
+          break;
         case Opcodes.DefArg:
         {
           byte def_arg_idx = (byte)Bytecode.Decode8(bytes, ref exec.ip);
           int jump_pos = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count-1]._num;
+          uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count - 1]._num;
           var args_info = new FuncArgsInfo(args_bits);
           //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
           //NOTE: if default argument is not used we need to jump out of default argument calculation code
           if(!args_info.IsDefaultArgUsed(def_arg_idx))
             exec.ip += jump_pos;
         }
-        break;
+          break;
         case Opcodes.Block:
         {
           var new_coroutine = ProcBlockOpcode(exec, curr_frame, region.defer_support);
@@ -767,24 +780,23 @@ public partial class VM : INamedResolver
             return BHS.SUCCESS;
           }
         }
-        break;
+          break;
         case Opcodes.New:
         {
           int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
           var type = curr_frame.type_refs[type_idx];
           HandleNew(curr_frame, exec.stack, type);
         }
-        break;
+          break;
         default:
           throw new Exception("Not supported opcode: " + opcode);
       }
-
     }
 
     ++exec.ip;
     return BHS.SUCCESS;
   }
-  
+
   void ExecInitCode(Module module)
   {
     var bytecode = module.compiled.initcode;
@@ -812,7 +824,8 @@ public partial class VM : INamedResolver
       return;
 
     var fs = (FuncSymbolScript)module.ns.members[module.compiled.init_func_idx];
-    var addr = new FuncAddr() {
+    var addr = new FuncAddr()
+    {
       module = module,
       fs = fs,
       ip = fs.ip_addr
@@ -830,13 +843,13 @@ public partial class VM : INamedResolver
     {
       case Opcodes.UnaryNot:
         stack.Push(Val.NewBool(this, operand != 1));
-      break;
+        break;
       case Opcodes.UnaryNeg:
         stack.Push(Val.NewFlt(this, operand * -1));
-      break;
+        break;
       case Opcodes.UnaryBitNot:
         stack.Push(Val.NewNum(this, ~((int)operand)));
-      break;
+        break;
     }
   }
 
@@ -856,75 +869,75 @@ public partial class VM : INamedResolver
         else
           stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
       }
-      break;
+        break;
       case Opcodes.Sub:
         stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
-      break;
+        break;
       case Opcodes.Div:
         stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
-      break;
+        break;
       case Opcodes.Mul:
         stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
-      break;
+        break;
       case Opcodes.Equal:
         stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
-      break;
+        break;
       case Opcodes.NotEqual:
         stack.Push(Val.NewBool(this, !l_operand.IsValueEqual(r_operand)));
-      break;
+        break;
       case Opcodes.LT:
         stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
-      break;
+        break;
       case Opcodes.LTE:
         stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
-      break;
+        break;
       case Opcodes.GT:
         stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
-      break;
+        break;
       case Opcodes.GTE:
         stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
-      break;
+        break;
       case Opcodes.And:
         stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
-      break;
+        break;
       case Opcodes.Or:
         stack.Push(Val.NewBool(this, l_operand._num == 1 || r_operand._num == 1));
-      break;
+        break;
       case Opcodes.BitAnd:
         stack.Push(Val.NewNum(this, (int)l_operand._num & (int)r_operand._num));
-      break;
+        break;
       case Opcodes.BitOr:
         stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
-      break;
+        break;
       case Opcodes.BitShr:
         stack.Push(Val.NewNum(this, (int)l_operand._num >> (int)r_operand._num));
-      break;
+        break;
       case Opcodes.BitShl:
         stack.Push(Val.NewNum(this, (int)l_operand._num << (int)r_operand._num));
-      break;
+        break;
       case Opcodes.Mod:
         stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
-      break;
+        break;
     }
 
     r_operand.Release();
     l_operand.Release();
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   Coroutine ProcBlockOpcode(
-    ExecState exec, 
-    Frame curr_frame, 
+    ExecState exec,
+    Frame curr_frame,
     List<DeferBlock> defer_support
   )
   {
     var (block_coro, block_paral_branches, block_defer_support) = _ProcBlockOpcode(
-      ref exec.ip, 
-      curr_frame, exec, 
-      out var block_size, 
+      ref exec.ip,
+      curr_frame, exec,
+      out var block_size,
       defer_support,
       false
-      );
+    );
 
     //NOTE: let's process paral block (add branches and defers)
     if(block_paral_branches != null)
@@ -935,13 +948,13 @@ public partial class VM : INamedResolver
         ++tmp_ip;
 
         var (branch_coro, _, _) = _ProcBlockOpcode(
-          ref tmp_ip, 
-          curr_frame, 
-          exec, 
-          out var tmp_size, 
+          ref tmp_ip,
+          curr_frame,
+          exec,
+          out var tmp_size,
           block_defer_support,
           true
-          );
+        );
 
         if(branch_coro != null)
         {
@@ -950,17 +963,18 @@ public partial class VM : INamedResolver
         }
       }
     }
+
     return block_coro;
   }
-  
+
   (Coroutine, List<Coroutine>, List<DeferBlock>) _ProcBlockOpcode(
-    ref int ip, 
-    Frame curr_frame, 
-    ExecState exec, 
-    out int size, 
+    ref int ip,
+    Frame curr_frame,
+    ExecState exec,
+    out int size,
     List<DeferBlock> defer_support,
     bool is_paral
-    )
+  )
   {
     var type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
     size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
@@ -1003,7 +1017,7 @@ public partial class VM : INamedResolver
     else
       throw new Exception("Not supported block type: " + type);
   }
-  
+
   void Call(ExecState exec, Frame new_frame, uint args_bits)
   {
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
@@ -1022,7 +1036,8 @@ public partial class VM : INamedResolver
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status, ref Coroutine coroutine)
+  static bool CallNative(Frame curr_frame, ValStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status,
+    ref Coroutine coroutine)
   {
     status = BHS.SUCCESS;
     var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);

@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.Text;
 using System.Collections.Generic;
 using bhl;
@@ -129,9 +129,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"invalid usage",
       new PlaceAssert(bhl, @"
   #endif
@@ -154,9 +152,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"invalid usage",
       new PlaceAssert(bhl, @"
   #else
@@ -176,9 +172,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"invalid usage",
       new PlaceAssert(bhl, @"
   #if FOO
@@ -199,9 +193,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"mismatched input",
       new PlaceAssert(bhl, @"
   #if
@@ -224,9 +216,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"return value is missing",
       new PlaceAssert(bhl, @"
       return
@@ -248,9 +238,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"incompatible types: 'bool' and 'int'",
       new PlaceAssert(bhl, @"
       return 10
@@ -277,9 +265,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"incompatible types: 'string' and 'int'",
       new PlaceAssert(bhl, @"
       string f = a

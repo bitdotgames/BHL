@@ -2,21 +2,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
 {
   internal SymbolsStorage members;
 
   public EnumSymbol(Origin origin, string name)
-     : base(origin, name)
+    : base(origin, name)
   {
     this.members = new SymbolsStorage(this);
   }
 
-  public IScope GetFallbackScope() { return scope; }
+  public IScope GetFallbackScope()
+  {
+    return scope;
+  }
 
-  public Symbol Resolve(string name) 
+  public Symbol Resolve(string name)
   {
     return members.Find(name);
   }
@@ -28,7 +32,11 @@ public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
     members.Add(sym);
   }
 
-  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    return members.GetEnumerator();
+  }
+
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public EnumItemSymbol FindValue(string name)
@@ -44,7 +52,7 @@ public abstract class EnumSymbol : Symbol, IScope, IType, IEnumerable<Symbol>
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
   }
-  
+
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();
@@ -57,17 +65,19 @@ public class EnumSymbolScript : EnumSymbol
 
   public EnumSymbolScript(Origin origin, string name)
     : base(origin, name)
-  {}
+  {
+  }
 
   //marshall factory version
   public EnumSymbolScript()
     : base(null, null)
-  {}
+  {
+  }
 
   //0 - OK, 1 - duplicate key, 2 - duplicate value
   public int TryAddItem(Origin origin, string name, int val)
   {
-    for(int i=0;i<members.Count;++i)
+    for(int i = 0; i < members.Count; ++i)
     {
       var m = (EnumItemSymbol)members[i];
       if(m.val == val)
@@ -94,7 +104,7 @@ public class EnumSymbolScript : EnumSymbol
     marshall.Marshall.Sync(ctx, ref members);
     if(ctx.is_read)
     {
-      for(int i=0;i<members.Count;++i)
+      for(int i = 0; i < members.Count; ++i)
       {
         var item = (EnumItemSymbol)members[i];
         item.scope = this;
@@ -125,35 +135,37 @@ public class EnumSymbolNative : EnumSymbol, INativeType
   }
 }
 
-public class EnumItemSymbol : Symbol, IType 
+public class EnumItemSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 15;
 
-  public EnumSymbol owner {
-    get {
-      return scope as EnumSymbol;
-    }
+  public EnumSymbol owner
+  {
+    get { return scope as EnumSymbol; }
   }
+
   public int val;
 
-  public EnumItemSymbol(Origin origin, string name, int val = 0) 
-    : base(origin, name) 
+  public EnumItemSymbol(Origin origin, string name, int val = 0)
+    : base(origin, name)
   {
     this.val = val;
   }
 
   //marshall factory version
-  public EnumItemSymbol() 
+  public EnumItemSymbol()
     : base(null, null)
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
     return CLASS_ID;
   }
-  
+
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
 
   public override void Sync(marshall.SyncContext ctx)
   {

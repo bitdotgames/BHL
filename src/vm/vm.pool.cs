@@ -1,6 +1,6 @@
+namespace bhl
+{
 
-namespace bhl {
- 
 public partial class VM : INamedResolver
 {
   public Pool<Val> vals_pool = new Pool<Val>();

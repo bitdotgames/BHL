@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
 public partial class VM : INamedResolver
 {
@@ -22,9 +23,7 @@ public partial class VM : INamedResolver
 
     public FuncAddr func_addr
     {
-      get {
-        return new FuncAddr() { module = module, ip = func_ip, fsn = native };
-      }
+      get { return new FuncAddr() { module = module, ip = func_ip, fsn = native }; }
     }
 
     static public FuncPtr New(VM vm)
@@ -100,11 +99,12 @@ public partial class VM : INamedResolver
       this.module = null;
       this.func_ip = -1;
       this.native = null;
-      for(int i=upvals.Count;i-- > 0;)
+      for(int i = upvals.Count; i-- > 0;)
       {
         //NOTE: let's check if it exists
         upvals[i]?.Release();
       }
+
       upvals.Clear();
     }
 
@@ -143,12 +143,12 @@ public partial class VM : INamedResolver
       {
         frm.Init(fb, return_stack, module, func_ip);
 
-        for(int i=0;i<upvals.Count;++i)
+        for(int i = 0; i < upvals.Count; ++i)
         {
           var upval = upvals[i];
           if(upval != null)
           {
-            frm.locals.Count = i+1;
+            frm.locals.Count = i + 1;
             upval.Retain();
             frm.locals[i] = upval;
           }

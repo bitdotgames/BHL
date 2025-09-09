@@ -2,9 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
-public class Namespace : Symbol, IScope, 
+public class Namespace : Symbol, IScope,
   marshall.IMarshallable, IEnumerable<Symbol>, INamedResolver
 {
   public const uint CLASS_ID = 20;
@@ -12,12 +13,13 @@ public class Namespace : Symbol, IScope,
   public Module module;
 
   internal List<Namespace> links = new List<Namespace>();
+
   //NOTE: paramater which reflects 'how deeply' the namespace was linked from other namespaces,
   //      it's reset to 0 once we add any real members to namespace. 'Deeply linked' namespaces
   //      are ignored during Resolve(..) which means the namespace was locally added from another
   //      imported module which in its turn also imported it.
   internal int indirectness = 0;
-  
+
   public SymbolsStorage members;
 
   public override uint ClassId()
@@ -34,12 +36,14 @@ public class Namespace : Symbol, IScope,
 
   public Namespace(Module module)
     : this(module, "")
-  {}
+  {
+  }
 
   //marshall version 
   public Namespace()
     : this(null, "")
-  {}
+  {
+  }
 
   public override string ToString()
   {
@@ -56,15 +60,15 @@ public class Namespace : Symbol, IScope,
 
   public void ForAllLocalSymbols(System.Action<Symbol> cb)
   {
-    for(int m=0;m<members.Count;++m)
+    for(int m = 0; m < members.Count; ++m)
     {
       var member = members[m];
       var ns = member as Namespace;
-      
+
       //NOTE: taking into consideration only 'direct' namespaces
       if(ns == null || ns.indirectness == 0)
         cb(member);
-      
+
       if(ns != null)
       {
         if(ns.indirectness == 0)
@@ -78,8 +82,8 @@ public class Namespace : Symbol, IScope,
   public Namespace Nest(string name)
   {
     var sym = Resolve(name);
-    if(sym != null && !(sym is Namespace)) 
-      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'"); 
+    if(sym != null && !(sym is Namespace))
+      throw new SymbolError(sym, "already defined symbol '" + sym.name + "'");
 
     if(sym == null)
     {
@@ -102,9 +106,10 @@ public class Namespace : Symbol, IScope,
     public Symbol local;
     public Symbol other;
 
-    public bool Ok { 
-      get { return local == null && other == null; } 
-    } 
+    public bool Ok
+    {
+      get { return local == null && other == null; }
+    }
 
     public LinkConflict(Symbol local, Symbol other)
     {
@@ -117,13 +122,13 @@ public class Namespace : Symbol, IScope,
   {
     if(IsLinked(other))
       return default(LinkConflict);
-    
-    for(int i=0;i<other.members.Count;++i)
+
+    for(int i = 0; i < other.members.Count; ++i)
     {
       var other_symb = other.members[i];
 
       var this_symb = _Resolve(other_symb.name);
-      
+
       if(other_symb is Namespace other_ns)
       {
         if(this_symb is Namespace this_ns)
@@ -169,11 +174,11 @@ public class Namespace : Symbol, IScope,
   public Namespace UnlinkAll()
   {
     var clean = new Namespace(module, name);
-    
-    for(int i=0;i<members.Count;++i)
+
+    for(int i = 0; i < members.Count; ++i)
     {
       var s = members[i];
-      var ns = s as Namespace; 
+      var ns = s as Namespace;
       if(ns == null || ns.indirectness == 0)
         clean.members.Add(s);
     }
@@ -181,17 +186,20 @@ public class Namespace : Symbol, IScope,
     return clean;
   }
 
-  public IScope GetFallbackScope() { return scope; }
+  public IScope GetFallbackScope()
+  {
+    return scope;
+  }
 
   public IEnumerator<Symbol> GetEnumerator()
   {
     //TODO: this is to remove any duplicated symbols
     //      (like symbols in linked namespaces)
     var seen_names = new HashSet<string>();
-    
+
     foreach(var s in members)
     {
-      var ns = s as Namespace; 
+      var ns = s as Namespace;
       if(ns == null || ns.indirectness <= 1)
       {
         seen_names.Add(s.name);
@@ -205,14 +213,14 @@ public class Namespace : Symbol, IScope,
       {
         if(seen_names.Contains(s.name))
           continue;
-        
-        var ns = s as Namespace; 
+
+        var ns = s as Namespace;
         if(ns == null || ns.indirectness == 0)
           yield return s;
       }
     }
   }
-  
+
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public virtual Symbol Resolve(string name)
@@ -222,7 +230,7 @@ public class Namespace : Symbol, IScope,
     {
       //NOTE: allowing only namespaces which have indirectness <= 1
       //      (with any real members or directly imported ones)
-      var ns = s as Namespace; 
+      var ns = s as Namespace;
       if(ns == null || ns.indirectness <= 1)
         return s;
     }
@@ -232,7 +240,7 @@ public class Namespace : Symbol, IScope,
       s = lnk.members.Find(name);
       if(s != null)
       {
-        var ns = s as Namespace; 
+        var ns = s as Namespace;
         if(ns == null || ns.indirectness == 0)
           return s;
       }
@@ -246,7 +254,7 @@ public class Namespace : Symbol, IScope,
     var s = members.Find(name);
     if(s != null)
       return s;
-    
+
     foreach(var lnk in links)
     {
       s = lnk.members.Find(name);
@@ -256,7 +264,7 @@ public class Namespace : Symbol, IScope,
 
     return null;
   }
-    
+
   public virtual void Define(Symbol sym)
   {
     if(Resolve(sym.name) != null)
@@ -272,16 +280,16 @@ public class Namespace : Symbol, IScope,
     //NOTE: let's reset 'indirectness', it's now considered a 'real' namespace
     //      since it now contains real symbols
     indirectness = 0;
-    
+
     members.Add(sym);
   }
-  
+
   public override void IndexTypeRefs(TypeRefIndex refs)
   {
     refs.Index(members.list);
   }
 
-  public override void Sync(marshall.SyncContext ctx) 
+  public override void Sync(marshall.SyncContext ctx)
   {
     //NOTE: persisting only essential data since other pieces
     //      will be restored (e.g module setup, during imports, etc)

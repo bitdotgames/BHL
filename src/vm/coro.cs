@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface ICoroutine
 {
@@ -9,7 +10,7 @@ public interface ICoroutine
   void Cleanup(VM.Frame frm, VM.ExecState exec);
 }
 
-public interface IInspectableCoroutine 
+public interface IInspectableCoroutine
 {
   int Count { get; }
   ICoroutine At(int i);
@@ -20,7 +21,10 @@ public abstract class Coroutine : ICoroutine
   internal Pool<Coroutine> pool;
 
   public abstract void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status);
-  public virtual void Cleanup(VM.Frame frm, VM.ExecState exec) {}
+
+  public virtual void Cleanup(VM.Frame frm, VM.ExecState exec)
+  {
+  }
 }
 
 public class CoroutinePool
@@ -28,12 +32,14 @@ public class CoroutinePool
   //TODO: add debug inspection for concrete types?
   static class PoolHolder<T> where T : Coroutine
   {
-    [ThreadStatic]
-    static public Pool<Coroutine> _pool;
-    static public Pool<Coroutine> pool {
-      get {
-        if(_pool == null) 
-          _pool = new Pool<Coroutine>(); 
+    [ThreadStatic] static public Pool<Coroutine> _pool;
+
+    static public Pool<Coroutine> pool
+    {
+      get
+      {
+        if(_pool == null)
+          _pool = new Pool<Coroutine>();
         return _pool;
       }
     }
@@ -44,24 +50,28 @@ public class CoroutinePool
   internal int news;
   internal int dels;
 
-  public int HitCount {
+  public int HitCount
+  {
     get { return hits; }
   }
 
-  public int MissCount {
+  public int MissCount
+  {
     get { return miss; }
   }
 
-  public int DelCount {
+  public int DelCount
+  {
     get { return dels; }
   }
 
-  public int NewCount {
+  public int NewCount
+  {
     get { return news; }
   }
 
 #if BHL_TEST
-  public HashSet<Pool<Coroutine>> pools_tracker = new HashSet<Pool<Coroutine>>(); 
+  public HashSet<Pool<Coroutine>> pools_tracker = new HashSet<Pool<Coroutine>>();
 #endif
 
   static public T New<T>(VM vm) where T : Coroutine, new()
@@ -119,7 +129,7 @@ public class CoroutinePool
 
     if(coro is IInspectableCoroutine ti)
     {
-      for(int i=0;i<ti.Count;++i)
+      for(int i = 0; i < ti.Count; ++i)
         Dump(ti.At(i), level + 1);
     }
 

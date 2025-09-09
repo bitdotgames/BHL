@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentHoverService : IService
 {
@@ -38,7 +39,7 @@ public class TextDocumentHoverService : IService
         }
       }));
     }
-    
+
     return Task.FromResult(new RpcResult(null));
   }
 }

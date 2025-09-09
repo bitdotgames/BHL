@@ -13,12 +13,15 @@ public abstract class bhlLexerBase : Lexer
 
   public bhlLexerBase(ICharStream input)
     : base(input)
-  {}
+  {
+  }
 
   public bhlLexerBase(ICharStream input, TextWriter output, TextWriter errorOutput) : this(input)
-  {}
+  {
+  }
 
-  public bool IsStartOfFile(){
+  public bool IsStartOfFile()
+  {
     return _lastToken == null;
   }
 
@@ -57,10 +60,12 @@ public abstract class bhlParserBase : Parser
 {
   public bhlParserBase(ITokenStream input)
     : base(input)
-  {}
+  {
+  }
 
   public bhlParserBase(ITokenStream input, TextWriter output, TextWriter errorOutput) : this(input)
-  {}
+  {
+  }
 
   /// <summary>
   /// Whether the previous token value equals to str
@@ -80,7 +85,7 @@ public abstract class bhlParserBase : Parser
   {
     return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACE;
   }
-  
+
   protected bool closeBracket()
   {
     return ((ITokenStream)this.InputStream).LT(1).Type == CLOSE_BRACKET;
@@ -127,7 +132,7 @@ public abstract class bhlParserBase : Parser
     int type = token.Type;
 
     // Check if the token is, or contains a line terminator.
-    return 
+    return
       type == NL ||
       (type == DELIMITED_COMMENT && (text.Contains("\r") || text.Contains("\n")));
   }
@@ -136,7 +141,7 @@ public abstract class bhlParserBase : Parser
   {
     return !this.lineTerminator();
   }
-  
+
   protected bool whiteSpace()
   {
     //NOTE: CurrentToken contains prefetched new token, we need  
@@ -146,7 +151,7 @@ public abstract class bhlParserBase : Parser
     // Get the token ahead of the current index.
     int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
     IToken token = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
-    
+
     if(token.Channel != Lexer.Hidden)
     {
       // We're only interested in tokens on the Hidden channel.
@@ -155,7 +160,7 @@ public abstract class bhlParserBase : Parser
 
     return token.Type == WS;
   }
-  
+
   protected bool notWhiteSpace()
   {
     return !this.whiteSpace();

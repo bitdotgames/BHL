@@ -1,11 +1,11 @@
-
 #if BHL_FRONT
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 #endif
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public struct SourcePos
 {
   public int line;
@@ -30,7 +30,7 @@ public struct SourceRange
 
   public SourceRange(int line, int column)
   {
-    this.start = new SourcePos(line, column); 
+    this.start = new SourcePos(line, column);
     this.end = new SourcePos(line, column);
   }
 

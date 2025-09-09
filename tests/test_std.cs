@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.IO;
 using Xunit;
 
@@ -15,7 +15,7 @@ public class TestStd : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var w = new StringWriter(); 
+    var w = new StringWriter();
     var std_out = Console.Out;
     Console.SetOut(w);
 

@@ -14,7 +14,8 @@ using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp.proto;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class Server
 {
@@ -68,7 +69,7 @@ public class Server
 
         var pms = method.GetParameters();
         if(pms.Length == 1)
-          sm.arg_type = pms[0].ParameterType; 
+          sm.arg_type = pms[0].ParameterType;
         else if(pms.Length == 0)
           sm.arg_type = null;
         else
@@ -77,6 +78,7 @@ public class Server
         name2method.Add(name, sm);
       }
     }
+
     services.Add(service);
   }
 
@@ -109,7 +111,7 @@ public class Server
       string json = await connection.Read(ct);
       if(string.IsNullOrEmpty(json))
         return false;
-    
+
       string response = await Handle(json);
 
       if(!string.IsNullOrEmpty(response))
@@ -122,17 +124,17 @@ public class Server
       logger.Log(0, e.ToString());
       return false;
     }
-    
+
     return true;
   }
 
   public async Task<string> Handle(string req_json)
   {
     var sw = Stopwatch.StartNew();
-    
+
     Request req = null;
     Response rsp = null;
-    
+
     try
     {
       req = req_json.FromJson<Request>();
@@ -154,9 +156,10 @@ public class Server
 
     string resp_json = string.Empty;
 
-    logger.Log(1, $"> ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 500 ? req_json.Substring(0,500) + ".." : req_json)}");
-    
-    //NOTE: if there's no response error by this time 
+    logger.Log(1,
+      $"> ({req?.method}, id: {req?.id.Value}) {(req_json.Length > 500 ? req_json.Substring(0, 500) + ".." : req_json)}");
+
+    //NOTE: if there's no response error by this time
     //      let's handle the request
     if(req != null && rsp == null)
     {
@@ -175,8 +178,8 @@ public class Server
 
     if(rsp != null)
     {
-      //NOTE: handling special type of response: server exit 
-      if((rsp.error?.code??0) == (int)ErrorCodes.Exit)
+      //NOTE: handling special type of response: server exit
+      if((rsp.error?.code ?? 0) == (int)ErrorCodes.Exit)
         going_to_exit = true;
       else if(rsp.error != null || rsp.result != null)
         resp_json = rsp.ToJson();
@@ -187,15 +190,16 @@ public class Server
     }
 
     sw.Stop();
-    logger.Log(1, $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds/1000.0f,2)} sec) {(resp_json?.Length > 500 ? resp_json?.Substring(0,500) + ".." : resp_json)}");
-    
+    logger.Log(1,
+      $"< ({req?.method}, id: {req?.id.Value}) done({Math.Round(sw.ElapsedMilliseconds / 1000.0f, 2)} sec) {(resp_json?.Length > 500 ? resp_json?.Substring(0, 500) + ".." : resp_json)}");
+
     return resp_json;
   }
-  
+
   public async Task<Response> HandleRequest(Request request)
   {
     Response response;
-    
+
     try
     {
       if(!string.IsNullOrEmpty(request.method))
@@ -217,7 +221,7 @@ public class Server
       {
         response = new Response
         {
-          id = request.id, 
+          id = request.id,
           error = new ResponseError
           {
             code = (int)ErrorCodes.InvalidRequest,
@@ -232,7 +236,7 @@ public class Server
 
       response = new Response
       {
-        id = request.id, 
+        id = request.id,
         error = new ResponseError
         {
           code = (int)ErrorCodes.InternalError,
@@ -240,7 +244,7 @@ public class Server
         }
       };
     }
-    
+
     return response;
   }
 
@@ -255,7 +259,7 @@ public class Server
       });
     }
 
-    if(!name2method.TryGetValue(name, out var sm)) 
+    if(!name2method.TryGetValue(name, out var sm))
     {
       return RpcResult.Error(new ResponseError
       {
@@ -263,7 +267,7 @@ public class Server
         message = "Method not found: " + name
       });
     }
-    
+
     object[] args = null;
     if(sm.arg_type != null)
     {
@@ -282,7 +286,7 @@ public class Server
         });
       }
     }
-    
+
     return await (Task<RpcResult>)sm.method.Invoke(sm.service, args);
   }
 
@@ -290,11 +294,11 @@ public class Server
   {
     string json = notification.ToJson();
 
-    logger.Log(1, $"<< ({notification.method} {(json?.Length > 500 ? json?.Substring(0,500) + ".." : json)}");
+    logger.Log(1, $"<< ({notification.method} {(json?.Length > 500 ? json?.Substring(0, 500) + ".." : json)}");
 
     await connection.Write(notification.ToJson(), ct);
   }
-  
+
   static string FindRpcMethodName(MethodInfo m)
   {
     foreach(var attribute in m.GetCustomAttributes(true))
@@ -306,101 +310,100 @@ public class Server
     return null;
   }
 
-  public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output, Workspace workspace, CancellationToken ct)
+  public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output,
+    Workspace workspace, CancellationToken ct)
   {
     Console.OutputEncoding = new UTF8Encoding();
 
     IObserver<WorkDoneProgressReport> work_done = null;
-    
+
     var server = await LanguageServer.From(options => options
-      .WithInput(input)
-      .WithOutput(output)
-      .ConfigureLogging(
-        x => x
+        .WithInput(input)
+        .WithOutput(output)
+        .ConfigureLogging(x => x
           .AddSerilog(logger)
           .AddLanguageProtocolLogging()
           .SetMinimumLevel(LogLevel.Trace)
-      )
-      .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
-      .WithServices(services => 
-        services
-          .AddSingleton(workspace)
         )
-      .WithHandler<TextDocumentHandler>()
-      .WithHandler<SemanticTokensHandler>()
-      .OnInitialize(async (server, request, token) =>
-      {
-        var ts = new Types();
-        ProjectConf proj = null;
-        
-        if(request.WorkspaceFolders != null)
+        .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
+        .WithServices(services =>
+          services
+            .AddSingleton(workspace)
+        )
+        .WithHandler<TextDocumentHandler>()
+        .WithHandler<SemanticTokensHandler>()
+        .OnInitialize(async (server, request, token) =>
         {
-          foreach(var wf in request.WorkspaceFolders)
+          var ts = new Types();
+          ProjectConf proj = null;
+
+          if(request.WorkspaceFolders != null)
           {
-            proj = ProjectConf.TryReadFromDir(wf.Uri.Path);
-            if(proj != null)
-              break;
-          }
-        }
-        else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
-        {
-          proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
-        }
-        else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
-        {
-          proj = ProjectConf.TryReadFromDir(request.RootPath);
-        }                                                                         
-        else
-          logger.Error("No root path specified");
-
-        if(proj == null)
-          proj = new ProjectConf();
-
-        proj.LoadBindings().Register(ts);
-    
-        workspace.Init(ts, proj);
-
-        //TODO: run it in async manner with progress
-        workspace.IndexFiles();
-        
-        var manager = server.WorkDoneManager.For(
-          request, new WorkDoneProgressBegin
-          {
-            Title = "Server is starting...",
-            Percentage = 10,
-          }
-        );
-        work_done = manager;
-        
-        await Task.Delay(500).ConfigureAwait(false);
-        
-        manager.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
-      })
-      .OnInitialized(
-        async (server, request, response, token) =>
-        {
-          work_done.OnNext(
-            new WorkDoneProgressReport
+            foreach(var wf in request.WorkspaceFolders)
             {
-              Percentage = 40,
-              Message = "loading almost done",
+              proj = ProjectConf.TryReadFromDir(wf.Uri.Path);
+              if(proj != null)
+                break;
+            }
+          }
+          else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
+          {
+            proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
+          }
+          else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
+          {
+            proj = ProjectConf.TryReadFromDir(request.RootPath);
+          }
+          else
+            logger.Error("No root path specified");
+
+          if(proj == null)
+            proj = new ProjectConf();
+
+          proj.LoadBindings().Register(ts);
+
+          workspace.Init(ts, proj);
+
+          //TODO: run it in async manner with progress
+          workspace.IndexFiles();
+
+          var manager = server.WorkDoneManager.For(
+            request, new WorkDoneProgressBegin
+            {
+              Title = "Server is starting...",
+              Percentage = 10,
             }
           );
+          work_done = manager;
 
           await Task.Delay(500).ConfigureAwait(false);
 
-          work_done.OnNext(
-            new WorkDoneProgressReport
-            {
-              Message = "loading done",
-              Percentage = 100,
-            }
-          );
-          work_done.OnCompleted();
-        }
-      )
-    , 
-    ct
+          manager.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
+        })
+        .OnInitialized(async (server, request, response, token) =>
+          {
+            work_done.OnNext(
+              new WorkDoneProgressReport
+              {
+                Percentage = 40,
+                Message = "loading almost done",
+              }
+            );
+
+            await Task.Delay(500).ConfigureAwait(false);
+
+            work_done.OnNext(
+              new WorkDoneProgressReport
+              {
+                Message = "loading done",
+                Percentage = 100,
+              }
+            );
+            work_done.OnCompleted();
+          }
+        )
+      ,
+      ct
     );
     return server;
   }

@@ -1,9 +1,9 @@
-
 using System;
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class TupleType : IEphemeralType, IEquatable<TupleType>
 {
   public const uint CLASS_ID = 16;
@@ -12,12 +12,14 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
 
   List<ProxyType> items = new List<ProxyType>();
 
-  public string GetName() { return name; }
+  public string GetName()
+  {
+    return name;
+  }
 
-  public int Count {
-    get {
-      return items.Count;
-    }
+  public int Count
+  {
+    get { return items.Count; }
   }
 
   public TupleType(params ProxyType[] items)
@@ -29,13 +31,12 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
 
   //symbol factory version
   public TupleType()
-  {}
+  {
+  }
 
   public ProxyType this[int index]
   {
-    get { 
-      return items[index]; 
-    }
+    get { return items[index]; }
   }
 
   public void Add(ProxyType item)
@@ -47,7 +48,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
   void Update()
   {
     string tmp = "";
-    for(int i=0;i<items.Count;++i)
+    for(int i = 0; i < items.Count; ++i)
     {
       if(i > 0)
         tmp += ",";
@@ -66,7 +67,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
   {
     refs.Index(items);
   }
-  
+
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.SyncTypeRefs(ctx, items);
@@ -89,7 +90,7 @@ public class TupleType : IEphemeralType, IEquatable<TupleType>
       return true;
     if(items.Count != o.items.Count)
       return false;
-    for(int i=0;i<items.Count;++i)
+    for(int i = 0; i < items.Count; ++i)
       if(!items[i].Equals(o.items[i]))
         return false;
     return true;

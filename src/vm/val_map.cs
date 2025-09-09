@@ -3,56 +3,53 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
-public class ValMap : IDictionary<Val,Val>, IValRefcounted
+public class ValMap : IDictionary<Val, Val>, IValRefcounted
 {
   //NOTE: Since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason
   //      we store the key alongside with the value in a KeyValuePair
-  Dictionary<Val,KeyValuePair<Val, Val>> map = 
-    new Dictionary<Val,KeyValuePair<Val,Val>>(new Comparer());
+  Dictionary<Val, KeyValuePair<Val, Val>> map =
+    new Dictionary<Val, KeyValuePair<Val, Val>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
   public int _refs;
 
-  public int refs => _refs; 
+  public int refs => _refs;
 
   public VM vm;
 
   //TODO: make it 'poolable' in the future
-  public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<Val,Val>>
+  public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<Val, Val>>
   {
-    Dictionary<Val,KeyValuePair<Val, Val>>.Enumerator en;
+    Dictionary<Val, KeyValuePair<Val, Val>>.Enumerator en;
 
     public Enumerator(ValMap m)
     {
       en = m.map.GetEnumerator();
-
-    }
-    public DictionaryEntry Entry {
-      get {
-        throw new NotImplementedException();
-      }
     }
 
-    public object Current {
-      get {
-        throw new NotImplementedException();
-      }
+    public DictionaryEntry Entry
+    {
+      get { throw new NotImplementedException(); }
     }
 
-    public object Value {
-      get {
-        return en.Current.Value.Value;
-      }
+    public object Current
+    {
+      get { throw new NotImplementedException(); }
     }
 
-    public object Key {
-      get {
-        return en.Current.Key;
-      }
+    public object Value
+    {
+      get { return en.Current.Value.Value; }
+    }
+
+    public object Key
+    {
+      get { return en.Current.Key; }
     }
 
     public bool MoveNext()
@@ -65,7 +62,8 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       throw new NotImplementedException();
     }
 
-    KeyValuePair<Val, Val> IEnumerator<KeyValuePair<Val, Val>>.Current {
+    KeyValuePair<Val, Val> IEnumerator<KeyValuePair<Val, Val>>.Current
+    {
       get
       {
         var tmp = en.Current;
@@ -81,15 +79,27 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
 
   //////////////////IDictionary//////////////////
 
-  public int Count { get { return map.Count; } }
+  public int Count
+  {
+    get { return map.Count; }
+  }
 
-  public bool IsReadOnly { get { return false; } }
+  public bool IsReadOnly
+  {
+    get { return false; }
+  }
 
-  public ICollection<Val> Keys { get { return map.Keys; } }
+  public ICollection<Val> Keys
+  {
+    get { return map.Keys; }
+  }
 
-  public ICollection<Val> Values { get { throw new NotImplementedException(); } }
+  public ICollection<Val> Values
+  {
+    get { throw new NotImplementedException(); }
+  }
 
-  public void Add(KeyValuePair<Val,Val> p)
+  public void Add(KeyValuePair<Val, Val> p)
   {
     throw new NotImplementedException();
   }
@@ -107,17 +117,14 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       en.Current.Key.Release();
       en.Current.Value.Value.Release();
     }
+
     map.Clear();
   }
 
   public Val this[Val k]
   {
-    get {
-      return map[k].Value;
-    }
-    set {
-      map[k] = new KeyValuePair<Val,Val>(k, value);
-    }
+    get { return map[k].Value; }
+    set { map[k] = new KeyValuePair<Val, Val>(k, value); }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,7 +142,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
     else
     {
       k = k.CloneValue();
-      map[k] = new KeyValuePair<Val,Val>(k, value.CloneValue());
+      map[k] = new KeyValuePair<Val, Val>(k, value.CloneValue());
     }
   }
 
@@ -165,20 +172,21 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       prev.Key.Release();
       prev.Value.Release();
     }
+
     return removed;
   }
 
-  public bool Remove(KeyValuePair<Val,Val> p)
+  public bool Remove(KeyValuePair<Val, Val> p)
   {
     throw new NotImplementedException();
   }
 
-  public void CopyTo(KeyValuePair<Val,Val>[] arr, int len)
+  public void CopyTo(KeyValuePair<Val, Val>[] arr, int len)
   {
     throw new NotImplementedException();
   }
 
-  public IEnumerator<KeyValuePair<Val,Val>> GetEnumerator()
+  public IEnumerator<KeyValuePair<Val, Val>> GetEnumerator()
   {
     return new Enumerator(this);
   }
@@ -233,6 +241,7 @@ public class ValMap : IDictionary<Val,Val>, IValRefcounted
       if(map._refs != -1)
         throw new Exception("Expected to be released, refs " + map._refs);
     }
+
     map._refs = 1;
 
     return map;

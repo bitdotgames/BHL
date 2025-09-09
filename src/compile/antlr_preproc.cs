@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace bhl {
+namespace bhl
+{
 
 public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 {
@@ -36,7 +37,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   {
     internal IParseTree if_node;
     internal bool else_found;
-    internal Annotated expression; 
+    internal Annotated expression;
   }
 
   Stack<IfBlock> ifs = new Stack<IfBlock>();
@@ -44,9 +45,9 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   const int SHARP_CODE = 35;
 
   public static Stream ProcessStream(
-    Module module, 
+    Module module,
     CompileErrorsHub err_hub,
-    Stream src, 
+    Stream src,
     HashSet<string> defines,
     out ANTLR_Parsed preproc_parsed
   )
@@ -59,11 +60,11 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     src.Position = pos;
     if(!need_preproc)
       return src;
-    
+
     var preproc = new ANTLR_Preprocessor(
-      module, 
+      module,
       err_hub,
-      src, 
+      src,
       defines
     );
 
@@ -81,10 +82,10 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
     int total_bytes = (int)src.Length;
     do
     {
-      int n = src.Read(buf, 0, 1024); 
+      int n = src.Read(buf, 0, 1024);
 
       //check if there's any # character
-      for(int i=0;i<n;++i)
+      for(int i = 0; i < n; ++i)
         if(buf[i] == SHARP_CODE)
           return true;
 
@@ -95,9 +96,9 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   }
 
   public ANTLR_Preprocessor(
-    Module module, 
+    Module module,
     CompileErrorsHub err_hub,
-    Stream src, 
+    Stream src,
     HashSet<string> defines
   )
   {
@@ -113,11 +114,12 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
     public CustomInputStream(Stream src)
       : base(src)
-    {}
+    {
+    }
   }
 
   public Stream Process(bool length_strict_check = false)
-  {                          
+  {
     input = new CustomInputStream(src);
     var lex = new bhlPreprocLexer(input);
     tokens = new CommonTokenStream(lex);
@@ -189,16 +191,16 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
   void CopyBytes(ParserRuleContext ctx)
   {
-    var t1 = tokens.Get(ctx.Start.TokenIndex); 
-    var t2 = tokens.Get(ctx.Stop.TokenIndex); 
+    var t1 = tokens.Get(ctx.Start.TokenIndex);
+    var t2 = tokens.Get(ctx.Stop.TokenIndex);
 
     writer.Write(input.Data, t1.StartIndex, t2.StopIndex - t1.StartIndex + 1);
   }
-  
+
   void ConvertToWhiteSpace(ParserRuleContext ctx)
   {
-    var t1 = tokens.Get(ctx.Start.TokenIndex); 
-    var t2 = tokens.Get(ctx.Stop.TokenIndex); 
+    var t1 = tokens.Get(ctx.Start.TokenIndex);
+    var t2 = tokens.Get(ctx.Stop.TokenIndex);
 
     for(int i = t1.StartIndex; i < (t2.StopIndex + 1); ++i)
     {
@@ -224,8 +226,9 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
       else
       {
         Visit(ctx.preprocessor_expression());
-         
-        ifs.Push(new IfBlock() { 
+
+        ifs.Push(new IfBlock()
+          {
             if_node = ctx,
             expression = Annotate(ctx.preprocessor_expression())
           }
@@ -251,6 +254,7 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
       else
         ifs.Pop();
     }
+
     return null;
   }
 
@@ -281,10 +285,11 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 
       annotated_nodes.Add(t, at);
     }
+
     return at;
   }
 
-  void AddError(IParseTree place, string msg) 
+  void AddError(IParseTree place, string msg)
   {
     err_hub.errors.Add(new ParseError(module, place, tokens, msg));
   }

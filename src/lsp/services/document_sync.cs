@@ -1,7 +1,8 @@
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentSynchronizationService : IService
 {
@@ -11,7 +12,7 @@ public class TextDocumentSynchronizationService : IService
   {
     this.workspace = srv.workspace;
   }
-  
+
   public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
   {
     if(cc.textDocument?.synchronization != null)
@@ -32,7 +33,7 @@ public class TextDocumentSynchronizationService : IService
 
     return Task.FromResult(RpcResult.Null);
   }
-  
+
   [RpcMethod("textDocument/didChange")]
   public Task<RpcResult> DidChangeTextDocument(DidChangeTextDocumentParams args)
   {
@@ -45,7 +46,7 @@ public class TextDocumentSynchronizationService : IService
           message = "Update failed"
         }));
     }
-    
+
     return Task.FromResult(RpcResult.Null);
   }
 
@@ -54,7 +55,7 @@ public class TextDocumentSynchronizationService : IService
   {
     return Task.FromResult(RpcResult.Null);
   }
-  
+
   [RpcMethod("textDocument/willSave")]
   public Task<RpcResult> WillSaveTextDocument(WillSaveTextDocumentParams args)
   {

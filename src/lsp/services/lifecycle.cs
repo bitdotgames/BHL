@@ -1,15 +1,16 @@
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
-  
+namespace bhl.lsp
+{
+
 public class LifecycleService : IService
 {
   Server srv;
   Workspace workspace;
 
   public int? process_id { get; private set; }
-  
+
   public LifecycleService(Server srv)
   {
     this.srv = srv;
@@ -17,13 +18,14 @@ public class LifecycleService : IService
   }
 
   public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
-  {}
+  {
+  }
 
   [RpcMethod("initialize")]
   public Task<RpcResult> Initialize(InitializeParams args)
   {
     process_id = args.processId;
-    
+
     var ts = new Types();
     ProjectConf proj = null;
 
@@ -43,7 +45,7 @@ public class LifecycleService : IService
     else if(!string.IsNullOrEmpty(args.rootPath)) // @deprecated in favour of `rootUri`.
     {
       proj = ProjectConf.TryReadFromDir(args.rootPath);
-    }                                                                         
+    }
 
     if(proj == null)
       proj = new ProjectConf();
@@ -51,7 +53,7 @@ public class LifecycleService : IService
     srv.logger.Log(1, "Initializing workspace from project file '" + proj.proj_file + "'");
 
     proj.LoadBindings().Register(ts);
-    
+
     workspace.Init(ts, proj);
 
     //TODO: run it in background?
@@ -60,7 +62,7 @@ public class LifecycleService : IService
     var server_capabilities = srv.capabilities;
     foreach(var service in srv.services)
       service.GetCapabilities(args.capabilities, ref server_capabilities);
-    
+
     return Task.FromResult(new RpcResult(new InitializeResult
     {
       capabilities = server_capabilities,
@@ -85,7 +87,7 @@ public class LifecycleService : IService
 
     return Task.FromResult(new RpcResult(null));
   }
-  
+
   [RpcMethod("$/cancelRequest")]
   public Task<RpcResult> CancelRequest(CancelParams args)
   {

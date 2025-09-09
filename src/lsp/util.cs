@@ -3,7 +3,8 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Newtonsoft.Json;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class CodeIndex
 {
@@ -15,7 +16,7 @@ public class CodeIndex
     length = text.Length;
 
     line2byte_offset.Clear();
-    
+
     if(length > 0)
       line2byte_offset.Add(0);
 
@@ -39,7 +40,7 @@ public class CodeIndex
 
     return -1;
   }
-  
+
   public int CalcByteIndex(int line)
   {
     if(line2byte_offset.Count > 0 && line < line2byte_offset.Count)
@@ -47,29 +48,29 @@ public class CodeIndex
 
     return -1;
   }
-  
+
   public SourcePos GetIndexPosition(int index)
   {
     if(index >= length)
-      return new SourcePos(-1, -1); 
+      return new SourcePos(-1, -1);
 
     // Binary search.
     int low = 0;
     int high = line2byte_offset.Count - 1;
     int i = 0;
-    
+
     while(low <= high)
     {
       i = (low + high) / 2;
       var v = line2byte_offset[i];
-      if(v < index) 
+      if(v < index)
         low = i + 1;
-      else if(v > index) 
+      else if(v > index)
         high = i - 1;
-      else 
+      else
         break;
     }
-    
+
     var min = low <= high ? i : high;
     return new SourcePos(min, index - line2byte_offset[min]);
   }

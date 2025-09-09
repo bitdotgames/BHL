@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 //public class ParserAnalyzer : bhlBaseVisitor<object>
 //{
@@ -58,4 +59,5 @@ namespace bhl.lsp {
 //  }
 //  
 //}
+
 }

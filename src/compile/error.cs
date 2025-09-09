@@ -7,7 +7,8 @@ using Antlr4.Runtime.Dfa;
 using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Sharpen;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface ICompileError
 {
@@ -17,13 +18,13 @@ public interface ICompileError
   SourceRange range { get; }
 }
 
-public class CompileErrors : List<ICompileError> 
-{ 
-  public override string ToString() 
+public class CompileErrors : List<ICompileError>
+{
+  public override string ToString()
   {
     string str = "";
-    for(int i=0;i<Count;++i)
-      str += "#" + (i+1) + " " + this[i] + "\n";
+    for(int i = 0; i < Count; ++i)
+      str += "#" + (i + 1) + " " + this[i] + "\n";
     return str;
   }
 
@@ -60,7 +61,12 @@ public class CompileErrorsException : Exception
 public class SyntaxError : Exception, ICompileError
 {
   public string text { get; }
-  public string stack_trace { get { return StackTrace; } }
+
+  public string stack_trace
+  {
+    get { return StackTrace; }
+  }
+
   public SourceRange range { get; }
   public string file { get; }
 
@@ -76,10 +82,19 @@ public class SyntaxError : Exception, ICompileError
 public class BuildError : Exception, ICompileError
 {
   private const int MAX_EXCEPTION_STR_LEN = 1000;
-  
+
   public string text { get; }
-  public string stack_trace { get { return StackTrace; } }
-  public SourceRange range { get { return new SourceRange(); } }
+
+  public string stack_trace
+  {
+    get { return StackTrace; }
+  }
+
+  public SourceRange range
+  {
+    get { return new SourceRange(); }
+  }
+
   public string file { get; }
 
   public BuildError(string file, string msg)
@@ -103,15 +118,21 @@ public class BuildError : Exception, ICompileError
 public class ParseError : Exception, ICompileError
 {
   public string text { get; }
-  public string stack_trace { get { return StackTrace; } }
 
-  public SourceRange range { 
-    get {
-      return new SourceRange(place.SourceInterval, tokens);
-    }
+  public string stack_trace
+  {
+    get { return StackTrace; }
   }
 
-  public string file { get { return module.file_path; } }
+  public SourceRange range
+  {
+    get { return new SourceRange(place.SourceInterval, tokens); }
+  }
+
+  public string file
+  {
+    get { return module.file_path; }
+  }
 
   public Module module { get; }
   public IParseTree place { get; }
@@ -128,19 +149,20 @@ public class ParseError : Exception, ICompileError
 
   public ParseError(AnnotatedParseTree w, string msg)
     : this(w.module, w.tree, w.tokens, msg)
-  {}
+  {
+  }
 }
 
 public class ErrorHandlers
 {
   public IAntlrErrorListener<int> lexer_listener;
-  public IParserErrorListener parser_listener; 
+  public IParserErrorListener parser_listener;
   public IAntlrErrorStrategy error_strategy;
 
   static public ErrorHandlers MakeStandard(string file, CompileErrors errors)
   {
     var eh = new ErrorHandlers();
-    eh.lexer_listener = new ErrorLexerListener(file, errors); 
+    eh.lexer_listener = new ErrorLexerListener(file, errors);
     eh.parser_listener = new ErrorParserListener(file, errors);
     eh.error_strategy = new ErrorStrategy();
     return eh;
@@ -181,19 +203,19 @@ public class CompileErrorsHub
 
   public static CompileErrorsHub MakeStandard(string file)
   {
-     var errs = new CompileErrors();
-     return new CompileErrorsHub(
-        errs,
-        ErrorHandlers.MakeStandard(file, errs)
-     );
+    var errs = new CompileErrors();
+    return new CompileErrorsHub(
+      errs,
+      ErrorHandlers.MakeStandard(file, errs)
+    );
   }
 
   public static CompileErrorsHub MakeStandard(string file, CompileErrors errs)
   {
-     return new CompileErrorsHub(
-        errs,
-        ErrorHandlers.MakeStandard(file, errs)
-     );
+    return new CompileErrorsHub(
+      errs,
+      ErrorHandlers.MakeStandard(file, errs)
+    );
   }
 }
 
@@ -208,7 +230,8 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
     this.errors = errors;
   }
 
-  public void SyntaxError(TextWriter tw, IRecognizer recognizer, int offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
+  public void SyntaxError(TextWriter tw, IRecognizer recognizer, int offendingSymbol, int line, int char_pos,
+    string msg, RecognitionException e)
   {
     errors.Add(new SyntaxError(file_path, new SourceRange(line, char_pos), msg));
   }
@@ -216,7 +239,7 @@ public class ErrorLexerListener : IAntlrErrorListener<int>
 
 public class ErrorStrategy : DefaultErrorStrategy
 {
-  public override void Sync(Antlr4.Runtime.Parser parser) 
+  public override void Sync(Antlr4.Runtime.Parser parser)
   {
     //NOTE: base sync is 'smart' and removes extra tokens
     base.Sync(parser);
@@ -234,21 +257,27 @@ public class ErrorParserListener : IParserErrorListener
     this.errors = errors;
   }
 
-  public void SyntaxError(TextWriter tw, IRecognizer recognizer, IToken offendingSymbol, int line, int char_pos, string msg, RecognitionException e)
+  public void SyntaxError(TextWriter tw, IRecognizer recognizer, IToken offendingSymbol, int line, int char_pos,
+    string msg, RecognitionException e)
   {
     errors.Add(new SyntaxError(file_path, new SourceRange(line, char_pos), msg));
   }
 
-  public void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
-  {}
+  public void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact,
+    BitSet ambigAlts, ATNConfigSet configs)
+  {
+  }
 
-  public void ReportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts,
+  public void ReportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex,
+    BitSet conflictingAlts,
     ATNConfigSet configs)
-  {}
+  {
+  }
 
   public void ReportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction,
     ATNConfigSet configs)
-  {}
+  {
+  }
 }
 
 }

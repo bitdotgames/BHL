@@ -15,7 +15,7 @@ public class TestLSPHover : TestLSPShared
     test1() //hover 1
   }
   ";
-  
+
   Server srv;
 
   bhl.lsp.proto.Uri uri;

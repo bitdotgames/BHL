@@ -23,7 +23,7 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(10, fb.result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestResultMustBeReadyOnceFinished()
   {
@@ -42,7 +42,7 @@ public class TestFiber : BHL_TestBase
     fb.Release();
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestStackList3Args()
   {
@@ -135,7 +135,7 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDirectExecuteNativeFunc()
   {
@@ -144,15 +144,16 @@ public class TestFiber : BHL_TestBase
     {}
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var n = stack.PopRelease().num;
-            stack.Push(Val.NewInt(frm.vm, n * 2));
-            return null;
-          }, 
-          new FuncArgSymbol("n", Types.Int)
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var n = stack.PopRelease().num;
+          stack.Push(Val.NewInt(frm.vm, n * 2));
+          return null;
+        },
+        new FuncArgSymbol("n", Types.Int)
       );
       ts.ns.Define(fn);
     });
@@ -162,7 +163,7 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDirectExecuteNativeFuncWithDefaultArgsPassed()
   {
@@ -171,26 +172,27 @@ public class TestFiber : BHL_TestBase
     {}
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
-          def_args_num: 1,
-          cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-            stack.Push(Val.NewInt(frm.vm, n * 2));
-            return null;
-          }, 
-          args: new FuncArgSymbol("n", Types.Int)
+        def_args_num: 1,
+        cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
+          stack.Push(Val.NewInt(frm.vm, n * 2));
+          return null;
+        },
+        args: new FuncArgSymbol("n", Types.Int)
       );
       ts.ns.Define(fn);
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2",Val.NewInt(vm, 10)).result.PopRelease().num;
+    var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDirectExecuteNativeFuncWithDefaultArgsNotPassed()
   {
@@ -199,16 +201,17 @@ public class TestFiber : BHL_TestBase
     {}
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
-          def_args_num: 1,
-          cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-            stack.Push(Val.NewInt(frm.vm, n * 2));
-            return null;
-          }, 
-          args: new FuncArgSymbol("n", Types.Int)
+        def_args_num: 1,
+        cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
+          stack.Push(Val.NewInt(frm.vm, n * 2));
+          return null;
+        },
+        args: new FuncArgSymbol("n", Types.Int)
       );
       ts.ns.Define(fn);
     });
@@ -218,7 +221,7 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(2, num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDirectExecuteNativeCoro()
   {
@@ -243,12 +246,14 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var fn = new FuncSymbolNative(new Origin(), "native", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            log.Append("HERE");
-            return null;
-          } 
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          log.Append("HERE");
+          return null;
+        }
       );
       ts.ns.Define(fn);
     });
@@ -292,15 +297,16 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "yield_and_trace", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-          { 
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
             var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
             inst.log = log;
             return inst;
-          } 
+          }
         );
         ts.ns.Define(fn);
       }
@@ -333,9 +339,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
@@ -368,11 +372,10 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       },
@@ -399,9 +402,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -442,9 +443,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -474,9 +473,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -516,9 +513,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -528,7 +523,7 @@ public class TestFiber : BHL_TestBase
     AssertEqual("1340", log.ToString());
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDoubleStopFiberFromDefer()
   {
@@ -561,9 +556,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -606,9 +599,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
 
@@ -651,19 +642,20 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "STOP", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var val = stack.Pop();
-            var fb_ref = new VM.FiberRef(val);
-            fb_ref.Get().Stop();
-            val.Release();
-            return null;
-          }, 
-          new FuncArgSymbol("fb", ts.T(Types.FiberRef))
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var val = stack.Pop();
+          var fb_ref = new VM.FiberRef(val);
+          fb_ref.Get().Stop();
+          val.Release();
+          return null;
+        },
+        new FuncArgSymbol("fb", ts.T(Types.FiberRef))
       );
       ts.ns.Define(fn);
     });
@@ -735,14 +727,16 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            return CoroutinePool.New<YIELD_STOP>(frm.vm);
-          }, 
-          new FuncArgSymbol("fb", ts.T(Types.FiberRef))
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          return CoroutinePool.New<YIELD_STOP>(frm.vm);
+        },
+        new FuncArgSymbol("fb", ts.T(Types.FiberRef))
       );
       ts.ns.Define(fn);
     });
@@ -820,7 +814,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -835,7 +830,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Empty(cs); 
+      Assert.Empty(cs);
     }
 
     {
@@ -845,7 +840,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Empty(cs); 
+      Assert.Empty(cs);
     }
 
     ScriptMgr.instance.Stop();
@@ -877,7 +872,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -892,8 +888,8 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Single(cs); 
-      
+      Assert.Single(cs);
+
       //let's check func addresses, however since it's a lambda, there's no
       //actual func symbol and we simply check if instruction pointer is valid
       Assert.True(cs[0].FuncAddr.ip > -1);
@@ -906,7 +902,7 @@ public class TestFiber : BHL_TestBase
       AssertEqual("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
-      Assert.Equal(2, cs.Count); 
+      Assert.Equal(2, cs.Count);
       Assert.True(cs[0] != cs[1]);
     }
 
@@ -935,7 +931,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -947,7 +944,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(3, cs.Count); 
+    Assert.Equal(3, cs.Count);
     Assert.True(cs[0] != cs[1]);
     Assert.True(cs[1] != cs[2]);
     Assert.True(cs[0] != cs[2]);
@@ -981,7 +978,8 @@ public class TestFiber : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -993,7 +991,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(2, cs.Count); 
+    Assert.Equal(2, cs.Count);
     Assert.True(cs[0] != cs[1]);
 
     AssertEqual("HERE;HERE;", log.ToString());
@@ -1022,18 +1020,19 @@ public class TestFiber : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
 
       {
         var fn = new FuncSymbolNative(new Origin(), "say_here", Types.Void,
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-            {
-              log.Append("HERE;");
-              return null;
-            }
-            );
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            log.Append("HERE;");
+            return null;
+          }
+        );
         ts.ns.Define(fn);
       }
     });
@@ -1045,7 +1044,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Empty(cs); 
+    Assert.Empty(cs);
 
     AssertEqual("HERE;HERE;", log.ToString());
 
@@ -1056,7 +1055,7 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestStartCoroFuncPtrManyTimesInScriptMgr()
   {
@@ -1078,7 +1077,8 @@ public class TestFiber : BHL_TestBase
 
     var log = new StringBuilder();
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -1099,9 +1099,9 @@ public class TestFiber : BHL_TestBase
     {
       Assert.False(vm.Tick());
       ScriptMgr.instance.Tick();
-      
+
       AssertEqual("HERE;HERE;", log.ToString());
-      
+
       var cs = ScriptMgr.instance.active;
       Assert.Empty(cs);
     }
@@ -1135,7 +1135,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -1147,7 +1148,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(2, cs.Count); 
+    Assert.Equal(2, cs.Count);
     Assert.True(cs[0] != cs[1]);
 
     AssertEqual("HERE;HERE;", log.ToString());
@@ -1180,7 +1181,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -1192,7 +1194,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(3, cs.Count); 
+    Assert.Equal(3, cs.Count);
     Assert.True(cs[0] != cs[1]);
     Assert.True(cs[1] != cs[2]);
     Assert.True(cs[0] != cs[2]);
@@ -1229,7 +1231,8 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
@@ -1241,7 +1244,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
 
     var cs = ScriptMgr.instance.active;
-    Assert.Equal(3, cs.Count); 
+    Assert.Equal(3, cs.Count);
     Assert.True(cs[0] != cs[1]);
     Assert.True(cs[1] != cs[2]);
     Assert.True(cs[0] != cs[2]);
@@ -1255,7 +1258,7 @@ public class TestFiber : BHL_TestBase
 
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestStaleFrameReferenceFuncPtrBug()
   {
@@ -1282,14 +1285,15 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindStartScriptInMgr(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    
+
     AssertEqual("", log.ToString());
 
     ScriptMgr.instance.Tick();
@@ -1297,13 +1301,13 @@ public class TestFiber : BHL_TestBase
     //NOTE: in case of bug the defer block is going to use a stale Frame
     //      and it will lead to origin stack pointing to the new Frame's stack!
     var frm = VM.Frame.New(vm);
-    
+
     ScriptMgr.instance.Tick();
 
     AssertEqual("2;", log.ToString());
-    
+
     Assert.True(!ScriptMgr.instance.Busy);
-    
+
     frm.Release();
 
     CommonChecks(vm);
@@ -1321,7 +1325,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var fs = 
+    var fs =
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
@@ -1349,7 +1353,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
 
-    var fs = 
+    var fs =
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
@@ -1364,7 +1368,7 @@ public class TestFiber : BHL_TestBase
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestExecuteFuncTrampoline()
   {
@@ -1384,10 +1388,10 @@ public class TestFiber : BHL_TestBase
 
     int trampoline1 = 0;
     int trampoline2 = 0;
-    
+
     var test_fs1 = vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "test");
     var test2_fs1 = vm.GetOrMakeFuncTrampoline(ref trampoline2, TestModuleName, "test2");
-    
+
     int trampoline1_copy = trampoline1;
     Assert.NotEqual(0, trampoline1);
 
@@ -1396,18 +1400,18 @@ public class TestFiber : BHL_TestBase
       Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
-    
+
     var test_fs2 = vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "test");
     Assert.Equal(test_fs1, test_fs2);
     Assert.Equal(trampoline1_copy, trampoline1);
-    
+
     {
       var result = vm.Execute(test2_fs1);
       Assert.Equal(20, result.PopRelease().num);
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestFuncTrampolineNotFound()
   {
@@ -1421,7 +1425,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
 
     int trampoline1 = 0;
-    
+
     AssertError<Exception>(
       () => vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "no_such_a_func"),
       $"Module '{TestModuleName}' symbol 'no_such_a_func' not found"
@@ -1450,12 +1454,10 @@ public class TestFiber : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
     var vm = MakeVM(bhl, ts_fn);
 
-    var fs = 
+    var fs =
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
@@ -1471,17 +1473,18 @@ public class TestFiber : BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "StartScriptInMgr", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) {
-            int spawns = (int)stack.PopRelease().num;
-            var ptr = stack.Pop();
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          int spawns = (int)stack.PopRelease().num;
+          var ptr = stack.Pop();
 
-            for(int i=0;i<spawns;++i)
-              ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
+          for(int i = 0; i < spawns; ++i)
+            ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
 
-            ptr.Release();
+          ptr.Release();
 
-            return null;
-          },
+          return null;
+        },
         new FuncArgSymbol("script", ts.TFunc(true, Types.Void)),
         new FuncArgSymbol("spawns", Types.Int)
       );
@@ -1495,10 +1498,9 @@ public class TestFiber : BHL_TestBase
     public static ScriptMgr instance = new ScriptMgr();
     public List<VM.Fiber> active = new List<VM.Fiber>();
 
-    public bool Busy {
-      get {
-        return active.Count > 0;
-      }
+    public bool Busy
+    {
+      get { return active.Count > 0; }
     }
 
     public void Start(VM.Frame origin, VM.FuncPtr ptr, ValStack stack)
@@ -1516,7 +1518,7 @@ public class TestFiber : BHL_TestBase
 
     public void Stop()
     {
-      for(int i=active.Count;i-- > 0;)
+      for(int i = active.Count; i-- > 0;)
       {
         active[i].vm.Stop(active[i]);
         active.RemoveAt(i);

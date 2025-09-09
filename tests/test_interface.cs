@@ -205,7 +205,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(4+3+40+30, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(4 + 3 + 40 + 30, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -219,9 +219,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "default argument value is not allowed",
       new PlaceAssert(bhl, @"
       func hey(int a, float b = 1)
@@ -242,9 +240,7 @@ public class TestInterface : BHL_TestBase
       }
       ";
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
@@ -263,9 +259,7 @@ public class TestInterface : BHL_TestBase
       }
       ";
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "class 'Foo' doesn't implement interface 'IFoo' method 'func int bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
@@ -286,9 +280,7 @@ public class TestInterface : BHL_TestBase
       }
       ";
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "class 'Foo' doesn't implement interface 'IFoo' method 'func int,string bar(int i)'",
         new PlaceAssert(bhl, @"
       class Foo : IFoo {
@@ -315,9 +307,7 @@ public class TestInterface : BHL_TestBase
       }
       ";
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "incompatible types: 'IFoo' and 'Foo'",
         new PlaceAssert(bhl, @"
         foo(f)
@@ -344,9 +334,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "interface is implemented already",
       new PlaceAssert(bhl, @"
     class Foo : IFoo, IBar, IFoo { 
@@ -369,9 +357,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "interface is inherited already",
       new PlaceAssert(bhl, @"
     interface IBar : IFoo, IFoo { 
@@ -394,9 +380,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "self inheritance is not allowed",
       new PlaceAssert(bhl, @"
     interface IBar : IBar { 
@@ -464,26 +448,26 @@ public class TestInterface : BHL_TestBase
 
       var c = Compile(bhl);
 
-      var expected = 
-        new ModuleCompiler()
-        .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1+1/*this*/+1/*args info*/ })
-        .EmitThen(Opcodes.ArgVar, new int[] { 1 })
-        .EmitThen(Opcodes.GetVar, new int[] { 1 })
-        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-        .EmitThen(Opcodes.Add)
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-        .EmitThen(Opcodes.Return)
-        .EmitThen(Opcodes.InitFrame, new int[] { 2+1 /*args info*/ })
-        .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
-        .EmitThen(Opcodes.SetVar, new int[] { 0 })
-        .EmitThen(Opcodes.GetVar, new int[] { 0 })
-        .EmitThen(Opcodes.SetVar, new int[] { 1 })
-        .EmitThen(Opcodes.GetVar, new int[] { 1 })
-        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
-        .EmitThen(Opcodes.CallMethodIface, new int[] { 0, TypeIdx(c, c.ns.T("IFoo")), 1 })
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-        .EmitThen(Opcodes.Return)
+      var expected =
+          new ModuleCompiler()
+            .UseCode()
+            .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*this*/ + 1 /*args info*/ })
+            .EmitThen(Opcodes.ArgVar, new int[] { 1 })
+            .EmitThen(Opcodes.GetVar, new int[] { 1 })
+            .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+            .EmitThen(Opcodes.Add)
+            .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+            .EmitThen(Opcodes.Return)
+            .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+            .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+            .EmitThen(Opcodes.SetVar, new int[] { 0 })
+            .EmitThen(Opcodes.GetVar, new int[] { 0 })
+            .EmitThen(Opcodes.SetVar, new int[] { 1 })
+            .EmitThen(Opcodes.GetVar, new int[] { 1 })
+            .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
+            .EmitThen(Opcodes.CallMethodIface, new int[] { 0, TypeIdx(c, c.ns.T("IFoo")), 1 })
+            .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+            .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
 
@@ -715,22 +699,21 @@ public class TestInterface : BHL_TestBase
       }
     }
     ";
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ifs = new InterfaceSymbolNative(
-          new Origin(),
-          "IFoo", 
-          null, 
-          new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null, 
-            new FuncArgSymbol("int", ts.T("int")) 
-          )
+        new Origin(),
+        "IFoo",
+        null,
+        new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null,
+          new FuncArgSymbol("int", ts.T("int"))
+        )
       );
       ts.ns.Define(ifs);
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "implementing native interfaces is not supported",
       new PlaceAssert(bhl, @"
     class Foo : IFoo {
@@ -758,22 +741,21 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { 
+    var ts_fn = new Action<Types>((ts) =>
+    {
       var ifs = new InterfaceSymbolNative(
-          new Origin(),
-          "IBar", 
-          null, 
-          new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null, 
-            new FuncArgSymbol("int", ts.T("int")) 
-          )
+        new Origin(),
+        "IBar",
+        null,
+        new FuncSymbolNative(new Origin(), "bar", ts.T("int"), null,
+          new FuncArgSymbol("int", ts.T("int"))
+        )
       );
       ts.ns.Define(ifs);
     });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "implementing native interfaces is not supported",
       new PlaceAssert(bhl, @"
     class Foo : IBar, IFoo {
@@ -783,16 +765,17 @@ public class TestInterface : BHL_TestBase
   }
 
   public interface IFooLocal
-  {}
+  {
+  }
 
   public class LocalFoo : IFooLocal
   {
-    public int X() 
+    public int X()
     {
       return 10;
     }
 
-    public int Y() 
+    public int Y()
     {
       return 20;
     }
@@ -809,15 +792,17 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       {
         var fn = new FuncSymbolNative(new Origin(), "create", ts.T("IFoo"),
-            delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-              var foo = new LocalFoo();
-              var v = Val.NewObj(frm.vm, foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
-              stack.Push(v);
-              return null;
-            }
+          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var foo = new LocalFoo();
+            var v = Val.NewObj(frm.vm, foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
+            stack.Push(v);
+            return null;
+          }
         );
 
         ts.ns.Define(fn);
@@ -825,21 +810,18 @@ public class TestInterface : BHL_TestBase
 
       {
         var ifs = new InterfaceSymbolNative(
-            new Origin(),
-            "IFoo", 
-            null,
-            typeof(IFooLocal)
+          new Origin(),
+          "IFoo",
+          null,
+          typeof(IFooLocal)
         );
         ts.ns.Define(ifs);
         ifs.Setup();
       }
 
       {
-        var cl = new ClassSymbolNative(new Origin(), "Foo", new List<ProxyType>(){ ts.T("IFoo") },
-          delegate(VM.Frame frm, ref Val v, IType type) 
-          { 
-            v.SetObj(new LocalFoo(), type);
-          },
+        var cl = new ClassSymbolNative(new Origin(), "Foo", new List<ProxyType>() { ts.T("IFoo") },
+          delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new LocalFoo(), type); },
           typeof(LocalFoo)
         );
         ts.ns.Define(cl);
@@ -890,8 +872,8 @@ public class TestInterface : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""  
 
     func int test() {
@@ -900,7 +882,8 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -928,8 +911,8 @@ public class TestInterface : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""
     namespace a {
       namespace c {
@@ -942,7 +925,8 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }
@@ -952,14 +936,17 @@ public class TestInterface : BHL_TestBase
     CommonChecks(vm);
   }
 
-  public interface INativeFoo 
+  public interface INativeFoo
   {
     int foo(int n);
   }
 
   public class NativeFoo : INativeFoo
   {
-    public int foo(int n) { return n; }
+    public int foo(int n)
+    {
+      return n;
+    }
   }
 
   [Fact]
@@ -977,8 +964,8 @@ public class TestInterface : BHL_TestBase
     {
       var ifs = new InterfaceSymbolNative(
         new Origin(),
-        "INativeFoo", 
-        null, 
+        "INativeFoo",
+        null,
         new FuncSymbolNative(new Origin(), "foo", ts.T("int"),
           delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
@@ -987,17 +974,14 @@ public class TestInterface : BHL_TestBase
             stack.Push(Val.NewInt(frm.vm, f.foo(n)));
             return null;
           },
-          new FuncArgSymbol("int", ts.T("int")) 
+          new FuncArgSymbol("int", ts.T("int"))
         )
       );
       ts.ns.Define(ifs);
       ifs.Setup();
 
-      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", new List<ProxyType>(){ ts.T("INativeFoo") },
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new NativeFoo(), type);
-        }
+      var cl = new ClassSymbolNative(new Origin(), "NativeFoo", new List<ProxyType>() { ts.T("INativeFoo") },
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); }
       );
       ts.ns.Define(cl);
 
@@ -1009,7 +993,7 @@ public class TestInterface : BHL_TestBase
           stack.Push(Val.NewInt(frm.vm, f.foo(n)));
           return null;
         },
-        new FuncArgSymbol("int", ts.T("int")) 
+        new FuncArgSymbol("int", ts.T("int"))
       );
       cl.Define(m);
       cl.Setup();
@@ -1032,8 +1016,8 @@ public class TestInterface : BHL_TestBase
       }
     }
     ";
-      
-  string bhl2 = @"
+
+    string bhl2 = @"
     import ""bhl1""
     namespace a {
       namespace c {
@@ -1049,7 +1033,8 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
       }

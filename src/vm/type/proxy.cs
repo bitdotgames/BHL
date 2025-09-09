@@ -2,14 +2,16 @@ using System;
 using System.Runtime.CompilerServices;
 using bhl.marshall;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 // For lazy evaluation of types and forward declarations
 public struct ProxyType : IMarshallable, IEquatable<ProxyType>
 {
   public IType resolved;
-  
+
   public INamedResolver resolver;
+
   //NOTE: for symbols it's a full absolute path from the very top namespace
   public NamePath path;
 
@@ -19,10 +21,10 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       throw new Exception("Type path is empty");
     if(Types.IsCompoundType(path))
       throw new Exception("Type spec contains illegal characters: '" + path + "'");
-    
+
     this.resolver = resolver;
     this.path = path;
-    
+
     resolved = null;
   }
 
@@ -30,9 +32,9 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
   {
     resolver = null;
     path = default;
-    
+
     resolved = null;
-    
+
     SetResolved(obj);
   }
 
@@ -91,9 +93,9 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
     bool is_ephemeral = false;
     if(!ctx.is_read)
       is_ephemeral = Get() is IEphemeralType;
-    
+
     marshall.Marshall.Sync(ctx, ref is_ephemeral);
-    
+
     if(is_ephemeral)
     {
       var eph = ctx.is_read ? null : Get() as IMarshallableGeneric;
@@ -125,7 +127,7 @@ public struct ProxyType : IMarshallable, IEquatable<ProxyType>
       return o.resolved.Equals(resolved);
     else if(resolver != null && o.resolver == resolver && o.path.Equals(path))
       return true;
-     
+
     //OK nothing worked, let's resolve the type
     Get();
 

@@ -3,7 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class DiagnosticService : IService
 {

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace bhl {
+namespace bhl
+{
 
 public partial class VM : INamedResolver
 {
@@ -15,6 +16,7 @@ public partial class VM : INamedResolver
     internal string name;
     internal Module loaded;
   }
+
   List<LoadingModule> loading_modules = new List<LoadingModule>();
 
   public struct ModuleSymbol
@@ -50,9 +52,9 @@ public partial class VM : INamedResolver
       return false;
 
     //NOTE: initing modules in reverse order
-    for(int i=loading_modules.Count;i-- > 0;)
+    for(int i = loading_modules.Count; i-- > 0;)
       Init_Phase2(loading_modules[i].loaded);
-    for(int i=loading_modules.Count;i-- > 0;)
+    for(int i = loading_modules.Count; i-- > 0;)
       Init_Phase3(loading_modules[i].loaded);
 
     loading_modules.Clear();
@@ -76,7 +78,7 @@ public partial class VM : INamedResolver
 
     if(registered_modules.TryGetValue(module_name, out rm))
       return rm;
-    
+
     return null;
   }
 
@@ -177,23 +179,23 @@ public partial class VM : INamedResolver
     ms.symbol = symb;
 
     if(use_cache)
-     symbol_spec2module_cache[spec] = ms;
+      symbol_spec2module_cache[spec] = ms;
 
     return LoadModuleSymbolError.Ok;
   }
 
-  static int ToNextNearestPow2(int x) 
+  static int ToNextNearestPow2(int x)
   {
-     if(x < 0)
+    if(x < 0)
       return 0;
-     --x;
-     x |= x >> 1;
-     x |= x >> 2;
-     x |= x >> 4;
-     x |= x >> 8;
-     x |= x >> 16;
-     return x + 1;
-  }   
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x + 1;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FuncSymbolScript GetOrMakeFuncTrampoline(ref int trampoline_idx, string module, string path)
@@ -215,9 +217,9 @@ public partial class VM : INamedResolver
       fs = (FuncSymbolScript)ms.symbol;
       trampolines_cache[trampoline_idx] = fs;
     }
+
     return fs;
   }
-
 }
 
 }

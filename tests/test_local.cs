@@ -41,9 +41,7 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(bhl);
-      },
+      delegate() { MakeVM(bhl); },
       "already defined symbol 'foo'",
       new PlaceAssert(bhl, @"
     static func int foo()
@@ -71,8 +69,10 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
           }
@@ -107,8 +107,10 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
           }
@@ -142,7 +144,8 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
       }
@@ -171,7 +174,8 @@ public class TestLocal : BHL_TestBase
     static func int foo() { return 20 }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
       }
@@ -205,7 +209,8 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
       }
@@ -229,8 +234,10 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
           }
@@ -270,9 +277,7 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(bhl);
-      },
+      delegate() { MakeVM(bhl); },
       "already defined symbol 'foo'",
       new PlaceAssert(bhl, @"
     static int foo = 100
@@ -300,8 +305,10 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
           }
@@ -333,7 +340,8 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
       }
@@ -357,8 +365,10 @@ public class TestLocal : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
           }
@@ -371,5 +381,4 @@ public class TestLocal : BHL_TestBase
       )
     );
   }
-
 }

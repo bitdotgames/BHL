@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace bhl {
+namespace bhl
+{
 
 public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 {
@@ -250,7 +251,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
     var all_members = new SymbolsStorage(this);
     DoSetupMembers(this, all_members);
-    
+
     _all_members = all_members.list.ToArray();
   }
 

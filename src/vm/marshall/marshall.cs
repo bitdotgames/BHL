@@ -2,8 +2,10 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl.marshall {
-public static class Marshall 
+namespace bhl.marshall
+{
+
+public static class Marshall
 {
   //TODO: strings sync should use some sort of lookup table
   static public void Sync(SyncContext ctx, ref string v)
@@ -108,7 +110,7 @@ public static class Marshall
     {
       int size = ctx.reader.BeginContainer();
 
-      if(v.Capacity < size) 
+      if(v.Capacity < size)
         v.Capacity = size;
 
       return size;
@@ -139,6 +141,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -152,6 +155,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -165,6 +169,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -178,6 +183,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -191,6 +197,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -204,6 +211,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -217,6 +225,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -230,6 +239,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -243,6 +253,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -256,6 +267,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -269,6 +281,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -282,9 +295,10 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
-  
+
   static public void Sync<T>(SyncContext ctx, List<T> v) where T : IMarshallable, new()
   {
     int size = BeginArray(ctx, v);
@@ -295,9 +309,10 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
-  
+
   //TODO: make it private and deduce by IMarshallableGeneric interface
   static public void SyncGeneric(SyncContext ctx, ref IMarshallableGeneric v)
   {
@@ -307,12 +322,12 @@ public static class Marshall
 
       uint clid = 0;
       ctx.reader.ReadU32(ref clid);
-      
+
       //check for null
       if(clid != 0xFFFFFFFF)
       {
         v = ctx.factory.CreateById(clid);
-        if(v == null) 
+        if(v == null)
           throw new Error(ErrorCode.BAD_CLASS_ID, "Could not create object with class id: " + clid);
 
         v.Sync(ctx);
@@ -321,12 +336,13 @@ public static class Marshall
       {
         v = null;
       }
+
       ctx.reader.EndContainer();
     }
     else
     {
-      int fields_num = v == null ? 0 : -1/*unspecified*/;
-       //class id
+      int fields_num = v == null ? 0 : -1 /*unspecified*/;
+      //class id
       if(fields_num != -1)
         ++fields_num;
       ctx.writer.BeginContainer(fields_num);
@@ -336,7 +352,7 @@ public static class Marshall
       ctx.writer.EndContainer();
     }
   }
-  
+
   //TODO: make it private and deduce by IMarshallableGeneric interface?
   static public void SyncGeneric<T>(SyncContext ctx, List<T> v) where T : IMarshallableGeneric
   {
@@ -348,6 +364,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add((T)tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -361,7 +378,7 @@ public static class Marshall
     }
     else
     {
-      ctx.writer.BeginContainer(-1/*unspecified amount of fields*/);
+      ctx.writer.BeginContainer(-1 /*unspecified amount of fields*/);
       v.Sync(ctx);
       ctx.writer.EndContainer();
     }
@@ -369,31 +386,31 @@ public static class Marshall
 
   static public ProxyType ReadTypeRefAt(SyncContext ctx, int idx)
   {
-     if(!ctx.type_refs.IsValid(idx))
-     {
-       //let's make a temporary specialized copy of the sync ctx
-       var ctx_tmp = ctx;
-       ctx_tmp.reader = ctx.type_refs_reader; 
-       
-       var old_pos = ctx_tmp.reader.Stream.Position;
-       ctx_tmp.reader.Stream.Position = ctx.type_refs_offsets[idx];
-       
-       var tmp = new ProxyType();
-       Sync(ctx_tmp, ref tmp);
+    if(!ctx.type_refs.IsValid(idx))
+    {
+      //let's make a temporary specialized copy of the sync ctx
+      var ctx_tmp = ctx;
+      ctx_tmp.reader = ctx.type_refs_reader;
 
-       ctx_tmp.reader.Stream.Position = old_pos;
+      var old_pos = ctx_tmp.reader.Stream.Position;
+      ctx_tmp.reader.Stream.Position = ctx.type_refs_offsets[idx];
 
-       ctx.type_refs.SetAt(idx, tmp);
-     }
+      var tmp = new ProxyType();
+      Sync(ctx_tmp, ref tmp);
 
-     return ctx.type_refs.Get(idx);
+      ctx_tmp.reader.Stream.Position = old_pos;
+
+      ctx.type_refs.SetAt(idx, tmp);
+    }
+
+    return ctx.type_refs.Get(idx);
   }
-  
+
   static public void SyncTypeRef(SyncContext ctx, ref ProxyType v)
   {
     if(ctx.is_read)
     {
-      int idx = 0; 
+      int idx = 0;
       ctx.reader.ReadI32(ref idx);
       v = ReadTypeRefAt(ctx, idx);
     }
@@ -403,7 +420,7 @@ public static class Marshall
       ctx.writer.WriteI32(idx);
     }
   }
-  
+
   static public void SyncTypeRefs(SyncContext ctx, List<ProxyType> v)
   {
     int size = BeginArray(ctx, v);
@@ -414,6 +431,7 @@ public static class Marshall
       if(ctx.is_read)
         v.Add(tmp);
     }
+
     EndArray(ctx, v);
   }
 
@@ -428,7 +446,7 @@ public static class Marshall
   static public void Stream2Obj<T>(Stream s, T obj, IFactory f = null, TypeRefIndex refs = null) where T : IMarshallable
   {
     var reader = new MsgPackDataReader(s);
-    var ctx = SyncContext.NewReader(reader, f, refs); 
+    var ctx = SyncContext.NewReader(reader, f, refs);
     Sync(ctx, ref obj);
   }
 
@@ -448,12 +466,12 @@ public static class Marshall
   public static byte[] WriteTypeRefs(TypeRefIndex refs, out List<int> refs_offsets)
   {
     refs_offsets = new List<int>();
-    
+
     var dst = new MemoryStream();
     var writer = new MsgPackDataWriter(dst);
-    
+
     var ctx = SyncContext.NewWriter(writer, null, refs);
-    
+
     BeginArray(ctx, refs.all);
     for(int i = 0; i < refs.all.Count; ++i)
     {
@@ -461,8 +479,9 @@ public static class Marshall
       refs_offsets.Add((int)dst.Position);
       Sync(ctx, ref tmp);
     }
+
     EndArray(ctx, refs.all);
-    
+
     return dst.GetBuffer();
   }
 

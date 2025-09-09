@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using Antlr4.Runtime.Tree;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class TextDocumentCompletionService : IService
 {
@@ -30,45 +31,43 @@ public class TextDocumentCompletionService : IService
   public Task<RpcResult> Completion(CompletionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-    
+
     var list = new CompletionList();
     list.isIncomplete = false;
 
     var completions = new HashSet<Symbol>();
     if(document != null)
     {
-      var node = document.FindTerminalNode((int)args.position.line, (int)args.position.character-1);
+      var node = document.FindTerminalNode((int)args.position.line, (int)args.position.character - 1);
       if(node != null)
       {
         foreach(var m in workspace.ts.GetModules())
         {
-          m.ns.ForAllLocalSymbols(
-            s =>
+          m.ns.ForAllLocalSymbols(s =>
             {
               if(Matches(s, node.GetText()))
                 completions.Add(s);
             }
           );
         }
-        
+
         foreach(var kv in workspace.uri2doc)
         {
-          kv.Value.proc.module.ns.ForAllLocalSymbols(
-            s =>
+          kv.Value.proc.module.ns.ForAllLocalSymbols(s =>
             {
               if(Matches(s, node.GetText()))
                 completions.Add(s);
             }
           );
         }
-          
+
         foreach(var kv in document.proc.annotated_nodes)
         {
-          if(kv.Value.lsp_symbol != null && Matches(kv.Value.lsp_symbol, node.GetText())) 
+          if(kv.Value.lsp_symbol != null && Matches(kv.Value.lsp_symbol, node.GetText()))
             completions.Add(kv.Value.lsp_symbol);
         }
       }
-      
+
       list.items = new List<CompletionItem>();
 
       foreach (var symbol in completions)
@@ -79,16 +78,16 @@ public class TextDocumentCompletionService : IService
         list.items.Add(item);
       }
     }
-    
+
     return Task.FromResult(new RpcResult(list));
   }
 
   static bool Matches(Symbol symbol, string completion)
   {
-    return 
+    return
       symbol.name[0] != '$' &&
       symbol.name.Contains(completion);
   }
 }
- 
+
 }

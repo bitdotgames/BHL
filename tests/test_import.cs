@@ -49,39 +49,39 @@ public class TestImport : BHL_TestBase
     var ts = new Types();
     var loader = new ModuleLoader(ts, CompileFiles(files));
 
-    AssertEqual(loader.Load("bhl1", ts), 
+    AssertEqual(loader.Load("bhl1", ts),
       new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 3, 1 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Constant, new int[] { 0 })
+        .EmitThen(Opcodes.Call, new int[] { 0, 3, 1 })
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl2", ts), 
+    AssertEqual(loader.Load("bhl2", ts),
       new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.ArgVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Call, new int[] { 0, 0, 1 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+        .EmitThen(Opcodes.ArgVar, new int[] { 0 })
+        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+        .EmitThen(Opcodes.Call, new int[] { 0, 0, 1 })
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
     );
-    AssertEqual(loader.Load("bhl3", ts), 
+    AssertEqual(loader.Load("bhl3", ts),
       new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.ArgVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
-      .EmitThen(Opcodes.Return)
+        .UseCode()
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+        .EmitThen(Opcodes.ArgVar, new int[] { 0 })
+        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+        .EmitThen(Opcodes.Return)
+        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.Return)
     );
 
     var vm = new VM(ts, loader);
@@ -106,10 +106,8 @@ public class TestImport : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(files);
-      },
-     "invalid import 'garbage'",
+      delegate() { CompileFiles(files); },
+      "invalid import 'garbage'",
       new PlaceAssert(bhl1, @"
     import ""garbage""  
 ----^"
@@ -140,10 +138,8 @@ public class TestImport : BHL_TestBase
     files.RemoveAt(NewTestFile("bhl2.bhl", bhl2, ref files));
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(files);
-      },
-     "invalid import 'bhl2'",
+      delegate() { CompileFiles(files); },
+      "invalid import 'bhl2'",
       new PlaceAssert(bhl1, @"
     import ""bhl2""  
 ----^"
@@ -182,14 +178,16 @@ public class TestImport : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(new Dictionary<string, string>() {
+      delegate()
+      {
+        CompileFiles(new Dictionary<string, string>()
+          {
             {"a.bhl", file_a},
             {"test.bhl", file_test},
           }
         );
       },
-     "already imported 'a'",
+      "already imported 'a'",
       new PlaceAssert(file_test, @"
     import ""a""
 ----^"
@@ -259,7 +257,7 @@ public class TestImport : BHL_TestBase
       vm.LoadModule("test");
       Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
-      Assert.Equal(1+1, exec.cache_miss);
+      Assert.Equal(1 + 1, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
     }
   }
@@ -330,7 +328,7 @@ public class TestImport : BHL_TestBase
       vm.LoadModule("test");
       Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
-      Assert.Equal(1+1, exec.cache_miss);
+      Assert.Equal(1 + 1, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
     }
   }
@@ -361,7 +359,7 @@ public class TestImport : BHL_TestBase
     func use_unit() { 
       Unit u = {test: 42}
     }
-    ";                 
+    ";
 
     string file_test = @"
     import ""/try/get""
@@ -505,7 +503,7 @@ public class TestImport : BHL_TestBase
     func int get(int i) { 
       return gunit.test + i
     }
-    ";                 
+    ";
 
     string file_test = @"
     import ""/get""
@@ -584,7 +582,8 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -615,8 +614,10 @@ public class TestImport : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
           }
@@ -648,7 +649,8 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -678,7 +680,8 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
       }
@@ -716,7 +719,8 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -777,7 +781,8 @@ public class TestImport : BHL_TestBase
       func abliity_dummy() {}
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"main.bhl", main_bhl},
         {"g.bhl", g_bhl},
         {"input.bhl", input_bhl},
@@ -807,8 +812,10 @@ public class TestImport : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
           }
@@ -854,7 +861,8 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -897,7 +905,8 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -939,7 +948,8 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
         {"bhl3.bhl", bhl3},
@@ -976,8 +986,10 @@ public class TestImport : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        MakeVM(new Dictionary<string, string>() {
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+          {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
           }
@@ -1014,11 +1026,12 @@ public class TestImport : BHL_TestBase
       func garbage() {}
     ";
 
-    var files = MakeFiles(new Dictionary<string, string>() {
-          {"unit.bhl", file_unit},
-          {"test.bhl", file_test},
-          {"garbage.bhl", file_garbage},
-        }       
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        {"unit.bhl", file_unit},
+        {"test.bhl", file_test},
+        {"garbage.bhl", file_garbage},
+      }
     );
 
     {
@@ -1197,7 +1210,7 @@ public class TestImport : BHL_TestBase
         int foo
       }
     }
-    ";                                                                                                              
+    ";
     string file_interim = @"
     import ""/unit""
     func interim() { }
@@ -1225,9 +1238,7 @@ public class TestImport : BHL_TestBase
     conf.proj.max_threads = 1;
 
     AssertError<Exception>(
-      delegate() {
-        CompileFiles(exec, conf);
-      },
+      delegate() { CompileFiles(exec, conf); },
       "type 'units.Unit' not found",
       new PlaceAssert(file_test, @"
       units.Unit u = {}
@@ -1245,7 +1256,7 @@ public class TestImport : BHL_TestBase
         int foo
       }
     }
-    ";                                                                                                              
+    ";
     string file_test = @"
     //import ""/garbage1""
     import ""/unit""
@@ -1258,7 +1269,8 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>() {
+    var vm = MakeVM(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"unit.bhl", file_unit},
       }
@@ -1278,7 +1290,7 @@ public class TestImport : BHL_TestBase
         int foo
       }
     }
-    ";                                                                                                              
+    ";
     string file_test = @"
     //import ""/unit""
 
@@ -1289,19 +1301,20 @@ public class TestImport : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-       MakeVM(new Dictionary<string, string>() {
-        {"test.bhl", file_test},
-        {"unit.bhl", file_unit},
-       });
+      delegate()
+      {
+        MakeVM(new Dictionary<string, string>()
+        {
+          {"test.bhl", file_test},
+          {"unit.bhl", file_unit},
+        });
       },
-    "type 'units.Unit' not found",
-    new PlaceAssert(file_test, @"
+      "type 'units.Unit' not found",
+      new PlaceAssert(file_test, @"
       units.Unit u = {}
 ------^"
       )
     );
-
   }
 
   [Fact]
@@ -1323,18 +1336,17 @@ public class TestImport : BHL_TestBase
     NewTestFile(Path.Combine("a", "test.bhl"), file_test1, ref files);
     NewTestFile(Path.Combine("b", "test.bhl"), file_test2, ref files);
 
-    var conf = MakeCompileConf(files, 
-      src_dirs: new List<string>() { 
-        TestDirPath() + "/a", 
+    var conf = MakeCompileConf(files,
+      src_dirs: new List<string>()
+      {
+        TestDirPath() + "/a",
         TestDirPath() + "/b"
       }
     );
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(conf);
-      },
-     "module 'test' ambiguous resolving"
+      delegate() { CompileFiles(conf); },
+      "module 'test' ambiguous resolving"
     );
   }
 
@@ -1351,12 +1363,13 @@ public class TestImport : BHL_TestBase
     func int test() {
       return Strings.IndexOf(""test"")
     }
-    ";                 
+    ";
 
-    var files = MakeFiles(new Dictionary<string, string>() {
-          {"a.bhl", file_a},
-          {"test.bhl", file_test},
-        }       
+    var files = MakeFiles(new Dictionary<string, string>()
+      {
+        {"a.bhl", file_a},
+        {"test.bhl", file_test},
+      }
     );
 
     {
@@ -1409,7 +1422,7 @@ public class TestImport : BHL_TestBase
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
     }
   }
-  
+
   [Fact]
   public void TestImportFuncPtrs()
   {
@@ -1451,7 +1464,7 @@ public class TestImport : BHL_TestBase
        return ptrs[i]()
     }
     ";
-    
+
     string bhl3 = @"
     class BaseGarbage { 
       func base_garbage() { }
@@ -1478,7 +1491,7 @@ public class TestImport : BHL_TestBase
     Assert.Equal(100, Execute(vm, "test2").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestImportNativeModulesFromCachedModule()
   {
@@ -1492,7 +1505,7 @@ public class TestImport : BHL_TestBase
       return std.GetType(foo).Name
     }
     ";
-    
+
     string bhl2 = @"
     import ""bhl1""  
     
@@ -1501,12 +1514,12 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    
+
     var files = MakeFiles(new Dictionary<string, string>()
-      {
-        { "bhl1.bhl", bhl1 },
-        { "bhl2.bhl", bhl2 },
-      });
+    {
+      { "bhl1.bhl", bhl1 },
+      { "bhl2.bhl", bhl2 },
+    });
 
     {
       var vm = MakeVM(files);
@@ -1526,7 +1539,7 @@ public class TestImport : BHL_TestBase
       CommonChecks(vm);
     }
   }
-  
+
   [Fact]
   public void TestImportInheritedClassFromCachedModule()
   {
@@ -1537,17 +1550,17 @@ public class TestImport : BHL_TestBase
      func int Do() { return 10 }
     }
     ";
-    
+
     string bhl2 = @"
     import ""bhl1""  
 
     class Foo : Base { }
     ";
-    
+
     string interim = @"
     func interim() {}
     ";
-    
+
     string bhl3 = @"
     import ""bhl2""  
 
@@ -1557,14 +1570,14 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    
+
     var files = MakeFiles(new Dictionary<string, string>()
-      {
-        { "bhl1.bhl", bhl1 },
-        { "bhl2.bhl", bhl2 },
-        { "bhl3.bhl", bhl3 },
-        { "interim.bhl", interim },
-      });
+    {
+      { "bhl1.bhl", bhl1 },
+      { "bhl2.bhl", bhl2 },
+      { "bhl3.bhl", bhl3 },
+      { "interim.bhl", interim },
+    });
 
     {
       var vm = MakeVM(files);
@@ -1591,7 +1604,7 @@ public class TestImport : BHL_TestBase
       namespace root.foo {
         func Foo() {}
       }
-    ";                                                                                                              
+    ";
     string file_bar = @"
     import ""/foo""
 
@@ -1609,20 +1622,19 @@ public class TestImport : BHL_TestBase
     ";
 
     var conf = MakeCompileConf(
-      MakeFiles(new Dictionary<string, string>() {
+      MakeFiles(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"bar.bhl", file_bar},
         {"foo.bhl", file_foo},
-       }), 
-      use_cache: false, 
+      }),
+      use_cache: false,
       max_threads: 1);
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(conf);
-      },
-    "symbol 'foo' not resolved",
-    new PlaceAssert(file_test, @"
+      delegate() { CompileFiles(conf); },
+      "symbol 'foo' not resolved",
+      new PlaceAssert(file_test, @"
       root.foo.Foo()
 -----------^"
       )
@@ -1631,11 +1643,9 @@ public class TestImport : BHL_TestBase
     conf.proj.use_cache = true;
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(conf);
-      },
-    "symbol 'foo' not resolved",
-    new PlaceAssert(file_test, @"
+      delegate() { CompileFiles(conf); },
+      "symbol 'foo' not resolved",
+      new PlaceAssert(file_test, @"
       root.foo.Foo()
 -----------^"
       )
@@ -1649,7 +1659,7 @@ public class TestImport : BHL_TestBase
       namespace root.foo {
         func Foo() {}
       }
-    ";                                                                                                              
+    ";
     string file_bar = @"
     import ""/foo""
 
@@ -1667,20 +1677,19 @@ public class TestImport : BHL_TestBase
     ";
 
     var conf = MakeCompileConf(
-      MakeFiles(new Dictionary<string, string>() {
+      MakeFiles(new Dictionary<string, string>()
+      {
         {"test.bhl", file_test},
         {"bar.bhl", file_bar},
         {"foo.bhl", file_foo},
-       }), 
-      use_cache: false, 
+      }),
+      use_cache: false,
       max_threads: 1);
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(conf);
-      },
-    "symbol 'Foo' not resolved",
-    new PlaceAssert(file_test, @"
+      delegate() { CompileFiles(conf); },
+      "symbol 'Foo' not resolved",
+      new PlaceAssert(file_test, @"
       root.foo.Foo()
 ---------------^"
       )
@@ -1689,15 +1698,12 @@ public class TestImport : BHL_TestBase
     conf.proj.use_cache = true;
 
     AssertError<Exception>(
-      delegate() { 
-        CompileFiles(conf);
-      },
-    "symbol 'Foo' not resolved",
-    new PlaceAssert(file_test, @"
+      delegate() { CompileFiles(conf); },
+      "symbol 'Foo' not resolved",
+      new PlaceAssert(file_test, @"
       root.foo.Foo()
 ---------------^"
       )
     );
-
   }
 }

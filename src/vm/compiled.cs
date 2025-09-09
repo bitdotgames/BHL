@@ -4,7 +4,8 @@ using System.IO;
 using System.Collections.Generic;
 using bhl.marshall;
 
-namespace bhl {
+namespace bhl
+{
 
 public class Ip2SrcLine
 {
@@ -19,7 +20,7 @@ public class Ip2SrcLine
 
   public int TryMap(int ip)
   {
-    int idx = Search(ip, 0, ips.Count-1);
+    int idx = Search(ip, 0, ips.Count - 1);
     if(idx == -1)
       return 0;
     return lines[idx];
@@ -32,7 +33,7 @@ public class Ip2SrcLine
       int mid = l + (r - l) / 2;
 
       //checking for IP range
-      if(ip <= ips[mid] && (mid == 0 || ip > ips[mid-1]))
+      if(ip <= ips[mid] && (mid == 0 || ip > ips[mid - 1]))
         return mid;
 
       if(ips[mid] > ip)
@@ -40,6 +41,7 @@ public class Ip2SrcLine
       else
         return Search(ip, mid + 1, r);
     }
+
     return -1;
   }
 
@@ -53,9 +55,9 @@ public class Ip2SrcLine
 public class CompiledModule
 {
   const uint HEADER_VERSION = 2;
-  
+
   public static CompiledModule None = new CompiledModule();
-  
+
   //normalized imported module names
   public List<string> imports;
   public int total_gvars_num;
@@ -64,18 +66,22 @@ public class CompiledModule
   public Const[] constants;
   public TypeRefIndex type_refs;
   IType[] _type_refs_resolved;
+
   public IType[] type_refs_resolved
   {
-    get {
+    get
+    {
       if(_type_refs_resolved == null)
       {
         _type_refs_resolved = new IType[type_refs.Count];
         for (int i = 0; i < type_refs.Count; ++i)
           _type_refs_resolved[i] = type_refs.all[i].Get();
       }
+
       return _type_refs_resolved;
     }
-  } 
+  }
+
   public Ip2SrcLine ip2src_line;
   public int init_func_idx = -1;
 
@@ -98,7 +104,7 @@ public class CompiledModule
     this.bytecode = bytecode;
     this.ip2src_line = ip2src_line;
   }
-  
+
   public CompiledModule()
     : this(
       -1,
@@ -110,11 +116,12 @@ public class CompiledModule
       new byte[0],
       new Ip2SrcLine()
     )
-  {}
+  {
+  }
 
   static public Module FromStream(
-    Types types, 
-    Stream src, 
+    Types types,
+    Stream src,
     INamedResolver resolver = null
   )
   {
@@ -143,7 +150,7 @@ public class CompiledModule
     byte[] bytecode = null;
     var ip2src_line = new Ip2SrcLine();
 
-    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true/*leave open*/))
+    using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true /*leave open*/))
     {
       //TODO: add better support for version
       uint version = r.ReadUInt32();
@@ -157,11 +164,11 @@ public class CompiledModule
       init_func_idx = r.ReadInt32();
 
       int imports_len = r.ReadInt32();
-      for(int i=0;i<imports_len;++i)
+      for(int i = 0; i < imports_len; ++i)
         imports.Add(r.ReadString());
 
       int type_refs_offsets_len = r.ReadInt32();
-      for(int i=0;i<type_refs_offsets_len;++i)
+      for(int i = 0; i < type_refs_offsets_len; ++i)
         type_refs_offsets.Add(r.ReadInt32());
 
       int type_refs_len = r.ReadInt32();
@@ -192,7 +199,7 @@ public class CompiledModule
 
       int ip2src_line_len = r.ReadInt32();
       ip2src_line.EnsureCapacity(ip2src_line_len);
-      for(int i=0;i<ip2src_line_len;++i)
+      for(int i = 0; i < ip2src_line_len; ++i)
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
 
@@ -206,7 +213,7 @@ public class CompiledModule
     ctx.type_refs_offsets = type_refs_offsets;
 
     marshall.Marshall.ReadTypeRefs(ctx);
-    
+
     marshall.Marshall.Sync(ctx, ref module.ns);
 
     //NOTE: we link(import) the global native namespace once the module was loaded
@@ -222,34 +229,34 @@ public class CompiledModule
     }
     else
       constants = Array.Empty<Const>();
-    
+
     ArrayPool<byte>.Shared.Return(symb_bytes);
     ArrayPool<byte>.Shared.Return(type_refs_bytes);
 
     var compiled = new CompiledModule(
-        init_func_idx,
-        imports,
-        total_gvars_num,
-        constants, 
-        type_refs,
-        initcode, 
-        bytecode, 
-        ip2src_line
-      );
-    
+      init_func_idx,
+      imports,
+      total_gvars_num,
+      constants,
+      type_refs,
+      initcode,
+      bytecode,
+      ip2src_line
+    );
+
     module.InitWithCompiled(compiled);
-     
+
     return module;
   }
 
   static void ReadConstants(byte[] constant_bytes, out Const[] constants)
   {
-    var src = new MemoryStream(constant_bytes); 
+    var src = new MemoryStream(constant_bytes);
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8))
     {
       int constants_num = r.ReadInt32();
       constants = new Const[constants_num];
-      for(int i=0;i<constants_num;++i)
+      for(int i = 0; i < constants_num; ++i)
       {
         Const cn = null;
 
@@ -257,7 +264,7 @@ public class CompiledModule
 
         if(cn_type == ConstType.STR)
           cn = new Const(r.ReadString());
-        else if(cn_type == ConstType.FLT || 
+        else if(cn_type == ConstType.FLT ||
                 cn_type == ConstType.INT ||
                 cn_type == ConstType.BOOL ||
                 cn_type == ConstType.NIL)
@@ -280,21 +287,21 @@ public class CompiledModule
 
       w.Write(module.name);
       w.Write(module.file_path);
-      
+
       w.Write(module.compiled.init_func_idx);
 
       w.Write(module.compiled.imports.Count);
       foreach(var import in module.compiled.imports)
         w.Write(import);
-      
+
       module.compiled.type_refs.Index(module.ns);
-      
+
       //for debug
       //Console.WriteLine("==== module: " + module.name + ", refs: " + module.compiled.type_refs.Count);
       //for(int t=0;t<module.compiled.type_refs.all.Count;++t)
       //  Console.WriteLine("TYPE REF #" + t + " " + module.compiled.type_refs.all[t]);
 
-      var type_ref_bytes = 
+      var type_ref_bytes =
         marshall.Marshall.WriteTypeRefs(module.compiled.type_refs, out var type_ref_offsets);
       w.Write(type_ref_offsets.Count);
       foreach(int offset in type_ref_offsets)
@@ -303,10 +310,10 @@ public class CompiledModule
       w.Write(type_ref_bytes, 0, type_ref_bytes.Length);
 
       var symb_bytes = marshall.Marshall.Obj2Bytes(
-        module.ns, 
+        module.ns,
         module.compiled.type_refs
       );
-      
+
       w.Write(symb_bytes.Length);
       w.Write(symb_bytes, 0, symb_bytes.Length);
 
@@ -328,14 +335,14 @@ public class CompiledModule
 
       //TODO: add this info only for development builds
       w.Write(module.compiled.ip2src_line.ips.Count);
-      for(int i=0;i<module.compiled.ip2src_line.ips.Count;++i)
+      for(int i = 0; i < module.compiled.ip2src_line.ips.Count; ++i)
       {
         w.Write(module.compiled.ip2src_line.ips[i]);
         w.Write(module.compiled.ip2src_line.lines[i]);
       }
     }
   }
-  
+
   static byte[] WriteConstants(Const[] constants)
   {
     var dst = new MemoryStream();
@@ -347,15 +354,16 @@ public class CompiledModule
         w.Write((byte)cn.type);
         if(cn.type == ConstType.STR)
           w.Write(cn.str);
-        else if(cn.type == ConstType.FLT || 
-            cn.type == ConstType.INT ||
-            cn.type == ConstType.BOOL ||
-            cn.type == ConstType.NIL)
+        else if(cn.type == ConstType.FLT ||
+                cn.type == ConstType.INT ||
+                cn.type == ConstType.BOOL ||
+                cn.type == ConstType.NIL)
           w.Write(cn.num);
         else
           throw new Exception("Unknown type: " + cn.type);
       }
     }
+
     return dst.GetBuffer();
   }
 

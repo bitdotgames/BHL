@@ -15,9 +15,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
@@ -36,9 +34,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
       coro func test() {
@@ -55,9 +51,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
       coro func test() {
@@ -76,9 +70,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
       coro func test() {
@@ -96,9 +88,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro functions without yield calls not allowed",
         new PlaceAssert(bhl, @"
         start(coro func() {
@@ -309,9 +299,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "base: 'func int()', override: 'coro func int()'",
       new PlaceAssert(bhl, @"
       coro override func int Doer() {
@@ -366,18 +354,18 @@ public class TestYield : BHL_TestBase
 
     var ts = new Types();
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-      .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+          .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
     var fb = vm.Start("test");
-    for(int i=0;i<99;i++)
+    for(int i = 0; i < 99; i++)
       Assert.True(vm.Tick());
     vm.Stop(fb);
     CommonChecks(vm);
@@ -393,9 +381,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       suspend()
@@ -421,9 +407,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "coro function must be called via yield",
       new PlaceAssert(bhl, @"
       foo.bar()
@@ -454,9 +438,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         int n = foo.bar().number
@@ -491,9 +473,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "coro function must be called via yield",
         new PlaceAssert(bhl, @"
         int n = foo.bar().ptr().number
@@ -565,9 +545,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
@@ -658,7 +636,7 @@ public class TestYield : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    for(int i=0;i<5;++i)
+    for(int i = 0; i < 5; ++i)
       Assert.True(vm.Tick());
     //...will be running forever, well, we assume that :)
     vm.Stop(fb);
@@ -675,9 +653,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "function with yield calls must be coro",
       new PlaceAssert(bhl, @"
     func test() {
@@ -715,9 +691,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "not a coro function",
       new PlaceAssert(bhl, @"
       yield foo()
@@ -737,9 +711,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "not a coro function",
       new PlaceAssert(bhl, @"
       yield p()
@@ -762,9 +734,7 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "incompatible types: 'func int()' and 'coro func int()'",
       new PlaceAssert(bhl, @"
       func int() p = coro func int() {
@@ -786,9 +756,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "yield is not allowed in defer block",
         new PlaceAssert(bhl, @"
           yield()
@@ -807,9 +775,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "yield is not allowed in defer block",
         new PlaceAssert(bhl, @"
           yield while(true)
@@ -831,9 +797,7 @@ public class TestYield : BHL_TestBase
       ";
 
       AssertError<Exception>(
-        delegate() { 
-          Compile(bhl);
-        },
+        delegate() { Compile(bhl); },
         "yield is not allowed in defer block",
         new PlaceAssert(bhl, @"
           yield foo()
@@ -854,14 +818,12 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'FOO' not resolved",
       new PlaceAssert(bhl, @"
       yield FOO()
 ------------^"
-       )
+      )
     );
   }
 
@@ -878,14 +840,12 @@ public class TestYield : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "symbol 'FOO' not resolved",
       new PlaceAssert(bhl, @"
         yield FOO()
 --------------^"
-       )
+      )
     );
   }
 
@@ -902,12 +862,13 @@ public class TestYield : BHL_TestBase
     var vm = MakeVM(bhl);
     int start = System.Environment.TickCount;
     var fb = vm.Start("test");
-    for(int c=0;c<10;++c)
+    for(int c = 0; c < 10; ++c)
     {
       if(!vm.Tick())
         break;
       System.Threading.Thread.Sleep(1);
     }
+
     Assert.True(fb.IsStopped());
     Assert.True(System.Environment.TickCount - start >= 5);
     CommonChecks(vm);
@@ -929,14 +890,12 @@ public class TestYield : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    for(int i=0;i<10;++i)
+    for(int i = 0; i < 10; ++i)
       Assert.True(vm.Tick());
     vm.Stop();
     AssertEqual(new String('.', 9), log.ToString());
@@ -959,14 +918,12 @@ public class TestYield : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
 
-    for(int i=0;i<10;++i)
+    for(int i = 0; i < 10; ++i)
       Assert.True(vm.Tick());
     vm.Stop();
     AssertEqual(new String('.', 10), log.ToString());

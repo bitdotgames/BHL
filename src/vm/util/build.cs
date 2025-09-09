@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace bhl {
+namespace bhl
+{
 
 static public class BuildUtils
 {

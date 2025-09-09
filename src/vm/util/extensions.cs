@@ -2,14 +2,15 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-    
+namespace bhl
+{
+
 public static class Extensions
 {
   public static string GetFullMessage(this Exception ex)
   {
-    return ex.InnerException == null 
-      ? ex.Message 
+    return ex.InnerException == null
+      ? ex.Message
       : ex.Message + " --> " + ex.InnerException.GetFullMessage();
   }
 
@@ -44,7 +45,8 @@ public static class Extensions
       n = src.Read(buffer, 0, buffer.Length);
       dest.Write(buffer, 0, n);
       total += n;
-    } while (n != 0);           
+    } while (n != 0);
+
     return total;
   }
 
@@ -68,11 +70,12 @@ public static class Extensions
     var curr = stack[idx];
     if(curr != null)
     {
-      for(int i=0;i<curr._refs;++i)
+      for(int i = 0; i < curr._refs; ++i)
       {
         val._refc?.Retain();
         curr._refc?.Release();
       }
+
       curr.ValueCopyFrom(val);
     }
     else
@@ -95,19 +98,19 @@ public static class Extensions
     //      these bits in the target value and 'or' the bits we want to set
     other = (byte)((other & (byte)~FuncSignatureAttrib.FuncAttribMask) | (byte)attrib);
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe int SizeOf<T>() where T : unmanaged
   {
     return sizeof(T);
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe ref T UsafeAsRef<T>(void* source) where T : unmanaged
   {
     return ref *(T*)source;
-  }  
-  
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe ref TTo UnsafeAs<TFrom, TTo>(ref TFrom source) where TTo : unmanaged where TFrom : unmanaged
   {
@@ -115,7 +118,7 @@ public static class Extensions
     {
       return ref UsafeAsRef<TTo>(p);
     }
-  }  
+  }
 }
 
 }

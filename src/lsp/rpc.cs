@@ -8,7 +8,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public enum ErrorCodes
 {
@@ -49,7 +50,7 @@ public class Request : MessageBase
     this.id = id;
     this.method = method;
     if(@params != null)
-      this.@params = JToken.FromObject(@params); 
+      this.@params = JToken.FromObject(@params);
   }
 }
 
@@ -67,7 +68,8 @@ public class Response : MessageBase
   public ResponseError error;
 
   public Response()
-  {}
+  {
+  }
 
   //for tests convenience
   public Response(int id, object result, ResponseError error = null)
@@ -78,7 +80,7 @@ public class Response : MessageBase
   }
 }
 
-public class Notification 
+public class Notification
 {
   public string method { get; set; }
   public object @params { get; set; }

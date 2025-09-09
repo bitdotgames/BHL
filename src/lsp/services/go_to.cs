@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
-  
+namespace bhl.lsp
+{
+
 public class TextDocumentGoToService : IService
 {
   Workspace workspace;
@@ -22,7 +23,7 @@ public class TextDocumentGoToService : IService
 
     if(cc.textDocument?.typeDefinition != null)
       sc.typeDefinitionProvider = false; //textDocument/typeDefinition
-    
+
     if(cc.textDocument?.implementation != null)
       sc.implementationProvider = false; //textDocument/implementation
   }
@@ -35,7 +36,7 @@ public class TextDocumentGoToService : IService
   public Task<RpcResult> GotoDefinition(DefinitionParams args)
   {
     var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-        
+
     if(document != null)
     {
       var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
@@ -52,7 +53,7 @@ public class TextDocumentGoToService : IService
 
     return Task.FromResult(new RpcResult(new Location()));
   }
-  
+
   /**
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.declaration.linkSupport.
@@ -65,7 +66,7 @@ public class TextDocumentGoToService : IService
       "Not supported"
     ));
   }
-  
+
   /**
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.typeDefinition.linkSupport.
@@ -78,7 +79,7 @@ public class TextDocumentGoToService : IService
       "Not supported"
     ));
   }
-  
+
   /**
    * The result type LocationLink[] got introduced with version 3.14.0
    * and depends on the corresponding client capability textDocument.implementation.linkSupport.
@@ -92,4 +93,5 @@ public class TextDocumentGoToService : IService
     ));
   }
 }
+
 }

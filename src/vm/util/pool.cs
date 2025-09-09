@@ -1,28 +1,33 @@
 using System.Collections.Generic;
 
-namespace bhl {
-  
- public class Pool<T> where T : class
- {
-   internal Stack<T> stack = new Stack<T>();
-   internal int hits;
-   internal int miss;
+namespace bhl
+{
 
-   public int HitCount {
-     get { return hits; }
-   }
+public class Pool<T> where T : class
+{
+  internal Stack<T> stack = new Stack<T>();
+  internal int hits;
+  internal int miss;
 
-   public int MissCount {
-     get { return miss; }
-   }
+  public int HitCount
+  {
+    get { return hits; }
+  }
 
-   public int IdleCount {
-     get { return stack.Count; }
-   }
+  public int MissCount
+  {
+    get { return miss; }
+  }
 
-   public int BusyCount {
-     get { return miss - IdleCount; }
-   }
+  public int IdleCount
+  {
+    get { return stack.Count; }
+  }
+
+  public int BusyCount
+  {
+    get { return miss - IdleCount; }
+  }
 }
- 
+
 }

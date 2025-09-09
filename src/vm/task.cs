@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface ITask
 {

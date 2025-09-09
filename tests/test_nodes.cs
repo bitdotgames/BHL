@@ -178,19 +178,17 @@ public class TestNodes : BHL_TestBase
       public string type;
       public BehaviorTreeNode node;
     }
+
     public List<Event> events = new List<Event>();
 
-    public int Count {
-      get {
-        return events.Count;
-      }
+    public int Count
+    {
+      get { return events.Count; }
     }
 
     public Event this[int i]
     {
-      get {
-        return events[i];
-      }
+      get { return events[i]; }
     }
 
     public void Add(string type, BehaviorTreeNode n)

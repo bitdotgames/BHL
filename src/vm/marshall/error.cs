@@ -1,7 +1,8 @@
 using System;
 
-namespace bhl.marshall {
-  
+namespace bhl.marshall
+{
+
 public enum ErrorCode
 {
   SUCCESS                = 0,

@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
-  
-  
+namespace bhl
+{
+
 //NOTE: in case of IList implementation ValList doesn't apply owning semantics
 public class ValList : IList<Val>, IList, IValRefcounted
 {
@@ -15,7 +15,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   //      public only for quick inspection
   public int _refs;
 
-  public int refs => _refs; 
+  public int refs => _refs;
 
   public VM vm;
 
@@ -26,22 +26,39 @@ public class ValList : IList<Val>, IList, IValRefcounted
     throw new NotImplementedException();
   }
 
-  public int Count { get { return lst.Count; } }
+  public int Count
+  {
+    get { return lst.Count; }
+  }
 
-  public bool IsFixedSize { get { return false; } }
-  public bool IsReadOnly { get { return false; } }
+  public bool IsFixedSize
+  {
+    get { return false; }
+  }
 
-  public bool IsSynchronized { get { throw new NotImplementedException(); } }
-  public object SyncRoot { get { throw new NotImplementedException(); } }
+  public bool IsReadOnly
+  {
+    get { return false; }
+  }
+
+  public bool IsSynchronized
+  {
+    get { throw new NotImplementedException(); }
+  }
+
+  public object SyncRoot
+  {
+    get { throw new NotImplementedException(); }
+  }
 
   public void Add(Val dv)
   {
-   lst.Add(dv);
+    lst.Add(dv);
   }
 
   public void AddRange(IList<Val> list)
   {
-    for(int i=0; i<list.Count; ++i)
+    for(int i = 0; i < list.Count; ++i)
       Add(list[i]);
   }
 
@@ -54,7 +71,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   {
     var dv = lst[idx];
     dv.Release();
-    lst.RemoveAt(idx); 
+    lst.RemoveAt(idx);
   }
 
   public int Add(object value)
@@ -64,7 +81,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public void Clear()
   {
-    for(int i=0;i<Count;++i)
+    for(int i = 0; i < Count; ++i)
       lst[i].Release();
 
     lst.Clear();
@@ -84,7 +101,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   {
     throw new NotImplementedException();
   }
-  
+
   object IList.this[int index]
   {
     get => lst[index];
@@ -93,12 +110,8 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public Val this[int i]
   {
-    get {
-      return lst[i];
-    }
-    set {
-      lst[i] = value;
-    }
+    get { return lst[i]; }
+    set { lst[i] = value; }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -190,7 +203,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   public void CopyFrom(ValList lst)
   {
     Clear();
-    for(int i=0;i<lst.Count;++i)
+    for(int i = 0; i < lst.Count; ++i)
       Add(lst[i].CloneValue());
   }
 
@@ -218,6 +231,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
       if(lst._refs != -1)
         throw new Exception("Expected to be released, refs " + lst._refs);
     }
+
     lst._refs = 1;
 
     return lst;

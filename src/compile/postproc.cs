@@ -1,6 +1,6 @@
+namespace bhl
+{
 
-namespace bhl {
-  
 public interface IFrontPostProcessor
 {
   //NOTE: returns patched result
@@ -8,10 +8,16 @@ public interface IFrontPostProcessor
   void Tally();
 }
 
-public class EmptyPostProcessor : IFrontPostProcessor 
+public class EmptyPostProcessor : IFrontPostProcessor
 {
-  public ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file) { return fres; }
-  public void Tally() {}
+  public ANTLR_Processor.Result Patch(ANTLR_Processor.Result fres, string src_file)
+  {
+    return fres;
+  }
+
+  public void Tally()
+  {
+  }
 }
 
 }

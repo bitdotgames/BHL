@@ -24,14 +24,14 @@ public class TestLSPSignatureHelp : TestLSPShared
       test1(5.2, //signature help 2
     }
     ";
-    
+
     var ws = new Workspace();
 
     var srv = new Server(NoLogger(), NoConnection(), ws);
     srv.AttachService(new bhl.lsp.TextDocumentSignatureHelpService(srv));
-    
+
     CleanTestFiles();
-    
+
     var uri = MakeTestDocument("bhl1.bhl", bhl1);
 
     ws.Init(new bhl.Types(), GetTestProjConf());
@@ -43,7 +43,7 @@ public class TestLSPSignatureHelp : TestLSPShared
       "{\"label\":\"float k\",\"documentation\":\"\"},{\"label\":\"float n\",\"documentation\":\"\"}]," +
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
     );
-    
+
     AssertEqual(
       await srv.Handle(SignatureHelpReq(uri, ", //signature help 2")),
       "{\"id\":1,\"result\":{\"signatures\":[{\"label\":\"func float test1(float,float)\",\"documentation\":null,\"parameters\":[" +
@@ -51,5 +51,4 @@ public class TestLSPSignatureHelp : TestLSPShared
       "\"activeParameter\":0}],\"activeSignature\":0,\"activeParameter\":0},\"jsonrpc\":\"2.0\"}"
     );
   }
-
 }

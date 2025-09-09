@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 {
   internal SymbolsStorage members;
@@ -21,23 +22,24 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbo
   //marshall factory version
   public InterfaceSymbol()
     : this(null, null)
-  {}
+  {
+  }
 
   public void Define(Symbol sym)
   {
     if(!(sym is FuncSymbol))
       throw new Exception("Only function symbols supported, given " + sym?.GetType().Name);
-    
+
     members.Add(sym);
   }
 
-  public Symbol Resolve(string name) 
+  public Symbol Resolve(string name)
   {
     var sym =  members.Find(name);
     if(sym != null)
       return sym;
 
-    for(int i=0;i<inherits.Count;++i)
+    for(int i = 0; i < inherits.Count; ++i)
     {
       var tmp = inherits[i].Resolve(name);
       if(tmp != null)
@@ -47,9 +49,16 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbo
     return null;
   }
 
-  public IScope GetFallbackScope() { return scope; }
+  public IScope GetFallbackScope()
+  {
+    return scope;
+  }
 
-  public IEnumerator<Symbol> GetEnumerator() { return members.GetEnumerator(); }
+  public IEnumerator<Symbol> GetEnumerator()
+  {
+    return members.GetEnumerator();
+  }
+
   IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
   public void SetInherits(IList<InterfaceSymbol> inherits)
@@ -72,13 +81,14 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbo
     {
       related_types = new HashSet<IInstantiable>();
       related_types.Add(this);
-      for(int i=0;i<inherits.Count;++i)
+      for(int i = 0; i < inherits.Count; ++i)
       {
         var ext = (IInstantiable)inherits[i];
         if(!related_types.Contains(ext))
           related_types.UnionWith(ext.GetAllRelatedTypesSet());
       }
     }
+
     return related_types;
   }
 }
@@ -86,15 +96,17 @@ public abstract class InterfaceSymbol : Symbol, IInstantiable, IEnumerable<Symbo
 public class InterfaceSymbolScript : InterfaceSymbol
 {
   public const uint CLASS_ID = 18;
-  
+
   public InterfaceSymbolScript(Origin origin, string name)
     : base(origin, name)
-  {}
+  {
+  }
 
   //marshall factory version
-  public InterfaceSymbolScript() 
+  public InterfaceSymbolScript()
     : this(null, null)
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -106,12 +118,12 @@ public class InterfaceSymbolScript : InterfaceSymbol
     refs.Index(inherits.list);
     refs.Index(members.list);
   }
-  
+
   public override void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref name);
-    marshall.Marshall.Sync(ctx, ref inherits); 
-    marshall.Marshall.Sync(ctx, ref members); 
+    marshall.Marshall.Sync(ctx, ref inherits);
+    marshall.Marshall.Sync(ctx, ref members);
   }
 }
 
@@ -123,7 +135,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 
   public InterfaceSymbolNative(
     Origin origin,
-    string name, 
+    string name,
     IList<ProxyType> proxy_inherits,
     params FuncSymbol[] funcs
   )
@@ -135,7 +147,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 
   public InterfaceSymbolNative(
     Origin origin,
-    string name, 
+    string name,
     IList<ProxyType> proxy_inherits,
     System.Type native_type,
     params FuncSymbol[] funcs
@@ -164,11 +176,12 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
       foreach(var pi in proxy_inherits)
       {
         var iface = pi.Get() as InterfaceSymbol;
-        if(iface == null) 
+        if(iface == null)
           throw new Exception("Inherited interface not found" + pi);
 
         inherits.Add(iface);
       }
+
       SetInherits(inherits);
     }
 
@@ -186,7 +199,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
     if(proxy_inherits != null)
       refs.Index(proxy_inherits);
   }
-  
+
   public override void Sync(marshall.SyncContext ctx)
   {
     throw new NotImplementedException();

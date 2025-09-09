@@ -19,9 +19,7 @@ public class TestErrors : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "at input '('",
       new PlaceAssert(bhl, @"
     []Color color() {
@@ -41,9 +39,7 @@ public class TestErrors : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "rule eos failed predicate",
       new PlaceAssert(bhl, @"
       a +++++++++== 1
@@ -65,9 +61,7 @@ public class TestErrors : BHL_TestBase
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "mismatched input",
       new PlaceAssert(bhl, @"
     {
@@ -88,9 +82,7 @@ public class TestErrors : BHL_TestBase
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "no viable alternative at input 'coro func foo(,'",
       new PlaceAssert(bhl, @"
     coro func foo(, int a)
@@ -110,9 +102,7 @@ public class TestErrors : BHL_TestBase
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "mismatched input",
       new PlaceAssert(bhl, @"
     }
@@ -137,9 +127,7 @@ public class TestErrors : BHL_TestBase
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "no viable alternative at input",
       new PlaceAssert(bhl, @"
     }
@@ -163,9 +151,7 @@ public class TestErrors : BHL_TestBase
 
     //TODO: error hint placement must be more precise
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "no viable alternative at input",
       new PlaceAssert(bhl, @"
     }
@@ -287,8 +273,9 @@ public class TestErrors : BHL_TestBase
     {
       CompileFiles(conf);
     }
-    catch(Exception) 
-    {}
+    catch(Exception)
+    {
+    }
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(2, lines.Length);
@@ -332,8 +319,9 @@ public class TestErrors : BHL_TestBase
     {
       CompileFiles(conf);
     }
-    catch(Exception) 
-    {}
+    catch(Exception)
+    {
+    }
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(2, lines.Length);
@@ -341,7 +329,7 @@ public class TestErrors : BHL_TestBase
     Assert.Contains("bhl1.bhl\", \"line\": 6, \"column\" : 10", lines[0]);
     Assert.Contains("bhl2.bhl\", \"line\": 5, \"column\" : 12", lines[1]);
   }
-  
+
   [Fact]
   public void TestSeveralErrorsDumpedIntoErrorFile()
   {
@@ -373,8 +361,9 @@ public class TestErrors : BHL_TestBase
     {
       CompileFiles(conf);
     }
-    catch(Exception) 
-    {}
+    catch(Exception)
+    {
+    }
 
     var lines = File.ReadAllText(conf.proj.error_file).Split('\n');
     Assert.Equal(5, lines.Length);
@@ -465,9 +454,7 @@ public class TestErrors : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       "token recognition error at: '\"",
       new PlaceAssert(bhl, @"
       import foo""

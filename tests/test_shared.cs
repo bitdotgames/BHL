@@ -12,18 +12,19 @@ public class BHL_TestBase
   protected static void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-          var b = (float)stack.PopRelease().num;
-          var a = (float)stack.PopRelease().num;
-          stack.Push(Val.NewFlt(frm.vm, a > b ? b : a)); 
-          return null;
-        },
-        new FuncArgSymbol("a", ts.T("float")),
-        new FuncArgSymbol("b", ts.T("float"))
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      {
+        var b = (float)stack.PopRelease().num;
+        var a = (float)stack.PopRelease().num;
+        stack.Push(Val.NewFlt(frm.vm, a > b ? b : a));
+        return null;
+      },
+      new FuncArgSymbol("a", ts.T("float")),
+      new FuncArgSymbol("b", ts.T("float"))
     );
     ts.ns.Define(fn);
   }
-  
+
   public struct IntStruct
   {
     public int n;
@@ -44,8 +45,8 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
+        delegate(VM.Frame frm, ref Val v, IType type)
+        {
           var s = new IntStruct();
           IntStruct.Encode(v, s, type);
         }
@@ -71,7 +72,7 @@ public class BHL_TestBase
       cl.Setup();
     }
   }
-  
+
   public class StringClass
   {
     public string str;
@@ -81,10 +82,7 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "StringClass",
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new StringClass(), type);
-        }
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new StringClass(), type); }
       );
 
       ts.ns.Define(cl);
@@ -98,7 +96,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
-          c.str = v.str; 
+          c.str = v.str;
           ctx.SetObj(c, ctx.type);
         }
       ));
@@ -109,11 +107,11 @@ public class BHL_TestBase
   public void BindFail(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "fail", ts.T("void"),
-      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) 
-      { 
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      {
         status = BHS.FAILURE;
         return null;
-      } 
+      }
     );
     ts.ns.Define(fn);
   }
@@ -125,7 +123,7 @@ public class BHL_TestBase
 
     public override string ToString()
     {
-      return "[r="+r+",g="+g+"]";
+      return "[r=" + r + ",g=" + g + "]";
     }
   }
 
@@ -135,7 +133,7 @@ public class BHL_TestBase
 
     public override string ToString()
     {
-      return "[r="+r+",g="+g+",a="+a+"]";
+      return "[r=" + r + ",g=" + g + ",a=" + a + "]";
     }
   }
 
@@ -147,10 +145,7 @@ public class BHL_TestBase
   public ClassSymbolNative BindColor(Types ts, bool call_setup = true)
   {
     var cl = new ClassSymbolNative(new Origin(), "Color", null,
-      delegate(VM.Frame frm, ref Val v, IType type) 
-      { 
-        v.SetObj(new Color(), type);
-      },
+      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Color(), type); },
       typeof(Color)
     );
 
@@ -164,7 +159,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        c.r = (float)v.num; 
+        c.r = (float)v.num;
         ctx.SetObj(c, ctx.type);
       }
     ));
@@ -177,7 +172,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
-        c.g = (float)v.num; 
+        c.g = (float)v.num;
         ctx.SetObj(c, ctx.type);
       }
     ));
@@ -203,7 +198,7 @@ public class BHL_TestBase
 
       cl.Define(m);
     }
-    
+
     {
       var m = new FuncSymbolNative(new Origin(), "mult_summ", ts.T("float"),
         delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
@@ -218,29 +213,31 @@ public class BHL_TestBase
 
       cl.Define(m);
     }
-    
+
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor", ts.T("Color"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            var r = stack.PopRelease().num;
-            var c = new Color();
-            c.r = (float)r;
-            var v = Val.NewObj(frm.vm, c, ts.T("Color").Get());
-            stack.Push(v);
-            return null;
-          },
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var r = stack.PopRelease().num;
+          var c = new Color();
+          c.r = (float)r;
+          var v = Val.NewObj(frm.vm, c, ts.T("Color").Get());
+          stack.Push(v);
+          return null;
+        },
         new FuncArgSymbol("r", ts.T("float"))
       );
 
       ts.ns.Define(fn);
     }
-    
+
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_null", ts.T("Color"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            stack.Push(frm.vm.Null);
-            return null;
-          }
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          stack.Push(frm.vm.Null);
+          return null;
+        }
       );
 
       ts.ns.Define(fn);
@@ -248,11 +245,11 @@ public class BHL_TestBase
 
     var arrT_Color = new NativeListTypeSymbol<Color>(
       new Origin(),
-      "ArrayT_Color", 
-        (v) => (Color)v.obj,
-      (_vm, itype, n) => Val.NewObj(_vm, n, cl), 
+      "ArrayT_Color",
+      (v) => (Color)v.obj,
+      (_vm, itype, n) => Val.NewObj(_vm, n, cl),
       ts.T("Color")
-      );
+    );
     ts.ns.Define(arrT_Color);
     arrT_Color.Setup();
 
@@ -267,10 +264,7 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "ColorAlpha", ts.T("Color"),
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new ColorAlpha(), type);
-        },
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new ColorAlpha(), type); },
         typeof(ColorAlpha)
       );
 
@@ -285,7 +279,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
-          c.a = (float)v.num; 
+          c.a = (float)v.num;
           ctx.SetObj(c, ctx.type);
         }
       ));
@@ -307,96 +301,95 @@ public class BHL_TestBase
       }
     }
   }
-  
- public struct MasterStruct
- {
-   public StringClass child;
-   public StringClass child2;
-   public IntStruct child_struct;
-   public IntStruct child_struct2;
- }
 
- public void BindMasterStruct(Types ts)
- {
-   BindStringClass(ts);
-   BindIntStruct(ts);
+  public struct MasterStruct
+  {
+    public StringClass child;
+    public StringClass child2;
+    public IntStruct child_struct;
+    public IntStruct child_struct2;
+  }
 
-   {
-     var cl = new ClassSymbolNative(new Origin(), "MasterStruct",
-       delegate(VM.Frame frm, ref Val v, IType type) 
-       { 
-         var o = new MasterStruct();
-         o.child = new StringClass();
-         o.child2 = new StringClass();
-         v.SetObj(o, type);
-       }
-     );
+  public void BindMasterStruct(Types ts)
+  {
+    BindStringClass(ts);
+    BindIntStruct(ts);
 
-     ts.ns.Define(cl);
+    {
+      var cl = new ClassSymbolNative(new Origin(), "MasterStruct",
+        delegate(VM.Frame frm, ref Val v, IType type)
+        {
+          var o = new MasterStruct();
+          o.child = new StringClass();
+          o.child2 = new StringClass();
+          v.SetObj(o, type);
+        }
+      );
 
-     cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
-       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         v.SetObj(c.child, fld.type.Get());
-       },
-       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         c.child = (StringClass)v._obj; 
-         ctx.SetObj(c, ctx.type);
-       }
-     ));
+      ts.ns.Define(cl);
 
-     cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
-       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         v.SetObj(c.child2, fld.type.Get());
-       },
-       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         c.child2 = (StringClass)v.obj; 
-         ctx.SetObj(c, ctx.type);
-       }
-     ));
+      cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          v.SetObj(c.child, fld.type.Get());
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          c.child = (StringClass)v._obj;
+          ctx.SetObj(c, ctx.type);
+        }
+      ));
 
-     cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
-       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         IntStruct.Encode(v, c.child_struct, fld.type.Get());
-       },
-       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         IntStruct s = new IntStruct();
-         IntStruct.Decode(v, ref s);
-         c.child_struct = s;
-         ctx.SetObj(c, ctx.type);
-       }
-     ));
+      cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          v.SetObj(c.child2, fld.type.Get());
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          c.child2 = (StringClass)v.obj;
+          ctx.SetObj(c, ctx.type);
+        }
+      ));
 
-     cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
-       delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         IntStruct.Encode(v, c.child_struct2, fld.type.Get());
-       },
-       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
-       {
-         var c = (MasterStruct)ctx.obj;
-         IntStruct s = new IntStruct();
-         IntStruct.Decode(v, ref s);
-         c.child_struct2 = s;
-         ctx.SetObj(c, ctx.type);
-       }
-     ));
-     cl.Setup();
+      cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct, fld.type.Get());
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct = s;
+          ctx.SetObj(c, ctx.type);
+        }
+      ));
 
-   }
- }
+      cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
+        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct.Encode(v, c.child_struct2, fld.type.Get());
+        },
+        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var c = (MasterStruct)ctx.obj;
+          IntStruct s = new IntStruct();
+          IntStruct.Decode(v, ref s);
+          c.child_struct2 = s;
+          ctx.SetObj(c, ctx.type);
+        }
+      ));
+      cl.Setup();
+    }
+  }
 
   public class Foo
   {
@@ -416,10 +409,7 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) 
-        { 
-          v.SetObj(new Foo(), type);
-        }
+        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Foo(), type); }
       );
       ts.ns.Define(cl);
 
@@ -432,7 +422,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          f.hey = (int)v.num; 
+          f.hey = (int)v.num;
           ctx.SetObj(f, ctx.type);
         }
       ));
@@ -457,7 +447,7 @@ public class BHL_TestBase
         delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
-          f.sub_color = (Color)v.obj; 
+          f.sub_color = (Color)v.obj;
           ctx.SetObj(f, ctx.type);
         }
       ));
@@ -466,11 +456,12 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "PassthruFoo", ts.T("Foo"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            stack.Push(stack.Pop());
-            return null;
-          },
-          new FuncArgSymbol("foo", ts.T("Foo"))
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          stack.Push(stack.Pop());
+          return null;
+        },
+        new FuncArgSymbol("foo", ts.T("Foo"))
       );
 
       ts.ns.Define(fn);
@@ -487,10 +478,7 @@ public class BHL_TestBase
   public ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative(new Origin(), "Bar", null,
-      delegate(VM.Frame frm, ref Val v, IType type) 
-      { 
-        v.SetObj(new Bar(), type);
-      }
+      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Bar(), type); }
     );
 
     ts.ns.Define(cl);
@@ -503,7 +491,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
-        c.Int = (int)v.num; 
+        c.Int = (int)v.num;
         ctx.SetObj(c, ctx.type);
       }
     ));
@@ -516,7 +504,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
-        c.Flt = (float)v.num; 
+        c.Flt = (float)v.num;
         ctx.SetObj(c, ctx.type);
       }
     ));
@@ -529,7 +517,7 @@ public class BHL_TestBase
       delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
-        c.Str = (string)v.obj; 
+        c.Str = (string)v.obj;
         ctx.SetObj(c, ctx.type);
       }
     ));
@@ -541,14 +529,15 @@ public class BHL_TestBase
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "trace", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-          string str = stack.PopRelease().str;
-          //for extra debug
-          //Console.WriteLine(str);
-          log.Append(str);
-          return null;
-        }, 
-        new FuncArgSymbol("str", ts.T("string"))
+      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      {
+        string str = stack.PopRelease().str;
+        //for extra debug
+        //Console.WriteLine(str);
+        log.Append(str);
+        return null;
+      },
+      new FuncArgSymbol("str", ts.T("string"))
     );
     ts.ns.Define(fn);
     return fn;
@@ -559,35 +548,36 @@ public class BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "log", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status) { 
-            string str = stack.PopRelease().str;
-            Console.WriteLine(str); 
-            return null;
-          },
-          new FuncArgSymbol("str", ts.T("string"))
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          string str = stack.PopRelease().str;
+          Console.WriteLine(str);
+          return null;
+        },
+        new FuncArgSymbol("str", ts.T("string"))
       );
       ts.ns.Define(fn);
     }
   }
 
   public VM MakeVM(
-    string bhl, 
-    Action<Types> ts_fn = null, 
-    bool show_ast = false, 
-    bool show_bytes = false, 
-    bool show_parse_tree = false, 
+    string bhl,
+    Action<Types> ts_fn = null,
+    bool show_ast = false,
+    bool show_bytes = false,
+    bool show_parse_tree = false,
     HashSet<string> defines = null
   )
   {
     return MakeVM(
-        Compile(
-          bhl, 
-          ts_fn, 
-          show_ast: show_ast, 
-          show_bytes: show_bytes, 
-          show_parse_tree: show_parse_tree,
-          defines: defines
-        ), 
+      Compile(
+        bhl,
+        ts_fn,
+        show_ast: show_ast,
+        show_bytes: show_bytes,
+        show_parse_tree: show_parse_tree,
+        defines: defines
+      ),
       ts_fn);
   }
 
@@ -631,7 +621,8 @@ public class BHL_TestBase
     return vm;
   }
 
-  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, CompilationExecutor executor = null)
+  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
+    CompilationExecutor executor = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
@@ -641,7 +632,8 @@ public class BHL_TestBase
     return vm;
   }
 
-  public static VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true, bool use_cache = false)
+  public static VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true,
+    bool use_cache = false)
   {
     return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
   }
@@ -656,11 +648,12 @@ public class BHL_TestBase
     var fb = vm.Start(fn_name, args_info, new StackList<Val>(args));
     const int LIMIT = 20;
     int c = 0;
-    for(;c<LIMIT;++c)
+    for(; c < LIMIT; ++c)
     {
       if(!vm.Tick())
         return fb;
     }
+
     throw new Exception("Too many iterations: " + c);
   }
 
@@ -688,7 +681,7 @@ public class BHL_TestBase
   {
     string dir = TestDirPath();
     if(Directory.Exists(dir))
-      Directory.Delete(dir, true/*recursive*/);
+      Directory.Delete(dir, true /*recursive*/);
   }
 
   public static int NewTestFile(string path, string text, ref List<string> files, bool unique = false)
@@ -699,50 +692,54 @@ public class BHL_TestBase
     Directory.CreateDirectory(Path.GetDirectoryName(full_path));
     File.WriteAllText(full_path, text);
     files.Add(full_path);
-    return files.Count-1;
+    return files.Count - 1;
   }
 
   public static int ConstIdx(bhl.Module module, string str)
   {
-    for(int i=0;i<module.compiled.constants.Length;++i)
+    for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.STR && cn.str == str)
         return i;
     }
+
     throw new Exception("Constant not found: " + str);
   }
 
   public static int ConstIdx(bhl.Module module, int num)
   {
-    for(int i=0;i<module.compiled.constants.Length;++i)
+    for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.INT && cn.num == num)
         return i;
     }
+
     throw new Exception("Constant not found: " + num);
   }
 
   public static int ConstIdx(bhl.Module module, double num)
   {
-    for(int i=0;i<module.compiled.constants.Length;++i)
+    for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.FLT && cn.num == num)
         return i;
     }
+
     throw new Exception("Constant not found: " + num);
   }
 
   public static int ConstIdx(bhl.Module module, bool v)
   {
-    for(int i=0;i<module.compiled.constants.Length;++i)
+    for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.BOOL && cn.num == (v ? 1 : 0))
         return i;
     }
+
     throw new Exception("Constant not found: " + v);
   }
 
@@ -753,12 +750,13 @@ public class BHL_TestBase
 
   public static int ConstNullIdx(bhl.Module module)
   {
-    for(int i=0;i<module.compiled.constants.Length;++i)
+    for(int i = 0; i < module.compiled.constants.Length; ++i)
     {
       var cn = module.compiled.constants[i];
       if(cn.type == ConstType.NIL)
         return i;
     }
+
     throw new Exception("Constant null not found");
   }
 
@@ -860,17 +858,17 @@ public class BHL_TestBase
     if(place_assert != null)
     {
       if(place_assert.err_type != null && err.GetType() != place_assert.err_type)
-        Assert.Fail("Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType()); 
+        Assert.Fail("Error types don't match, expected " + place_assert.err_type + ", got " + err.GetType());
 
       if(err is ICompileError cerr)
       {
         string place_err = ErrorUtils.ShowErrorPlace(place_assert.source, cerr.range);
-        if(place_err.Trim('\r','\n') != place_assert.expect.Trim('\r','\n'))
+        if(place_err.Trim('\r', '\n') != place_assert.expect.Trim('\r', '\n'))
           Console.WriteLine(err.StackTrace);
-        Assert.Equal(place_err.Trim('\r','\n'), place_assert.expect.Trim('\r','\n'));
+        Assert.Equal(place_err.Trim('\r', '\n'), place_assert.expect.Trim('\r', '\n'));
       }
       else
-        Assert.Fail("No ICompileError occured, got " + err?.GetType().Name); 
+        Assert.Fail("No ICompileError occured, got " + err?.GetType().Name);
     }
   }
 
@@ -895,10 +893,10 @@ public class BHL_TestBase
   }
 
   static public CompileConf MakeCompileConf(
-    List<string> files, 
-    Action<Types> ts_fn = null, 
-    bool use_cache = false, 
-    int max_threads = 1, 
+    List<string> files,
+    Action<Types> ts_fn = null,
+    bool use_cache = false,
+    int max_threads = 1,
     List<string> src_dirs = null,
     List<string> inc_paths = null
   )
@@ -915,11 +913,13 @@ public class BHL_TestBase
     }
     else
       proj.src_dirs.Add(TestDirPath());
+
     if(inc_paths != null)
     {
       foreach(var path in inc_paths)
         proj.inc_path.Add(path);
     }
+
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
     proj.result_file = TestDirPath() + "/result.bin";
     proj.tmp_dir = TestDirPath() + "/cache";
@@ -930,7 +930,7 @@ public class BHL_TestBase
 
     var conf = new CompileConf();
     conf.ts = ts;
-    conf.logger = new Logger(proj.verbosity, new ConsoleLogger()); 
+    conf.logger = new Logger(proj.verbosity, new ConsoleLogger());
     conf.proj = proj;
     conf.files = BuildUtils.NormalizeFilePaths(files);
 
@@ -953,6 +953,7 @@ public class BHL_TestBase
           Console.Error.WriteLine("==========");
         }
       }
+
       throw new CompileErrorsException(errors);
     }
 
@@ -960,17 +961,20 @@ public class BHL_TestBase
     return ms;
   }
 
-  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false, int max_threads = 1, CompilationExecutor executor = null)
+  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
+    int max_threads = 1, CompilationExecutor executor = null)
   {
-    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads), executor: executor);
+    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads),
+      executor: executor);
   }
 
   public static Stream CompileFiles(
-    Dictionary<string, string> file2src, Action<Types> ts_fn = null, 
-    bool use_cache = false, int max_threads = 1, 
+    Dictionary<string, string> file2src, Action<Types> ts_fn = null,
+    bool use_cache = false, int max_threads = 1,
     bool clean_dir = true, CompilationExecutor executor = null)
   {
-    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache: use_cache, max_threads: max_threads, executor: executor);
+    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache: use_cache, max_threads: max_threads,
+      executor: executor);
   }
 
   static public Stream CompileFiles(CompileConf conf, CompilationExecutor executor = null)
@@ -979,22 +983,22 @@ public class BHL_TestBase
   }
 
   public bhl.Module Compile(
-    string bhl, 
-    Action<Types> ts_fn = null, 
-    bool show_ast = false, 
-    bool show_bytes = false, 
+    string bhl,
+    Action<Types> ts_fn = null,
+    bool show_ast = false,
+    bool show_bytes = false,
     bool show_parse_tree = false,
     HashSet<string> defines = null
-    )
+  )
   {
     var ts = new Types();
     ts_fn?.Invoke(ts);
 
     var proc = Parse(
-      bhl, 
-      ts, 
-      show_ast: show_ast, 
-      show_parse_tree: show_parse_tree, 
+      bhl,
+      ts,
+      show_ast: show_ast,
+      show_parse_tree: show_parse_tree,
       throw_errors: true,
       defines: defines
     );
@@ -1007,20 +1011,20 @@ public class BHL_TestBase
   }
 
   public ANTLR_Processor Parse(
-    string bhl, 
-    Types ts, 
-    bool show_ast = false, 
-    bool show_parse_tree = false, 
+    string bhl,
+    Types ts,
+    bool show_ast = false,
+    bool show_parse_tree = false,
     bool throw_errors = false,
     HashSet<string> defines = null
-  ) 
+  )
   {
     var mdl = new bhl.Module(ts, TestModuleName);
     var proc = ANTLR_Processor.ParseAndMakeProcessor(
-      mdl, 
-      new FileImports(), 
-      bhl.ToStream(), 
-      ts, 
+      mdl,
+      new FileImports(),
+      bhl.ToStream(),
+      ts,
       CompileErrorsHub.MakeEmpty(),
       defines,
       out var preproc_parsed
@@ -1064,7 +1068,7 @@ public class BHL_TestBase
   {
     bool equal = true;
     string cmp = "";
-    for(int i=0;i<(a.Length > b.Length ? a.Length : b.Length);i++)
+    for(int i = 0; i < (a.Length > b.Length ? a.Length : b.Length); i++)
     {
       string astr = "";
       if(i < a.Length)
@@ -1098,14 +1102,14 @@ public class BHL_TestBase
     ModuleCompiler.Definition op = null;
     int op_size = 0;
 
-    for(int i=0;i<bs.Length;i++)
+    for(int i = 0; i < bs.Length; i++)
     {
       string str = string.Format("0x{0:x2}", bs[i]);
       if(op != null)
       {
         --op_size;
         if(op_size == 0)
-          op = null; 
+          op = null;
       }
       else
       {
@@ -1115,8 +1119,10 @@ public class BHL_TestBase
         if(op_size == 0)
           op = null;
       }
+
       Console.WriteLine(string.Format("{0:x2}", i) + " " + str);
     }
+
     Console.WriteLine("============");
   }
 
@@ -1124,7 +1130,7 @@ public class BHL_TestBase
   {
     AssertEqual(ca.Compile(), cb.Compile());
   }
-  
+
   public static void AssertEqual(bhl.Module ca, ModuleCompiler cb)
   {
     AssertEqual(ca, cb.Compile());
@@ -1159,6 +1165,7 @@ public class BHL_TestBase
       Console.WriteLine("=== INIT ===");
       Dump(module.compiled.initcode);
     }
+
     Console.WriteLine("=== CODE ===");
     Dump(module.compiled.bytecode);
   }
@@ -1170,14 +1177,14 @@ public class BHL_TestBase
     ModuleCompiler.Definition op = null;
     int op_size = 0;
 
-    for(int i=0;i<bs?.Length;i++)
+    for(int i = 0; i < bs?.Length; i++)
     {
       res += string.Format("{1:00} 0x{0:x2} {0}", bs[i], i);
       if(op != null)
       {
         --op_size;
         if(op_size == 0)
-          op = null; 
+          op = null;
       }
       else
       {
@@ -1187,6 +1194,7 @@ public class BHL_TestBase
         if(op_size == 0)
           op = null;
       }
+
       res += "\n";
     }
 
@@ -1204,7 +1212,7 @@ public class BHL_TestBase
     cmp = "";
     var lens = new List<int>();
     int max_len = 0;
-    for(int i=0;i<(a?.Length > b?.Length ? a?.Length : b?.Length);i++)
+    for(int i = 0; i < (a?.Length > b?.Length ? a?.Length : b?.Length); i++)
     {
       string astr = "";
       if(i < a?.Length)
@@ -1214,7 +1222,7 @@ public class BHL_TestBase
         {
           --aop_size;
           if(aop_size == 0)
-            aop = null; 
+            aop = null;
         }
         else
         {
@@ -1234,7 +1242,7 @@ public class BHL_TestBase
         {
           --bop_size;
           if(bop_size == 0)
-            bop = null; 
+            bop = null;
         }
         else
         {
@@ -1260,9 +1268,9 @@ public class BHL_TestBase
       cmp += "\n";
     }
 
-    for(int i=1;i<=lens.Count;++i)
+    for(int i = 1; i <= lens.Count; ++i)
     {
-      cmp = cmp.Replace("{fill" + i + "}", new String(' ', max_len - lens[i-1]));
+      cmp = cmp.Replace("{fill" + i + "}", new String(' ', max_len - lens[i - 1]));
     }
 
     return equal;
@@ -1271,7 +1279,7 @@ public class BHL_TestBase
   public static void AssertEqual(List<Const> cas, List<Const> cbs)
   {
     Assert.Equal(cas.Count, cbs.Count);
-    for(int i=0;i<cas.Count;++i)
+    for(int i = 0; i < cas.Count; ++i)
     {
       Assert.Equal((int)cas[i].type, (int)cbs[i].type);
       Assert.Equal(cas[i].num, cbs[i].num);

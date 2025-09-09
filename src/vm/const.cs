@@ -1,8 +1,9 @@
 using System;
 
-namespace bhl {
+namespace bhl
+{
 
-public enum ConstType 
+public enum ConstType
 {
   INT        = 1,
   FLT        = 2,
@@ -75,10 +76,10 @@ public class Const : IEquatable<Const>
     if(o == null)
       return false;
 
-    return type == o.type && 
-           num == o.num && 
+    return type == o.type &&
+           num == o.num &&
            str == o.str
-           ;
+      ;
   }
 }
 

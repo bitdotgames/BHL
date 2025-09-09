@@ -5,8 +5,9 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public static partial class Tasks
 {
   public static string BHL_ROOT
@@ -19,28 +20,28 @@ public static partial class Tasks
       );
     }
   }
-  
+
   const int ERROR_EXIT_CODE = 2;
-  
+
   [Task(verbose: false)]
   public static ThreadTask version(Taskman tm, string[] args)
   {
     Console.WriteLine(bhl.Version.Name);
     return ThreadTask.CompletedTask;
   }
-  
+
   [Task(verbose: false)]
   public static ThreadTask help(Taskman tm, string[] args)
   {
     Console.WriteLine("BHL build tool version " + bhl.Version.Name + "\n");
     Console.WriteLine("Available tasks:");
 
-    var tasks = new List<Taskman.Task>(tm.Tasks); 
+    var tasks = new List<Taskman.Task>(tm.Tasks);
     tasks.Sort((a, b) => a.Name.CompareTo(b.Name));
-    
+
     foreach(var t in tasks)
       Console.WriteLine(" " + t.Name);
-    
+
     return ThreadTask.CompletedTask;
   }
 
@@ -50,10 +51,10 @@ public static partial class Tasks
     //touching version file which is used for detection of bhl dll
     //'staleness' in top level scripts
     tm.Touch($"{BHL_ROOT}/src/vm/version.cs", DateTime.Now);
-    
+
     //invoking dotnet clean to remove all build products
-    tm.TryShell("dotnet",$"clean {BHL_ROOT}/bhl.csproj");
-    
+    tm.TryShell("dotnet", $"clean {BHL_ROOT}/bhl.csproj");
+
     return ThreadTask.CompletedTask;
   }
 
@@ -118,8 +119,8 @@ public static partial class Tasks
     deps.Add(csproj_file);
 
     if(force ||
-        tm.NeedToRegen(result_dll, files) ||
-        tm.NeedToRegen(result_dll, deps))
+       tm.NeedToRegen(result_dll, files) ||
+       tm.NeedToRegen(result_dll, deps))
     {
       string args = "build --no-restore --framework " + framework + " " + csproj_file + " -o " + result;
       try

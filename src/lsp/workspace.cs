@@ -7,7 +7,8 @@ using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class Workspace
 {
@@ -18,9 +19,9 @@ public class Workspace
   public event System.Func<Dictionary<string, CompileErrors>, Task> OnDiagnostics;
 
   //NOTE: keeping both collections for convenience of re-indexing
-  Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
+  Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>();
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
-  
+
   public bool indexed { get; private set; }
 
   public void Init(Types ts, ProjectConf conf)
@@ -28,19 +29,20 @@ public class Workspace
     this.ts = ts;
     this.conf = conf;
   }
-  
+
   public void Shutdown()
-  {}
+  {
+  }
 
   //NOTE: naive initial implementation
   public void IndexFiles()
   {
     indexed = true;
-    
+
     uri2proc.Clear();
     uri2doc.Clear();
 
-    for(int i=0;i<conf.src_dirs.Count;++i)
+    for(int i = 0; i < conf.src_dirs.Count; ++i)
     {
       var src_dir = conf.src_dirs[i];
 
@@ -61,14 +63,14 @@ public class Workspace
     proc_bundle.file2proc = uri2proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
-    
+
     ANTLR_Processor.ProcessAll(proc_bundle);
 
     CheckDiagnostics();
 
     foreach(var kv in uri2proc)
     {
-      var document = new BHLDocument(new proto.Uri(kv.Key)); 
+      var document = new BHLDocument(new proto.Uri(kv.Key));
       document.Update(File.ReadAllText(kv.Key), kv.Value);
       uri2doc.Add(kv.Key, document);
     }
@@ -81,16 +83,16 @@ public class Workspace
 
     //TODO: use different error handlers?
     var err_hub = CompileErrorsHub.MakeStandard(file);
-    
+
     var proc = ANTLR_Processor.ParseAndMakeProcessor(
-      module, 
-      imports, 
-      stream, 
-      ts, 
+      module,
+      imports,
+      stream,
+      ts,
       err_hub,
       new HashSet<string>(conf.defines),
       out var _
-      );
+    );
 
     return proc;
   }
@@ -103,7 +105,7 @@ public class Workspace
     else
       return LoadDocument(uri);
   }
-  
+
   public BHLDocument LoadDocument(proto.Uri uri)
   {
     byte[] buffer = File.ReadAllBytes(uri.path);
@@ -116,17 +118,18 @@ public class Workspace
     BHLDocument document;
     if(!uri2doc.TryGetValue(uri.path, out document))
     {
-      document = new BHLDocument(uri);  
+      document = new BHLDocument(uri);
       uri2doc.Add(uri.path, document);
     }
+
     return document;
   }
-  
+
   public BHLDocument FindDocument(proto.Uri uri)
   {
     return FindDocument(uri.path);
   }
-  
+
   public BHLDocument FindDocument(string path)
   {
     BHLDocument document;
@@ -149,7 +152,7 @@ public class Workspace
     proc_bundle.file2proc = uri2proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
-    
+
     ANTLR_Processor.ProcessAll(proc_bundle);
 
     CheckDiagnostics();
@@ -169,13 +172,14 @@ public class Workspace
 
   public List<AnnotatedParseTree> FindReferences(Symbol symb)
   {
-    var refs = new List<AnnotatedParseTree>(); 
+    var refs = new List<AnnotatedParseTree>();
     foreach(var doc_kv in uri2doc)
     {
       foreach(var node_kv in doc_kv.Value.proc.annotated_nodes)
         if(node_kv.Value.lsp_symbol == symb)
           refs.Add(node_kv.Value);
     }
+
     return refs;
   }
 }

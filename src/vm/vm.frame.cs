@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
 public partial class VM : INamedResolver
 {
@@ -10,7 +11,7 @@ public partial class VM : INamedResolver
   {
     public const int MAX_LOCALS = 64;
     public const int MAX_STACK = 32;
-    
+
     //NOTE: -1 means it's in released state,
     //      public only for inspection
     public int refs;
@@ -75,12 +76,12 @@ public partial class VM : INamedResolver
     public void Init(Frame origin, ValStack return_stack, int start_ip)
     {
       Init(
-        origin.fb, 
+        origin.fb,
         return_stack,
-        origin.module, 
-        origin.constants, 
+        origin.module,
+        origin.constants,
         origin.type_refs,
-        origin.bytecode, 
+        origin.bytecode,
         start_ip
       );
     }
@@ -89,24 +90,24 @@ public partial class VM : INamedResolver
     public void Init(Fiber fb, ValStack return_stack, Module module, int start_ip)
     {
       Init(
-        fb, 
+        fb,
         return_stack,
-        module, 
-        module.compiled.constants, 
-        module.compiled.type_refs_resolved, 
-        module.compiled.bytecode, 
+        module,
+        module.compiled.constants,
+        module.compiled.type_refs_resolved,
+        module.compiled.bytecode,
         start_ip
       );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Init(
-      Fiber fb, 
-      ValStack return_stack, 
-      Module module, 
-      Const[] constants, 
+      Fiber fb,
+      ValStack return_stack,
+      Module module,
+      Const[] constants,
       IType[] type_refs,
-      byte[] bytecode, 
+      byte[] bytecode,
       int start_ip)
     {
       this.fb = fb;
@@ -121,11 +122,11 @@ public partial class VM : INamedResolver
 
     internal void Clear()
     {
-      for(int i=locals.Count;i-- > 0;)
+      for(int i = locals.Count; i-- > 0;)
         locals[i]?.Release();
       locals.Clear();
 
-      for(int i=stack.Count;i-- > 0;)
+      for(int i = stack.Count; i-- > 0;)
         stack[i].Release();
 
       stack.Clear();

@@ -1,5 +1,6 @@
-namespace bhl {
-  
+namespace bhl
+{
+
 public static class SymbolExtensions
 {
   static public bool IsStatic(this Symbol symb)
@@ -10,5 +11,5 @@ public static class SymbolExtensions
       ;
   }
 }
-  
+
 }

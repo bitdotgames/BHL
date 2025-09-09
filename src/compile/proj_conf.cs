@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class ProjectConf
 {
   const string FILE_NAME = "bhl.proj";
@@ -19,20 +20,18 @@ public class ProjectConf
 
   public static ProjectConf TryReadFromDir(string dir_path)
   {
-    string proj_file = dir_path + "/" + FILE_NAME; 
+    string proj_file = dir_path + "/" + FILE_NAME;
     if(!File.Exists(proj_file))
       return null;
     return ReadFromFile(proj_file);
   }
 
-  [JsonIgnore]
-  public string proj_file = "";
+  [JsonIgnore] public string proj_file = "";
 
   public ModuleBinaryFormat module_fmt = ModuleBinaryFormat.FMT_LZ4;
 
   public List<string> inc_dirs = new List<string>();
-  [JsonIgnore]
-  public IncludePath inc_path = new IncludePath();
+  [JsonIgnore] public IncludePath inc_path = new IncludePath();
 
   public List<string> src_dirs = new List<string>();
 
@@ -47,10 +46,12 @@ public class ProjectConf
   public bool deterministic = false;
 
   public List<string> bindings_sources = new List<string>();
+
   //NOTE: this can be a directory path as well containing dll
   public string bindings_dll = "";
 
   public List<string> postproc_sources = new List<string>();
+
   //NOTE: this can be a directory path as well containing dll
   public string postproc_dll = "";
 
@@ -58,8 +59,8 @@ public class ProjectConf
   {
     if(Path.IsPathRooted(file_path))
       return BuildUtils.NormalizeFilePath(file_path);
-    else if(!string.IsNullOrEmpty(proj_file) && 
-            !string.IsNullOrEmpty(file_path) && 
+    else if(!string.IsNullOrEmpty(proj_file) &&
+            !string.IsNullOrEmpty(file_path) &&
             file_path[0] == '.')
       return BuildUtils.NormalizeFilePath(Path.Combine(Path.GetDirectoryName(proj_file), file_path));
     return file_path;
@@ -67,24 +68,24 @@ public class ProjectConf
 
   public void Setup()
   {
-    for(int i=0;i<inc_dirs.Count;++i)
+    for(int i = 0; i < inc_dirs.Count; ++i)
     {
       inc_dirs[i] = NormalizePath(proj_file, inc_dirs[i]);
       inc_path.Add(inc_dirs[i]);
     }
 
-    for(int i=0;i<src_dirs.Count;++i)
+    for(int i = 0; i < src_dirs.Count; ++i)
     {
       src_dirs[i] = NormalizePath(proj_file, src_dirs[i]);
       if(inc_dirs.Count == 0)
         inc_path.Add(src_dirs[i]);
     }
 
-    for(int i=0;i<bindings_sources.Count;++i)
+    for(int i = 0; i < bindings_sources.Count; ++i)
       bindings_sources[i] = NormalizePath(proj_file, bindings_sources[i]);
     bindings_dll = NormalizePath(proj_file, bindings_dll);
 
-    for(int i=0;i<postproc_sources.Count;++i)
+    for(int i = 0; i < postproc_sources.Count; ++i)
       postproc_sources[i] = NormalizePath(proj_file, postproc_sources[i]);
     postproc_dll = NormalizePath(proj_file, postproc_dll);
 
@@ -96,10 +97,8 @@ public class ProjectConf
   static System.Reflection.Assembly LoadAssemblyFromDirOrFile(string path)
   {
     return System.Reflection.Assembly.LoadFrom(
-      Directory.Exists(path) ? 
-        path + "/" + Path.GetFileName(path) : 
-        path
-      );
+      Directory.Exists(path) ? path + "/" + Path.GetFileName(path) : path
+    );
   }
 
   public IUserBindings LoadBindings()
@@ -122,7 +121,7 @@ public class ProjectConf
 
     if(userbindings_class == null)
       throw new Exception("IUserBindings instance not found");
-      
+
     return Activator.CreateInstance(userbindings_class) as IUserBindings;
   }
 
@@ -133,7 +132,7 @@ public class ProjectConf
 
     var postproc_assembly = LoadAssemblyFromDirOrFile(postproc_dll);
     var types = postproc_assembly.GetTypes();
-    
+
     Type postproc_class = null;
     foreach(var type in types)
     {
@@ -143,10 +142,10 @@ public class ProjectConf
         break;
       }
     }
-    
+
     if(postproc_class == null)
       throw new Exception("IFrontPostProcessor instance not found");
-    
+
     return Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
   }
 }

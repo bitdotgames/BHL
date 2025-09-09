@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
 public partial class VM : INamedResolver
 {
@@ -81,7 +82,7 @@ public partial class VM : INamedResolver
 
     internal FiberRef parent;
     public FiberRef Parent => parent;
-    
+
     internal List<FiberRef> children = new List<FiberRef>();
 
     public IReadOnlyList<FiberRef> Children => children;
@@ -126,6 +127,7 @@ public partial class VM : INamedResolver
         var val = fb.result.Pop();
         val.Release();
       }
+
       fb.parent.Clear();
       fb.children.Clear();
 
@@ -168,18 +170,19 @@ public partial class VM : INamedResolver
           exec.coroutine = null;
         }
 
-        for(int i=exec.frames.Count;i-- > 0;)
+        for(int i = exec.frames.Count; i-- > 0;)
         {
           var frm = exec.frames[i];
           frm.ExitScope(null, exec);
         }
 
         //NOTE: we need to release frames only after we actually exited their scopes
-        for(int i=exec.frames.Count;i-- > 0;)
+        for(int i = exec.frames.Count; i-- > 0;)
         {
           var frm = exec.frames[i];
           frm.Release();
         }
+
         exec.frames.Clear();
       }
 
@@ -224,7 +227,7 @@ public partial class VM : INamedResolver
 
     static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
     {
-      for(int i=0;i<exec.frames.Count;++i)
+      for(int i = 0; i < exec.frames.Count; ++i)
         calls.Add(exec.frames[i]);
     }
 
@@ -235,7 +238,7 @@ public partial class VM : INamedResolver
       GetCalls(exec, calls);
       TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
 
-      for(int i=0;i<calls.Count;++i)
+      for(int i = 0; i < calls.Count; ++i)
       {
         var frm = calls[i];
 
@@ -245,7 +248,7 @@ public partial class VM : INamedResolver
         //      for the last frame we have a special case. In this case there's no
         //      'next' frame and we should consider taking ip from Fiber or an active
         //      coroutine
-        if(i == calls.Count-1)
+        if(i == calls.Count - 1)
         {
           item.ip = coroutine_ip == -1 ? frm.fb.exec.ip : coroutine_ip;
         }
@@ -253,7 +256,7 @@ public partial class VM : INamedResolver
         {
           //NOTE: retrieving last ip for the current Frame which
           //      turns out to be return_ip assigned to the next Frame
-          var next = calls[i+1];
+          var next = calls[i + 1];
           item.ip = next.return_ip;
         }
 
@@ -430,11 +433,12 @@ public partial class VM : INamedResolver
     StackList <Val> args
   )
   {
-    for(int i=args.Count;i-- > 0;)
+    for(int i = args.Count; i-- > 0;)
     {
       var arg = args[i];
       curr_stack.Push(arg);
     }
+
     fb.Attach(frame);
     //overriding exec.stack with passed curr_stack
     fb.exec.stack = curr_stack;
@@ -503,7 +507,9 @@ public partial class VM : INamedResolver
           fb.GetStackTrace(trace);
         }
         catch(Exception)
-        {}
+        {
+        }
+
         throw new Error(trace, e);
       }
     }
@@ -542,6 +548,7 @@ public partial class VM : INamedResolver
   public class ScriptExecutor
   {
     VM vm;
+
     //NOTE: we manually create and own these
     VM.Fiber fb;
     VM.Frame frm;
@@ -579,6 +586,7 @@ public partial class VM : INamedResolver
         var val = fb.result.Pop();
         val.Release();
       }
+
       fb.Retain();
 
       frm.Retain();

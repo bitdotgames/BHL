@@ -2,14 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 //TODO: Not all interfaces are fully implemented
 //NOTE: StackList is passed by value since it's a struct
 public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 {
   const int StackCapacity = 16;
-  
+
   Array16<T> storage;
   List<T> fallback;
 
@@ -34,19 +35,29 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
     object IEnumerator.Current => Current;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
   }
 
   public void CopyTo(Array array, int index)
   {
     throw new NotImplementedException();
   }
+
   public int Count { get ; private set; }
   public bool IsSynchronized { get; }
   public object SyncRoot { get; }
 
-  public bool IsFixedSize { get { return false; } }
-  public bool IsReadOnly { get { return false; } }
+  public bool IsFixedSize
+  {
+    get { return false; }
+  }
+
+  public bool IsReadOnly
+  {
+    get { return false; }
+  }
 
   object IList.this[int index]
   {
@@ -54,7 +65,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     set => this[index] = (T)value;
   }
 
-  public StackList(IList<T> list) 
+  public StackList(IList<T> list)
     : this()
   {
     storage = new Array16<T>();
@@ -62,7 +73,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   }
 
   //convenience special case
-  public StackList(T v) 
+  public StackList(T v)
     : this()
   {
     storage = new Array16<T>();
@@ -70,7 +81,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   }
 
   //convenience special case
-  public StackList(T v1, T v2) 
+  public StackList(T v1, T v2)
     : this()
   {
     storage = new Array16<T>();
@@ -79,7 +90,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   }
 
   //convenience special case
-  public StackList(T v1, T v2, T v3) 
+  public StackList(T v1, T v2, T v3)
     : this()
   {
     storage = new Array16<T>();
@@ -90,7 +101,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
   public void AddRange(IList<T> list)
   {
-    for(int i=0; i<list?.Count; ++i)
+    for(int i = 0; i < list?.Count; ++i)
       Add(list[i]);
   }
 
@@ -98,7 +109,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     if(fallback == null)
     {
-      for(int i=0;i<Count;++i)
+      for(int i = 0; i < Count; ++i)
         this[i] = default(T);
     }
     else
@@ -109,13 +120,15 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
   public T this[int i]
   {
-    get {
+    get
+    {
       if(fallback == null)
         return storage[i];
       else
         return fallback[i];
     }
-    set {
+    set
+    {
       if(fallback == null)
         storage[i] = value;
       else
@@ -130,7 +143,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
       Fallback();
 
     if(fallback == null)
-      this[Count-1] = val;
+      this[Count - 1] = val;
     else
       fallback.Add(val);
   }
@@ -139,10 +152,10 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     if(fallback == null)
     {
-      for(int i=0; i<Count-1; ++i)
+      for(int i = 0; i < Count - 1; ++i)
       {
         if(i >= index)
-          storage[i] = storage[i+1];
+          storage[i] = storage[i + 1];
       }
     }
     else
@@ -153,8 +166,8 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
 
   void Fallback()
   {
-    fallback = new List<T>(2*StackCapacity);
-    for(int i=0; i<StackCapacity; ++i)
+    fallback = new List<T>(2 * StackCapacity);
+    for(int i = 0; i < StackCapacity; ++i)
       fallback.Add(storage[i]);
   }
 
@@ -163,11 +176,12 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
     if(fallback != null)
       return fallback.IndexOf(o);
 
-    for(int i=0; i<Count; ++i)
+    for(int i = 0; i < Count; ++i)
     {
       if(this[i].Equals(o))
         return i;
     }
+
     return -1;
   }
 
@@ -210,6 +224,7 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     throw new NotImplementedException();
   }
+
   IEnumerator IEnumerable.GetEnumerator()
   {
     throw new NotImplementedException();
@@ -220,18 +235,22 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     throw new NotImplementedException();
   }
+
   public bool Contains(object value)
   {
     throw new NotImplementedException();
   }
+
   public int IndexOf(object value)
   {
     throw new NotImplementedException();
   }
+
   public void Insert(int index, object value)
   {
     throw new NotImplementedException();
   }
+
   public void Remove(object value)
   {
     throw new NotImplementedException();
@@ -259,7 +278,8 @@ public struct Array16<T>
 
   public T this[int i]
   {
-    get {
+    get
+    {
       if(i == 0)
         return v0;
       else if(i == 1)
@@ -297,7 +317,8 @@ public struct Array16<T>
         throw new Exception("Too large idx: " + i);
       }
     }
-    set {
+    set
+    {
       if(i == 0)
         v0 = value;
       else if(i == 1)

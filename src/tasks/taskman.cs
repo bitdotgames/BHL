@@ -6,8 +6,9 @@ using System.Linq;
 using System.Reflection;
 using ThreadTask = System.Threading.Tasks.Task;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class ShellException : Exception
 {
   public int code;
@@ -38,7 +39,7 @@ public class Taskman
 
   List<Task> tasks = new List<Task>();
   public IList<Task> Tasks => tasks;
-  
+
   HashSet<Task> invoked = new HashSet<Task>();
 
   public bool IsWin
@@ -207,10 +208,10 @@ public class Taskman
     p.StartInfo.UseShellExecute = false;
     p.StartInfo.RedirectStandardOutput = false;
     p.StartInfo.RedirectStandardError = false;
-    
+
     p.Start();
     p.WaitForExit();
-    
+
     return p.ExitCode;
   }
 

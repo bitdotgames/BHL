@@ -18,17 +18,17 @@ public class TestAny : BHL_TestBase
 
     var c = Compile(bhl);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
-      .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { 0 })
-      .EmitThen(Opcodes.Equal)
-      .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.Constant, new int[] { 0 })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { 0 })
+          .EmitThen(Opcodes.Equal)
+          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
@@ -93,16 +93,14 @@ public class TestAny : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestDynamicArrayOfAny()
   {
@@ -120,7 +118,7 @@ public class TestAny : BHL_TestBase
     Assert.True(res);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestCastAnyNativeTypeReturnedFromBindings()
   {
@@ -136,16 +134,17 @@ public class TestAny : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindColor(ts);
-      
+
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_any", Types.Any,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var v = Val.NewObj(frm.vm, new Color(), Types.Any);
-            stack.Push(v);
-            return null;
-          }
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          var v = Val.NewObj(frm.vm, new Color(), Types.Any);
+          stack.Push(v);
+          return null;
+        }
       );
       ts.ns.Define(fn);
     });
@@ -155,7 +154,7 @@ public class TestAny : BHL_TestBase
     Assert.Equal(110, res);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestCastAnyNativeTypeReturnedFromBindingsAsNull()
   {
@@ -169,16 +168,14 @@ public class TestAny : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.PopRelease().bval;
     Assert.True(res);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestCastNativeTypeArrayToAnyArray()
   {
@@ -222,16 +219,14 @@ public class TestAny : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var num = Execute(vm, "test").result.PopRelease().num;
     Assert.Equal(1111, num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestCastUserTypeArrayToAnyArray()
   {
@@ -288,7 +283,7 @@ public class TestAny : BHL_TestBase
     Assert.Equal(1111, num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestUserlandSort()
   {
@@ -325,9 +320,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual("100;10;1;1,10,100,", log.ToString());
@@ -350,10 +343,10 @@ public class TestAny : BHL_TestBase
     ";
 
     AssertError(() => MakeVM(bhl),
-    "incompatible types: '[]int' and '[]any'"
+      "incompatible types: '[]int' and '[]any'"
     );
   }
-  
+
   [Fact]
   public void TestCastUserTypeMapToAnyMap()
   {
@@ -427,7 +420,7 @@ public class TestAny : BHL_TestBase
     ";
 
     AssertError(() => MakeVM(bhl),
-    "incompatible types: '[string]int' and '[any]any'"
+      "incompatible types: '[string]int' and '[any]any'"
     );
   }
 }

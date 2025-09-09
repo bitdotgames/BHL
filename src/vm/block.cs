@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
-public enum BlockType 
+public enum BlockType
 {
   FUNC      = 0,
   SEQ       = 1,
@@ -42,10 +43,10 @@ public struct DeferBlock
     exec.regions.Push(new VM.Region(frm, null, min_ip: ip, max_ip: max_ip));
     //3. and execute it
     var status = frm.vm.Execute(
-      exec, 
+      exec,
       //NOTE: we re-use the existing exec.stack but limit the execution 
       //      only up to the defer code block
-      exec.regions.Count-1 
+      exec.regions.Count - 1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -62,13 +63,15 @@ public struct DeferBlock
       return;
 
     var coro_orig = exec.coroutine;
-    for(int i=defers.Count;i-- > 0;)
+    for(int i = defers.Count; i-- > 0;)
     {
       var d = defers[i];
       exec.coroutine = null;
       //TODO: do we need ensure that status is SUCCESS?
-      /*var status = */d.Execute(exec);
+      /*var status = */
+      d.Execute(exec);
     }
+
     exec.coroutine = coro_orig;
     defers.Clear();
   }
@@ -85,13 +88,12 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers = new List<DeferBlock>(2);
 
-  public int Count {
-    get {
-      return 0;
-    }
+  public int Count
+  {
+    get { return 0; }
   }
 
-  public ICoroutine At(int i) 
+  public ICoroutine At(int i)
   {
     return exec.coroutine;
   }
@@ -123,11 +125,11 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     }
 
     //NOTE: 1. first we exit the scope for all dangling frames
-    for(int i=exec.frames.Count;i-- > 0;)
+    for(int i = exec.frames.Count; i-- > 0;)
       exec.frames[i].ExitScope(null, exec);
 
     //NOTE: 2. then we release frames only after exiting them
-    for(int i=exec.frames.Count;i-- > 0;)
+    for(int i = exec.frames.Count; i-- > 0;)
       exec.frames[i].Release();
     exec.frames.Clear();
     exec.regions.Clear();
@@ -144,13 +146,12 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   public VM.ExecState exec = new VM.ExecState();
   public List<DeferBlock> defers = new List<DeferBlock>(1);
 
-  public int Count {
-    get {
-      return 0;
-    }
+  public int Count
+  {
+    get { return 0; }
   }
 
-  public ICoroutine At(int i) 
+  public ICoroutine At(int i)
   {
     return exec.coroutine;
   }
@@ -185,11 +186,12 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     SeqBlock.ExitScope(frm, exec, defers);
 
     //NOTE: let's clean the local stack
-    for(int i=stack.Count;i-- > 0;)
+    for(int i = stack.Count; i-- > 0;)
     {
       var val = stack[i];
       val.Release();
     }
+
     stack.Clear();
   }
 }
@@ -202,13 +204,12 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
   public List<Coroutine> branches = new List<Coroutine>();
   public List<DeferBlock> defers = new List<DeferBlock>(1);
 
-  public int Count {
-    get {
-      return branches.Count;
-    }
+  public int Count
+  {
+    get { return branches.Count; }
   }
 
-  public ICoroutine At(int i) 
+  public ICoroutine At(int i)
   {
     return branches[i];
   }
@@ -228,7 +229,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
 
     status = BHS.RUNNING;
 
-    for(i=0;i<branches.Count;++i)
+    for(i = 0; i < branches.Count; ++i)
     {
       var branch = branches[i];
       branch.Tick(frm, exec, ref status);
@@ -248,7 +249,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
-    for(i=0;i<branches.Count;++i)
+    for(i = 0; i < branches.Count; ++i)
       CoroutinePool.Del(frm, exec, branches[i]);
     branches.Clear();
     DeferBlock.ExitScope(defers, exec);
@@ -263,13 +264,12 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
   public List<Coroutine> branches = new List<Coroutine>();
   public List<DeferBlock> defers = new List<DeferBlock>(1);
 
-  public int Count {
-    get {
-      return branches.Count;
-    }
+  public int Count
+  {
+    get { return branches.Count; }
   }
 
-  public ICoroutine At(int i) 
+  public ICoroutine At(int i)
   {
     return branches[i];
   }
@@ -286,19 +286,20 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
   public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
   {
     exec.ip = min_ip;
-    
-    for(i=0;i<branches.Count;)
+
+    for(i = 0; i < branches.Count;)
     {
       var branch = branches[i];
       branch.Tick(frm, exec, ref status);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || exec.ip < (min_ip-1) || exec.ip > (max_ip+1))
+      if(frm.refs == -1 /*return executed*/ || exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
       {
         CoroutinePool.Del(frm, exec, branch);
         branches.RemoveAt(i);
         status = BHS.SUCCESS;
         return;
       }
+
       if(status == BHS.SUCCESS)
       {
         CoroutinePool.Del(frm, exec, branch);
@@ -325,7 +326,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
-    for(i=0;i<branches.Count;++i)
+    for(i = 0; i < branches.Count; ++i)
       CoroutinePool.Del(frm, exec, branches[i]);
     branches.Clear();
     DeferBlock.ExitScope(defers, exec);

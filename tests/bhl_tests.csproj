@@ -1,27 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <RootNamespace>bhl</RootNamespace>
-        <TargetFrameworks>net8.0</TargetFrameworks>
-        <DefineConstants>BHL_FRONT</DefineConstants>
-        <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-    </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>bhl</RootNamespace>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <DefineConstants>BHL_FRONT</DefineConstants>
+    <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-      <PackageReference Include="xunit" Version="2.9.0" />
-      <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
-      <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="Mono.Options" Version="6.12.0.148" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
+    <PackageReference Include="xunit" Version="2.9.0"/>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1"/>
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1"/>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    <PackageReference Include="Mono.Options" Version="6.12.0.148"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\src\compile\bhl_front.csproj" />
-      <ProjectReference Include="..\src\lsp\bhl_lsp.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\compile\bhl_front.csproj"/>
+    <ProjectReference Include="..\src\lsp\bhl_lsp.csproj"/>
+  </ItemGroup>
 
 </Project>

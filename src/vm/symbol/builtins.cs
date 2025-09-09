@@ -1,25 +1,30 @@
 using System;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class IntSymbol : Symbol, IType
 {
   public const uint CLASS_ID = 1;
 
   public IntSymbol()
     : base(new Origin(), "int")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
     return CLASS_ID;
   }
-  
+
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(IntSymbol s)
@@ -34,7 +39,8 @@ public class BoolSymbol : Symbol, IType
 
   public BoolSymbol()
     : base(new Origin(), "bool")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -42,10 +48,13 @@ public class BoolSymbol : Symbol, IType
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(BoolSymbol s)
@@ -60,18 +69,22 @@ public class StringSymbol : ClassSymbolNative
 
   public StringSymbol()
     : base(new Origin(), "string", native_type: typeof(string))
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
     return CLASS_ID;
   }
-  
+
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(StringSymbol s)
@@ -86,7 +99,8 @@ public class FloatSymbol : Symbol, IType
 
   public FloatSymbol()
     : base(new Origin(), "float")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -94,10 +108,13 @@ public class FloatSymbol : Symbol, IType
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(FloatSymbol s)
@@ -112,7 +129,8 @@ public class VoidSymbol : Symbol, IType
 
   public VoidSymbol()
     : base(new Origin(), "void")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -120,10 +138,13 @@ public class VoidSymbol : Symbol, IType
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(VoidSymbol s)
@@ -138,7 +159,8 @@ public class AnySymbol : Symbol, IType
 
   public AnySymbol()
     : base(new Origin(), "any")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -146,10 +168,13 @@ public class AnySymbol : Symbol, IType
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 
   //for convenience
   public static implicit operator ProxyType(AnySymbol s)
@@ -165,7 +190,8 @@ public class NullSymbol : ClassSymbolScript
 
   public NullSymbol()
     : base(new Origin(), "null")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -173,17 +199,21 @@ public class NullSymbol : ClassSymbolScript
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 }
 
 public class VarSymbol : Symbol
 {
   public VarSymbol()
     : base(new Origin(), "var")
-  {}
+  {
+  }
 
   public override uint ClassId()
   {
@@ -191,10 +221,13 @@ public class VarSymbol : Symbol
   }
 
   public override void IndexTypeRefs(TypeRefIndex refs)
-  {}
+  {
+  }
+
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
-  {}
+  {
+  }
 }
 
 }

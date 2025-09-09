@@ -1,8 +1,9 @@
 using bhl.lsp.proto;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
-public interface IService 
+public interface IService
 {
   void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc);
 }

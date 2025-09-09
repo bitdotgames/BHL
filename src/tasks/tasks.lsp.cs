@@ -12,7 +12,8 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl {
+namespace bhl
+{
 
 public static partial class Tasks
 {
@@ -23,10 +24,12 @@ public static partial class Tasks
 
     var p = new OptionSet
     {
-      { "log-file=", "log file path",
-        v => log_file_path = v }
+      {
+        "log-file=", "log file path",
+        v => log_file_path = v
+      }
     };
-    
+
     p.Parse(args);
 
     var logger_conf = new LoggerConfiguration()
@@ -37,7 +40,7 @@ public static partial class Tasks
       logger_conf = logger_conf.WriteTo.File(log_file_path /*, rollingInterval: RollingInterval.Day*/);
     else
       logger_conf = logger_conf.WriteTo.Console();
-    
+
     Log.Logger = logger_conf.CreateLogger();
 
     var workspace = new Workspace();
@@ -45,12 +48,12 @@ public static partial class Tasks
     var cts = new CancellationTokenSource();
 
     var server = await Server.CreateAsync(
-      Log.Logger, 
+      Log.Logger,
       new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
       new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
-      workspace, 
+      workspace,
       cts.Token
-      );
+    );
 
     try
     {
@@ -63,6 +66,7 @@ public static partial class Tasks
     }
   }
 }
+
 public class LoggingStream : Stream
 {
   private readonly Stream _inner;
@@ -91,6 +95,7 @@ public class LoggingStream : Stream
       var text = Encoding.UTF8.GetString(buffer, offset, read);
       _logger.Debug("{Prefix} {Payload}", _prefix, text);
     }
+
     return read;
   }
 
@@ -98,11 +103,16 @@ public class LoggingStream : Stream
   public override bool CanSeek => _inner.CanSeek;
   public override bool CanWrite => _inner.CanWrite;
   public override long Length => _inner.Length;
-  public override long Position { get => _inner.Position; set => _inner.Position = value; }
+
+  public override long Position
+  {
+    get => _inner.Position;
+    set => _inner.Position = value;
+  }
+
   public override void Flush() => _inner.Flush();
   public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
   public override void SetLength(long value) => _inner.SetLength(value);
 }
-
 
 }

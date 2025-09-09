@@ -6,9 +6,10 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl {
+namespace bhl
+{
 
-public static partial class Tasks 
+public static partial class Tasks
 {
   static void run_usage(string msg = "")
   {
@@ -23,8 +24,9 @@ public static partial class Tasks
   {
     var files = new List<string>();
 
-    var p = new OptionSet() {
-     };
+    var p = new OptionSet()
+    {
+    };
 
     var extra = new List<string>();
     try
@@ -35,9 +37,10 @@ public static partial class Tasks
     {
       run_usage(e.Message);
     }
+
     files.AddRange(extra);
 
-    for(int i=files.Count;i-- > 0;)
+    for(int i = files.Count; i-- > 0;)
     {
       if(string.IsNullOrEmpty(files[i]))
         files.RemoveAt(i);
@@ -84,7 +87,7 @@ public static partial class Tasks
 
     vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
 
-    var argv_lst = ValList.New(vm); 
+    var argv_lst = ValList.New(vm);
     //TODO:
     //foreach(var arg in args)
     //  argv_lst.Add(Val.NewStr(vm, arg));

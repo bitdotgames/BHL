@@ -1,7 +1,8 @@
 using System.IO;
 
-namespace bhl.marshall {
-  
+namespace bhl.marshall
+{
+
 public interface IFactory
 {
   IMarshallableGeneric CreateById(uint id);
@@ -12,15 +13,15 @@ public interface IMarshallable
   void Sync(SyncContext ctx);
 }
 
-public interface IMarshallableGeneric : IMarshallable 
+public interface IMarshallableGeneric : IMarshallable
 {
   uint ClassId();
 }
 
-public interface IReader 
+public interface IReader
 {
   Stream Stream { get; }
-  
+
   void ReadI8(ref sbyte v);
   void ReadU8(ref byte v);
   void ReadI16(ref short v);
@@ -35,14 +36,14 @@ public interface IReader
   void ReadString(ref string v);
   void ReadRawBegin(ref int vlen);
   void ReadRawEnd(byte[] v);
-  int BeginContainer(); 
-  void EndContainer(); 
+  int BeginContainer();
+  void EndContainer();
 }
 
-public interface IWriter 
+public interface IWriter
 {
   Stream Stream { get; }
-  
+
   void WriteI8(sbyte v);
   void WriteU8(byte v);
   void WriteI16(short v);
@@ -54,10 +55,12 @@ public interface IWriter
   void WriteFloat(float v);
   void WriteBool(bool v);
   void WriteDouble(double v);
+
   void WriteString(string v);
+
   //NOTE: -1 means 'unspecified'
-  void BeginContainer(int len); 
-  void EndContainer(); 
+  void BeginContainer(int len);
+  void EndContainer();
 }
 
 }

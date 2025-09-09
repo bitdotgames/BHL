@@ -1,9 +1,9 @@
-
 using System.Runtime.CompilerServices;
 using System;
 
-namespace bhl {
-  
+namespace bhl
+{
+
 public class FixedStack<T>
 {
   internal T[] storage;
@@ -17,9 +17,10 @@ public class FixedStack<T>
   public ref T this[int index]
   {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get { 
+    get
+    {
       ValidateIndex(index);
-      return ref storage[index]; 
+      return ref storage[index];
     }
   }
 
@@ -54,7 +55,7 @@ public class FixedStack<T>
   {
     if(idx == --Count)
       return;
-    Array.Copy(storage, idx+1, storage, idx, storage.Length-idx-1);
+    Array.Copy(storage, idx + 1, storage, idx, storage.Length - idx - 1);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

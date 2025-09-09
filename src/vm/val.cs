@@ -1,9 +1,11 @@
 //#define DEBUG_REFS
+
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace bhl {
+namespace bhl
+{
 
 public interface IValRefcounted
 {
@@ -18,14 +20,17 @@ public class Val
 
   //NOTE: below members are semi-public, one can use them for 
   //      fast access in case you know what you are doing
-  
+
   //NOTE: -1 means it's in released state
   public int _refs;
   public double _num;
+
   public object _obj;
+
   //NOTE: it's a cached version of _obj cast to IValRefcounted for
   //      less casting in refcounting routines
   public IValRefcounted _refc;
+
   //NOTE: extra values below are for efficient encoding of small structs,
   //      e.g Vector3, Color, etc
   public double _num2;
@@ -36,43 +41,32 @@ public class Val
   //      and properly released
   public int _blob_size;
 
-  public double num {
-    get {
-      return _num;
-    }
-    set {
-      SetFlt(value);
-    }
+  public double num
+  {
+    get { return _num; }
+    set { SetFlt(value); }
   }
 
-  public string str {
-    get {
-      return (string)_obj;
-    }
-    set {
-      SetStr(value);
-    }
+  public string str
+  {
+    get { return (string)_obj; }
+    set { SetStr(value); }
   }
 
-  public object obj {
-    get {
-      return _obj;
-    }
+  public object obj
+  {
+    get { return _obj; }
   }
 
-  public bool bval {
-    get {
-      return _num == 1;
-    }
-    set {
-      SetBool(value);
-    }
+  public bool bval
+  {
+    get { return _num == 1; }
+    set { SetBool(value); }
   }
 
-  public bool is_null {
-    get {
-      return this == vm.Null;
-    }
+  public bool is_null
+  {
+    get { return this == vm.Null; }
   }
 
   public VM vm;
@@ -109,6 +103,7 @@ public class Val
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
     }
+
     dv._refs = 1;
     dv.Reset();
     return dv;
@@ -140,6 +135,7 @@ public class Val
       Console.WriteLine("HIT: " + dv.GetHashCode()/* + " " + Environment.StackTrace*/);
 #endif
     }
+
     dv._refs = 1;
     return dv;
   }
@@ -167,13 +163,13 @@ public class Val
     _num3 = 0;
     _num4 = 0;
     _refc = null;
-    
+
     if(_blob_size > 0)
     {
       ArrayPool<byte>.Shared.Return((byte[])_obj);
       _blob_size = 0;
     }
-    
+
     _obj = null;
   }
 
@@ -187,7 +183,7 @@ public class Val
     _num3 = o._num3;
     _num4 = o._num4;
     _refc = o._refc;
-    
+
     if(o._blob_size > 0)
     {
       CopyBlobDataFrom(o);
@@ -205,7 +201,7 @@ public class Val
   void CopyBlobDataFrom(Val src)
   {
     var src_data = (byte[])src._obj;
-    
+
     if(_blob_size > 0)
     {
       var data = (byte[])_obj;
@@ -216,18 +212,18 @@ public class Val
       else
       {
         ArrayPool<byte>.Shared.Return(data);
-        var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size); 
+        var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
         Array.Copy(src_data, new_data, src._blob_size);
         _obj = new_data;
       }
     }
     else
     {
-      var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size); 
+      var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
       Array.Copy(src_data, new_data, src._blob_size);
       _obj = new_data;
     }
-    
+
     _blob_size = src._blob_size;
   }
 
@@ -369,7 +365,7 @@ public class Val
     dv.SetObj(o, type);
     return dv;
   }
-  
+
   static public Val NewObj(VM vm, IValRefcounted o, IType type)
   {
     Val dv = NewNoReset(vm);
@@ -393,7 +389,7 @@ public class Val
     this.type = type;
     _obj = o;
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(IValRefcounted o, IType type)
   {
@@ -402,18 +398,18 @@ public class Val
     _obj = o;
     _refc = o;
   }
-  
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBlob<T>(ref T val, IType type) where T : unmanaged
   {
     Reset();
 
     int size = Extensions.SizeOf<T>();
-      
+
     var data = ArrayPool<byte>.Shared.Rent(size);
 
     Extensions.UnsafeAs<byte, T>(ref data[0]) = val;
-    
+
     this.type = type;
     _blob_size = size;
     _obj = data;
@@ -436,13 +432,11 @@ public class Val
   public bool IsValueEqual(Val o)
   {
     bool res =
-      _num == o._num &&
-      _num2 == o._num2 &&
-      _num3 == o._num3 &&
-      _num4 == o._num4 &&
-      ((_blob_size > 0 || o._blob_size > 0) ? 
-        IsBlobEqual(o) :
-        (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
+        _num == o._num &&
+        _num2 == o._num2 &&
+        _num3 == o._num3 &&
+        _num4 == o._num4 &&
+        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(o) : (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
       ;
 
     return res;
@@ -450,7 +444,7 @@ public class Val
 
   public int GetValueHashCode()
   {
-    return 
+    return
       _num.GetHashCode()
       ^ _num2.GetHashCode()
       ^ _num3.GetHashCode()
@@ -459,7 +453,7 @@ public class Val
       ;
   }
 
-  public override string ToString() 
+  public override string ToString()
   {
     string str = "";
     if(type != null)
@@ -474,7 +468,7 @@ public class Val
     str += " obj.type:" + _obj?.GetType().Name;
     str += " (refs:" + _refs + ", refcs:" + _refc?.refs + ")";
 
-    return str;// + " " + GetHashCode();//for extra debug
+    return str; // + " " + GetHashCode();//for extra debug
   }
 }
 
@@ -482,7 +476,8 @@ public class ValStack : FixedStack<Val>
 {
   public ValStack(int max_capacity)
     : base(max_capacity)
-  {}
+  {
+  }
 }
 
 }

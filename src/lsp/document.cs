@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace bhl.lsp {
+namespace bhl.lsp
+{
 
 public class BHLDocument
 {
   public proto.Uri uri { get; private set; }
-  
+
   public CodeIndex index { get; private set; } = new CodeIndex();
 
   public ANTLR_Processor proc { get; private set; }
@@ -19,7 +20,7 @@ public class BHLDocument
   {
     this.uri = uri;
   }
-  
+
   public void Update(string text, ANTLR_Processor proc)
   {
     this.proc = proc;
@@ -46,8 +47,9 @@ public class BHLDocument
     foreach(var node in term_nodes)
     {
       if(node.Symbol.StartIndex <= idx && node.Symbol.StopIndex >= idx)
-        return node;  
+        return node;
     }
+
     return null;
   }
 
@@ -68,7 +70,7 @@ public class BHLDocument
     return annotated.lsp_symbol;
   }
 
-  static T GoUpUntil<T>(TerminalNodeImpl node) where T : class,IParseTree
+  static T GoUpUntil<T>(TerminalNodeImpl node) where T : class, IParseTree
   {
     IParseTree tmp = node;
     while(tmp.Parent != null)
@@ -77,6 +79,7 @@ public class BHLDocument
         break;
       tmp = tmp.Parent;
     }
+
     return tmp as T;
   }
 

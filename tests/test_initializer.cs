@@ -25,47 +25,45 @@ public class TestInitializer : BHL_TestBase
 
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
-    var ts_fn = new Action<Types>((ts) => {
-      fn = BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { fn = BindTrace(ts, log); });
 
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) }) 
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -80,9 +78,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -100,9 +96,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
@@ -120,9 +114,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
@@ -139,14 +131,10 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       @"no such attribute 'b' in class 'Color",
       new PlaceAssert(bhl, @"
       Color c = {b: 10}
@@ -165,14 +153,10 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'float' and 'string'",
       new PlaceAssert(bhl, @"
       Color c = {r: ""what""}
@@ -193,9 +177,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -214,9 +196,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(111, Execute(vm, "test").result.PopRelease().num);
@@ -236,9 +216,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(111, Execute(vm, "test").result.PopRelease().num);
@@ -256,14 +234,10 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
       ColorAlpha c = new Color {g: 10, r: 100}
@@ -289,15 +263,13 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(42, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestJsonReturnObjectNewLine()
   {
@@ -316,9 +288,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(42, Execute(vm, "test").result.PopRelease().num);
@@ -337,9 +307,7 @@ public class TestInitializer : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"type 'Foo' not found",
       new PlaceAssert(bhl, @"
       any c = new Foo {}
@@ -369,54 +337,55 @@ public class TestInitializer : BHL_TestBase
 
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       fn = BindTrace(ts, log);
       BindBar(ts);
     });
 
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Foo")) }) 
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T( "Foo")) }) 
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
-      .EmitThen(Opcodes.ArrAddInplace)
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.ArrIdx)
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Foo")) })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T( "Foo")) })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.2) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
+          .EmitThen(Opcodes.ArrAddInplace)
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+          .EmitThen(Opcodes.ArrIdx)
+          .EmitThen(Opcodes.SetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.2;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -440,14 +409,12 @@ public class TestInitializer : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
-      BindTrace(ts, log);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("2;15.1;Foo-10;14.2;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
 
@@ -494,9 +461,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(1111, Execute(vm, "test").result.PopRelease().num);
@@ -518,9 +483,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -542,9 +505,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -566,9 +527,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(40, Execute(vm, "test").result.PopRelease().num);
@@ -590,14 +549,10 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
     func float foo(ColorAlpha c = new Color{r:20})
@@ -622,9 +577,7 @@ public class TestInitializer : BHL_TestBase
     ";
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl);
-      },
+      delegate() { Compile(bhl); },
       @"can't be specified with {..}",
       new PlaceAssert(bhl, @"
       return foo(a : {})
@@ -648,9 +601,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
@@ -672,9 +623,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
@@ -696,9 +645,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
@@ -717,9 +664,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
@@ -738,9 +683,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColor(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(5, Execute(vm, "test").result.PopRelease().num);
@@ -760,15 +703,13 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestJsonArrayInitializer()
   {
@@ -785,7 +726,7 @@ public class TestInitializer : BHL_TestBase
     Assert.Equal(111, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestComplexJsonArrayInitializer()
   {
@@ -799,15 +740,13 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(114, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestJsonArrayNewLineNotAllowed()
   {
@@ -848,9 +787,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(114, Execute(vm, "test").result.PopRelease().num);
@@ -874,9 +811,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(114, Execute(vm, "test").result.PopRelease().num);
@@ -896,9 +831,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(112, Execute(vm, "test").result.PopRelease().num);
@@ -916,15 +849,11 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    
-    var ts_fn = new Action<Types>((ts) => {
-      BindColorAlpha(ts);
-    });
+
+    var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     AssertError<Exception>(
-      delegate() { 
-        Compile(bhl, ts_fn);
-      },
+      delegate() { Compile(bhl, ts_fn); },
       "incompatible types: 'ColorAlpha' and 'Color'",
       new PlaceAssert(bhl, @"
       []ColorAlpha c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
@@ -948,9 +877,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindMasterStruct(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindMasterStruct(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     AssertEqual("hey2", Execute(vm, "test").result.PopRelease().str);
@@ -972,9 +899,7 @@ public class TestInitializer : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => {
-      BindMasterStruct(ts);
-    });
+    var ts_fn = new Action<Types>((ts) => { BindMasterStruct(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
@@ -993,7 +918,8 @@ public class TestInitializer : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
       BindFoo(ts);
@@ -1016,7 +942,8 @@ public class TestInitializer : BHL_TestBase
     ";
 
     var log = new StringBuilder();
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       BindTrace(ts, log);
       BindColor(ts);
       BindFoo(ts);
@@ -1027,7 +954,7 @@ public class TestInitializer : BHL_TestBase
     AssertEqual("3", log.ToString());
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestJsonArrInitForNativeClass()
   {
@@ -1042,57 +969,58 @@ public class TestInitializer : BHL_TestBase
 
     var log = new StringBuilder();
     FuncSymbolNative fn = null;
-    var ts_fn = new Action<Types>((ts) => {
+    var ts_fn = new Action<Types>((ts) =>
+    {
       fn = BindTrace(ts, log);
       BindBar(ts);
     });
 
     var c = Compile(bhl, ts_fn);
 
-    var expected = 
-      new ModuleCompiler()
-      .UseCode()
-      .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Bar")) }) 
-      .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) }) 
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
-      .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
-      .EmitThen(Opcodes.ArrAddInplace)
-      .EmitThen(Opcodes.SetVar, new int[] { 0 })
-      .EmitThen(Opcodes.GetVar, new int[] { 0 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
-      .EmitThen(Opcodes.ArrIdx)
-      .EmitThen(Opcodes.SetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 1 })
-      .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.GetVar, new int[] { 1 })
-      .EmitThen(Opcodes.GetAttr, new int[] { 2 })
-      .EmitThen(Opcodes.Add)
-      .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-      .EmitThen(Opcodes.Return)
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.TArr("Bar")) })
+          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 14.5) })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "Hey") })
+          .EmitThen(Opcodes.SetAttrInplace, new int[] { 2 })
+          .EmitThen(Opcodes.ArrAddInplace)
+          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+          .EmitThen(Opcodes.ArrIdx)
+          .EmitThen(Opcodes.SetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 1 })
+          .EmitThen(Opcodes.TypeCast, new int[] { TypeIdx(c, c.ns.T("string")), 1 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, ";") })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.GetVar, new int[] { 1 })
+          .EmitThen(Opcodes.GetAttr, new int[] { 2 })
+          .EmitThen(Opcodes.Add)
+          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.')/*locale issues*/);
+    AssertEqual("10;14.5;Hey", log.ToString().Replace(',', '.') /*locale issues*/);
     CommonChecks(vm);
   }
-  
+
   [Fact]
   public void TestJsonMapInitializer()
   {
@@ -1109,5 +1037,4 @@ public class TestInitializer : BHL_TestBase
     Assert.Equal(111, Execute(vm, "test").result.PopRelease().num);
     CommonChecks(vm);
   }
-
 }

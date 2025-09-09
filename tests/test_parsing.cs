@@ -1,4 +1,4 @@
-using System;           
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -40,9 +40,7 @@ public class TestParsing : BHL_TestBase
       ";
 
       var log = new StringBuilder();
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Execute(vm, "test");
@@ -64,9 +62,7 @@ public class TestParsing : BHL_TestBase
       ";
 
       var log = new StringBuilder();
-      var ts_fn = new Action<Types>((ts) => {
-        BindTrace(ts, log);
-      });
+      var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
       Execute(vm, "test");
@@ -90,5 +86,4 @@ public class TestParsing : BHL_TestBase
 
     Compile(bhl);
   }
-
 }
