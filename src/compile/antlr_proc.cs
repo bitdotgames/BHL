@@ -5955,7 +5955,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       "operator",
       "parameter"
     };
-    
+
     public static string[] modifiers = 
     {
       "declaration",   // 1

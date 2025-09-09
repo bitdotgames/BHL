@@ -326,6 +326,7 @@ public class Server
         services
           .AddSingleton(workspace)
         )
+      .WithHandler<TextDocumentHandler>()
       .WithHandler<SemanticTokensHandler>()
       .OnInitialize(async (server, request, token) =>
       {
@@ -334,7 +335,6 @@ public class Server
         
         if(request.WorkspaceFolders != null)
         {
-          logger.Debug("WorkspaceFolders");
           foreach(var wf in request.WorkspaceFolders)
           {
             proj = ProjectConf.TryReadFromDir(wf.Uri.Path);
@@ -344,12 +344,10 @@ public class Server
         }
         else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
         {
-          logger.Debug("RootUri");
           proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
         }
         else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
         {
-          logger.Debug("RootPath");
           proj = ProjectConf.TryReadFromDir(request.RootPath);
         }                                                                         
         else
@@ -357,12 +355,12 @@ public class Server
 
         if(proj == null)
           proj = new ProjectConf();
-        
+
         proj.LoadBindings().Register(ts);
     
         workspace.Init(ts, proj);
 
-        //TODO: run it in background?
+        //TODO: run it in async manner with progress
         workspace.IndexFiles();
         
         var manager = server.WorkDoneManager.For(

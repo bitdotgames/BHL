@@ -51,7 +51,6 @@ public static partial class Tasks
       workspace, 
       cts.Token
       );
-    //server.AttachAllServices();
 
     try
     {
@@ -80,7 +79,7 @@ public class LoggingStream : Stream
   public override void Write(byte[] buffer, int offset, int count)
   {
     var text = Encoding.UTF8.GetString(buffer, offset, count);
-    _logger.Debug("{Prefix} {Payload}", _prefix, text);
+    _logger.Verbose("{Prefix} {Payload}", _prefix, text);
     _inner.Write(buffer, offset, count);
   }
 

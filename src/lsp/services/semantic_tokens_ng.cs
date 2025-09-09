@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -55,13 +56,11 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
   //    var content = await File.ReadAllTextAsync(DocumentUri.GetFileSystemPath(identifier), cancellationToken).ConfigureAwait(false);
       await Task.Yield();
       
-      ANTLR_Processor.SemanticTokenNode prev = null;
       foreach (var token in document.proc.semantic_tokens)
       {
-          int diff_line = token.line - (prev?.line??1);
-          int diff_column = diff_line != 0 ? token.column : token.column - prev?.column??0;
-          builder.Push(diff_line, diff_column, token.len, (int)token.type_idx, (int)token.mods);
-          prev = token;
+          int line = token.line - 1;
+          int column = token.column;
+          builder.Push(line, column, token.len, (int)token.type_idx, (int)token.mods);
       }
 
       //    foreach (var (line, text) in content.Split('\n').Select((text, line) => ( line, text )))
@@ -89,13 +88,35 @@ public class SemanticTokensHandler : SemanticTokensHandlerBase
       SemanticTokensCapability capability, ClientCapabilities clientCapabilities
   )
   {
+      //NOTE: synchronized with ANTLR_Processor.token_types
+      IEnumerable<SemanticTokenType> token_types = new SemanticTokenType[] {
+          SemanticTokenType.Class,
+          SemanticTokenType.Function,
+          SemanticTokenType.Variable,
+          SemanticTokenType.Number,
+          SemanticTokenType.String,
+          SemanticTokenType.Type,
+          SemanticTokenType.Keyword,
+          SemanticTokenType.Property,
+          SemanticTokenType.Operator,
+          SemanticTokenType.Parameter
+      };
+
+      IEnumerable<SemanticTokenModifier> token_modifiers = new SemanticTokenModifier[]
+      {
+          SemanticTokenModifier.Declaration,
+          SemanticTokenModifier.Definition,
+          SemanticTokenModifier.Readonly,
+          SemanticTokenModifier.Static
+      };
+      
       return new SemanticTokensRegistrationOptions
       {
           DocumentSelector = TextDocumentSelector.ForLanguage("bhl"),
           Legend = new SemanticTokensLegend
           {
-              TokenModifiers = capability.TokenModifiers,
-              TokenTypes = capability.TokenTypes
+              TokenTypes = new (token_types),
+              TokenModifiers = new (token_modifiers)
           },
           Full = new SemanticTokensCapabilityRequestFull
           {

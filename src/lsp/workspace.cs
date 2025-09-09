@@ -11,17 +11,17 @@ namespace bhl.lsp {
 
 public class Workspace
 {
-  public Types ts;
+  public Types ts { get; private set; }
 
-  public ProjectConf conf;
+  public ProjectConf conf { get; private set; }
 
   public event System.Func<Dictionary<string, CompileErrors>, Task> OnDiagnostics;
 
   //NOTE: keeping both collections for convenience of re-indexing
   Dictionary<string, ANTLR_Processor> uri2proc = new Dictionary<string, ANTLR_Processor>(); 
   public Dictionary<string, BHLDocument> uri2doc { get ; private set; } = new Dictionary<string, BHLDocument>();
-
-  public lsp.proto.ClientCapabilities capabilities { get; private set; }
+  
+  public bool indexed { get; private set; }
 
   public void Init(Types ts, ProjectConf conf)
   {
@@ -35,6 +35,8 @@ public class Workspace
   //NOTE: naive initial implementation
   public void IndexFiles()
   {
+    indexed = true;
+    
     uri2proc.Clear();
     uri2doc.Clear();
 
