@@ -32,7 +32,7 @@ public class TestStackTrace : BHL_TestBase
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -114,7 +114,7 @@ public class TestStackTrace : BHL_TestBase
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -170,7 +170,7 @@ public class TestStackTrace : BHL_TestBase
   public void TestGetStackTraceFromVirtualMethod()
   {
     string bhl3 = @"
-    class Base 
+    class Base
     {
       virtual func float wow(float b) { return b }
     }
@@ -200,7 +200,7 @@ public class TestStackTrace : BHL_TestBase
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -256,16 +256,16 @@ public class TestStackTrace : BHL_TestBase
   public void TestGetStackTraceFromCoroVirtualMethodInParal()
   {
     string bhl3 = @"
-    class Base 
+    class Base
     {
-      coro virtual func float wow(float b) { 
-        yield() 
-        return b 
+      coro virtual func float wow(float b) {
+        yield()
+        return b
       }
 
       coro func test(float b) {
         yield this.wow(b)
-      }  
+      }
     }
     ";
 
@@ -287,7 +287,7 @@ public class TestStackTrace : BHL_TestBase
     {
       coro override func float wow(float b)
       {
-        yield() 
+        yield()
         fatal_error()
         return b
       }
@@ -301,7 +301,7 @@ public class TestStackTrace : BHL_TestBase
       return yield bar(k)
     }
 
-    coro func float test(float k) 
+    coro func float test(float k)
     {
       return yield foo(k)
     }
@@ -345,7 +345,7 @@ at test(..) in bhl1.bhl:10"
   public void TestGetStackTraceFromInterfaceMethod()
   {
     string bhl3 = @"
-    interface IBase 
+    interface IBase
     {
       func float wow(float b)
     }
@@ -375,7 +375,7 @@ at test(..) in bhl1.bhl:10"
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -453,7 +453,7 @@ at test(..) in bhl1.bhl:10"
       return k
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(
           bar(k)
@@ -519,7 +519,7 @@ at test(..) in bhl1.bhl:10"
 
     string bhl1 = @"
     import ""bhl2""
-    func float test() 
+    func float test()
     {
       return bar()
     }
@@ -585,7 +585,7 @@ at test(..) in bhl1.bhl:10"
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -681,7 +681,7 @@ at test(..) in bhl1.bhl:10"
       return yield bar(k)
     }
 
-    coro func float test(float k) 
+    coro func float test(float k)
     {
       return yield foo(k)
     }
@@ -766,7 +766,7 @@ at test(..) in bhl1.bhl:10"
       return yield bar(k)
     }
 
-    coro func float test(float k) 
+    coro func float test(float k)
     {
       return yield foo(k)
     }
@@ -846,7 +846,7 @@ at test(..) in bhl1.bhl:10"
       return bar(k)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(k)
     }
@@ -932,7 +932,7 @@ at test(..) in bhl1.bhl:10"
       bar(k)
     }
 
-    func test() 
+    func test()
     {
       foo(14)
     }
@@ -1030,7 +1030,7 @@ at test(..) in bhl1.bhl:10"
     string bhl1 = @"
     import ""bhl2""
 
-    coro func test() 
+    coro func test()
     {
       yield chase()
     }
@@ -1136,7 +1136,7 @@ at test(..) in bhl1.bhl:10"
     string bhl1 = @"
     import ""bhl2""
 
-    coro func test() 
+    coro func test()
     {
       yield chase()
     }
@@ -1235,7 +1235,7 @@ at test(..) in bhl1.bhl:10"
       bar(k)
     }
 
-    func test() 
+    func test()
     {
       foo(14)
     }
@@ -1325,7 +1325,7 @@ at test(..) in bhl1.bhl:10"
       bar(cb)
     }
 
-    func test() 
+    func test()
     {
       foo(func() {
 

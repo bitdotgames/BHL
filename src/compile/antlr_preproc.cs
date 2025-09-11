@@ -4,8 +4,7 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace bhl
-{
+namespace bhl;
 
 public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
 {
@@ -293,6 +292,4 @@ public class ANTLR_Preprocessor : bhlPreprocParserBaseVisitor<object>
   {
     err_hub.errors.Add(new ParseError(module, place, tokens, msg));
   }
-}
-
 }

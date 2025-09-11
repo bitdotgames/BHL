@@ -10,7 +10,7 @@ public class TestFiber : BHL_TestBase
   public void TestFuncAddr()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10
     }
@@ -28,7 +28,7 @@ public class TestFiber : BHL_TestBase
   public void TestResultMustBeReadyOnceFinished()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 6
     }
@@ -47,7 +47,7 @@ public class TestFiber : BHL_TestBase
   public void TestStackList3Args()
   {
     string bhl = @"
-    func int test(int a, int b, int c) 
+    func int test(int a, int b, int c)
     {
       return a + b + c
     }
@@ -140,7 +140,7 @@ public class TestFiber : BHL_TestBase
   public void TestDirectExecuteNativeFunc()
   {
     string bhl = @"
-    func dummy() 
+    func dummy()
     {}
     ";
 
@@ -168,7 +168,7 @@ public class TestFiber : BHL_TestBase
   public void TestDirectExecuteNativeFuncWithDefaultArgsPassed()
   {
     string bhl = @"
-    func dummy() 
+    func dummy()
     {}
     ";
 
@@ -197,7 +197,7 @@ public class TestFiber : BHL_TestBase
   public void TestDirectExecuteNativeFuncWithDefaultArgsNotPassed()
   {
     string bhl = @"
-    func dummy() 
+    func dummy()
     {}
     ";
 
@@ -226,7 +226,7 @@ public class TestFiber : BHL_TestBase
   public void TestDirectExecuteNativeCoro()
   {
     string bhl = @"
-    func dummy() 
+    func dummy()
     {}
     ";
 
@@ -239,7 +239,7 @@ public class TestFiber : BHL_TestBase
   public void TestStartNativeFunc()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       start(native)
     }
@@ -290,7 +290,7 @@ public class TestFiber : BHL_TestBase
   public void TestStartNativeStatefulFunc()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       start(yield_and_trace)
     }
@@ -539,7 +539,7 @@ public class TestFiber : BHL_TestBase
 
     coro func test()
     {
-      FiberRef fb 
+      FiberRef fb
       fb = start(coro func() {
         defer {
           trace(""0"")
@@ -755,13 +755,13 @@ public class TestFiber : BHL_TestBase
   public void TestFiberCache()
   {
     string bhl = @"
-      
+
     coro func foo()
     {
       yield()
     }
 
-    coro func test() 
+    coro func test()
     {
       yield foo()
     }
@@ -799,12 +799,12 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         StartScriptInMgr(
-          script: func() { 
-            trace(""HERE;"") 
+          script: func() {
+            trace(""HERE;"")
           },
           spawns : 1
         )
@@ -856,12 +856,12 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         StartScriptInMgr(
-          script: coro func() { 
-            trace(""HERE;"") 
+          script: coro func() {
+            trace(""HERE;"")
             yield suspend()
           },
           spawns : 1
@@ -919,10 +919,10 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       StartScriptInMgr(
-        script: coro func() { 
+        script: coro func() {
           yield suspend()
         },
         spawns : 3
@@ -962,7 +962,7 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       coro func() fn = coro func() {
         trace(""HERE;"")
@@ -1009,7 +1009,7 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       StartScriptInMgr(
         script: say_here,
@@ -1066,7 +1066,7 @@ public class TestFiber : BHL_TestBase
       trace(""HERE;"")
     }
 
-    func test() 
+    func test()
     {
       StartScriptInMgr(
         script: say_here,
@@ -1118,7 +1118,7 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       coro func() fn = coro func() {
         trace(""HERE;"")
@@ -1126,7 +1126,7 @@ public class TestFiber : BHL_TestBase
       }
 
       StartScriptInMgr(
-        script: coro func() { 
+        script: coro func() {
           yield fn()
         },
         spawns : 2
@@ -1166,13 +1166,13 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       float a = 0
       StartScriptInMgr(
-        script: coro func() { 
+        script: coro func() {
           a = a + 1
-          trace((string) a + "";"") 
+          trace((string) a + "";"")
           yield suspend()
         },
         spawns : 3
@@ -1214,14 +1214,14 @@ public class TestFiber : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       float a = 1
       StartScriptInMgr(
-        script: coro func() { 
-            yield coro func (float a) { 
+        script: coro func() {
+            yield coro func (float a) {
               a = a + 1
-              trace((string) a + "";"") 
+              trace((string) a + "";"")
               yield suspend()
           }(a)
         },
@@ -1263,14 +1263,14 @@ public class TestFiber : BHL_TestBase
   public void TestStaleFrameReferenceFuncPtrBug()
   {
     string bhl = @"
-    
+
     func sub(int a, int b) {
        trace((string)(b - a) + "";"")
     }
 
     func test() {
       StartScriptInMgr(
-        script: coro func() { 
+        script: coro func() {
           int a = 1
           int b = 3
           defer {
@@ -1317,7 +1317,7 @@ public class TestFiber : BHL_TestBase
   public void TestExecute()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10
     }
@@ -1345,7 +1345,7 @@ public class TestFiber : BHL_TestBase
   public void TestExecuteWithArgs()
   {
     string bhl = @"
-    func int test(int k, int d) 
+    func int test(int k, int d)
     {
       return d - k
     }
@@ -1373,7 +1373,7 @@ public class TestFiber : BHL_TestBase
   public void TestExecuteFuncTrampoline()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10
     }
@@ -1416,7 +1416,7 @@ public class TestFiber : BHL_TestBase
   public void TestFuncTrampolineNotFound()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10
     }
@@ -1436,7 +1436,7 @@ public class TestFiber : BHL_TestBase
   public void TestExecuteStartsAFiber()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       int i = 10
       start(coro func() {
@@ -1444,7 +1444,7 @@ public class TestFiber : BHL_TestBase
       })
     }
 
-    coro func Doer(int i) 
+    coro func Doer(int i)
     {
       trace((string)i)
       yield()

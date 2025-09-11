@@ -4,16 +4,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
-using Microsoft.Extensions.Logging;
 using bhl.lsp;
 using Serilog;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl
-{
+namespace bhl.taskman;
 
 public static partial class Tasks
 {
@@ -115,6 +112,4 @@ public class LoggingStream : Stream
   public override void Flush() => _inner.Flush();
   public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
   public override void SetLength(long value) => _inner.SetLength(value);
-}
-
 }

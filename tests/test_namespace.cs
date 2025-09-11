@@ -1387,7 +1387,7 @@ public class TestNamespace : BHL_TestBase
   public void TestPreferLocalVersion()
   {
     string bhl = @"
-    func int bar() { 
+    func int bar() {
       return 1
     }
     namespace foo {
@@ -1555,7 +1555,7 @@ public class TestNamespace : BHL_TestBase
   public void TestCallGlobalVersion()
   {
     string bhl = @"
-    func int bar() { 
+    func int bar() {
       return 1
     }
     namespace foo {
@@ -1583,17 +1583,17 @@ public class TestNamespace : BHL_TestBase
         float a
       }
     }
-      
+
     namespace foo {
       namespace sub_foo {
-        class Foo : bar.Bar { 
+        class Foo : bar.Bar {
           float b
           int c
         }
       }
     }
 
-    func float test() 
+    func float test()
     {
       foo.sub_foo.Foo f = { c : 2, b : 101.5, a : 1 }
       bar.Bar b = { a : 10 }
@@ -1622,7 +1622,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       bar.Hey.Hey_Sub sub = {f: 10}
       return sub.getF()
@@ -1646,7 +1646,7 @@ public class TestNamespace : BHL_TestBase
 
     namespace foo {
       namespace sub_foo {
-        class Foo : bar.IFoo { 
+        class Foo : bar.IFoo {
           func int test() {
             return 42
           }
@@ -1654,7 +1654,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       foo.sub_foo.Foo f = {}
       return f.test()
@@ -1683,7 +1683,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return bar.Do()
     }
@@ -1717,7 +1717,7 @@ public class TestNamespace : BHL_TestBase
 
     }
 
-    func int test() 
+    func int test()
     {
       a.B b = {}
       return b.Call()
@@ -1741,13 +1741,13 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     func int Foo() {
       return 1
     }
 
-    func int test() 
+    func int test()
     {
       return foo.Foo() + Foo()
     }
@@ -1783,7 +1783,7 @@ public class TestNamespace : BHL_TestBase
       return 1
     }
 
-    func int test() 
+    func int test()
     {
       func int() p1 = foo.Foo
       func int() p2 = Foo
@@ -1812,7 +1812,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     class Garbage {
       func garbage() {}
@@ -1822,7 +1822,7 @@ public class TestNamespace : BHL_TestBase
       return 1
     }
 
-    func int test() 
+    func int test()
     {
       func int() p1 = foo.Foo
       func int() p2 = Foo
@@ -1847,15 +1847,15 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl1 = @"
     namespace foo {
-      class Foo { 
+      class Foo {
         int Int
       }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
-    func int test() 
+    import ""bhl1""
+    func int test()
     {
       foo.Foo f = {}
       f.Int = 10
@@ -1880,7 +1880,7 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl1 = @"
     namespace foo {
-      class A { 
+      class A {
         func int a() {
           return 10
         }
@@ -1889,9 +1889,9 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace foo {
-      class B { 
+      class B {
         func int b() {
           //visible without namespace prefix
           A a = {}
@@ -1924,7 +1924,7 @@ public class TestNamespace : BHL_TestBase
     string bhl1 = @"
     namespace foo {
       namespace sub_foo {
-        class A { 
+        class A {
           func int a() {
             return 10
           }
@@ -1934,9 +1934,9 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace foo {
-      class B { 
+      class B {
         func int b() {
           sub_foo.A a = {}
           return a.a()
@@ -1967,14 +1967,14 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl1 = @"
     namespace foo {
-      interface IFoo { 
+      interface IFoo {
         func int Do()
       }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     class Foo : foo.IFoo {
       func int Do() {
@@ -1982,7 +1982,7 @@ public class TestNamespace : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {}
       return f.Do()
@@ -2005,7 +2005,7 @@ public class TestNamespace : BHL_TestBase
   public void TestImportGlobalObjectVar()
   {
     string bhl1 = @"
-    import ""bhl3""  
+    import ""bhl3""
     func float test() {
       return bar.foo.x
     }
@@ -2020,7 +2020,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl3 = @"
-    import ""bhl2""  
+    import ""bhl2""
     namespace bar {
       foo.Foo foo = {x : 10}
     }
@@ -2080,17 +2080,17 @@ public class TestNamespace : BHL_TestBase
   {
     string bhl1 = @"
     namespace foo {
-      class Foo { 
+      class Foo {
         int Int
       }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace foo {
       namespace sub {
-        class Sub { 
+        class Sub {
           foo.Foo foo
         }
       }
@@ -2099,10 +2099,10 @@ public class TestNamespace : BHL_TestBase
 
 
     string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
+    import ""bhl1""
+    import ""bhl2""
 
-    func int test() 
+    func int test()
     {
       foo.Foo f = {Int: 10}
       foo.sub.Sub s = {foo: f}
@@ -2206,11 +2206,11 @@ public class TestNamespace : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
-    func int test() 
+    func int test()
     {
-      return ns1.View.Foo() + 
+      return ns1.View.Foo() +
         ns2.View.Bar()
     }
     ";

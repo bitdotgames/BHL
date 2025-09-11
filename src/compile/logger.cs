@@ -1,8 +1,7 @@
 using System;
 using System.IO;
 
-namespace bhl
-{
+namespace bhl;
 
 public interface ILogWriter
 {
@@ -67,7 +66,7 @@ public class Logger
   ILogWriter writer;
   int max_level;
 
-  //NOTE: for quick debugging, only in places where 
+  //NOTE: for quick debugging, only in places where
   //      logger is not passed (and not supposed to)
   public static Logger current { get; private set; }
 
@@ -91,6 +90,4 @@ public class Logger
   {
     writer.Error(DateTime.Now, msg);
   }
-}
-
 }

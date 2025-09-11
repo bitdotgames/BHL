@@ -14,7 +14,7 @@ public class TestLocal : BHL_TestBase
       return 10
     }
 
-    func int test() 
+    func int test()
     {
       return foo()
     }
@@ -62,7 +62,7 @@ public class TestLocal : BHL_TestBase
     string file_test = @"
     import ""./a""
 
-    func int test() 
+    func int test()
     {
       return foo()
     }
@@ -100,7 +100,7 @@ public class TestLocal : BHL_TestBase
     string file_test = @"
     import ""./a""
 
-    func int test() 
+    func int test()
     {
       return foo()
     }
@@ -138,7 +138,7 @@ public class TestLocal : BHL_TestBase
 
     static func int foo() { return 20 }
 
-    func int test() 
+    func int test()
     {
       return foo() + bar()
     }
@@ -165,7 +165,7 @@ public class TestLocal : BHL_TestBase
     string file_test = @"
     import ""./a""
 
-    func int test() 
+    func int test()
     {
       func int() p = foo
       return p()
@@ -203,7 +203,7 @@ public class TestLocal : BHL_TestBase
       static func int foo() { return 20 }
     }
 
-    func int test() 
+    func int test()
     {
       return Foo.foo() + Foo.bar()
     }
@@ -257,7 +257,7 @@ public class TestLocal : BHL_TestBase
     string bhl = @"
     static int foo = 10
 
-    func int test() 
+    func int test()
     {
       return foo
     }
@@ -298,7 +298,7 @@ public class TestLocal : BHL_TestBase
     string file_test = @"
     import ""./a""
 
-    func int test() 
+    func int test()
     {
       return foo
     }
@@ -334,7 +334,7 @@ public class TestLocal : BHL_TestBase
 
     static int foo = 20
 
-    func int test() 
+    func int test()
     {
       return foo
     }

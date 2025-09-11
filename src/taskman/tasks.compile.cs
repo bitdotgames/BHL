@@ -6,8 +6,7 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl
-{
+namespace bhl.taskman;
 
 public static partial class Tasks
 {
@@ -238,6 +237,4 @@ public static partial class Tasks
       left.Insert(0, "--proj=" + proj_file);
     return left;
   }
-}
-
 }

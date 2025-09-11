@@ -17,7 +17,7 @@ public class TestInit : BHL_TestBase
       foo = 10
     }
 
-    func int test() 
+    func int test()
     {
       return foo
     }
@@ -39,7 +39,7 @@ public class TestInit : BHL_TestBase
       foo = 10
     }
 
-    func int test() 
+    func int test()
     {
       return foo
     }
@@ -63,7 +63,7 @@ public class TestInit : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return foo
     }
@@ -143,7 +143,7 @@ public class TestInit : BHL_TestBase
     string file_foo = @"
       static int FOO
 
-      static func init() { 
+      static func init() {
         FOO = 10
       }
 
@@ -153,7 +153,7 @@ public class TestInit : BHL_TestBase
     string file_bar = @"
       static int BAR
 
-      static func init() { 
+      static func init() {
         BAR = 100
       }
 
@@ -164,7 +164,7 @@ public class TestInit : BHL_TestBase
     import ""./foo""
     import ""./bar""
 
-    func int test() 
+    func int test()
     {
       return foo() + bar()
     }

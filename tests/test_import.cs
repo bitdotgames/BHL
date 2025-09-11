@@ -10,18 +10,18 @@ public class TestImport : BHL_TestBase
   public void TestSimpleImport()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
     func garbage1() { }
 
-    func float bhl1() 
+    func float bhl1()
     {
       return bhl2(23)
     }
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
+    import ""bhl3""
 
     func garbage2() { }
 
@@ -94,8 +94,8 @@ public class TestImport : BHL_TestBase
   public void TestBadImport()
   {
     string bhl1 = @"
-    import ""garbage""  
-    func float bhl1() 
+    import ""garbage""
+    func float bhl1()
     {
       return bhl2(23)
     }
@@ -109,7 +109,7 @@ public class TestImport : BHL_TestBase
       delegate() { CompileFiles(files); },
       "invalid import 'garbage'",
       new PlaceAssert(bhl1, @"
-    import ""garbage""  
+    import ""garbage""
 ----^"
       )
     );
@@ -119,15 +119,15 @@ public class TestImport : BHL_TestBase
   public void TestBadImportNotInSourceFiles()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    func float bhl1() 
+    import ""bhl2""
+    func float bhl1()
     {
       return bhl2()
     }
     ";
 
     string bhl2 = @"
-    func bhl2() 
+    func bhl2()
     {}
     ";
 
@@ -141,7 +141,7 @@ public class TestImport : BHL_TestBase
       delegate() { CompileFiles(files); },
       "invalid import 'bhl2'",
       new PlaceAssert(bhl1, @"
-    import ""bhl2""  
+    import ""bhl2""
 ----^"
       )
     );
@@ -151,8 +151,8 @@ public class TestImport : BHL_TestBase
   public void TestSelfImportIsIgnored()
   {
     string bhl1 = @"
-    import ""bhl1""  
-    func bhl1() 
+    import ""bhl1""
+    func bhl1()
     {}
     ";
 
@@ -206,9 +206,9 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_test = @"
-    import ""garbage"";import ""unit"";  
+    import ""garbage"";import ""unit"";
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -274,7 +274,7 @@ public class TestImport : BHL_TestBase
     string file_get = @"
     import ""unit""
 
-    func Unit get() { 
+    func Unit get() {
       Unit u = {test: 23}
       return u
     }
@@ -311,7 +311,7 @@ public class TestImport : BHL_TestBase
     string new_file_get = @"
     import ""unit""
 
-    func Unit get() { 
+    func Unit get() {
       Unit u = {test: 32}
       return u
     }
@@ -347,7 +347,7 @@ public class TestImport : BHL_TestBase
 
     Unit global_unit
 
-    func Unit get(int a) { 
+    func Unit get(int a) {
       Unit u = {test: 23 + a}
       return u
     }
@@ -356,7 +356,7 @@ public class TestImport : BHL_TestBase
     string file_use =  @"
     import ""/collections/unit""
 
-    func use_unit() { 
+    func use_unit() {
       Unit u = {test: 42}
     }
     ";
@@ -429,7 +429,7 @@ public class TestImport : BHL_TestBase
     string file_get = @"
     import ""unit""
 
-    func Unit get() { 
+    func Unit get() {
       Unit u = {test: 23}
       return u
     }
@@ -500,7 +500,7 @@ public class TestImport : BHL_TestBase
     string file_get =  @"
     import ""/unit""
 
-    func int get(int i) { 
+    func int get(int i) {
       return gunit.test + i
     }
     ";
@@ -535,7 +535,7 @@ public class TestImport : BHL_TestBase
 
     Unit gunit2 = {test: 10}
 
-    func int get(int i) { 
+    func int get(int i) {
       return gunit.test + i + gunit2.test
     }
     ";
@@ -560,9 +560,9 @@ public class TestImport : BHL_TestBase
   public void TestImportEnum()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
-    func float test() 
+    func float test()
     {
       Foo f = Foo.B
       return bar(f)
@@ -598,9 +598,9 @@ public class TestImport : BHL_TestBase
   public void TestImportEnumConflict()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
-    enum Bar { 
+    enum Bar {
       FOO = 1
     }
 
@@ -608,7 +608,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string bhl2 = @"
-    enum Bar { 
+    enum Bar {
       BAR = 2
     }
     ";
@@ -625,7 +625,7 @@ public class TestImport : BHL_TestBase
       },
       @"already defined symbol 'Bar'",
       new PlaceAssert(bhl1, @"
-    enum Bar { 
+    enum Bar {
 ----^"
       )
     );
@@ -635,8 +635,8 @@ public class TestImport : BHL_TestBase
   public void TestImportReadWriteGlobalVar()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    func float test() 
+    import ""bhl2""
+    func float test()
     {
       foo = 10
       return foo
@@ -665,8 +665,8 @@ public class TestImport : BHL_TestBase
   public void TestImportReadWriteSeveralGlobalVars()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    func float test() 
+    import ""bhl2""
+    func float test()
     {
       foo = 10
       return foo + boo
@@ -696,8 +696,8 @@ public class TestImport : BHL_TestBase
   public void TestImportGlobalObjectVar()
   {
     string bhl1 = @"
-    import ""bhl3""  
-    func float test() 
+    import ""bhl3""
+    func float test()
     {
       return foo.x
     }
@@ -713,7 +713,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string bhl3 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
     Foo foo = {x : 10}
 
@@ -736,9 +736,9 @@ public class TestImport : BHL_TestBase
   public void TestImportGlobalObjectVarWithDepCycles()
   {
     string main_bhl = @"
-    import ""g""  
-    import ""input""  
-    import ""unit""  
+    import ""g""
+    import ""input""
+    import ""unit""
 
     func int test() {
       return unit_count()
@@ -753,7 +753,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string input_bhl = @"
-    import ""unit""  
+    import ""unit""
 
     []int ins = []
 
@@ -764,7 +764,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string unit_bhl = @"
-    import ""g""  
+    import ""g""
     import ""ability""
 
     func int garbage_func() {
@@ -800,7 +800,7 @@ public class TestImport : BHL_TestBase
   public void TestImportGlobalVarConflict()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
     int foo = 10
 
@@ -839,8 +839,8 @@ public class TestImport : BHL_TestBase
       return hey(k)
     }
 
-    import ""bhl2""  
-    func float test(float k) 
+    import ""bhl2""
+    func float test(float k)
     {
       return bar(k) * what(k)
     }
@@ -878,17 +878,17 @@ public class TestImport : BHL_TestBase
   public void TestImportWithCycles()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    import ""bhl3""  
+    import ""bhl2""
+    import ""bhl3""
 
-    func float test(float k) 
+    func float test(float k)
     {
       return bar(k)
     }
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
+    import ""bhl3""
 
     func float bar(float k)
     {
@@ -922,16 +922,16 @@ public class TestImport : BHL_TestBase
   public void TestImportWithSemicolon()
   {
     string bhl1 = @"
-    import ""bhl2"";;;import ""bhl3"";  
+    import ""bhl2"";;;import ""bhl3"";
 
-    func float test(float k) 
+    func float test(float k)
     {
       return bar(k)
     }
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
+    import ""bhl3""
 
     func float bar(float k)
     {
@@ -965,14 +965,14 @@ public class TestImport : BHL_TestBase
   public void TestImportConflict()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
-    func float bar() 
+    func float bar()
     {
       return 1
     }
 
-    func float test() 
+    func float test()
     {
       return bar()
     }
@@ -997,7 +997,7 @@ public class TestImport : BHL_TestBase
       },
       @"already defined symbol 'bar'",
       new PlaceAssert(bhl1, @"
-    func float bar() 
+    func float bar()
 ----^"
       )
     );
@@ -1014,9 +1014,9 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_test = @"
-    import ""garbage"";import ""unit"";  
+    import ""garbage"";import ""unit"";
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1068,9 +1068,9 @@ public class TestImport : BHL_TestBase
     ";
 
     string file_test = @"
-    import ""/unit"";  
+    import ""/unit"";
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1110,7 +1110,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     import ""/units/unit""
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1144,7 +1144,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     import ""units/unit""
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1178,7 +1178,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     import ""./unit""
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1219,7 +1219,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     import ""/interim""
 
-    func test() 
+    func test()
     {
       units.Unit u = {}
     }
@@ -1262,7 +1262,7 @@ public class TestImport : BHL_TestBase
     import ""/unit""
     //import ""/garbage2""
 
-    func int test() 
+    func int test()
     {
       units.Unit u = {foo: 10}
       return u.foo
@@ -1294,7 +1294,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     //import ""/unit""
 
-    func test() 
+    func test()
     {
       units.Unit u = {}
     }
@@ -1400,7 +1400,7 @@ public class TestImport : BHL_TestBase
     string file_test = @"
     import ""/units/unit""
 
-    func int test() 
+    func int test()
     {
       return u.test
     }
@@ -1427,27 +1427,27 @@ public class TestImport : BHL_TestBase
   public void TestImportFuncPtrs()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
-    func int test0() 
+    func int test0()
     {
       return calc(0)
     }
 
-    func int test1() 
+    func int test1()
     {
       return calc(1)
     }
 
-    func int test2() 
+    func int test2()
     {
       return calc(2)
     }
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
-    
+    import ""bhl3""
+
     class Garbage : BaseGarbage {
       func garbage() { }
     }
@@ -1466,7 +1466,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string bhl3 = @"
-    class BaseGarbage { 
+    class BaseGarbage {
       func base_garbage() { }
     }
 
@@ -1496,8 +1496,8 @@ public class TestImport : BHL_TestBase
   public void TestImportNativeModulesFromCachedModule()
   {
     string bhl1 = @"
-    import ""std""  
-    
+    import ""std""
+
     class Foo { }
 
     func string GetFooName() {
@@ -1507,8 +1507,8 @@ public class TestImport : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
-    
+    import ""bhl1""
+
     func string test() {
       return GetFooName()
     }
@@ -1546,13 +1546,13 @@ public class TestImport : BHL_TestBase
     string bhl1 = @"
     import ""interim"" //we'll force this class change
 
-    class Base { 
+    class Base {
      func int Do() { return 10 }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     class Foo : Base { }
     ";
@@ -1562,7 +1562,7 @@ public class TestImport : BHL_TestBase
     ";
 
     string bhl3 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
     func int test() {
       var foo = new Foo

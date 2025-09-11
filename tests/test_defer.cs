@@ -10,12 +10,12 @@ public class TestDefer : BHL_TestBase
   public void TestBasicDefer()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       defer {
         trace(""bar"")
       }
-      
+
       trace(""foo"")
     }
     ";
@@ -57,7 +57,7 @@ public class TestDefer : BHL_TestBase
       trace((string)k)
     }
 
-    func test() 
+    func test()
     {
       float k = 142
       defer {
@@ -94,7 +94,7 @@ public class TestDefer : BHL_TestBase
       yield while(true)
     }
 
-    coro func test() 
+    coro func test()
     {
       yield doer()
     }
@@ -122,7 +122,7 @@ public class TestDefer : BHL_TestBase
       trace((string)k)
     }
 
-    coro func int doer() 
+    coro func int doer()
     {
       float k = 1
       defer {
@@ -137,7 +137,7 @@ public class TestDefer : BHL_TestBase
       return 100
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         {
@@ -173,7 +173,7 @@ public class TestDefer : BHL_TestBase
       trace((string)k)
     }
 
-    coro func doer() 
+    coro func doer()
     {
       float k = 1
       defer {
@@ -185,7 +185,7 @@ public class TestDefer : BHL_TestBase
       k = 2
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         {
@@ -213,7 +213,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""0"")
@@ -258,7 +258,7 @@ public class TestDefer : BHL_TestBase
       }
     }
 
-    func test() 
+    func test()
     {
       bar()
     }
@@ -330,7 +330,7 @@ public class TestDefer : BHL_TestBase
       trace(""FOO"")
     }
 
-    func test() 
+    func test()
     {
       bar(foo())
     }
@@ -366,7 +366,7 @@ public class TestDefer : BHL_TestBase
       trace(""FOO"")
     }
 
-    func test() 
+    func test()
     {
       defer {
         foo()
@@ -394,7 +394,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         return
@@ -417,7 +417,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         func() {
@@ -434,16 +434,16 @@ public class TestDefer : BHL_TestBase
   public void TestSubCallsInDefer()
   {
     string bhl = @"
-    func string bar() 
+    func string bar()
     {
       return ""bar""
     }
-    func test() 
+    func test()
     {
       defer {
         trace(bar())
       }
-      
+
       trace(""foo"")
     }
     ";
@@ -462,7 +462,7 @@ public class TestDefer : BHL_TestBase
   public void TestSeveralDefers()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       defer {
         trace(""bar"")
@@ -471,7 +471,7 @@ public class TestDefer : BHL_TestBase
       defer {
         trace(""hey"")
       }
-      
+
       trace(""foo"")
     }
     ";
@@ -514,7 +514,7 @@ public class TestDefer : BHL_TestBase
       defer {
         trace(""test2"")
       }
-      
+
       trace(""test"")
     }
     ";
@@ -551,8 +551,8 @@ public class TestDefer : BHL_TestBase
     }
 
     coro func test() {
-      yield level_body(coro func() { 
-        yield() 
+      yield level_body(coro func() {
+        yield()
       } )
     }
     ";
@@ -570,7 +570,7 @@ public class TestDefer : BHL_TestBase
   public void TestSequenceDefer()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -604,7 +604,7 @@ public class TestDefer : BHL_TestBase
         trace(""4"")
       }
     }
-    func test() 
+    func test()
     {
       defer {
         trace(""1"")
@@ -634,7 +634,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -667,7 +667,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -701,7 +701,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func doer() 
+    coro func doer()
     {
       defer {
         start(coro func() { yield() })
@@ -726,7 +726,7 @@ public class TestDefer : BHL_TestBase
       }
     }
 
-    coro func test() 
+    coro func test()
     {
       yield wow()
     }
@@ -746,7 +746,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func doer(ref int a) 
+    coro func doer(ref int a)
     {
       defer {
         start(coro func() { yield() })
@@ -768,7 +768,7 @@ public class TestDefer : BHL_TestBase
       }
     }
 
-    coro func test() 
+    coro func test()
     {
       int a = 0
       yield wow(ref a)
@@ -790,7 +790,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       while(true) {
         defer {
@@ -815,7 +815,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         while(true) {
@@ -841,7 +841,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         int i = 0
@@ -875,7 +875,7 @@ public class TestDefer : BHL_TestBase
       fail()
     }
 
-    func test() 
+    func test()
     {
       defer {
       }
@@ -895,7 +895,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -926,7 +926,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         defer {
@@ -950,7 +950,7 @@ public class TestDefer : BHL_TestBase
       Assert.True(vm.Tick());
     //...will be running forever, well, we assume that :)
 
-    //NOTE: on the first tick we yield() is executed and 
+    //NOTE: on the first tick we yield() is executed and
     //      defer block is not run
     AssertEqual("HEY;HEY;HEY;HEY;", log.ToString());
     vm.Stop(fb);
@@ -962,7 +962,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       int i = 0
       while(true) {
@@ -995,7 +995,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -1028,7 +1028,7 @@ public class TestDefer : BHL_TestBase
   public void TestParalDefer()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -1066,7 +1066,7 @@ public class TestDefer : BHL_TestBase
       k = 10
     }
 
-    func test() 
+    func test()
     {
       paral {
         foo()
@@ -1112,7 +1112,7 @@ public class TestDefer : BHL_TestBase
       }
     }
 
-    coro func test() 
+    coro func test()
     {
       yield doer()
     }
@@ -1131,7 +1131,7 @@ public class TestDefer : BHL_TestBase
   public void TestParalWithYieldDefer()
   {
     string bhl = @"
-    coro func test() 
+    coro func test()
     {
       defer {
         trace(""hey"")
@@ -1166,7 +1166,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       defer {
         trace(""1"")
@@ -1218,7 +1218,7 @@ public class TestDefer : BHL_TestBase
   public void TestParalAllDefer()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")
@@ -1248,7 +1248,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       defer {
         trace(""hey"")
@@ -1283,7 +1283,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       defer {
         trace(""1"")
@@ -1327,7 +1327,7 @@ public class TestDefer : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     AssertEqual("", log.ToString());
-    //TODO: VM.Tick() returns BHS.SUCCESS when all fibers exited 
+    //TODO: VM.Tick() returns BHS.SUCCESS when all fibers exited
     //      regardless of their individual exit status
     Assert.False(vm.Tick());
     AssertEqual("54231", log.ToString());
@@ -1339,7 +1339,7 @@ public class TestDefer : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       defer {
         trace(""hey"")

@@ -7,8 +7,7 @@ using Antlr4.Runtime.Dfa;
 using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Sharpen;
 
-namespace bhl
-{
+namespace bhl;
 
 public interface ICompileError
 {
@@ -278,6 +277,4 @@ public class ErrorParserListener : IParserErrorListener
     ATNConfigSet configs)
   {
   }
-}
-
 }

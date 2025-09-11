@@ -5,8 +5,7 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl
-{
+namespace bhl.taskman;
 
 public static partial class Tasks
 {
@@ -159,7 +158,7 @@ public static partial class Tasks
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   <TargetFramework>{framework}</TargetFramework>
   <DefineConstants>{string.Join(';', defines)}</DefineConstants>
-</PropertyGroup>  
+</PropertyGroup>
  ";
 
     string csproj_footer = @"
@@ -203,6 +202,4 @@ public static partial class Tasks
       csproj_deps +
       csproj_footer;
   }
-}
-
 }

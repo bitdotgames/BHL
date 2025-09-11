@@ -6,8 +6,7 @@ using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 
-namespace bhl
-{
+namespace bhl;
 
 public class ANTLR_Parsed
 {
@@ -328,7 +327,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       out var tokens
     );
 
-    //NOTE: parsing happens here 
+    //NOTE: parsing happens here
     var parsed = new ANTLR_Parsed(parser, ParseFastWithFallback(tokens, parser));
     return parsed;
   }
@@ -1762,7 +1761,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
           else
           {
-            //NOTE: for func native symbols we assume default arguments  
+            //NOTE: for func native symbols we assume default arguments
             //      are specified manually in bindings
             if(func_symb is FuncSymbolNative ||
                (func_symb is FuncSymbolScript fss && fss.HasDefaultArgAt(i)))
@@ -2201,7 +2200,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return tp;
     }
 
-    //NOTE: this is required for LSP, we might want to have 
+    //NOTE: this is required for LSP, we might want to have
     //      a special LSP mode for that?
     if(ctx.nsName() != null && resolved is Symbol symb)
       LSP_SetSymbol(ctx.nsName().dotName().NAME(), symb);
@@ -2243,8 +2242,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
 
-    //NOTE: lambdas are not defined (persisted) in any scope, however as a symbol resolve 
-    //      fallback we set the scope to the one it's actually defined in during body parsing 
+    //NOTE: lambdas are not defined (persisted) in any scope, however as a symbol resolve
+    //      fallback we set the scope to the one it's actually defined in during body parsing
     lmb_symb.scope = scope_backup;
 
     var fparams = lmb_ctx.funcParams();
@@ -2594,9 +2593,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return null;
   }
 
-  //TODO: this is almost a copy paste of the code above, it's used 
+  //TODO: this is almost a copy paste of the code above, it's used
   //      when we need to traverse chainExp rule when it is not a part of
-  //      #ExpChain 
+  //      #ExpChain
   public override object VisitChainExp(bhlParser.ChainExpContext ctx)
   {
     IType curr_type = null;
@@ -2730,13 +2729,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   static bool NeedToForceCastType(IType cast_type)
   {
     //NOTE: For native types we need to enforce the cast type since we don't have
-    //      vtables for them like for userland classes. (for native types we rely on 
+    //      vtables for them like for userland classes. (for native types we rely on
     //      C# casting checks anyway)
     //
     //      If we don't enforce the type then later method/properties calls will use wrong type info.
     //
-    //      We have no control on which instance of the native class is actually will 
-    //      be set in the runtime when, say, the base class is used as a returned type 
+    //      We have no control on which instance of the native class is actually will
+    //      be set in the runtime when, say, the base class is used as a returned type
     //      in the function signature.
     //
     //      For example, here's the native base and child classes:
@@ -2753,12 +2752,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //        return new Child() //this happens in C# bindings!
     //      }
     //
-    //      Now if we make bindings for these entities the returned type of the 'make()' 
+    //      Now if we make bindings for these entities the returned type of the 'make()'
     //      function will be Base and the following bhl code will throw an exception in runtime
     //      without enforcing of the type:
     //
     //      Base b = make()
-    //      Child c = (Child)b // without 'type enforcing' value's type will be 'Base'    
+    //      Child c = (Child)b // without 'type enforcing' value's type will be 'Base'
     //      c.b = 10           // runtime error: b's index can't be found in 'Base'
     //
     //      Or for example, here's the native interface and class:
@@ -2775,16 +2774,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //      }
     //
     //      IFoo ifoo = create()
-    //      Foo foo = (Foo)foo // without 'type enforcing' value's type will be 'IFoo'    
+    //      Foo foo = (Foo)foo // without 'type enforcing' value's type will be 'IFoo'
     //      foo.X()            // runtime error: X's index can't be found in 'IFoo'
     //
-    //      In case of userland classes if we enforce the cast type we wipe information about 
+    //      In case of userland classes if we enforce the cast type we wipe information about
     //      the original type and later virtual/interface method invocations will be wrong.
-    //      For userland classes we build vtables/itables which contain all the neccessary 
-    //      information for proper methods dispatching. Basically enforcing the cast type for 
+    //      For userland classes we build vtables/itables which contain all the neccessary
+    //      information for proper methods dispatching. Basically enforcing the cast type for
     //      userland classes roughly equals 'static casting' in C++. We do that only in some
-    //      edge cases, e.g. when calling 'base' virtual class method implementation from the 
-    //      overriden one 
+    //      edge cases, e.g. when calling 'base' virtual class method implementation from the
+    //      overriden one
     return cast_type is ClassSymbolNative ||
            cast_type is InterfaceSymbolNative;
   }
@@ -2806,7 +2805,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Annotate(ctx).eval_type = tp.Get();
 
     //TODO: do we need to pre-check absolutely unrelated types?
-    //types.CheckCast(Annotate(ctx), Annotate(exp)); 
+    //types.CheckCast(Annotate(ctx), Annotate(exp));
 
     PeekAST().AddChild(ast);
 
@@ -2828,7 +2827,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     Annotate(ctx).eval_type = Types.Bool;
 
     //TODO: do we need to pre-check absolutely unrelated types?
-    //types.CheckCast(Annotate(ctx), Annotate(exp)); 
+    //types.CheckCast(Annotate(ctx), Annotate(exp));
 
     PeekAST().AddChild(ast);
 
@@ -2981,9 +2980,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return false;
     }
 
-    //NOTE: let's process the assignment the operation result first 
-    //      so that we have nice type check errors, however we need to 
-    //      put the resulting AST after binary operation processing below 
+    //NOTE: let's process the assignment the operation result first
+    //      so that we have nice type check errors, however we need to
+    //      put the resulting AST after binary operation processing below
     var chain_ast = new AST_Interim();
     PushAST(chain_ast);
     IType curr_type = null;
@@ -3009,7 +3008,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ann_one.tree = ann_exp.tree;
     ann_one.tokens = ann_exp.tokens;
 
-    //1. let's add/sub expression and '1' 
+    //1. let's add/sub expression and '1'
     ProcBinOp(ctx, inc_dec.GetText() == "++" ? "+" : "-", chain_exp, one_literal_exp);
 
     //2. let's attach the assignment
@@ -3114,7 +3113,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PeekAST().AddChild(ast);
 
-    //NOTE: adding implicit casting to int of the result of the division product of two ints 
+    //NOTE: adding implicit casting to int of the result of the division product of two ints
     if(op_type == EnumBinaryOp.DIV &&
        ann_lhs.eval_type == Types.Int &&
        ann_rhs.eval_type == Types.Int
@@ -3438,7 +3437,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       var fmret_type = fret_type as TupleType;
 
-      //NOTE: there can be a situation when explen == 1 but the return type 
+      //NOTE: there can be a situation when explen == 1 but the return type
       //      is actually a multi return, like in the following case:
       //
       //      func int,string bar() {
@@ -4102,10 +4101,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return;
 
     PushScope(pass.class_symb);
-    //NOTE: we want to prevent resolving of attributes and methods at this point 
+    //NOTE: we want to prevent resolving of attributes and methods at this point
     //      since they might collide with types. For example:
     //      class Foo {
-    //        a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type  
+    //        a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type
     //      }
     pass.class_symb._resolve_only_decl_members = true;
 
@@ -4228,7 +4227,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     pass.class_symb.Setup();
 
-    //NOTE: let's declare static class variables as module global variables 
+    //NOTE: let's declare static class variables as module global variables
     //      so that they are properly initialized upon module loading
     for(int m = 0; m < pass.class_symb.members.Count; ++m)
     {
@@ -4287,7 +4286,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     //NOTE: currently all enum values are replaced with literals,
     //      so that it doesn't really make sense to create AST for them.
-    //      But we do it just for consistency. Later once we have runtime 
+    //      But we do it just for consistency. Later once we have runtime
     //      type info this will be justified.
     var symb = new EnumSymbolScript(Annotate(ctx), enum_name);
     if(!curr_scope.TryDefine(symb, out SymbolError err))
@@ -4833,7 +4832,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     IScope curr_scope,
     ITerminalNode name,
     ProxyType tp,
-    bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery 
+    bhlParser.TypeContext tp_ctx, //can be null, used for LSP discovery
     bool is_ref,
     bool func_arg,
     bool write,
@@ -4894,7 +4893,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     bhlParser.AssignExpContext assign_exp
   )
   {
-    //NOTE: look forward at expression and push json type 
+    //NOTE: look forward at expression and push json type
     //      if it's a json-init-expression
     bool pop_json_type = false;
     if((assign_exp.exp() is bhlParser.ExpJsonObjContext ||
@@ -4911,7 +4910,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       PushJsonType(var_ann.eval_type);
     }
 
-    //NOTE: temporarily replacing just declared variable with the dummy one when visiting 
+    //NOTE: temporarily replacing just declared variable with the dummy one when visiting
     //      assignment expression in order to avoid error like: float k = k
     VariableSymbol subst_symb = null;
     if(is_decl)
@@ -5082,7 +5081,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //
     //      func int foo() {
     //        if(..) {
-    //          return 1 
+    //          return 1
     //        } else {
     //          return 2
     //        }
@@ -5538,7 +5537,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     {
       //NOTE: we're going to generate the following code
       //
-      //$foreach_en = map.GetEnumerator() 
+      //$foreach_en = map.GetEnumerator()
       //while($foreach_en.MoveNext())
       //{
       // map_key = $foreach_en.Current.Key
@@ -5732,7 +5731,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     foreach(var st in sts)
     {
       //NOTE: we need to understand if we need to wrap statements
-      //      with a group 
+      //      with a group
       if(is_paral)
       {
         PushAST(tmp);
@@ -6046,6 +6045,4 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       "static",        // 8
     };
   }
-}
-
 }

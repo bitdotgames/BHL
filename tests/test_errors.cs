@@ -164,11 +164,11 @@ public class TestErrors : BHL_TestBase
   public void TestSeveralSemanticErrorsInOneFile()
   {
     string bhl = @"
-    func int foo() 
+    func int foo()
     {
     }
 
-    func bar() 
+    func bar()
     {
       return 1
     }
@@ -185,7 +185,7 @@ public class TestErrors : BHL_TestBase
       AssertError((Exception)m.errors[0],
         "matching 'return' statement not found",
         new PlaceAssert(bhl, @"
-    func int foo() 
+    func int foo()
 ---------^"
         )
       );
@@ -204,14 +204,14 @@ public class TestErrors : BHL_TestBase
   public void TestSeveralSemanticErrorsInManyFiles()
   {
     string bhl1 = @"
-    func float bhl1() 
+    func float bhl1()
     {
-      return 
+      return
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     func bhl2()
     {
@@ -235,7 +235,7 @@ public class TestErrors : BHL_TestBase
       AssertError((Exception)m.errors[0],
         "return value is missing",
         new PlaceAssert(bhl1, @"
-      return 
+      return
 ------^"
         )
       );
@@ -254,11 +254,11 @@ public class TestErrors : BHL_TestBase
   public void TestSeveralSemanticErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
-    func int foo() 
+    func int foo()
     {
     }
 
-    func bar() 
+    func bar()
     {
       return 1
     }
@@ -293,7 +293,7 @@ public class TestErrors : BHL_TestBase
     string bhl1 = @"
     func int foo() { } //won't be in errors list
 
-    func bar() 
+    func bar()
     {
       fdf &* =1
       string a = 1 //won't be in errors list
@@ -301,7 +301,7 @@ public class TestErrors : BHL_TestBase
     ";
 
     string bhl2 = @"
-    func wow() 
+    func wow()
     {
       return 1
         fdf /
@@ -336,7 +336,7 @@ public class TestErrors : BHL_TestBase
     string bhl1 = @"
     func int foo() { }
 
-    func bar() 
+    func bar()
     {
       string a = 1
       string b = 10
@@ -344,7 +344,7 @@ public class TestErrors : BHL_TestBase
     ";
 
     string bhl2 = @"
-    func wow() 
+    func wow()
     {
       string a = 100
       string b = 1000

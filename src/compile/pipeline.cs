@@ -5,8 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace bhl
-{
+namespace bhl;
 
 public interface IPipelineStageBase
 {
@@ -139,6 +138,4 @@ public class Pipeline<TIn, TOut>
 
     return (TOut)current;
   }
-}
-
 }

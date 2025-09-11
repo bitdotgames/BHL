@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
-namespace bhl
-{
+namespace bhl;
 
 public abstract class AST_Visitor
 {
@@ -868,5 +867,3 @@ public static class AST_Extensions
     return num;
   }
 }
-
-} // namespace bhl

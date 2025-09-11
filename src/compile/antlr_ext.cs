@@ -1,4 +1,3 @@
-using System;
 using Antlr4.Runtime;
 using System.IO;
 using static bhlParser;
@@ -30,7 +29,7 @@ public abstract class bhlLexerBase : Lexer
   /// token in case it resides on the default channel. This recorded token
   /// is used to determine when the lexer could possibly match a regex
   /// literal.
-  /// 
+  ///
   /// </summary>
   /// <returns>
   /// The next token from the character stream.
@@ -99,7 +98,7 @@ public abstract class bhlParserBase : Parser
   /// </summary>
   protected bool lineTerminator()
   {
-    //NOTE: CurrentToken contains prefetched new token, we need  
+    //NOTE: CurrentToken contains prefetched new token, we need
     //      to 'look back' and get from input stream the previous
     //      token from the hidden channel
 
@@ -144,7 +143,7 @@ public abstract class bhlParserBase : Parser
 
   protected bool whiteSpace()
   {
-    //NOTE: CurrentToken contains prefetched new token, we need  
+    //NOTE: CurrentToken contains prefetched new token, we need
     //      to 'look back' and get from input stream the previous
     //      token from the hidden channel
 

@@ -4,8 +4,7 @@ using System.Collections.Generic;
 //NOTE: removing related warnings due to CLSCompliant annotations in ANTLR generated code
 [assembly: CLSCompliant(false)]
 
-namespace bhl
-{
+namespace bhl;
 
 public class ModuleCompiler : AST_Visitor
 {
@@ -1130,7 +1129,7 @@ public class ModuleCompiler : AST_Visitor
     {
       var child = ast.children[i];
 
-      //NOTE: let's automatically wrap all children with sequence if 
+      //NOTE: let's automatically wrap all children with sequence if
       //      they are inside paral block
       if(is_paral &&
          (!(child is AST_Block child_block) ||
@@ -1484,7 +1483,7 @@ public class ModuleCompiler : AST_Visitor
       if(mod_idx == -1)
         throw new Exception("Not found module '" + mod.name + "' imported index");
       //NOTE: using convention where built-in module is always at index 0
-      //      and imported modules are at (mod_idx + 1) 
+      //      and imported modules are at (mod_idx + 1)
       inst_op.operands[0] = mod_idx + 1;
     }
     else
@@ -1666,8 +1665,8 @@ public class ModuleCompiler : AST_Visitor
     {
       var fsymb = func_decls.Peek();
       int symb_idx = (int)ast.symb_idx;
-      //let's take into account 'this' special case, which is 
-      //stored at 0 idx and is not part of func args 
+      //let's take into account 'this' special case, which is
+      //stored at 0 idx and is not part of func args
       //(which are stored in the very beginning)
       if(fsymb.scope is ClassSymbol)
         --symb_idx;
@@ -1763,6 +1762,4 @@ public class ModuleCompiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.SetAttrInplace, new int[] { (int)ast.symb_idx }, ast.line_num);
   }
-}
-
 }

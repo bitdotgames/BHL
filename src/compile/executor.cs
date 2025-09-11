@@ -3,11 +3,9 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using bhl.marshall;
 
-namespace bhl
-{
-
-using marshall;
+namespace bhl;
 
 public class CompileConf
 {
@@ -866,6 +864,4 @@ public class CompilationExecutor
       }
     );
   }
-}
-
 }

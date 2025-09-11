@@ -6,8 +6,7 @@ using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
 
-namespace bhl
-{
+namespace bhl.taskman;
 
 public static partial class Tasks
 {
@@ -99,6 +98,4 @@ public static partial class Tasks
     while(vm.Tick())
       System.Threading.Thread.Sleep((int)(dt * 1000));
   }
-}
-
 }

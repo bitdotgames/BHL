@@ -1,5 +1,4 @@
-namespace bhl
-{
+namespace bhl;
 
 public interface IFrontPostProcessor
 {
@@ -18,6 +17,4 @@ public class EmptyPostProcessor : IFrontPostProcessor
   public void Tally()
   {
   }
-}
-
 }

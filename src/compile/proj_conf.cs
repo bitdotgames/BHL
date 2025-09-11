@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace bhl
-{
+namespace bhl;
 
 public class ProjectConf
 {
@@ -148,6 +147,4 @@ public class ProjectConf
 
     return Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
   }
-}
-
 }

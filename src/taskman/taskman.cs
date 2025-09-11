@@ -6,8 +6,7 @@ using System.Linq;
 using System.Reflection;
 using ThreadTask = System.Threading.Tasks.Task;
 
-namespace bhl
-{
+namespace bhl.taskman;
 
 public class ShellException : Exception
 {
@@ -285,6 +284,4 @@ public class TaskAttribute : Attribute
     this.verbose = verbose;
     this.deps = deps;
   }
-}
-
 }

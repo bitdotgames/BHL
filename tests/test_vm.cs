@@ -140,8 +140,8 @@ public class TestVM : BHL_TestBase
   void DoTestReturnNum(string bhlnum, double expected_num)
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       return " + bhlnum + @"
     }
@@ -350,8 +350,8 @@ public class TestVM : BHL_TestBase
   public void TestBindFunctionWithDefaultArgs()
   {
     string bhl = @"
-      
-    func float test(int k) 
+
+    func float test(int k)
     {
       return func_with_def(k)
     }
@@ -393,8 +393,8 @@ public class TestVM : BHL_TestBase
     {
       return a
     }
-      
-    func float test(int k) 
+
+    func float test(int k)
     {
       return func_with_def(k, foo(k)+1)
     }
@@ -432,7 +432,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float test() 
+    func float test()
     {
       return func_with_def()
     }
@@ -467,8 +467,8 @@ public class TestVM : BHL_TestBase
   public void TestBindFunctionWithDefaultArgsOmittingSome()
   {
     string bhl = @"
-      
-    func float test(int k) 
+
+    func float test(int k)
     {
       return func_with_def(b : k)
     }
@@ -511,8 +511,8 @@ public class TestVM : BHL_TestBase
       fail()
       return 100
     }
-      
-    func float test() 
+
+    func float test()
     {
       float val = foo()
       return val
@@ -533,7 +533,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float test() 
+    func float test()
     {
       float val = foo()
       return val
@@ -564,8 +564,8 @@ public class TestVM : BHL_TestBase
   public void TestSeveralReturns()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       return 300
       float k = 1
@@ -648,8 +648,8 @@ public class TestVM : BHL_TestBase
   public void TestReturnVoid()
   {
     string bhl = @"
-      
-    func void test() 
+
+    func void test()
     {
       trace(""HERE"")
       return
@@ -670,8 +670,8 @@ public class TestVM : BHL_TestBase
   public void TestMultiReturn()
   {
     string bhl = @"
-      
-    func float,string test() 
+
+    func float,string test()
     {
       return 300,""bar""
     }
@@ -703,12 +703,12 @@ public class TestVM : BHL_TestBase
   public void TestMultiReturnVarsAssign()
   {
     string bhl = @"
-    func float,float foo() 
+    func float,float foo()
     {
       return 300,100
     }
-      
-    func float test() 
+
+    func float test()
     {
       float f1,float f2 = foo()
       return f1-f2
@@ -726,12 +726,12 @@ public class TestVM : BHL_TestBase
   public void TestMultiReturnVarAssign2()
   {
     string bhl = @"
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func float,string test() 
+
+    func float,string test()
     {
       string s
       float a,s = foo()
@@ -753,12 +753,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func float,string test() 
+
+    func float,string test()
     {
       string s
       Color c = {}
@@ -781,12 +781,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func float,string test() 
+
+    func float,string test()
     {
       []string s = [""""]
       float r,s[0] = foo()
@@ -805,12 +805,12 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultipleVarAssignArrItem2()
   {
     string bhl = @"
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func float,string test() 
+
+    func float,string test()
     {
       string s
       []Color c = [{}]
@@ -869,12 +869,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func float,string test() 
+
+    func float,string test()
     {
       float a,s = foo()
       return a,s
@@ -939,12 +939,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func void test() 
+
+    func void test()
     {
       float s = foo()
     }
@@ -965,12 +965,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func void test() 
+
+    func void test()
     {
       float s,string a,int f = foo()
     }
@@ -990,7 +990,7 @@ public class TestVM : BHL_TestBase
   public void TestReturnNotAllPathsReturnValue()
   {
     string bhl = @"
-    coro func int test() 
+    coro func int test()
     {
       paral_all {
         {
@@ -1005,7 +1005,7 @@ public class TestVM : BHL_TestBase
       delegate() { Compile(bhl); },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-    coro func int test() 
+    coro func int test()
 --------------^"
       )
     );
@@ -1017,7 +1017,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo() { }
 
-    func test() 
+    func test()
     {
       func bool() { foo() }()
     }
@@ -1038,7 +1038,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return ""bar"",100
     }
@@ -1059,12 +1059,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func void test() 
+
+    func void test()
     {
       string a,float s = foo()
     }
@@ -1084,8 +1084,8 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultipleFromBindings()
   {
     string bhl = @"
-      
-    func float,string test() 
+
+    func float,string test()
     {
       return func_mult()
     }
@@ -1117,8 +1117,8 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultiple3()
   {
     string bhl = @"
-      
-    func float,string,int test() 
+
+    func float,string,int test()
     {
       return 100,""foo"",3
     }
@@ -1136,8 +1136,8 @@ public class TestVM : BHL_TestBase
   public void TestReturnMultiple4FromBindings()
   {
     string bhl = @"
-      
-    func float,string,int,float test() 
+
+    func float,string,int,float test()
     {
       float a,string b,int c,float d = func_mult()
       return a,b,c,d
@@ -1175,7 +1175,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       float foo = 1
       foo
@@ -1198,7 +1198,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       func int() ptr = func int() {
         return 1
@@ -1218,7 +1218,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int a = 1
       suspend
@@ -1240,7 +1240,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       func []int() ptr = func []int() {
         return [1,2]
@@ -1260,7 +1260,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       Color c = new Color
       c.r
@@ -1285,12 +1285,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float foo() 
+    func float foo()
     {
       return 100
     }
-      
-    func int test() 
+
+    func int test()
     {
       foo()
       return 2
@@ -1307,12 +1307,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float foo() 
+    func float foo()
     {
       return 100
     }
-      
-    coro func int test() 
+
+    coro func int test()
     {
       paral {
         foo()
@@ -1332,12 +1332,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string foo() 
+    func float,string foo()
     {
       return 100,""bar""
     }
-      
-    func int test() 
+
+    func int test()
     {
       foo()
       return 2
@@ -1638,7 +1638,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       ().foo
     }
@@ -1658,8 +1658,8 @@ public class TestVM : BHL_TestBase
   public void TestSimpleExpression()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       return ((k*100) + 100) / 400
     }
@@ -1674,8 +1674,8 @@ public class TestVM : BHL_TestBase
   public void TestSemicolonStatementSeparator()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       int a = 100; ; int b = 100; int c = 400
       return ((k*a) + b) / c
@@ -1692,7 +1692,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       ()
     }
@@ -1713,11 +1713,11 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo() 
+    func foo()
     {
     }
 
-    func test() 
+    func test()
     {
       foo() ()
     }
@@ -1737,7 +1737,7 @@ public class TestVM : BHL_TestBase
   public void TestWriteReadVar()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       int a = 123
       return a + a
@@ -1773,14 +1773,14 @@ public class TestVM : BHL_TestBase
   public void TestLocalVariables()
   {
     string bhl = @"
-      
+
     func float foo(float k)
     {
       float b = 5
       return k + 5
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       float b = 10
       return k * foo(b)
@@ -1796,7 +1796,7 @@ public class TestVM : BHL_TestBase
   public void TestLocalVarHiding()
   {
     string bhl = @"
-      
+
     func float time()
     {
       return 42
@@ -1807,7 +1807,7 @@ public class TestVM : BHL_TestBase
       return time
     }
 
-    func float test() 
+    func float test()
     {
       return bar(100)
     }
@@ -1822,7 +1822,7 @@ public class TestVM : BHL_TestBase
   public void TestLocalVarConflictsWithFunc()
   {
     string bhl = @"
-      
+
     func float time()
     {
       return 42
@@ -1855,8 +1855,8 @@ public class TestVM : BHL_TestBase
   public void TestVarSelfDecl()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       float k = k
       return k
@@ -2009,12 +2009,12 @@ public class TestVM : BHL_TestBase
   public void TestAssignVars()
   {
     string bhl = @"
-    func float test() 
+    func float test()
     {
       float k
       k = 42
       float r
-      r = k 
+      r = k
       return r
     }
     ";
@@ -2032,7 +2032,7 @@ public class TestVM : BHL_TestBase
   public void TestUnaryNegVar()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       int x = 1
       return -x
@@ -2067,7 +2067,7 @@ public class TestVM : BHL_TestBase
   public void TestAdd()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10 + 20
     }
@@ -2100,7 +2100,7 @@ public class TestVM : BHL_TestBase
   public void TestSubtract()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 20 - 10
     }
@@ -2133,7 +2133,7 @@ public class TestVM : BHL_TestBase
   public void TestDivision()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 20 / 10
     }
@@ -2150,7 +2150,7 @@ public class TestVM : BHL_TestBase
   public void TestMultiply()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10 * 20
     }
@@ -2167,8 +2167,8 @@ public class TestVM : BHL_TestBase
   public void TestGT()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k > 2
     }
@@ -2184,8 +2184,8 @@ public class TestVM : BHL_TestBase
   public void TestNotGT()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k > 5
     }
@@ -2201,8 +2201,8 @@ public class TestVM : BHL_TestBase
   public void TestLT()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k < 20
     }
@@ -2218,8 +2218,8 @@ public class TestVM : BHL_TestBase
   public void TestNotLT()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k < 2
     }
@@ -2235,8 +2235,8 @@ public class TestVM : BHL_TestBase
   public void TestGTE()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k >= 2
     }
@@ -2252,8 +2252,8 @@ public class TestVM : BHL_TestBase
   public void TestGTE2()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k >= 2
     }
@@ -2269,8 +2269,8 @@ public class TestVM : BHL_TestBase
   public void TestLTE()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k <= 21
     }
@@ -2286,8 +2286,8 @@ public class TestVM : BHL_TestBase
   public void TestLTE2()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k <= 20
     }
@@ -2303,8 +2303,8 @@ public class TestVM : BHL_TestBase
   public void TestEqNumber()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k == 2
     }
@@ -2320,8 +2320,8 @@ public class TestVM : BHL_TestBase
   public void TestEqString()
   {
     string bhl = @"
-      
-    func bool test(string k) 
+
+    func bool test(string k)
     {
       return k == ""b""
     }
@@ -2337,8 +2337,8 @@ public class TestVM : BHL_TestBase
   public void TestNotEqNum()
   {
     string bhl = @"
-      
-    func bool test(float k) 
+
+    func bool test(float k)
     {
       return k == 2
     }
@@ -2354,8 +2354,8 @@ public class TestVM : BHL_TestBase
   public void TestNotEqString()
   {
     string bhl = @"
-      
-    func bool test(string k) 
+
+    func bool test(string k)
     {
       return k != ""c""
     }
@@ -2371,8 +2371,8 @@ public class TestVM : BHL_TestBase
   public void TestNotEqString2()
   {
     string bhl = @"
-      
-    func bool test(string k) 
+
+    func bool test(string k)
     {
       return k == ""c""
     }
@@ -2425,7 +2425,7 @@ public class TestVM : BHL_TestBase
   public void TestAddSameConstants()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10 + 10
     }
@@ -2458,7 +2458,7 @@ public class TestVM : BHL_TestBase
   public void TestPostOpAddAssign()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       int k
       k += 10
@@ -2476,8 +2476,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpSubAssign()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       int k
       k -= 10
@@ -2495,8 +2495,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpMulAssign()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       int k = 1
       k *= 10
@@ -2514,8 +2514,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpDivAssign()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       int k = 10
       k /= 10
@@ -2533,8 +2533,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpAddAssignString()
   {
     string bhl = @"
-      
-    func string test() 
+
+    func string test()
     {
       string k = ""bar""
       k += ""foo""
@@ -2552,8 +2552,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpAddAssignStringNotCompatible()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       int k
       k += ""foo""
@@ -2574,8 +2574,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpSubAssignStringNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       string k
       k -= ""foo""
@@ -2596,8 +2596,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpMulAssignStringNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       string k
       k *= ""foo""
@@ -2618,8 +2618,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpDivAssignStringNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       string k
       k /= ""foo""
@@ -2640,8 +2640,8 @@ public class TestVM : BHL_TestBase
   public void TestPostOpAssignExpCompatibleTypes()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       float k = 2.1
       int a = 1
@@ -2660,7 +2660,7 @@ public class TestVM : BHL_TestBase
   public void TestParenthesisExpression()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return 10 * (20 + 30)
     }
@@ -2696,7 +2696,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 1
       {
@@ -2720,7 +2720,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 1
       {
@@ -2749,7 +2749,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
 
     int i = 10
-    func int test() 
+    func int test()
     {
       int i = 1
       return i
@@ -2766,7 +2766,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       {
         int i = 1
@@ -2799,7 +2799,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       paral_all {
         {
@@ -2837,7 +2837,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       {
         int i = 1
@@ -2864,7 +2864,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       paral_all {
         {
@@ -2896,7 +2896,7 @@ public class TestVM : BHL_TestBase
   public void TestSimpleFuncCall()
   {
     string bhl = @"
-    func int bar() 
+    func int bar()
     {
       return 123
     }
@@ -2936,7 +2936,7 @@ public class TestVM : BHL_TestBase
   {
     {
       string bhl = @"
-      func int bar() 
+      func int bar()
       {
         return 123
       }
@@ -3051,7 +3051,7 @@ public class TestVM : BHL_TestBase
   public void TestSimpleNativeFunc()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       trace(""foo"")
     }
@@ -3084,7 +3084,7 @@ public class TestVM : BHL_TestBase
   public void TestSimpleNativeFuncReturnValue()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return answer42()
     }
@@ -3112,7 +3112,7 @@ public class TestVM : BHL_TestBase
   public void TestSimpleNativeFuncWithSeveralArgs()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return answer(1, 2)
     }
@@ -3147,7 +3147,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     import ""std""
 
-    func test() 
+    func test()
     {
       int a
       std.GetType(a)
@@ -3199,7 +3199,7 @@ public class TestVM : BHL_TestBase
   public void TestRecursion()
   {
     string bhl = @"
-      
+
     func float mult(float k)
     {
       if(k == 0) {
@@ -3208,7 +3208,7 @@ public class TestVM : BHL_TestBase
       return 2 * mult(k-1)
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return mult(k)
     }
@@ -3244,7 +3244,7 @@ public class TestVM : BHL_TestBase
       return 1
     }
 
-    func int test() 
+    func int test()
     {
       func int() ptr = foo
       return ptr()
@@ -3266,7 +3266,7 @@ public class TestVM : BHL_TestBase
       return a - b
     }
 
-    func int test() 
+    func int test()
     {
       func int(int, int) ptr = foo
       return ptr(42, 1)
@@ -3284,7 +3284,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       func(string) ptr = trace
       ptr(""Hey"")
@@ -3312,7 +3312,7 @@ public class TestVM : BHL_TestBase
       {
         x1 = 10
       }
-      
+
       return x1
     }
     ";
@@ -3354,9 +3354,9 @@ public class TestVM : BHL_TestBase
     {
       int x1 = 100
 
-      if(1 > 2) 
+      if(1 > 2)
       {}
-      
+
       return x1
     }
     ";
@@ -3384,7 +3384,7 @@ public class TestVM : BHL_TestBase
       {
         x1 = 20
       }
-      
+
       return x1
     }
     ";
@@ -3445,7 +3445,7 @@ public class TestVM : BHL_TestBase
       {
         x1 = 40
       }
-      
+
       return x1
     }
     ";
@@ -3508,7 +3508,7 @@ public class TestVM : BHL_TestBase
       if(1 > 2) {
         x1 = 200
       } else {}
-      
+
       return x1
     }
     ";
@@ -3524,7 +3524,7 @@ public class TestVM : BHL_TestBase
   public void TestIfFalseComplexCondition()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       if(false || !true) {
         trace(""NEVER"")
@@ -3546,7 +3546,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       if(false) {
         trace(""NEVER"")
@@ -3572,7 +3572,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       if(false) {
         trace(""NEVER"")
@@ -3598,7 +3598,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       if(false) {
         trace(""NEVER"")
@@ -3622,7 +3622,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       if(false) {
         trace(""NEVER"")
@@ -3649,7 +3649,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       if(false) {
         return 10
@@ -3668,7 +3668,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       if(false) {
         return 10
@@ -3682,7 +3682,7 @@ public class TestVM : BHL_TestBase
       delegate() { Compile(bhl); },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-    func int test() 
+    func int test()
 ---------^"
       )
     );
@@ -3693,7 +3693,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       if(false) {
       } else if (true) {
@@ -3706,7 +3706,7 @@ public class TestVM : BHL_TestBase
       delegate() { Compile(bhl); },
       "matching 'return' statement not found",
       new PlaceAssert(bhl, @"
-    func int test() 
+    func int test()
 ---------^"
       )
     );
@@ -3739,7 +3739,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       if(false) {
         return 10
@@ -3961,7 +3961,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test(int b) 
+    func int test(int b)
     {
       if(b == 1) {
         return 2
@@ -4060,7 +4060,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       int i = 0
       while(i < 3 && true) {
@@ -4165,7 +4165,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       while(i < 3) {
@@ -4252,7 +4252,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       int i = 0
       do {
@@ -4272,7 +4272,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       int i = 0
       do {
@@ -4292,7 +4292,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       string i;
       do {
@@ -4318,7 +4318,7 @@ public class TestVM : BHL_TestBase
     {
       int x1 = 100
 
-      do 
+      do
       {
         x1 = x1 - 10
         if(x1 < 80) {
@@ -4400,7 +4400,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         int foo = 1
@@ -4443,7 +4443,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       do {
@@ -4487,7 +4487,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         hey(foo())
@@ -4663,7 +4663,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       for(int i = 0, int j = 1; i < 3; i = i + 1, j = j + 2) {
         trace((string)(i*j) + "";"")
@@ -4685,7 +4685,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       for(int i = 2; i >= 0; i = i - 1) {
         trace((string)i)
@@ -4706,7 +4706,7 @@ public class TestVM : BHL_TestBase
   public void TestForUseExternalVar()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       int i
       for(i = 1; i < 3; i = i + 1) {
@@ -4729,7 +4729,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       for(int i = 0; i < 3; i = i + 1) {
         for(int j = 0; j < 2; j = j + 1) {
@@ -4753,7 +4753,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       paral {
         for(int i = 0; i < 3; i = i + 1) {
@@ -4782,7 +4782,7 @@ public class TestVM : BHL_TestBase
   public void TestForBadPreSection()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       int i = 0
       for(i ; i < 3; i = i + 1) {
@@ -4806,7 +4806,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       for(; i < 3; i = i + 1) {
@@ -4829,7 +4829,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       for(; i < 3;) {
@@ -4852,7 +4852,7 @@ public class TestVM : BHL_TestBase
   public void TestForBadPostSection()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       for(int i = 0 ; i < 3; i) {
         trace((string)i)
@@ -4875,7 +4875,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       for(;;) {
       }
@@ -4897,12 +4897,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int foo() 
+    func int foo()
     {
       return 14
     }
 
-    func test() 
+    func test()
     {
       for(; foo() ;) {
       }
@@ -4995,7 +4995,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int its = [1, 2, 3]
       foreach(int it in its) {
@@ -5018,7 +5018,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach(int it in [1, 2, 3]) {
         trace((string)it)
@@ -5045,7 +5045,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []Color cs = [{r:1}, {r:2}, {r:3}]
       foreach(Color c in cs) {
@@ -5072,7 +5072,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int it
       []int its = [1, 2, 3]
@@ -5096,7 +5096,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach(int it in [1,2,3]) {
         trace((string)it)
@@ -5123,7 +5123,7 @@ public class TestVM : BHL_TestBase
       return [1,2,3]
     }
 
-    func test() 
+    func test()
     {
       foreach(int it in foo()) {
         trace((string)it)
@@ -5145,7 +5145,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       paral {
         foreach(int it in [1,2,3]) {
@@ -5175,7 +5175,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       paral_all {
         foreach(int it in [1,2,3]) {
@@ -5204,7 +5204,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach(int it in [1,2,3]) {
         if(it == 3) {
@@ -5229,7 +5229,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int its = [1,2,3]
       foreach(int it in its) {
@@ -5256,7 +5256,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int its = [1,2,3]
       foreach(int it in its) {
@@ -5281,7 +5281,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach(int it in [1,2,3]) {
         foreach(int it2 in [20,30]) {
@@ -5305,7 +5305,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach(string it in [1,2,3]) {
       }
@@ -5332,7 +5332,7 @@ public class TestVM : BHL_TestBase
       return 14
     }
 
-    func test() 
+    func test()
     {
       foreach(float it in foo()) {
       }
@@ -5354,7 +5354,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       string it
       foreach(it in [1,2,3]) {
@@ -5377,7 +5377,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       string it
       foreach(int it in [1,2,3]) {
@@ -5400,7 +5400,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       foreach([1,2,3] as int t) {
       }
@@ -5423,7 +5423,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     namespace foo {
     int a = 1
-    func test() 
+    func test()
     {
       foreach([1,2,3] as int t) {
       }
@@ -5505,7 +5505,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       break
     }
@@ -5613,7 +5613,7 @@ public class TestVM : BHL_TestBase
   public void TestInfiniteLoopBreak()
   {
     string bhl = @"
-    coro func int test() 
+    coro func int test()
     {
       int i = 0
       while(true) {
@@ -5636,7 +5636,7 @@ public class TestVM : BHL_TestBase
   public void TestBreakFromNestedSequences()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       int i = 0
       while(true) {
@@ -5699,7 +5699,7 @@ public class TestVM : BHL_TestBase
   public void TestContinueFromNestedSequences()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       int i = 0
       while(i == 0) {
@@ -5844,11 +5844,11 @@ public class TestVM : BHL_TestBase
   public void TestMultiFuncCall()
   {
     string bhl = @"
-    func int test2(int x) 
+    func int test2(int x)
     {
       return 98 + x
     }
-    func int test1(int x1) 
+    func int test1(int x1)
     {
       return x1
     }
@@ -5870,7 +5870,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func string StringTest(string s) 
+    func string StringTest(string s)
     {
       return ""Hello"" + s
     }
@@ -5963,7 +5963,7 @@ public class TestVM : BHL_TestBase
       return a > 2
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       func bool(int,string) ptr = foo
       return ptr(a, ""HEY"")
@@ -5989,7 +5989,7 @@ public class TestVM : BHL_TestBase
       return a > 2
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       func bool(int,string) ptr = foo
       return ptr(a, ""HEY"") && ptr(a-1, ""BAR"")
@@ -6011,7 +6011,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      func int(int) p = 
+      func int(int) p =
         func int (int a) {
           return a * 2
         }
@@ -6019,7 +6019,7 @@ public class TestVM : BHL_TestBase
       return p(a)
     }
 
-    func int test(int a) 
+    func int test(int a)
     {
       return foo(a) + foo(a+1)
     }
@@ -6036,7 +6036,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      func int(int) p = 
+      func int(int) p =
         func int (int a) {
           return a
         }
@@ -6044,7 +6044,7 @@ public class TestVM : BHL_TestBase
       return p(a)
     }
 
-    func int test(int a) 
+    func int test(int a)
     {
       return foo(a) + foo(a)
     }
@@ -6062,7 +6062,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int foo(int a)
     {
-      func int(int) p = 
+      func int(int) p =
         func int (int a) {
           return a
         }
@@ -6076,7 +6076,7 @@ public class TestVM : BHL_TestBase
       return tmp + p(a)
     }
 
-    func int test(int a) 
+    func int test(int a)
     {
       return foo(a) + foo(a+1)
     }
@@ -6097,9 +6097,9 @@ public class TestVM : BHL_TestBase
       return p(a)
     }
 
-    func int test(int a) 
+    func int test(int a)
     {
-      return foo(func int(int a) { return a }, a) + 
+      return foo(func int(int a) { return a }, a) +
              foo(func int(int a) { return a * 2 }, a + 1)
     }
     ";
@@ -6114,14 +6114,14 @@ public class TestVM : BHL_TestBase
   public void TestArrayOfComplexFuncPtrs()
   {
     string bhl = @"
-    func int test(int a) 
+    func int test(int a)
     {
       []func int(int,string) ptrs = new []func int(int,string)
-      ptrs.Add(func int(int a, string b) { 
-          trace(b) 
-          return a*2 
+      ptrs.Add(func int(int a, string b) {
+          trace(b)
+          return a*2
       })
-      ptrs.Add(func int(int a, string b) { 
+      ptrs.Add(func int(int a, string b) {
           trace(b)
           return a*10
       })
@@ -6145,10 +6145,10 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func func bool(int) foo()
     {
-      return func bool(int a) { return a > 2 } 
+      return func bool(int a) { return a > 2 }
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       func bool(int) ptr = foo()
       return ptr(a)
@@ -6166,10 +6166,10 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func func bool(int) foo()
     {
-      return func bool(int a) { return a > 2 } 
+      return func bool(int a) { return a > 2 }
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       return foo()(a)
     }
@@ -6190,7 +6190,7 @@ public class TestVM : BHL_TestBase
       res = a > 2
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       func(int,string, ref bool) ptr = foo
       bool res = false
@@ -6212,9 +6212,9 @@ public class TestVM : BHL_TestBase
   public void TestComplexFuncPtrLambda()
   {
     string bhl = @"
-    func bool test(int a) 
+    func bool test(int a)
     {
-      func bool(int,string) ptr = 
+      func bool(int,string) ptr =
         func bool (int a, string k)
         {
           trace(k)
@@ -6237,9 +6237,9 @@ public class TestVM : BHL_TestBase
   public void TestComplexFuncPtrLambdaInALoop()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
-      func(int) ptr = 
+      func(int) ptr =
         func (int a)
         {
           trace((string)a)
@@ -6269,7 +6269,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func void foo(int a) { }
 
-    func void test() 
+    func void test()
     {
       func bool(int) ptr = foo
     }
@@ -6291,7 +6291,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a) { }
 
-    func test() 
+    func test()
     {
       func(float) ptr = foo
     }
@@ -6313,7 +6313,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a) { }
 
-    func test() 
+    func test()
     {
       func(int) ptr = foo
       ptr(""hey"")
@@ -6336,7 +6336,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a, ref  float b) { }
 
-    func test() 
+    func test()
     {
       float b = 1
       func(int, ref float) ptr = foo
@@ -6360,7 +6360,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a, ref float b) { }
 
-    func test() 
+    func test()
     {
       float b = 1
       func(int, float) ptr = foo
@@ -6387,7 +6387,7 @@ public class TestVM : BHL_TestBase
       trace(k)
     }
 
-    func bool test(int a) 
+    func bool test(int a)
     {
       func(int,string,ref bool) ptr = foo
       bool res = false
@@ -6425,7 +6425,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a) { }
 
-    func test() 
+    func test()
     {
       func(int) ptr = foo
       ptr()
@@ -6448,7 +6448,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a, float b) { }
 
-    func test() 
+    func test()
     {
       func(int, float) ptr = foo
       ptr(10)
@@ -6471,7 +6471,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func foo(int a) { }
 
-    func test() 
+    func test()
     {
       func(int) ptr = foo
       ptr(10, 30)
@@ -6504,7 +6504,7 @@ public class TestVM : BHL_TestBase
       trace(""HERE"")
     }
 
-    func test() 
+    func test()
     {
       foo(hey)
     }
@@ -6523,7 +6523,7 @@ public class TestVM : BHL_TestBase
   public void TestFuncPtrForNativeFunc()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       func() ptr = foo
       ptr()
@@ -6556,11 +6556,11 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int foo(int k0, int k1 = 1 - 0, int k2 = 10) 
+    func int foo(int k0, int k1 = 1 - 0, int k2 = 10)
     {
       return k0+k1+k2
     }
-      
+
     func int test()
     {
       return foo(1 + 1, 0)
@@ -6622,8 +6622,8 @@ public class TestVM : BHL_TestBase
     {
       return k26
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo()
     }
@@ -6648,8 +6648,8 @@ public class TestVM : BHL_TestBase
     {
       return k27
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo()
     }
@@ -6674,8 +6674,8 @@ public class TestVM : BHL_TestBase
     {
       return k
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       return foo()
     }
@@ -6700,8 +6700,8 @@ public class TestVM : BHL_TestBase
     {
       return k
     }
-      
-    func int test() 
+
+    func int test()
     {
       return foo(k: 1, k: 2)
     }
@@ -6726,8 +6726,8 @@ public class TestVM : BHL_TestBase
     {
       return k
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       return foo()
     }
@@ -6752,8 +6752,8 @@ public class TestVM : BHL_TestBase
     {
       return k
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(24)
     }
@@ -6774,8 +6774,8 @@ public class TestVM : BHL_TestBase
     {
       return b + k
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(24)
     }
@@ -6801,8 +6801,8 @@ public class TestVM : BHL_TestBase
     {
       return b + k
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(24)
     }
@@ -6828,8 +6828,8 @@ public class TestVM : BHL_TestBase
     {
       return b + k
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(26, bar(2))
     }
@@ -6845,7 +6845,7 @@ public class TestVM : BHL_TestBase
   public void TestFuncMissingReturnArgument()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return
     }
@@ -6870,8 +6870,8 @@ public class TestVM : BHL_TestBase
     {
       return b + k
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(24)
     }
@@ -6897,8 +6897,8 @@ public class TestVM : BHL_TestBase
       float f = 3
       float a = b + k
     }
-      
-    func test() 
+
+    func test()
     {
       foo(b: 24, k: 3, f : 1)
     }
@@ -6923,8 +6923,8 @@ public class TestVM : BHL_TestBase
     {
       return k - b
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(k : 2, b : 5)
     }
@@ -6940,13 +6940,13 @@ public class TestVM : BHL_TestBase
   public void TestFuncArgPassedByValue()
   {
     string bhl = @"
-      
+
     func foo(float a)
     {
       a = a + 1
     }
 
-    func float test() 
+    func float test()
     {
       float k = 1
       foo(k)
@@ -6965,12 +6965,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(ref k)
       return k
@@ -7010,12 +7010,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       float k
       foo(ref k)
@@ -7034,12 +7034,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a, float a) 
+    func foo(ref float a, float a)
     {
       a = a + 1
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(ref k, k)
       return k
@@ -7050,7 +7050,7 @@ public class TestVM : BHL_TestBase
       delegate() { Compile(bhl); },
       "already defined symbol 'a'",
       new PlaceAssert(bhl, @"
-    func foo(ref float a, float a) 
+    func foo(ref float a, float a)
 --------------------------------^"
       )
     );
@@ -7061,13 +7061,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       float b = a
       b = b + 1
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(ref k)
       return k
@@ -7090,13 +7090,13 @@ public class TestVM : BHL_TestBase
       b = b * 2
     }
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
       bar(ref a)
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(ref k)
       return k
@@ -7114,12 +7114,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a, float b) 
+    func foo(ref float a, float b)
     {
       a = a + b
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(ref k, k)
       return k
@@ -7137,7 +7137,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float test(float k) 
+    func float test(float k)
     {
       func_with_ref(k, ref k)
       return k
@@ -7176,12 +7176,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a, float b) 
+    func foo(ref float a, float b)
     {
       a = a + b
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       foo(a : ref k, b: k)
       return k
@@ -7199,13 +7199,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float foo(ref float a) 
+    func float foo(ref float a)
     {
       a = a + 1
       return a
     }
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       return foo(ref k)
     }
@@ -7222,7 +7222,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       ref float a
     }
@@ -7273,7 +7273,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    func float,float test() 
+    func float,float test()
     {
       float res = 0
       float k = 10
@@ -7297,13 +7297,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref int a) 
+    func foo(ref int a)
     {
     }
 
-    func test() 
+    func test()
     {
-      foo(ref 10)  
+      foo(ref 10)
     }
     ";
 
@@ -7311,7 +7311,7 @@ public class TestVM : BHL_TestBase
       delegate() { Compile(bhl); },
       "expression is not passable by 'ref'",
       new PlaceAssert(bhl, @"
-      foo(ref 10)  
+      foo(ref 10)
 ----------^"
       )
     );
@@ -7327,12 +7327,12 @@ public class TestVM : BHL_TestBase
       float a
     }
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       Bar b = { a: 10}
 
@@ -7352,12 +7352,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float fs = [1,10,20]
 
@@ -7382,12 +7382,12 @@ public class TestVM : BHL_TestBase
       float f
     }
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       []Bar bs = [{f:1},{f:10},{f:20}]
 
@@ -7412,13 +7412,13 @@ public class TestVM : BHL_TestBase
       float a
     }
 
-    func float foo(ref float a) 
+    func float foo(ref float a)
     {
       a = a + 1
       return a
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(ref (new Bar).a)
     }
@@ -7445,12 +7445,12 @@ public class TestVM : BHL_TestBase
       Wow w
     }
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       Bar b = { w: { c : 4} }
 
@@ -7515,7 +7515,7 @@ public class TestVM : BHL_TestBase
       p = _2
     }
 
-    func int test() 
+    func int test()
     {
       func int() ptr = _1
       change(ref ptr)
@@ -7549,12 +7549,12 @@ public class TestVM : BHL_TestBase
       return 10
     }
 
-    func foo(ref func int() p) 
+    func foo(ref func int() p)
     {
       p = _10
     }
-      
-    func int test() 
+
+    func int test()
     {
       Bar b = {p: _5}
 
@@ -7574,12 +7574,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref float a) 
+    func foo(ref float a)
     {
       a = a + 1
     }
-      
-    func float test() 
+
+    func float test()
     {
       Color c = new Color
 
@@ -7611,12 +7611,12 @@ public class TestVM : BHL_TestBase
       return fs
     }
 
-    func foo(ref []float a) 
+    func foo(ref []float a)
     {
       a = make()
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a
       foo(ref a)
@@ -7635,12 +7635,12 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref []float a) 
+    func foo(ref []float a)
     {
       a = [42]
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a = []
       foo(ref a)
@@ -7659,13 +7659,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(ref []float a) 
+    func foo(ref []float a)
     {
       a = [42]
       []float b = a
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a = []
       foo(ref a)
@@ -7688,8 +7688,8 @@ public class TestVM : BHL_TestBase
     {
       a = [100]
     }
-      
-    func int test() 
+
+    func int test()
     {
       []int a = [1, 2]
 
@@ -7710,17 +7710,17 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float bar() 
-    { 
+    func float bar()
+    {
       return 42
-    } 
+    }
 
-    func foo(ref func float() a) 
+    func foo(ref func float() a)
     {
       a = bar
     }
-      
-    func float test() 
+
+    func float test()
     {
       func float() a
       foo(ref a)
@@ -7739,19 +7739,19 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float bar() 
-    { 
+    func float bar()
+    {
       return 42
-    } 
+    }
 
-    func foo(ref func float() a) 
+    func foo(ref func float() a)
     {
       a = bar
     }
-      
-    func float test() 
+
+    func float test()
     {
-      func float() a = func float() { return 45 } 
+      func float() a = func float() { return 45 }
       foo(ref a)
       return a()
     }
@@ -7772,8 +7772,8 @@ public class TestVM : BHL_TestBase
     {
       return k - b
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(k : 2)
     }
@@ -7899,7 +7899,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float test(float k = 42) 
+    func float test(float k = 42)
     {
       return k
     }
@@ -7917,13 +7917,13 @@ public class TestVM : BHL_TestBase
   public void TestPassNamedValue()
   {
     string bhl = @"
-      
+
     func float foo(float a)
     {
       return a
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return foo(a : k)
     }
@@ -7939,13 +7939,13 @@ public class TestVM : BHL_TestBase
   public void TestPassSeveralNamedValues()
   {
     string bhl = @"
-      
+
     func float foo(float a, float b)
     {
       return b - a
     }
 
-    func float test() 
+    func float test()
     {
       return foo(b : 5, a : 3)
     }
@@ -7962,11 +7962,11 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int foo(int k0, int k1 = 1 - 0, int k2 = 10) 
+    func int foo(int k0, int k1 = 1 - 0, int k2 = 10)
     {
       return k0+k1+k2
     }
-      
+
     func int test()
     {
       return foo(1 + 1, k2: 2)
@@ -7984,7 +7984,7 @@ public class TestVM : BHL_TestBase
   public void TestStatefulNativeFunc()
   {
     string bhl = @"
-    coro func test() 
+    coro func test()
     {
       yield WaitTicks(2)
     }
@@ -8029,7 +8029,7 @@ public class TestVM : BHL_TestBase
       trace(""BAR"")
     }
 
-    func test() 
+    func test()
     {
       {
         bar()
@@ -8063,7 +8063,7 @@ public class TestVM : BHL_TestBase
       trace(""BAR"")
     }
 
-    func test() 
+    func test()
     {
       {
         bar()
@@ -8091,7 +8091,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       int a = 1
       {
@@ -8145,7 +8145,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncArgsOnStackUserBindInBinOp()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       bool res = foo(false) != bar_fail(4)
     }
@@ -8191,7 +8191,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncArgsStackOnFailure()
   {
     string bhl = @"
-    func int foo(int v) 
+    func int foo(int v)
     {
       fail()
       return v
@@ -8200,7 +8200,7 @@ public class TestVM : BHL_TestBase
     func hey(int a, int b)
     { }
 
-    func test() 
+    func test()
     {
       hey(1, foo(10))
     }
@@ -8235,7 +8235,7 @@ public class TestVM : BHL_TestBase
       return 100
     }
 
-    func test() 
+    func test()
     {
       hey(bar(), foo())
     }
@@ -8261,7 +8261,7 @@ public class TestVM : BHL_TestBase
       return 100
     }
 
-    func test() 
+    func test()
     {
       hey(""bar"", foo())
     }
@@ -8303,7 +8303,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    coro func test() 
+    coro func test()
     {
       hey(""bar"", 1 + yield foo())
     }
@@ -8335,7 +8335,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    coro func test() 
+    coro func test()
     {
       int c = 0
       yield doer(ref c)
@@ -8371,7 +8371,7 @@ public class TestVM : BHL_TestBase
     {
     }
 
-    func test() 
+    func test()
     {
       Foo f = {}
       f.ptr = bar
@@ -8401,7 +8401,7 @@ public class TestVM : BHL_TestBase
       return 10
     }
 
-    func test() 
+    func test()
     {
       Color c = new Color
       c.mult_summ(foo())
@@ -8435,7 +8435,7 @@ public class TestVM : BHL_TestBase
       return 1 + 10 + 12 + yield sub_sub_call()
     }
 
-    coro func test() 
+    coro func test()
     {
       int cost = 1 + yield sub_call()
     }
@@ -8465,7 +8465,7 @@ public class TestVM : BHL_TestBase
       return 10
     }
 
-    func test() 
+    func test()
     {
       foo(func []int () { return make_ints(2, do_fail()) } )
       trace(""HERE"")
@@ -8504,7 +8504,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncArgsOnStackForFuncPtr()
   {
     string bhl = @"
-    func int foo(int v) 
+    func int foo(int v)
     {
       fail()
       return v
@@ -8517,7 +8517,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    func test() 
+    func test()
     {
       bar()
     }
@@ -8545,15 +8545,15 @@ public class TestVM : BHL_TestBase
     func bar()
     {
       Foo f = PassthruFoo({hey:1, colors:[{r:
-          func int (int v) { 
+          func int (int v) {
             fail()
             return v
-          }(42) 
+          }(42)
         }]})
       trace((string)f.hey)
     }
 
-    func test() 
+    func test()
     {
       bar()
     }
@@ -8578,7 +8578,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanArgsStackInParal()
   {
     string bhl = @"
-    coro func int foo(int ticks) 
+    coro func int foo(int ticks)
     {
       if(ticks == 2) {
         yield()
@@ -8606,7 +8606,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    coro func test() 
+    coro func test()
     {
       yield bar()
     }
@@ -8635,7 +8635,7 @@ public class TestVM : BHL_TestBase
   public void TestCleanFuncPtrArgsStackInParal()
   {
     string bhl = @"
-    coro func int foo(int ticks) 
+    coro func int foo(int ticks)
     {
       if(ticks == 2) {
         yield()
@@ -8664,7 +8664,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    coro func test() 
+    coro func test()
     {
       yield bar()
     }
@@ -8699,32 +8699,32 @@ public class TestVM : BHL_TestBase
       paral_all {
         {
           f = PassthruFoo({hey:10, colors:[{r:
-              yield coro func int (int n) 
-              { 
+              yield coro func int (int n)
+              {
                 yield()
                 yield()
                 fail()
                 return n
-              }(2) 
+              }(2)
               }]})
         }
         {
           f = PassthruFoo({hey:20, colors:[{r:
-              yield coro func int (int n) 
-              { 
+              yield coro func int (int n)
+              {
                 yield()
                 yield()
                 yield()
                 fail()
                 return n
-              }(3) 
+              }(3)
               }]})
         }
       }
       trace((string)f.hey)
     }
 
-    coro func test() 
+    coro func test()
     {
       yield bar()
     }
@@ -8772,7 +8772,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         {
@@ -8797,7 +8797,7 @@ public class TestVM : BHL_TestBase
   public void TestInterleaveFuncStackInParal()
   {
     string bhl = @"
-    coro func int foo(int ticks) 
+    coro func int foo(int ticks)
     {
       if(ticks == 2) {
         yield()
@@ -8826,7 +8826,7 @@ public class TestVM : BHL_TestBase
       trace((string)f.hey)
     }
 
-    coro func test() 
+    coro func test()
     {
       yield bar()
     }
@@ -8865,7 +8865,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    coro func test() 
+    coro func test()
     {
       coro func int(int,int) p = ret_int
       paral {
@@ -8896,7 +8896,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    class Bar { 
+    class Bar {
       coro func int(int,int) ptr
     }
 
@@ -8910,7 +8910,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    coro func test() 
+    coro func test()
     {
       Bar b = {}
       b.ptr = ret_int
@@ -8942,11 +8942,11 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         {
-          foo(1, 
+          foo(1,
               yield coro func int (int val, int ticks) {
                 while(ticks > 0) {
                   yield()
@@ -8956,7 +8956,7 @@ public class TestVM : BHL_TestBase
               }(2, 1))
           yield suspend()
         }
-        foo(10, 
+        foo(10,
             yield coro func int (int val, int ticks) {
               while(ticks > 0) {
                 yield()
@@ -8996,7 +8996,7 @@ public class TestVM : BHL_TestBase
       return val
     }
 
-    coro func test() 
+    coro func test()
     {
       paral_all {
         foo(1, yield ret_int(val: 2, ticks: 1))
@@ -9057,7 +9057,7 @@ public class TestVM : BHL_TestBase
       trace((string)a + "" "" + (string)b + "";"")
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         {
@@ -9130,7 +9130,7 @@ public class TestVM : BHL_TestBase
       yield suspend()
     }
 
-    coro func test() 
+    coro func test()
     {
       int i = 0
       while(i < 2) {
@@ -9197,21 +9197,21 @@ public class TestVM : BHL_TestBase
       return a < b ? (int)a : b
     }
 
-    func int test1() 
+    func int test1()
     {
       float a = 100500
       int b   = 500100
 
       int c = a > b ? b : (int)a //500100
-      
+
       return min(a > c ? b : c/*500100*/, (int)a/*100500*/)
     }
 
-    func int test2() 
+    func int test2()
     {
       func int() af = func int() { return 500100 } //500100
 
-      func int() bf = func int() { 
+      func int() bf = func int() {
         int a = 2
         int b = 1
 
@@ -9220,11 +9220,11 @@ public class TestVM : BHL_TestBase
         return c //100500
       }
 
-      func int() cf = func int() { 
+      func int() cf = func int() {
         return true ? 100500 : 500100 //100500
       }
 
-      return min(af()/*500100*/, 
+      return min(af()/*500100*/,
         af() > bf()/*true*/ ? (false ? af() : cf()/*100500*/) : bf())
         /*100500*/ > af()/*500100*/ ? af() : cf()/*100500*/
     }
@@ -9532,7 +9532,7 @@ public class TestVM : BHL_TestBase
     );
 
     string bhl5 = @"
-    
+
     func foo(float a)
     {
     }
@@ -9653,7 +9653,7 @@ public class TestVM : BHL_TestBase
   {
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         return string
       }
@@ -9676,7 +9676,7 @@ public class TestVM : BHL_TestBase
         }
       }
 
-      func Foo.IFoo test() 
+      func Foo.IFoo test()
       {
         return Foo.IFoo
       }
@@ -9698,7 +9698,7 @@ public class TestVM : BHL_TestBase
         DUMMY = 1
       }
 
-      func Bar test() 
+      func Bar test()
       {
         return Bar
       }
@@ -9722,7 +9722,7 @@ public class TestVM : BHL_TestBase
         }
       }
 
-      func Foo.Bar test() 
+      func Foo.Bar test()
       {
         return Foo.Bar
       }
@@ -9748,7 +9748,7 @@ public class TestVM : BHL_TestBase
         DUMMY = 1
       }
 
-      func Bar test() 
+      func Bar test()
       {
         Bar bar
         {
@@ -9770,7 +9770,7 @@ public class TestVM : BHL_TestBase
 
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         return
         int foo = 10
@@ -9783,7 +9783,7 @@ public class TestVM : BHL_TestBase
 
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         return
         string str
@@ -9801,7 +9801,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int arr = []
       int i = 0
@@ -9827,7 +9827,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int arr = [1,2,3]
       int i = 0
@@ -9853,7 +9853,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       []int arr = [1,2]
       int i = 0
@@ -9884,7 +9884,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       while(i < 3) {
@@ -9908,7 +9908,7 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int i = 0
       while(false) {
@@ -9931,8 +9931,8 @@ public class TestVM : BHL_TestBase
   public void TestOrShortCircuit()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c = null
       if(c == null || c.r == 0) {
@@ -9961,8 +9961,8 @@ public class TestVM : BHL_TestBase
   public void TestAndShortCircuit()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c = null
       if(c != null && c.r == 0) {
@@ -9991,8 +9991,8 @@ public class TestVM : BHL_TestBase
   public void TestAndShortCircuitWithBoolNot()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       bool ready = false
       bool activated = true
@@ -10019,13 +10019,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo 
+    class Foo
     {
       bool ready
       bool activated
     }
-      
-    func test() 
+
+    func test()
     {
       Foo foo = {}
       foo.ready = false
@@ -10053,13 +10053,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo 
+    class Foo
     {
       bool ready
       bool activated
     }
-      
-    func test() 
+
+    func test()
     {
       Foo foo = {}
       foo.ready = false
@@ -10086,7 +10086,7 @@ public class TestVM : BHL_TestBase
   public void TestChainCall()
   {
     string bhl = @"
-      
+
     func Color MakeColor(float g)
     {
       Color c = new Color
@@ -10094,7 +10094,7 @@ public class TestVM : BHL_TestBase
       return c
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return MakeColor(k).mult_summ(k*2)
     }
@@ -10112,7 +10112,7 @@ public class TestVM : BHL_TestBase
   public void TestChainCall2()
   {
     string bhl = @"
-      
+
     func Color MakeColor(float g)
     {
       Color c = new Color
@@ -10120,7 +10120,7 @@ public class TestVM : BHL_TestBase
       return c
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return MakeColor(k).g
     }
@@ -10138,7 +10138,7 @@ public class TestVM : BHL_TestBase
   public void TestChainCall3()
   {
     string bhl = @"
-      
+
     func Color MakeColor(float g)
     {
       Color c = new Color
@@ -10146,7 +10146,7 @@ public class TestVM : BHL_TestBase
       return c
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return MakeColor(k).Add(1).g
     }
@@ -10164,7 +10164,7 @@ public class TestVM : BHL_TestBase
   public void TestChainCall4()
   {
     string bhl = @"
-      
+
     func Color MakeColor(float g)
     {
       Color c = new Color
@@ -10172,7 +10172,7 @@ public class TestVM : BHL_TestBase
       return c
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return MakeColor(MakeColor(k).g).g
     }
@@ -10190,7 +10190,7 @@ public class TestVM : BHL_TestBase
   public void TestChainCall5()
   {
     string bhl = @"
-      
+
     func Color MakeColor2(string temp)
     {
       Color c = new Color
@@ -10209,7 +10209,7 @@ public class TestVM : BHL_TestBase
       return cond
     }
 
-    func bool test(float k) 
+    func bool test(float k)
     {
       Color o = new Color
       o.g = k
@@ -10229,8 +10229,8 @@ public class TestVM : BHL_TestBase
   public void TestNativeClassCallMethod()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       Color c = new Color
       c.r = 10
@@ -10256,8 +10256,8 @@ public class TestVM : BHL_TestBase
     {
       return 14
     }
-      
-    func int test() 
+
+    func int test()
     {
       return int(foo())
     }
@@ -10300,7 +10300,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber()
   {
     string bhl = @"
-    coro func float test(float k, float m) 
+    coro func float test(float k, float m)
     {
       yield()
       return m
@@ -10317,7 +10317,7 @@ public class TestVM : BHL_TestBase
   public void TestPassArgsToFiber2()
   {
     string bhl = @"
-    coro func float test(float k, float m) 
+    coro func float test(float k, float m)
     {
       yield()
       return k
@@ -10359,13 +10359,13 @@ public class TestVM : BHL_TestBase
   public void TestFrameCache()
   {
     string bhl = @"
-      
+
     coro func foo()
     {
       yield()
     }
 
-    coro func test() 
+    coro func test()
     {
       yield foo()
     }
@@ -10418,15 +10418,15 @@ public class TestVM : BHL_TestBase
   public void TestLoadModuleTwice()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    func float bhl1() 
+    import ""bhl2""
+    func float bhl1()
     {
       return bhl2(23)
     }
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
+    import ""bhl3""
 
     func float bhl2(float k)
     {
@@ -10463,7 +10463,7 @@ public class TestVM : BHL_TestBase
   public void TestLoadNonExistingModule()
   {
     string bhl1 = @"
-    func float bhl1() 
+    func float bhl1()
     {
       return 42
     }
@@ -10487,8 +10487,8 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
     float foo
-      
-    func float test() 
+
+    func float test()
     {
       return foo
     }
@@ -10520,8 +10520,8 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
     float foo = 10
-      
-    func float test() 
+
+    func float test()
     {
       foo = 20
       return foo
@@ -10556,8 +10556,8 @@ public class TestVM : BHL_TestBase
     string bhl = @"
 
     float foo = 10
-      
-    func float test() 
+
+    func float test()
     {
       return foo
     }
@@ -10589,8 +10589,8 @@ public class TestVM : BHL_TestBase
     string bhl = @"
 
     float foo = -10
-      
-    func float test() 
+
+    func float test()
     {
       return foo
     }
@@ -10606,13 +10606,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
 
     Foo foo = {b : 100}
-      
-    func float test() 
+
+    func float test()
     {
       return foo.b
     }
@@ -10627,13 +10627,13 @@ public class TestVM : BHL_TestBase
   public void TestGlobalVariableAssignAndReadArray()
   {
     string bhl = @"
-    class Foo { 
+    class Foo {
       float b
     }
 
     []Foo foos = [{b : 100}, {b: 200}]
-      
-    func float test() 
+
+    func float test()
     {
       return foos[1].b
     }
@@ -10648,7 +10648,7 @@ public class TestVM : BHL_TestBase
   public void TestGlobalVariableWrite()
   {
     string bhl = @"
-    class Foo { 
+    class Foo {
       float b
     }
 
@@ -10658,8 +10658,8 @@ public class TestVM : BHL_TestBase
     {
       return foo.b
     }
-      
-    func float test() 
+
+    func float test()
     {
       foo.b = 101
       return bar()
@@ -10678,8 +10678,8 @@ public class TestVM : BHL_TestBase
 
     int foo = 0
     int foo = 1
-      
-    func int test() 
+
+    func int test()
     {
       return foo
     }
@@ -10765,13 +10765,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
 
     Foo foo = {b : 100}
-      
-    func float test() 
+
+    func float test()
     {
       Foo foo = {b : 200}
       return foo.b
@@ -10788,13 +10788,13 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
 
     Foo foo = {b : 100}
-      
-    func float test() 
+
+    func float test()
     {
       float a = 1
       return func float() {
@@ -10840,8 +10840,8 @@ public class TestVM : BHL_TestBase
       string bhl = @"
       int bar = 1
       int foo = 10
-        
-      func int test() 
+
+      func int test()
       {
         return foo
       }
@@ -10862,8 +10862,8 @@ public class TestVM : BHL_TestBase
       namespace what {
         int foo = 10
       }
-        
-      func int test() 
+
+      func int test()
       {
         return what.foo
       }
@@ -10961,7 +10961,7 @@ public class TestVM : BHL_TestBase
       yield suspend()
     }
 
-    coro func test() 
+    coro func test()
     {
       while(true) {
         int i = 0
@@ -11075,7 +11075,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountSimple()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r = new RefC
     }
@@ -11095,7 +11095,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountReturnResult()
   {
     string bhl = @"
-    func RefC test() 
+    func RefC test()
     {
       return new RefC
     }
@@ -11115,7 +11115,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountAssignSame()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r1 = new RefC
       RefC r2 = r1
@@ -11137,7 +11137,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountAssignSelf()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r1 = new RefC
       r1 = r1
@@ -11158,7 +11158,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountAssignOverwrite()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r1 = new RefC
       RefC r2 = new RefC
@@ -11180,7 +11180,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountSeveral()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r1 = new RefC
       RefC r2 = new RefC
@@ -11201,7 +11201,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountInLambda()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       RefC r1 = new RefC
 
@@ -11210,7 +11210,7 @@ public class TestVM : BHL_TestBase
       func() fn = func() {
         trace(""REFS"" + (string)r1.refs + "";"")
       }
-      
+
       fn()
       trace(""REFS"" + (string)r1.refs + "";"")
     }
@@ -11235,7 +11235,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountInArray()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       []RefC rs = new []RefC
       rs.Add(new RefC)
@@ -11256,7 +11256,7 @@ public class TestVM : BHL_TestBase
   public void TestRefCountSeveralInArrayAccess()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       []RefC rs = new []RefC
       rs.Add(new RefC)
@@ -11286,7 +11286,7 @@ public class TestVM : BHL_TestBase
       return c
     }
 
-    func test() 
+    func test()
     {
       RefC c1 = make()
     }
@@ -11308,11 +11308,11 @@ public class TestVM : BHL_TestBase
     string bhl = @"
 
     func foo(RefC c)
-    { 
+    {
       trace(""HERE;"")
     }
 
-    func test() 
+    func test()
     {
       foo(new RefC)
     }
@@ -11348,7 +11348,7 @@ public class TestVM : BHL_TestBase
       RefC c2 = c
     }
 
-    func test() 
+    func test()
     {
       RefC c1 = make()
       foo(c1)

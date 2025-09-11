@@ -12,8 +12,8 @@ public class TestClass : BHL_TestBase
     {
       string bhl = @"
       class Foo {}
-        
-      func bool test() 
+
+      func bool test()
       {
         Foo f = new Foo
         return f != null
@@ -47,8 +47,8 @@ public class TestClass : BHL_TestBase
       string bhl = @"
 
       class Foo { }
-        
-      func bool test() 
+
+      func bool test()
       {
         Foo f = new Foo
         return f != null
@@ -69,8 +69,8 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {}
-      
-    func test() 
+
+    func test()
     {
       Foo f = {}
     }
@@ -98,7 +98,7 @@ public class TestClass : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     namespace bar {
       class Foo {
@@ -107,8 +107,8 @@ public class TestClass : BHL_TestBase
         }
       }
     }
-      
-    func int test() 
+
+    func int test()
     {
       bar.Foo f = {}
       return f.Calc()
@@ -138,7 +138,7 @@ public class TestClass : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     namespace bar {
       class Foo {
@@ -147,8 +147,8 @@ public class TestClass : BHL_TestBase
         }
       }
     }
-      
-    func int test() 
+
+    func int test()
     {
       return bar.Foo.Calc()
     }
@@ -176,10 +176,10 @@ public class TestClass : BHL_TestBase
     class Bar{
     }
 
-    func bool test() 
+    func bool test()
     {
       Foo f = {}
-      Bar b = { 
+      Bar b = {
       }
       return f != null && b != null
     }
@@ -212,13 +212,13 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int Int
       float Flt
       string Str
     }
-      
-    func test() 
+
+    func test()
     {
       Foo f = new Foo
       f.Int = 10
@@ -279,11 +279,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { b : 101 }
       f.b = f.b + 1
@@ -301,7 +301,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
       int c
     }
@@ -309,8 +309,8 @@ public class TestClass : BHL_TestBase
      class Bar {
        float a
      }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { c : 2, b : 101.5 }
       Bar b = { a : 10 }
@@ -328,8 +328,8 @@ public class TestClass : BHL_TestBase
   public void TestBindNativeChildClass()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       ColorAlpha c = new ColorAlpha
       c.r = k*1
@@ -351,8 +351,8 @@ public class TestClass : BHL_TestBase
   public void TestNativeChildClassCallParentMethod()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       ColorAlpha c = new ColorAlpha
       c.r = 10
@@ -373,8 +373,8 @@ public class TestClass : BHL_TestBase
   public void TestNativeChildClassCallOwnMethod()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       ColorAlpha c = new ColorAlpha
       c.r = 10
@@ -396,8 +396,8 @@ public class TestClass : BHL_TestBase
   public void TestNestedMembersAccess()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       ColorNested cn = new ColorNested
       cn.c.r = k*1
@@ -442,8 +442,8 @@ public class TestClass : BHL_TestBase
   public void TestCtorNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Foo f = new Foo
     }
@@ -472,8 +472,8 @@ public class TestClass : BHL_TestBase
   public void TestJsonCtorNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Foo f = {}
     }
@@ -502,8 +502,8 @@ public class TestClass : BHL_TestBase
   public void TestGetFieldOperationIsNotAllowed()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {}
       return f.x
@@ -545,8 +545,8 @@ public class TestClass : BHL_TestBase
   public void TestSetFieldOperationIsNotAllowed()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Foo f = {}
       int tmp = f.x
@@ -589,7 +589,7 @@ public class TestClass : BHL_TestBase
   public void TestReturnNativeInstance()
   {
     string bhl = @"
-      
+
     func Color MakeColor(float g)
     {
       Color c = new Color
@@ -597,7 +597,7 @@ public class TestClass : BHL_TestBase
       return c
     }
 
-    func float test(float k) 
+    func float test(float k)
     {
       return MakeColor(k).g + MakeColor(k).r
     }
@@ -615,7 +615,7 @@ public class TestClass : BHL_TestBase
   public void TestImportUserClass()
   {
     string bhl1 = @"
-    class Foo { 
+    class Foo {
       int Int
       float Flt
       string Str
@@ -623,8 +623,8 @@ public class TestClass : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
-    func test() 
+    import ""bhl1""
+    func test()
     {
       Foo f = new Foo
       f.Int = 10
@@ -655,8 +655,8 @@ public class TestClass : BHL_TestBase
   public void TestImportClassMoreComplex()
   {
     string bhl1 = @"
-    import ""bhl2""  
-    func float test(float k) 
+    import ""bhl2""
+    func float test(float k)
     {
       Foo f = { x : k }
       return bar(f)
@@ -664,7 +664,7 @@ public class TestClass : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl3""  
+    import ""bhl3""
 
     class Foo
     {
@@ -701,7 +701,7 @@ public class TestClass : BHL_TestBase
   public void TestImportClassConflict()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
 
     class Bar { }
 
@@ -735,13 +735,13 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
       int c
       string s
     }
-      
-    func string test() 
+
+    func string test()
     {
       Foo f = {}
       return (string)f.b + "";"" + (string)f.c + "";"" + f.s + "";""
@@ -758,11 +758,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       bool c
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       Foo f = {}
       return f.c == false
@@ -779,11 +779,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       []int a
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {a : [10, 20]}
       return f.a[1]
@@ -800,11 +800,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       []int a
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       Foo f = {}
       return f.a == null
@@ -845,11 +845,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       []int a
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {a : [10, 20]}
       f.a.Clear()
@@ -873,11 +873,11 @@ public class TestClass : BHL_TestBase
       return a + 1
     }
 
-    class Foo { 
+    class Foo {
       func int(int) ptr
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {}
       f.ptr = foo
@@ -897,8 +897,8 @@ public class TestClass : BHL_TestBase
     class Bar {
       Bar b?
     }
-      
-    func test() 
+
+    func test()
     {
       Bar b = {}
       b.b = b
@@ -921,8 +921,8 @@ public class TestClass : BHL_TestBase
         this.d = 1
       }
     }
-      
-    func test() 
+
+    func test()
     {
       Bar b = {}
       b.ptr = func() [b?] {
@@ -941,11 +941,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       func void(int) ptr
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       Foo f = {}
       return f.ptr == null
@@ -972,11 +972,11 @@ public class TestClass : BHL_TestBase
       return a + 10
     }
 
-    class Foo { 
+    class Foo {
       []func int(int) ptrs
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {ptrs: []}
       f.ptrs.Add(foo)
@@ -1005,7 +1005,7 @@ public class TestClass : BHL_TestBase
       return a + 10
     }
 
-    class Foo { 
+    class Foo {
       []func int(int,int) ptrs
     }
 
@@ -1014,8 +1014,8 @@ public class TestClass : BHL_TestBase
       fail()
       return 1
     }
-      
-    func void test() 
+
+    func void test()
     {
       Foo f = {ptrs: []}
       f.ptrs.Add(foo)
@@ -1036,12 +1036,12 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       func void foo() {
       }
     }
-      
-    func test() 
+
+    func test()
     {
       Foo f = {}
       func() ptr = f.foo
@@ -1063,14 +1063,14 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       func garbage() { }
       static func int foo() {
         return 10
       }
     }
-      
-    func int test() 
+
+    func int test()
     {
       func int() ptr = Foo.foo
       return ptr()
@@ -1087,12 +1087,12 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       func void foo() {
       }
     }
-      
-    func test() 
+
+    func test()
     {
       Foo f = {}
       f.foo = null
@@ -1119,11 +1119,11 @@ public class TestClass : BHL_TestBase
       FOO  = 1
     }
 
-    class Foo { 
+    class Foo {
       Bar b
     }
-      
-    func bool test() 
+
+    func bool test()
     {
       Foo f = {}
       return f.b == Bar.NONE
@@ -1144,11 +1144,11 @@ public class TestClass : BHL_TestBase
       []int a
     }
 
-    class Foo { 
+    class Foo {
       Bar b
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {b : { a : [10, 21] } }
       return f.b.a[1]
@@ -1165,12 +1165,12 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       string s1
       string s2
     }
-      
-    func string test() 
+
+    func string test()
     {
       Foo f = {}
       return f.s1 + f.s2
@@ -1188,8 +1188,8 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo { }
-      
-    func bool test() 
+
+    func bool test()
     {
       Foo f = {}
       any foo = f
@@ -1208,8 +1208,8 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo { int x }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = {x : 10}
       any foo = f
@@ -1229,10 +1229,10 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
 
-      func int getA() 
+      func int getA()
       {
         return this.a
       }
@@ -1280,7 +1280,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
       int b
 
@@ -1289,7 +1289,7 @@ public class TestClass : BHL_TestBase
         return this.a
       }
 
-      func int getB() 
+      func int getB()
       {
         return this.b
       }
@@ -1350,10 +1350,10 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
 
-      func int getA() 
+      func int getA()
       {
         return func int() { return this.a }()
       }
@@ -1454,7 +1454,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
 
       func int getA(int i)
@@ -1507,7 +1507,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
 
       func int getA(int i, int c = 10)
@@ -1535,7 +1535,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
 
       func int getA(int i, int c = 10)
@@ -1563,7 +1563,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       func int Foo()
       {
         return 2
@@ -1587,7 +1587,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
       class Foo {
-        
+
         int a
 
         func int Summ()
@@ -1613,7 +1613,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
       class Foo {
-        
+
         int a
 
         func int Foo()
@@ -1749,7 +1749,7 @@ public class TestClass : BHL_TestBase
 
     }
 
-    func int test() 
+    func int test()
     {
       Bar.b = 42
       var bar = new Bar
@@ -1775,7 +1775,7 @@ public class TestClass : BHL_TestBase
 
     }
 
-    func int test() 
+    func int test()
     {
       Bar.b = 42
       return Bar.foo()
@@ -1793,7 +1793,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
       int b
 
@@ -1842,7 +1842,7 @@ public class TestClass : BHL_TestBase
     }
 
     class Foo : Base {
-      
+
       int b
 
       func int getB() {
@@ -1878,7 +1878,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
     class Foo {
-      
+
       int a
       int b
 
@@ -1899,7 +1899,7 @@ public class TestClass : BHL_TestBase
       }
 
       func int getSumm() {
-        return this.getC() + this.getB() + this.getA() 
+        return this.getC() + this.getB() + this.getA()
       }
     }
 
@@ -1923,7 +1923,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
     class Foo {
-      
+
       int a
       int b
 
@@ -2015,7 +2015,7 @@ public class TestClass : BHL_TestBase
     class Bar : Foo {
 
       func int getSumm() {
-        return this.getC() + this.getB() + this.getA() 
+        return this.getC() + this.getB() + this.getA()
       }
 
       func int getC() {
@@ -2026,7 +2026,7 @@ public class TestClass : BHL_TestBase
     }
 
     class Foo : Hey {
-      
+
       func int getA() {
         return this.a
       }
@@ -2062,7 +2062,7 @@ public class TestClass : BHL_TestBase
     }
 
     class Foo : Base {
-      
+
       int b
 
       func int getB() {
@@ -2078,7 +2078,7 @@ public class TestClass : BHL_TestBase
       }
 
       func int getSumm() {
-        return this.getC() + this.getB() + this.getA() 
+        return this.getC() + this.getB() + this.getA()
       }
     }
 
@@ -2129,12 +2129,12 @@ public class TestClass : BHL_TestBase
   public void TestArrayOfUserClasses()
   {
     string bhl = @"
-    class Foo { 
+    class Foo {
       float b
       int c
     }
 
-    func float test() 
+    func float test()
     {
       []Foo fs = [{b:1, c:2}]
       fs.Add({b:10, c:20})
@@ -2153,11 +2153,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { b : 101 }
       any a = f
@@ -2176,11 +2176,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       float b
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { b : 101 }
       any a = f
@@ -2198,11 +2198,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       []int b
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = { b : [101, 102] }
       any a = f
@@ -2220,11 +2220,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       []int b
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = { b : [101, 102] }
       any a = f
@@ -2243,13 +2243,13 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Base {
-      float x 
+      float x
     }
 
-    class Foo : Base { 
+    class Foo : Base {
       float y
     }
-      
+
     func float test() {
       Foo f = { x : 1, y : 2}
       return f.y + f.x
@@ -2271,12 +2271,12 @@ public class TestClass : BHL_TestBase
       return f.y + f.x
     }
 
-    class Foo : Base { 
+    class Foo : Base {
       float y
     }
-      
+
     class Base {
-      float x 
+      float x
     }
 
     ";
@@ -2292,15 +2292,15 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Base {
-      float x 
+      float x
     }
 
-    class Foo : Base 
-    { 
+    class Foo : Base
+    {
       float y
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { x : 1, y : 2}
       Base b = (Foo)f
@@ -2319,15 +2319,15 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Base {
-      float x 
+      float x
     }
 
-    class Foo : Base 
-    { 
+    class Foo : Base
+    {
       float y
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { x : 1, y : 2}
       Base b = (Foo)f
@@ -2347,15 +2347,15 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Base {
-      float x 
+      float x
     }
 
-    class Foo : Base 
-    { 
+    class Foo : Base
+    {
       float y
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { y : 2}
       return f.x + f.y
@@ -2372,11 +2372,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int c
     }
-      
-    func int test() 
+
+    func int test()
     {
       return (new Foo).c
     }
@@ -2392,11 +2392,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int c
     }
-      
-    func int test() 
+
+    func int test()
     {
       return (new Foo{c: 10}).c
     }
@@ -2412,11 +2412,11 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int c
     }
-      
-    func test() 
+
+    func test()
     {
       (new Foo{c: 10}).c = 20
     }
@@ -2434,8 +2434,8 @@ public class TestClass : BHL_TestBase
     func Color get() {
       return mkcolor(1)
     }
-      
-    func test() 
+
+    func test()
     {
       get().mult_summ(10)
     }
@@ -2454,15 +2454,15 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Base {
-      float x 
+      float x
     }
 
-    class Foo : Base 
-    { 
+    class Foo : Base
+    {
       int x
     }
-      
-    func float test() 
+
+    func float test()
     {
       Foo f = { x : 2}
       return f.x
@@ -2484,8 +2484,8 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    class ColorA : Color 
-    { 
+    class ColorA : Color
+    {
       float a
     }
     ";
@@ -2496,7 +2496,7 @@ public class TestClass : BHL_TestBase
       delegate() { Compile(bhl, ts_fn); },
       "extending native classes is not supported",
       new PlaceAssert(bhl, @"
-    class ColorA : Color 
+    class ColorA : Color
 -------------------^"
       )
     );
@@ -2553,7 +2553,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    func bool test() 
+    func bool test()
     {
       Bar b = new Bar
       return b != null
@@ -2590,7 +2590,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       Bar o = new Bar
       o.Int = 10
@@ -2655,8 +2655,8 @@ public class TestClass : BHL_TestBase
   public void TestNativeClassAttributesAccess()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       Color c = new Color
       c.r = k*1
@@ -2703,8 +2703,8 @@ public class TestClass : BHL_TestBase
     {
       return 0
     }
-      
-    func test() 
+
+    func test()
     {
       Color c = new Color
       c.r()
@@ -2727,7 +2727,7 @@ public class TestClass : BHL_TestBase
   public void TestNativeClassTypeRefNotFound()
   {
     string bhl = @"
-    func test(Foo foo) 
+    func test(Foo foo)
     {
       var native = foo.sub
     }
@@ -2760,8 +2760,8 @@ public class TestClass : BHL_TestBase
   public void TestNullWithClassInstance()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c = null
       Color c2 = new Color
@@ -2808,7 +2808,7 @@ public class TestClass : BHL_TestBase
   public void TestCallImportedMethodFromLocalMethod()
   {
     string bhl1 = @"
-    class A { 
+    class A {
       func int a() {
         return 10
       }
@@ -2816,8 +2816,8 @@ public class TestClass : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
-    class B { 
+    import ""bhl1""
+    class B {
       func int b() {
         A a = {}
         return a.a()
@@ -2848,15 +2848,15 @@ public class TestClass : BHL_TestBase
     string bhl1 = @"
     import ""bhl2""
     namespace a {
-      class A : b.B { 
+      class A : b.B {
       }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace b {
-      class B { 
+      class B {
         func int Foo() {
           return 42
         }
@@ -2865,8 +2865,8 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
+    import ""bhl1""
+    import ""bhl2""
 
     class C {
       a.A a
@@ -2901,15 +2901,15 @@ public class TestClass : BHL_TestBase
     string bhl1 = @"
     import ""bhl2""
     namespace a {
-      class A : b.B { 
+      class A : b.B {
       }
     }
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace b {
-      class B { 
+      class B {
         virtual func int Foo() {
           return 42
         }
@@ -2918,8 +2918,8 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl3 = @"
-    import ""bhl1""  
-    import ""bhl2""  
+    import ""bhl1""
+    import ""bhl2""
 
     class C {
       a.A a
@@ -2954,7 +2954,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
       int b
 
@@ -3164,7 +3164,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
       int b
 
@@ -3239,7 +3239,7 @@ public class TestClass : BHL_TestBase
     string bhl = @"
 
     class Foo {
-      
+
       int a
       int b
 
@@ -3280,7 +3280,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl1 = @"
     class Foo {
-      
+
       int b
       int a
 
@@ -3299,7 +3299,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     class Bar : Foo {
       int new_a
@@ -3350,7 +3350,7 @@ public class TestClass : BHL_TestBase
     string bhl_1 = @"
     namespace Unit.Traits {
       class Trait {
-        
+
         int b
         int a
 
@@ -3375,7 +3375,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl_2 = @"
-    import ""bhl_1""  
+    import ""bhl_1""
 
     namespace Unit.Pilot {
       class Trait : Unit.Traits.Trait {
@@ -3450,7 +3450,7 @@ public class TestClass : BHL_TestBase
 
     namespace Unit.Traits {
       class Trait {
-        
+
         int b
         int a
 
@@ -3475,7 +3475,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl_2 = @"
-    import ""bhl_1""  
+    import ""bhl_1""
 
     namespace Unit.Pilot {
       class Trait : Unit.Traits.Trait {
@@ -3548,7 +3548,7 @@ public class TestClass : BHL_TestBase
     string bhl_1 = @"
     namespace Unit.Traits {
       class Trait {
-        
+
         func int DummyGarbage0() {
           return 42
         }
@@ -3561,11 +3561,11 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl_2 = @"
-    import ""bhl_1""  
+    import ""bhl_1""
 
     func int test()
     {
-      return Unit.Traits.Trait.GetB() 
+      return Unit.Traits.Trait.GetB()
     }
     ";
 
@@ -3600,7 +3600,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl1 = @"
       class BaseBar {
-        
+
         int b
         int a
 
@@ -3619,7 +3619,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     namespace foo {
       class Bar : BaseBar {
@@ -3663,7 +3663,7 @@ public class TestClass : BHL_TestBase
         int a
       }
       class Foo {
-        
+
         int b
         int a
 
@@ -3683,7 +3683,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     class Bar : fns.Foo {
       int new_a
@@ -3722,7 +3722,7 @@ public class TestClass : BHL_TestBase
   {
     string bhl = @"
     class Foo {
-      
+
       int a
       int b
 
@@ -3817,7 +3817,7 @@ public class TestClass : BHL_TestBase
   public void TestImportedClassVirtualMethodsOrderIsIrrelevant()
   {
     string bhl1 = @"
-    import ""bhl2""  
+    import ""bhl2""
     namespace a {
       class A : b.B {
         override func int Foo(int v) {
@@ -3828,7 +3828,7 @@ public class TestClass : BHL_TestBase
   ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
     namespace b {
       class B {
         virtual func int Foo(int v) {
@@ -4088,7 +4088,7 @@ public class TestClass : BHL_TestBase
        int c
     }
 
-    func int test() 
+    func int test()
     {
       Bar.Foo foo = {f: 1}
       Bar bar = {b: 10, c: 20}
@@ -4117,7 +4117,7 @@ public class TestClass : BHL_TestBase
        }
     }
 
-    func int test() 
+    func int test()
     {
       Bar bar = {b: 10}
       return bar.calc()
@@ -4148,7 +4148,7 @@ public class TestClass : BHL_TestBase
        }
     }
 
-    func int test() 
+    func int test()
     {
       Bar.Foo foo = {f: 1}
       Bar bar = {b: 10, c: 20}
@@ -4186,7 +4186,7 @@ public class TestClass : BHL_TestBase
        }
     }
 
-    func int test() 
+    func int test()
     {
       Bar.Foo foo = {f: 1}
       Bar bar = {b: 10, c: 20}
@@ -4216,10 +4216,10 @@ public class TestClass : BHL_TestBase
        int c
     }
 
-    func int test() 
+    func int test()
     {
       Bar bar = {}
-      Bar.E e1 = Bar.E.E1 
+      Bar.E e1 = Bar.E.E1
       Bar.E e2 = bar.getE2()
       return (int)e1 + (int)e2
     }
@@ -4252,7 +4252,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       Bar.Foo foo1 = {}
       Foo foo2 = {}
@@ -4275,7 +4275,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.foo()
     }
@@ -4300,7 +4300,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.foo()
     }
@@ -4325,7 +4325,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       var bar = new Bar
       return bar.foo()
@@ -4355,7 +4355,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.Doer()
     }
@@ -4376,7 +4376,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.foo(10, 100)
     }
@@ -4402,7 +4402,7 @@ public class TestClass : BHL_TestBase
       int c
     }
 
-    func int test() 
+    func int test()
     {
       Bar bar = {b: 10, c:20}
       return Bar.foo() + bar.b + bar.getC()
@@ -4436,7 +4436,7 @@ public class TestClass : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl1""
-    func int test() 
+    func int test()
     {
       a.Bar bar = {b: 10, c:20}
       return a.Bar.foo() + bar.b + bar.getC()
@@ -4465,7 +4465,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       Bar b = {}
       return b.foo()
@@ -4492,7 +4492,7 @@ public class TestClass : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.foo()
     }
@@ -4583,7 +4583,7 @@ public class TestClass : BHL_TestBase
       static int foo
     }
 
-    func int test() 
+    func int test()
     {
       Bar.foo = 42
       return Bar.foo
@@ -4604,7 +4604,7 @@ public class TestClass : BHL_TestBase
       static int foo = 42
     }
 
-    func int test() 
+    func int test()
     {
       return Bar.foo
     }
@@ -4657,7 +4657,7 @@ public class TestClass : BHL_TestBase
 
     string bhl2 = @"
     import ""bhl1""
-    func int test() 
+    func int test()
     {
       a.Bar.foo = 42
       return a.Bar.foo
@@ -4701,7 +4701,7 @@ public class TestClass : BHL_TestBase
 
     int B = 30
 
-    func int test() 
+    func int test()
     {
       a.Bar.foo = 42
       return a.A + A + B + a.Bar.foo
@@ -4724,7 +4724,7 @@ public class TestClass : BHL_TestBase
   public void TestNativeStaticField()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       NativeFoo.static_bar = 42
       NativeFoo.static_bar++
@@ -4866,7 +4866,7 @@ public class TestClass : BHL_TestBase
         }
 
         {
-          //NOTE: setting up classes not in 'natural' order  
+          //NOTE: setting up classes not in 'natural' order
           (ts.T("C").Get() as ClassSymbolNative).Setup();
           (ts.T("B").Get() as ClassSymbolNative).Setup();
           (ts.T("A").Get() as ClassSymbolNative).Setup();
@@ -4878,7 +4878,7 @@ public class TestClass : BHL_TestBase
     public void _1()
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         A a = {}
         B b = {}
@@ -4898,7 +4898,7 @@ public class TestClass : BHL_TestBase
     public void _2()
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         A a = {}
         B b = {}
@@ -4918,7 +4918,7 @@ public class TestClass : BHL_TestBase
     public void _3()
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         C c = {}
         c.b2 = 10

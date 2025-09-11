@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
-namespace bhl
-{
+namespace bhl;
 
 //NOTE: representing only part of the original ProjectConf
 public class ProjectConfPartial
@@ -38,6 +37,4 @@ public class ProjectConfPartial
       postproc_sources[i] = ProjectConf.NormalizePath(proj_file, postproc_sources[i]);
     postproc_dll = ProjectConf.NormalizePath(proj_file, postproc_dll);
   }
-}
-
 }

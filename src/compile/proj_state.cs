@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace bhl
-{
+namespace bhl;
 
 public class ProjectCompilationStateBundle
 {
@@ -74,6 +73,4 @@ public class ProjectCompilationStateBundle
 
     return all;
   }
-}
-
 }

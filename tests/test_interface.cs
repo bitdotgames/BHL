@@ -31,7 +31,7 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface Foo { 
+      interface Foo {
       }
       ";
 
@@ -45,7 +45,7 @@ public class TestInterface : BHL_TestBase
   public void TestUserInterfaceWithMethod()
   {
     string bhl = @"
-    interface Foo { 
+    interface Foo {
       func hey(int a, float b)
     }
     ";
@@ -65,10 +65,10 @@ public class TestInterface : BHL_TestBase
   public void TestUserInterfaceWithSeveralMethods()
   {
     string bhl = @"
-    class Bar { 
+    class Bar {
     }
 
-    interface Foo { 
+    interface Foo {
       func bool hey(int a, float b)
       func Bar,int bar(string s)
     }
@@ -99,16 +99,16 @@ public class TestInterface : BHL_TestBase
   public void TestUserInterfaceInheritanceIrrelevantOrder()
   {
     string bhl = @"
-    interface Foo : Wow { 
+    interface Foo : Wow {
       func bool hey(int a, float b)
     }
 
-    interface Wow 
+    interface Wow
     {
       func Bar,int bar(string s)
     }
 
-    class Bar { 
+    class Bar {
     }
 
     ";
@@ -167,7 +167,7 @@ public class TestInterface : BHL_TestBase
       func int ab()
     }
 
-    class Imp : AB, B_sub { 
+    class Imp : AB, B_sub {
       func int a() {
         return 4
       }
@@ -213,7 +213,7 @@ public class TestInterface : BHL_TestBase
   public void TestUserInterfaceMethodDefaultValuesNotAllowed()
   {
     string bhl = @"
-    interface Foo { 
+    interface Foo {
       func hey(int a, float b = 1)
     }
     ";
@@ -233,7 +233,7 @@ public class TestInterface : BHL_TestBase
   {
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int bar(int i)
       }
       class Foo : IFoo {
@@ -251,11 +251,11 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int bar(int i)
       }
       class Foo : IFoo {
-        func bar(int i) { } 
+        func bar(int i) { }
       }
       ";
       AssertError<Exception>(
@@ -270,13 +270,13 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int,string bar(int i)
       }
       class Foo : IFoo {
-        func int,int bar(int i) { 
+        func int,int bar(int i) {
           return 1,2
-        } 
+        }
       }
       ";
       AssertError<Exception>(
@@ -291,18 +291,18 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int,string bar(int i)
       }
 
       class Foo {
       }
 
-      func foo(IFoo ifoo) { 
+      func foo(IFoo ifoo) {
       }
 
       func test() {
-        Foo f = {} 
+        Foo f = {}
         foo(f)
       }
       ";
@@ -321,15 +321,15 @@ public class TestInterface : BHL_TestBase
   public void TestDoubleImplementationIsNotAllowed()
   {
     string bhl = @"
-    interface IFoo { 
+    interface IFoo {
       func foo()
     }
 
-    interface IBar { 
+    interface IBar {
       func bar()
     }
 
-    class Foo : IFoo, IBar, IFoo { 
+    class Foo : IFoo, IBar, IFoo {
     }
     ";
 
@@ -337,7 +337,7 @@ public class TestInterface : BHL_TestBase
       delegate() { Compile(bhl); },
       "interface is implemented already",
       new PlaceAssert(bhl, @"
-    class Foo : IFoo, IBar, IFoo { 
+    class Foo : IFoo, IBar, IFoo {
 ----------------------------^"
       )
     );
@@ -347,11 +347,11 @@ public class TestInterface : BHL_TestBase
   public void TestDoubleInheritanceIsNotAllowed()
   {
     string bhl = @"
-    interface IFoo { 
+    interface IFoo {
       func foo()
     }
 
-    interface IBar : IFoo, IFoo { 
+    interface IBar : IFoo, IFoo {
       func bar()
     }
     ";
@@ -360,7 +360,7 @@ public class TestInterface : BHL_TestBase
       delegate() { Compile(bhl); },
       "interface is inherited already",
       new PlaceAssert(bhl, @"
-    interface IBar : IFoo, IFoo { 
+    interface IBar : IFoo, IFoo {
 ---------------------------^"
       )
     );
@@ -370,11 +370,11 @@ public class TestInterface : BHL_TestBase
   public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"
-    interface IFoo { 
+    interface IFoo {
       func foo()
     }
 
-    interface IBar : IBar { 
+    interface IBar : IBar {
       func bar()
     }
     ";
@@ -383,7 +383,7 @@ public class TestInterface : BHL_TestBase
       delegate() { Compile(bhl); },
       "self inheritance is not allowed",
       new PlaceAssert(bhl, @"
-    interface IBar : IBar { 
+    interface IBar : IBar {
 ---------------------^"
       )
     );
@@ -394,7 +394,7 @@ public class TestInterface : BHL_TestBase
   {
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int bar(int i)
       }
       class Foo : IFoo {
@@ -412,7 +412,7 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int,string bar(int i)
       }
       class Foo : IFoo {
@@ -430,7 +430,7 @@ public class TestInterface : BHL_TestBase
   {
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int bar(int i)
       }
       class Foo : IFoo {
@@ -478,17 +478,17 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IBarBase1 { 
+      interface IBarBase1 {
         func int bar1(int i)
       }
-      interface IBarBase2 { 
+      interface IBarBase2 {
         func int bar2(int i)
       }
-      interface IBar : IBarBase1, IBarBase2 { 
+      interface IBar : IBarBase1, IBarBase2 {
         func foo()
       }
       class Foo : IBar {
-        func foo() { } 
+        func foo() { }
 
         func int bar1(int i) {
           return i+1
@@ -520,14 +520,14 @@ public class TestInterface : BHL_TestBase
       IBarBase2 ifoo = foo
       return ifoo.bar2(42)
     }
-    
-    interface IBar : IBarBase1, IBarBase2 { 
+
+    interface IBar : IBarBase1, IBarBase2 {
       func foo()
 
       func Foo circularDependency()
     }
     class Foo : IBar {
-      func foo() { } 
+      func foo() { }
 
       func int bar1(int i) {
         return i+1
@@ -542,10 +542,10 @@ public class TestInterface : BHL_TestBase
       }
     }
 
-    interface IBarBase1 { 
+    interface IBarBase1 {
       func int bar1(int i)
     }
-    interface IBarBase2 { 
+    interface IBarBase2 {
       func int bar2(int i)
     }
     ";
@@ -559,7 +559,7 @@ public class TestInterface : BHL_TestBase
   {
     {
       string bhl = @"
-      interface IFoo { 
+      interface IFoo {
         func int bar(int i)
       }
       class Foo : IFoo {
@@ -584,14 +584,14 @@ public class TestInterface : BHL_TestBase
 
     {
       string bhl = @"
-      interface IBarBase { 
+      interface IBarBase {
         func int bar(int i)
       }
-      interface IBar : IBarBase { 
+      interface IBar : IBarBase {
         func foo()
       }
       class Foo : IBar {
-        func foo() { } 
+        func foo() { }
 
         func int bar(int i) {
           return i+1
@@ -623,17 +623,17 @@ public class TestInterface : BHL_TestBase
         return call(f, 42)
       }
       class Foo : IBar {
-        func foo() { } 
+        func foo() { }
 
         func int bar(int i) {
           return i+1
         }
       }
 
-      interface IBar : IBarBase { 
+      interface IBar : IBarBase {
         func foo()
       }
-      interface IBarBase { 
+      interface IBarBase {
         func int bar(int i)
       }
       func int call(IBarBase b, int i) {
@@ -726,14 +726,14 @@ public class TestInterface : BHL_TestBase
   public void TestMixNativeAndScriptInterfacesNotSupported()
   {
     string bhl = @"
-    interface IFoo { 
+    interface IFoo {
       func int foo(int k)
     }
     class Foo : IBar, IFoo {
-      func int foo(int k) 
-      { 
+      func int foo(int k)
+      {
         return k
-      } 
+      }
 
       func int bar(int i) {
         return i+1
@@ -866,7 +866,7 @@ public class TestInterface : BHL_TestBase
     interface IFoo {
       func int a()
     }
-    class A : IFoo { 
+    class A : IFoo {
       func int a() {
         return 10
       }
@@ -874,7 +874,7 @@ public class TestInterface : BHL_TestBase
     ";
 
     string bhl2 = @"
-    import ""bhl1""  
+    import ""bhl1""
 
     func int test() {
       IFoo foo = new A
@@ -906,7 +906,7 @@ public class TestInterface : BHL_TestBase
         }
       }
       namespace b {
-        func Foo(a.c.IKlass v) { 
+        func Foo(a.c.IKlass v) {
         }
       }
     }
@@ -1011,7 +1011,7 @@ public class TestInterface : BHL_TestBase
     import ""bhl2""
     namespace a {
       namespace b {
-        func Foo(a.c.IKlass v) { 
+        func Foo(a.c.IKlass v) {
         }
       }
     }
