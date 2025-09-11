@@ -47,7 +47,9 @@ public static partial class Tasks
 
     var cts = new CancellationTokenSource();
 
-    var server = await Server.CreateAsync(
+    Console.OutputEncoding = new UTF8Encoding();
+
+    var server = await bhl.lsp.ServerCreator.CreateAsync(
       Log.Logger,
       new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
       new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),

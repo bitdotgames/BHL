@@ -1,34 +1,33 @@
-using System;
 using System.Collections.Generic;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
-namespace bhl.lsp
-{
+namespace bhl.lsp;
 
 public class BHLDocument
 {
-  public proto.Uri uri { get; private set; }
+  public DocumentUri Uri { get; private set; }
 
-  public CodeIndex index { get; private set; } = new CodeIndex();
+  public CodeIndex Index { get; private set; } = new CodeIndex();
 
-  public ANTLR_Processor proc { get; private set; }
+  public ANTLR_Processor Processed { get; private set; }
 
-  List<TerminalNodeImpl> term_nodes = new List<TerminalNodeImpl>();
+  List<TerminalNodeImpl> _termNodes = new List<TerminalNodeImpl>();
 
-  public BHLDocument(proto.Uri uri)
+  public BHLDocument(DocumentUri uri)
   {
-    this.uri = uri;
+    this.Uri = uri;
   }
 
   public void Update(string text, ANTLR_Processor proc)
   {
-    this.proc = proc;
+    this.Processed = proc;
 
-    index.Update(text);
+    Index.Update(text);
 
-    term_nodes.Clear();
-    GetTerminalNodes(proc.parsed.parse_tree, term_nodes);
+    _termNodes.Clear();
+    GetTerminalNodes(proc.parsed.parse_tree, _termNodes);
   }
 
   public TerminalNodeImpl FindTerminalNode(SourcePos pos)
@@ -38,13 +37,13 @@ public class BHLDocument
 
   public TerminalNodeImpl FindTerminalNode(int line, int character)
   {
-    return FindTerminalNodeByByteIndex(index.CalcByteIndex(line, character));
+    return FindTerminalNodeByByteIndex(Index.CalcByteIndex(line, character));
   }
 
   public TerminalNodeImpl FindTerminalNodeByByteIndex(int idx)
   {
     //TODO: use binary search?
-    foreach(var node in term_nodes)
+    foreach(var node in _termNodes)
     {
       if(node.Symbol.StartIndex <= idx && node.Symbol.StopIndex >= idx)
         return node;
@@ -61,7 +60,7 @@ public class BHLDocument
 
     //Logger.current.Log(0, "NODE " + node.GetType().Name + " " + node.GetText() + " " + node.GetHashCode() + "; parent " + node.Parent.GetType().Name + " " + node.Parent.GetText());
 
-    var annotated = proc.FindAnnotated(node);
+    var annotated = Processed.FindAnnotated(node);
     if(annotated == null)
       return null;
 
@@ -113,6 +112,4 @@ public class BHLDocument
         GetTerminalNodes(rule.children[i], nodes);
     }
   }
-}
-
 }

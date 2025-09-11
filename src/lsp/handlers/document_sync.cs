@@ -12,8 +12,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 
-namespace bhl.lsp
-{
+namespace bhl.lsp.handlers;
 
 internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 {
@@ -28,15 +27,14 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     }
   );
 
-  public TextDocumentHandler(ILogger<TextDocumentHandler> logger, Workspace workspace,
-    ILanguageServerConfiguration configuration)
+  public TextDocumentHandler(ILogger<TextDocumentHandler> logger, Workspace workspace, ILanguageServerConfiguration configuration)
   {
     _logger = logger;
     _configuration = configuration;
     _workspace = workspace;
   }
 
-  public TextDocumentSyncKind Change { get; } = TextDocumentSyncKind.Full;
+  public TextDocumentSyncKind SyncKind { get; } = TextDocumentSyncKind.Full;
 
   public override Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
   {
@@ -44,20 +42,25 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     return Unit.Task;
   }
 
-  public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
+  Task IndexWorkspaceIfNeededAsync(string path)
   {
-    //NOTE: a special case when a file is opened without any valid project file
-    if (string.IsNullOrEmpty(_workspace.conf.proj_file))
+    if (string.IsNullOrEmpty(_workspace.ProjConf.proj_file))
     {
-      _workspace.conf.src_dirs.Add(Path.GetDirectoryName(notification.TextDocument.Uri.Path));
-      _workspace.conf.inc_dirs.Add(Path.GetDirectoryName(notification.TextDocument.Uri.Path));
-      _workspace.conf.Setup();
+      _workspace.ProjConf.src_dirs.Add(Path.GetDirectoryName(path));
+      _workspace.ProjConf.inc_dirs.Add(Path.GetDirectoryName(path));
+      _workspace.ProjConf.Setup();
       _workspace.IndexFiles();
     }
+    return Task.CompletedTask;
+  }
 
-    await Task.Yield();
+  public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
+  {
     _logger.LogInformation("Handle Open Document");
-    await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
+
+    await IndexWorkspaceIfNeededAsync(notification.TextDocument.Uri.Path);
+
+    //await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
 
     return Unit.Value;
   }
@@ -66,10 +69,8 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
   {
     _logger.LogInformation("Handle Did Close Document");
 
-    if (_configuration.TryGetScopedConfiguration(notification.TextDocument.Uri, out var disposable))
-    {
-      disposable.Dispose();
-    }
+    //if (_configuration.TryGetScopedConfiguration(notification.TextDocument.Uri, out var disposable))
+    //  disposable.Dispose();
 
     return Unit.Task;
   }
@@ -78,15 +79,13 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
   protected override TextDocumentSyncRegistrationOptions CreateRegistrationOptions(
     TextSynchronizationCapability capability, ClientCapabilities clientCapabilities) =>
-    new TextDocumentSyncRegistrationOptions()
+    new ()
     {
       DocumentSelector = _textDocumentSelector,
-      Change = Change,
+      Change = SyncKind,
       Save = new SaveOptions() { IncludeText = true }
     };
 
   public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) =>
-    new TextDocumentAttributes(uri, "csharp");
-}
-
+    new (uri, "bhl");
 }
