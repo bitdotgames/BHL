@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -51,7 +52,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalFuncNotImported()
+  public async Task TestLocalFuncNotImported()
   {
     string file_a = @"
       static func int foo() { return 10 }
@@ -68,10 +69,10 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
@@ -87,7 +88,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalNamespaceFuncNotImported()
+  public async Task TestLocalNamespaceFuncNotImported()
   {
     string file_a = @"
       namespace Foo {
@@ -106,10 +107,10 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
@@ -125,7 +126,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalFuncDontClash()
+  public async Task TestLocalFuncDontClash()
   {
     string file_a = @"
       static func int foo() { return 10 }
@@ -144,7 +145,7 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
@@ -156,7 +157,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalFuncPtrDontClash()
+  public async Task TestLocalFuncPtrDontClash()
   {
     string file_a = @"
       static func int foo() { return 10 }
@@ -174,7 +175,7 @@ public class TestLocal : BHL_TestBase
     static func int foo() { return 20 }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
@@ -186,7 +187,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalFuncDontClashInDifferentNamespaces()
+  public async Task TestLocalFuncDontClashInDifferentNamespaces()
   {
     string file_a = @"
       namespace Foo {
@@ -209,7 +210,7 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
@@ -221,7 +222,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalModuleFuncClashWithOtherGlobalFunc()
+  public async Task TestLocalModuleFuncClashWithOtherGlobalFunc()
   {
     string file_a = @"
       func foo() { }
@@ -233,10 +234,10 @@ public class TestLocal : BHL_TestBase
     static func foo() { }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
@@ -287,7 +288,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalModuleVarNotImported()
+  public async Task TestLocalModuleVarNotImported()
   {
     string file_a = @"
       static int foo = 10
@@ -304,10 +305,9 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"test.bhl", file_test},
             {"a.bhl", file_a},
@@ -323,7 +323,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalModuleVarsDontClash()
+  public async Task TestLocalModuleVarsDontClash()
   {
     string file_a = @"
       static int foo = 10
@@ -340,7 +340,7 @@ public class TestLocal : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"a.bhl", file_a},
@@ -352,7 +352,7 @@ public class TestLocal : BHL_TestBase
   }
 
   [Fact]
-  public void TestLocalModuleVarClashWithOtherGlobalVar()
+  public async Task TestLocalModuleVarClashWithOtherGlobalVar()
   {
     string file_a = @"
       int foo = 10
@@ -364,10 +364,10 @@ public class TestLocal : BHL_TestBase
     static int foo = 20
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"test.bhl", file_test},
             {"a.bhl", file_a},

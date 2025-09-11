@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -348,7 +349,7 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
-  public void TestStartImportedSameFuncPtr()
+  public async Task TestStartImportedSameFuncPtr()
   {
     string bhl2 = @"
     coro func foo() {
@@ -374,7 +375,7 @@ public class TestFiber : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},

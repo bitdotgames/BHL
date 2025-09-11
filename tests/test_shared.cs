@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -609,30 +610,30 @@ public class BHL_TestBase
     return files;
   }
 
-  public static VM MakeVM(CompileConf conf, Action<Types> ts_fn = null, CompilationExecutor exec = null)
+  public static async Task<VM> MakeVM(CompileConf conf, Action<Types> ts_fn = null, CompilationExecutor exec = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
-    var stream = CompileFiles(exec ?? new CompilationExecutor(), conf);
+    var stream = await CompileFiles(exec ?? new CompilationExecutor(), conf);
 
     var loader = new ModuleLoader(ts, stream);
     var vm = new VM(ts, loader);
     return vm;
   }
 
-  public static VM MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
+  public static async Task<VM> MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
     CompilationExecutor executor = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
-    var loader = new ModuleLoader(ts, CompileFiles(files, ts_fn, use_cache: use_cache, executor: executor));
+    var loader = new ModuleLoader(ts, await CompileFiles(files, ts_fn, use_cache: use_cache, executor: executor));
     var vm = new VM(ts, loader);
     return vm;
   }
 
-  public static VM MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true,
+  public static Task<VM> MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true,
     bool use_cache = false)
   {
     return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
@@ -829,6 +830,21 @@ public class BHL_TestBase
     AssertError(err, msg, place_assert);
   }
 
+  public async Task AssertErrorAsync<T>(Func<Task> action, string msg, PlaceAssert place_assert = null) where T : Exception
+  {
+    Exception err = null;
+    try
+    {
+      await action();
+    }
+    catch(T e)
+    {
+      err = e;
+    }
+
+    AssertError(err, msg, place_assert);
+  }
+
   public void AssertError(Exception err, string msg, PlaceAssert place_assert = null)
   {
     //let's normalize line endings
@@ -892,7 +908,7 @@ public class BHL_TestBase
     }
   }
 
-  static public CompileConf MakeCompileConf(
+  public static CompileConf MakeCompileConf(
     List<string> files,
     Action<Types> ts_fn = null,
     bool use_cache = false,
@@ -938,19 +954,19 @@ public class BHL_TestBase
   }
 
   //NOTE: returns stream of bhl compiled data
-  static public Stream CompileFiles(CompilationExecutor exec, CompileConf conf)
+  public static async Task<Stream> CompileFiles(CompilationExecutor exec, CompileConf conf)
   {
-    var errors = exec.Exec(conf).GetAwaiter().GetResult();
+    var errors = await exec.Exec(conf);
     if(errors.Count > 0)
     {
       if(conf.proj.verbosity > 0)
       {
         foreach(var err in errors)
         {
-          Console.Error.WriteLine(err.ToString());
+          await Console.Error.WriteLineAsync(err.ToString());
           if(!string.IsNullOrEmpty(err.stack_trace))
-            Console.Error.WriteLine(err.stack_trace);
-          Console.Error.WriteLine("==========");
+            await Console.Error.WriteLineAsync(err.stack_trace);
+          await Console.Error.WriteLineAsync("==========");
         }
       }
 
@@ -961,14 +977,14 @@ public class BHL_TestBase
     return ms;
   }
 
-  static public Stream CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
+  public static Task<Stream> CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
     int max_threads = 1, CompilationExecutor executor = null)
   {
     return CompileFiles(MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads),
       executor: executor);
   }
 
-  public static Stream CompileFiles(
+  public static Task<Stream> CompileFiles(
     Dictionary<string, string> file2src, Action<Types> ts_fn = null,
     bool use_cache = false, int max_threads = 1,
     bool clean_dir = true, CompilationExecutor executor = null)
@@ -977,7 +993,7 @@ public class BHL_TestBase
       executor: executor);
   }
 
-  static public Stream CompileFiles(CompileConf conf, CompilationExecutor executor = null)
+  public static Task<Stream> CompileFiles(CompileConf conf, CompilationExecutor executor = null)
   {
     return CompileFiles(executor ?? new CompilationExecutor(), conf);
   }

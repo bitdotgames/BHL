@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -1415,7 +1416,7 @@ public class TestDefer : BHL_TestBase
   }
 
   [Fact]
-  public void TestStopFiberExternallyWithProperDefersInParalsInModules()
+  public async Task TestStopFiberExternallyWithProperDefersInParalsInModules()
   {
     string bhl2 = @"
     coro func foo()
@@ -1450,7 +1451,7 @@ public class TestDefer : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},

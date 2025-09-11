@@ -1,13 +1,14 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
 public class TestStackTrace : BHL_TestBase
 {
   [Fact]
-  public void TestGetStackTrace()
+  public async Task TestGetStackTrace()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -52,7 +53,7 @@ public class TestStackTrace : BHL_TestBase
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -85,7 +86,7 @@ public class TestStackTrace : BHL_TestBase
   }
 
   [Fact]
-  public void TestGetStackTraceFromMethod()
+  public async Task TestGetStackTraceFromMethod()
   {
     string bhl3 = @"
     class Foo
@@ -134,7 +135,7 @@ public class TestStackTrace : BHL_TestBase
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -167,7 +168,7 @@ public class TestStackTrace : BHL_TestBase
   }
 
   [Fact]
-  public void TestGetStackTraceFromVirtualMethod()
+  public async Task TestGetStackTraceFromVirtualMethod()
   {
     string bhl3 = @"
     class Base
@@ -220,7 +221,7 @@ public class TestStackTrace : BHL_TestBase
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -253,7 +254,7 @@ public class TestStackTrace : BHL_TestBase
   }
 
   [Fact]
-  public void TestGetStackTraceFromCoroVirtualMethodInParal()
+  public async Task TestGetStackTraceFromCoroVirtualMethodInParal()
   {
     string bhl3 = @"
     class Base
@@ -320,7 +321,7 @@ public class TestStackTrace : BHL_TestBase
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -342,7 +343,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceFromInterfaceMethod()
+  public async Task TestGetStackTraceFromInterfaceMethod()
   {
     string bhl3 = @"
     interface IBase
@@ -395,7 +396,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -428,7 +429,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceFromFuncAsArg()
+  public async Task TestGetStackTraceFromFuncAsArg()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -475,7 +476,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -504,7 +505,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceForUserObjNullRef()
+  public async Task TestGetStackTraceForUserObjNullRef()
   {
     string bhl2 = @"
     class Foo {
@@ -525,7 +526,7 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -560,7 +561,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceAfterNativeException()
+  public async Task TestGetStackTraceAfterNativeException()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -607,7 +608,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -649,7 +650,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceFromParal()
+  public async Task TestGetStackTraceFromParal()
   {
     string bhl3 = @"
     coro func float wow(float b)
@@ -701,7 +702,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -734,7 +735,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceFromParalAll()
+  public async Task TestGetStackTraceFromParalAll()
   {
     string bhl3 = @"
     coro func float wow(float b)
@@ -786,7 +787,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -818,7 +819,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInDefer()
+  public async Task TestGetStackTraceInDefer()
   {
     string bhl3 = @"
     func float wow(float b)
@@ -866,7 +867,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -898,7 +899,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInParalDefer()
+  public async Task TestGetStackTraceInParalDefer()
   {
     string bhl3 = @"
     func hey()
@@ -952,7 +953,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -988,7 +989,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInSeqWithSuspendDefer()
+  public async Task TestGetStackTraceInSeqWithSuspendDefer()
   {
     string bhl3 = @"
     func foo() {
@@ -1051,7 +1052,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -1098,7 +1099,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInParalWithSuspendDefer()
+  public async Task TestGetStackTraceInParalWithSuspendDefer()
   {
     string bhl3 = @"
     func foo() {
@@ -1158,7 +1159,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -1201,7 +1202,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInSubParal()
+  public async Task TestGetStackTraceInSubParal()
   {
     string bhl3 = @"
     func hey()
@@ -1255,7 +1256,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -1291,7 +1292,7 @@ at test(..) in bhl1.bhl:10"
   }
 
   [Fact]
-  public void TestGetStackTraceInLambda()
+  public async Task TestGetStackTraceInLambda()
   {
     string bhl3 = @"
     func hey(func() cb)
@@ -1350,7 +1351,7 @@ at test(..) in bhl1.bhl:10"
       }
     });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},

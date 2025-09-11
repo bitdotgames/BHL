@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -89,7 +90,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallFreeFuncFromMethodWithSameName()
+  public async Task TestCallFreeFuncFromMethodWithSameName()
   {
     string bhl1 = @"
     func int Calc(int i) {
@@ -115,7 +116,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -129,7 +130,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallFreeFuncFromStaticMethodWithSameName()
+  public async Task TestCallFreeFuncFromStaticMethodWithSameName()
   {
     string bhl1 = @"
     func int Calc(int i) {
@@ -154,7 +155,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -612,7 +613,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUserClass()
+  public async Task TestImportUserClass()
   {
     string bhl1 = @"
     class Foo {
@@ -637,7 +638,7 @@ public class TestClass : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -652,7 +653,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportClassMoreComplex()
+  public async Task TestImportClassMoreComplex()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -684,7 +685,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -698,7 +699,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportClassConflict()
+  public async Task TestImportClassConflict()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -712,10 +713,10 @@ public class TestClass : BHL_TestBase
     class Bar { }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
@@ -2805,7 +2806,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallImportedMethodFromLocalMethod()
+  public async Task TestCallImportedMethodFromLocalMethod()
   {
     string bhl1 = @"
     class A {
@@ -2830,7 +2831,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -2843,7 +2844,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallImportedMemberMethodFromMethod()
+  public async Task TestCallImportedMemberMethodFromMethod()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -2882,7 +2883,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -2896,7 +2897,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallImportedVirtualMemberMethodFromMethod()
+  public async Task TestCallImportedVirtualMemberMethodFromMethod()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -2935,7 +2936,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -3276,7 +3277,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsSupport()
+  public async Task TestImportedClassVirtualMethodsSupport()
   {
     string bhl1 = @"
     class Foo {
@@ -3331,7 +3332,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -3345,7 +3346,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsSupportFromCachedModule()
+  public async Task TestImportedClassVirtualMethodsSupportFromCachedModule()
   {
     string bhl_1 = @"
     namespace Unit.Traits {
@@ -3420,7 +3421,7 @@ public class TestClass : BHL_TestBase
     });
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("bhl_2");
       Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
@@ -3434,7 +3435,7 @@ public class TestClass : BHL_TestBase
       //       are loaded properly disregarding their order of load
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
-      var vm = MakeVM(conf);
+      var vm = await MakeVM(conf);
       vm.LoadModule("bhl_2");
       Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
@@ -3443,7 +3444,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsSupportFromCachedModule2()
+  public async Task TestImportedClassVirtualMethodsSupportFromCachedModule2()
   {
     string bhl_1 = @"
     import ""interim""
@@ -3520,7 +3521,7 @@ public class TestClass : BHL_TestBase
     });
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("bhl_2");
       Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
@@ -3532,7 +3533,7 @@ public class TestClass : BHL_TestBase
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
       var exec = new CompilationExecutor();
-      var vm = MakeVM(conf, exec: exec);
+      var vm = await MakeVM(conf, exec: exec);
       vm.LoadModule("bhl_2");
       Assert.Equal(110, Execute(vm, "test1").result.PopRelease().num);
       Assert.Equal(110, Execute(vm, "test2").result.PopRelease().num);
@@ -3543,7 +3544,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassStaticMethodsSupportFromCachedModule()
+  public async Task TestImportedClassStaticMethodsSupportFromCachedModule()
   {
     string bhl_1 = @"
     namespace Unit.Traits {
@@ -3576,7 +3577,7 @@ public class TestClass : BHL_TestBase
     });
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("bhl_2");
       Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
@@ -3586,7 +3587,7 @@ public class TestClass : BHL_TestBase
       System.IO.File.SetLastWriteTimeUtc(files[0], DateTime.UtcNow.AddSeconds(1));
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 1);
       var exec = new CompilationExecutor();
-      var vm = MakeVM(conf, exec: exec);
+      var vm = await MakeVM(conf, exec: exec);
       vm.LoadModule("bhl_2");
       Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
@@ -3596,7 +3597,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsSupportFromRootNamespace()
+  public async Task TestImportedClassVirtualMethodsSupportFromRootNamespace()
   {
     string bhl1 = @"
       class BaseBar {
@@ -3642,7 +3643,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -3655,7 +3656,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsSupportInADifferentNamespace()
+  public async Task TestImportedClassVirtualMethodsSupportInADifferentNamespace()
   {
     string bhl1 = @"
     namespace fns {
@@ -3705,7 +3706,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -3814,7 +3815,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedClassVirtualMethodsOrderIsIrrelevant()
+  public async Task TestImportedClassVirtualMethodsOrderIsIrrelevant()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -3844,7 +3845,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -4415,7 +4416,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestStaticMethodImported()
+  public async Task TestStaticMethodImported()
   {
     string bhl1 = @"
     namespace a {
@@ -4443,7 +4444,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -4644,7 +4645,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestStaticFieldImported()
+  public async Task TestStaticFieldImported()
   {
     string bhl1 = @"
     namespace a {
@@ -4663,7 +4664,7 @@ public class TestClass : BHL_TestBase
       return a.Bar.foo
     }
     ";
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -4676,7 +4677,7 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
-  public void TestStaticFieldImportedMixWithGlobalVars()
+  public async Task TestStaticFieldImportedMixWithGlobalVars()
   {
     string bhl0 = @"
       int G = 111
@@ -4707,7 +4708,7 @@ public class TestClass : BHL_TestBase
       return a.A + A + B + a.Bar.foo
     }
     ";
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl0.bhl", bhl0},
         {"bhl1.bhl", bhl1},

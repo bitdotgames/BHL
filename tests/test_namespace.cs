@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -1268,7 +1269,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestMixNativeAndUserland()
+  public async Task TestMixNativeAndUserland()
   {
     var ts_fn = new Action<Types>((ts) =>
     {
@@ -1294,7 +1295,7 @@ public class TestNamespace : BHL_TestBase
 
     var _ts = new Types();
     ts_fn(_ts);
-    var loader = new ModuleLoader(_ts, CompileFiles(files, ts_fn));
+    var loader = new ModuleLoader(_ts, await CompileFiles(files, ts_fn));
 
     var vm = new VM(_ts, loader);
     vm.LoadModule("test");
@@ -1432,7 +1433,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestEnumImported()
+  public async Task TestEnumImported()
   {
     string bhl1 = @"
     namespace foo {
@@ -1468,7 +1469,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -1730,7 +1731,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUserFunc()
+  public async Task TestImportUserFunc()
   {
     string bhl1 = @"
     namespace foo {
@@ -1753,7 +1754,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1797,7 +1798,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUserFuncPtr()
+  public async Task TestImportUserFuncPtr()
   {
     string bhl1 = @"
     namespace foo {
@@ -1830,7 +1831,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1843,7 +1844,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUserClass()
+  public async Task TestImportUserClass()
   {
     string bhl1 = @"
     namespace foo {
@@ -1863,7 +1864,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1876,7 +1877,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportAndLocalVisibility()
+  public async Task TestImportAndLocalVisibility()
   {
     string bhl1 = @"
     namespace foo {
@@ -1906,7 +1907,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1919,7 +1920,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportAndRelativeLocalVisibility()
+  public async Task TestImportAndRelativeLocalVisibility()
   {
     string bhl1 = @"
     namespace foo {
@@ -1950,7 +1951,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1963,7 +1964,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUserInterface()
+  public async Task TestImportUserInterface()
   {
     string bhl1 = @"
     namespace foo {
@@ -1989,7 +1990,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -2002,7 +2003,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportGlobalObjectVar()
+  public async Task TestImportGlobalObjectVar()
   {
     string bhl1 = @"
     import ""bhl3""
@@ -2026,7 +2027,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -2040,7 +2041,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportSymbolsConflict()
+  public async Task TestImportSymbolsConflict()
   {
     string bhl1 = @"
     namespace foo {
@@ -2057,10 +2058,10 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
@@ -2076,7 +2077,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportedSymbolsInGlobalNamespace()
+  public async Task TestImportedSymbolsInGlobalNamespace()
   {
     string bhl1 = @"
     namespace foo {
@@ -2110,7 +2111,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -2189,7 +2190,7 @@ public class TestNamespace : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportSeveralNestedNamespacesWithSameLastName()
+  public async Task TestImportSeveralNestedNamespacesWithSameLastName()
   {
     string bhl1 = @"
     namespace ns1.View {
@@ -2215,7 +2216,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}

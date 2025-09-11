@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using bhl;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
@@ -201,7 +202,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [Fact]
-  public void TestSeveralSemanticErrorsInManyFiles()
+  public async Task TestSeveralSemanticErrorsInManyFiles()
   {
     string bhl1 = @"
     func float bhl1()
@@ -226,7 +227,7 @@ public class TestErrors : BHL_TestBase
 
     try
     {
-      CompileFiles(files);
+      await CompileFiles(files);
     }
     catch(CompileErrorsException m)
     {
@@ -251,7 +252,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [Fact]
-  public void TestSeveralSemanticErrorsDumpedIntoErrorFile()
+  public async Task TestSeveralSemanticErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
     func int foo()
@@ -271,7 +272,7 @@ public class TestErrors : BHL_TestBase
     var conf = MakeCompileConf(files);
     try
     {
-      CompileFiles(conf);
+      await CompileFiles(conf);
     }
     catch(Exception)
     {
@@ -288,7 +289,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [Fact]
-  public void TestParseErrorsPreventFromFurtherProcessing()
+  public async Task TestParseErrorsPreventFromFurtherProcessing()
   {
     string bhl1 = @"
     func int foo() { } //won't be in errors list
@@ -317,7 +318,7 @@ public class TestErrors : BHL_TestBase
     var conf = MakeCompileConf(files);
     try
     {
-      CompileFiles(conf);
+      await CompileFiles(conf);
     }
     catch(Exception)
     {
@@ -331,7 +332,7 @@ public class TestErrors : BHL_TestBase
   }
 
   [Fact]
-  public void TestSeveralErrorsDumpedIntoErrorFile()
+  public async Task TestSeveralErrorsDumpedIntoErrorFile()
   {
     string bhl1 = @"
     func int foo() { }
@@ -359,7 +360,7 @@ public class TestErrors : BHL_TestBase
     var conf = MakeCompileConf(files);
     try
     {
-      CompileFiles(conf);
+      await CompileFiles(conf);
     }
     catch(Exception)
     {

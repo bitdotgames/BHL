@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -860,7 +861,7 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallImportedMethodFromLocalMethod()
+  public async Task TestCallImportedMethodFromLocalMethod()
   {
     string bhl1 = @"
     interface IFoo {
@@ -882,7 +883,7 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -895,7 +896,7 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
-  public void TestBugPassThisAsInterfaceArgToFreeFunc()
+  public async Task TestBugPassThisAsInterfaceArgToFreeFunc()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -925,7 +926,7 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}
@@ -1005,7 +1006,7 @@ public class TestInterface : BHL_TestBase
   }
 
   [Fact]
-  public void TestCircularDependencyInModules()
+  public async Task TestCircularDependencyInModules()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -1033,7 +1034,7 @@ public class TestInterface : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2}

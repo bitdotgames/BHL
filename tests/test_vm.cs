@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -10415,7 +10416,7 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
-  public void TestLoadModuleTwice()
+  public async Task TestLoadModuleTwice()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -10448,7 +10449,7 @@ public class TestVM : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, await CompileFiles(files));
 
     var vm = new VM(ts, loader);
     Assert.True(vm.LoadModule("bhl1"));
@@ -10460,7 +10461,7 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
-  public void TestLoadNonExistingModule()
+  public async Task TestLoadNonExistingModule()
   {
     string bhl1 = @"
     func float bhl1()
@@ -10474,7 +10475,7 @@ public class TestVM : BHL_TestBase
     NewTestFile("bhl1.bhl", bhl1, ref files);
 
     var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, await CompileFiles(files));
 
     var vm = new VM(ts, loader);
     Assert.False(vm.LoadModule("garbage"));
@@ -10878,7 +10879,7 @@ public class TestVM : BHL_TestBase
     }
 
     [Fact]
-    public void _5()
+    public async Task _5()
     {
       string bar_bhl = @"
       int bar = 1
@@ -10892,7 +10893,7 @@ public class TestVM : BHL_TestBase
       }
       ";
 
-      var vm = MakeVM(new Dictionary<string, string>()
+      var vm = await MakeVM(new Dictionary<string, string>()
         {
           {"bar.bhl", bar_bhl},
           {"test.bhl", test_bhl},
@@ -10911,7 +10912,7 @@ public class TestVM : BHL_TestBase
     }
 
     [Fact]
-    public void _6()
+    public async Task _6()
     {
       string bar_bhl = @"
       namespace N {
@@ -10931,7 +10932,7 @@ public class TestVM : BHL_TestBase
       }
       ";
 
-      var vm = MakeVM(new Dictionary<string, string>()
+      var vm = await MakeVM(new Dictionary<string, string>()
         {
           {"test.bhl", test_bhl},
           {"bar.bhl", bar_bhl},

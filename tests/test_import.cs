@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
 public class TestImport : BHL_TestBase
 {
   [Fact]
-  public void TestSimpleImport()
+  public async Task TestSimpleImport()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -47,7 +48,7 @@ public class TestImport : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var loader = new ModuleLoader(ts, CompileFiles(files));
+    var loader = new ModuleLoader(ts, await CompileFiles(files));
 
     AssertEqual(loader.Load("bhl1", ts),
       new ModuleCompiler()
@@ -91,7 +92,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestBadImport()
+  public async Task TestBadImport()
   {
     string bhl1 = @"
     import ""garbage""
@@ -105,8 +106,8 @@ public class TestImport : BHL_TestBase
     var files = new List<string>();
     NewTestFile("bhl1.bhl", bhl1, ref files);
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(files); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(files); },
       "invalid import 'garbage'",
       new PlaceAssert(bhl1, @"
     import ""garbage""
@@ -116,7 +117,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestBadImportNotInSourceFiles()
+  public async Task TestBadImportNotInSourceFiles()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -137,8 +138,8 @@ public class TestImport : BHL_TestBase
     //NOTE: let's create it but remove from processed sources
     files.RemoveAt(NewTestFile("bhl2.bhl", bhl2, ref files));
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(files); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(files); },
       "invalid import 'bhl2'",
       new PlaceAssert(bhl1, @"
     import ""bhl2""
@@ -148,7 +149,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestSelfImportIsIgnored()
+  public async Task TestSelfImportIsIgnored()
   {
     string bhl1 = @"
     import ""bhl1""
@@ -160,11 +161,11 @@ public class TestImport : BHL_TestBase
     var files = new List<string>();
     NewTestFile("bhl1.bhl", bhl1, ref files);
 
-    CompileFiles(files);
+    await CompileFiles(files);
   }
 
   [Fact]
-  public void TestDoubleImportError()
+  public async Task TestDoubleImportError()
   {
     string file_a = @"
       func foo() {}
@@ -177,10 +178,9 @@ public class TestImport : BHL_TestBase
     func test() {}
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(async delegate()
       {
-        CompileFiles(new Dictionary<string, string>()
+        await CompileFiles(new Dictionary<string, string>()
           {
             {"a.bhl", file_a},
             {"test.bhl", file_test},
@@ -196,7 +196,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestIncrementalBuildOfChangedFiles()
+  public async Task TestIncrementalBuildOfChangedFiles()
   {
     string file_unit = @"
       class Unit {
@@ -229,7 +229,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -252,7 +252,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
@@ -263,7 +263,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile()
+  public async Task TestIncrementalBuildOfChangedFilesWithIntermediateFile()
   {
     string file_unit = @"
       class Unit {
@@ -299,7 +299,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -323,7 +323,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
@@ -334,7 +334,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
+  public async Task TestIncrementalBuildOfChangedFilesWithIntermediateFile2()
   {
     string file_unit = @"
       class Unit {
@@ -381,7 +381,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23 + 1, Execute(vm, "test").result.PopRelease().num);
@@ -407,7 +407,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(24 + 2, Execute(vm, "test").result.PopRelease().num);
@@ -418,7 +418,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestIncrementalBuildOfChangedFilesWithChangedImportedDependency()
+  public async Task TestIncrementalBuildOfChangedFilesWithChangedImportedDependency()
   {
     string file_unit = @"
       class Unit {
@@ -454,7 +454,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -476,7 +476,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -487,7 +487,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestIncrementalBuildOfChangedFilesWithGlobalVars()
+  public async Task TestIncrementalBuildOfChangedFilesWithGlobalVars()
   {
     string file_unit = @"
       class Unit {
@@ -524,7 +524,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(42 + 1, Execute(vm, "test").result.PopRelease().num);
@@ -546,7 +546,7 @@ public class TestImport : BHL_TestBase
       var exec = new CompilationExecutor();
       var conf = MakeCompileConf(files, use_cache: true, max_threads: 3);
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(42 + 1 + 10, Execute(vm, "test").result.PopRelease().num);
@@ -557,7 +557,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportEnum()
+  public async Task TestImportEnum()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -582,7 +582,7 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -595,7 +595,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportEnumConflict()
+  public async Task TestImportEnumConflict()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -613,10 +613,10 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
@@ -632,7 +632,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportReadWriteGlobalVar()
+  public async Task TestImportReadWriteGlobalVar()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -649,7 +649,7 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -662,7 +662,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportReadWriteSeveralGlobalVars()
+  public async Task TestImportReadWriteSeveralGlobalVars()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -680,7 +680,7 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -693,7 +693,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportGlobalObjectVar()
+  public async Task TestImportGlobalObjectVar()
   {
     string bhl1 = @"
     import ""bhl3""
@@ -719,7 +719,7 @@ public class TestImport : BHL_TestBase
 
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -733,7 +733,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportGlobalObjectVarWithDepCycles()
+  public async Task TestImportGlobalObjectVarWithDepCycles()
   {
     string main_bhl = @"
     import ""g""
@@ -781,7 +781,7 @@ public class TestImport : BHL_TestBase
       func abliity_dummy() {}
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"main.bhl", main_bhl},
         {"g.bhl", g_bhl},
@@ -797,7 +797,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportGlobalVarConflict()
+  public async Task TestImportGlobalVarConflict()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -811,10 +811,10 @@ public class TestImport : BHL_TestBase
     float foo = 100
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
@@ -830,7 +830,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportMixed()
+  public async Task TestImportMixed()
   {
     string bhl1 = @"
     import ""bhl3""
@@ -861,7 +861,7 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -875,7 +875,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportWithCycles()
+  public async Task TestImportWithCycles()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -905,7 +905,7 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -919,7 +919,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportWithSemicolon()
+  public async Task TestImportWithSemicolon()
   {
     string bhl1 = @"
     import ""bhl2"";;;import ""bhl3"";
@@ -948,7 +948,7 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
@@ -962,7 +962,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportConflict()
+  public async Task TestImportConflict()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -985,10 +985,9 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
           {
             {"bhl1.bhl", bhl1},
             {"bhl2.bhl", bhl2},
@@ -1004,7 +1003,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportInvalidateCachesAfterChange()
+  public async Task TestImportInvalidateCachesAfterChange()
   {
     string file_unit = @"
       class Unit {
@@ -1035,7 +1034,7 @@ public class TestImport : BHL_TestBase
     );
 
     {
-      var vm = MakeVM(files, use_cache: true);
+      var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
     }
@@ -1051,14 +1050,14 @@ public class TestImport : BHL_TestBase
     System.IO.File.SetLastWriteTimeUtc(files[0], DateTime.UtcNow.AddSeconds(1));
 
     {
-      var vm = MakeVM(files, use_cache: true);
+      var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
       Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
     }
   }
 
   [Fact]
-  public void TestSearchIncludePath()
+  public async Task TestSearchIncludePath()
   {
     string file_unit = @"
       class Unit {
@@ -1090,7 +1089,7 @@ public class TestImport : BHL_TestBase
       conf.proj.inc_path.Add(TestDirPath() + "/unit");
 
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(exec, conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -1098,7 +1097,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportTryIncludePathWithSlash()
+  public async Task TestImportTryIncludePathWithSlash()
   {
     string file_unit = @"
       class Unit {
@@ -1124,7 +1123,7 @@ public class TestImport : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
+      var loader = new ModuleLoader(ts, await CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -1132,7 +1131,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportTryIncludePathNoInitialSlash()
+  public async Task TestImportTryIncludePathNoInitialSlash()
   {
     string file_unit = @"
       class Unit {
@@ -1158,7 +1157,7 @@ public class TestImport : BHL_TestBase
 
     {
       var ts = new Types();
-      var loader = new ModuleLoader(ts, CompileFiles(files, use_cache: true));
+      var loader = new ModuleLoader(ts, await CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -1166,7 +1165,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportUseRelativePath()
+  public async Task TestImportUseRelativePath()
   {
     string file_unit = @"
       class Unit {
@@ -1194,7 +1193,7 @@ public class TestImport : BHL_TestBase
       var ts = new Types();
 
       var conf = MakeCompileConf(files, use_cache: true);
-      var loader = new ModuleLoader(ts, CompileFiles(conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("src/tests/test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -1202,7 +1201,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestMistakenlyImportedBy3dParty()
+  public async Task TestMistakenlyImportedBy3dParty()
   {
     string file_unit = @"
     namespace units {
@@ -1237,8 +1236,8 @@ public class TestImport : BHL_TestBase
     conf.proj.use_cache = false;
     conf.proj.max_threads = 1;
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(exec, conf); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(exec, conf); },
       "type 'units.Unit' not found",
       new PlaceAssert(file_test, @"
       units.Unit u = {}
@@ -1248,7 +1247,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestCommentedImportsIgnored()
+  public async Task TestCommentedImportsIgnored()
   {
     string file_unit = @"
     namespace units {
@@ -1269,7 +1268,7 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"unit.bhl", file_unit},
@@ -1282,7 +1281,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestCommentedImportError()
+  public async Task TestCommentedImportError()
   {
     string file_unit = @"
     namespace units {
@@ -1300,10 +1299,10 @@ public class TestImport : BHL_TestBase
     }
     ";
 
-    AssertError<Exception>(
-      delegate()
+    await AssertErrorAsync<Exception>(
+      async delegate()
       {
-        MakeVM(new Dictionary<string, string>()
+        await MakeVM(new Dictionary<string, string>()
         {
           {"test.bhl", file_test},
           {"unit.bhl", file_unit},
@@ -1318,7 +1317,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestModuleNamesCollision()
+  public async Task TestModuleNamesCollision()
   {
     string file_test1 = @"
       func test1() {
@@ -1344,14 +1343,16 @@ public class TestImport : BHL_TestBase
       }
     );
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(conf); },
+    await AssertErrorAsync<Exception>(async delegate()
+      {
+        await CompileFiles(conf);
+      },
       "module 'test' ambiguous resolving"
     );
   }
 
   [Fact]
-  public void TestUseGlobalVarFromAnotherModuleAfterIncrementalBuild()
+  public async Task TestUseGlobalVarFromAnotherModuleAfterIncrementalBuild()
   {
     string file_a = @"
       []string Strings = []
@@ -1373,7 +1374,7 @@ public class TestImport : BHL_TestBase
     );
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("test");
       Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
     }
@@ -1381,14 +1382,14 @@ public class TestImport : BHL_TestBase
     {
       //emulate changes and try incremental build
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
-      var vm = MakeVM(files, use_cache: true);
+      var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
       Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
     }
   }
 
   [Fact]
-  public void TestImportUseSrcDirsWithIncPath()
+  public async Task TestImportUseSrcDirsWithIncPath()
   {
     string file_unit = @"
       class Unit {
@@ -1416,7 +1417,7 @@ public class TestImport : BHL_TestBase
       var ts = new Types();
 
       var conf = MakeCompileConf(files, use_cache: true, inc_paths: new List<string>() { TestDirPath() + "/src/" });
-      var loader = new ModuleLoader(ts, CompileFiles(conf));
+      var loader = new ModuleLoader(ts, await CompileFiles(conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
       Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
@@ -1424,7 +1425,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportFuncPtrs()
+  public async Task TestImportFuncPtrs()
   {
     string bhl1 = @"
     import ""bhl2""
@@ -1483,7 +1484,7 @@ public class TestImport : BHL_TestBase
       { "bhl3.bhl", bhl3 },
     };
 
-    var vm = MakeVM(files);
+    var vm = await MakeVM(files);
 
     vm.LoadModule("bhl1");
     Assert.Equal(1, Execute(vm, "test0").result.PopRelease().num);
@@ -1493,7 +1494,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportNativeModulesFromCachedModule()
+  public async Task TestImportNativeModulesFromCachedModule()
   {
     string bhl1 = @"
     import ""std""
@@ -1522,7 +1523,7 @@ public class TestImport : BHL_TestBase
     });
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("bhl2");
       AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
       CommonChecks(vm);
@@ -1531,7 +1532,7 @@ public class TestImport : BHL_TestBase
     {
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
       var executor = new CompilationExecutor();
-      var vm = MakeVM(files, use_cache: true, executor: executor);
+      var vm = await MakeVM(files, use_cache: true, executor: executor);
       vm.LoadModule("bhl2");
       Assert.Equal(1, executor.cache_hits);
       Assert.Equal(1, executor.cache_miss);
@@ -1541,7 +1542,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestImportInheritedClassFromCachedModule()
+  public async Task TestImportInheritedClassFromCachedModule()
   {
     string bhl1 = @"
     import ""interim"" //we'll force this class change
@@ -1580,7 +1581,7 @@ public class TestImport : BHL_TestBase
     });
 
     {
-      var vm = MakeVM(files);
+      var vm = await MakeVM(files);
       vm.LoadModule("bhl3");
       Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
@@ -1590,7 +1591,7 @@ public class TestImport : BHL_TestBase
       //let's 'touch' the interim file
       System.IO.File.SetLastWriteTimeUtc(files[3], DateTime.UtcNow.AddSeconds(1));
       var executor = new CompilationExecutor();
-      var vm = MakeVM(files, use_cache: true, executor: executor);
+      var vm = await MakeVM(files, use_cache: true, executor: executor);
       vm.LoadModule("bhl3");
       Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
       CommonChecks(vm);
@@ -1598,7 +1599,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug()
+  public async Task TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug()
   {
     string file_foo = @"
       namespace root.foo {
@@ -1631,8 +1632,8 @@ public class TestImport : BHL_TestBase
       use_cache: false,
       max_threads: 1);
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(conf); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(conf); },
       "symbol 'foo' not resolved",
       new PlaceAssert(file_test, @"
       root.foo.Foo()
@@ -1642,8 +1643,8 @@ public class TestImport : BHL_TestBase
 
     conf.proj.use_cache = true;
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(conf); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(conf); },
       "symbol 'foo' not resolved",
       new PlaceAssert(file_test, @"
       root.foo.Foo()
@@ -1653,7 +1654,7 @@ public class TestImport : BHL_TestBase
   }
 
   [Fact]
-  public void TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug2()
+  public async Task TestNotFoundFuncSymbolImproperIncrementalBuildErrorBug2()
   {
     string file_foo = @"
       namespace root.foo {
@@ -1686,8 +1687,8 @@ public class TestImport : BHL_TestBase
       use_cache: false,
       max_threads: 1);
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(conf); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(conf); },
       "symbol 'Foo' not resolved",
       new PlaceAssert(file_test, @"
       root.foo.Foo()
@@ -1697,8 +1698,8 @@ public class TestImport : BHL_TestBase
 
     conf.proj.use_cache = true;
 
-    AssertError<Exception>(
-      delegate() { CompileFiles(conf); },
+    await AssertErrorAsync<Exception>(
+      async delegate() { await CompileFiles(conf); },
       "symbol 'Foo' not resolved",
       new PlaceAssert(file_test, @"
       root.foo.Foo()

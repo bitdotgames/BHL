@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
@@ -138,7 +139,7 @@ public class TestInit : BHL_TestBase
   }
 
   [Fact]
-  public void TestSeveralModulesInit()
+  public async Task TestSeveralModulesInit()
   {
     string file_foo = @"
       static int FOO
@@ -170,7 +171,7 @@ public class TestInit : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(new Dictionary<string, string>()
+    var vm = await MakeVM(new Dictionary<string, string>()
       {
         {"test.bhl", file_test},
         {"foo.bhl", file_foo},
