@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <Compile Include="bhl.cs" />
-    <Compile Include="src\tasks\*.cs" />
+    <Compile Include="src\taskman\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

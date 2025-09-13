@@ -16,6 +16,7 @@ public static class ServerCreator
   public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output,
     Workspace workspace, CancellationToken ct)
   {
+    logger.Debug("BHL server starting...");
     //IObserver<WorkDoneProgressReport> workDone = null;
 
     var server = await LanguageServer.From(options => options
@@ -33,6 +34,11 @@ public static class ServerCreator
         )
         .WithHandler<handlers.TextDocumentHandler>()
         .WithHandler<handlers.SemanticTokensHandler>()
+        .OnStarted((server, token) =>
+          {
+            logger.Debug("Server started");
+            return Task.CompletedTask;
+          })
         .OnInitialize((server, request, token) =>
         {
           var ts = new Types();

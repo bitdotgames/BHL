@@ -35,8 +35,10 @@ public class TestLSPShared : BHL_TestBase
 
       var server = Task.Run(
         () => ServerCreator.CreateAsync(logger,
-          input: input,
-          output: output,
+          //input: input,
+          //output: output,
+          Console.OpenStandardInput(),
+          Console.OpenStandardOutput(),
           workspace: workspace,
           ct: cts.Token));
 
@@ -69,8 +71,9 @@ public class TestLSPShared : BHL_TestBase
 
     public async Task<string> RecvAsync(CancellationToken ct = default)
     {
+      await Task.Delay(TimeSpan.FromSeconds(1), ct);
       using var reader = new StreamReader(_output, Encoding.UTF8, leaveOpen: true);
-      var text = await reader.ReadToEndAsync();
+      var text = await reader.ReadToEndAsync(ct);
       return text;
     }
 
