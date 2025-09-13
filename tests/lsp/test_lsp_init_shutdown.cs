@@ -2,49 +2,45 @@ using System.Threading.Tasks;
 using bhl.lsp;
 using Xunit;
 
-//public class TestLSPInitShutdownExit : TestLSPShared
-//{
-//  ServerCreator srv;
-//
-//  public TestLSPInitShutdownExit()
-//  {
-//    srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//    srv.AttachService(new LifecycleService(srv));
-//  }
-//
-//  [Fact]
-//  public async Task _1()
-//  {
-//    string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
-//
-//    string rsp = "{\"id\":1,\"result\":{" +
-//                 "\"capabilities\":{" +
-//                 "\"textDocumentSync\":null," +
-//                 "\"hoverProvider\":null," +
-//                 "\"declarationProvider\":null," +
-//                 "\"definitionProvider\":null," +
-//                 "\"typeDefinitionProvider\":null," +
-//                 "\"implementationProvider\":null," +
-//                 "\"referencesProvider\":null," +
-//                 "\"documentHighlightProvider\":null," +
-//                 "\"documentSymbolProvider\":null," +
-//                 "\"codeActionProvider\":null," +
-//                 "\"colorProvider\":null," +
-//                 "\"documentFormattingProvider\":null," +
-//                 "\"documentRangeFormattingProvider\":null," +
-//                 "\"renameProvider\":null," +
-//                 "\"foldingRangeProvider\":null," +
-//                 "\"selectionRangeProvider\":null," +
-//                 "\"linkedEditingRangeProvider\":null," +
-//                 "\"callHierarchyProvider\":null," +
-//                 "\"semanticTokensProvider\":null," +
-//                 "\"monikerProvider\":null," +
-//                 "\"workspaceSymbolProvider\":null}," +
-//                 "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
-//                 "\"jsonrpc\":\"2.0\"}";
-//
-//    AssertEqual(await srv.Handle(req), rsp);
-//  }
+public class TestLSPInitShutdownExit : TestLSPShared
+{
+  [Fact]
+  public async Task _1()
+  {
+    using var srv = await NewTestServer(new Workspace());
+
+    string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
+
+    string expected = "{\"id\":1,\"result\":{" +
+                 "\"capabilities\":{" +
+                 "\"textDocumentSync\":null," +
+                 "\"hoverProvider\":null," +
+                 "\"declarationProvider\":null," +
+                 "\"definitionProvider\":null," +
+                 "\"typeDefinitionProvider\":null," +
+                 "\"implementationProvider\":null," +
+                 "\"referencesProvider\":null," +
+                 "\"documentHighlightProvider\":null," +
+                 "\"documentSymbolProvider\":null," +
+                 "\"codeActionProvider\":null," +
+                 "\"colorProvider\":null," +
+                 "\"documentFormattingProvider\":null," +
+                 "\"documentRangeFormattingProvider\":null," +
+                 "\"renameProvider\":null," +
+                 "\"foldingRangeProvider\":null," +
+                 "\"selectionRangeProvider\":null," +
+                 "\"linkedEditingRangeProvider\":null," +
+                 "\"callHierarchyProvider\":null," +
+                 "\"semanticTokensProvider\":null," +
+                 "\"monikerProvider\":null," +
+                 "\"workspaceSymbolProvider\":null}," +
+                 "\"serverInfo\":{\"name\":\"bhlsp\",\"version\":\"" + bhl.Version.Name + "\"}}," +
+                 "\"jsonrpc\":\"2.0\"}";
+
+    await srv.SendAsync(req);
+    var rsp = await srv.RecvAsync();
+    AssertEqual(rsp, expected);
+  }
 //
 //  [Fact]
 //  public async Task _2()
@@ -74,4 +70,4 @@ using Xunit;
 //    );
 //    Assert.True(srv.going_to_exit);
 //  }
-//}
+}

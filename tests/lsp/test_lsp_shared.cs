@@ -15,11 +15,42 @@ public class TestLSPShared : BHL_TestBase
   {
     private readonly Stream _input;
     private readonly Stream _output;
-    private readonly LanguageServer _server;
+    private readonly Task<LanguageServer> _server;
+    private readonly CancellationTokenSource _cts;
 
-    public TestLSPHost(LanguageServer server, Stream input, Stream output)
+    public static async Task<TestLSPHost> NewServer(
+      Workspace workspace,
+      ILogger logger = null,
+      Stream input = null,
+      Stream output = null
+      )
+    {
+      var cts = new CancellationTokenSource();
+
+      if(logger == null)
+        logger = new LoggerConfiguration().CreateLogger();
+
+      input ??= new MemoryStream();
+      output ??= new MemoryStream();
+
+      var server = Task.Run(
+        () => ServerCreator.CreateAsync(logger,
+          input: input,
+          output: output,
+          workspace: workspace,
+          ct: cts.Token));
+
+      return new TestLSPHost(server, cts, input, output);
+    }
+
+    private TestLSPHost(
+      Task<LanguageServer> server,
+      CancellationTokenSource cts,
+      Stream input,
+      Stream output)
     {
       _server = server;
+      _cts = cts;
       _input = input;
       _output = output;
     }
@@ -45,29 +76,17 @@ public class TestLSPShared : BHL_TestBase
 
     public void Dispose()
     {
-      _server.Dispose();
+      _cts.Cancel();
     }
   }
 
-  public static async Task<TestLSPHost> NewTestServer(
+  public static Task<TestLSPHost> NewTestServer(
     Workspace workspace,
     ILogger logger = null,
     Stream input = null,
-    CancellationToken ct = default)
+    Stream output = null)
   {
-    if(logger == null)
-      logger = new LoggerConfiguration().CreateLogger();
-
-    input ??= new MemoryStream();
-    var output = new MemoryStream();
-
-    var server = await ServerCreator.CreateAsync(logger,
-        input: input,
-        output: output,
-        workspace: workspace,
-        ct: ct);
-
-    return new TestLSPHost(server, input: input, output: output);
+    return TestLSPHost.NewServer(workspace, logger, input, output);
   }
 
   //public static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)
