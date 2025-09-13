@@ -11,7 +11,7 @@ using bhl.lsp;
 
 public class TestLSPShared : BHL_TestBase
 {
-  public sealed class TestLSPHost : IAsyncDisposable
+  public sealed class TestLSPHost : IDisposable
   {
     private readonly Stream _input;
     private readonly Stream _output;
@@ -43,26 +43,22 @@ public class TestLSPShared : BHL_TestBase
       return text;
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
       _server.Dispose();
-      try
-      {
-        await _server.WaitForExit; // wait for graceful exit
-      }
-      catch { /* swallow during test */ }
     }
   }
 
   public static async Task<TestLSPHost> NewTestServer(
     Workspace workspace,
     ILogger logger = null,
+    Stream input = null,
     CancellationToken ct = default)
   {
     if(logger == null)
       logger = new LoggerConfiguration().CreateLogger();
 
-    var input = new MemoryStream();
+    input ??= new MemoryStream();
     var output = new MemoryStream();
 
     var server = await ServerCreator.CreateAsync(logger,
