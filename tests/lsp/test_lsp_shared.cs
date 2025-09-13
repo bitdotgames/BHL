@@ -35,10 +35,8 @@ public class TestLSPShared : BHL_TestBase
 
       var server = Task.Run(
         () => ServerCreator.CreateAsync(logger,
-          //input: input,
-          //output: output,
-          Console.OpenStandardInput(),
-          Console.OpenStandardOutput(),
+          input: input,
+          output: output,
           workspace: workspace,
           ct: cts.Token));
 
