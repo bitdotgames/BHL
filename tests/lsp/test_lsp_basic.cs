@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
@@ -103,19 +104,21 @@ public class TestLSPBasic : TestLSPShared
     Assert.True(fn.origin.source_range.start.line > 0);
   }
 
-//  public class TestRpcResponseErrors : TestLSPShared
-//  {
-//    [Fact]
-//    public async Task parse_error()
-//    {
-//      var srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
-//      AssertEqual(
-//        await srv.Handle(json),
-//        "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//
+  public class TestRpcResponseErrors : TestLSPShared
+  {
+    [Fact]
+    public async Task parse_error()
+    {
+      await using var srv = await NewTestServer(new Workspace());
+
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
+      await srv.SendAsync(json);
+      AssertEqual(
+        await srv.RecvAsync(),
+        "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
+      );
+    }
+
 //    [Fact]
 //    public async Task invalid_request()
 //    {
@@ -307,5 +310,5 @@ public class TestLSPBasic : TestLSPShared
 //        string.Empty
 //      );
 //    }
-//  }
+  }
 }

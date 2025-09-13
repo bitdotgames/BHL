@@ -3,26 +3,76 @@ using System.IO;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
+using Serilog;
+using OmniSharp.Extensions.LanguageServer.Server;
 using bhl;
 using bhl.lsp;
 
 public class TestLSPShared : BHL_TestBase
 {
-  //public class MockConnection : IConnection
-  //{
-  //  public string buffer = "";
+  public sealed class TestLSPHost : IAsyncDisposable
+  {
+    private readonly Stream _input;
+    private readonly Stream _output;
+    private readonly LanguageServer _server;
 
-  //  public Task<string> Read(CancellationToken ct)
-  //  {
-  //    return Task.FromResult(string.Empty);
-  //  }
+    public TestLSPHost(LanguageServer server, Stream input, Stream output)
+    {
+      _server = server;
+      _input = input;
+      _output = output;
+    }
 
-  //  public Task Write(string json, CancellationToken ct)
-  //  {
-  //    buffer += json;
-  //    return Task.CompletedTask;
-  //  }
-  //}
+    public async Task SendAsync(string json, CancellationToken ct = default)
+    {
+      // Frame according to LSP spec
+      var bytes = Encoding.UTF8.GetBytes(json);
+      var header = Encoding.ASCII.GetBytes($"Content-Length: {bytes.Length}\r\n\r\n");
+
+      // Write header + json to input stream
+      await _input.WriteAsync(header, 0, header.Length, ct);
+      await _input.WriteAsync(bytes, 0, bytes.Length, ct);
+      await _input.FlushAsync(ct);
+    }
+
+    public async Task<string> RecvAsync(CancellationToken ct = default)
+    {
+      using var reader = new StreamReader(_output, Encoding.UTF8, leaveOpen: true);
+      var text = await reader.ReadToEndAsync();
+      return text;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+      _server.Dispose();
+      try
+      {
+        await _server.WaitForExit; // wait for graceful exit
+      }
+      catch { /* swallow during test */ }
+    }
+  }
+
+  public static async Task<TestLSPHost> NewTestServer(
+    Workspace workspace,
+    ILogger logger = null,
+    CancellationToken ct = default)
+  {
+    if(logger == null)
+      logger = new LoggerConfiguration().CreateLogger();
+
+    var input = new MemoryStream();
+    var output = new MemoryStream();
+
+    var server = await ServerCreator.CreateAsync(logger,
+        input: input,
+        output: output,
+        workspace: workspace,
+        ct: ct);
+
+    return new TestLSPHost(server, input: input, output: output);
+  }
 
   //public static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)
   //{
