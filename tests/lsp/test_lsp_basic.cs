@@ -4,6 +4,8 @@ using System.IO;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
+using Newtonsoft.Json.Linq;
+using OmniSharp.Extensions.JsonRpc.Server;
 using Xunit;
 
 public class TestLSPBasic : TestLSPShared
@@ -109,28 +111,17 @@ public class TestLSPBasic : TestLSPShared
   public class TestRpcResponseErrors : TestLSPShared
   {
     [Fact]
-    public async Task parse_error()
+    public async Task invalid_method()
     {
       using var srv = NewTestServer(new Workspace());
 
-      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
       await srv.SendAsync(json);
-      AssertEqual(
-        await srv.RecvAsync(),
-        "{\"id\":null,\"error\":{\"code\":-32700,\"message\":\"Parse error\"},\"jsonrpc\":\"2.0\"}"
-      );
+      var msg = await srv.RecvMsgAsync();
+      AssertEqual("window/logMessage", msg.Method);
+      AssertContains( msg.Params.Value<string>("message"), "InvalidRequest | Method='1'");
     }
 
-//    [Fact]
-//    public async Task invalid_request()
-//    {
-//      var srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//      string json = "{\"jsonrpc\": \"2.0\", \"id\": 1}";
-//      AssertEqual(
-//        await srv.Handle(json),
-//        "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
 //
 //    [Fact]
 //    public async Task invalid_request_2()

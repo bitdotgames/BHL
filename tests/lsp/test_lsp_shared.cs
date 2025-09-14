@@ -114,6 +114,8 @@ public class TestLSPShared : BHL_TestBase
 
     public async Task SendAsync(string json, CancellationToken ct = default)
     {
+      Console.WriteLine("SEND: " + json);
+
       var bytes = Encoding.UTF8.GetBytes(json);
       var header = Encoding.ASCII.GetBytes($"Content-Length: {bytes.Length}\r\n\r\n");
 
@@ -151,7 +153,17 @@ public class TestLSPShared : BHL_TestBase
       return new string(buffer, 0, read);
     }
 
-    public async IAsyncEnumerable<LspMessage> RecvAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async Task<LspMessage> RecvMsgAsync(CancellationToken ct = default)
+    {
+      await foreach(var msg in RecvAllMsgsAsync(ct))
+      {
+        return msg;
+      }
+
+      throw new Exception("No message received");
+    }
+
+    public async IAsyncEnumerable<LspMessage> RecvAllMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
       using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
 
@@ -181,6 +193,7 @@ public class TestLSPShared : BHL_TestBase
         }
 
         var json = new string(buffer, 0, read);
+        Console.WriteLine("RECV: " + json);
         yield return LspMessage.Parse(json);
       }
     }
@@ -201,14 +214,13 @@ public class TestLSPShared : BHL_TestBase
       };
 
       var json = JsonConvert.SerializeObject(request, _jsonOptions);
-      Console.WriteLine(json);
       await SendAsync(json, ct);
 
-      await foreach(var msg in RecvAllAsync(ct))
+      await foreach(var msg in RecvAllMsgsAsync(ct))
       {
         if(msg.Id == id && msg.Result != null)
         {
-          Console.WriteLine(msg.Json);
+          Console.WriteLine("RECV: " + msg.Json);
           return msg.Result.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
         }
 
