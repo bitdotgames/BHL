@@ -5,8 +5,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Runtime.CompilerServices;
 using Serilog;
 using OmniSharp.Extensions.LanguageServer.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Serialization;
 using bhl;
 using bhl.lsp;
 
@@ -20,6 +26,50 @@ public class TestLSPShared : BHL_TestBase
     // client-facing ends
     private readonly Stream _clientInput;   // what we write requests into
     private readonly Stream _clientOutput;  // what we read responses from
+
+    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+    {
+      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+      DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private int _nextId = 1;
+
+    public class LspMessage
+    {
+      public int? Id;
+      public string Method;
+      public JsonNode Params;
+      public JsonNode Result;
+      public JsonNode Error;
+      public string Json;
+
+      public static LspMessage Parse(string json)
+      {
+        var node = JsonNode.Parse(json);
+        var msg = new LspMessage();
+
+        msg.Json = json;
+
+        if(node?["id"] != null)
+          msg.Id = node["id"].GetValue<int>();
+
+        if(node?["method"] != null)
+          msg.Method = node["method"].GetValue<string>();
+
+        if(node?["params"] != null)
+          msg.Params = node["params"];
+
+        if(node?["result"] != null)
+          msg.Result = node["result"];
+
+        if(node?["error"] != null)
+          msg.Error = node["error"];
+
+        return msg;
+      }
+    }
+
 
     public static TestLSPHost NewServer(
       Workspace workspace,
@@ -102,6 +152,90 @@ public class TestLSPShared : BHL_TestBase
       }
 
       return new string(buffer, 0, read);
+    }
+
+    public async IAsyncEnumerable<LspMessage> RecvAllAsync([EnumeratorCancellation] CancellationToken ct = default)
+    {
+      using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
+
+      while(!ct.IsCancellationRequested)
+      {
+        // ---- Read headers ----
+        string line;
+        int contentLength = 0;
+
+        while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync().WaitAsync(ct)))
+        {
+          if(line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+            contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
+        }
+
+        if(contentLength == 0)
+          continue;
+
+        // ---- Read body ----
+        char[] buffer = new char[contentLength];
+        int read = 0;
+        while(read < contentLength)
+        {
+          int r = await reader.ReadAsync(buffer, read, contentLength - read).WaitAsync(ct);
+          if (r == 0) break;
+          read += r;
+        }
+
+        var json = new string(buffer, 0, read);
+        yield return LspMessage.Parse(json);
+      }
+    }
+
+    public async Task<TResult> SendRequestAsync<TParams, TResult>(
+      string method,
+      TParams @params,
+      CancellationToken ct = default) where TResult : class
+    {
+      var id = Interlocked.Increment(ref _nextId);
+
+      var request = new
+      {
+        jsonrpc = "2.0",
+        id,
+        method,
+        @params
+      };
+
+      var json = JsonSerializer.Serialize(request, _jsonOptions);
+      Console.WriteLine(json);
+      await SendAsync(json, ct);
+
+      await foreach(var msg in RecvAllAsync(ct))
+      {
+        if(msg.Id == id && msg.Result != null)
+        {
+          Console.WriteLine(msg.Json);
+          return msg.Result.Deserialize<TResult>(_jsonOptions);
+        }
+
+        if(msg.Id == id && msg.Error != null)
+          throw new InvalidOperationException($"LSP error: {msg.Error}");
+      }
+
+      throw new InvalidOperationException("No response received");
+    }
+
+    public async Task SendNotificationAsync<TParams>(
+      string method,
+      TParams @params,
+      CancellationToken ct = default)
+    {
+      var notification = new
+      {
+        jsonrpc = "2.0",
+        method,
+        @params
+      };
+
+      var json = JsonSerializer.Serialize(notification, _jsonOptions);
+      await SendAsync(json, ct);
     }
 
     public void Dispose()
