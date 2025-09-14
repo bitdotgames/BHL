@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,80 +14,111 @@ public class TestLSPShared : BHL_TestBase
 {
   public sealed class TestLSPHost : IDisposable
   {
-    private readonly Stream _input;
-    private readonly Stream _output;
     private readonly Task<LanguageServer> _server;
     private readonly CancellationTokenSource _cts;
 
-    public static async Task<TestLSPHost> NewServer(
+    // client-facing ends
+    private readonly Stream _clientInput;   // what we write requests into
+    private readonly Stream _clientOutput;  // what we read responses from
+
+    public static TestLSPHost NewServer(
       Workspace workspace,
       ILogger logger = null,
-      Stream input = null,
-      Stream output = null
-      )
+      CancellationToken ct = default
+    )
     {
-      var cts = new CancellationTokenSource();
+      var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
-      if(logger == null)
-        logger = new LoggerConfiguration().CreateLogger();
+      logger ??= new LoggerConfiguration().CreateLogger();
 
-      input ??= new MemoryStream();
-      output ??= new MemoryStream();
+      // Pipes for client <-> server communication
+      var clientToServer = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.None);
+      var serverInput = new AnonymousPipeClientStream(PipeDirection.In, clientToServer.GetClientHandleAsString());
 
-      var server = Task.Run(
-        () => ServerCreator.CreateAsync(logger,
-          input: input,
-          output: output,
-          workspace: workspace,
-          ct: cts.Token));
+      var serverToClient = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.None);
+      var clientOutput = new AnonymousPipeClientStream(PipeDirection.In, serverToClient.GetClientHandleAsString());
 
-      return new TestLSPHost(server, cts, input, output);
+      // Start server
+      var serverTask = Task.Run(() =>
+          ServerCreator.CreateAsync(
+            logger,
+            input: serverInput,
+            output: serverToClient,
+            workspace: workspace,
+            ct: cts.Token
+            )
+          );
+
+      return new TestLSPHost(serverTask, cts, clientToServer, clientOutput);
     }
 
     private TestLSPHost(
       Task<LanguageServer> server,
       CancellationTokenSource cts,
-      Stream input,
-      Stream output)
+      Stream clientInput,
+      Stream clientOutput
+    )
     {
       _server = server;
       _cts = cts;
-      _input = input;
-      _output = output;
+      _clientInput = clientInput;
+      _clientOutput = clientOutput;
     }
 
     public async Task SendAsync(string json, CancellationToken ct = default)
     {
-      // Frame according to LSP spec
       var bytes = Encoding.UTF8.GetBytes(json);
       var header = Encoding.ASCII.GetBytes($"Content-Length: {bytes.Length}\r\n\r\n");
 
-      // Write header + json to input stream
-      await _input.WriteAsync(header, 0, header.Length, ct);
-      await _input.WriteAsync(bytes, 0, bytes.Length, ct);
-      await _input.FlushAsync(ct);
+      await _clientInput.WriteAsync(header, 0, header.Length, ct);
+      await _clientInput.WriteAsync(bytes, 0, bytes.Length, ct);
+      await _clientInput.FlushAsync(ct);
     }
 
     public async Task<string> RecvAsync(CancellationToken ct = default)
     {
-      using var reader = new StreamReader(_output, Encoding.UTF8, leaveOpen: true);
-      var text = await reader.ReadToEndAsync(ct);
-      return text;
+      using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
+
+      // LSP is message-framed, so read until we have a complete response
+      // First read headers
+      string line;
+      int contentLength = 0;
+      while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
+      {
+        if(line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+          contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
+      }
+
+      if(contentLength == 0)
+        return string.Empty;
+
+      char[] buffer = new char[contentLength];
+      int read = 0;
+      while(read < contentLength)
+      {
+        int r = await reader.ReadAsync(buffer, read, contentLength - read);
+        if (r == 0) break;
+        read += r;
+      }
+
+      return new string(buffer, 0, read);
     }
 
     public void Dispose()
     {
       _cts.Cancel();
+      _clientInput.Dispose();
+      _clientOutput.Dispose();
     }
   }
 
-  public static Task<TestLSPHost> NewTestServer(
+  public static TestLSPHost NewTestServer(
     Workspace workspace,
     ILogger logger = null,
-    Stream input = null,
-    Stream output = null)
+    CancellationToken ct = default
+    )
   {
-    return TestLSPHost.NewServer(workspace, logger, input, output);
+    return TestLSPHost.NewServer(workspace, logger, ct);
   }
 
   //public static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)

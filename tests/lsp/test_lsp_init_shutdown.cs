@@ -7,7 +7,7 @@ public class TestLSPInitShutdownExit : TestLSPShared
   [Fact]
   public async Task _1()
   {
-    using var srv = await NewTestServer(new Workspace());
+    using var srv = NewTestServer(new Workspace());
 
     string req = "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": {\"capabilities\":{}}}";
 

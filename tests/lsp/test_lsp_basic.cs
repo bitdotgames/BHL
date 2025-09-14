@@ -111,7 +111,7 @@ public class TestLSPBasic : TestLSPShared
     [Fact]
     public async Task parse_error()
     {
-      using var srv = await NewTestServer(new Workspace());
+      using var srv = NewTestServer(new Workspace());
 
       string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize";
       await srv.SendAsync(json);
