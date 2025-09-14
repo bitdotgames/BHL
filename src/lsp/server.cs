@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace bhl.lsp;
 
-public static class ServerCreator
+public static class ServerFactory
 {
   public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output,
     Workspace workspace, CancellationToken ct)

@@ -5,15 +5,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
 using Serilog;
 using OmniSharp.Extensions.LanguageServer.Server;
-using OmniSharp.Extensions.LanguageServer.Protocol;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using OmniSharp.Extensions.LanguageServer.Protocol.Serialization;
-using bhl;
 using bhl.lsp;
 
 public class TestLSPShared : BHL_TestBase
@@ -27,10 +24,10 @@ public class TestLSPShared : BHL_TestBase
     private readonly Stream _clientInput;   // what we write requests into
     private readonly Stream _clientOutput;  // what we read responses from
 
-    private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerSettings _jsonOptions = new()
     {
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-      DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+      ContractResolver = new CamelCasePropertyNamesContractResolver(),
+      NullValueHandling = NullValueHandling.Ignore
     };
 
     private int _nextId = 1;
@@ -39,31 +36,31 @@ public class TestLSPShared : BHL_TestBase
     {
       public int? Id;
       public string Method;
-      public JsonNode Params;
-      public JsonNode Result;
-      public JsonNode Error;
+      public JToken Params;
+      public JToken Result;
+      public JToken Error;
       public string Json;
 
       public static LspMessage Parse(string json)
       {
-        var node = JsonNode.Parse(json);
+        var node = JObject.Parse(json);
         var msg = new LspMessage();
 
         msg.Json = json;
 
-        if(node?["id"] != null)
-          msg.Id = node["id"].GetValue<int>();
+        if(node["id"] != null)
+          msg.Id = node["id"].Value<int>();
 
-        if(node?["method"] != null)
-          msg.Method = node["method"].GetValue<string>();
+        if(node["method"] != null)
+          msg.Method = node["method"].Value<string>();
 
-        if(node?["params"] != null)
+        if(node["params"] != null)
           msg.Params = node["params"];
 
-        if(node?["result"] != null)
+        if(node["result"] != null)
           msg.Result = node["result"];
 
-        if(node?["error"] != null)
+        if(node["error"] != null)
           msg.Error = node["error"];
 
         return msg;
@@ -90,7 +87,7 @@ public class TestLSPShared : BHL_TestBase
 
       // Start server
       var serverTask = Task.Run(() =>
-          ServerCreator.CreateAsync(
+          ServerFactory.CreateAsync(
             logger,
             input: serverInput,
             output: serverToClient,
@@ -203,7 +200,7 @@ public class TestLSPShared : BHL_TestBase
         @params
       };
 
-      var json = JsonSerializer.Serialize(request, _jsonOptions);
+      var json = JsonConvert.SerializeObject(request, _jsonOptions);
       Console.WriteLine(json);
       await SendAsync(json, ct);
 
@@ -212,7 +209,7 @@ public class TestLSPShared : BHL_TestBase
         if(msg.Id == id && msg.Result != null)
         {
           Console.WriteLine(msg.Json);
-          return msg.Result.Deserialize<TResult>(_jsonOptions);
+          return msg.Result.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
         }
 
         if(msg.Id == id && msg.Error != null)
@@ -234,7 +231,7 @@ public class TestLSPShared : BHL_TestBase
         @params
       };
 
-      var json = JsonSerializer.Serialize(notification, _jsonOptions);
+      var json = JsonConvert.SerializeObject(notification, _jsonOptions);
       await SendAsync(json, ct);
     }
 

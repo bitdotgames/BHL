@@ -46,7 +46,7 @@ public static partial class Tasks
 
     Console.OutputEncoding = new UTF8Encoding();
 
-    var server = await bhl.lsp.ServerCreator.CreateAsync(
+    var server = await bhl.lsp.ServerFactory.CreateAsync(
       Log.Logger,
       new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
       new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
