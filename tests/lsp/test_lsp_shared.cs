@@ -32,7 +32,7 @@ public class TestLSPShared : BHL_TestBase
 
     private int _nextId = 1;
 
-    public class LspMessage
+    public class LspResponse
     {
       public int? Id;
       public string Method;
@@ -41,10 +41,10 @@ public class TestLSPShared : BHL_TestBase
       public JToken Error;
       public string Json;
 
-      public static LspMessage Parse(string json)
+      public static LspResponse Parse(string json)
       {
         var node = JObject.Parse(json);
-        var msg = new LspMessage();
+        var msg = new LspResponse();
 
         msg.Json = json;
 
@@ -132,7 +132,7 @@ public class TestLSPShared : BHL_TestBase
       // First read headers
       string line;
       int contentLength = 0;
-      while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync()))
+      while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync(ct)))
       {
         if(line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
           contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
@@ -142,10 +142,11 @@ public class TestLSPShared : BHL_TestBase
         return string.Empty;
 
       char[] buffer = new char[contentLength];
+      Memory<char> memory = buffer.AsMemory();
       int read = 0;
       while(read < contentLength)
       {
-        int r = await reader.ReadAsync(buffer, read, contentLength - read);
+        int r = await reader.ReadAsync(memory.Slice(read), ct);
         if (r == 0) break;
         read += r;
       }
@@ -153,7 +154,7 @@ public class TestLSPShared : BHL_TestBase
       return new string(buffer, 0, read);
     }
 
-    public async Task<LspMessage> RecvMsgAsync(CancellationToken ct = default)
+    public async Task<LspResponse> RecvMsgAsync(CancellationToken ct = default)
     {
       await foreach(var msg in RecvAllMsgsAsync(ct))
       {
@@ -163,7 +164,7 @@ public class TestLSPShared : BHL_TestBase
       throw new Exception("No message received");
     }
 
-    public async IAsyncEnumerable<LspMessage> RecvAllMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<LspResponse> RecvAllMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
       using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
 
@@ -194,7 +195,7 @@ public class TestLSPShared : BHL_TestBase
 
         var json = new string(buffer, 0, read);
         Console.WriteLine("RECV: " + json);
-        yield return LspMessage.Parse(json);
+        yield return LspResponse.Parse(json);
       }
     }
 
@@ -213,7 +214,7 @@ public class TestLSPShared : BHL_TestBase
       throw new InvalidOperationException("No response received");
     }
 
-    public async Task<LspMessage> SendRequestAsync<TParams>(
+    public async Task<LspResponse> SendRequestAsync<TParams>(
       string method,
       TParams @params,
       CancellationToken ct = default)

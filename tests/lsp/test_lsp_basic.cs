@@ -122,42 +122,17 @@ public class TestLSPBasic : TestLSPShared
       AssertContains( msg.Params.Value<string>("message"), "InvalidRequest | Method='1'");
     }
 
-//
-//    [Fact]
-//    public async Task invalid_request_2()
-//    {
-//      var srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//      string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
-//      AssertEqual(
-//        await srv.Handle(json),
-//        "{\"id\":1,\"error\":{\"code\":-32600,\"message\":\"\"},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//
-//    [Fact]
-//    public async Task method_not_found()
-//    {
-//      var srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"foo\", \"id\": 1}";
-//      AssertEqual(
-//        await srv.Handle(json),
-//        "{\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found: foo\"},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//
-//    [Fact]
-//    public async Task invalid_params()
-//    {
-//      var srv = new ServerCreator(NoLogger(), NoConnection(), new Workspace());
-//      srv.AttachService(new bhl.lsp.LifecycleService(srv));
-//      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
-//      AssertEqual(
-//        await srv.Handle(json),
-//        "{\"id\":1,\"error\":{\"code\":-32602,\"message\":\"Error converting value \\\"bar\\\" to type 'bhl.lsp.proto.InitializeParams'. Path ''.\"},\"jsonrpc\":\"2.0\"}"
-//      );
-//    }
-//  }
-//
+    [Fact]
+    public async Task invalid_params()
+    {
+      using var srv = NewTestServer(new Workspace());
+
+      string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
+      await srv.SendAsync(json);
+      var msg = await srv.RecvMsgAsync();
+      AssertContains( msg.Params.Value<string>("message"), "InvalidRequest | Method='initialize'");
+    }
+
 //  [Fact]
 //  public async Task TestBadImportError()
 //  {
