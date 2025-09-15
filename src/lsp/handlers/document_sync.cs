@@ -16,6 +16,7 @@ namespace bhl.lsp.handlers;
 
 internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 {
+  private readonly ILanguageServerFacade _server;
   private readonly ILogger _logger;
   private readonly ILanguageServerConfiguration _configuration;
   private readonly Workspace _workspace;
@@ -27,9 +28,11 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     }
   );
 
-  public TextDocumentHandler(ILogger<TextDocumentHandler> logger, Workspace workspace, ILanguageServerConfiguration configuration)
+  public TextDocumentHandler(ILogger<TextDocumentHandler> logger, ILanguageServerFacade server,
+    Workspace workspace, ILanguageServerConfiguration configuration)
   {
     _logger = logger;
+    _server = server;
     _configuration = configuration;
     _workspace = workspace;
   }
@@ -60,7 +63,8 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
     await IndexWorkspaceIfNeededAsync(notification.TextDocument.Uri.Path);
 
-    //await _configuration.GetScopedConfiguration(notification.TextDocument.Uri, token).ConfigureAwait(false);
+    //TODO:
+    // _server.TextDocument.PublishDiagnostics();
 
     return Unit.Value;
   }

@@ -20,7 +20,7 @@ public class TestLSPInitShutdownExit : TestLSPShared
     {
       var initParams = new InitializeParams
       {
-        Capabilities = new ClientCapabilities(),
+        Capabilities = new (),
         ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
       };
 

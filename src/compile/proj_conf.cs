@@ -17,6 +17,11 @@ public class ProjectConf
     return proj;
   }
 
+  public static void WriteToFile(ProjectConf proj, string file_path)
+  {
+    File.WriteAllText(file_path, JsonConvert.SerializeObject(proj));
+  }
+
   public static ProjectConf TryReadFromDir(string dir_path)
   {
     string proj_file = dir_path + "/" + FILE_NAME;

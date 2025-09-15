@@ -6,6 +6,7 @@ using bhl;
 using bhl.lsp;
 using Newtonsoft.Json.Linq;
 using OmniSharp.Extensions.JsonRpc.Server;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
 public class TestLSPBasic : TestLSPShared
@@ -133,52 +134,55 @@ public class TestLSPBasic : TestLSPShared
       AssertContains( msg.Params.Value<string>("message"), "InvalidRequest | Method='initialize'");
     }
 
-//  [Fact]
-//  public async Task TestBadImportError()
-//  {
-//    string bhl_v1 = @"
-//    import hey""
-//
-//    class Foo {
-//      int BAR
-//    }
-//    ";
-//
-//    var ws = new Workspace();
-//
-//    var conn = new MockConnection();
-//    var srv = new ServerCreator(NoLogger(), conn, ws);
-//    srv.AttachService(new bhl.lsp.TextDocumentSynchronizationService(srv));
-//    srv.AttachService(new bhl.lsp.DiagnosticService(srv));
-//
-//    CleanTestFiles();
-//
-//    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
-//
-//    ws.Init(new bhl.Types(), GetTestProjConf());
-//
-//    {
-//      ws.IndexFiles();
-//
-//      AssertEqual(
-//        await srv.Handle(new Request(1, "textDocument/didOpen",
-//          new bhl.lsp.proto.DidOpenTextDocumentParams()
-//          {
-//            textDocument = new bhl.lsp.proto.TextDocumentItem()
-//            {
-//              languageId = "bhl",
-//              version = 0,
-//              uri = uri,
-//              text = bhl_v1
-//            }
-//          }
-//        ).ToJson()),
-//        string.Empty
-//      );
-//
-//      AssertContains(conn.buffer, "invalid import 'missing NORMALSTRING'");
-//    }
-//  }
+  [Fact]
+  public async Task TestBadImportError()
+  {
+    string bhl_v1 = @"
+    import hey""
+
+    class Foo {
+      int BAR
+    }
+    ";
+
+    var ws = new Workspace();
+    using var srv = NewTestServer(ws);
+
+    CleanTestFiles();
+    MakeTestProjConf();
+
+    {
+      var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
+        "initialize",
+        new ()
+        {
+          Capabilities = new (),
+          ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
+          RootPath = GetTestDirPath()
+        }
+      );
+    }
+
+    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
+
+    {
+      ws.IndexFiles();
+
+      var didOpen = new DidOpenTextDocumentParams()
+      {
+        TextDocument = new ()
+        {
+          LanguageId = "bhl",
+          Version = 0,
+          Uri = uri,
+          Text = bhl_v1
+        }
+      };
+      var result = await srv.SendRequestAsync("textDocument/didOpen", didOpen);
+      Assert.Equal(JTokenType.Null, result.Result.Type);
+      //AssertContains(conn.buffer, "invalid import 'missing NORMALSTRING'");
+    }
+  }
 //
 //  [Fact]
 //  public async Task TestOpenChangeCloseDocument()

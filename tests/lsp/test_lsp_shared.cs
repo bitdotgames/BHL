@@ -9,9 +9,11 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
+using bhl;
 using Serilog;
 using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp;
+using OmniSharp.Extensions.LanguageServer.Protocol;
 
 public class TestLSPShared : BHL_TestBase
 {
@@ -346,75 +348,69 @@ public class TestLSPShared : BHL_TestBase
   //         "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
   //}
 
-  //public static void CleanTestFiles()
-  //{
-  //  string dir = GetTestDirPath();
-  //  if(Directory.Exists(dir))
-  //    Directory.Delete(dir, true /*recursive*/);
-  //}
+  public static void CleanTestFiles()
+  {
+    string dir = GetTestDirPath();
+    if(Directory.Exists(dir))
+      Directory.Delete(dir, true /*recursive*/);
+  }
 
-  //public static bhl.ProjectConf GetTestProjConf()
-  //{
-  //  var conf = new bhl.ProjectConf();
-  //  conf.src_dirs.Add(GetTestDirPath());
-  //  conf.inc_path = GetTestIncPath();
-  //  return conf;
-  //}
+  public static bhl.ProjectConf GetTestProjConf()
+  {
+    var conf = new bhl.ProjectConf();
+    conf.src_dirs.Add(GetTestDirPath());
+    conf.inc_path = GetTestIncPath();
+    return conf;
+  }
 
-  //public static bhl.IncludePath GetTestIncPath()
-  //{
-  //  var inc_path = new bhl.IncludePath();
-  //  inc_path.Add(GetTestDirPath());
-  //  return inc_path;
-  //}
+  public static bhl.IncludePath GetTestIncPath()
+  {
+    var inc_path = new bhl.IncludePath();
+    inc_path.Add(GetTestDirPath());
+    return inc_path;
+  }
 
-  //public static string GetTestDirPath()
-  //{
-  //  string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
-  //  return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
-  //}
+  public static string GetTestDirPath()
+  {
+    string self_bin = System.Reflection.Assembly.GetExecutingAssembly().Location;
+    return Path.GetDirectoryName(self_bin) + "/tmp/bhlsp";
+  }
 
-  //public static bhl.lsp.proto.Uri MakeTestDocument(string path, string text, List<string> files = null)
-  //{
-  //  string full_path = bhl.BuildUtils.NormalizeFilePath(GetTestDirPath() + "/" + path);
-  //  Directory.CreateDirectory(Path.GetDirectoryName(full_path));
-  //  File.WriteAllText(full_path, text);
-  //  if(files != null)
-  //    files.Add(full_path);
-  //  var uri = new bhl.lsp.proto.Uri(full_path);
-  //  return uri;
-  //}
+  public static DocumentUri MakeTestDocument(string path, string text, List<string> files = null)
+  {
+    string full_path = bhl.BuildUtils.NormalizeFilePath(GetTestDirPath() + "/" + path);
+    Directory.CreateDirectory(Path.GetDirectoryName(full_path));
+    File.WriteAllText(full_path, text);
+    if(files != null)
+      files.Add(full_path);
+    var uri = DocumentUri.Parse("file://" + full_path);
+    return uri;
+  }
 
-  //public static bhl.SourcePos Pos(string code, string needle)
-  //{
-  //  int idx = code.IndexOf(needle);
-  //  if(idx == -1)
-  //    throw new Exception("Needle not found: " + needle);
-  //  var indexer = new CodeIndex();
-  //  indexer.Update(code);
-  //  var pos = indexer.GetIndexPosition(idx);
-  //  if(pos.line == -1 && pos.column == -1)
-  //    throw new Exception("Needle not mapped position: " + needle);
-  //  return pos;
-  //}
+  public string MakeTestProjConf()
+  {
+    var conf = new bhl.ProjectConf();
+    string path = GetTestDirPath() + "/bhl.proj";
+    Directory.CreateDirectory(Path.GetDirectoryName(path));
+    ProjectConf.WriteToFile(conf, path);
+    return path;
+  }
 
-  //public static string AsJson(bhl.SourcePos pos)
-  //{
-  //  return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
-  //}
+  public static bhl.SourcePos Pos(string code, string needle)
+  {
+    int idx = code.IndexOf(needle);
+    if(idx == -1)
+      throw new Exception("Needle not found: " + needle);
+    var indexer = new CodeIndex();
+    indexer.Update(code);
+    var pos = indexer.GetIndexPosition(idx);
+    if(pos.line == -1 && pos.column == -1)
+      throw new Exception("Needle not mapped position: " + needle);
+    return pos;
+  }
 
-  //public static Logger NoLogger()
-  //{
-  //  return new Logger(0, new NoLogger());
-  //}
-
-  //public static string NullResultJson(int id)
-  //{
-  //  return "{\"id\":" + id + ",\"jsonrpc\":\"2.0\",\"result\":null}";
-  //}
-
-  //public static IConnection NoConnection()
-  //{
-  //  return new MockConnection();
-  //}
+  public static string AsJson(bhl.SourcePos pos)
+  {
+    return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
+  }
 }
