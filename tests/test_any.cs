@@ -45,8 +45,8 @@ public class TestAny : BHL_TestBase
   public void TestAnyNullEquality()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       any foo
       return foo == null
@@ -63,8 +63,8 @@ public class TestAny : BHL_TestBase
   public void TestAnyNullAssign()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       any foo = null
       return foo == null
@@ -81,15 +81,15 @@ public class TestAny : BHL_TestBase
   public void TestCastNativeClassToAny()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       Color c = new Color
       c.r = k
       c.g = k*100
       any a = (any)c
       Color b = (Color)a
-      return b.g + b.r 
+      return b.g + b.r
     }
     ";
 
@@ -105,8 +105,8 @@ public class TestAny : BHL_TestBase
   public void TestDynamicArrayOfAny()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       var ans = new []any [ ""hey"", 1, new []any[10, ""bar""], 200 ]
       return (int)ans[3] == 200
@@ -123,14 +123,14 @@ public class TestAny : BHL_TestBase
   public void TestCastAnyNativeTypeReturnedFromBindings()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       any tmp = mkcolor_any()
       Color c = (Color)tmp
       c.r = 10
       c.g = 100
-      return c.g + c.r 
+      return c.g + c.r
     }
     ";
 
@@ -159,8 +159,8 @@ public class TestAny : BHL_TestBase
   public void TestCastAnyNativeTypeReturnedFromBindingsAsNull()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       any tmp = mkcolor_null()
       Color c = (Color)tmp
@@ -180,8 +180,8 @@ public class TestAny : BHL_TestBase
   public void TestCastNativeTypeArrayToAnyArray()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       Color c1 = new Color
       c1.r = 1
@@ -210,7 +210,7 @@ public class TestAny : BHL_TestBase
       if(ints != null) {
         ints.Add(14)
       }
-      
+
       int summ = 0
       foreach(var a in anys) {
         summ += ((Color)a).r
@@ -234,8 +234,8 @@ public class TestAny : BHL_TestBase
     class Color {
       float r
     }
-      
-    func int test() 
+
+    func int test()
     {
       Color c1 = new Color
       c1.r = 1
@@ -269,7 +269,7 @@ public class TestAny : BHL_TestBase
       if(ints != null) {
         ints.Add(14)
       }
-      
+
       int summ = 0
       foreach(var a in anys) {
         summ += ((Color)a).r
@@ -288,8 +288,8 @@ public class TestAny : BHL_TestBase
   public void TestUserlandSort()
   {
     string bhl = @"
-    
-    func Sort([]any arr, func bool(int, int) cmp) 
+
+    func Sort([]any arr, func bool(int, int) cmp)
     {
       int len = arr.Count
       for(int i = 1; i <= len - 1; i++) {
@@ -302,8 +302,8 @@ public class TestAny : BHL_TestBase
         }
       }
     }
-      
-    func test() 
+
+    func test()
     {
       []int ints = [10, 100, 1]
 
@@ -311,7 +311,7 @@ public class TestAny : BHL_TestBase
       foreach(var i in ints) {
         trace(i + "";"")
       }
-      
+
       Sort(ints, func bool(int a, int b) { return ints[a] > ints[b] })
       foreach(var i in ints) {
         trace(i + "","")
@@ -331,8 +331,8 @@ public class TestAny : BHL_TestBase
   public void TestNeedExplicitCastForAnyArray()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       []int cs
       []any anys
@@ -354,8 +354,8 @@ public class TestAny : BHL_TestBase
     class Color {
       float r
     }
-      
-    func int test() 
+
+    func int test()
     {
       Color c1 = new Color
       c1.r = 1
@@ -389,7 +389,7 @@ public class TestAny : BHL_TestBase
       if(ints != null) {
         ints.Add(100, 14)
       }
-      
+
       int summ = 0
       foreach(var k, var v in anys) {
         summ += (int)k + ((Color)v).r
@@ -408,8 +408,8 @@ public class TestAny : BHL_TestBase
   public void TestNeedExplicitCastForAnyMap()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       [string]int cs
       [any]any anys

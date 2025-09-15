@@ -203,6 +203,21 @@ public class TestLSPShared : BHL_TestBase
       TParams @params,
       CancellationToken ct = default) where TResult : class
     {
+      var msg = await SendRequestAsync<TParams>(method, @params, ct);
+      if(msg.Result != null)
+        return msg.Result.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
+
+      if(msg.Error != null)
+        throw new InvalidOperationException($"LSP error: {msg.Error}");
+
+      throw new InvalidOperationException("No response received");
+    }
+
+    public async Task<LspMessage> SendRequestAsync<TParams>(
+      string method,
+      TParams @params,
+      CancellationToken ct = default)
+    {
       var id = Interlocked.Increment(ref _nextId);
 
       var request = new
@@ -218,14 +233,8 @@ public class TestLSPShared : BHL_TestBase
 
       await foreach(var msg in RecvAllMsgsAsync(ct))
       {
-        if(msg.Id == id && msg.Result != null)
-        {
-          Console.WriteLine("RECV: " + msg.Json);
-          return msg.Result.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
-        }
-
-        if(msg.Id == id && msg.Error != null)
-          throw new InvalidOperationException($"LSP error: {msg.Error}");
+        if(msg.Id == id)
+          return msg;
       }
 
       throw new InvalidOperationException("No response received");
