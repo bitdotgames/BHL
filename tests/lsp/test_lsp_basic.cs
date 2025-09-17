@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
@@ -176,9 +177,10 @@ public class TestLSPBasic : TestLSPShared
           Text = bhl_v1
         }
       };
-      var result = await srv.SendRequestAsync("textDocument/didOpen", didOpen);
-      Assert.Equal(JTokenType.Null, result.Result.Type);
-      //AssertContains(conn.buffer, "invalid import 'missing NORMALSTRING'");
+      await srv.SendNotificationAsync("textDocument/didOpen", didOpen);
+
+      var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
+      AssertContains(diagnostics.Diagnostics.Last().Message, "invalid import 'missing NORMALSTRING'");
     }
   }
 //

@@ -158,7 +158,7 @@ public class TestLSPShared : BHL_TestBase
 
     public async Task<LspResponse> RecvMsgAsync(CancellationToken ct = default)
     {
-      await foreach(var msg in RecvAllMsgsAsync(ct))
+      await foreach(var msg in RecvMsgsAsync(ct))
       {
         return msg;
       }
@@ -166,7 +166,7 @@ public class TestLSPShared : BHL_TestBase
       throw new Exception("No message received");
     }
 
-    public async IAsyncEnumerable<LspResponse> RecvAllMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<LspResponse> RecvMsgsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
       using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
 
@@ -234,11 +234,34 @@ public class TestLSPShared : BHL_TestBase
       var json = JsonConvert.SerializeObject(request, _jsonOptions);
       await SendAsync(json, ct);
 
-      await foreach(var msg in RecvAllMsgsAsync(ct))
+      await foreach(var msg in RecvMsgsAsync(ct))
       {
         if(msg.Id == id)
           return msg;
       }
+
+      throw new InvalidOperationException("No response received");
+    }
+
+    public async Task<TResult> RecvEventAsync<TResult>(
+      string method,
+      CancellationToken ct = default) where TResult : class
+    {
+      LspResponse msg = null;
+      await foreach(var tmp in RecvMsgsAsync(ct))
+      {
+        if(tmp.Method == method)
+        {
+          msg = tmp;
+          break;
+        }
+      }
+
+      if(msg.Params != null)
+        return msg.Params.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
+
+      if(msg.Error != null)
+        throw new InvalidOperationException($"LSP error: {msg.Error}");
 
       throw new InvalidOperationException("No response received");
     }

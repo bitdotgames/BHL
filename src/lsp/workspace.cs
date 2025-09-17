@@ -12,7 +12,8 @@ public class Workspace
 
   public ProjectConf ProjConf { get; private set; }
 
-  public event System.Action<Dictionary<string, CompileErrors>> OnCompileErrors;
+  //TODO: do we need this one?
+  //public event System.Action<Dictionary<string, CompileErrors>> OnCompileErrors;
 
   //NOTE: keeping both collections for convenience of re-indexing
   Dictionary<string, ANTLR_Processor> _path2proc = new Dictionary<string, ANTLR_Processor>();

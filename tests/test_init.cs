@@ -133,7 +133,7 @@ public class TestInit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(0, vm.Fibers.Count);
+    Assert.Empty(vm.Fibers);
     Execute(vm, "test");
     CommonChecks(vm);
   }

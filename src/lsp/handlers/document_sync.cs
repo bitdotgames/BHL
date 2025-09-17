@@ -92,7 +92,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
           range.End.Line = range.Start.Line + 1;
           range.End.Character = 0;
         }
-        
+
         var current = new Diagnostic()
         {
           Severity = DiagnosticSeverity.Error,
