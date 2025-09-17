@@ -1,12 +1,7 @@
-using System;
-using System.Text;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
-using Newtonsoft.Json.Linq;
-using OmniSharp.Extensions.JsonRpc.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
@@ -135,10 +130,10 @@ public class TestLSPBasic : TestLSPShared
       AssertContains( msg.Params.Value<string>("message"), "InvalidRequest | Method='initialize'");
     }
 
-  [Fact]
-  public async Task TestBadImportError()
-  {
-    string bhl_v1 = @"
+    [Fact]
+    public async Task TestBadImportError()
+    {
+      string bhl_v1 = @"
     import hey""
 
     class Foo {
@@ -146,141 +141,109 @@ public class TestLSPBasic : TestLSPShared
     }
     ";
 
-    CleanTestFiles();
-    MakeTestProjConf();
+      CleanTestFiles();
+      MakeTestProjConf();
 
-    var ws = new Workspace();
-    using var srv = NewTestServer(ws);
+      var ws = new Workspace();
+      using var srv = NewTestServer(ws);
 
-    {
-      var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
-        "initialize",
-        new ()
+      await SendInit(srv);
+
+      var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
+
+      await srv.SendNotificationAsync("textDocument/didOpen",
+        new DidOpenTextDocumentParams()
         {
-          Capabilities = new (),
-          ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
-          RootPath = GetTestDirPath()
+          TextDocument = new ()
+          {
+            LanguageId = "bhl",
+            Version = 0,
+            Uri = uri,
+            Text = bhl_v1
+          }
         }
       );
-    }
-
-    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
-
-    {
-      var didOpen = new DidOpenTextDocumentParams()
-      {
-        TextDocument = new ()
-        {
-          LanguageId = "bhl",
-          Version = 0,
-          Uri = uri,
-          Text = bhl_v1
-        }
-      };
-      await srv.SendNotificationAsync("textDocument/didOpen", didOpen);
 
       var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
       AssertContains(diagnostics.Diagnostics.Last().Message, "invalid import 'missing NORMALSTRING'");
     }
-  }
-//
-//  [Fact]
-//  public async Task TestOpenChangeCloseDocument()
-//  {
-//    string bhl_v1 = @"
-//    func float test1(float k)
-//    {
-//      return 0
-//    }
-//
-//    func test2()
-//    {
-//      test1(1)
-//    }
-//    ";
-//
-//    string bhl_v2 = @"
-//    func float test1(float k, int j)
-//    {
-//      return 0
-//    }
-//
-//    func test2()
-//    {
-//      test1(1, 2)
-//    }
-//    ";
-//
-//    var ws = new Workspace();
-//
-//    var srv = new ServerCreator(NoLogger(), NoConnection(), ws);
-//    srv.AttachService(new bhl.lsp.TextDocumentSynchronizationService(srv));
-//
-//    CleanTestFiles();
-//
-//    var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
-//
-//    ws.Init(new bhl.Types(), GetTestProjConf());
-//
-//    {
-//      ws.IndexFiles();
-//
-//      AssertEqual(
-//        await srv.Handle(new Request(1, "textDocument/didOpen",
-//          new bhl.lsp.proto.DidOpenTextDocumentParams()
-//          {
-//            textDocument = new bhl.lsp.proto.TextDocumentItem()
-//            {
-//              languageId = "bhl",
-//              version = 0,
-//              uri = uri,
-//              text = bhl_v1
-//            }
-//          }
-//        ).ToJson()),
-//        string.Empty
-//      );
-//    }
-//
-//    CleanTestFiles();
-//
-//    {
-//      MakeTestDocument("bhl1.bhl", bhl_v2);
-//
-//      ws.IndexFiles();
-//
-//      AssertEqual(
-//        await srv.Handle(new Request(1, "textDocument/didChange",
-//            new bhl.lsp.proto.DidChangeTextDocumentParams()
-//            {
-//              textDocument = new bhl.lsp.proto.VersionedTextDocumentIdentifier()
-//              {
-//                version = 1,
-//                uri = uri
-//              },
-//              contentChanges = new[]
-//              {
-//                new bhl.lsp.proto.TextDocumentContentChangeEvent { text = bhl_v2 }
-//              }
-//            }).ToJson()
-//        ),
-//        string.Empty
-//      );
-//    }
-//
-//    {
-//      AssertEqual(
-//        await srv.Handle(new Request(1, "textDocument/didClose",
-//            new bhl.lsp.proto.DidCloseTextDocumentParams()
-//            {
-//              textDocument = new bhl.lsp.proto.TextDocumentIdentifier()
-//              {
-//                uri = uri
-//              }
-//            }).ToJson()
-//        ),
-//        string.Empty
-//      );
-//    }
+
+    [Fact]
+    public async Task TestOpenChangeCloseDocument()
+    {
+      string bhl_v1 = @"
+    func float test1(float k)
+    {
+      return 0
+    }
+
+    func test2()
+    {
+      test1(1)
+    }
+    ";
+
+      string bhl_v2 = @"
+    func float test1(float k, int j)
+    {
+      return 0
+    }
+
+    func test2()
+    {
+      test1(1, 2)
+    }
+    ";
+
+      CleanTestFiles();
+      MakeTestProjConf();
+
+      var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
+
+      var ws = new Workspace();
+
+      using var srv = NewTestServer(ws);
+
+      await SendInit(srv);
+
+      await srv.SendNotificationAsync("textDocument/didOpen",
+        new DidOpenTextDocumentParams()
+          {
+            TextDocument = new ()
+            {
+              LanguageId = "bhl",
+              Version = 0,
+              Uri = uri,
+              Text = bhl_v1
+            }
+          }
+        );
+
+      await srv.SendNotificationAsync("textDocument/didChange",
+        new DidChangeTextDocumentParams()
+        {
+          TextDocument = new ()
+          {
+            Version = 0,
+            Uri = uri,
+          },
+          ContentChanges = new (
+            new TextDocumentContentChangeEvent() { Text = bhl_v2 }
+            )
+        }
+      );
+
+      await Task.Delay(500);
+
+      await srv.SendNotificationAsync("textDocument/didClose",
+        new DidCloseTextDocumentParams()
+        {
+          TextDocument = new ()
+          {
+            Uri = uri,
+          },
+        }
+      );
+    }
   }
 }

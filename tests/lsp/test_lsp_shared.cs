@@ -14,6 +14,7 @@ using Serilog;
 using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 public class TestLSPShared : BHL_TestBase
 {
@@ -437,5 +438,18 @@ public class TestLSPShared : BHL_TestBase
   public static string AsJson(bhl.SourcePos pos)
   {
     return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
+  }
+
+  public static async Task SendInit(TestLSPHost srv)
+  {
+    var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
+      "initialize",
+      new ()
+      {
+        Capabilities = new (),
+        ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id,
+        RootPath = GetTestDirPath()
+      }
+    );
   }
 }
