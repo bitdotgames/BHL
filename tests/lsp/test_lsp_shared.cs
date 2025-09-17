@@ -390,6 +390,8 @@ public class TestLSPShared : BHL_TestBase
   public string MakeTestProjConf()
   {
     var conf = new bhl.ProjectConf();
+    conf.inc_dirs.Add(GetTestDirPath());
+    conf.src_dirs.Add(GetTestDirPath());
     string path = GetTestDirPath() + "/bhl.proj";
     Directory.CreateDirectory(Path.GetDirectoryName(path));
     ProjectConf.WriteToFile(conf, path);

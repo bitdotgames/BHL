@@ -83,7 +83,7 @@ public class IncludePath
 
     if(norm_path.Length == 0)
     {
-      throw new Exception("File path '" + full_path + "' was not normalized, inc.path: " + this);
+      throw new Exception("File path '" + full_path + "' was not normalized according to include path (" + this + ")");
     }
 
     return norm_path;

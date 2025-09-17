@@ -12,11 +12,11 @@ public class Workspace
 
   public ProjectConf ProjConf { get; private set; }
 
-  public event System.Action<Dictionary<string, CompileErrors>> OnDiagnostics;
+  public event System.Action<Dictionary<string, CompileErrors>> OnCompileErrors;
 
   //NOTE: keeping both collections for convenience of re-indexing
-  Dictionary<string, ANTLR_Processor> _uri2proc = new Dictionary<string, ANTLR_Processor>();
-  public Dictionary<string, BHLDocument> Uri2Doc { get ; private set; } = new Dictionary<string, BHLDocument>();
+  Dictionary<string, ANTLR_Processor> _path2proc = new Dictionary<string, ANTLR_Processor>();
+  public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new Dictionary<string, BHLDocument>();
 
   public bool Indexed { get; private set; }
 
@@ -35,8 +35,8 @@ public class Workspace
   {
     Indexed = true;
 
-    _uri2proc.Clear();
-    Uri2Doc.Clear();
+    _path2proc.Clear();
+    Path2Doc.Clear();
 
     for(int i = 0; i < ProjConf.src_dirs.Count; ++i)
     {
@@ -50,25 +50,23 @@ public class Workspace
         using(var sfs = File.OpenRead(norm_file))
         {
           var proc = ParseFile(norm_file, sfs);
-          _uri2proc.Add(norm_file, proc);
+          _path2proc.Add(norm_file, proc);
         }
       }
     }
 
     var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = _uri2proc;
+    proc_bundle.file2proc = _path2proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
 
     ANTLR_Processor.ProcessAll(proc_bundle);
 
-    CheckDiagnostics();
-
-    foreach(var kv in _uri2proc)
+    foreach(var kv in _path2proc)
     {
       var document = new BHLDocument(kv.Key);
       document.Update(File.ReadAllText(kv.Key), kv.Value);
-      Uri2Doc.Add(kv.Key, document);
+      Path2Doc.Add(kv.Key, document);
     }
   }
 
@@ -95,8 +93,7 @@ public class Workspace
 
   public BHLDocument GetOrLoadDocument(DocumentUri uri)
   {
-    BHLDocument document;
-    if(Uri2Doc.TryGetValue(uri.Path, out document))
+    if(Path2Doc.TryGetValue(uri.Path, out var document))
       return document;
     else
       return LoadDocument(uri);
@@ -106,31 +103,27 @@ public class Workspace
   {
     byte[] buffer = File.ReadAllBytes(uri.Path);
     string text = Encoding.UTF8.GetString(buffer);
-    return OpenDocument(uri, text);
-  }
-
-  public BHLDocument OpenDocument(DocumentUri uri, string text)
-  {
-    BHLDocument document;
-    if(!Uri2Doc.TryGetValue(uri.Path, out document))
-    {
-      document = new BHLDocument(uri);
-      Uri2Doc.Add(uri.Path, document);
-    }
-
+    var document = new BHLDocument(uri);
+    ParseDocument(document, text);
     return document;
   }
 
   public BHLDocument FindDocument(DocumentUri uri)
   {
-    return FindDocument(uri);
+    Path2Doc.TryGetValue(uri.Path, out var document);
+    return document;
   }
 
   public BHLDocument FindDocument(string path)
   {
-    BHLDocument document;
-    Uri2Doc.TryGetValue(path, out document);
+    Path2Doc.TryGetValue(path, out var document);
     return document;
+  }
+
+  public void OpenDocument(DocumentUri uri, string text)
+  {
+    var document = new BHLDocument(uri);
+    ParseDocument(document, text);
   }
 
   public bool UpdateDocument(DocumentUri uri, string text)
@@ -139,37 +132,39 @@ public class Workspace
     if(document == null)
       return false;
 
-    var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(document.Uri.Path, ms);
+    ParseDocument(document, text);
 
-    _uri2proc[document.Uri.Path] = proc;
-
-    var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = _uri2proc;
-    //TODO: use compiled cache if needed
-    proc_bundle.file2cached = null;
-
-    ANTLR_Processor.ProcessAll(proc_bundle);
-
-    CheckDiagnostics();
-
-    document.Update(text, proc);
     return true;
   }
 
-  void CheckDiagnostics()
+  ANTLR_Processor ParseDocument(BHLDocument document, string text)
+  {
+    var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
+    var proc = ParseFile(document.Uri.Path, ms);
+    _path2proc[document.Uri.Path] = proc;
+
+    var proc_bundle = new ProjectCompilationStateBundle(Types);
+    proc_bundle.file2proc = _path2proc;
+    //TODO: use compiled cache if needed
+    proc_bundle.file2cached = null;
+    ANTLR_Processor.ProcessAll(proc_bundle);
+
+    document.Update(text, proc);
+    return proc;
+  }
+
+  public Dictionary<string, CompileErrors> GetCompileErrors()
   {
     var uri2errs = new Dictionary<string, CompileErrors>();
-    foreach(var kv in _uri2proc)
+    foreach(var kv in _path2proc)
       uri2errs[kv.Key] = kv.Value.result.errors;
-
-    OnDiagnostics?.Invoke(uri2errs);
+    return uri2errs;
   }
 
   public List<AnnotatedParseTree> FindReferences(Symbol symb)
   {
     var refs = new List<AnnotatedParseTree>();
-    foreach(var doc_kv in Uri2Doc)
+    foreach(var doc_kv in Path2Doc)
     {
       foreach(var node_kv in doc_kv.Value.Processed.annotated_nodes)
         if(node_kv.Value.lsp_symbol == symb)

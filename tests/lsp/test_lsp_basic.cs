@@ -145,11 +145,11 @@ public class TestLSPBasic : TestLSPShared
     }
     ";
 
-    var ws = new Workspace();
-    using var srv = NewTestServer(ws);
-
     CleanTestFiles();
     MakeTestProjConf();
+
+    var ws = new Workspace();
+    using var srv = NewTestServer(ws);
 
     {
       var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
@@ -166,8 +166,6 @@ public class TestLSPBasic : TestLSPShared
     var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
 
     {
-      ws.IndexFiles();
-
       var didOpen = new DidOpenTextDocumentParams()
       {
         TextDocument = new ()
