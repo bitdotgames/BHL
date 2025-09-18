@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using bhl;
@@ -206,6 +207,8 @@ public class TestLSPBasic : TestLSPShared
 
       await SendInit(srv);
 
+      Assert.Equal(1, ws.Path2Doc.Count);
+
       await srv.SendNotificationAsync("textDocument/didOpen",
         new DidOpenTextDocumentParams()
           {
@@ -218,6 +221,8 @@ public class TestLSPBasic : TestLSPShared
             }
           }
         );
+
+      Assert.Equal(0, CountErrors(ws));
 
       await srv.SendNotificationAsync("textDocument/didChange",
         new DidChangeTextDocumentParams()
@@ -233,7 +238,8 @@ public class TestLSPBasic : TestLSPShared
         }
       );
 
-      await Task.Delay(500);
+      Assert.Equal(0, CountErrors(ws));
+      Assert.Equal(1, ws.Path2Doc.Count);
 
       await srv.SendNotificationAsync("textDocument/didClose",
         new DidCloseTextDocumentParams()
@@ -245,5 +251,13 @@ public class TestLSPBasic : TestLSPShared
         }
       );
     }
+  }
+
+  public static int CountErrors(Workspace ws)
+  {
+    int count = 0;
+    foreach (var kv in ws.GetCompileErrors())
+      count += kv.Value.Count;
+    return count;
   }
 }
