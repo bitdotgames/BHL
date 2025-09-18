@@ -41,10 +41,26 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
 
   public TextDocumentSyncKind SyncKind { get; } = TextDocumentSyncKind.Full;
 
-  public override Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
+  public override async Task<Unit> Handle(DidChangeTextDocumentParams notification, CancellationToken token)
   {
     _logger.LogInformation("Handle Change Document");
-    return Unit.Task;
+
+    await IndexWorkspaceIfNeededAsync(notification.TextDocument.Uri.Path);
+
+    foreach(var change in notification.ContentChanges)
+    {
+      if(!_workspace.UpdateDocument(
+           notification.TextDocument.Uri,
+           change.Text
+         ))
+      {
+        //TODO: send some diagnostics about missing document?
+      }
+    }
+
+    CheckDiagnostics(_workspace.GetCompileErrors());
+
+    return Unit.Value;
   }
 
   Task IndexWorkspaceIfNeededAsync(string path)
@@ -112,12 +128,15 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
         diagnostics.Add(current);
       }
 
-      var dparams = new PublishDiagnosticsParams()
+      if(diagnostics.Count > 0)
       {
-        Uri = DocumentUri.Parse(kv.Key),
-        Diagnostics = diagnostics,
-      };
-      _server.TextDocument.PublishDiagnostics(dparams);
+        _server.TextDocument.PublishDiagnostics(
+          new PublishDiagnosticsParams()
+          {
+            Uri = DocumentUri.Parse(kv.Key),
+            Diagnostics = diagnostics,
+          });
+      }
     }
   }
 

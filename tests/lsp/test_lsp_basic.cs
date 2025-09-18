@@ -132,7 +132,7 @@ public class TestLSPBasic : TestLSPShared
     }
 
     [Fact]
-    public async Task TestBadImportError()
+    public async Task TestErrorOnOpen()
     {
       string bhl_v1 = @"
     import hey""
@@ -167,32 +167,24 @@ public class TestLSPBasic : TestLSPShared
 
       var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
       AssertContains(diagnostics.Diagnostics.Last().Message, "invalid import 'missing NORMALSTRING'");
+
+      Assert.True(CountErrors(ws) > 0);
     }
 
     [Fact]
-    public async Task TestOpenChangeCloseDocument()
+    public async Task TestErrorOnChange()
     {
       string bhl_v1 = @"
     func float test1(float k)
     {
       return 0
     }
-
-    func test2()
-    {
-      test1(1)
-    }
     ";
 
       string bhl_v2 = @"
-    func float test1(float k, int j)
+    func float test1(float k, int ) // <--- error
     {
       return 0
-    }
-
-    func test2()
-    {
-      test1(1, 2)
     }
     ";
 
@@ -208,6 +200,7 @@ public class TestLSPBasic : TestLSPShared
       await SendInit(srv);
 
       Assert.Equal(1, ws.Path2Doc.Count);
+      Assert.Equal(0, CountErrors(ws));
 
       await srv.SendNotificationAsync("textDocument/didOpen",
         new DidOpenTextDocumentParams()
@@ -238,18 +231,11 @@ public class TestLSPBasic : TestLSPShared
         }
       );
 
-      Assert.Equal(0, CountErrors(ws));
-      Assert.Equal(1, ws.Path2Doc.Count);
+      var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
+      AssertContains(diagnostics.Diagnostics.Last().Message, "missing NAME at ')'");
 
-      await srv.SendNotificationAsync("textDocument/didClose",
-        new DidCloseTextDocumentParams()
-        {
-          TextDocument = new ()
-          {
-            Uri = uri,
-          },
-        }
-      );
+      Assert.Equal(1, CountErrors(ws));
+      Assert.Equal(1, ws.Path2Doc.Count);
     }
   }
 
