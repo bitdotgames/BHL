@@ -199,7 +199,7 @@ public class TestLSPBasic : TestLSPShared
 
       await SendInit(srv);
 
-      Assert.Equal(1, ws.Path2Doc.Count);
+      Assert.Single(ws.Path2Doc);
       Assert.Equal(0, CountErrors(ws));
 
       await srv.SendNotificationAsync("textDocument/didOpen",
@@ -235,7 +235,7 @@ public class TestLSPBasic : TestLSPShared
       AssertContains(diagnostics.Diagnostics.Last().Message, "missing NAME at ')'");
 
       Assert.Equal(1, CountErrors(ws));
-      Assert.Equal(1, ws.Path2Doc.Count);
+      Assert.Single(ws.Path2Doc);
     }
   }
 
