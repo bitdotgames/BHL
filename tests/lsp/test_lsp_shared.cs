@@ -23,6 +23,8 @@ public class TestLSPShared : BHL_TestBase
     private readonly Task<LanguageServer> _server;
     private readonly CancellationTokenSource _cts;
 
+    public Task<LanguageServer> ServerTask => _server;
+
     // client-facing ends
     private readonly Stream _clientInput;   // what we write requests into
     private readonly Stream _clientOutput;  // what we read responses from
@@ -70,7 +72,6 @@ public class TestLSPShared : BHL_TestBase
       }
     }
 
-
     public static TestLSPHost NewServer(
       Workspace workspace,
       ILogger logger = null,
@@ -87,17 +88,13 @@ public class TestLSPShared : BHL_TestBase
 
       var serverToClient = new AnonymousPipeServerStream(PipeDirection.Out, HandleInheritability.None);
       var clientOutput = new AnonymousPipeClientStream(PipeDirection.In, serverToClient.GetClientHandleAsString());
-
-      // Start server
-      var serverTask = Task.Run(() =>
-          ServerFactory.CreateAsync(
-            logger,
-            input: serverInput,
-            output: serverToClient,
-            workspace: workspace,
-            ct: cts.Token
-            )
-          );
+      var serverTask = ServerFactory.CreateAsync(
+          logger,
+          input: serverInput,
+          output: serverToClient,
+          workspace: workspace,
+          ct: cts.Token
+        );
 
       return new TestLSPHost(serverTask, cts, clientToServer, clientOutput);
     }
@@ -177,7 +174,12 @@ public class TestLSPShared : BHL_TestBase
       TParams @params,
       CancellationToken ct = default) where TResult : class
     {
-      var msg = await SendRequestAsync<TParams>(method, @params, ct);
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+        new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+        ct);
+
+      var msg = await SendRequestAsync<TParams>(method, @params, cts.Token);
+
       if(msg.Result != null)
         return msg.Result.ToObject<TResult>(JsonSerializer.CreateDefault(_jsonOptions));
 
@@ -192,6 +194,10 @@ public class TestLSPShared : BHL_TestBase
       TParams @params,
       CancellationToken ct = default)
     {
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+        new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+        ct);
+
       var id = Interlocked.Increment(ref _nextId);
 
       var request = new
@@ -203,9 +209,9 @@ public class TestLSPShared : BHL_TestBase
       };
 
       var json = JsonConvert.SerializeObject(request, _jsonOptions);
-      await SendAsync(json, ct);
+      await SendAsync(json, cts.Token);
 
-      await foreach(var msg in RecvMsgsAsync(ct))
+      await foreach(var msg in RecvMsgsAsync(cts.Token))
       {
         if(msg.Id != id)
           throw new InvalidOperationException($"Unexpected response id: {msg.Id}, expected {id}");
@@ -219,8 +225,12 @@ public class TestLSPShared : BHL_TestBase
       string method,
       CancellationToken ct = default) where TResult : class
     {
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+        new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+        ct);
+
       LspResponse msg = null;
-      await foreach(var tmp in RecvMsgsAsync(ct))
+      await foreach(var tmp in RecvMsgsAsync(cts.Token))
       {
         if(tmp.Method != method)
           throw new InvalidOperationException($"Unexpected message method: {msg.Method}, expected {method}");
@@ -243,6 +253,10 @@ public class TestLSPShared : BHL_TestBase
       TParams @params,
       CancellationToken ct = default)
     {
+      using var cts = CancellationTokenSource.CreateLinkedTokenSource(
+        new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+        ct);
+
       var notification = new
       {
         jsonrpc = "2.0",
@@ -251,7 +265,7 @@ public class TestLSPShared : BHL_TestBase
       };
 
       var json = JsonConvert.SerializeObject(notification, _jsonOptions);
-      await SendAsync(json, ct);
+      await SendAsync(json, cts.Token);
     }
 
     public void Dispose()
@@ -422,5 +436,13 @@ public class TestLSPShared : BHL_TestBase
         RootPath = GetTestDirPath()
       }
     );
+  }
+
+  public static int CountErrors(Workspace ws)
+  {
+    int count = 0;
+    foreach (var kv in ws.GetCompileErrors())
+      count += kv.Value.Count;
+    return count;
   }
 }

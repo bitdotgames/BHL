@@ -12,22 +12,18 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 public class TestLSPInitShutdownExit : TestLSPShared
 {
   [Fact]
-  public async Task _1()
+  public async Task InitShutdownExit()
   {
     using var srv = NewTestServer(new Workspace());
-    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
     {
-      var initParams = new InitializeParams
-      {
-        Capabilities = new (),
-        ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
-      };
-
       var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
         "initialize",
-        initParams,
-        cts.Token
+        new ()
+        {
+          Capabilities = new (),
+          ProcessId = System.Diagnostics.Process.GetCurrentProcess().Id
+        }
       );
 
       Assert.NotNull(result.Capabilities);
@@ -35,33 +31,22 @@ public class TestLSPInitShutdownExit : TestLSPShared
     }
 
     {
-      var shutdownParams = new ShutdownParams() { };
       var result = await srv.SendRequestAsync<ShutdownParams>(
         "shutdown",
-        shutdownParams,
-        cts.Token
+        new ()
       );
       Assert.Equal(JTokenType.Null, result.Result.Type);
+
+      await (await srv.ServerTask).WasShutDown.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    {
+      srv.SendRequestAsync<ExitParams>(
+        "exit",
+        new ()
+      );
+
+      await (await srv.ServerTask).WaitForExit.WaitAsync(TimeSpan.FromSeconds(5));
     }
   }
-//
-//  [Fact]
-//  public async Task _3()
-//  {
-//    AssertEqual(
-//      await srv.Handle(new Request(1, "shutdown").ToJson()),
-//      NullResultJson(1)
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task _4()
-//  {
-//    Assert.False(srv.going_to_exit);
-//    AssertEqual(
-//      await srv.Handle(new Request(1, "exit").ToJson()),
-//      string.Empty
-//    );
-//    Assert.True(srv.going_to_exit);
-//  }
 }
