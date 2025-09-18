@@ -127,36 +127,6 @@ public class TestLSPShared : BHL_TestBase
       await _clientInput.FlushAsync(ct);
     }
 
-    public async Task<string> RecvAsync(CancellationToken ct = default)
-    {
-      using var reader = new StreamReader(_clientOutput, Encoding.UTF8, leaveOpen: true);
-
-      // LSP is message-framed, so read until we have a complete response
-      // First read headers
-      string line;
-      int contentLength = 0;
-      while(!string.IsNullOrEmpty(line = await reader.ReadLineAsync(ct)))
-      {
-        if(line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
-          contentLength = int.Parse(line.Substring("Content-Length:".Length).Trim());
-      }
-
-      if(contentLength == 0)
-        return string.Empty;
-
-      char[] buffer = new char[contentLength];
-      Memory<char> memory = buffer.AsMemory();
-      int read = 0;
-      while(read < contentLength)
-      {
-        int r = await reader.ReadAsync(memory.Slice(read), ct);
-        if (r == 0) break;
-        read += r;
-      }
-
-      return new string(buffer, 0, read);
-    }
-
     public async Task<LspResponse> RecvMsgAsync(CancellationToken ct = default)
     {
       await foreach(var msg in RecvMsgsAsync(ct))
@@ -237,8 +207,9 @@ public class TestLSPShared : BHL_TestBase
 
       await foreach(var msg in RecvMsgsAsync(ct))
       {
-        if(msg.Id == id)
-          return msg;
+        if(msg.Id != id)
+          throw new InvalidOperationException($"Unexpected response id: {msg.Id}, expected {id}");
+        return msg;
       }
 
       throw new InvalidOperationException("No response received");
@@ -251,11 +222,11 @@ public class TestLSPShared : BHL_TestBase
       LspResponse msg = null;
       await foreach(var tmp in RecvMsgsAsync(ct))
       {
-        if(tmp.Method == method)
-        {
-          msg = tmp;
-          break;
-        }
+        if(tmp.Method != method)
+          throw new InvalidOperationException($"Unexpected message method: {msg.Method}, expected {method}");
+
+        msg = tmp;
+        break;
       }
 
       if(msg.Params != null)
