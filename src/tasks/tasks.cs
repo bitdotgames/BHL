@@ -121,17 +121,17 @@ public static partial class Tasks
         tm.NeedToRegen(result_dll, files) ||
         tm.NeedToRegen(result_dll, deps))
     {
-      string args = "build --no-restore --framework " + framework + " " + csproj_file + " -o " + result;
-      try
+      if(force)
       {
-        //let's try building without restore since it's faster
-        tm.Shell("dotnet", args);
+        try
+        {
+          tm.Shell("dotnet", "clean --framework " + framework + " " + csproj_file);
+        }
+        catch(Exception)
+        {}
       }
-      catch (Exception)
-      {
-        //..and if it doesn't work let's try the 'normal' build
-        tm.Shell("dotnet", args.Replace("--no-restore", ""));
-      }
+
+      tm.Shell("dotnet", "build --framework " + framework + " " + csproj_file + " -o " + result);
 
       //let's force file modification time since .Net may use result from the cache
       //without changing the file time
