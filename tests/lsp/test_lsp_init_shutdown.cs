@@ -41,7 +41,7 @@ public class TestLSPInitShutdownExit : TestLSPShared
     }
 
     {
-      srv.SendRequestAsync<ExitParams>(
+      _ = srv.SendRequestAsync<ExitParams>(
         "exit",
         new ()
       );
