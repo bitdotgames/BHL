@@ -16,8 +16,8 @@ public class Workspace
   //public event System.Action<Dictionary<string, CompileErrors>> OnCompileErrors;
 
   //NOTE: keeping both collections for convenience of re-indexing
-  Dictionary<string, ANTLR_Processor> _path2proc = new Dictionary<string, ANTLR_Processor>();
-  public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new Dictionary<string, BHLDocument>();
+  public Dictionary<string, ANTLR_Processor> Path2Proc { get ; private set; } = new ();
+  public Dictionary<string, BHLDocument> Path2Doc { get ; private set; } = new ();
 
   public bool Indexed { get; private set; }
 
@@ -32,11 +32,11 @@ public class Workspace
   }
 
   //NOTE: naive initial implementation
-  public void IndexFiles()
+  public Task IndexFiles()
   {
     Indexed = true;
 
-    _path2proc.Clear();
+    Path2Proc.Clear();
     Path2Doc.Clear();
 
     for(int i = 0; i < ProjConf.src_dirs.Count; ++i)
@@ -51,24 +51,25 @@ public class Workspace
         using(var sfs = File.OpenRead(norm_file))
         {
           var proc = ParseFile(norm_file, sfs);
-          _path2proc.Add(norm_file, proc);
+          Path2Proc.Add(norm_file, proc);
         }
       }
     }
 
     var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = _path2proc;
+    proc_bundle.file2proc = Path2Proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
 
     ANTLR_Processor.ProcessAll(proc_bundle);
 
-    foreach(var kv in _path2proc)
+    foreach(var kv in Path2Proc)
     {
       var document = new BHLDocument(kv.Key);
       document.Update(File.ReadAllText(kv.Key), kv.Value);
       Path2Doc.Add(kv.Key, document);
     }
+    return Task.CompletedTask;
   }
 
   ANTLR_Processor ParseFile(string file, Stream stream)
@@ -142,10 +143,10 @@ public class Workspace
   {
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
     var proc = ParseFile(document.Uri.Path, ms);
-    _path2proc[document.Uri.Path] = proc;
+    Path2Proc[document.Uri.Path] = proc;
 
     var proc_bundle = new ProjectCompilationStateBundle(Types);
-    proc_bundle.file2proc = _path2proc;
+    proc_bundle.file2proc = Path2Proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
     ANTLR_Processor.ProcessAll(proc_bundle);
@@ -157,7 +158,7 @@ public class Workspace
   public Dictionary<string, CompileErrors> GetCompileErrors()
   {
     var uri2errs = new Dictionary<string, CompileErrors>();
-    foreach(var kv in _path2proc)
+    foreach(var kv in Path2Proc)
       uri2errs[kv.Key] = kv.Value.result.errors;
     return uri2errs;
   }

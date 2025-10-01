@@ -45,7 +45,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
   {
     _logger.LogInformation("Handle Change Document");
 
-    await IndexWorkspaceIfNeededAsync(notification.TextDocument.Uri.Path);
+    await _workspace.SetupIfEmpty(notification.TextDocument.Uri.Path);
 
     foreach(var change in notification.ContentChanges)
     {
@@ -63,23 +63,11 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
     return Unit.Value;
   }
 
-  Task IndexWorkspaceIfNeededAsync(string path)
-  {
-    if (string.IsNullOrEmpty(_workspace.ProjConf.proj_file))
-    {
-      _workspace.ProjConf.src_dirs.Add(Path.GetDirectoryName(path));
-      _workspace.ProjConf.inc_dirs.Add(Path.GetDirectoryName(path));
-      _workspace.ProjConf.Setup();
-      _workspace.IndexFiles();
-    }
-    return Task.CompletedTask;
-  }
-
   public override async Task<Unit> Handle(DidOpenTextDocumentParams notification, CancellationToken token)
   {
     _logger.LogInformation("Handle Open Document");
 
-    await IndexWorkspaceIfNeededAsync(notification.TextDocument.Uri.Path);
+    await _workspace.SetupIfEmpty(notification.TextDocument.Uri.Path);
 
     _workspace.OpenDocument(
       notification.TextDocument.Uri,
@@ -98,10 +86,8 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       List<Diagnostic> diagnostics = new();
       foreach (var err in kv.Value)
       {
-        var range = new Range(
-          err.range.start.line, err.range.start.column,
-          err.range.end.line, err.range.end.column
-          );
+        var range = err.range.ToRange();
+
         //NOTE: let's force the error to be 'one-line'
         if (range.Start.Line != range.End.Line)
         {

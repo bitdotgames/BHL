@@ -31,11 +31,11 @@ public static class ServerFactory
         )
         .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
         .WithServices(services =>
-          services
-            .AddSingleton(workspace)
+          services.AddSingleton(workspace)
         )
         .WithHandler<handlers.TextDocumentHandler>()
         .WithHandler<handlers.SemanticTokensHandler>()
+        .WithHandler<handlers.TextDocumentReferencesHandler>()
         .OnStarted((server, token) =>
           {
             logger.Debug("Server started");
@@ -58,10 +58,20 @@ public static class ServerFactory
           else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
           {
             proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
+            if(proj == null)
+            {
+              proj = new ProjectConf();
+              proj.SetupForRootPath(request.RootUri.Path);
+            }
           }
           else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
           {
             proj = ProjectConf.TryReadFromDir(request.RootPath);
+            if(proj == null)
+            {
+              proj = new ProjectConf();
+              proj.SetupForRootPath(request.RootPath);
+            }
           }
           else
             logger.Error("No root path specified");

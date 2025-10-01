@@ -301,12 +301,17 @@ public class TestLSPShared : BHL_TestBase
   //         AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
   //}
 
-  //public static string FindReferencesReq(bhl.lsp.proto.Uri uri, string needle)
-  //{
-  //  var pos = Pos(File.ReadAllText(uri.path), needle);
-  //  return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/references\", \"params\":" +
-  //         "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
-  //}
+  public static ReferenceParams MakeFindReferencesReq(DocumentUri uri, string needle)
+  {
+    var pos = Pos(File.ReadAllText(uri.Path), needle);
+
+    var result = new ReferenceParams()
+    {
+      TextDocument = uri,
+      Position = pos.ToPosition(),
+    };
+    return result;
+  }
 
   //public struct UriNeedle
   //{

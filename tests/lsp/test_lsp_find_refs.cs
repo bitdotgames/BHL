@@ -1,115 +1,123 @@
 using System;
 using System.Threading.Tasks;
 using bhl.lsp;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
-//public class TestLSPFindRefs : TestLSPShared
-//{
-//  string bhl1 = @"
-//  func float test1(float k)
-//  {
-//    return 0
-//  }
-//
-//  func test2()
-//  {
-//    test1(42)
-//  }
-//
-//  func test3()
-//  {
-//    int upval = 1 //upval value
-//    func() {
-//      upval = upval + 1 //upval1
-//    }()
-//  }
-//
-//  func test4(int foo, int bar, int upval) //upval arg
-//  {
-//    sink(
-//      func() {
-//        func() {
-//          upval = upval + 1 //upval2
-//        }()
-//      }
-//    )
-//  }
-//
-//  func sink(func() ptr) {}
-//
-//  class Foo {} //class Foo
-//
-//  class Bar : IFoo, Foo {} //class Bar
-//
-//  enum Item //enum Item
-//  {
-//    Type = 1
-//  }
-//
-//  interface IFoo {} //interface IFoo
-//  ";
-//
-//  string bhl2 = @"
-//  import ""bhl1""
-//
-//  func float test5(float k, int j)
-//  {
-//    test1(24)
-//    return 0
-//  }
-//
-//  func Foo test6() //test6
-//  {
-//    return new Foo //new Foo
-//  }
-//
-//  func Item test7() //test7
-//  {
-//    return Item.Type //new Item.Type
-//  }
-//
-//  func IFoo test8() //test8
-//  {
-//    return null
-//  }
-//  ";
-//
-//  ServerCreator srv;
-//
-//  bhl.lsp.proto.Uri uri1;
-//  bhl.lsp.proto.Uri uri2;
-//
-//  public TestLSPFindRefs()
-//  {
-//    var ws = new Workspace();
-//
-//    srv = new ServerCreator(NoLogger(), NoConnection(), ws);
-//    srv.AttachService(new bhl.lsp.TextDocumentFindReferencesService(srv));
-//
-//    CleanTestFiles();
-//
-//    uri1 = MakeTestDocument("bhl1.bhl", bhl1);
-//    uri2 = MakeTestDocument("bhl2.bhl", bhl2);
-//
-//    var ts = new bhl.Types();
-//
-//    ws.Init(ts, GetTestProjConf());
-//    ws.IndexFiles();
-//  }
-//
-//  [Fact]
-//  public async Task ref_test1()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
-//        new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
-//        new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
-//      )
-//    );
-//  }
-//
+public class TestLSPFindRefs : TestLSPShared, IDisposable
+{
+  string bhl1 = @"
+  func float test1(float k)
+  {
+    return 0
+  }
+
+  func test2()
+  {
+    test1(42)
+  }
+
+  func test3()
+  {
+    int upval = 1 //upval value
+    func() {
+      upval = upval + 1 //upval1
+    }()
+  }
+
+  func test4(int foo, int bar, int upval) //upval arg
+  {
+    sink(
+      func() {
+        func() {
+          upval = upval + 1 //upval2
+        }()
+      }
+    )
+  }
+
+  func sink(func() ptr) {}
+
+  class Foo {} //class Foo
+
+  class Bar : IFoo, Foo {} //class Bar
+
+  enum Item //enum Item
+  {
+    Type = 1
+  }
+
+  interface IFoo {} //interface IFoo
+  ";
+
+  string bhl2 = @"
+  import ""bhl1""
+
+  func float test5(float k, int j)
+  {
+    test1(24)
+    return 0
+  }
+
+  func Foo test6() //test6
+  {
+    return new Foo //new Foo
+  }
+
+  func Item test7() //test7
+  {
+    return Item.Type //new Item.Type
+  }
+
+  func IFoo test8() //test8
+  {
+    return null
+  }
+  ";
+
+  TestLSPHost srv;
+
+  DocumentUri uri1;
+  DocumentUri uri2;
+
+  public TestLSPFindRefs()
+  {
+    var ws = new Workspace();
+
+    srv = NewTestServer(new Workspace());
+
+    CleanTestFiles();
+
+    uri1 = MakeTestDocument("bhl1.bhl", bhl1);
+    uri2 = MakeTestDocument("bhl2.bhl", bhl2);
+  }
+
+  public void Dispose()
+  {
+    srv.Dispose();
+  }
+
+  [Fact]
+  public async Task ref_test1()
+  {
+    await SendInit(srv);
+
+    var rsp = await srv.SendRequestAsync<ReferenceParams, LocationContainer>(
+      "textDocument/references",
+      MakeFindReferencesReq(uri1, "st1(42)")
+      );
+
+    //AssertEqual(
+    //  await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
+    //  FindReferencesRsp(
+    //    new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
+    //    new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
+    //    new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
+    //  )
+    //);
+  }
+
 //  [Fact]
 //  public async Task ref_upval()
 //  {
@@ -175,4 +183,4 @@ using Xunit;
 //      )
 //    );
 //  }
-//}
+}

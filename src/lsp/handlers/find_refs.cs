@@ -1,80 +1,88 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+
 
 namespace bhl.lsp.handlers;
 
-//public class TextDocumentFindReferencesService : IService
-//{
-//  Server srv;
-//  Workspace workspace;
-//
-//  public TextDocumentFindReferencesService(Server srv)
-//  {
-//    this.srv = srv;
-//    this.workspace = srv.workspace;
-//  }
-//
-//  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
-//  {
-//    if(cc.textDocument?.references != null)
-//      sc.referencesProvider = true; //textDocument/references
-//  }
-//
-//  /**
-//   * The result type Location[] | null
-//   */
-//  [RpcMethod("textDocument/references")]
-//  public Task<RpcResult> FindReferences(ReferenceParams args)
-//  {
-//    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-//
-//    var refs = new List<Location>();
-//
-//    if(document != null)
-//    {
-//      var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
-//      if(symb != null)
-//      {
-//        //1. adding all found references
-//        foreach(var kv in workspace.uri2doc)
-//        {
-//          foreach(var an_kv in kv.Value.proc.annotated_nodes)
-//          {
-//            if(an_kv.Value.lsp_symbol == symb)
-//            {
-//              var range = (bhl.lsp.proto.Range)an_kv.Value.range;
-//              var loc = new Location
-//              {
-//                uri = new proto.Uri(kv.Key),
-//                range = range
-//              };
-//              refs.Add(loc);
-//            }
-//          }
-//        }
-//
-//        //2. sorting by file name
-//        refs.Sort((a, b) =>
-//          {
-//            if(a.uri.path == b.uri.path)
-//              return a.range.start.line.CompareTo(b.range.start.line);
-//            else
-//              return a.uri.path.CompareTo(b.uri.path);
-//          }
-//        );
-//
-//        //3. adding definition for native symbol (if any)
-//        if(symb is FuncSymbolNative)
-//        {
-//          refs.Add(new Location
-//          {
-//            uri = new proto.Uri(symb.origin.source_file),
-//            range = (bhl.lsp.proto.Range)symb.origin.source_range
-//          });
-//        }
-//      }
-//    }
-//
-//    return Task.FromResult(new RpcResult(refs));
-//  }
-//}
+public class TextDocumentReferencesHandler : ReferencesHandlerBase
+{
+  private readonly ILogger _logger;
+  private readonly Workspace _workspace;
+
+  public TextDocumentReferencesHandler(ILogger<TextDocumentReferencesHandler> logger, Workspace workspace)
+  {
+    _logger = logger;
+    _workspace = workspace;
+  }
+
+  //TODO: does it provide neccessary capabilities?
+  protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability,
+    ClientCapabilities clientCapabilities)
+  {
+    return new()
+    {
+      DocumentSelector = TextDocumentSelector.ForLanguage("bhl")
+    };
+  }
+
+  public override async Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken)
+  {
+    await _workspace.SetupIfEmpty(request.TextDocument.Uri.Path);
+
+    var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
+
+    var refs = new List<Location>();
+
+    if(document != null)
+    {
+      var symb = document.FindSymbol(request.Position.Line, request.Position.Character);
+      if(symb != null)
+      {
+        //1. adding all found references
+        foreach(var kv in _workspace.Path2Proc)
+        {
+          foreach(var anKv in kv.Value.annotated_nodes)
+          {
+            if(anKv.Value.lsp_symbol == symb)
+            {
+              var loc = new Location
+              {
+                Uri = DocumentUri.Parse(kv.Key),
+                Range = anKv.Value.range.ToRange()
+              };
+              refs.Add(loc);
+            }
+          }
+        }
+
+        //2. sorting by file name
+        refs.Sort((a, b) =>
+          {
+            if(a.Uri.Path == b.Uri.Path)
+              return a.Range.Start.Line.CompareTo(b.Range.Start.Line);
+            else
+              return a.Uri.Path.CompareTo(b.Uri.Path);
+          }
+        );
+
+        //3. adding definition for native symbol (if any)
+        if(symb is FuncSymbolNative)
+        {
+          refs.Add(new Location
+          {
+            Uri = DocumentUri.Parse(symb.origin.source_file),
+            Range = symb.origin.source_range.ToRange()
+          });
+        }
+      }
+    }
+
+    return new LocationContainer(refs);
+  }
+}
