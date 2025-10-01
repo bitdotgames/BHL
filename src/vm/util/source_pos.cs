@@ -8,6 +8,7 @@ namespace bhl
 
 public struct SourcePos
 {
+  //NOTE: in ANTLR lines are 1 based, in LSP lines are 0 based
   public int line;
   public int column;
 

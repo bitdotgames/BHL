@@ -52,6 +52,11 @@ public class BHLDocument
     return null;
   }
 
+  public Symbol FindSymbol(SourcePos pos)
+  {
+    return FindSymbol(pos.line, pos.column);
+  }
+
   public Symbol FindSymbol(int line, int character)
   {
     var node = FindTerminalNode(line, character);

@@ -104,19 +104,17 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
   {
     await SendInit(srv);
 
-    var rsp = await srv.SendRequestAsync<ReferenceParams, LocationContainer>(
+    var result = await srv.SendRequestAsync<ReferenceParams, LocationContainer>(
       "textDocument/references",
       MakeFindReferencesReq(uri1, "st1(42)")
       );
-
-    Assert.Equal(
-      MakeFindReferencesRsp(
-        new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
-        new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
-        new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
-      ),
-      rsp
+    var expected = MakeFindReferencesRsp(
+      new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
+      new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
+      new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
     );
+
+    Assert.Equal(expected, result);
   }
 
 //  [Fact]

@@ -41,7 +41,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
 
     if(document != null)
     {
-      var symb = document.FindSymbol(request.Position.Line, request.Position.Character);
+      var symb = document.FindSymbol(request.Position.FromLsp2Antlr());
       if(symb != null)
       {
         //1. adding all found references
@@ -54,7 +54,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
               var loc = new Location
               {
                 Uri = DocumentUri.Parse(kv.Key),
-                Range = anKv.Value.range.ToRange()
+                Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
               };
               refs.Add(loc);
             }
@@ -77,7 +77,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
           refs.Add(new Location
           {
             Uri = DocumentUri.Parse(symb.origin.source_file),
-            Range = symb.origin.source_range.ToRange()
+            Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
           });
         }
       }

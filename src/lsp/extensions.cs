@@ -26,7 +26,33 @@ public static class Extensions
 
   public static Position ToPosition(this SourcePos pos)
   {
-    return new Position(pos.line + 1, pos.column);
+    //NOTE: in LSP position is 0 based
+    return new Position(pos.line - 1, pos.column);
+  }
+
+  public static SourcePos FromAntlr2Lsp(this SourcePos pos)
+  {
+    return new SourcePos(pos.line - 1, pos.column);
+  }
+
+  public static SourcePos FromLsp2Antlr(this SourcePos pos)
+  {
+    return new SourcePos(pos.line + 1, pos.column);
+  }
+
+  public static SourceRange FromAntlr2Lsp(this SourceRange range)
+  {
+    return new SourceRange(range.start.FromAntlr2Lsp(), range.end.FromAntlr2Lsp());
+  }
+
+  public static SourceRange FromLsp2Antlr(this SourceRange range)
+  {
+    return new SourceRange(range.start.FromLsp2Antlr(), range.end.FromLsp2Antlr());
+  }
+
+  public static SourcePos FromLsp2Antlr(this Position pos)
+  {
+    return new SourcePos(pos.Line + 1, pos.Character);
   }
 
   public static void SetupForRootPath(this ProjectConf proj, string rootPath)
