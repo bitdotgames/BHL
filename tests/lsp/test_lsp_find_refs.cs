@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using bhl.lsp;
+using OmniSharp.Extensions.JsonRpc;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
@@ -108,14 +109,14 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
       MakeFindReferencesReq(uri1, "st1(42)")
       );
 
-    //AssertEqual(
-    //  await srv.Handle(FindReferencesReq(uri1, "st1(42)")),
-    //  FindReferencesRsp(
-    //    new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
-    //    new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
-    //    new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
-    //  )
-    //);
+    Assert.Equal(
+      MakeFindReferencesRsp(
+        new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
+        new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
+        new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
+      ),
+      rsp
+    );
   }
 
 //  [Fact]

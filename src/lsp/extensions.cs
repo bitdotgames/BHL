@@ -21,15 +21,12 @@ public static class Extensions
 
   public static Range ToRange(this SourceRange range)
   {
-    return new Range(
-      range.start.line, range.start.column,
-      range.end.line, range.end.column
-    );
+    return new Range(range.start.ToPosition(), range.end.ToPosition());
   }
 
   public static Position ToPosition(this SourcePos pos)
   {
-    return new Position(pos.line, pos.column);
+    return new Position(pos.line + 1, pos.column);
   }
 
   public static void SetupForRootPath(this ProjectConf proj, string rootPath)

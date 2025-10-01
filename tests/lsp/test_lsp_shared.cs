@@ -15,6 +15,7 @@ using OmniSharp.Extensions.LanguageServer.Server;
 using bhl.lsp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 public class TestLSPShared : BHL_TestBase
 {
@@ -303,7 +304,7 @@ public class TestLSPShared : BHL_TestBase
 
   public static ReferenceParams MakeFindReferencesReq(DocumentUri uri, string needle)
   {
-    var pos = Pos(File.ReadAllText(uri.Path), needle);
+    var pos = FindPos(File.ReadAllText(uri.Path), needle);
 
     var result = new ReferenceParams()
     {
@@ -313,40 +314,38 @@ public class TestLSPShared : BHL_TestBase
     return result;
   }
 
-  //public struct UriNeedle
-  //{
-  //  public bhl.lsp.proto.Uri uri;
-  //  public string needle;
-  //  public int end_line_offset;
-  //  public int end_column_offset;
+  public struct UriNeedle
+  {
+    public DocumentUri uri;
+    public string needle;
+    public int end_line_offset;
+    public int end_column_offset;
 
-  //  public UriNeedle(bhl.lsp.proto.Uri uri, string needle, int end_line_offset = 0, int end_column_offset = 0)
-  //  {
-  //    this.uri = uri;
-  //    this.needle = needle;
-  //    this.end_line_offset = end_line_offset;
-  //    this.end_column_offset = end_column_offset;
-  //  }
-  //}
+    public UriNeedle(DocumentUri uri, string needle, int end_line_offset = 0, int end_column_offset = 0)
+    {
+      this.uri = uri;
+      this.needle = needle;
+      this.end_line_offset = end_line_offset;
+      this.end_column_offset = end_column_offset;
+    }
+  }
 
-  //public static string FindReferencesRsp(params UriNeedle[] uns)
-  //{
-  //  string rsp = "{\"id\":1,\"result\":[";
-
-  //  foreach(var un in uns)
-  //  {
-  //    var start = Pos(File.ReadAllText(un.uri.path), un.needle);
-  //    var end = new bhl.SourcePos(start.line + un.end_line_offset, start.column + un.end_column_offset);
-  //    rsp += "{\"uri\":\"" + un.uri + "\",\"range\":{\"start\":" +
-  //           AsJson(start) + ",\"end\":" + AsJson(end) + "}},";
-  //  }
-
-  //  rsp = rsp.TrimEnd(',');
-
-  //  rsp += "],\"jsonrpc\":\"2.0\"}";
-
-  //  return rsp;
-  //}
+  public static LocationContainer MakeFindReferencesRsp(params UriNeedle[] uns)
+  {
+    var locations = new List<Location>();
+    foreach(var un in uns)
+    {
+      var start = FindPos(File.ReadAllText(un.uri.Path), un.needle);
+      var end = new bhl.SourcePos(start.line + un.end_line_offset, start.column + un.end_column_offset);
+      var location = new Location()
+      {
+        Uri = un.uri,
+        Range = new Range() { Start = start.ToPosition(), End = end.ToPosition() }
+      };
+      locations.Add(location);
+    }
+    return locations;
+  }
 
   //public static string HoverReq(bhl.lsp.proto.Uri uri, string needle)
   //{
@@ -412,7 +411,7 @@ public class TestLSPShared : BHL_TestBase
     return path;
   }
 
-  public static bhl.SourcePos Pos(string code, string needle)
+  public static bhl.SourcePos FindPos(string code, string needle)
   {
     int idx = code.IndexOf(needle);
     if(idx == -1)
