@@ -330,7 +330,7 @@ public class TestLSPShared : BHL_TestBase
     }
   }
 
-  public static LocationContainer MakeFindReferencesRsp(params UriNeedle[] uns)
+  public static LocationContainer MakeReferencesRsp(params UriNeedle[] uns)
   {
     var locations = new List<Location>();
     foreach(var un in uns)

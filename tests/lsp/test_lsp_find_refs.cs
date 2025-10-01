@@ -84,8 +84,6 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
   public TestLSPFindRefs()
   {
-    var ws = new Workspace();
-
     srv = NewTestServer(new Workspace());
 
     CleanTestFiles();
@@ -104,11 +102,9 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
   {
     await SendInit(srv);
 
-    var result = await srv.SendRequestAsync<ReferenceParams, LocationContainer>(
-      "textDocument/references",
-      MakeFindReferencesReq(uri1, "st1(42)")
-      );
-    var expected = MakeFindReferencesRsp(
+    var result = await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+      MakeFindReferencesReq(uri1, "st1(42)"));
+    var expected = MakeReferencesRsp(
       new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
       new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
       new UriNeedle(uri2, "test1(24)", end_column_offset: 4)
@@ -117,69 +113,84 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
     Assert.Equal(expected, result);
   }
 
-//  [Fact]
-//  public async Task ref_upval()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri1, "pval + 1")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "upval = 1", end_column_offset: 4),
-//        new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
-//        new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
-//      )
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task ref_upval_arg()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri1, "upval) //upval arg")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "upval) //upval arg", end_column_offset: 4),
-//        new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
-//        new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
-//      )
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task ref_class_Foo()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri2, "o test6() //test6")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
-//        new UriNeedle(uri1, "Foo {} //class Bar", end_column_offset: 2),
-//        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
-//        new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
-//      )
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task ref_enum_Item()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri1, "tem //enum Item")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "Item //enum Item", end_column_offset: 3),
-//        new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
-//        new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
-//      )
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task ref_interface_IFoo()
-//  {
-//    AssertEqual(
-//      await srv.Handle(FindReferencesReq(uri2, "o test8() //test8")),
-//      FindReferencesRsp(
-//        new UriNeedle(uri1, "IFoo, Foo {} //class Bar", end_column_offset: 3),
-//        new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 3),
-//        new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 3)
-//      )
-//    );
-//  }
+  [Fact]
+  public async Task ref_upval()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      MakeReferencesRsp(
+        new UriNeedle(uri1, "upval = 1", end_column_offset: 4),
+        new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
+        new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
+      ),
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+        MakeFindReferencesReq(uri1, "pval + 1"))
+    );
+  }
+
+  [Fact]
+  public async Task ref_upval_arg()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      MakeReferencesRsp(
+        new UriNeedle(uri1, "upval) //upval arg", end_column_offset: 4),
+        new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
+        new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
+      ),
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+      MakeFindReferencesReq(uri1, "upval) //upval arg"))
+    );
+  }
+
+  [Fact]
+  public async Task ref_class_Foo()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      MakeReferencesRsp(
+        new UriNeedle(uri1, "Foo {} //class Foo", end_column_offset: 2),
+        new UriNeedle(uri1, "Foo {} //class Bar", end_column_offset: 2),
+        new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
+        new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
+      ),
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+      MakeFindReferencesReq(uri2, "o test6() //test6"))
+    );
+  }
+
+  [Fact]
+  public async Task ref_enum_Item()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      MakeReferencesRsp(
+        new UriNeedle(uri1, "Item //enum Item", end_column_offset: 3),
+        new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
+        new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
+      ),
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+      MakeFindReferencesReq(uri1, "tem //enum Item"))
+    );
+  }
+
+  [Fact]
+  public async Task ref_interface_IFoo()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      MakeReferencesRsp(
+        new UriNeedle(uri1, "IFoo, Foo {} //class Bar", end_column_offset: 3),
+        new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 3),
+        new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 3)
+      ),
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+      MakeFindReferencesReq(uri2, "o test8() //test8"))
+    );
+  }
 }
