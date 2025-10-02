@@ -32,7 +32,7 @@ public class Workspace
   }
 
   //NOTE: naive initial implementation
-  public Task IndexFiles()
+  public Task IndexFilesAsync()
   {
     Indexed = true;
 

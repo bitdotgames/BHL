@@ -42,7 +42,7 @@ public static class ServerFactory
             logger.Debug("Server started");
             return Task.CompletedTask;
           })
-        .OnInitialize((server, request, token) =>
+        .OnInitialize(async (server, request, token) =>
         {
           var ts = new Types();
           ProjectConf proj = null;
@@ -84,7 +84,7 @@ public static class ServerFactory
           workspace.Init(ts, proj);
 
           //TODO: run it in async manner with progress
-          workspace.IndexFiles();
+          await workspace.IndexFilesAsync();
 
           //var manager = server.WorkDoneManager.For(
           //  request, new WorkDoneProgressBegin
@@ -95,7 +95,6 @@ public static class ServerFactory
           //);
           //work_done = manager;
           //work_done.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
-          return Task.CompletedTask;
         })
         .OnInitialized((server, request, response, token) => Task.CompletedTask)
       ,

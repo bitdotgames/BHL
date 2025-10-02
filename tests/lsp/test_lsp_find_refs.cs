@@ -102,8 +102,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
   {
     await SendInit(srv);
 
-    var result = await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-      MakeFindReferencesReq(uri1, "st1(42)"));
+    var result = await FindReferences(srv, uri1, "st1(42)");
     var expected = MakeReferencesRsp(
       new UriNeedle(uri1, "test1(float k)", end_column_offset: 4),
       new UriNeedle(uri1, "test1(42)", end_column_offset: 4),
@@ -124,8 +123,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
         new UriNeedle(uri1, "upval = upval + 1 //upval1", end_column_offset: 4),
         new UriNeedle(uri1, "upval + 1 //upval1", end_column_offset: 4)
       ),
-      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-        MakeFindReferencesReq(uri1, "pval + 1"))
+      await FindReferences(srv, uri1, "pval + 1")
     );
   }
 
@@ -140,8 +138,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
         new UriNeedle(uri1, "upval = upval + 1 //upval2", end_column_offset: 4),
         new UriNeedle(uri1, "upval + 1 //upval2", end_column_offset: 4)
       ),
-      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-      MakeFindReferencesReq(uri1, "upval) //upval arg"))
+      await FindReferences(srv, uri1, "upval) //upval arg")
     );
   }
 
@@ -157,8 +154,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
         new UriNeedle(uri2, "Foo test6() //test6", end_column_offset: 2),
         new UriNeedle(uri2, "Foo //new Foo", end_column_offset: 2)
       ),
-      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-      MakeFindReferencesReq(uri2, "o test6() //test6"))
+      await FindReferences(srv, uri2, "o test6() //test6")
     );
   }
 
@@ -173,8 +169,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
         new UriNeedle(uri2, "Item test7() //test7", end_column_offset: 3),
         new UriNeedle(uri2, "Item.Type //new Item.Type", end_column_offset: 3)
       ),
-      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-      MakeFindReferencesReq(uri1, "tem //enum Item"))
+      await FindReferences(srv, uri1, "tem //enum Item")
     );
   }
 
@@ -189,8 +184,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
         new UriNeedle(uri1, "IFoo {} //interface IFoo", end_column_offset: 3),
         new UriNeedle(uri2, "IFoo test8() //test8", end_column_offset: 3)
       ),
-      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
-      MakeFindReferencesReq(uri2, "o test8() //test8"))
+      await FindReferences(srv, uri2, "o test8() //test8")
     );
   }
 }

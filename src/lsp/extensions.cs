@@ -63,12 +63,12 @@ public static class Extensions
     proj.Setup();
   }
 
-  public static async Task SetupIfEmpty(this Workspace workspace, string filePath)
+  public static async Task SetupIfEmptyAsync(this Workspace workspace, string filePath)
   {
     if (string.IsNullOrEmpty(workspace.ProjConf.proj_file))
     {
       workspace.ProjConf.SetupForRootPath(Path.GetDirectoryName(filePath));
-      await workspace.IndexFiles();
+      await workspace.IndexFilesAsync();
     }
   }
 }

@@ -312,15 +312,18 @@ public class TestLSPShared : BHL_TestBase
     return result;
   }
 
-  public static ReferenceParams MakeFindReferencesReq(DocumentUri uri, string needle)
+  public static async Task<LocationContainer> FindReferences(TestLSPHost srv, DocumentUri uri, string needle)
   {
     var pos = FindPos(File.ReadAllText(uri.Path), needle);
 
-    var result = new ReferenceParams()
-    {
-      TextDocument = uri,
-      Position = pos.ToPosition(),
-    };
+    var result =
+      await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
+        new ReferenceParams()
+        {
+          TextDocument = uri,
+          Position = pos.ToPosition(),
+        }
+      );
     return result;
   }
 
