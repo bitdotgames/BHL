@@ -367,12 +367,20 @@ public class TestLSPShared : BHL_TestBase
     return locations;
   }
 
-  //public static string HoverReq(bhl.lsp.proto.Uri uri, string needle)
-  //{
-  //  var pos = Pos(File.ReadAllText(uri.path), needle);
-  //  return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/hover\", \"params\":" +
-  //         "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
-  //}
+  public static async Task<Hover> GetHover(TestLSPHost srv, DocumentUri uri, string needle)
+  {
+    var pos = FindPos(File.ReadAllText(uri.Path), needle);
+
+    var result =
+      await srv.SendRequestAsync<HoverParams, Hover>("textDocument/hover",
+        new HoverParams()
+        {
+          TextDocument = uri,
+          Position = pos.ToPosition(),
+        }
+      );
+    return result;
+  }
 
   //public static string SignatureHelpReq(bhl.lsp.proto.Uri uri, string needle)
   //{
@@ -440,11 +448,6 @@ public class TestLSPShared : BHL_TestBase
     if(pos.line == -1 && pos.column == -1)
       throw new Exception("Needle not mapped position: " + needle);
     return pos;
-  }
-
-  public static string AsJson(bhl.SourcePos pos)
-  {
-    return "{\"line\":" + pos.line + ",\"character\":" + pos.column + "}";
   }
 
   public static async Task SendInit(TestLSPHost srv)

@@ -1,54 +1,60 @@
+using System;
 using System.Threading.Tasks;
-using bhl.lsp;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Xunit;
 
-//public class TestLSPHover : TestLSPShared
-//{
-//  string bhl1 = @"
-//  func float test1(float k, float n)
-//  {
-//    return k //return k
-//  }
-//
-//  func test2()
-//  {
-//    test1() //hover 1
-//  }
-//  ";
-//
-//  ServerCreator srv;
-//
-//  bhl.lsp.proto.Uri uri;
-//
-//  public TestLSPHover()
-//  {
-//    var ws = new Workspace();
-//    srv = new ServerCreator(NoLogger(), NoConnection(), ws);
-//    srv.AttachService(new bhl.lsp.TextDocumentHoverService(srv));
-//
-//    CleanTestFiles();
-//
-//    uri = MakeTestDocument("bhl1.bhl", bhl1);
-//
-//    ws.Init(new bhl.Types(), GetTestProjConf());
-//    ws.IndexFiles();
-//  }
-//
-//  [Fact]
-//  public async Task _1()
-//  {
-//    AssertEqual(
-//      await srv.Handle(HoverReq(uri, "est1() //hover 1")),
-//      "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"func float test1(float k,float n)\"}},\"jsonrpc\":\"2.0\"}"
-//    );
-//  }
-//
-//  [Fact]
-//  public async Task _2()
-//  {
-//    AssertEqual(
-//      await srv.Handle(HoverReq(uri, "k //return k")),
-//      "{\"id\":1,\"result\":{\"contents\":{\"kind\":\"plaintext\",\"value\":\"float k\"}},\"jsonrpc\":\"2.0\"}"
-//    );
-//  }
-//}
+public class TestLSPHover : TestLSPShared, IDisposable
+{
+  string bhl1 = @"
+  func float test1(float k = 0, float n = 1)
+  {
+    return k //return k
+  }
+
+  func test2()
+  {
+    test1() //hover 1
+  }
+  ";
+
+  TestLSPHost srv;
+
+  DocumentUri uri;
+
+  public TestLSPHover()
+  {
+    srv = NewTestServer();
+
+    CleanTestFiles();
+
+    uri = MakeTestDocument("bhl1.bhl", bhl1);
+  }
+
+  public void Dispose()
+  {
+    srv.Dispose();
+  }
+
+  [Fact]
+  public async Task _1()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      new Hover() { Contents = new (new MarkupContent { Kind = MarkupKind.PlainText, Value = "func float test1(float k,float n)"})},
+      await GetHover(srv, uri, "est1() //hover 1")
+    );
+  }
+
+  [Fact]
+  public async Task _2()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      new Hover() { Contents = new (new MarkupContent { Kind = MarkupKind.PlainText, Value = "float k"})},
+      await GetHover(srv, uri, "k //return k")
+    );
+  }
+}

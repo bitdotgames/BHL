@@ -18,6 +18,7 @@ public class TextDocumentHoverHandler : HoverHandlerBase
     _logger = logger;
     _workspace = workspace;
   }
+
   protected override HoverRegistrationOptions CreateRegistrationOptions(HoverCapability capability, ClientCapabilities clientCapabilities)
   {
     return new()
