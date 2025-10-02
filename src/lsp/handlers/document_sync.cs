@@ -58,7 +58,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       }
     }
 
-    CheckDiagnostics();
+    _server.PublishDiagnostics(_workspace.GetCompileErrors().GetDiagnostics());
 
     return Unit.Value;
   }
@@ -74,29 +74,10 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       notification.TextDocument.Text
       );
 
-    CheckDiagnostics();
+    _server.PublishDiagnostics(_workspace.GetCompileErrors().GetDiagnostics());
 
     return Unit.Value;
   }
-
-  void CheckDiagnostics()
-  {
-    var diagnostics = _workspace.GetCompileErrors().GetDiagnostics();
-
-    foreach(var kv in diagnostics)
-    {
-      if(kv.Value.Count > 0)
-      {
-        _server.TextDocument.PublishDiagnostics(
-          new PublishDiagnosticsParams()
-          {
-            Uri = DocumentUri.Parse(kv.Key),
-            Diagnostics = kv.Value,
-          });
-      }
-    }
-  }
-
   public override Task<Unit> Handle(DidCloseTextDocumentParams notification, CancellationToken token)
   {
     _logger.LogInformation("Handle Did Close Document");

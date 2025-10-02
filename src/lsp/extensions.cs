@@ -3,7 +3,10 @@ using System.Data.Common;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using OmniSharp.Extensions.LanguageServer.Protocol;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 
 namespace bhl.lsp;
 
@@ -114,4 +117,21 @@ public static class Extensions
     }
     return result;
   }
+
+  public static void PublishDiagnostics(this ILanguageServerFacade server, Dictionary<string, List<Diagnostic>> diagnostics)
+  {
+    foreach(var kv in diagnostics)
+    {
+      if(kv.Value.Count > 0)
+      {
+        server.TextDocument.PublishDiagnostics(
+          new PublishDiagnosticsParams()
+          {
+            Uri = DocumentUri.Parse(kv.Key),
+            Diagnostics = kv.Value,
+          });
+      }
+    }
+  }
+
 }

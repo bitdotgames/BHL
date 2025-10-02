@@ -86,11 +86,6 @@ public static class ServerFactory
           //TODO: run it in async manner with progress
           await workspace.IndexFilesAsync();
 
-          ////TODO: send diagnostics?
-          //var errors = workspace.GetCompileErrors();
-          //if(errors.Count > 0)
-          //  Console.Error.WriteLine("ERRORS " + errors.GetDiagnostics().ToJson());
-
           //var manager = server.WorkDoneManager.For(
           //  request, new WorkDoneProgressBegin
           //  {
@@ -101,7 +96,13 @@ public static class ServerFactory
           //work_done = manager;
           //work_done.OnNext(new WorkDoneProgressReport() { Percentage = 20, Message = "Loading in progress"});
         })
-        .OnInitialized((server, request, response, token) => Task.CompletedTask)
+        .OnInitialized((server, request, response, token) =>
+        {
+          var diagnostics = workspace.GetCompileErrors().GetDiagnostics();
+          _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); });
+
+          return Task.CompletedTask;
+        })
       ,
       ct
     );
