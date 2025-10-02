@@ -14,7 +14,7 @@ public class TestLSPInitShutdownExit : TestLSPShared
   [Fact]
   public async Task InitShutdownExit()
   {
-    using var srv = NewTestServer(new Workspace());
+    using var srv = NewTestServer();
 
     {
       var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(

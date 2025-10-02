@@ -155,11 +155,15 @@ public class Workspace
     return proc;
   }
 
-  public Dictionary<string, CompileErrors> GetCompileErrors()
+  public Dictionary<string, CompileErrors> GetCompileErrors(bool filter_empty = false)
   {
     var uri2errs = new Dictionary<string, CompileErrors>();
     foreach(var kv in Path2Proc)
-      uri2errs[kv.Key] = kv.Value.result.errors;
+    {
+      if(!filter_empty || kv.Value.result.errors.Count > 0)
+        uri2errs[kv.Key] = kv.Value.result.errors;
+    }
+
     return uri2errs;
   }
 

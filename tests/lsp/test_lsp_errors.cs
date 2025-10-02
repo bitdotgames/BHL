@@ -9,7 +9,7 @@ public class TestLspDocumentErrors : TestLSPShared
   [Fact]
   public async Task invalid_method()
   {
-    using var srv = NewTestServer(new Workspace());
+    using var srv = NewTestServer();
 
     string json = "{\"jsonrpc\": \"2.0\", \"method\": 1, \"params\": \"bar\",\"id\": 1}";
     await srv.SendAsync(json);
@@ -21,7 +21,7 @@ public class TestLspDocumentErrors : TestLSPShared
   [Fact]
   public async Task invalid_params()
   {
-    using var srv = NewTestServer(new Workspace());
+    using var srv = NewTestServer();
 
     string json = "{\"jsonrpc\": \"2.0\", \"method\": \"initialize\", \"params\": \"bar\",\"id\": 1}";
     await srv.SendAsync(json);
@@ -44,7 +44,7 @@ public class TestLspDocumentErrors : TestLSPShared
     MakeTestProjConfFile();
 
     var ws = new Workspace();
-    using var srv = NewTestServer(ws);
+    using var srv = NewTestServer(workspace: ws);
 
     await SendInit(srv);
 
@@ -66,7 +66,7 @@ public class TestLspDocumentErrors : TestLSPShared
     var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
     AssertContains(diagnostics.Diagnostics.Last().Message, "invalid import 'missing NORMALSTRING'");
 
-    Assert.True(CountErrors(ws) > 0);
+    Assert.True(ws.GetCompileErrors().Count > 0);
   }
 
   [Fact]
@@ -93,12 +93,12 @@ public class TestLspDocumentErrors : TestLSPShared
 
     var ws = new Workspace();
 
-    using var srv = NewTestServer(ws);
+    using var srv = NewTestServer(workspace: ws);
 
     await SendInit(srv);
 
     Assert.Single(ws.Path2Doc);
-    Assert.Equal(0, CountErrors(ws));
+    Assert.Empty(ws.GetCompileErrors(filter_empty: true));
 
     await srv.SendNotificationAsync("textDocument/didOpen",
       new DidOpenTextDocumentParams()
@@ -113,7 +113,7 @@ public class TestLspDocumentErrors : TestLSPShared
       }
     );
 
-    Assert.Equal(0, CountErrors(ws));
+    Assert.Empty(ws.GetCompileErrors(filter_empty: true));
 
     await srv.SendNotificationAsync("textDocument/didChange",
       new DidChangeTextDocumentParams()
@@ -132,7 +132,7 @@ public class TestLspDocumentErrors : TestLSPShared
     var diagnostics = await srv.RecvEventAsync<PublishDiagnosticsParams>("textDocument/publishDiagnostics");
     AssertContains(diagnostics.Diagnostics.Last().Message, "missing NAME at ')'");
 
-    Assert.Equal(1, CountErrors(ws));
+    Assert.Single(ws.GetCompileErrors(filter_empty: true));
     Assert.Single(ws.Path2Doc);
   }
 }

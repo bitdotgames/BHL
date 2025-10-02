@@ -40,8 +40,6 @@ public static partial class Tasks
 
     Log.Logger = logger_conf.CreateLogger();
 
-    var workspace = new Workspace();
-
     var cts = new CancellationTokenSource();
 
     Console.OutputEncoding = new UTF8Encoding();
@@ -50,7 +48,8 @@ public static partial class Tasks
       Log.Logger,
       new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
       new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
-      workspace,
+      new Types(),
+      new Workspace(),
       cts.Token
     );
 

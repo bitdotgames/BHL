@@ -15,8 +15,9 @@ namespace bhl.lsp;
 
 public static class ServerFactory
 {
-  public static async Task<LanguageServer> CreateAsync(Serilog.ILogger logger, Stream input, Stream output,
-    Workspace workspace, CancellationToken ct)
+  public static async Task<LanguageServer> CreateAsync(
+    Serilog.ILogger logger, Stream input, Stream output,
+    Types types, Workspace workspace, CancellationToken ct)
   {
     logger.Debug("BHL server starting...");
     //IObserver<WorkDoneProgressReport> workDone = null;
@@ -44,7 +45,6 @@ public static class ServerFactory
           })
         .OnInitialize(async (server, request, token) =>
         {
-          var ts = new Types();
           ProjectConf proj = null;
 
           if(request.WorkspaceFolders != null)
@@ -79,9 +79,9 @@ public static class ServerFactory
 
           proj ??= new ProjectConf();
 
-          proj.LoadBindings().Register(ts);
+          proj.LoadBindings().Register(types);
 
-          workspace.Init(ts, proj);
+          workspace.Init(types, proj);
 
           //TODO: run it in async manner with progress
           await workspace.IndexFilesAsync();

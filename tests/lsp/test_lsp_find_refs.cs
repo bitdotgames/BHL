@@ -84,7 +84,7 @@ public class TestLSPFindRefs : TestLSPShared, IDisposable
 
   public TestLSPFindRefs()
   {
-    srv = NewTestServer(new Workspace());
+    srv = NewTestServer();
 
     CleanTestFiles();
 

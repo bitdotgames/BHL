@@ -74,11 +74,16 @@ public class TestLSPShared : BHL_TestBase
     }
 
     public static TestLSPHost NewServer(
-      Workspace workspace,
+      Types types = null,
+      Workspace workspace = null,
       ILogger logger = null,
       CancellationToken ct = default
     )
     {
+      types ??= new Types();
+
+      workspace ??= new Workspace();
+
       var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
       logger ??= new LoggerConfiguration().CreateLogger();
@@ -93,6 +98,7 @@ public class TestLSPShared : BHL_TestBase
           logger,
           input: serverInput,
           output: serverToClient,
+          types: types,
           workspace: workspace,
           ct: cts.Token
         );
@@ -278,12 +284,13 @@ public class TestLSPShared : BHL_TestBase
   }
 
   public static TestLSPHost NewTestServer(
-    Workspace workspace,
+    Types types = null,
+    Workspace workspace = null,
     ILogger logger = null,
     CancellationToken ct = default
     )
   {
-    return TestLSPHost.NewServer(workspace, logger, ct);
+    return TestLSPHost.NewServer(types, workspace, logger, ct);
   }
 
   public static async Task<LocationOrLocationLinks> GoToDefinition(TestLSPHost srv, DocumentUri uri, string needle)
@@ -451,13 +458,5 @@ public class TestLSPShared : BHL_TestBase
         RootPath = GetTestDirPath()
       }
     );
-  }
-
-  public static int CountErrors(Workspace ws)
-  {
-    int count = 0;
-    foreach (var kv in ws.GetCompileErrors())
-      count += kv.Value.Count;
-    return count;
   }
 }

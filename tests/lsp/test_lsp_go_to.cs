@@ -78,19 +78,16 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
 
   public TestLSPGoToDefinition()
   {
-    var ws = new Workspace();
-    srv = NewTestServer(ws);
+    var ts = new bhl.Types();
+    fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
+    ts.ns.Define(fn_TEST);
+
+    srv = NewTestServer(ts);
 
     CleanTestFiles();
 
     uri1 = MakeTestDocument("bhl1.bhl", bhl1);
     uri2 = MakeTestDocument("bhl2.bhl", bhl2);
-
-    var ts = new bhl.Types();
-    fn_TEST = new FuncSymbolNative(new Origin(), "TEST", Types.Void, null);
-    ts.ns.Define(fn_TEST);
-
-    ws.Init(ts, MakeTestProjConf());
   }
 
   public void Dispose()

@@ -113,7 +113,8 @@ public static class Extensions
         diagnostics.Add(current);
       }
 
-      result.Add(kv.Key, diagnostics);
+      if(diagnostics.Count > 0)
+        result.Add(kv.Key, diagnostics);
     }
     return result;
   }
