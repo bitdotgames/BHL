@@ -1,57 +1,70 @@
+using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
+using OmniSharp.Extensions.LanguageServer.Protocol.Document;
+using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 
 namespace bhl.lsp.handlers;
 
-//public class TextDocumentGoToService : IService
-//{
-//  Workspace workspace;
-//
-//  public TextDocumentGoToService(Server srv)
-//  {
-//    this.workspace = srv.workspace;
-//  }
-//
-//  public void GetCapabilities(ClientCapabilities cc, ref ServerCapabilities sc)
-//  {
-//    if(cc.textDocument?.definition != null)
-//      sc.definitionProvider = true; //textDocument/definition
-//
-//    if(cc.textDocument?.declaration != null)
-//      sc.declarationProvider = false; //textDocument/declaration
-//
-//    if(cc.textDocument?.typeDefinition != null)
-//      sc.typeDefinitionProvider = false; //textDocument/typeDefinition
-//
-//    if(cc.textDocument?.implementation != null)
-//      sc.implementationProvider = false; //textDocument/implementation
-//  }
-//
-//  /**
-//   * The result type LocationLink[] got introduced with version 3.14.0
-//   * and depends on the corresponding client capability textDocument.definition.linkSupport.
-//   */
-//  [RpcMethod("textDocument/definition")]
-//  public Task<RpcResult> GotoDefinition(DefinitionParams args)
-//  {
-//    var document = workspace.GetOrLoadDocument(args.textDocument.uri);
-//
-//    if(document != null)
-//    {
-//      var symb = document.FindSymbol((int)args.position.line, (int)args.position.character);
-//      if(symb != null)
-//      {
-//        var range = (bhl.lsp.proto.Range)symb.origin.source_range;
-//        return Task.FromResult(new RpcResult(new Location
-//        {
-//          uri = new proto.Uri(symb.origin.source_file),
-//          range = range
-//        }));
-//      }
-//    }
-//
-//    return Task.FromResult(new RpcResult(new Location()));
-//  }
-//
+public class TextDocumentDefinitionHandler : DefinitionHandlerBase
+{
+  private readonly ILogger _logger;
+  private readonly Workspace _workspace;
+
+  public TextDocumentDefinitionHandler(ILogger<TextDocumentReferencesHandler> logger, Workspace workspace)
+  {
+    _logger = logger;
+    _workspace = workspace;
+  }
+
+  //TODO: does it provide necessary capabilities?
+  //    if(cc.textDocument?.definition != null)
+  //      sc.definitionProvider = true; //textDocument/definition
+  //
+  //    if(cc.textDocument?.declaration != null)
+  //      sc.declarationProvider = false; //textDocument/declaration
+  //
+  //    if(cc.textDocument?.typeDefinition != null)
+  //      sc.typeDefinitionProvider = false; //textDocument/typeDefinition
+  //
+  //    if(cc.textDocument?.implementation != null)
+  //      sc.implementationProvider = false; //textDocument/implementation
+  protected override DefinitionRegistrationOptions CreateRegistrationOptions(DefinitionCapability capability,
+    ClientCapabilities clientCapabilities)
+  {
+    return new()
+    {
+      DocumentSelector = TextDocumentSelector.ForLanguage("bhl")
+    };
+  }
+
+  public override async Task<LocationOrLocationLinks> Handle(DefinitionParams request, CancellationToken cancellationToken)
+  {
+    await _workspace.SetupIfEmpty(request.TextDocument.Uri.Path);
+
+    var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
+
+    if(document != null)
+    {
+      var symb = document.FindSymbol(request.Position.FromLsp2Antlr());
+      if(symb != null)
+      {
+        var range = symb.origin.source_range;
+        return new LocationOrLocationLinks(
+          new Location()
+          {
+            Uri = symb.origin.source_file,
+            Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
+          });
+      }
+    }
+
+    return null;
+  }
+}
+
 //  /**
 //   * The result type LocationLink[] got introduced with version 3.14.0
 //   * and depends on the corresponding client capability textDocument.declaration.linkSupport.

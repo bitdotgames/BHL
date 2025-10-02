@@ -41,7 +41,7 @@ public class TestLspDocumentErrors : TestLSPShared
   ";
 
     CleanTestFiles();
-    MakeTestProjConf();
+    MakeTestProjConfFile();
 
     var ws = new Workspace();
     using var srv = NewTestServer(ws);
@@ -87,7 +87,7 @@ public class TestLspDocumentErrors : TestLSPShared
   ";
 
     CleanTestFiles();
-    MakeTestProjConf();
+    MakeTestProjConfFile();
 
     var uri = MakeTestDocument("bhl1.bhl", bhl_v1);
 

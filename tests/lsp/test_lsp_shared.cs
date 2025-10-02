@@ -286,21 +286,31 @@ public class TestLSPShared : BHL_TestBase
     return TestLSPHost.NewServer(workspace, logger, ct);
   }
 
-  //public static string GoToDefinitionReq(bhl.lsp.proto.Uri uri, string needle)
-  //{
-  //  var pos = Pos(File.ReadAllText(uri.path), needle);
-  //  return "{\"id\": 1,\"jsonrpc\": \"2.0\", \"method\": \"textDocument/definition\", \"params\":" +
-  //         "{\"textDocument\": {\"uri\": \"" + uri + "\"}, \"position\": " + AsJson(pos) + "}}";
-  //}
+  public static async Task<LocationOrLocationLinks> GoToDefinition(TestLSPHost srv, DocumentUri uri, string needle)
+  {
+    var pos = FindPos(File.ReadAllText(uri.Path), needle);
 
-  //public static string GoToDefinitionRsp(bhl.lsp.proto.Uri uri, string needle, int end_line_offset = 0,
-  //  int end_column_offset = 0)
-  //{
-  //  var start = Pos(File.ReadAllText(uri.path), needle);
-  //  var end = new bhl.SourcePos(start.line + end_line_offset, start.column + end_column_offset);
-  //  return "{\"id\":1,\"result\":{\"uri\":\"" + uri + "\",\"range\":{\"start\":" +
-  //         AsJson(start) + ",\"end\":" + AsJson(end) + "}},\"jsonrpc\":\"2.0\"}";
-  //}
+    return await srv.SendRequestAsync<DefinitionParams, LocationOrLocationLinks>(
+      "textDocument/definition",
+      new ()
+      {
+        TextDocument = uri,
+        Position = pos.ToPosition()
+      }
+    );
+  }
+
+  public static LocationOrLocationLinks GoToDefinitionRsp(DocumentUri uri, string needle, int end_line_offset = 0,
+    int end_column_offset = 0)
+  {
+    var start = FindPos(File.ReadAllText(uri.Path), needle);
+    var end = new bhl.SourcePos(start.line + end_line_offset, start.column + end_column_offset);
+
+    var result = new LocationOrLocationLinks(
+      new Location() { Uri = uri, Range = new Range(start.ToPosition(), end.ToPosition()) }
+      );
+    return result;
+  }
 
   public static ReferenceParams MakeFindReferencesReq(DocumentUri uri, string needle)
   {
@@ -368,12 +378,21 @@ public class TestLSPShared : BHL_TestBase
       Directory.Delete(dir, true /*recursive*/);
   }
 
-  public static bhl.ProjectConf GetTestProjConf()
+  public static bhl.ProjectConf MakeTestProjConf()
   {
     var conf = new bhl.ProjectConf();
     conf.src_dirs.Add(GetTestDirPath());
     conf.inc_path = GetTestIncPath();
     return conf;
+  }
+
+  public string MakeTestProjConfFile()
+  {
+    var conf = MakeTestProjConf();
+    string path = GetTestDirPath() + "/bhl.proj";
+    Directory.CreateDirectory(Path.GetDirectoryName(path));
+    ProjectConf.WriteToFile(conf, path);
+    return path;
   }
 
   public static bhl.IncludePath GetTestIncPath()
@@ -398,17 +417,6 @@ public class TestLSPShared : BHL_TestBase
       files.Add(full_path);
     var uri = DocumentUri.Parse("file://" + full_path);
     return uri;
-  }
-
-  public string MakeTestProjConf()
-  {
-    var conf = new bhl.ProjectConf();
-    conf.inc_dirs.Add(GetTestDirPath());
-    conf.src_dirs.Add(GetTestDirPath());
-    string path = GetTestDirPath() + "/bhl.proj";
-    Directory.CreateDirectory(Path.GetDirectoryName(path));
-    ProjectConf.WriteToFile(conf, path);
-    return path;
   }
 
   public static bhl.SourcePos FindPos(string code, string needle)

@@ -36,6 +36,7 @@ public static class ServerFactory
         .WithHandler<handlers.TextDocumentHandler>()
         .WithHandler<handlers.SemanticTokensHandler>()
         .WithHandler<handlers.TextDocumentReferencesHandler>()
+        .WithHandler<handlers.TextDocumentDefinitionHandler>()
         .OnStarted((server, token) =>
           {
             logger.Debug("Server started");

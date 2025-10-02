@@ -21,7 +21,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
     _workspace = workspace;
   }
 
-  //TODO: does it provide neccessary capabilities?
+  //TODO: does it provide necessary capabilities?
   protected override ReferenceRegistrationOptions CreateRegistrationOptions(ReferenceCapability capability,
     ClientCapabilities clientCapabilities)
   {
