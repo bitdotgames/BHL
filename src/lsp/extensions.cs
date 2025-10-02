@@ -67,7 +67,7 @@ public static class Extensions
     proj.Setup();
   }
 
-  public static async Task SetupIfEmptyAsync(this Workspace workspace, string filePath)
+  public static async Task SetupProjectIfEmptyAsync(this Workspace workspace, string filePath)
   {
     if (string.IsNullOrEmpty(workspace.ProjConf.proj_file))
     {
