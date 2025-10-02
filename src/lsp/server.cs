@@ -86,6 +86,11 @@ public static class ServerFactory
           //TODO: run it in async manner with progress
           await workspace.IndexFilesAsync();
 
+          ////TODO: send diagnostics?
+          //var errors = workspace.GetCompileErrors();
+          //if(errors.Count > 0)
+          //  Console.Error.WriteLine("ERRORS " + errors.GetDiagnostics().ToJson());
+
           //var manager = server.WorkDoneManager.For(
           //  request, new WorkDoneProgressBegin
           //  {

@@ -58,7 +58,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       }
     }
 
-    CheckDiagnostics(_workspace.GetCompileErrors());
+    CheckDiagnostics();
 
     return Unit.Value;
   }
@@ -74,53 +74,24 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
       notification.TextDocument.Text
       );
 
-    CheckDiagnostics(_workspace.GetCompileErrors());
+    CheckDiagnostics();
 
     return Unit.Value;
   }
 
-  void CheckDiagnostics(Dictionary<string, CompileErrors> errors)
+  void CheckDiagnostics()
   {
-    foreach(var kv in errors)
+    var diagnostics = _workspace.GetCompileErrors().GetDiagnostics();
+
+    foreach(var kv in diagnostics)
     {
-      List<Diagnostic> diagnostics = new();
-      foreach (var err in kv.Value)
-      {
-        var range = err.range.ToRange();
-
-        //NOTE: let's force the error to be 'one-line'
-        if (range.Start.Line != range.End.Line)
-        {
-          range.End.Line = range.Start.Line + 1;
-          range.End.Character = 0;
-        }
-
-        var current = new Diagnostic()
-        {
-          Severity = DiagnosticSeverity.Error,
-          Range = range,
-          Message = err.text
-        };
-
-        if (diagnostics.Count > 0)
-        {
-          var prev = diagnostics[^1];
-          //NOTE: let's skip diagnostics which starts on the same line
-          //      just like the previous one
-          if (prev.Range.Start.Line == current.Range.Start.Line)
-            continue;
-        }
-
-        diagnostics.Add(current);
-      }
-
-      if(diagnostics.Count > 0)
+      if(kv.Value.Count > 0)
       {
         _server.TextDocument.PublishDiagnostics(
           new PublishDiagnosticsParams()
           {
             Uri = DocumentUri.Parse(kv.Key),
-            Diagnostics = diagnostics,
+            Diagnostics = kv.Value,
           });
       }
     }
