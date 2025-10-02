@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using bhl;
 using bhl.lsp;
@@ -255,19 +256,22 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
     await SendInit(srv);
 
     var rsp = await GoToDefinition(srv, uri2, "EST() //native call");
-    Console.WriteLine("OUTPUT " + rsp.ToJson());
-    //AssertContains(rsp, "test_lsp_go_to.cs");
-    //AssertContains(rsp,
-    //  "\"start\":{\"line\":" + (fn_TEST.origin.source_range.start.line - 1) + ",\"character\":1},\"end\":{\"line\":" +
-    //  (fn_TEST.origin.source_range.start.line - 1) + ",\"character\":1}}");
+
+    AssertContains(rsp.First().Location!.Uri.Path, "test_lsp_go_to.cs");
+    Assert.Equal(
+      fn_TEST.origin.source_range.FromAntlr2Lsp().ToRange(),
+      rsp.First().Location!.Range
+      );
   }
 
-//  [Fact]
-//  public async Task _15()
-//  {
-//    AssertEqual(
-//      await srv.Handle(GoToDefinitionReq(uri2, "pval + 1")),
-//      GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4)
-//    );
-//  }
+  [Fact]
+  public async Task _15()
+  {
+    await SendInit(srv);
+
+    Assert.Equal(
+      GoToDefinitionRsp(uri2, "upval = 1", end_column_offset: 4),
+      await GoToDefinition(srv, uri2, "pval + 1")
+    );
+  }
 }
