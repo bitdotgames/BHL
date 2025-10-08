@@ -2165,7 +2165,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     else if(ctx.funcType() != null)
       tp = curr_scope.R().T(ParseFuncSignature(ctx.funcType()));
 
-    if(ctx.ARR() != null)
+    if(ctx.arrType() != null)
     {
       if(tp.Get() == null)
       {

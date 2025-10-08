@@ -74,6 +74,12 @@ public interface IbhlParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitType([NotNull] bhlParser.TypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="bhlParser.arrType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArrType([NotNull] bhlParser.ArrTypeContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="bhlParser.mapType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

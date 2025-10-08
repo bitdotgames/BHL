@@ -1,7 +1,7 @@
 lexer grammar bhlLexer;
 
-options { 
-  superClass=bhlLexerBase; 
+options {
+  superClass=bhlLexerBase;
 }
 
 IMPORT : 'import' ;
@@ -26,7 +26,7 @@ NEW : 'new' ;
 PARAL : 'paral' ;
 PARAL_ALL : 'paral_all' ;
 DEFER : 'defer' ;
-NAMESPACE : 'namespace' ;  
+NAMESPACE : 'namespace' ;
 CLASS : 'class' ;
 INTERFACE : 'interface' ;
 ENUM : 'enum' ;
@@ -66,10 +66,6 @@ NAME
   : [a-zA-Z_][a-zA-Z_0-9]*
   ;
 
-ARR
-  : '[' ']'
-  ;
-
 GLOBAL : '..' ;
 
 VARIADIC : '...' ;
@@ -86,7 +82,7 @@ OPEN_BRACE : '{';
 CLOSE_BRACE : '}';
 COMMA : ',' ;
 QUESTION : '?' ;
-  
+
 NORMALSTRING
   : '"' ( EscapeSequence | ~('\\'|'"') )* '"'  //" let's keep text editor happy
   ;

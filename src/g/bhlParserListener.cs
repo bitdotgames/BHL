@@ -101,6 +101,16 @@ public interface IbhlParserListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitType([NotNull] bhlParser.TypeContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.arrType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterArrType([NotNull] bhlParser.ArrTypeContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.arrType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitArrType([NotNull] bhlParser.ArrTypeContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mapType"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

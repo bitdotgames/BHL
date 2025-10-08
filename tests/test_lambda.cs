@@ -11,7 +11,7 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       int a = 1
       func() {}
@@ -81,14 +81,14 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func int test(int a) 
+    func int test(int a)
     {
-      return func []int(int a) { 
+      return func []int(int a) {
         []int ns = new []int
         ns.Add(a)
         ns.Add(a*2)
         return ns
-      }(a)[1] 
+      }(a)[1]
     }
     ";
 
@@ -101,9 +101,9 @@ public class TestLambda : BHL_TestBase
   public void TestCallLambdaInPlaceInvalid()
   {
     string bhl = @"
-    func bool test(int a) 
+    func bool test(int a)
     {
-      return func bool(int a) { return a > 2 }.foo 
+      return func bool(int a) { return a > 2 }.foo
     }
     ";
 
@@ -111,7 +111,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       "type doesn't support member access via '.'",
       new PlaceAssert(bhl, @"
-      return func bool(int a) { return a > 2 }.foo 
+      return func bool(int a) { return a > 2 }.foo
 ----------------------------------------------^"
       )
     );
@@ -122,9 +122,9 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func bool test(int a) 
+    func bool test(int a)
     {
-      return func bool(int a) { return a > 2 }[10] 
+      return func bool(int a) { return a > 2 }[10]
     }
     ";
 
@@ -132,7 +132,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       "accessing not an array/map type",
       new PlaceAssert(bhl, @"
-      return func bool(int a) { return a > 2 }[10] 
+      return func bool(int a) { return a > 2 }[10]
 ----------------------------------------------^"
       )
     );
@@ -197,7 +197,7 @@ public class TestLambda : BHL_TestBase
     func dummy() {
     }
 
-    func int foo() 
+    func int foo()
     {
       return func int() {
         return 123
@@ -536,17 +536,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func void() fn) 
+    func foo(func void() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       float a = 2
-      foo(func() { 
-          a = a + 1 
-        } 
+      foo(func() {
+          a = a + 1
+        }
       )
       return a
     }
@@ -563,17 +563,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func void() fn) 
+    func foo(func void() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       float a = 2
-      foo(func() [a] { 
-          a = a + 1 
-        } 
+      foo(func() [a] {
+          a = a + 1
+        }
       )
       return a
     }
@@ -590,20 +590,20 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func void() fn) 
+    func foo(func void() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       float a = 2
       float b = 10
       foo(func()
-        { 
-          a = a + 1 
+        {
+          a = a + 1
           b = b * 2
-        } 
+        }
       )
       return a + b
     }
@@ -620,12 +620,12 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func float test() 
+    func float test()
     {
       float a = 2
       func() {
           func() fn = func() {
-            a = a + 1    
+            a = a + 1
           }
       }()
       return a
@@ -643,22 +643,22 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       float a = 2
       float b = 10
-      foo(func() { 
+      foo(func() {
           func() p = func() {
-            a = a + 1    
-            b = b * 2    
+            a = a + 1
+            b = b * 2
           }
           p()
-        } 
+        }
       )
       return a+b
     }
@@ -674,15 +674,15 @@ public class TestLambda : BHL_TestBase
   public void TestLambdaSelfCallAndBindValues()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       float a = 2
 
-      func() fn = func func() (float a) { 
-        return func() { 
+      func() fn = func func() (float a) {
+        return func() {
           a = 1
         }
-      }(a) 
+      }(a)
 
       fn()
     }
@@ -698,17 +698,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func float test() 
+    func float test()
     {
       float a = 2
 
       float res
 
-      func() fn = func func() (float a, int b) { 
-        return func() { 
-          res = a + b 
+      func() fn = func func() (float a, int b) {
+        return func() {
+          res = a + b
         }
-      }(a, 1) 
+      }(a, 1)
 
       a = 100
 
@@ -728,9 +728,9 @@ public class TestLambda : BHL_TestBase
   public void TestReturnMultipleLambda()
   {
     string bhl = @"
-    func float,string test() 
+    func float,string test()
     {
-      return func float,string () 
+      return func float,string ()
         { return 30, ""foo"" }()
     }
     ";
@@ -747,9 +747,9 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string test() 
+    func float,string test()
     {
-      return func string,string () 
+      return func string,string ()
         { return ""bar"", ""foo"" }()
     }
     ";
@@ -758,7 +758,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       "incompatible types: 'float,string' and 'string,string'",
       new PlaceAssert(bhl, @"
-      return func string,string () 
+      return func string,string ()
 -------------^"
       )
     );
@@ -769,9 +769,9 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func string test() 
+    func string test()
     {
-      return func string,string () 
+      return func string,string ()
         { return ""bar"", ""foo"" }()
     }
     ";
@@ -780,7 +780,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       "incompatible types: 'string' and 'string,string'",
       new PlaceAssert(bhl, @"
-      return func string,string () 
+      return func string,string ()
 -------------^"
       )
     );
@@ -791,9 +791,9 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func float,string test() 
+    func float,string test()
     {
-      float a,string s = func float,string () 
+      float a,string s = func float,string ()
         { return 30, ""foo"" }()
       return a,s
     }
@@ -811,7 +811,7 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func test() 
+    func test()
     {
       func []int() ptr =  func []int () {
         return [1,2]
@@ -858,7 +858,7 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    coro func test() 
+    coro func test()
     {
       coro func(string) ptr = coro func(string arg) {
         trace(arg)
@@ -892,13 +892,13 @@ public class TestLambda : BHL_TestBase
       fn()
     }
 
-    func test() 
+    func test()
     {
-      func() fun = 
+      func() fun =
         func()
-        { 
+        {
           trace(""HERE"")
-        }             
+        }
 
       foo(fun)
     }
@@ -917,13 +917,13 @@ public class TestLambda : BHL_TestBase
   public void TestLambdaVarSeveralTimes()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
-      func() fun = 
+      func() fun =
         func()
-        { 
+        {
           trace(""HERE"")
-        }             
+        }
 
       fun()
       fun()
@@ -960,7 +960,7 @@ public class TestLambda : BHL_TestBase
       fn()
     }
 
-    func test() 
+    func test()
     {
       foo(10)
     }
@@ -979,16 +979,16 @@ public class TestLambda : BHL_TestBase
   public void TestLambdaLocalVarsConflict()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       float a = 10
       float b = 20
       start(
         func()
-        { 
-          float a = a 
-        }             
-      ) 
+        {
+          float a = a
+        }
+      )
     }
     ";
 
@@ -996,7 +996,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       "already defined symbol 'a'",
       new PlaceAssert(bhl, @"
-          float a = a 
+          float a = a
 ----------------^"
       )
     );
@@ -1006,24 +1006,24 @@ public class TestLambda : BHL_TestBase
   public void TestStartSeveralLambdas()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       start(
         func()
-        { 
+        {
           trace(""HERE"")
-        }             
-      ) 
+        }
+      )
     }
 
-    func test2() 
+    func test2()
     {
       start(
         func()
-        { 
+        {
           trace(""HERE2"")
-        }             
-      ) 
+        }
+      )
     }
     ";
 
@@ -1041,14 +1041,14 @@ public class TestLambda : BHL_TestBase
   public void TestStartLambdaSeveralTimes()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       start(
         func()
-        { 
+        {
           trace(""HERE"")
-        }             
-      ) 
+        }
+      )
     }
     ";
 
@@ -1066,17 +1066,17 @@ public class TestLambda : BHL_TestBase
   public void TestStartLambdaCaptureVars()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       float a = 10
       float b = 20
       start(
         func()
-        { 
-          float k = a 
+        {
+          float k = a
           trace((string)k + (string)b)
-        }             
-      ) 
+        }
+      )
     }
     ";
 
@@ -1093,23 +1093,23 @@ public class TestLambda : BHL_TestBase
   public void TestStartLambdaCaptureVarsNested()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       float a = 10
       float b = 20
       start(
         func()
-        { 
-          float k = a 
+        {
+          float k = a
 
-          func() fn = func() 
+          func() fn = func()
           {
             trace((string)k + (string)b)
           }
 
           fn()
-        }             
-      ) 
+        }
+      )
     }
     ";
 
@@ -1126,18 +1126,18 @@ public class TestLambda : BHL_TestBase
   public void TestStartLambdaCaptureVarsNested2()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       float a = 10
       float b = 20
       start(
         func()
-        { 
-          float k = a 
+        {
+          float k = a
 
-          func() fn = func() 
+          func() fn = func()
           {
-            func() fn = func() 
+            func() fn = func()
             {
               trace((string)k + (string)b)
             }
@@ -1146,8 +1146,8 @@ public class TestLambda : BHL_TestBase
           }
 
           fn()
-        }             
-      ) 
+        }
+      )
     }
     ";
 
@@ -1174,12 +1174,12 @@ public class TestLambda : BHL_TestBase
     {
       call(fn2 :
         func()
-        { 
-          float k = a 
+        {
+          float k = a
           trace((string)k + (string)b)
         },
         fn : func() { }
-      ) 
+      )
     }
 
     func bar()
@@ -1187,14 +1187,14 @@ public class TestLambda : BHL_TestBase
       call(
         fn2 :
         func()
-        { 
+        {
           trace(""HEY!"")
-        },             
+        },
         fn : func() { }
-      ) 
+      )
     }
 
-    func test() 
+    func test()
     {
       foo(10, 20)
       bar()
@@ -1216,10 +1216,10 @@ public class TestLambda : BHL_TestBase
   public void TestEmptyCaptureNotAllowed()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
-      func() [] { 
-      }() 
+      func() [] {
+      }()
     }
     ";
 
@@ -1227,8 +1227,8 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       @"no viable alternative at input 'func() []'",
       new PlaceAssert(bhl, @"
-      func() [] { 
--------------^"
+      func() [] {
+--------------^"
       )
     );
   }
@@ -1237,10 +1237,10 @@ public class TestLambda : BHL_TestBase
   public void TestCaptureNonExisting()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
-      func() [i] { 
-      }() 
+      func() [i] {
+      }()
     }
     ";
 
@@ -1248,7 +1248,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       @"symbol 'i' not resolved",
       new PlaceAssert(bhl, @"
-      func() [i] { 
+      func() [i] {
 --------------^"
       )
     );
@@ -1258,11 +1258,11 @@ public class TestLambda : BHL_TestBase
   public void TestCaptureAlreadyExists()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       int i = 1
-      func() [i, i] { 
-      }() 
+      func() [i, i] {
+      }()
     }
     ";
 
@@ -1270,7 +1270,7 @@ public class TestLambda : BHL_TestBase
       delegate() { Compile(bhl); },
       @"symbol 'i' is already included",
       new PlaceAssert(bhl, @"
-      func() [i, i] { 
+      func() [i, i] {
 -----------------^"
       )
     );
@@ -1280,13 +1280,13 @@ public class TestLambda : BHL_TestBase
   public void TestStartLambdaCaptureCopyOfLoopVars()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       for(int i=0;i<3;i++)
       {
-        start(func() [i] { 
+        start(func() [i] {
             trace((string)i)
-          }) 
+          })
       }
     }
     ";
@@ -1304,15 +1304,15 @@ public class TestLambda : BHL_TestBase
   public void TestCaptureMixCopyAndStrong()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       for(int i=0;i<3;i++)
       {
         int j = i*2
         int k = i*10
-        start(func() [i, j] { 
+        start(func() [i, j] {
             trace(i + "":"" + j + "":"" + k + "";"")
-          }) 
+          })
       }
     }
     ";
@@ -1331,7 +1331,7 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func float test() 
+    func float test()
     {
       return func func float(float) (float a) {
         return func float (float b) { return a + b }
@@ -1350,12 +1350,12 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       float a = 2
       foo(func() { a = a + 1 } )
@@ -1374,12 +1374,12 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a = []
       foo(func() { a.Add(10) } )
@@ -1398,17 +1398,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a
-      foo(func() { 
+      foo(func() {
           a = [42]
-        } 
+        }
       )
       return a[0]
     }
@@ -1425,17 +1425,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       []float a = []
-      foo(func() { 
+      foo(func() {
           a = [42]
-        } 
+        }
       )
       return a[0]
     }
@@ -1452,17 +1452,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
       func float() a
-      foo(func() { 
+      foo(func() {
           a = func float () { return 42 }
-        } 
+        }
       )
       return a()
     }
@@ -1479,17 +1479,17 @@ public class TestLambda : BHL_TestBase
   {
     string bhl = @"
 
-    func foo(func() fn) 
+    func foo(func() fn)
     {
       fn()
     }
-      
-    func float test() 
+
+    func float test()
     {
-      func float() a = func float() { return 45 } 
-      foo(func() { 
+      func float() a = func float() { return 45 }
+      foo(func() {
           a = func float () { return 42 }
-        } 
+        }
       )
       return a()
     }
@@ -1505,7 +1505,7 @@ public class TestLambda : BHL_TestBase
   public void TestLambdaVariableShadowing()
   {
     string bhl = @"
-    func test(int a) 
+    func test(int a)
     {
       func() {
         int b = 10

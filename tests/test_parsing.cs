@@ -12,7 +12,7 @@ public class TestParsing : BHL_TestBase
   {
     string bhl = @"
     //надеюсь тут нет ошибки?
-    func int test() 
+    func int test()
     {
       //привет всем!
       return 10
@@ -75,12 +75,38 @@ public class TestParsing : BHL_TestBase
   public void TestParseMapTypeAmbuiguityWithArrAccess()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       int foo = 1
       float a = 1/foo
 
       [int]string m = []
+    }
+    ";
+
+    Compile(bhl);
+  }
+
+  [Fact]
+  public void TestCommentInEmptyArray()
+  {
+    string bhl = @"
+    func test()
+    {
+      []int foo = [/*kek*/]
+    }
+    ";
+
+    Compile(bhl);
+  }
+
+  [Fact]
+  public void TestSpaceInEmptyArray()
+  {
+    string bhl = @"
+    func test()
+    {
+      []int foo = [ ]
     }
     ";
 

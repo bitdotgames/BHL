@@ -31,7 +31,11 @@ nsName
   ;
 
 type
-  : (ARR | mapType)? (nsName | funcType) 
+  : (arrType | mapType)? (nsName | funcType)
+  ;
+
+arrType
+  : OPEN_BRACKET CLOSE_BRACKET
   ;
 
 mapType
@@ -80,14 +84,14 @@ exp
   ;
 
 ternaryIfExp
-  : QUESTION exp COLON exp 
+  : QUESTION exp COLON exp
   ;
 
 newExp
   //TODO: notice a quick hack for jsonArray initializer to force it start on the same line as 'new' operator,
   //      currently it's done this way to resolve the following ambiguity:
   //      var tmp = new Foo <--- need 'notLineTerminator' predicate to remove 'new Foo []' ambiguity
-  //      []int a = [] 
+  //      []int a = []
   : NEW type (jsonObject | ({this.notLineTerminator()}? jsonArray))?
   ;
 
@@ -113,7 +117,7 @@ statement
   | varDeclareList ({this.notLineTerminator()}? assignExp)? eos  #StmDeclOptAssign
   //int a, c.r = foo()
   | varDeclaresOrChainExps assignExp eos                         #StmDeclOrExpAssign
-  | YIELD OPEN_PAREN CLOSE_PAREN eos                             #StmYield                                                                   
+  | YIELD OPEN_PAREN CLOSE_PAREN eos                             #StmYield
   | YIELD chainExp eos                                           #StmYieldCall
   | YIELD WHILE OPEN_PAREN exp CLOSE_PAREN                       #StmYieldWhile
   //func call or variable/member read/write access
@@ -139,7 +143,7 @@ elseIf
 else
   : ELSE block
   ;
-  
+
 chainExpItem
   : callArgs | memberAccess | arrAccess
   ;
@@ -151,7 +155,7 @@ arrAccess
 memberAccess
   : DOT NAME
   ;
-  
+
 callArgs
   : OPEN_PAREN callArgsList? CLOSE_PAREN
   ;
@@ -164,7 +168,7 @@ callArg
   : VARIADIC? (NAME COLON)? REF? exp
   ;
 
-block 
+block
   : OPEN_BRACE statement* CLOSE_BRACE
   ;
 
@@ -261,7 +265,7 @@ retType
   ;
 
 captureList
-  : OPEN_BRACKET NAME (COMMA NAME)* CLOSE_BRACKET 
+  : OPEN_BRACKET NAME (COMMA NAME)* CLOSE_BRACKET
   ;
 
 types
@@ -297,7 +301,7 @@ varOrDeclareAssign
   ;
 
 varDeclareOrChainExp
-  : varDeclare 
+  : varDeclare
   | chainExp
   ;
 
@@ -316,7 +320,7 @@ expModifyOp
 assignExp
   : ASSIGN exp
   ;
-  
+
 operatorBitwise
   : BOR | BAND | SHR | SHL
   ;
@@ -329,7 +333,7 @@ operatorSelfOp
   : SINC | SDEC | SMUL | SDIV
   ;
 
-operatorComparison 
+operatorComparison
   : LT | GT | LTE | GTE | NEQ | EQ
   ;
 
@@ -363,7 +367,7 @@ jsonEmptyObj
   ;
 
 jsonPair
-  : NAME COLON jsonValue 
+  : NAME COLON jsonValue
   ;
 
 jsonArray
@@ -372,7 +376,7 @@ jsonArray
   ;
 
 jsonEmptyArr
-  : ARR
+  : OPEN_BRACKET CLOSE_BRACKET
   ;
 
 jsonValue

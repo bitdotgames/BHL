@@ -5410,7 +5410,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "mismatched input '1' expecting",
+      "no viable alternative",
       new PlaceAssert(bhl, @"
       foreach([1,2,3] as int t) {
 ---------------^"
@@ -5434,7 +5434,7 @@ public class TestVM : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "mismatched input '1'",
+      "no viable alternative",
       new PlaceAssert(bhl, @"
       foreach([1,2,3] as int t) {
 ---------------^"

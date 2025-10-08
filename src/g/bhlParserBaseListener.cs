@@ -120,6 +120,18 @@ public partial class bhlParserBaseListener : IbhlParserListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitType([NotNull] bhlParser.TypeContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="bhlParser.arrType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterArrType([NotNull] bhlParser.ArrTypeContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="bhlParser.arrType"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitArrType([NotNull] bhlParser.ArrTypeContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="bhlParser.mapType"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
