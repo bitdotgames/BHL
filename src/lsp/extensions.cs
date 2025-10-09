@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using OmniSharp.Extensions.LanguageServer.Protocol;
@@ -67,12 +68,12 @@ public static class Extensions
     proj.Setup();
   }
 
-  public static async Task SetupProjectIfEmptyAsync(this Workspace workspace, string filePath)
+  public static async Task SetupProjectIfEmptyAsync(this Workspace workspace, string filePath, CancellationToken ct = default)
   {
     if (string.IsNullOrEmpty(workspace.ProjConf.proj_file))
     {
       workspace.ProjConf.SetupForRootPath(Path.GetDirectoryName(filePath));
-      await workspace.IndexFilesAsync();
+      await workspace.IndexFilesAsync(ct);
     }
   }
 

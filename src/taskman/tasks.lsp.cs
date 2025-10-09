@@ -14,6 +14,28 @@ namespace bhl.taskman;
 
 public static partial class Tasks
 {
+  public static CancellationTokenSource CreateShutdownTokenSource()
+  {
+    var cts = new CancellationTokenSource();
+
+    // Handle Ctrl+C (SIGINT)
+    Console.CancelKeyPress += (sender, e) =>
+    {
+      e.Cancel = true; // prevent immediate termination
+      Log.Logger.Debug("SIGINT received, shutting down...");
+      cts.Cancel();
+    };
+
+    // Handle SIGTERM / process exit
+    AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+    {
+      Log.Logger.Debug("SIGTERM / ProcessExit received, shutting down...");
+      cts.Cancel();
+    };
+
+    return cts;
+  }
+
   [Task]
   public static async ThreadTask lsp(Taskman tm, string[] args)
   {
@@ -29,6 +51,8 @@ public static partial class Tasks
 
     p.Parse(args);
 
+    var cts = CreateShutdownTokenSource();
+
     var logger_conf = new LoggerConfiguration()
       .Enrich.FromLogContext()
       .MinimumLevel.Verbose();
@@ -40,22 +64,24 @@ public static partial class Tasks
 
     Log.Logger = logger_conf.CreateLogger();
 
-    var cts = new CancellationTokenSource();
-
     Console.OutputEncoding = new UTF8Encoding();
-
-    var server = await bhl.lsp.ServerFactory.CreateAsync(
-      Log.Logger,
-      new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
-      new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
-      new Types(),
-      new Workspace(),
-      cts.Token
-    );
 
     try
     {
+      var server = await bhl.lsp.ServerFactory.CreateAsync(
+        Log.Logger,
+        new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
+        new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
+        new Types(),
+        new Workspace(),
+        cts.Token
+      );
+
       await server.WaitForExit;
+    }
+    catch(OperationCanceledException e)
+    {
+
     }
     catch (Exception e)
     {

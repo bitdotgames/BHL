@@ -29,7 +29,7 @@ public class TextDocumentHoverHandler : HoverHandlerBase
 
   public override async Task<Hover> Handle(HoverParams request, CancellationToken cancellationToken)
   {
-    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.Path);
+    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.Path, cancellationToken);
 
     var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
 

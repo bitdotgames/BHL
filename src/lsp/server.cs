@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 using Microsoft.Extensions.Logging;
-using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Server;
 using Microsoft.Extensions.DependencyInjection;
-using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 
 namespace bhl.lsp;
 
@@ -17,10 +12,12 @@ public static class ServerFactory
 {
   public static async Task<LanguageServer> CreateAsync(
     Serilog.ILogger logger, Stream input, Stream output,
-    Types types, Workspace workspace, CancellationToken ct)
+    Types types, Workspace workspace, CancellationToken ct = default)
   {
     logger.Debug("BHL server starting...");
     //IObserver<WorkDoneProgressReport> workDone = null;
+
+    var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
     var server = await LanguageServer.From(options => options
         .WithInput(input)
@@ -32,18 +29,22 @@ public static class ServerFactory
         )
         .WithServices(x => x.AddLogging(b => b.SetMinimumLevel(LogLevel.Trace)))
         .WithServices(services =>
-          services.AddSingleton(workspace)
+          services
+            .AddSingleton(shutdownCts)
+            .AddSingleton(workspace)
         )
+        .WithHandler<handlers.ShutdownHandler>()
+        .WithHandler<handlers.ExitHandler>()
         .WithHandler<handlers.TextDocumentHandler>()
         .WithHandler<handlers.SemanticTokensHandler>()
         .WithHandler<handlers.TextDocumentReferencesHandler>()
         .WithHandler<handlers.TextDocumentDefinitionHandler>()
         .WithHandler<handlers.TextDocumentHoverHandler>()
         .OnStarted((server, token) =>
-          {
-            logger.Debug("Server started");
-            return Task.CompletedTask;
-          })
+         {
+           logger.Debug("Server started");
+           return Task.CompletedTask;
+         })
         .OnInitialize(async (server, request, token) =>
         {
           ProjectConf proj = null;
@@ -85,7 +86,7 @@ public static class ServerFactory
           workspace.Init(types, proj);
 
           //TODO: run it in async manner with progress
-          await workspace.IndexFilesAsync();
+          await workspace.IndexFilesAsync(token);
 
           //var manager = server.WorkDoneManager.For(
           //  request, new WorkDoneProgressBegin
@@ -100,13 +101,14 @@ public static class ServerFactory
         .OnInitialized((server, request, response, token) =>
         {
           var diagnostics = workspace.GetCompileErrors().GetDiagnostics();
-          _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); });
+          _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
 
           return Task.CompletedTask;
         })
       ,
-      ct
+      shutdownCts.Token
     );
+    logger.Debug("BHL server initialized...");
     return server;
   }
 }

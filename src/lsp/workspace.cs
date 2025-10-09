@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 
@@ -32,7 +33,7 @@ public class Workspace
   }
 
   //NOTE: naive initial implementation
-  public Task IndexFilesAsync()
+  public Task IndexFilesAsync(CancellationToken ct = default)
   {
     Indexed = true;
 
@@ -56,12 +57,15 @@ public class Workspace
       }
     }
 
+    ct.ThrowIfCancellationRequested();
+
     var proc_bundle = new ProjectCompilationStateBundle(Types);
     proc_bundle.file2proc = Path2Proc;
     //TODO: use compiled cache if needed
     proc_bundle.file2cached = null;
-
     ANTLR_Processor.ProcessAll(proc_bundle);
+
+    ct.ThrowIfCancellationRequested();
 
     foreach(var kv in Path2Proc)
     {
