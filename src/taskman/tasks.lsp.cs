@@ -70,18 +70,18 @@ public static partial class Tasks
     {
       var server = await bhl.lsp.ServerFactory.CreateAsync(
         Log.Logger,
-        new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
-        new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
+        new LoggingStream(new ErrorWatchableStream(Console.OpenStandardInput(), (e) => cts.Cancel()), Log.Logger, "IN:"),
+        new LoggingStream(new ErrorWatchableStream(Console.OpenStandardOutput(), (e) => cts.Cancel()), Log.Logger, "OUT:"),
         new Types(),
         new Workspace(),
         cts.Token
       );
 
-      await server.WaitForExit;
+      await Task.WhenAny(server.WaitForExit, Task.Delay(Timeout.Infinite, cts.Token));
     }
     catch(OperationCanceledException e)
     {
-
+      Environment.Exit(0);
     }
     catch (Exception e)
     {
@@ -138,3 +138,135 @@ public class LoggingStream : Stream
   public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
   public override void SetLength(long value) => _inner.SetLength(value);
 }
+
+class ErrorWatchableStream : Stream
+{
+  private readonly Stream _inner;
+  private readonly Action<Exception?> _onException;
+  private bool _notified;
+
+  public ErrorWatchableStream(Stream inner, Action<Exception?> onException)
+  {
+    _inner = inner;
+    _onException = onException;
+  }
+
+  private void Notify(Exception? ex = null)
+  {
+    if (_notified)
+      return;
+    _notified = true;
+    try
+    {
+      _onException(ex);
+    }
+    catch
+    {
+      // ignore handler exceptions
+    }
+  }
+
+  public override int Read(byte[] buffer, int offset, int count)
+  {
+    try
+    {
+      return _inner.Read(buffer, offset, count);
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      return await _inner.ReadAsync(buffer, cancellationToken);
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  public override void Write(byte[] buffer, int offset, int count)
+  {
+    try
+    {
+      _inner.Write(buffer, offset, count);
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      await _inner.WriteAsync(buffer, cancellationToken);
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  public override void Flush()
+  {
+    try
+    {
+      _inner.Flush();
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  public override async Task FlushAsync(CancellationToken cancellationToken)
+  {
+    try
+    {
+      await _inner.FlushAsync(cancellationToken);
+    }
+    catch (Exception ex)
+    {
+      Notify(ex);
+      throw;
+    }
+  }
+
+  protected override void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      Notify();
+      _inner.Dispose();
+    }
+    base.Dispose(disposing);
+  }
+
+  public override void Close()
+  {
+    Notify();
+    _inner.Close();
+    base.Close();
+  }
+
+  public override bool CanRead => _inner.CanRead;
+  public override bool CanSeek => _inner.CanSeek;
+  public override bool CanWrite => _inner.CanWrite;
+  public override long Length => _inner.Length;
+  public override long Position { get => _inner.Position; set => _inner.Position = value; }
+  public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
+  public override void SetLength(long value) => _inner.SetLength(value);
+}
+
