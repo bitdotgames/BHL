@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
 using Serilog;
 using bhl.lsp;
+using Microsoft.Win32.SafeHandles;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
@@ -66,12 +68,18 @@ public static partial class Tasks
 
     Console.OutputEncoding = new UTF8Encoding();
 
+    StdioMonitor.StartWatcher(() =>
+    {
+      Log.Logger.Error("IO closed, exiting");
+      Environment.Exit(0);
+    }, cancellationToken: cts.Token);
+
     try
     {
       var server = await bhl.lsp.ServerFactory.CreateAsync(
         Log.Logger,
-        new LoggingStream(new ErrorWatchableStream(Console.OpenStandardInput(), (e) => cts.Cancel()), Log.Logger, "IN:"),
-        new LoggingStream(new ErrorWatchableStream(Console.OpenStandardOutput(), (e) => cts.Cancel()), Log.Logger, "OUT:"),
+        new LoggingStream(Console.OpenStandardInput(), Log.Logger, "IN:"),
+        new LoggingStream(Console.OpenStandardOutput(), Log.Logger, "OUT:"),
         new Types(),
         new Workspace(),
         cts.Token
@@ -139,134 +147,110 @@ public class LoggingStream : Stream
   public override void SetLength(long value) => _inner.SetLength(value);
 }
 
-class ErrorWatchableStream : Stream
+public static class StdioMonitor
 {
-  private readonly Stream _inner;
-  private readonly Action<Exception?> _onException;
-  private bool _notified;
-
-  public ErrorWatchableStream(Stream inner, Action<Exception?> onException)
+  /// <summary>
+  /// Starts a background task that periodically checks whether stdin or stdout
+  /// has been closed by the client (e.g. Neovim).
+  /// When detected, invokes <paramref name="onDisconnected"/>.
+  /// </summary>
+  public static void StartWatcher(Action onDisconnected, int pollIntervalMs = 500,
+    CancellationToken? cancellationToken = null)
   {
-    _inner = inner;
-    _onException = onException;
+    var token = cancellationToken ?? CancellationToken.None;
+
+    new Thread(() =>
+    {
+      while (!token.IsCancellationRequested)
+      {
+        try
+        {
+          if (IsInputClosed() || IsOutputClosed())
+          {
+            onDisconnected();
+            return;
+          }
+        }
+        catch
+        {
+          // Swallow exceptions to avoid crashing the watcher.
+          onDisconnected();
+          return;
+        }
+
+        Thread.Sleep(pollIntervalMs);
+      }
+    })
+    {
+      IsBackground = true,
+      Name = "StdioMonitor"
+    }.Start();
   }
 
-  private void Notify(Exception? ex = null)
+  // ------------------------------------------------------------
+  // Cross-platform detection helpers
+  // ------------------------------------------------------------
+
+  private static bool IsInputClosed()
   {
-    if (_notified)
-      return;
-    _notified = true;
-    try
-    {
-      _onException(ex);
-    }
-    catch
-    {
-      // ignore handler exceptions
-    }
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      return IsHandleClosedWin(STD_INPUT_HANDLE);
+    else
+      return IsFdClosedUnix(0); // stdin fd = 0
   }
 
-  public override int Read(byte[] buffer, int offset, int count)
+  private static bool IsOutputClosed()
   {
-    try
-    {
-      return _inner.Read(buffer, offset, count);
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
+    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+      return IsHandleClosedWin(STD_OUTPUT_HANDLE);
+    else
+      return IsFdClosedUnix(1); // stdout fd = 1
   }
 
-  public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+  // -------------------- Windows --------------------
+  private const int STD_INPUT_HANDLE = -10;
+  private const int STD_OUTPUT_HANDLE = -11;
+  private const uint WAIT_OBJECT_0 = 0;
+  private const uint WAIT_TIMEOUT = 0x102;
+
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern SafeFileHandle GetStdHandle(int nStdHandle);
+
+  [DllImport("kernel32.dll", SetLastError = true)]
+  private static extern uint WaitForSingleObject(SafeHandle hHandle, uint dwMilliseconds);
+
+  private static bool IsHandleClosedWin(int stdHandle)
   {
-    try
-    {
-      return await _inner.ReadAsync(buffer, cancellationToken);
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
+    using var handle = GetStdHandle(stdHandle);
+    if (handle.IsInvalid)
+      return true;
+
+    uint result = WaitForSingleObject(handle, 0);
+    return result == WAIT_OBJECT_0;
   }
 
-  public override void Write(byte[] buffer, int offset, int count)
+  // -------------------- Unix --------------------
+  [StructLayout(LayoutKind.Sequential)]
+  private struct pollfd
   {
-    try
-    {
-      _inner.Write(buffer, offset, count);
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
+    public int fd;
+    public short events;
+    public short revents;
   }
 
-  public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+  private const short POLLIN = 0x001;
+  private const short POLLHUP = 0x010;
+
+  [DllImport("libc", SetLastError = true)]
+  private static extern int poll([In, Out] pollfd[] fds, uint nfds, int timeout);
+
+  private static bool IsFdClosedUnix(int fd)
   {
-    try
-    {
-      await _inner.WriteAsync(buffer, cancellationToken);
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
+    var fds = new pollfd[1];
+    fds[0].fd = fd;
+    fds[0].events = POLLIN | POLLHUP;
+    int ret = poll(fds, 1, 0);
+    return ret >= 0 && (fds[0].revents & POLLHUP) != 0;
   }
 
-  public override void Flush()
-  {
-    try
-    {
-      _inner.Flush();
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
-  }
-
-  public override async Task FlushAsync(CancellationToken cancellationToken)
-  {
-    try
-    {
-      await _inner.FlushAsync(cancellationToken);
-    }
-    catch (Exception ex)
-    {
-      Notify(ex);
-      throw;
-    }
-  }
-
-  protected override void Dispose(bool disposing)
-  {
-    if (disposing)
-    {
-      Notify();
-      _inner.Dispose();
-    }
-    base.Dispose(disposing);
-  }
-
-  public override void Close()
-  {
-    Notify();
-    _inner.Close();
-    base.Close();
-  }
-
-  public override bool CanRead => _inner.CanRead;
-  public override bool CanSeek => _inner.CanSeek;
-  public override bool CanWrite => _inner.CanWrite;
-  public override long Length => _inner.Length;
-  public override long Position { get => _inner.Position; set => _inner.Position = value; }
-  public override long Seek(long offset, SeekOrigin origin) => _inner.Seek(offset, origin);
-  public override void SetLength(long value) => _inner.SetLength(value);
 }
-
