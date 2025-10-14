@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -8,16 +9,17 @@ using Xunit;
 using FluentAssertions;
 using Newtonsoft.Json.Linq;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
+using Serilog;
 
 public class TestLSPInitShutdownExit : TestLSPShared
 {
   [Fact]
   public async Task InitShutdownExit()
   {
-    using var srv = NewTestServer();
+    using var srv_host = NewTestServer();
 
     {
-      var result = await srv.SendRequestAsync<InitializeParams, InitializeResult>(
+      var result = await srv_host.SendRequestAsync<InitializeParams, InitializeResult>(
         "initialize",
         new ()
         {
@@ -31,22 +33,22 @@ public class TestLSPInitShutdownExit : TestLSPShared
     }
 
     {
-      var result = await srv.SendRequestAsync<ShutdownParams>(
+      var result = await srv_host.SendRequestAsync<ShutdownParams>(
         "shutdown",
         new ()
       );
       Assert.Equal(JTokenType.Null, result.Result.Type);
 
-      await (await srv.ServerTask).WasShutDown.WaitAsync(TimeSpan.FromSeconds(5));
+      await (await srv_host.ServerTask).WasShutDown.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     {
-      _ = srv.SendRequestAsync<ExitParams>(
+      _ = srv_host.SendRequestAsync<ExitParams>(
         "exit",
         new ()
       );
 
-      await (await srv.ServerTask).WaitForExit.WaitAsync(TimeSpan.FromSeconds(5));
+      await (await srv_host.ServerTask).WaitForExit.WaitAsync(TimeSpan.FromSeconds(5));
     }
   }
 }

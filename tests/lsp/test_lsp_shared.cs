@@ -10,9 +10,9 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
 using bhl;
+using bhl.lsp;
 using Serilog;
 using OmniSharp.Extensions.LanguageServer.Server;
-using bhl.lsp;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using Range = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
@@ -287,9 +287,19 @@ public class TestLSPShared : BHL_TestBase
     Types types = null,
     Workspace workspace = null,
     ILogger logger = null,
-    CancellationToken ct = default
+    CancellationToken ct = default,
+    bool debug_log = false
     )
   {
+    if(debug_log && logger == null)
+    {
+      logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .MinimumLevel.Verbose()
+        .WriteTo.Console()
+        .CreateLogger();
+    }
+
     return TestLSPHost.NewServer(types, workspace, logger, ct);
   }
 

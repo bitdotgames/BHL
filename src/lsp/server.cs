@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
@@ -14,7 +16,7 @@ public static class ServerFactory
     Serilog.ILogger logger, Stream input, Stream output,
     Types types, Workspace workspace, CancellationToken ct = default)
   {
-    logger.Debug("BHL server starting...");
+    logger.Information("BHL server starting...");
     //IObserver<WorkDoneProgressReport> workDone = null;
 
     var shutdownCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -33,20 +35,17 @@ public static class ServerFactory
             .AddSingleton(shutdownCts)
             .AddSingleton(workspace)
         )
-        .WithHandler<handlers.ShutdownHandler>()
-        .WithHandler<handlers.ExitHandler>()
         .WithHandler<handlers.TextDocumentHandler>()
         .WithHandler<handlers.SemanticTokensHandler>()
         .WithHandler<handlers.TextDocumentReferencesHandler>()
         .WithHandler<handlers.TextDocumentDefinitionHandler>()
         .WithHandler<handlers.TextDocumentHoverHandler>()
-        .OnStarted((server, token) =>
-         {
-           logger.Debug("Server started");
-           return Task.CompletedTask;
-         })
         .OnInitialize(async (server, request, token) =>
         {
+          logger.Debug("OnInitialize");
+
+          server.Shutdown.Subscribe(_ => shutdownCts.Cancel());
+
           ProjectConf proj = null;
 
           if(request.WorkspaceFolders != null)
@@ -100,15 +99,22 @@ public static class ServerFactory
         })
         .OnInitialized((server, request, response, token) =>
         {
+          logger.Debug("OnInitialized");
+
           var diagnostics = workspace.GetCompileErrors().GetDiagnostics();
           _ = Task.Run(() => { server.PublishDiagnostics(diagnostics); }, token);
 
           return Task.CompletedTask;
         })
+        .OnStarted((server, token) =>
+        {
+          logger.Debug("OnStarted");
+          return Task.CompletedTask;
+        })
       ,
       shutdownCts.Token
     );
-    logger.Debug("BHL server initialized...");
+    logger.Information("BHL server initialized...");
     return server;
   }
 }
