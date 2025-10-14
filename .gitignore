@@ -17,6 +17,9 @@ BenchmarkDotNet.Artifacts/
 *.sln.DotSettings.user
 util/antlr*.jar
 
+src/lsp/vsclient/node_modules/*
+src/lsp/vsclient/out/*
+
 .idea
 .dotnet
 .vscode
