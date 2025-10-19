@@ -13,6 +13,13 @@ public enum UpvalMode
 
 public partial class VM : INamedResolver
 {
+  static readonly Action<VM, ExecState>[] op_handlers = new Action<VM, ExecState>[(int)Opcodes.MAX];
+
+  static VM()
+  {
+    InitOpcodeHandlers();
+  }
+
   //NOTE: why -2? we reserve some space before int.MaxValue so that
   //      increasing some ip couple of times after it was assigned
   //      a 'STOP_IP' value won't overflow int.MaxValue
@@ -295,7 +302,7 @@ public partial class VM : INamedResolver
         case Opcodes.GT:
         case Opcodes.GTE:
         {
-          ExecuteBinaryOp(opcode, exec.stack);
+          op_handlers[(int)opcode](this, exec);
         }
           break;
         case Opcodes.UnaryNot:
@@ -854,77 +861,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void ExecuteBinaryOp(Opcodes op, ValStack stack)
-  {
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
-
-    switch(op)
-    {
-      case Opcodes.Add:
-      {
-        //TODO: add Opcodes.Concat?
-        if((r_operand.type == Types.String) && (l_operand.type == Types.String))
-          stack.Push(Val.NewStr(this, (string)l_operand._obj + (string)r_operand._obj));
-        else
-          stack.Push(Val.NewFlt(this, l_operand._num + r_operand._num));
-      }
-        break;
-      case Opcodes.Sub:
-        stack.Push(Val.NewFlt(this, l_operand._num - r_operand._num));
-        break;
-      case Opcodes.Div:
-        stack.Push(Val.NewFlt(this, l_operand._num / r_operand._num));
-        break;
-      case Opcodes.Mul:
-        stack.Push(Val.NewFlt(this, l_operand._num * r_operand._num));
-        break;
-      case Opcodes.Equal:
-        stack.Push(Val.NewBool(this, l_operand.IsValueEqual(r_operand)));
-        break;
-      case Opcodes.NotEqual:
-        stack.Push(Val.NewBool(this, !l_operand.IsValueEqual(r_operand)));
-        break;
-      case Opcodes.LT:
-        stack.Push(Val.NewBool(this, l_operand._num < r_operand._num));
-        break;
-      case Opcodes.LTE:
-        stack.Push(Val.NewBool(this, l_operand._num <= r_operand._num));
-        break;
-      case Opcodes.GT:
-        stack.Push(Val.NewBool(this, l_operand._num > r_operand._num));
-        break;
-      case Opcodes.GTE:
-        stack.Push(Val.NewBool(this, l_operand._num >= r_operand._num));
-        break;
-      case Opcodes.And:
-        stack.Push(Val.NewBool(this, l_operand._num == 1 && r_operand._num == 1));
-        break;
-      case Opcodes.Or:
-        stack.Push(Val.NewBool(this, l_operand._num == 1 || r_operand._num == 1));
-        break;
-      case Opcodes.BitAnd:
-        stack.Push(Val.NewNum(this, (int)l_operand._num & (int)r_operand._num));
-        break;
-      case Opcodes.BitOr:
-        stack.Push(Val.NewNum(this, (int)l_operand._num | (int)r_operand._num));
-        break;
-      case Opcodes.BitShr:
-        stack.Push(Val.NewNum(this, (int)l_operand._num >> (int)r_operand._num));
-        break;
-      case Opcodes.BitShl:
-        stack.Push(Val.NewNum(this, (int)l_operand._num << (int)r_operand._num));
-        break;
-      case Opcodes.Mod:
-        stack.Push(Val.NewFlt(this, l_operand._num % r_operand._num));
-        break;
-    }
-
-    r_operand.Release();
-    l_operand.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   Coroutine ProcBlockOpcode(
     ExecState exec,
     Frame curr_frame,
@@ -1179,6 +1115,252 @@ public partial class VM : INamedResolver
       v.SetBool(false);
     else
       v.type = type;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeAdd(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    //TODO: add Opcodes.Concat?
+    if((r_operand.type == Types.String) && (l_operand.type == Types.String))
+      stack.Push(Val.NewStr(vm, (string)l_operand._obj + (string)r_operand._obj));
+    else
+      stack.Push(Val.NewFlt(vm, l_operand._num + r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeSub(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewFlt(vm, l_operand._num - r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeDiv(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewFlt(vm, l_operand._num / r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeMul(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewFlt(vm, l_operand._num * r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeEqual(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand.IsValueEqual(r_operand)));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeNotEqual(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, !l_operand.IsValueEqual(r_operand)));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeLT(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num < r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeLTE(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num <= r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGT(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num > r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGTE(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num >= r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeAnd(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num == 1 && r_operand._num == 1));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeOr(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewBool(vm, l_operand._num == 1 || r_operand._num == 1));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeBitAnd(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewNum(vm, (int)l_operand._num & (int)r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeBitOr(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewNum(vm, (int)l_operand._num | (int)r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeBitShr(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewNum(vm, (int)l_operand._num >> (int)r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeBitShl(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewNum(vm, (int)l_operand._num << (int)r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeMod(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var r_operand = stack.Pop();
+    var l_operand = stack.Pop();
+
+    stack.Push(Val.NewFlt(vm, l_operand._num % r_operand._num));
+
+    r_operand.Release();
+    l_operand.Release();
+  }
+
+  static void InitOpcodeHandlers()
+  {
+    op_handlers[(int)Opcodes.Add] = OpcodeAdd;
+    op_handlers[(int)Opcodes.Sub] = OpcodeSub;
+    op_handlers[(int)Opcodes.Div] = OpcodeDiv;
+    op_handlers[(int)Opcodes.Mul] = OpcodeMul;
+    op_handlers[(int)Opcodes.Equal] = OpcodeEqual;
+    op_handlers[(int)Opcodes.NotEqual] = OpcodeNotEqual;
+    op_handlers[(int)Opcodes.LT] = OpcodeLT;
+    op_handlers[(int)Opcodes.LTE] = OpcodeLTE;
+    op_handlers[(int)Opcodes.GT] = OpcodeGT;
+    op_handlers[(int)Opcodes.GTE] = OpcodeGTE;
+    op_handlers[(int)Opcodes.And] = OpcodeAnd;
+    op_handlers[(int)Opcodes.Or] = OpcodeOr;
+    op_handlers[(int)Opcodes.BitAnd] = OpcodeBitAnd;
+    op_handlers[(int)Opcodes.BitOr] = OpcodeBitOr;
+    op_handlers[(int)Opcodes.BitShr] = OpcodeBitShr;
+    op_handlers[(int)Opcodes.BitShl] = OpcodeBitShl;
+    op_handlers[(int)Opcodes.Mod] = OpcodeMod;
   }
 }
 

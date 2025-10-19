@@ -69,7 +69,7 @@ public enum Opcodes
   Dec                   = 82,
   ArrIdx                = 83,
   ArrIdxW               = 84,
-  ArrAddInplace         = 85,  //TODO: used for json alike array initialization,   
+  ArrAddInplace         = 85,  //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
 
   BitShr                = 86,
@@ -77,9 +77,10 @@ public enum Opcodes
 
   MapIdx                = 91,
   MapIdxW               = 92,
-  MapAddInplace         = 93,  //TODO: used for json alike array initialization,   
+  MapAddInplace         = 93,  //TODO: used for json alike array initialization,
 
   Nop                   = 99,
+  MAX                   = 100
 }
 
 }
