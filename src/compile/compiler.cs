@@ -65,6 +65,8 @@ public class ModuleCompiler : AST_Visitor
 
   List<Patch> patches = new List<Patch>();
 
+  bool dump_opcodes;
+
   static Dictionary<byte, Definition> opcode_decls = new Dictionary<byte, Definition>();
 
   public class Definition
@@ -104,6 +106,11 @@ public class ModuleCompiler : AST_Visitor
       def = LookupOpcode(op);
       this.op = op;
       operands = new int[def.operand_width.Length];
+    }
+
+    public override string ToString()
+    {
+      return op.ToString();
     }
 
     public Instruction SetOperand(int idx, int op_val)
@@ -752,6 +759,8 @@ public class ModuleCompiler : AST_Visitor
       inst.SetOperand(i, operands[i]);
     inst.line_num = line_num;
     head.Add(inst);
+    if(dump_opcodes)
+      Console.WriteLine(inst.ToString());
     return inst;
   }
 
@@ -1298,8 +1307,19 @@ public class ModuleCompiler : AST_Visitor
         else if(instr.op == Opcodes.GetFuncNativePtr)
         {
           Pop();
+
+          if(ast.symb == Prelude.DumpOpcodesOn)
+          {
+            Console.WriteLine("=== Opcodes dump start");
+            dump_opcodes = true;
+          }
+          else if(ast.symb == Prelude.DumpOpcodesOff)
+          {
+            Console.WriteLine("=== Opcodes dump end");
+            dump_opcodes = false;
+          }
           //let's check if it's a builtin native function
-          if(instr.operands[0] == 0)
+          else if(instr.operands[0] == 0)
             Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
           else
             Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits},
@@ -1762,4 +1782,46 @@ public class ModuleCompiler : AST_Visitor
     VisitChildren(ast);
     Emit(Opcodes.SetAttrInplace, new int[] { (int)ast.symb_idx }, ast.line_num);
   }
+
+  public static void Dump(byte[] bs)
+  {
+    string res = "";
+
+    Definition op = null;
+    int op_size = 0;
+
+    for(int i = 0; i < bs?.Length; i++)
+    {
+      res += string.Format("{1:00} 0x{0:x2} {0}", bs[i], i);
+      if(op != null)
+      {
+        --op_size;
+        if(op_size == 0)
+          op = null;
+      }
+      else
+      {
+        op = LookupOpcode((Opcodes)bs[i]);
+        op_size = PredictOpcodeSize(op, bs, i);
+        res += "(" + op.name.ToString() + ")";
+        if(op_size == 0)
+          op = null;
+      }
+
+      res += "\n";
+    }
+
+    Console.WriteLine(res);
+  }
+
+  public static int PredictOpcodeSize(Definition op, byte[] bytes, int start_pos)
+  {
+    if(op.operand_width == null)
+      return 0;
+    int pos = start_pos;
+    foreach(int ow in op.operand_width)
+      Bytecode.Decode(bytes, ow, ref pos);
+    return pos - start_pos;
+  }
+
 }

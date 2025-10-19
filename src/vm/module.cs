@@ -234,6 +234,18 @@ public class Module : INamedResolver
     for(int i = 0; i < imported_module.local_gvars_num; ++i)
       gvar_index.index.Add(imported_module.gvar_index[i]);
   }
+
+  public void DumpBytecode()
+  {
+    if(compiled?.initcode?.Length > 0)
+    {
+      Console.WriteLine("=== INIT ===");
+      ModuleCompiler.Dump(compiled.initcode);
+    }
+
+    Console.WriteLine("=== CODE ===");
+    ModuleCompiler.Dump(compiled.bytecode);
+  }
 }
 
 }

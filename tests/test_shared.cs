@@ -654,18 +654,7 @@ public class BHL_TestBase
       if(!vm.Tick())
         return fb;
     }
-
     throw new Exception("Too many iterations: " + c);
-  }
-
-  public static int PredictOpcodeSize(ModuleCompiler.Definition op, byte[] bytes, int start_pos)
-  {
-    if(op.operand_width == null)
-      return 0;
-    int pos = start_pos;
-    foreach(int ow in op.operand_width)
-      Bytecode.Decode(bytes, ow, ref pos);
-    return pos - start_pos;
   }
 
   public class TestImporter : IModuleLoader
@@ -1130,7 +1119,7 @@ public class BHL_TestBase
       else
       {
         op = ModuleCompiler.LookupOpcode((Opcodes)bs[i]);
-        op_size = PredictOpcodeSize(op, bs, i);
+        op_size = ModuleCompiler.PredictOpcodeSize(op, bs, i);
         str += "(" + op.name.ToString() + ")";
         if(op_size == 0)
           op = null;
@@ -1171,50 +1160,7 @@ public class BHL_TestBase
 
   static void Dump(ModuleCompiler c)
   {
-    Dump(c.Compile());
-  }
-
-  static void Dump(bhl.Module module)
-  {
-    if(module.compiled?.initcode?.Length > 0)
-    {
-      Console.WriteLine("=== INIT ===");
-      Dump(module.compiled.initcode);
-    }
-
-    Console.WriteLine("=== CODE ===");
-    Dump(module.compiled.bytecode);
-  }
-
-  static void Dump(byte[] bs)
-  {
-    string res = "";
-
-    ModuleCompiler.Definition op = null;
-    int op_size = 0;
-
-    for(int i = 0; i < bs?.Length; i++)
-    {
-      res += string.Format("{1:00} 0x{0:x2} {0}", bs[i], i);
-      if(op != null)
-      {
-        --op_size;
-        if(op_size == 0)
-          op = null;
-      }
-      else
-      {
-        op = ModuleCompiler.LookupOpcode((Opcodes)bs[i]);
-        op_size = PredictOpcodeSize(op, bs, i);
-        res += "(" + op.name.ToString() + ")";
-        if(op_size == 0)
-          op = null;
-      }
-
-      res += "\n";
-    }
-
-    Console.WriteLine(res);
+    c.Compile().DumpBytecode();
   }
 
   static bool CompareCode(byte[] a, byte[] b, out string cmp)
@@ -1243,7 +1189,7 @@ public class BHL_TestBase
         else
         {
           aop = ModuleCompiler.LookupOpcode((Opcodes)a[i]);
-          aop_size = PredictOpcodeSize(aop, a, i);
+          aop_size = ModuleCompiler.PredictOpcodeSize(aop, a, i);
           astr += "(" + aop.name.ToString() + ")";
           if(aop_size == 0)
             aop = null;
@@ -1263,7 +1209,7 @@ public class BHL_TestBase
         else
         {
           bop = ModuleCompiler.LookupOpcode((Opcodes)b[i]);
-          bop_size = PredictOpcodeSize(bop, b, i);
+          bop_size = ModuleCompiler.PredictOpcodeSize(bop, b, i);
           bstr += "(" + bop.name.ToString() + ")";
           if(bop_size == 0)
             bop = null;

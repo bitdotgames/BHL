@@ -7,6 +7,9 @@ public static class Prelude
 {
   static public FuncSymbolNative YieldFunc = null;
 
+  static public FuncSymbolNative DumpOpcodesOn = null;
+  static public FuncSymbolNative DumpOpcodesOff = null;
+
   public static void Define(Module m)
   {
     {
@@ -82,6 +85,28 @@ public static class Prelude
           return null;
         }
       );
+      m.ns.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          return null;
+        }
+      );
+      DumpOpcodesOn = fn;
+      m.ns.Define(fn);
+    }
+
+    {
+      var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
+        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        {
+          return null;
+        }
+      );
+      DumpOpcodesOff = fn;
       m.ns.Define(fn);
     }
   }
