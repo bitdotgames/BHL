@@ -13,7 +13,8 @@ public enum UpvalMode
 
 public partial class VM : INamedResolver
 {
-  static readonly Action<VM, ExecState>[] op_handlers = new Action<VM, ExecState>[(int)Opcodes.MAX];
+  static readonly Action<VM, ExecState, Region, Frame>[] op_handlers =
+    new Action<VM, ExecState, Region, Frame>[(int)Opcodes.MAX];
 
   static VM()
   {
@@ -59,6 +60,8 @@ public partial class VM : INamedResolver
     internal FixedStack<Region> regions = new FixedStack<Region>(32);
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
     public ValStack stack;
+    internal BHS status;
+    internal bool skip_ip_inc;
   }
 
   //fake frame used for module's init code
@@ -108,7 +111,7 @@ public partial class VM : INamedResolver
     return status;
   }
 
-  unsafe BHS ExecuteOnce(ExecState exec)
+  BHS ExecuteOnce(ExecState exec)
   {
     ref var region = ref exec.regions.Peek();
     var curr_frame = region.frame;
@@ -141,667 +144,15 @@ public partial class VM : INamedResolver
       return BHS.SUCCESS;
     }
 
-    fixed(byte* bytes = curr_frame.bytecode)
-    {
-      var opcode = (Opcodes)bytes[exec.ip];
-
-      switch(opcode)
-      {
-        case Opcodes.Constant:
-        {
-          int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var cn = curr_frame.constants[const_idx];
-          var cv = cn.ToVal(this);
-          exec.stack.Push(cv);
-        }
-          break;
-        case Opcodes.TypeCast:
-        {
-          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
-
-          var cast_type = curr_frame.type_refs[cast_type_idx];
-
-          HandleTypeCast(exec, cast_type, force_type);
-        }
-          break;
-        case Opcodes.TypeAs:
-        {
-          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
-          var as_type = curr_frame.type_refs[cast_type_idx];
-
-          HandleTypeAs(exec, as_type, force_type);
-        }
-          break;
-        case Opcodes.TypeIs:
-        {
-          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var as_type = curr_frame.type_refs[cast_type_idx];
-
-          HandleTypeIs(exec, as_type);
-        }
-          break;
-        case Opcodes.Typeof:
-        {
-          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx];
-
-          exec.stack.Push(Val.NewObj(this, type, Types.Type));
-        }
-          break;
-        case Opcodes.Inc:
-        {
-          int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          ++curr_frame.locals[var_idx]._num;
-        }
-          break;
-        case Opcodes.Dec:
-        {
-          int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          --curr_frame.locals[var_idx]._num;
-        }
-          break;
-        case Opcodes.ArrIdx:
-        {
-          var self = exec.stack[exec.stack.Count - 2];
-          var class_type = (ArrayTypeSymbol)self.type;
-
-          int idx = (int)exec.stack.PopRelease().num;
-          var arr = exec.stack.Pop();
-
-          var res = class_type.ArrGetAt(arr, idx);
-
-          exec.stack.Push(res);
-          arr.Release();
-        }
-          break;
-        case Opcodes.ArrIdxW:
-        {
-          var self = exec.stack[exec.stack.Count - 2];
-          var class_type = (ArrayTypeSymbol)self.type;
-
-          int idx = (int)exec.stack.PopRelease().num;
-          var arr = exec.stack.Pop();
-          var val = exec.stack.Pop();
-
-          class_type.ArrSetAt(arr, idx, val);
-
-          val.Release();
-          arr.Release();
-        }
-          break;
-        case Opcodes.ArrAddInplace:
-        {
-          var self = exec.stack[exec.stack.Count - 2];
-          self.Retain();
-          var class_type = (ArrayTypeSymbol)self.type;
-          var status = BHS.SUCCESS;
-          //NOTE: Add must be at 0 index
-          ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
-          exec.stack.Push(self);
-        }
-          break;
-        case Opcodes.MapIdx:
-        {
-          var self = exec.stack[exec.stack.Count - 2];
-          var class_type = (MapTypeSymbol)self.type;
-
-          var key = exec.stack.Pop();
-          var map = exec.stack.Pop();
-
-          class_type.MapTryGet(map, key, out var res);
-
-          exec.stack.PushRetain(res);
-          key.Release();
-          map.Release();
-        }
-          break;
-        case Opcodes.MapIdxW:
-        {
-          var self = exec.stack[exec.stack.Count - 2];
-          var class_type = (MapTypeSymbol)self.type;
-
-          var key = exec.stack.Pop();
-          var map = exec.stack.Pop();
-          var val = exec.stack.Pop();
-
-          class_type.MapSet(map, key, val);
-
-          key.Release();
-          val.Release();
-          map.Release();
-        }
-          break;
-        case Opcodes.MapAddInplace:
-        {
-          var self = exec.stack[exec.stack.Count - 3];
-          self.Retain();
-          var class_type = (MapTypeSymbol)self.type;
-          var status = BHS.SUCCESS;
-          //NOTE: Add must be at 0 index
-          ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
-          exec.stack.Push(self);
-        }
-          break;
-        case Opcodes.Add:
-        case Opcodes.Sub:
-        case Opcodes.Div:
-        case Opcodes.Mod:
-        case Opcodes.Mul:
-        case Opcodes.And:
-        case Opcodes.Or:
-        case Opcodes.BitAnd:
-        case Opcodes.BitOr:
-        case Opcodes.BitShr:
-        case Opcodes.BitShl:
-        case Opcodes.Equal:
-        case Opcodes.NotEqual:
-        case Opcodes.LT:
-        case Opcodes.LTE:
-        case Opcodes.GT:
-        case Opcodes.GTE:
-        {
-          op_handlers[(int)opcode](this, exec);
-        }
-          break;
-        case Opcodes.UnaryNot:
-        case Opcodes.UnaryNeg:
-        case Opcodes.UnaryBitNot:
-        {
-          op_handlers[(int)opcode](this, exec);
-        }
-          break;
-        case Opcodes.GetVar:
-        {
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          exec.stack.PushRetain(curr_frame.locals[local_idx]);
-        }
-          break;
-        case Opcodes.SetVar:
-        {
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          var new_val = exec.stack.Pop();
-          curr_frame.locals.Assign(this, local_idx, new_val);
-          new_val.Release();
-        }
-          break;
-        case Opcodes.ArgVar:
-        {
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          var arg_val = exec.stack.Pop();
-          var loc_var = Val.New(this);
-          loc_var.ValueCopyFrom(arg_val);
-          loc_var._refc?.Retain();
-          curr_frame.locals[local_idx] = loc_var;
-          arg_val.Release();
-        }
-          break;
-        case Opcodes.ArgRef:
-        {
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          curr_frame.locals[local_idx] = exec.stack.Pop();
-        }
-          break;
-        case Opcodes.DeclVar:
-        {
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx];
-
-          var curr = curr_frame.locals[local_idx];
-          //NOTE: handling case when variables are 're-declared' within the nested loop
-          if(curr != null)
-            curr.Release();
-          curr_frame.locals[local_idx] = MakeDefaultVal(type);
-        }
-          break;
-        case Opcodes.GetAttr:
-        {
-          int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          var obj = exec.stack.Pop();
-          var class_symb = (ClassSymbol)obj.type;
-          var res = Val.New(this);
-          var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-          field_symb.getter(curr_frame, obj, ref res, field_symb);
-          //NOTE: we retain only the payload since we make the copy of the value
-          //      and the new res already has refs = 1 while payload's refcount
-          //      is not incremented
-          res._refc?.Retain();
-          exec.stack.Push(res);
-          obj.Release();
-        }
-          break;
-        case Opcodes.RefAttr:
-        {
-          int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          var obj = exec.stack.Pop();
-          var class_symb = (ClassSymbol)obj.type;
-          var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-          Val res;
-          field_symb.getref(curr_frame, obj, out res, field_symb);
-          exec.stack.PushRetain(res);
-          obj.Release();
-        }
-          break;
-        case Opcodes.SetAttr:
-        {
-          int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-
-          var obj = exec.stack.Pop();
-          var class_symb = (ClassSymbol)obj.type;
-          var val = exec.stack.Pop();
-          var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-          field_symb.setter(curr_frame, ref obj, val, field_symb);
-          val.Release();
-          obj.Release();
-        }
-          break;
-        case Opcodes.SetAttrInplace:
-        {
-          int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          var val = exec.stack.Pop();
-          var obj = exec.stack.Peek();
-          var class_symb = (ClassSymbol)obj.type;
-          var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-          field_symb.setter(curr_frame, ref obj, val, field_symb);
-          val.Release();
-        }
-          break;
-        case Opcodes.GetGVar:
-        {
-          int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-
-          exec.stack.PushRetain(curr_frame.module.gvar_vals[var_idx]);
-        }
-          break;
-        case Opcodes.SetGVar:
-        {
-          int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-
-          var new_val = exec.stack.Pop();
-          curr_frame.module.gvar_vals.Assign(this, var_idx, new_val);
-          new_val.Release();
-        }
-          break;
-        case Opcodes.Nop:
-          break;
-        case Opcodes.Return:
-        {
-          exec.ip = EXIT_FRAME_IP - 1;
-        }
-          break;
-        case Opcodes.ReturnVal:
-        {
-          int ret_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
-
-          int stack_offset = exec.stack.Count;
-          for(int i = 0; i < ret_num; ++i)
-            curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
-          exec.stack.Count -= ret_num;
-
-          exec.ip = EXIT_FRAME_IP - 1;
-        }
-          break;
-        case Opcodes.GetFuncLocalPtr:
-        {
-          int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-
-          var func_symb = curr_frame.module.func_index.index[func_idx];
-
-          var ptr = FuncPtr.New(this);
-          ptr.Init(curr_frame.module, func_symb.ip_addr);
-          exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
-        }
-          break;
-        case Opcodes.GetFuncPtr:
-        {
-          int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-
-          var func_mod = curr_frame.module._imported[import_idx];
-          var func_symb = func_mod.func_index.index[func_idx];
-
-          var ptr = FuncPtr.New(this);
-          ptr.Init(func_mod, func_symb.ip_addr);
-          exec.stack.Push(Val.NewObj(this, ptr, func_symb.signature));
-        }
-          break;
-        case Opcodes.GetFuncNativePtr:
-        {
-          int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-
-          //NOTE: using convention where built-in global module is always at index 0
-          //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx - 1];
-          var nfunc_symb = func_mod.nfunc_index.index[func_idx];
-
-          var ptr = FuncPtr.New(this);
-          ptr.Init(nfunc_symb);
-          exec.stack.Push(Val.NewObj(this, ptr, nfunc_symb.signature));
-        }
-          break;
-        case Opcodes.GetFuncPtrFromVar:
-        {
-          int local_var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          var val = curr_frame.locals[local_var_idx];
-          val.Retain();
-          exec.stack.Push(val);
-        }
-          break;
-        case Opcodes.LastArgToTop:
-        {
-          //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
-          //      so that it fullfills Opcode.Call requirements
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-          int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-          int arg_idx = exec.stack.Count - args_num - 1;
-          var arg = exec.stack[arg_idx];
-          exec.stack.RemoveAt(arg_idx);
-          exec.stack.Push(arg);
-        }
-          break;
-        case Opcodes.CallLocal:
-        {
-          int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          var frm = Frame.New(this);
-          frm.Init(curr_frame, exec.stack, func_ip);
-          Call(exec, frm, args_bits);
-        }
-          break;
-        case Opcodes.CallGlobNative:
-        {
-          int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          var nfunc_symb = types.module.nfunc_index[func_idx];
-
-          BHS status;
-          if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
-            return status;
-        }
-          break;
-        case Opcodes.CallNative:
-        {
-          int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          //NOTE: using convention where built-in global module is always at index 0
-          //      and imported modules are at (import_idx + 1)
-          var func_mod = import_idx == 0 ? types.module : curr_frame.module._imported[import_idx - 1];
-          var nfunc_symb = func_mod.nfunc_index[func_idx];
-
-          BHS status;
-          if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
-            return status;
-        }
-          break;
-        case Opcodes.Call:
-        {
-          int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          var func_mod = curr_frame.module._imported[import_idx];
-
-          var frm = Frame.New(this);
-          frm.Init(curr_frame.fb, exec.stack, func_mod, func_ip);
-          Call(exec, frm, args_bits);
-        }
-          break;
-        case Opcodes.CallMethod:
-        {
-          int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          //TODO: use a simpler schema where 'self' is passed on the top
-          int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-          int self_idx = exec.stack.Count - args_num - 1;
-          var self = exec.stack[self_idx];
-          exec.stack.RemoveAt(self_idx);
-
-          var class_type = (ClassSymbolScript)self.type;
-          var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
-
-          var frm = Frame.New(this);
-          frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
-
-          frm.locals.Count = 1;
-          frm.locals[0] = self;
-
-          Call(exec, frm, args_bits);
-        }
-          break;
-        case Opcodes.CallMethodNative:
-        {
-          int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-          int self_idx = exec.stack.Count - args_num - 1;
-          var self = exec.stack[self_idx];
-
-          var class_type = (ClassSymbol)self.type;
-          var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
-
-          BHS status;
-          if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
-            return status;
-        }
-          break;
-        case Opcodes.CallMethodVirt:
-        {
-          int virt_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          //TODO: use a simpler schema where 'self' is passed on the top
-          int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-          int self_idx = exec.stack.Count - args_num - 1;
-          var self = exec.stack[self_idx];
-          exec.stack.RemoveAt(self_idx);
-
-          var class_type = (ClassSymbol)self.type;
-          var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
-
-          var frm = Frame.New(this);
-          frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
-
-          frm.locals.Count = 1;
-          frm.locals[0] = self;
-
-          Call(exec, frm, args_bits);
-        }
-          break;
-        case Opcodes.CallMethodIface:
-        {
-          int iface_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          //TODO: use a simpler schema where 'self' is passed on the top
-          int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-          int self_idx = exec.stack.Count - args_num - 1;
-          var self = exec.stack[self_idx];
-          exec.stack.RemoveAt(self_idx);
-
-          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
-          var class_type = (ClassSymbol)self.type;
-          var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
-
-          var frm = Frame.New(this);
-          frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
-
-          frm.locals.Count = 1;
-          frm.locals[0] = self;
-
-          Call(exec, frm, args_bits);
-        }
-          break;
-        case Opcodes.CallMethodIfaceNative:
-        {
-          int iface_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
-          var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
-
-          BHS status;
-          if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
-            return status;
-        }
-          break;
-        case Opcodes.CallFuncPtr:
-        {
-          uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-          var val_ptr = exec.stack.Pop();
-          var ptr = (FuncPtr)val_ptr._obj;
-
-          //checking if it's a native call
-          if(ptr.native != null)
-          {
-            BHS status;
-            bool return_status =
-              CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
-            val_ptr.Release();
-            if(return_status)
-              return status;
-          }
-          else
-          {
-            var frm = ptr.MakeFrame(this, curr_frame.fb, exec.stack);
-            val_ptr.Release();
-            Call(exec, frm, args_bits);
-          }
-        }
-          break;
-        case Opcodes.InitFrame:
-        {
-          int local_vars_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          var args_bits = exec.stack.Pop();
-          curr_frame.locals.Count = local_vars_num;
-          //NOTE: we need to store arg info bits locally so that
-          //      this information will be available to func
-          //      args related opcodes
-          curr_frame.locals[local_vars_num - 1] = args_bits;
-        }
-          break;
-        case Opcodes.Lambda:
-        {
-          short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
-          var ptr = FuncPtr.New(this);
-          ptr.Init(curr_frame, exec.ip + 1);
-          exec.stack.Push(Val.NewObj(this, ptr, Types.Any /*TODO: should be a FuncPtr type*/));
-
-          exec.ip += offset;
-        }
-          break;
-        case Opcodes.UseUpval:
-        {
-          int up_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-          var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
-
-          var addr = (FuncPtr)exec.stack.Peek()._obj;
-
-          //TODO: amount of local variables must be known ahead and
-          //      initialized during Frame initialization
-          //NOTE: we need to reflect the updated max amount of locals,
-          //      otherwise they might not be cleared upon Frame exit
-          addr.upvals.Count = local_idx + 1;
-
-          var upval = curr_frame.locals[up_idx];
-          if(mode == UpvalMode.COPY)
-          {
-            var copy = Val.New(this);
-            copy.ValueCopyFrom(upval);
-            addr.upvals[local_idx] = copy;
-          }
-          else
-          {
-            upval.Retain();
-            addr.upvals[local_idx] = upval;
-          }
-        }
-          break;
-        case Opcodes.Pop:
-        {
-          exec.stack.PopRelease();
-        }
-          break;
-        case Opcodes.Jump:
-        {
-          short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
-          exec.ip += offset;
-        }
-          break;
-        case Opcodes.JumpZ:
-        {
-          int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          if(exec.stack.PopRelease().bval == false)
-            exec.ip += offset;
-        }
-          break;
-        case Opcodes.JumpPeekZ:
-        {
-          int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          var v = exec.stack.Peek();
-          if(v.bval == false)
-            exec.ip += offset;
-        }
-          break;
-        case Opcodes.JumpPeekNZ:
-        {
-          int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          var v = exec.stack.Peek();
-          if(v.bval == true)
-            exec.ip += offset;
-        }
-          break;
-        case Opcodes.DefArg:
-        {
-          byte def_arg_idx = (byte)Bytecode.Decode8(bytes, ref exec.ip);
-          int jump_pos = (int)Bytecode.Decode16(bytes, ref exec.ip);
-          uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count - 1]._num;
-          var args_info = new FuncArgsInfo(args_bits);
-          //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
-          //NOTE: if default argument is not used we need to jump out of default argument calculation code
-          if(!args_info.IsDefaultArgUsed(def_arg_idx))
-            exec.ip += jump_pos;
-        }
-          break;
-        case Opcodes.Block:
-        {
-          var new_coroutine = ProcBlockOpcode(exec, curr_frame, region.defer_support);
-          if(new_coroutine != null)
-          {
-            //NOTE: since there's a new coroutine we want to skip ip incrementing
-            //      which happens below and proceed right to the execution of
-            //      the new coroutine
-            exec.coroutine = new_coroutine;
-            return BHS.SUCCESS;
-          }
-        }
-          break;
-        case Opcodes.New:
-        {
-          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var type = curr_frame.type_refs[type_idx];
-          HandleNew(curr_frame, exec.stack, type);
-        }
-          break;
-        default:
-          throw new Exception("Not supported opcode: " + opcode);
-      }
-    }
-
-    ++exec.ip;
-    return BHS.SUCCESS;
+    int opcode = curr_frame.bytecode[exec.ip];
+
+    exec.status = BHS.SUCCESS;
+    exec.skip_ip_inc = false;
+    op_handlers[opcode](this, exec, region, curr_frame);
+
+    if(!exec.skip_ip_inc)
+      ++exec.ip;
+    return exec.status;
   }
 
   void ExecInitCode(Module module)
@@ -1100,7 +451,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeAdd(VM vm, ExecState exec)
+  static void OpcodeAdd(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1117,7 +468,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeSub(VM vm, ExecState exec)
+  static void OpcodeSub(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1130,7 +481,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeDiv(VM vm, ExecState exec)
+  static void OpcodeDiv(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1143,7 +494,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeMul(VM vm, ExecState exec)
+  static void OpcodeMul(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1156,7 +507,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeEqual(VM vm, ExecState exec)
+  static void OpcodeEqual(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1169,7 +520,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeNotEqual(VM vm, ExecState exec)
+  static void OpcodeNotEqual(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1182,7 +533,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeLT(VM vm, ExecState exec)
+  static void OpcodeLT(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1195,7 +546,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeLTE(VM vm, ExecState exec)
+  static void OpcodeLTE(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1208,7 +559,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeGT(VM vm, ExecState exec)
+  static void OpcodeGT(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1221,7 +572,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeGTE(VM vm, ExecState exec)
+  static void OpcodeGTE(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1234,7 +585,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeAnd(VM vm, ExecState exec)
+  static void OpcodeAnd(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1247,7 +598,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeOr(VM vm, ExecState exec)
+  static void OpcodeOr(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1260,7 +611,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeBitAnd(VM vm, ExecState exec)
+  static void OpcodeBitAnd(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1273,7 +624,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeBitOr(VM vm, ExecState exec)
+  static void OpcodeBitOr(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1286,7 +637,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeBitShr(VM vm, ExecState exec)
+  static void OpcodeBitShr(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1299,7 +650,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeBitShl(VM vm, ExecState exec)
+  static void OpcodeBitShl(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1312,7 +663,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeMod(VM vm, ExecState exec)
+  static void OpcodeMod(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -1325,7 +676,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeUnaryNot(VM vm, ExecState exec)
+  static void OpcodeUnaryNot(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var operand = stack.PopRelease().num;
@@ -1334,7 +685,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeUnaryNeg(VM vm, ExecState exec)
+  static void OpcodeUnaryNeg(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var operand = stack.PopRelease().num;
@@ -1343,12 +694,786 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void OpcodeUnaryBitNot(VM vm, ExecState exec)
+  static void OpcodeUnaryBitNot(VM vm, ExecState exec, Region region, Frame curr_frame)
   {
     var stack = exec.stack;
     var operand = stack.PopRelease().num;
 
     stack.Push(Val.NewNum(vm, ~((int)operand)));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeConstant(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var cn = curr_frame.constants[const_idx];
+    var cv = cn.ToVal(vm);
+    exec.stack.Push(cv);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeTypeCast(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
+
+    var cast_type = curr_frame.type_refs[cast_type_idx];
+
+    vm.HandleTypeCast(exec, cast_type, force_type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeTypeAs(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    bool force_type = (int)Bytecode.Decode8(bytes, ref exec.ip) == 1;
+    var as_type = curr_frame.type_refs[cast_type_idx];
+
+    vm.HandleTypeAs(exec, as_type, force_type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeTypeIs(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var as_type = curr_frame.type_refs[cast_type_idx];
+
+    vm.HandleTypeIs(exec, as_type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeTypeof(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var type = curr_frame.type_refs[type_idx];
+
+    exec.stack.Push(Val.NewObj(vm, type, Types.Type));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeInc(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    ++curr_frame.locals[var_idx]._num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeDec(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int var_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    --curr_frame.locals[var_idx]._num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeArrIdx(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 2];
+    var class_type = (ArrayTypeSymbol)self.type;
+
+    int idx = (int)exec.stack.PopRelease().num;
+    var arr = exec.stack.Pop();
+
+    var res = class_type.ArrGetAt(arr, idx);
+
+    exec.stack.Push(res);
+    arr.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeArrIdxW(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 2];
+    var class_type = (ArrayTypeSymbol)self.type;
+
+    int idx = (int)exec.stack.PopRelease().num;
+    var arr = exec.stack.Pop();
+    var val = exec.stack.Pop();
+
+    class_type.ArrSetAt(arr, idx, val);
+
+    val.Release();
+    arr.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeArrAddInplace(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 2];
+    self.Retain();
+    var class_type = (ArrayTypeSymbol)self.type;
+    var status = BHS.SUCCESS;
+    //NOTE: Add must be at 0 index
+    ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+    exec.stack.Push(self);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeMapIdx(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 2];
+    var class_type = (MapTypeSymbol)self.type;
+
+    var key = exec.stack.Pop();
+    var map = exec.stack.Pop();
+
+    class_type.MapTryGet(map, key, out var res);
+
+    exec.stack.PushRetain(res);
+    key.Release();
+    map.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeMapIdxW(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 2];
+    var class_type = (MapTypeSymbol)self.type;
+
+    var key = exec.stack.Pop();
+    var map = exec.stack.Pop();
+    var val = exec.stack.Pop();
+
+    class_type.MapSet(map, key, val);
+
+    key.Release();
+    val.Release();
+    map.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeMapAddInplace(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var self = exec.stack[exec.stack.Count - 3];
+    self.Retain();
+    var class_type = (MapTypeSymbol)self.type;
+    var status = BHS.SUCCESS;
+    //NOTE: Add must be at 0 index
+    ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack, new FuncArgsInfo(), ref status);
+    exec.stack.Push(self);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    exec.stack.PushRetain(curr_frame.locals[local_idx]);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeSetVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    var new_val = exec.stack.Pop();
+    curr_frame.locals.Assign(vm, local_idx, new_val);
+    new_val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeArgVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    var arg_val = exec.stack.Pop();
+    var loc_var = Val.New(vm);
+    loc_var.ValueCopyFrom(arg_val);
+    loc_var._refc?.Retain();
+    curr_frame.locals[local_idx] = loc_var;
+    arg_val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeArgRef(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    curr_frame.locals[local_idx] = exec.stack.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeDeclVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var type = curr_frame.type_refs[type_idx];
+
+    var curr = curr_frame.locals[local_idx];
+    //NOTE: handling case when variables are 're-declared' within the nested loop
+    if(curr != null)
+      curr.Release();
+    curr_frame.locals[local_idx] = vm.MakeDefaultVal(type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetAttr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    var obj = exec.stack.Pop();
+    var class_symb = (ClassSymbol)obj.type;
+    var res = Val.New(vm);
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.getter(curr_frame, obj, ref res, field_symb);
+    //NOTE: we retain only the payload since we make the copy of the value
+    //      and the new res already has refs = 1 while payload's refcount
+    //      is not incremented
+    res._refc?.Retain();
+    exec.stack.Push(res);
+    obj.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeRefAttr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    var obj = exec.stack.Pop();
+    var class_symb = (ClassSymbol)obj.type;
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    Val res;
+    field_symb.getref(curr_frame, obj, out res, field_symb);
+    exec.stack.PushRetain(res);
+    obj.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeSetAttr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    var obj = exec.stack.Pop();
+    var class_symb = (ClassSymbol)obj.type;
+    var val = exec.stack.Pop();
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.setter(curr_frame, ref obj, val, field_symb);
+    val.Release();
+    obj.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeSetAttrInplace(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    var val = exec.stack.Pop();
+    var obj = exec.stack.Peek();
+    var class_symb = (ClassSymbol)obj.type;
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.setter(curr_frame, ref obj, val, field_symb);
+    val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetGVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    exec.stack.PushRetain(curr_frame.module.gvar_vals[var_idx]);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeSetGVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var new_val = exec.stack.Pop();
+    curr_frame.module.gvar_vals.Assign(vm, var_idx, new_val);
+    new_val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeNop(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeReturn(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    exec.ip = EXIT_FRAME_IP - 1;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeReturnVal(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
+
+    int stack_offset = exec.stack.Count;
+    for(int i = 0; i < ret_num; ++i)
+      curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
+    exec.stack.Count -= ret_num;
+
+    exec.ip = EXIT_FRAME_IP - 1;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetFuncLocalPtr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+
+    var func_symb = curr_frame.module.func_index.index[func_idx];
+
+    var ptr = FuncPtr.New(vm);
+    ptr.Init(curr_frame.module, func_symb.ip_addr);
+    exec.stack.Push(Val.NewObj(vm, ptr, func_symb.signature));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetFuncPtr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int import_idx = Bytecode.Decode16(bytes, ref exec.ip);
+    int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+
+    var func_mod = curr_frame.module._imported[import_idx];
+    var func_symb = func_mod.func_index.index[func_idx];
+
+    var ptr = FuncPtr.New(vm);
+    ptr.Init(func_mod, func_symb.ip_addr);
+    exec.stack.Push(Val.NewObj(vm, ptr, func_symb.signature));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetFuncNativePtr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int import_idx = Bytecode.Decode16(bytes, ref exec.ip);
+    int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+
+    //NOTE: using convention where built-in global module is always at index 0
+    //      and imported modules are at (import_idx + 1)
+    var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
+    var nfunc_symb = func_mod.nfunc_index.index[func_idx];
+
+    var ptr = FuncPtr.New(vm);
+    ptr.Init(nfunc_symb);
+    exec.stack.Push(Val.NewObj(vm, ptr, nfunc_symb.signature));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeGetFuncPtrFromVar(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_var_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    var val = curr_frame.locals[local_var_idx];
+    val.Retain();
+    exec.stack.Push(val);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeLastArgToTop(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
+    //      so that it fullfills Opcode.Call requirements
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int arg_idx = exec.stack.Count - args_num - 1;
+    var arg = exec.stack[arg_idx];
+    exec.stack.RemoveAt(arg_idx);
+    exec.stack.Push(arg);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallLocal(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame, exec.stack, func_ip);
+    vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallGlobNative(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var nfunc_symb = vm.types.module.nfunc_index[func_idx];
+
+    BHS status;
+    if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
+    {
+      exec.skip_ip_inc = true;
+      exec.status = status;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallNative(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    //NOTE: using convention where built-in global module is always at index 0
+    //      and imported modules are at (import_idx + 1)
+    var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
+    var nfunc_symb = func_mod.nfunc_index[func_idx];
+
+    BHS status;
+    if(CallNative(curr_frame, exec.stack, nfunc_symb, args_bits, out status, ref exec.coroutine))
+    {
+      exec.skip_ip_inc = true;
+      exec.status = status;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCall(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var func_mod = curr_frame.module._imported[import_idx];
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame.fb, exec.stack, func_mod, func_ip);
+    vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallMethod(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    //TODO: use a simpler schema where 'self' is passed on the top
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.Count - args_num - 1;
+    var self = exec.stack[self_idx];
+    exec.stack.RemoveAt(self_idx);
+
+    var class_type = (ClassSymbolScript)self.type;
+    var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
+
+    frm.locals.Count = 1;
+    frm.locals[0] = self;
+
+    vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallMethodNative(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.Count - args_num - 1;
+    var self = exec.stack[self_idx];
+
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
+
+    BHS status;
+    if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
+    {
+      exec.skip_ip_inc = true;
+      exec.status = status;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallMethodVirt(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int virt_func_idx = Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    //TODO: use a simpler schema where 'self' is passed on the top
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.Count - args_num - 1;
+    var self = exec.stack[self_idx];
+    exec.stack.RemoveAt(self_idx);
+
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
+
+    frm.locals.Count = 1;
+    frm.locals[0] = self;
+
+    vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallMethodIface(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int iface_func_idx = Bytecode.Decode16(bytes, ref exec.ip);
+    int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    //TODO: use a simpler schema where 'self' is passed on the top
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.Count - args_num - 1;
+    var self = exec.stack[self_idx];
+    exec.stack.RemoveAt(self_idx);
+
+    var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame.fb, exec.stack, func_symb._module, func_symb.ip_addr);
+
+    frm.locals.Count = 1;
+    frm.locals[0] = self;
+
+    vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallMethodIfaceNative(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int iface_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
+    var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
+
+    BHS status;
+    if(CallNative(curr_frame, exec.stack, func_symb, args_bits, out status, ref exec.coroutine))
+    {
+      exec.skip_ip_inc = true;
+      exec.status = status;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeCallFuncPtr(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var val_ptr = exec.stack.Pop();
+    var ptr = (FuncPtr)val_ptr._obj;
+
+    //checking if it's a native call
+    if(ptr.native != null)
+    {
+      BHS status;
+      bool return_status =
+        CallNative(curr_frame, exec.stack, ptr.native, args_bits, out status, ref exec.coroutine);
+      val_ptr.Release();
+      if(return_status)
+      {
+        exec.skip_ip_inc = true;
+        exec.status = status;
+      }
+    }
+    else
+    {
+      var frm = ptr.MakeFrame(vm, curr_frame.fb, exec.stack);
+      val_ptr.Release();
+      vm.Call(exec, frm, args_bits);
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeInitFrame(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int local_vars_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    var args_bits = exec.stack.Pop();
+    curr_frame.locals.Count = local_vars_num;
+    //NOTE: we need to store arg info bits locally so that
+    //      this information will be available to func
+    //      args related opcodes
+    curr_frame.locals[local_vars_num - 1] = args_bits;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeLambda(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
+    var ptr = FuncPtr.New(vm);
+    ptr.Init(curr_frame, exec.ip + 1);
+    exec.stack.Push(Val.NewObj(vm, ptr, Types.Any /*TODO: should be a FuncPtr type*/));
+
+    exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeUseUpval(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int up_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
+
+    var addr = (FuncPtr)exec.stack.Peek()._obj;
+
+    //TODO: amount of local variables must be known ahead and
+    //      initialized during Frame initialization
+    //NOTE: we need to reflect the updated max amount of locals,
+    //      otherwise they might not be cleared upon Frame exit
+    addr.upvals.Count = local_idx + 1;
+
+    var upval = curr_frame.locals[up_idx];
+    if(mode == UpvalMode.COPY)
+    {
+      var copy = Val.New(vm);
+      copy.ValueCopyFrom(upval);
+      addr.upvals[local_idx] = copy;
+    }
+    else
+    {
+      upval.Retain();
+      addr.upvals[local_idx] = upval;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodePop(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    exec.stack.PopRelease();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeJump(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
+    exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeJumpZ(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    if(exec.stack.PopRelease().bval == false)
+      exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeJumpPeekZ(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    var v = exec.stack.Peek();
+    if(v.bval == false)
+      exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeJumpPeekNZ(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    var v = exec.stack.Peek();
+    if(v.bval == true)
+      exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeDefArg(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int jump_pos = Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count - 1]._num;
+    var args_info = new FuncArgsInfo(args_bits);
+    //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
+    //NOTE: if default argument is not used we need to jump out of default argument calculation code
+    if(!args_info.IsDefaultArgUsed(def_arg_idx))
+      exec.ip += jump_pos;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeBlock(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var new_coroutine = vm.ProcBlockOpcode(exec, curr_frame, region.defer_support);
+    if(new_coroutine != null)
+    {
+      //NOTE: since there's a new coroutine we want to skip ip incrementing
+      //      which happens below and proceed right to the execution of
+      //      the new coroutine
+      exec.coroutine = new_coroutine;
+      exec.skip_ip_inc = true;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeNew(VM vm, ExecState exec, Region region, Frame curr_frame)
+  {
+    var bytes = curr_frame.bytecode;
+
+    int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var type = curr_frame.type_refs[type_idx];
+    vm.HandleNew(curr_frame, exec.stack, type);
   }
 
   static void InitOpcodeHandlers()
@@ -1375,6 +1500,79 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.UnaryNot] = OpcodeUnaryNot;
     op_handlers[(int)Opcodes.UnaryNeg] = OpcodeUnaryNeg;
     op_handlers[(int)Opcodes.UnaryBitNot] = OpcodeUnaryBitNot;
+
+    op_handlers[(int)Opcodes.Constant] = OpcodeConstant;
+
+    op_handlers[(int)Opcodes.TypeCast] = OpcodeTypeCast;
+    op_handlers[(int)Opcodes.TypeAs] = OpcodeTypeAs;
+    op_handlers[(int)Opcodes.TypeIs] = OpcodeTypeIs;
+    op_handlers[(int)Opcodes.Typeof] = OpcodeTypeof;
+
+    op_handlers[(int)Opcodes.Inc] = OpcodeInc;
+    op_handlers[(int)Opcodes.Dec] = OpcodeDec;
+
+    op_handlers[(int)Opcodes.ArrIdx] = OpcodeArrIdx;
+    op_handlers[(int)Opcodes.ArrIdxW] = OpcodeArrIdxW;
+    op_handlers[(int)Opcodes.ArrAddInplace] = OpcodeArrAddInplace;
+
+    op_handlers[(int)Opcodes.MapIdx] = OpcodeMapIdx;
+    op_handlers[(int)Opcodes.MapIdxW] = OpcodeMapIdxW;
+    op_handlers[(int)Opcodes.MapAddInplace] = OpcodeMapAddInplace;
+
+    op_handlers[(int)Opcodes.GetVar] = OpcodeGetVar;
+    op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
+    op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
+
+    op_handlers[(int)Opcodes.ArgVar] = OpcodeArgVar;
+    op_handlers[(int)Opcodes.ArgRef] = OpcodeArgRef;
+
+    op_handlers[(int)Opcodes.LastArgToTop] = OpcodeLastArgToTop;
+
+    op_handlers[(int)Opcodes.GetAttr] = OpcodeGetAttr;
+    op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;
+    op_handlers[(int)Opcodes.SetAttr] = OpcodeSetAttr;
+    op_handlers[(int)Opcodes.SetAttrInplace] = OpcodeSetAttrInplace;
+
+    op_handlers[(int)Opcodes.GetGVar] = OpcodeGetGVar;
+    op_handlers[(int)Opcodes.SetGVar] = OpcodeSetGVar;
+
+    op_handlers[(int)Opcodes.Nop] = OpcodeNop;
+
+    op_handlers[(int)Opcodes.Return] = OpcodeReturn;
+    op_handlers[(int)Opcodes.ReturnVal] = OpcodeReturnVal;
+
+    op_handlers[(int)Opcodes.GetFuncLocalPtr] = OpcodeGetFuncLocalPtr;
+    op_handlers[(int)Opcodes.GetFuncPtr] = OpcodeGetFuncPtr;
+    op_handlers[(int)Opcodes.GetFuncNativePtr] = OpcodeGetFuncNativePtr;
+    op_handlers[(int)Opcodes.GetFuncPtrFromVar] = OpcodeGetFuncPtrFromVar;
+
+    op_handlers[(int)Opcodes.CallLocal] = OpcodeCallLocal;
+    op_handlers[(int)Opcodes.CallGlobNative] = OpcodeCallGlobNative;
+    op_handlers[(int)Opcodes.CallNative] = OpcodeCallNative;
+    op_handlers[(int)Opcodes.Call] = OpcodeCall;
+    op_handlers[(int)Opcodes.CallMethod] = OpcodeCallMethod;
+    op_handlers[(int)Opcodes.CallMethodNative] = OpcodeCallMethodNative;
+    op_handlers[(int)Opcodes.CallMethodVirt] = OpcodeCallMethodVirt;
+    op_handlers[(int)Opcodes.CallMethodIface] = OpcodeCallMethodIface;
+    op_handlers[(int)Opcodes.CallMethodIfaceNative] = OpcodeCallMethodIfaceNative;
+    op_handlers[(int)Opcodes.CallFuncPtr] = OpcodeCallFuncPtr;
+
+    op_handlers[(int)Opcodes.InitFrame] = OpcodeInitFrame;
+
+    op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
+    op_handlers[(int)Opcodes.UseUpval] = OpcodeUseUpval;
+
+    op_handlers[(int)Opcodes.Pop] = OpcodePop;
+    op_handlers[(int)Opcodes.Jump] = OpcodeJump;
+    op_handlers[(int)Opcodes.JumpZ] = OpcodeJumpZ;
+    op_handlers[(int)Opcodes.JumpPeekZ] = OpcodeJumpPeekZ;
+    op_handlers[(int)Opcodes.JumpPeekNZ] = OpcodeJumpPeekNZ;
+
+    op_handlers[(int)Opcodes.DefArg] = OpcodeDefArg;
+
+    op_handlers[(int)Opcodes.Block] = OpcodeBlock;
+
+    op_handlers[(int)Opcodes.New] = OpcodeNew;
   }
 }
 
