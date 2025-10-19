@@ -309,7 +309,7 @@ public partial class VM : INamedResolver
         case Opcodes.UnaryNeg:
         case Opcodes.UnaryBitNot:
         {
-          ExecuteUnaryOp(opcode, exec.stack);
+          op_handlers[(int)opcode](this, exec);
         }
           break;
         case Opcodes.GetVar:
@@ -843,24 +843,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void ExecuteUnaryOp(Opcodes op, ValStack stack)
-  {
-    var operand = stack.PopRelease().num;
-    switch(op)
-    {
-      case Opcodes.UnaryNot:
-        stack.Push(Val.NewBool(this, operand != 1));
-        break;
-      case Opcodes.UnaryNeg:
-        stack.Push(Val.NewFlt(this, operand * -1));
-        break;
-      case Opcodes.UnaryBitNot:
-        stack.Push(Val.NewNum(this, ~((int)operand)));
-        break;
-    }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   Coroutine ProcBlockOpcode(
     ExecState exec,
     Frame curr_frame,
@@ -1342,8 +1324,36 @@ public partial class VM : INamedResolver
     l_operand.Release();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeUnaryNot(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var operand = stack.PopRelease().num;
+
+    stack.Push(Val.NewBool(vm, operand != 1));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeUnaryNeg(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var operand = stack.PopRelease().num;
+
+    stack.Push(Val.NewFlt(vm, operand * -1));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void OpcodeUnaryBitNot(VM vm, ExecState exec)
+  {
+    var stack = exec.stack;
+    var operand = stack.PopRelease().num;
+
+    stack.Push(Val.NewNum(vm, ~((int)operand)));
+  }
+
   static void InitOpcodeHandlers()
   {
+    //binary ops
     op_handlers[(int)Opcodes.Add] = OpcodeAdd;
     op_handlers[(int)Opcodes.Sub] = OpcodeSub;
     op_handlers[(int)Opcodes.Div] = OpcodeDiv;
@@ -1361,6 +1371,10 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.BitShr] = OpcodeBitShr;
     op_handlers[(int)Opcodes.BitShl] = OpcodeBitShl;
     op_handlers[(int)Opcodes.Mod] = OpcodeMod;
+    //unary ops
+    op_handlers[(int)Opcodes.UnaryNot] = OpcodeUnaryNot;
+    op_handlers[(int)Opcodes.UnaryNeg] = OpcodeUnaryNeg;
+    op_handlers[(int)Opcodes.UnaryBitNot] = OpcodeUnaryBitNot;
   }
 }
 
