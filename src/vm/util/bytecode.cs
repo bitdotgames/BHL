@@ -47,17 +47,14 @@ public class Bytecode
     {
       fixed(byte* p = bytecode)
       {
-        ushort val = (ushort)
-          ((uint)p[ip + 1] |
-           ((uint)p[ip + 2]) << 8
-          );
+        ushort val = (ushort)(p[ip + 1] | (uint)p[ip + 2] << 8);
         ip += 2;
         return val;
       }
     }
 #else
     ushort val = (ushort)
-      ((uint)bytecode[ip+1] | 
+      ((uint)bytecode[ip+1] |
        ((uint)bytecode[ip+2]) << 8
        );
     ip += 2;
@@ -68,10 +65,7 @@ public class Bytecode
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe uint Decode16(byte* p, ref int ip)
   {
-    uint val =
-      ((uint)p[ip + 1] |
-       ((uint)p[ip + 2]) << 8
-      );
+    uint val = p[ip + 1] | (uint)p[ip + 2] << 8;
     ip += 2;
     return val;
   }
@@ -84,18 +78,14 @@ public class Bytecode
     {
       fixed(byte* p = bytecode)
       {
-        uint val =
-          ((uint)p[ip + 1]         |
-           ((uint)p[ip + 2]) << 8  |
-           ((uint)p[ip + 3]) << 16
-          );
+        uint val = p[ip + 1] | (uint)p[ip + 2] << 8  | (uint)p[ip + 3] << 16;
         ip += 3;
         return val;
       }
     }
 #else
     uint val =
-      ((uint)bytecode[ip+1]        | 
+      ((uint)bytecode[ip+1]        |
        ((uint)bytecode[ip+2]) << 8 |
        ((uint)bytecode[ip+3]) << 16
        );
@@ -107,11 +97,7 @@ public class Bytecode
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static unsafe uint Decode24(byte* p, ref int ip)
   {
-    uint val =
-      ((uint)p[ip + 1]         |
-       ((uint)p[ip + 2]) << 8  |
-       ((uint)p[ip + 3]) << 16
-      );
+    uint val = p[ip + 1] | (uint)p[ip + 2] << 8 | (uint)p[ip + 3] << 16;
     ip += 3;
     return val;
   }
@@ -136,7 +122,7 @@ public class Bytecode
     }
 #else
     uint val = (uint)
-      ((uint)bytecode[ip+1]         | 
+      ((uint)bytecode[ip+1]         |
        ((uint)bytecode[ip+2] << 8)  |
        ((uint)bytecode[ip+3] << 16) |
        ((uint)bytecode[ip+4] << 24)
@@ -150,11 +136,7 @@ public class Bytecode
   public static unsafe uint Decode32(byte* p, ref int ip)
   {
     uint val =
-      ((uint)p[ip + 1]         |
-       ((uint)p[ip + 2]) << 8  |
-       ((uint)p[ip + 3]) << 16 |
-       ((uint)p[ip + 4]) << 24
-      );
+      p[ip + 1] | (uint)p[ip + 2] << 8  | (uint)p[ip + 3] << 16 | (uint)p[ip + 4] << 24;
     ip += 4;
     return val;
   }
