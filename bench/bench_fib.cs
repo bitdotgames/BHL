@@ -50,7 +50,7 @@ public class BenchFibonacciImported : BHL_TestBase
       }
     }
 
-    interface IFib 
+    interface IFib
     {
       func int fib(int x, IFib f)
     }
@@ -122,29 +122,29 @@ public class BenchFibonacciImported : BHL_TestBase
       }
     }
 
-    func test_simple() 
+    func test_simple()
     {
-      int x = 15 
+      int x = 15
       fib(x)
     }
 
-    func test_imported() 
+    func test_imported()
     {
-      int x = 15 
+      int x = 15
       fib1(x)
     }
 
-    func test_class_imported() 
+    func test_class_imported()
     {
-      int x = 15 
+      int x = 15
       var f1 = new Fib1
       var f2 = new Fib2
       f1.fib1(x, f2)
     }
 
-    func test_interface_imported() 
+    func test_interface_imported()
     {
-      int x = 15 
+      int x = 15
       IFib f = new Fib
       f.fib(x, f)
     }
@@ -155,16 +155,16 @@ public class BenchFibonacciImported : BHL_TestBase
         {"fib2.bhl", fib2},
         {"test.bhl", test},
       }
-    );
+    ).GetAwaiter().GetResult();
 
     vm.LoadModule("test");
-    fs_simple = 
+    fs_simple =
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_simple").LoadFuncSymbol(vm);
-    fs_imported = 
+    fs_imported =
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_imported").LoadFuncSymbol(vm);
-    fs_class_imported = 
+    fs_class_imported =
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_class_imported").LoadFuncSymbol(vm);
-    fs_interface_imported = 
+    fs_interface_imported =
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_interface_imported").LoadFuncSymbol(vm);
   }
 
