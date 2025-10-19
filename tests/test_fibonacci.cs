@@ -11,7 +11,7 @@ public class TestFibonacci : BHL_TestBase
     string bhl = @"
     func int fib(int x)
     {
-      __dump_opcodes_on();
+      //__dump_opcodes_on();
 
       if(x == 0) {
         return 0
@@ -23,19 +23,19 @@ public class TestFibonacci : BHL_TestBase
         }
       }
 
-      __dump_opcodes_off();
+      //__dump_opcodes_off();
     }
 
     func test() {
-      __dump_opcodes_on();
+      //__dump_opcodes_on();
 
       fib(1)
 
-      __dump_opcodes_off();
+      //__dump_opcodes_off();
     }
     ";
 
-    Compile(bhl, show_bytes: true);
+    Compile(bhl/*, show_bytes: true*/);
   }
 }
 
