@@ -1162,6 +1162,7 @@ public class BHL_TestBase
   {
     Dump(c.Compile());
   }
+
   static void Dump(Module module)
   {
     if(module.compiled?.initcode?.Length > 0)

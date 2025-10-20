@@ -122,9 +122,9 @@ public class TestVM : BHL_TestBase
     Assert.Single(c.compiled.constants);
 
     var vm = MakeVM(c);
-    var fb = vm.Start("test");
+    var fb = vm.Start2("test");
     Assert.False(vm.Tick());
-    Assert.Equal(123, fb.result.PopRelease().num);
+    Assert.Equal(123, fb.exec.stack2.PopRelease().num);
     CommonChecks(vm);
   }
 

@@ -480,24 +480,41 @@ public class ValStack : FixedStack<Val>
   }
 }
 
-public class Val2Holder
+public class Val2Stack
 {
   internal Val2[] vals;
-  public int Count;
+  public int sp;
 
-  public Val2Holder()
+  public Val2Stack()
   {
     vals = new Val2[1024];
-    Count = 0;
+    sp = 0;
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
-  public ref Val2 Add()
+  public ref Val2 Push()
   {
-    if(Count == vals.Length)
-      Array.Resize(ref vals, Count << 1);
+    if(sp == vals.Length)
+      Array.Resize(ref vals, sp << 1);
 
-    return ref vals[Count++];
+    return ref vals[sp++];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public void Add(int num)
+  {
+    int needed = num - (vals.Length - sp);
+    if(needed > 0)
+      Array.Resize(ref vals, vals.Length + needed);
+    sp += num;
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val2 PopRelease()
+  {
+    ref var val = ref vals[--sp];
+    val.Release();
+    return ref val;
   }
 }
 
@@ -716,7 +733,8 @@ public struct Val2
   static public Val2 NewInt(VM vm, double n)
   {
     Val2 dv = default(Val2);
-    dv.SetInt(n);
+    dv.type = Types.Int;
+    dv._num = n;
     return dv;
   }
 

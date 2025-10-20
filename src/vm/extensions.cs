@@ -10,6 +10,11 @@ public static class VMExtensions
     return vm.Start(func, 0u, new StackList<Val>());
   }
 
+  static public VM.Fiber Start2(this VM vm, string func)
+  {
+    return vm.Start2(func, 0u, new StackList<Val2>());
+  }
+
   static public VM.Fiber Start(this VM vm, string func, Val arg1)
   {
     return vm.Start(func, 1u, new StackList<Val>(arg1));
@@ -37,6 +42,15 @@ public static class VMExtensions
       return null;
 
     return vm.Start(addr, args_info, args, opts);
+  }
+
+  static public VM.Fiber Start2(this VM vm, string func, FuncArgsInfo args_info, StackList<Val2> args,
+    VM.FiberOptions opts = 0)
+  {
+    if(!vm.TryFindFuncAddr(func, out var addr))
+      return null;
+
+    return vm.Start2(addr, args_info, args, opts);
   }
 
   static public VM.Fiber Start(this VM vm, FuncSymbolScript fs, StackList<Val> args, VM.FiberOptions opts = 0)

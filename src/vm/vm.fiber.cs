@@ -96,7 +96,7 @@ public partial class VM : INamedResolver
 
     internal bool stop_guard;
 
-    internal ExecState exec = new ExecState();
+    public ExecState exec = new ExecState();
 
     public ValStack result = new ValStack(Frame.MAX_STACK);
 
@@ -367,7 +367,7 @@ public partial class VM : INamedResolver
 
   //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
   //       1) args put into stack
-  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg  
+  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg
   public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
@@ -388,6 +388,33 @@ public partial class VM : INamedResolver
       frame.Init(fb, fb.result, addr.module, addr.ip);
 
       PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
+    }
+
+    if(opts.HasFlag(FiberOptions.Retain))
+      fb.Retain();
+    return fb;
+  }
+
+  public Fiber Start2(FuncAddr addr, FuncArgsInfo args_info, StackList<Val2> args, FiberOptions opts = 0)
+  {
+    var fb = Fiber.New(this);
+    fb.func_addr = addr;
+    Register(fb, null, opts);
+
+    var frame = Frame.New(this);
+
+    //checking native call
+    if(addr.fsn != null)
+    {
+      frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+
+      //PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
+    }
+    else
+    {
+      frame.Init(fb, fb.result, addr.module, addr.ip);
+
+      PassArgsAndAttach2(fb, frame, Val2.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -467,6 +494,29 @@ public partial class VM : INamedResolver
 
     //passing args info as stack variable
     frame.stack.Push(args_info);
+
+    fb.Attach(frame);
+  }
+
+  static void PassArgsAndAttach2(
+    Fiber fb,
+    Frame frame,
+    Val2 args_info,
+    StackList <Val2> args
+  )
+  {
+    var stack = fb.exec.stack2;
+    for(int i = args.Count; i-- > 0;)
+    {
+      ref Val2 v = ref stack.Push();
+      v = args[i];
+    }
+
+    {
+      //passing args info as a stack variable
+      ref Val2 v = ref stack.Push();
+      v = args_info;
+    }
 
     fb.Attach(frame);
   }

@@ -64,6 +64,9 @@ public partial class VM : INamedResolver
     internal FixedStack<Region> regions = new FixedStack<Region>(32);
     internal FixedStack<Frame> frames = new FixedStack<Frame>(256);
     public ValStack stack;
+
+    //public int sp;
+    public Val2Stack stack2 = new Val2Stack();
   }
 
   //fake frame used for module's init code
@@ -301,6 +304,7 @@ public partial class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Call(ExecState exec, Frame new_frame, uint args_bits)
   {
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
@@ -311,6 +315,23 @@ public partial class VM : INamedResolver
     //let's remember ip to return to
     new_frame.return_ip = exec.ip;
     exec.stack = new_frame.stack;
+    exec.frames.Push(new_frame);
+    exec.regions.Push(new Region(new_frame, new_frame.defers));
+    //since ip will be incremented below we decrement it intentionally here
+    exec.ip = new_frame.start_ip - 1;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  void Call2(ExecState exec, Frame new_frame, uint args_bits)
+  {
+    var stack = exec.stack2;
+
+    ref Val2 v = ref stack.Push();
+    v.type = Types.Int;
+    v._num = args_bits;
+
+    //let's remember ip to return to
+    new_frame.return_ip = exec.ip;
     exec.frames.Push(new_frame);
     exec.regions.Push(new Region(new_frame, new_frame.defers));
     //since ip will be incremented below we decrement it intentionally here
@@ -465,7 +486,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeAdd(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeAdd(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -482,7 +503,18 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeSub(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void OpcodeAdd(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    var stack = exec.stack2;
+
+    ref Val2 r_operand = ref stack.vals[--stack.sp];
+    ref Val2 l_operand = ref stack.vals[stack.sp - 1];
+    l_operand._num += r_operand._num;
+    //r_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void _OpcodeSub(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -492,6 +524,17 @@ public partial class VM : INamedResolver
 
     r_operand.Release();
     l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSub(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    var stack = exec.stack2;
+
+    ref Val2 r_operand = ref stack.vals[--stack.sp];
+    ref Val2 l_operand = ref stack.vals[stack.sp - 1];
+    l_operand._num -= r_operand._num;
+    //r_operand.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -521,7 +564,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeEqual(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     var stack = exec.stack;
     var r_operand = stack.Pop();
@@ -531,6 +574,17 @@ public partial class VM : INamedResolver
 
     r_operand.Release();
     l_operand.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    var stack = exec.stack2;
+
+    ref Val2 r_operand = ref stack.vals[--stack.sp];
+    ref Val2 l_operand = ref stack.vals[stack.sp - 1];
+    l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -717,12 +771,25 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeConstant(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeConstant(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var cn = curr_frame.constants[const_idx];
     var cv = cn.ToVal(vm);
     exec.stack.Push(cv);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeConstant(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    var cn = curr_frame.constants[const_idx];
+
+    ref Val2 v = ref exec.stack2.Push();
+    v.type = Types.Int;
+    v._num = cn.num;
+    //v.SetInt(cn.num);
+    //++exec.sp;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -867,10 +934,20 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeGetVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeGetVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
     exec.stack.PushRetain(curr_frame.locals[local_idx]);
+  }
+
+  unsafe static void OpcodeGetVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+    ref Val2 v = ref exec.stack2.Push();
+    v._num = curr_frame.stack[curr_frame.locals_idx2 + local_idx]._num;
+
+    //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -883,15 +960,29 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeArgVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     var arg_val = exec.stack.Pop();
     var loc_var = Val.New(vm);
     loc_var.ValueCopyFrom(arg_val);
     loc_var._refc?.Retain();
     curr_frame.locals[local_idx] = loc_var;
     arg_val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    ++exec.stack2.sp;
+
+    //var arg_val = exec.stack.Pop();
+    //var loc_var = Val.New(vm);
+    //loc_var.ValueCopyFrom(arg_val);
+    //loc_var._refc?.Retain();
+    //curr_frame.locals[local_idx] = loc_var;
+    //arg_val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -999,7 +1090,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeReturnVal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeReturnVal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
 
@@ -1007,6 +1098,32 @@ public partial class VM : INamedResolver
     for(int i = 0; i < ret_num; ++i)
       curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
     exec.stack.Count -= ret_num;
+
+    exec.ip = EXIT_FRAME_IP - 1;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeReturnVal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
+
+    var stack = exec.stack2;
+
+    int ret_base = stack.sp - ret_num;
+    for(int i = curr_frame.locals_idx2; i < ret_base; ++i)
+      stack.vals[i].Release();
+
+    int new_sp = curr_frame.locals_idx2 + ret_num;
+
+    for(int i = 0; i < ret_num; ++i)
+      stack.vals[curr_frame.locals_idx2 + i] = stack.vals[ret_base + i];
+
+    stack.sp = new_sp;
+
+    //int stack_offset = exec.stack.Count;
+    //for(int i = 0; i < ret_num; ++i)
+    //  curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
+    //exec.stack.Count -= ret_num;
 
     exec.ip = EXIT_FRAME_IP - 1;
   }
@@ -1076,7 +1193,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeCallLocal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeCallLocal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
@@ -1084,6 +1201,17 @@ public partial class VM : INamedResolver
     var frm = Frame.New(vm);
     frm.Init(curr_frame, exec.stack, func_ip);
     vm.Call(exec, frm, args_bits);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeCallLocal(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    var frm = Frame.New(vm);
+    frm.Init(curr_frame, exec.stack, func_ip);
+    vm.Call2(exec, frm, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1279,15 +1407,29 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeInitFrame(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
-    int local_vars_num = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
     var args_bits = exec.stack.Pop();
     curr_frame.locals.Count = local_vars_num;
     //NOTE: we need to store arg info bits locally so that
     //      this information will be available to func
     //      args related opcodes
     curr_frame.locals[local_vars_num - 1] = args_bits;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+
+    var stack = exec.stack2;
+
+    ref Val2 args_bits = ref stack.vals[--stack.sp];
+
+    curr_frame.args_bits2 = (uint)args_bits._num;
+    curr_frame.locals_idx2 = stack.sp;
+    stack.Add(local_vars_num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1331,9 +1473,15 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodePop(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodePop(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     exec.stack.PopRelease();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodePop(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    exec.stack2.vals[--exec.stack2.sp].Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1344,10 +1492,21 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeJumpZ(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeJumpZ(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
     if(exec.stack.PopRelease().bval == false)
+      exec.ip += offset;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeJumpZ(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
+  {
+    int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    ref Val2 v = ref exec.stack2.vals[--exec.stack2.sp];
+
+    if(v._num == 0)
       exec.ip += offset;
   }
 

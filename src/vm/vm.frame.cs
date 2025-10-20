@@ -30,6 +30,9 @@ public partial class VM : INamedResolver
     public ValStack return_stack;
     public List<DeferBlock> defers = new List<DeferBlock>(2);
 
+    public uint args_bits2;
+    public int locals_idx2;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public Frame New(VM vm)
     {
