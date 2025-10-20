@@ -18,7 +18,7 @@ public class Val
 {
   public IType type;
 
-  //NOTE: below members are semi-public, one can use them for 
+  //NOTE: below members are semi-public, one can use them for
   //      fast access in case you know what you are doing
 
   //NOTE: -1 means it's in released state
@@ -477,6 +477,398 @@ public class ValStack : FixedStack<Val>
   public ValStack(int max_capacity)
     : base(max_capacity)
   {
+  }
+}
+
+public class Val2Holder
+{
+  internal Val2[] vals;
+  public int Count;
+
+  public Val2Holder()
+  {
+    vals = new Val2[1024];
+    Count = 0;
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val2 Add()
+  {
+    if(Count == vals.Length)
+      Array.Resize(ref vals, Count << 1);
+
+    return ref vals[Count++];
+  }
+}
+
+public struct Val2
+{
+  public IType type;
+
+  //NOTE: below members are semi-public, one can use them for
+  //      fast access in case you know what you are doing
+
+  public double _num;
+
+  public object _obj;
+
+  //NOTE: it's a cached version of _obj cast to IValRefcounted for
+  //      less casting in refcounting routines
+  public IValRefcounted _refc;
+
+  //NOTE: extra values below are for efficient encoding of small structs,
+  //      e.g Vector3, Color, etc
+  public double _num2;
+  public double _num3;
+  public double _num4;
+
+  //NOTE: indicates that _obj is byte[] rented from pool and must be copied
+  //      and properly released
+  public int _blob_size;
+
+  public double num
+  {
+    get { return _num; }
+    set { SetFlt(value); }
+  }
+
+  public string str
+  {
+    get { return (string)_obj; }
+    set { SetStr(value); }
+  }
+
+  public object obj
+  {
+    get { return _obj; }
+  }
+
+  public bool bval
+  {
+    get { return _num == 1; }
+    set { SetBool(value); }
+  }
+
+  //public bool is_null
+  //{
+  //  get { return this == vm.Null; }
+  //}
+
+  public VM vm;
+
+  //NOTE: use New() instead
+  internal Val2(VM vm)
+  {
+    this.vm = vm;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public Val2 New()
+  {
+    return new Val2();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  void Reset()
+  {
+    type = null;
+    _num = 0;
+    _num2 = 0;
+    _num3 = 0;
+    _num4 = 0;
+    _refc = null;
+
+    if(_blob_size > 0)
+    {
+      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _blob_size = 0;
+    }
+
+    _obj = null;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void ValueCopyFrom(Val o)
+  {
+    type = o.type;
+    _num = o._num;
+    _num2 = o._num2;
+    _num3 = o._num3;
+    _num4 = o._num4;
+    _refc = o._refc;
+
+    if(o._blob_size > 0)
+    {
+      CopyBlobDataFrom(o);
+    }
+    else if(_blob_size > 0)
+    {
+      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _obj = o._obj;
+      _blob_size = 0;
+    }
+    else
+      _obj = o._obj;
+  }
+
+  void CopyBlobDataFrom(Val src)
+  {
+    var src_data = (byte[])src._obj;
+
+    if(_blob_size > 0)
+    {
+      var data = (byte[])_obj;
+
+      //let's check if our current buffer has enough capacity
+      if(data.Length >= src._blob_size)
+        Array.Copy(src_data, data, src._blob_size);
+      else
+      {
+        ArrayPool<byte>.Shared.Return(data);
+        var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
+        Array.Copy(src_data, new_data, src._blob_size);
+        _obj = new_data;
+      }
+    }
+    else
+    {
+      var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
+      Array.Copy(src_data, new_data, src._blob_size);
+      _obj = new_data;
+    }
+
+    _blob_size = src._blob_size;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  bool IsBlobEqual(Val dv)
+  {
+    if(_blob_size != dv._blob_size)
+      return false;
+
+    ReadOnlySpan<byte> a = (byte[])_obj;
+    ReadOnlySpan<byte> b = (byte[])dv._obj;
+
+    return a.SequenceEqual(b);
+  }
+
+  //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+  //public Val CloneValue()
+  //{
+  //  var copy = Val.New(vm);
+  //  copy.ValueCopyFrom(this);
+  //  copy._refc?.Retain();
+  //  return copy;
+  //}
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Retain()
+  {
+    _refc?.Retain();
+
+#if DEBUG_REFS
+    Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
+#endif
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Release()
+  {
+    _refc?.Release();
+
+#if DEBUG_REFS
+    Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
+#endif
+  }
+
+  static public Val2 NewStr(VM vm, string s)
+  {
+    Val2 dv = default(Val2);
+    dv.SetStr(s);
+    return dv;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetStr(string s)
+  {
+    Reset();
+    type = Types.String;
+    _obj = s;
+    _refc = null;
+  }
+
+  static public Val2 NewNum(VM vm, long n)
+  {
+    Val2 dv = default(Val2);
+    dv.SetNum(n);
+    return dv;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetNum(long n)
+  {
+    Reset();
+    type = Types.Int;
+    _num = n;
+  }
+
+  //NOTE: it's caller's responsibility to ensure 'int precision'
+  static public Val2 NewInt(VM vm, double n)
+  {
+    Val2 dv = default(Val2);
+    dv.SetInt(n);
+    return dv;
+  }
+
+  static public Val2 NewFlt(VM vm, double n)
+  {
+    Val2 dv = default(Val2);
+    dv.SetFlt(n);
+    return dv;
+  }
+
+  //NOTE: it's caller's responsibility to ensure 'int precision'
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetInt(double n)
+  {
+    Reset();
+    type = Types.Int;
+    _num = n;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetFlt(double n)
+  {
+    Reset();
+    type = Types.Float;
+    _num = n;
+  }
+
+  static public Val2 NewBool(VM vm, bool b)
+  {
+    Val2 dv = default(Val2);
+    dv.SetBool(b);
+    return dv;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetBool(bool b)
+  {
+    Reset();
+    type = Types.Bool;
+    _num = b ? 1 : 0;
+  }
+
+  static public Val2 NewObj(VM vm, object o, IType type)
+  {
+    Val2 dv = default(Val2);
+    dv.SetObj(o, type);
+    return dv;
+  }
+
+  static public Val2 NewObj(VM vm, IValRefcounted o, IType type)
+  {
+    Val2 dv = default(Val2);
+    dv.SetObj(o, type);
+    return dv;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObj(object o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+    _refc = o as IValRefcounted;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObjNoRefc(object o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObj(IValRefcounted o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+    _refc = o;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetBlob<T>(ref T val, IType type) where T : unmanaged
+  {
+    Reset();
+
+    int size = Extensions.SizeOf<T>();
+
+    var data = ArrayPool<byte>.Shared.Rent(size);
+
+    Extensions.UnsafeAs<byte, T>(ref data[0]) = val;
+
+    this.type = type;
+    _blob_size = size;
+    _obj = data;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetBlob<T>(T val, IType type) where T : unmanaged
+  {
+    SetBlob(ref val, type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref T GetBlob<T>() where T : unmanaged
+  {
+    byte[] data = (byte[])_obj;
+    return ref Extensions.UnsafeAs<byte, T>(ref data[0]);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public bool IsValueEqual(Val o)
+  {
+    bool res =
+        _num == o._num &&
+        _num2 == o._num2 &&
+        _num3 == o._num3 &&
+        _num4 == o._num4 &&
+        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(o) : (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
+      ;
+
+    return res;
+  }
+
+  public int GetValueHashCode()
+  {
+    return
+      _num.GetHashCode()
+      ^ _num2.GetHashCode()
+      ^ _num3.GetHashCode()
+      ^ _num4.GetHashCode()
+      ^ (int)(_obj == null ? 0 : _obj.GetHashCode())
+      ;
+  }
+
+  public override string ToString()
+  {
+    string str = "";
+    if(type != null)
+      str += "(" + type.GetName() + ")";
+    else
+      str += "(?)";
+    str += " num:" + _num;
+    str += " num2:" + _num2;
+    str += " num3:" + _num3;
+    str += " num4:" + _num4;
+    str += " obj:" + _obj;
+    str += " obj.type:" + _obj?.GetType().Name;
+    str += " (refcs:" + _refc?.refs + ")";
+
+    return str; // + " " + GetHashCode();//for extra debug
   }
 }
 

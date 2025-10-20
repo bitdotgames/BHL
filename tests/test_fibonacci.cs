@@ -35,7 +35,7 @@ public class TestFibonacci : BHL_TestBase
     }
     ";
 
-    Compile(bhl/*, show_bytes: true*/);
+    Compile(bhl, show_bytes: true);
   }
 }
 
