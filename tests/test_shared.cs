@@ -1160,7 +1160,18 @@ public class BHL_TestBase
 
   static void Dump(ModuleCompiler c)
   {
-    c.Compile().DumpBytecode();
+    Dump(c.Compile());
+  }
+  static void Dump(Module module)
+  {
+    if(module.compiled?.initcode?.Length > 0)
+    {
+      Console.WriteLine("=== INIT ===");
+      ModuleCompiler.Dump(module.compiled.initcode);
+    }
+
+    Console.WriteLine("=== CODE ===");
+    ModuleCompiler.Dump(module.compiled.bytecode);
   }
 
   static bool CompareCode(byte[] a, byte[] b, out string cmp)

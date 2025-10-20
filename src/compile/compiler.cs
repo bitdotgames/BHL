@@ -1823,5 +1823,4 @@ public class ModuleCompiler : AST_Visitor
       Bytecode.Decode(bytes, ow, ref pos);
     return pos - start_pos;
   }
-
 }
