@@ -155,9 +155,9 @@ public partial class VM : INamedResolver
     {
       fixed (byte* p = curr_frame.bytecode)
       {
-        int opcode = p[exec.ip];
+        var opcode = (Opcodes)p[exec.ip];
 
-        op_handlers[opcode](
+        op_handlers[(int)opcode](
           this,
           exec,
           ref region,
@@ -945,7 +945,7 @@ public partial class VM : INamedResolver
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val2 v = ref exec.stack2.Push();
-    v._num = curr_frame.stack[curr_frame.locals_idx2 + local_idx]._num;
+    v._num = exec.stack2.vals[curr_frame.locals_idx2 + local_idx]._num;
 
     //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
@@ -975,7 +975,9 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, Frame curr_frame, byte* bytes, ref BHS status)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    ++exec.stack2.sp;
+
+    //it's already grown in init frame
+    //++exec.stack2.sp;
 
     //var arg_val = exec.stack.Pop();
     //var loc_var = Val.New(vm);
@@ -1110,11 +1112,13 @@ public partial class VM : INamedResolver
     var stack = exec.stack2;
 
     int ret_base = stack.sp - ret_num;
+    //releasing all locals
     for(int i = curr_frame.locals_idx2; i < ret_base; ++i)
       stack.vals[i].Release();
 
     int new_sp = curr_frame.locals_idx2 + ret_num;
 
+    //moving returned values up
     for(int i = 0; i < ret_num; ++i)
       stack.vals[curr_frame.locals_idx2 + i] = stack.vals[ret_base + i];
 
@@ -1425,10 +1429,11 @@ public partial class VM : INamedResolver
 
     var stack = exec.stack2;
 
-    ref Val2 args_bits = ref stack.vals[--stack.sp];
+    //ref Val2 args_bits = ref stack.vals[--stack.sp];
+    ref Val2 args_bits = ref stack.vals[stack.sp - 1];
 
     curr_frame.args_bits2 = (uint)args_bits._num;
-    curr_frame.locals_idx2 = stack.sp;
+    curr_frame.locals_idx2 = stack.sp - local_vars_num;
     stack.Add(local_vars_num);
   }
 

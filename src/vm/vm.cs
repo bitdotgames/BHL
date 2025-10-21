@@ -296,7 +296,7 @@ public partial class VM : INamedResolver
     if(fb.IsStopped())
       return false;
 
-    try
+    //try
     {
       _Tick(fb);
 
@@ -304,19 +304,19 @@ public partial class VM : INamedResolver
       if(fb.status != BHS.RUNNING)
         _Stop(fb);
     }
-    catch(Exception e)
-    {
-      var trace = new List<VM.TraceItem>();
-      try
-      {
-        fb.GetStackTrace(trace);
-      }
-      catch(Exception)
-      {
-      }
+    //catch(Exception e)
+    //{
+    //  var trace = new List<VM.TraceItem>();
+    //  try
+    //  {
+    //    fb.GetStackTrace(trace);
+    //  }
+    //  catch(Exception)
+    //  {
+    //  }
 
-      throw new Error(trace, e);
-    }
+    //  throw new Error(trace, e);
+    //}
 
     return !fb.IsStopped();
   }

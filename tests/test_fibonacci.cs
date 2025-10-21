@@ -11,8 +11,6 @@ public class TestFibonacci : BHL_TestBase
     string bhl = @"
     func int fib(int x)
     {
-      //__dump_opcodes_on();
-
       if(x == 0) {
         return 0
       } else {
@@ -22,20 +20,25 @@ public class TestFibonacci : BHL_TestBase
           return fib(x - 1) + fib(x - 2)
         }
       }
-
-      //__dump_opcodes_off();
-    }
-
-    func test() {
-      //__dump_opcodes_on();
-
-      fib(1)
-
-      //__dump_opcodes_off();
     }
     ";
 
-    Compile(bhl, show_bytes: true);
+    var vm = MakeVM(bhl, show_bytes: true);
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      var fb = vm.Start2("fib", Val2.NewInt(vm, 15));
+      Assert.False(vm.Tick());
+      Console.WriteLine("fib ticks: {0}", stopwatch.ElapsedTicks);
+      Assert.Equal(610, fb.exec.stack2.PopRelease().num);
+    }
+
+    {
+      var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+      var fb = vm.Start2("fib", Val2.NewInt(vm, 15));
+      Assert.False(vm.Tick());
+      Console.WriteLine("fib ticks2: {0}", stopwatch.ElapsedTicks);
+      Assert.Equal(610, fb.exec.stack2.PopRelease().num);
+    }
   }
 }
 

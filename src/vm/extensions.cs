@@ -20,6 +20,11 @@ public static class VMExtensions
     return vm.Start(func, 1u, new StackList<Val>(arg1));
   }
 
+  static public VM.Fiber Start2(this VM vm, string func, Val2 arg1)
+  {
+    return vm.Start2(func, 1u, new StackList<Val2>(arg1));
+  }
+
   static public VM.Fiber Start(this VM vm, string func, Val arg1, Val arg2)
   {
     return vm.Start(func, 2u, new StackList<Val>(arg1, arg2));
