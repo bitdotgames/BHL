@@ -175,7 +175,6 @@ public class BenchFibonacciImported : BHL_TestBase
 
   public BenchFibonacciImported()
   {
-
     string test = @"
 
     func int fib(int x)
@@ -205,7 +204,6 @@ public class BenchFibonacciImported : BHL_TestBase
     vm.LoadModule("test");
     fs_simple =
       (FuncSymbolScript)new VM.SymbolSpec("test", "test_simple").LoadFuncSymbol(vm);
-
 
     vm_aot = new VM();
     funcs_aot[0] = __fib;

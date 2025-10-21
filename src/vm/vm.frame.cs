@@ -30,9 +30,6 @@ public partial class VM : INamedResolver
     public ValStack return_stack;
     public List<DeferBlock> defers = new List<DeferBlock>(2);
 
-    public uint args_bits2;
-    public int locals_idx2;
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public Frame New(VM vm)
     {
@@ -165,6 +162,25 @@ public partial class VM : INamedResolver
       --refs;
       if(refs == 0)
         Del(this);
+    }
+  }
+
+  public struct Frame2
+  {
+    public byte[] bytecode;
+    public Const[] constants;
+    public IType[] type_refs;
+    public int start_ip;
+    public int return_ip;
+    public uint args_bits2;
+    public int locals_idx2;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Init(ref Frame2 frame)
+    {
+      bytecode = frame.bytecode;
+      constants = frame.constants;
+      type_refs = frame.type_refs;
     }
   }
 }

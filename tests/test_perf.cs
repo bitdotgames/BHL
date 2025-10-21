@@ -173,6 +173,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status,
     int local_vars_num
     )
@@ -182,8 +183,8 @@ public class TestPerf : BHL_TestBase
     //ref Val2 args_bits = ref stack.vals[--stack.sp];
     ref Val2 args_bits = ref stack.vals[stack.sp - 1];
 
-    curr_frame.args_bits2 = (uint)args_bits._num;
-    curr_frame.locals_idx2 = stack.sp - local_vars_num;
+    frame2.args_bits2 = (uint)args_bits._num;
+    frame2.locals_idx2 = stack.sp - local_vars_num;
     stack.Add(local_vars_num);
   }
 
@@ -193,6 +194,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status,
     int local_idx
   )
@@ -205,12 +207,13 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status,
     int local_idx
   )
   {
     ref Val2 v = ref exec.stack2.Push();
-    v._num = exec.stack2.vals[curr_frame.locals_idx2 + local_idx]._num;
+    v._num = exec.stack2.vals[frame2.locals_idx2 + local_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,6 +222,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status,
     int const_idx
   )
@@ -236,6 +240,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status
   )
   {
@@ -253,6 +258,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status
   )
   {
@@ -267,6 +273,7 @@ public class TestPerf : BHL_TestBase
     ref VM.Region region,
     VM.Frame curr_frame,
     ref BHS status,
+    ref VM.Frame2 frame2,
     int ret_num
   )
   {
@@ -274,14 +281,14 @@ public class TestPerf : BHL_TestBase
 
     int ret_base = stack.sp - ret_num;
     //releasing all locals
-    for(int i = curr_frame.locals_idx2; i < ret_base; ++i)
+    for(int i = frame2.locals_idx2; i < ret_base; ++i)
       stack.vals[i].Release();
 
-    int new_sp = curr_frame.locals_idx2 + ret_num;
+    int new_sp = frame2.locals_idx2 + ret_num;
 
     //moving returned values up
     for(int i = 0; i < ret_num; ++i)
-      stack.vals[curr_frame.locals_idx2 + i] = stack.vals[ret_base + i];
+      stack.vals[frame2.locals_idx2 + i] = stack.vals[ret_base + i];
 
     stack.sp = new_sp;
   }
@@ -292,6 +299,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status
   )
   {
@@ -308,6 +316,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status
   )
   {
@@ -324,6 +333,7 @@ public class TestPerf : BHL_TestBase
     VM.ExecState exec,
     ref VM.Region region,
     VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status,
     int func_ip,
     uint args_bits
@@ -331,14 +341,16 @@ public class TestPerf : BHL_TestBase
   {
     var fn = exec.funcs2[func_ip];
 
-    var frm = VM.Frame.New(vm);
-    frm.Init(curr_frame, exec.stack, func_ip);
+    ref var new_frame2 = ref exec.PushFrame2();
+    new_frame2.Init(frame2);
+    //var frm = VM.Frame.New(vm);
+    //frm.Init(curr_frame, exec.stack, func_ip);
 
     ref Val2 v = ref exec.stack2.Push();
     v.type = Types.Int;
     v._num = args_bits;
 
-    fn(vm, exec, ref region, frm, ref status);
+    fn(vm, exec, ref region, ref new_frame2, ref status);
   }
 
 }

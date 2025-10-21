@@ -487,7 +487,7 @@ public class Val2Stack
 
   public Val2Stack()
   {
-    vals = new Val2[1024];
+    vals = new Val2[2048];
     sp = 0;
   }
 
