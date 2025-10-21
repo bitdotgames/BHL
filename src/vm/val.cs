@@ -482,7 +482,7 @@ public class ValStack : FixedStack<Val>
 
 public class Val2Stack
 {
-  internal Val2[] vals;
+  public Val2[] vals;
   public int sp;
 
   public Val2Stack()

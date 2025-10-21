@@ -67,6 +67,13 @@ public partial class VM : INamedResolver
 
     //public int sp;
     public Val2Stack stack2 = new Val2Stack();
+    public Const[] constants2 = new Const[16];
+
+    public delegate void LocalFunc(
+      VM vm, ExecState exec, ref Region region,
+      Frame frame, ref BHS status
+    );
+    public LocalFunc[] funcs2 = new LocalFunc[16];
   }
 
   //fake frame used for module's init code
