@@ -14,6 +14,9 @@ public class BenchFibonacciImported : BHL_TestBase
   VM vm;
   VM vm_aot;
   FuncSymbolScript fs_simple;
+  VM.ExecState.LocalFunc[] funcs_aot = new VM.ExecState.LocalFunc[8];
+  Const[] const_aot = new Const[8];
+
   //FuncSymbolScript fs_imported;
   //FuncSymbolScript fs_class_imported;
   //FuncSymbolScript fs_interface_imported;
@@ -205,6 +208,10 @@ public class BenchFibonacciImported : BHL_TestBase
 
 
     vm_aot = new VM();
+    funcs_aot[0] = __fib;
+    const_aot[0] = new Const(0);
+    const_aot[1] = new Const(1);
+    const_aot[2] = new Const(2);
   }
 
   static int fib(int x)
@@ -236,11 +243,8 @@ public class BenchFibonacciImported : BHL_TestBase
   public void FibonacciAOT()
   {
     var fb = VM.Fiber.New(vm_aot);
-    //it's actually initialized once
-    fb.exec.funcs2[0] = __fib;
-    fb.exec.constants2[0] = new Const(0);
-    fb.exec.constants2[1] = new Const(1);
-    fb.exec.constants2[2] = new Const(2);
+    fb.exec.funcs2 = funcs_aot;
+    fb.exec.constants2 = const_aot;
 
     {
       ref Val2 v = ref fb.exec.stack2.Push();
