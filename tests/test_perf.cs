@@ -113,8 +113,8 @@ public class TestPerf : BHL_TestBase
     }
     var region = new VM.Region();
     var status = BHS.SUCCESS;
-    var frame = VM.Frame.New(vm);
-    fb.exec.funcs2[0](vm, fb.exec, ref region, frame, ref status);
+    ref var frame2 = ref fb.exec.PushFrame2();
+    fb.exec.funcs2[0](vm, fb.exec, ref region, ref frame2, ref status);
     Assert.Equal(610, fb.exec.stack2.PopRelease().num);
   }
 
@@ -122,46 +122,46 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 frame2,
     ref BHS status
     )
   {
     var __status = BHS.NONE;
 
-    __InitFrame(vm, exec, ref region, curr_frame, ref __status, 2);
-    __ArgVar(vm, exec, ref region, curr_frame, ref __status, 0);
+    __InitFrame(vm, exec, ref region, ref frame2, ref __status, 2);
+    __ArgVar(vm, exec, ref region, ref frame2, ref __status, 0);
     //if x == 0
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Equal(vm, exec, ref region, curr_frame, ref __status);
+    __GetVar(vm, exec, ref region, ref frame2, ref __status, 0);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 0);
+    __Equal(vm, exec, ref region, ref frame2, ref __status);
     //if x != 0 then jump
-    if(__JumpZ(vm, exec, ref region, curr_frame, ref __status))
+    if(__JumpZ(vm, exec, ref region, ref frame2, ref __status))
       goto _1_9;
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 0);
-    /*18*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 0);
+    /*18*/__ReturnVal(vm, exec, ref region, ref frame2, ref __status, 1);
     goto _exit;
     _1_9:
     //if x == 1
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    __Equal(vm, exec, ref region, curr_frame, ref __status);
-    if(__JumpZ(vm, exec, ref region, curr_frame, ref __status))
+    __GetVar(vm, exec, ref region, ref frame2, ref __status, 0);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 1);
+    __Equal(vm, exec, ref region, ref frame2, ref __status);
+    if(__JumpZ(vm, exec, ref region, ref frame2, ref __status))
       goto _2_9;
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    /*37*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 1);
+    /*37*/__ReturnVal(vm, exec, ref region, ref frame2, ref __status, 1);
     goto _exit;
     _2_9:
     //else
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    /*48*/__Sub(vm, exec, ref region, curr_frame, ref __status);
-    __CallLocal(vm, exec, ref region, curr_frame, ref __status, 0, 1);
-    /*57*/__GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 2);
-    __Sub(vm, exec, ref region, curr_frame, ref __status);
-    __CallLocal(vm, exec, ref region, curr_frame, ref __status, 0, 1);
-    __Add(vm, exec, ref region, curr_frame, ref __status);
-    /*73*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __GetVar(vm, exec, ref region, ref frame2, ref __status, 0);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 1);
+    /*48*/__Sub(vm, exec, ref region, ref frame2, ref __status);
+    __CallLocal(vm, exec, ref region, ref frame2, ref __status, 0, 1);
+    /*57*/__GetVar(vm, exec, ref region, ref frame2, ref __status, 0);
+    __Constant(vm, exec, ref region, ref frame2, ref __status, 2);
+    __Sub(vm, exec, ref region, ref frame2, ref __status);
+    __CallLocal(vm, exec, ref region, ref frame2, ref __status, 0, 1);
+    __Add(vm, exec, ref region, ref frame2, ref __status);
+    /*73*/__ReturnVal(vm, exec, ref region, ref frame2, ref __status, 1);
     goto _exit;
     _exit:
       return;
@@ -172,7 +172,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status,
     int local_vars_num
@@ -193,7 +192,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status,
     int local_idx
@@ -206,7 +204,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status,
     int local_idx
@@ -221,7 +218,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status,
     int const_idx
@@ -239,7 +235,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status
   )
@@ -257,7 +252,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status
   )
@@ -271,9 +265,8 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
-    ref BHS status,
     ref VM.Frame2 frame2,
+    ref BHS status,
     int ret_num
   )
   {
@@ -298,7 +291,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status
   )
@@ -315,7 +307,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status
   )
@@ -332,7 +323,6 @@ public class TestPerf : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
     ref VM.Frame2 frame2,
     ref BHS status,
     int func_ip,
@@ -342,7 +332,7 @@ public class TestPerf : BHL_TestBase
     var fn = exec.funcs2[func_ip];
 
     ref var new_frame2 = ref exec.PushFrame2();
-    new_frame2.Init(frame2);
+    new_frame2.Init(ref frame2);
     //var frm = VM.Frame.New(vm);
     //frm.Init(curr_frame, exec.stack, func_ip);
 

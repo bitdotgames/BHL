@@ -167,11 +167,13 @@ public partial class VM : INamedResolver
 
   public struct Frame2
   {
+    public Module module;
     public byte[] bytecode;
     public Const[] constants;
     public IType[] type_refs;
     public int start_ip;
     public int return_ip;
+
     public uint args_bits2;
     public int locals_idx2;
 
@@ -182,6 +184,58 @@ public partial class VM : INamedResolver
       constants = frame.constants;
       type_refs = frame.type_refs;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Init(/*Fiber fb, ValStack return_stack,*/ Module module, int start_ip)
+    {
+      Init(
+        //fb,
+        //return_stack,
+        module,
+        module.compiled.constants,
+        module.compiled.type_refs_resolved,
+        module.compiled.bytecode,
+        start_ip
+      );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Init(Frame2 origin, int start_ip)
+    {
+      Init(
+        //origin.fb,
+        //return_stack,
+        origin.module,
+        origin.constants,
+        origin.type_refs,
+        origin.bytecode,
+        start_ip
+      );
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Init(
+      //Fiber fb,
+      //ValStack return_stack,
+      Module module,
+      Const[] constants,
+      IType[] type_refs,
+      byte[] bytecode,
+      int start_ip)
+    {
+      //this.fb = fb;
+      //this.return_stack = return_stack;
+      this.module = module;
+      this.constants = constants;
+      this.type_refs = type_refs;
+      this.bytecode = bytecode;
+      this.start_ip = start_ip;
+      this.return_ip = -1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Deinit()
+    {}
   }
 }
 

@@ -256,8 +256,9 @@ public class BenchFibonacciImported : BHL_TestBase
     }
     var region = new VM.Region();
     var status = BHS.SUCCESS;
-    var frame = VM.Frame.New(vm_aot);
-    fb.exec.funcs2[0](vm_aot, fb.exec, ref region, frame, ref status);
+    //var frame = VM.Frame.New(vm_aot);
+    ref var frame2 = ref fb.exec.PushFrame2();
+    fb.exec.funcs2[0](vm_aot, fb.exec, ref region, ref frame2, ref status);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -265,7 +266,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int local_vars_num
     )
@@ -284,46 +285,46 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status
     )
   {
     var __status = BHS.NONE;
 
-    __InitFrame(vm, exec, ref region, curr_frame, ref __status, 2);
-    __ArgVar(vm, exec, ref region, curr_frame, ref __status, 0);
+    __InitFrame(vm, exec, ref region, ref curr_frame, ref __status, 2);
+    __ArgVar(vm, exec, ref region, ref curr_frame, ref __status, 0);
     //if x == 0
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Equal(vm, exec, ref region, curr_frame, ref __status);
+    __GetVar(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    __Equal(vm, exec, ref region, ref curr_frame, ref __status);
     //if x != 0 then jump
-    if(__JumpZ(vm, exec, ref region, curr_frame, ref __status))
+    if(__JumpZ(vm, exec, ref region, ref curr_frame, ref __status))
       goto _1_9;
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 0);
-    /*18*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    /*18*/__ReturnVal(vm, exec, ref region, ref curr_frame, ref __status, 1);
     goto _exit;
     _1_9:
     //if x == 1
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    __Equal(vm, exec, ref region, curr_frame, ref __status);
-    if(__JumpZ(vm, exec, ref region, curr_frame, ref __status))
+    __GetVar(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 1);
+    __Equal(vm, exec, ref region, ref curr_frame, ref __status);
+    if(__JumpZ(vm, exec, ref region, ref curr_frame, ref __status))
       goto _2_9;
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    /*37*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 1);
+    /*37*/__ReturnVal(vm, exec, ref region, ref curr_frame, ref __status, 1);
     goto _exit;
     _2_9:
     //else
-    __GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 1);
-    /*48*/__Sub(vm, exec, ref region, curr_frame, ref __status);
-    __CallLocal(vm, exec, ref region, curr_frame, ref __status, 0, 1);
-    /*57*/__GetVar(vm, exec, ref region, curr_frame, ref __status, 0);
-    __Constant(vm, exec, ref region, curr_frame, ref __status, 2);
-    __Sub(vm, exec, ref region, curr_frame, ref __status);
-    __CallLocal(vm, exec, ref region, curr_frame, ref __status, 0, 1);
-    __Add(vm, exec, ref region, curr_frame, ref __status);
-    /*73*/__ReturnVal(vm, exec, ref region, curr_frame, ref __status, 1);
+    __GetVar(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 1);
+    /*48*/__Sub(vm, exec, ref region, ref curr_frame, ref __status);
+    __CallLocal(vm, exec, ref region, ref curr_frame, ref __status, 0, 1);
+    /*57*/__GetVar(vm, exec, ref region, ref curr_frame, ref __status, 0);
+    __Constant(vm, exec, ref region, ref curr_frame, ref __status, 2);
+    __Sub(vm, exec, ref region, ref curr_frame, ref __status);
+    __CallLocal(vm, exec, ref region, ref curr_frame, ref __status, 0, 1);
+    __Add(vm, exec, ref region, ref curr_frame, ref __status);
+    /*73*/__ReturnVal(vm, exec, ref region, ref curr_frame, ref __status, 1);
     goto _exit;
     _exit:
       return;
@@ -334,7 +335,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int local_idx
   )
@@ -346,7 +347,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int local_idx
   )
@@ -360,7 +361,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int const_idx
   )
@@ -377,7 +378,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status
   )
   {
@@ -394,7 +395,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status
   )
   {
@@ -407,7 +408,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int ret_num
   )
@@ -433,7 +434,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status
   )
   {
@@ -449,7 +450,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status
   )
   {
@@ -465,7 +466,7 @@ public class BenchFibonacciImported : BHL_TestBase
     VM vm,
     VM.ExecState exec,
     ref VM.Region region,
-    VM.Frame curr_frame,
+    ref VM.Frame2 curr_frame,
     ref BHS status,
     int func_ip,
     uint args_bits
@@ -473,13 +474,16 @@ public class BenchFibonacciImported : BHL_TestBase
   {
     var fn = exec.funcs2[func_ip];
 
-    var frm = VM.Frame.New(vm);
-    frm.Init(curr_frame, exec.stack, func_ip);
+    //var frm = VM.Frame.New(vm);
+    //frm.Init(curr_frame, exec.stack, func_ip);
+
+    ref var new_frame = ref exec.PushFrame2();
+    new_frame.Init(curr_frame, /*exec.stack,*/ func_ip);
 
     ref Val2 v = ref exec.stack2.Push();
     v.type = Types.Int;
     v._num = args_bits;
 
-    fn(vm, exec, ref region, frm, ref status);
+    fn(vm, exec, ref region, ref new_frame, ref status);
   }
 }

@@ -160,6 +160,22 @@ public partial class VM : INamedResolver
       exec.stack = frm.stack;
     }
 
+    internal void Attach2(ref Frame2 frame2, int frame_idx2)
+    {
+      //do we need this?
+      //frame2.fb = this;
+      exec.ip = frame2.start_ip;
+      //already pushed
+      //exec.frames.Push(frm);
+      var region = new Region(null, null)
+      {
+        frame2_idx = frame_idx2
+      };
+      exec.regions.Push(region);
+      //really?
+      //exec.stack = frm.stack;
+    }
+
     internal void ExitScopes()
     {
       if(exec.frames.Count > 0)
@@ -401,20 +417,22 @@ public partial class VM : INamedResolver
     fb.func_addr = addr;
     Register(fb, null, opts);
 
-    var frame = Frame.New(this);
+    //var frame = Frame.New(this);
+    ref var frame2 = ref fb.exec.PushFrame2();
+    int frame2_idx = fb.exec.frames2_count - 1;
 
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      //frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       //PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
     }
     else
     {
-      frame.Init(fb, fb.result, addr.module, addr.ip);
+      frame2.Init(/*fb, fb.result, */addr.module, addr.ip);
 
-      PassArgsAndAttach2(fb, frame, Val2.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach2(fb, ref frame2, frame2_idx, Val2.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -500,7 +518,8 @@ public partial class VM : INamedResolver
 
   static void PassArgsAndAttach2(
     Fiber fb,
-    Frame frame,
+    ref Frame2 frame2,
+    int frame_idx2,
     Val2 args_info,
     StackList <Val2> args
   )
@@ -518,7 +537,7 @@ public partial class VM : INamedResolver
       v = args_info;
     }
 
-    fb.Attach(frame);
+    fb.Attach2(ref frame2, frame_idx2);
   }
 
   public void Detach(Fiber fb)
@@ -671,17 +690,19 @@ public partial class VM : INamedResolver
 
       fb.func_addr = addr;
       fb.stop_guard = false;
-      while(fb.result.Count > 0)
-      {
-        var val = fb.result.Pop();
-        val.Release();
-      }
+      //while(fb.result.Count > 0)
+      //{
+      //  var val = fb.result.Pop();
+      //  val.Release();
+      //}
 
       fb.Retain();
 
-      frm.Retain();
+      //frm.Retain();
+      //frm.Init(fb, fb.result, addr.module, addr.ip);
 
-      frm.Init(fb, fb.result, addr.module, addr.ip);
+      ref var frame2 = ref fb.exec.PushFrame2();
+      frame2.Init(addr.module, addr.ip);
 
       var stack = fb.exec.stack2;
       for(int i = args.Count; i-- > 0;)
@@ -696,13 +717,14 @@ public partial class VM : INamedResolver
         v._num = args_info.bits;
       }
 
-      fb.Attach(frm);
+      //fb.Attach(frm);
+      fb.Attach2(ref frame2, fb.exec.frames2_count - 1);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");
 
       //let's clear stuff
-      frm.Clear();
+      //frm.Clear();
 
       return new FiberResult(fb);
     }

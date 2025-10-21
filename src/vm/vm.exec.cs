@@ -79,16 +79,14 @@ public partial class VM : INamedResolver
     {
       if(frames2_count == frames2.Length)
         Array.Resize(ref frames2, frames2_count << 1);
-      ref var frame = ref frames2[frames2_count++];
-      //frame.Init();
-      return ref frame;
+       return ref frames2[frames2_count++];
     }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public void PopFrame2()
     {
       ref var frame = ref frames2[frames2_count--];
-      //frame.Release();
+      //frame.Deinit();
     }
 
     public delegate void LocalFunc(
@@ -148,7 +146,10 @@ public partial class VM : INamedResolver
   unsafe BHS ExecuteOnce(ExecState exec)
   {
     ref var region = ref exec.regions.Peek();
-    var curr_frame = region.frame;
+    Frame curr_frame = null;
+    //var curr_frame = region.frame;
+    //TODO: looks like frame2_idx is not really needed since we always need the top frame?
+    ref var frame2 = ref exec.frames2[region.frame2_idx];
 
 #if BHL_DEBUG
     Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
@@ -166,35 +167,37 @@ public partial class VM : INamedResolver
 
     if(exec.ip == EXIT_FRAME_IP)
     {
-      curr_frame.ExitScope(null, exec);
+      //curr_frame.ExitScope(null, exec);
 
-      exec.frames.Pop();
+      //exec.frames.Pop();
       exec.regions.Pop();
-      exec.ip = curr_frame.return_ip + 1;
-      exec.stack = curr_frame.return_stack;
+      exec.ip = frame2.return_ip + 1;
+      //exec.ip = curr_frame.return_ip + 1;
+      //exec.stack = curr_frame.return_stack;
 
-      curr_frame.Release();
+      //TODO: isn't it equal frame2?
+      ref var tmp = ref exec.frames2[exec.frames2_count--];
+      tmp.Deinit();
+      //curr_frame.Release();
 
       return BHS.SUCCESS;
     }
 
     var status = BHS.SUCCESS;
 
-    unsafe
+    fixed (byte* p = frame2.bytecode)
     {
-      fixed (byte* p = curr_frame.bytecode)
-      {
-        var opcode = (Opcodes)p[exec.ip];
+      var opcode = (Opcodes)p[exec.ip];
 
-        op_handlers[(int)opcode](
-          this,
-          exec,
-          ref region,
-          curr_frame,
-          p,
-          ref status
-        );
-      }
+      op_handlers[(int)opcode](
+        this,
+        exec,
+        ref region,
+        curr_frame,
+        ref frame2,
+        p,
+        ref status
+      );
     }
 
     ++exec.ip;
@@ -351,7 +354,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Call2(ExecState exec, Frame new_frame, uint args_bits)
+  void Call2(ExecState exec, ref Frame2 frame2, int frame_idx2, uint args_bits)
   {
     var stack = exec.stack2;
 
@@ -360,11 +363,11 @@ public partial class VM : INamedResolver
     v._num = args_bits;
 
     //let's remember ip to return to
-    new_frame.return_ip = exec.ip;
-    exec.frames.Push(new_frame);
-    exec.regions.Push(new Region(new_frame, new_frame.defers));
+    frame2.return_ip = exec.ip;
+    //exec.frames.Push(new_frame);
+    exec.regions.Push(new Region(null, null) { frame2_idx =  frame_idx2 });
     //since ip will be incremented below we decrement it intentionally here
-    exec.ip = new_frame.start_ip - 1;
+    exec.ip = frame2.start_ip - 1;
   }
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
@@ -812,7 +815,7 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeConstant(VM vm, ExecState exec, ref Region region, Frame curr_frame, ref Frame2 frame2, byte* bytes, ref BHS status)
   {
     int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var cn = curr_frame.constants[const_idx];
+    var cn = frame2.constants[const_idx];
 
     ref Val2 v = ref exec.stack2.Push();
     v.type = Types.Int;
@@ -974,7 +977,7 @@ public partial class VM : INamedResolver
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val2 v = ref exec.stack2.Push();
-    v._num = exec.stack2.vals[curr_frame.locals_idx2 + local_idx]._num;
+    v._num = exec.stack2.vals[frame2.locals_idx2 + local_idx]._num;
 
     //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
@@ -1140,16 +1143,16 @@ public partial class VM : INamedResolver
 
     var stack = exec.stack2;
 
-    int ret_base = stack.sp - ret_num;
+    int ret_start_offset = stack.sp - ret_num;
     //releasing all locals
-    for(int i = frame2.locals_idx2; i < ret_base; ++i)
+    for(int i = frame2.locals_idx2; i < ret_start_offset; ++i)
       stack.vals[i].Release();
 
     int new_sp = frame2.locals_idx2 + ret_num;
 
     //moving returned values up
     for(int i = 0; i < ret_num; ++i)
-      stack.vals[frame2.locals_idx2 + i] = stack.vals[ret_base + i];
+      stack.vals[frame2.locals_idx2 + i] = stack.vals[ret_start_offset + i];
 
     stack.sp = new_sp;
 
@@ -1242,9 +1245,11 @@ public partial class VM : INamedResolver
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    var frm = Frame.New(vm);
-    frm.Init(curr_frame, exec.stack, func_ip);
-    vm.Call2(exec, frm, args_bits);
+    //var frm = Frame.New(vm);
+    //frm.Init(curr_frame, exec.stack, func_ip);
+    ref var new_frame = ref exec.PushFrame2();
+    new_frame.Init(frame2, /*exec.stack,*/ func_ip);
+    vm.Call2(exec, ref new_frame, exec.frames2_count - 1, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
