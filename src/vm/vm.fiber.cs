@@ -664,6 +664,48 @@ public partial class VM : INamedResolver
 
       return new FiberResult(fb);
     }
+
+    public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
+    {
+      var addr = new FuncAddr(fs);
+
+      fb.func_addr = addr;
+      fb.stop_guard = false;
+      while(fb.result.Count > 0)
+      {
+        var val = fb.result.Pop();
+        val.Release();
+      }
+
+      fb.Retain();
+
+      frm.Retain();
+
+      frm.Init(fb, fb.result, addr.module, addr.ip);
+
+      var stack = fb.exec.stack2;
+      for(int i = args.Count; i-- > 0;)
+      {
+        ref Val2 v = ref stack.Push();
+        v = args[i];
+      }
+
+      {
+        //passing args info as stack variable
+        ref Val2 v = ref stack.Push();
+        v._num = args_info.bits;
+      }
+
+      fb.Attach(frm);
+
+      if(vm.Tick(fb))
+        throw new Exception($"Not expected to be running: {fs}");
+
+      //let's clear stuff
+      frm.Clear();
+
+      return new FiberResult(fb);
+    }
   }
 
   Stack<ScriptExecutor> script_executors = new Stack<ScriptExecutor>();
@@ -672,6 +714,12 @@ public partial class VM : INamedResolver
   public FiberResult Execute(FuncSymbolScript fs)
   {
     return Execute(fs, 0u, new StackList<Val>());
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public FiberResult Execute2(FuncSymbolScript fs)
+  {
+    return Execute2(fs, 0u, new StackList<Val2>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -688,6 +736,18 @@ public partial class VM : INamedResolver
     else
       executor = script_executors.Pop();
     var res = executor.Execute(fs, args_info, args);
+    script_executors.Push(executor);
+    return res;
+  }
+
+  public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
+  {
+    ScriptExecutor executor;
+    if(script_executors.Count == 0)
+      executor = new ScriptExecutor(this);
+    else
+      executor = script_executors.Pop();
+    var res = executor.Execute2(fs, args_info, args);
     script_executors.Push(executor);
     return res;
   }
