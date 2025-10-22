@@ -501,6 +501,12 @@ public class Val2Stack
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val2 Pop()
+  {
+    return ref vals[--sp];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
   public void Add(int num)
   {
     int needed = num - (vals.Length - sp);

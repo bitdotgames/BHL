@@ -427,6 +427,8 @@ public class BenchFibonacciImported : BHL_TestBase
       stack.vals[curr_frame.locals_idx2 + i] = stack.vals[ret_base + i];
 
     stack.sp = new_sp;
+
+    exec.PopFrame2().Deinit();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

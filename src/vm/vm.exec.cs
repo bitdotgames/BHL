@@ -71,7 +71,7 @@ public partial class VM : INamedResolver
     public Val2Stack stack2 = new Val2Stack();
     public Const[] constants2 = new Const[16];
 
-    public Frame2[] frames2 = new Frame2[1024];
+    public Frame2[] frames2 = new Frame2[256];
     public int frames2_count = 0;
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -79,14 +79,14 @@ public partial class VM : INamedResolver
     {
       if(frames2_count == frames2.Length)
         Array.Resize(ref frames2, frames2_count << 1);
-       return ref frames2[frames2_count++];
+
+      return ref frames2[frames2_count++];
     }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public void PopFrame2()
+    public ref Frame2 PopFrame2()
     {
-      ref var frame = ref frames2[frames2_count--];
-      //frame.Deinit();
+      return ref frames2[frames2_count--];
     }
 
     public delegate void LocalFunc(

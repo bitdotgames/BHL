@@ -690,11 +690,12 @@ public partial class VM : INamedResolver
 
       fb.func_addr = addr;
       fb.stop_guard = false;
-      //while(fb.result.Count > 0)
-      //{
-      //  var val = fb.result.Pop();
-      //  val.Release();
-      //}
+      //let's clean the stack from previous non popped results
+      while(fb.exec.stack2.sp > 0)
+      {
+        ref var val = ref fb.exec.stack2.Pop();
+        val.Release();
+      }
 
       fb.Retain();
 
