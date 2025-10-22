@@ -1,4 +1,3 @@
-#define UNSAFE_BITOPS
 using System.Runtime.CompilerServices;
 using System;
 using System.IO;
@@ -40,26 +39,11 @@ public class Bytecode
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ushort Decode16(byte[] bytecode, ref int ip)
+  public static uint Decode16(byte[] bytecode, ref int ip)
   {
-#if UNSAFE_BITOPS
-    unsafe
-    {
-      fixed(byte* p = bytecode)
-      {
-        ushort val = (ushort)(p[ip + 1] | (uint)p[ip + 2] << 8);
-        ip += 2;
-        return val;
-      }
-    }
-#else
-    ushort val = (ushort)
-      ((uint)bytecode[ip+1] |
-       ((uint)bytecode[ip+2]) << 8
-       );
+    uint val = bytecode[ip+1] | (uint)bytecode[ip+2] << 8;
     ip += 2;
     return val;
-#endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -73,25 +57,9 @@ public class Bytecode
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint Decode24(byte[] bytecode, ref int ip)
   {
-#if UNSAFE_BITOPS
-    unsafe
-    {
-      fixed(byte* p = bytecode)
-      {
-        uint val = p[ip + 1] | (uint)p[ip + 2] << 8  | (uint)p[ip + 3] << 16;
-        ip += 3;
-        return val;
-      }
-    }
-#else
-    uint val =
-      ((uint)bytecode[ip+1]        |
-       ((uint)bytecode[ip+2]) << 8 |
-       ((uint)bytecode[ip+3]) << 16
-       );
+    uint val = bytecode[ip+1] | (uint)bytecode[ip+2] << 8 | (uint)bytecode[ip+3] << 16;
     ip += 3;
     return val;
-#endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -105,31 +73,9 @@ public class Bytecode
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static uint Decode32(byte[] bytecode, ref int ip)
   {
-#if UNSAFE_BITOPS
-    unsafe
-    {
-      fixed(byte* p = bytecode)
-      {
-        uint val = (uint)
-          ((uint)p[ip + 1]         |
-           ((uint)p[ip + 2]) << 8  |
-           ((uint)p[ip + 3]) << 16 |
-           ((uint)p[ip + 4]) << 24
-          );
-        ip += 4;
-        return val;
-      }
-    }
-#else
-    uint val = (uint)
-      ((uint)bytecode[ip+1]         |
-       ((uint)bytecode[ip+2] << 8)  |
-       ((uint)bytecode[ip+3] << 16) |
-       ((uint)bytecode[ip+4] << 24)
-       );
+    uint val = bytecode[ip+1] | ((uint)bytecode[ip+2] << 8)  | ((uint)bytecode[ip+3] << 16) | ((uint)bytecode[ip+4] << 24);
     ip += 4;
     return val;
-#endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
