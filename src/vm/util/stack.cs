@@ -39,6 +39,12 @@ public class FixedStack<T>
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref T Push()
+  {
+    return ref storage[Count++];
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T Pop()
   {
     return ref storage[--Count];

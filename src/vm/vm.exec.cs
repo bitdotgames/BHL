@@ -189,15 +189,7 @@ public partial class VM : INamedResolver
     var bc = frame2.bytecode;
     var opcode = bc[exec.ip];
 
-    op_handlers[opcode](
-      this,
-      exec,
-      ref region,
-      null,
-      ref frame2,
-      bc,
-      ref status
-    );
+    op_handlers[opcode](this, exec, ref region, null, ref frame2, bc, ref status);
 
     ++exec.ip;
     return status;
@@ -216,14 +208,11 @@ public partial class VM : INamedResolver
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;
 
-    //fixed (byte* p = init_frame.bytecode)
+    while(init_exec.regions.Count > 0)
     {
-      while(init_exec.regions.Count > 0)
-      {
-        var status = ExecuteOnce(init_exec/*, p*/);
-        if(status == BHS.RUNNING)
-          throw new Exception("Invalid state in init mode: " + status);
-      }
+      var status = ExecuteOnce(init_exec);
+      if(status == BHS.RUNNING)
+        throw new Exception("Invalid state in init mode: " + status);
     }
   }
 

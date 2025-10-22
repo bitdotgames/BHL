@@ -775,6 +775,38 @@ public partial class VM : INamedResolver
     script_executors.Push(executor);
     return res;
   }
+
+  //public void Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
+  //{
+  //  var fb = VM.Fiber.New(this);
+
+  //  var addr = new FuncAddr(fs);
+  //  fb.func_addr = addr;
+
+  //  ref var frame2 = ref fb.exec.PushFrame2();
+  //  frame2.Init(addr.module, addr.ip);
+
+  //  var stack = fb.exec.stack2;
+  //  for(int i = args.Count; i-- > 0;)
+  //  {
+  //    ref Val2 v = ref stack.Push();
+  //    v = args[i];
+  //  }
+
+  //  {
+  //    //passing args info as stack variable
+  //    ref Val2 v = ref stack.Push();
+  //    v._num = args_info.bits;
+  //  }
+
+  //  fb.Attach2(ref frame2, fb.exec.frames2_count - 1);
+
+  //  if(Tick(fb))
+  //    throw new Exception($"Not expected to be running: {fs}");
+
+  //  //not needed, Tick(..) does it
+  //  //fb.Release();
+  //}
 }
 
 }
