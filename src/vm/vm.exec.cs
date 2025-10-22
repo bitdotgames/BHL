@@ -135,18 +135,22 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
+  internal unsafe BHS Execute(ExecState exec, int exec_waterline_idx = 0)
   {
     var status = BHS.SUCCESS;
-    while(exec.regions.Count > exec_waterline_idx && status == BHS.SUCCESS)
-      status = ExecuteOnce(exec);
+
+    fixed (byte* p = exec.frames2[0].bytecode)
+    {
+      while(exec.regions.Count > exec_waterline_idx && status == BHS.SUCCESS)
+        status = ExecuteOnce(exec, p);
+    }
+    
     return status;
   }
 
-  unsafe BHS ExecuteOnce(ExecState exec)
+  unsafe BHS ExecuteOnce(ExecState exec, byte* p)
   {
     ref var region = ref exec.regions.Peek();
-    Frame curr_frame = null;
     //var curr_frame = region.frame;
     //TODO: looks like frame2_idx is not really needed since we always need the top frame?
     ref var frame2 = ref exec.frames2[region.frame2_idx];
@@ -157,7 +161,7 @@ public partial class VM : INamedResolver
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)
-      return ExecuteCoroutine(curr_frame, exec);
+      return ExecuteCoroutine(null, exec);
 
     if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
@@ -185,26 +189,23 @@ public partial class VM : INamedResolver
 
     var status = BHS.SUCCESS;
 
-    fixed (byte* p = frame2.bytecode)
-    {
-      var opcode = (Opcodes)p[exec.ip];
+    var opcode = p[exec.ip];
 
-      op_handlers[(int)opcode](
-        this,
-        exec,
-        ref region,
-        curr_frame,
-        ref frame2,
-        p,
-        ref status
-      );
-    }
+    op_handlers[opcode](
+      this,
+      exec,
+      ref region,
+      null,
+      ref frame2,
+      p,
+      ref status
+    );
 
     ++exec.ip;
     return status;
   }
 
-  void ExecInitCode(Module module)
+  unsafe void ExecInitCode(Module module)
   {
     var bytecode = module.compiled.initcode;
     if(bytecode == null || bytecode.Length == 0)
@@ -217,11 +218,14 @@ public partial class VM : INamedResolver
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;
 
-    while(init_exec.regions.Count > 0)
+    fixed (byte* p = init_frame.bytecode)
     {
-      var status = ExecuteOnce(init_exec);
-      if(status == BHS.RUNNING)
-        throw new Exception("Invalid state in init mode: " + status);
+      while(init_exec.regions.Count > 0)
+      {
+        var status = ExecuteOnce(init_exec, p);
+        if(status == BHS.RUNNING)
+          throw new Exception("Invalid state in init mode: " + status);
+      }
     }
   }
 
