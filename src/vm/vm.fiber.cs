@@ -122,6 +122,7 @@ public partial class VM : INamedResolver
 
       fb.refs = 1;
       fb.stop_guard = false;
+      //releasing non reclaimed results
       while(fb.result.Count > 0)
       {
         var val = fb.result.Pop();

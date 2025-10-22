@@ -259,6 +259,7 @@ public class BenchFibonacciImported : BHL_TestBase
     //var frame = VM.Frame.New(vm_aot);
     ref var frame2 = ref fb.exec.PushFrame2();
     fb.exec.funcs2[0](vm_aot, fb.exec, ref region, ref frame2, ref status);
+    fb.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
