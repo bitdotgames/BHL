@@ -1155,8 +1155,7 @@ public partial class VM : INamedResolver
     int new_sp = frame2.locals_idx2 + ret_num;
 
     //moving returned values up
-    for(int i = 0; i < ret_num; ++i)
-      stack.vals[frame2.locals_idx2 + i] = stack.vals[ret_start_offset + i];
+    Array.Copy(stack.vals, ret_start_offset, stack.vals, frame2.locals_idx2, ret_num);
 
     stack.sp = new_sp;
 

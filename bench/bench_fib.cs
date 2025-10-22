@@ -424,8 +424,7 @@ public class BenchFibonacciImported : BHL_TestBase
     int new_sp = curr_frame.locals_idx2 + ret_num;
 
     //moving returned values up
-    for(int i = 0; i < ret_num; ++i)
-      stack.vals[curr_frame.locals_idx2 + i] = stack.vals[ret_base + i];
+    Array.Copy(stack.vals, ret_base, stack.vals, curr_frame.locals_idx2, ret_num);
 
     stack.sp = new_sp;
 
