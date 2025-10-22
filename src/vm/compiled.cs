@@ -63,6 +63,22 @@ public class CompiledModule
   public int total_gvars_num;
   public byte[] initcode;
   public byte[] bytecode;
+
+  unsafe byte* _bytecode_ptr;
+  public unsafe byte* bytecode_ptr
+  {
+    get
+    {
+      if(_bytecode_ptr == null)
+      {
+        fixed(byte* ptr = bytecode)
+        {
+          _bytecode_ptr = ptr;
+        }
+      }
+      return _bytecode_ptr;
+    }
+  }
   public Const[] constants;
   public TypeRefIndex type_refs;
   IType[] _type_refs_resolved;
@@ -203,7 +219,7 @@ public class CompiledModule
         ip2src_line.Add(r.ReadInt32(), r.ReadInt32());
     }
 
-    //NOTE: due to specifics of type refs storage sync context is initialized 
+    //NOTE: due to specifics of type refs storage sync context is initialized
     //      with neccessary data related to type refs 'lazy loading'
     var reader = new MsgPackDataReader(new MemoryStream(symb_bytes));
     var ctx = SyncContext.NewReader(reader);

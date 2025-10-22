@@ -168,7 +168,7 @@ public partial class VM : INamedResolver
   public struct Frame2
   {
     public Module module;
-    public byte[] bytecode;
+    public unsafe byte* bytecode;
     public Const[] constants;
     public IType[] type_refs;
     public int start_ip;
@@ -180,13 +180,16 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(ref Frame2 frame)
     {
-      bytecode = frame.bytecode;
+      unsafe
+      {
+        bytecode = frame.bytecode;
+      }
       constants = frame.constants;
       type_refs = frame.type_refs;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(/*Fiber fb, ValStack return_stack,*/ Module module, int start_ip)
+    public unsafe void Init(/*Fiber fb, ValStack return_stack,*/ Module module, int start_ip)
     {
       Init(
         //fb,
@@ -194,13 +197,13 @@ public partial class VM : INamedResolver
         module,
         module.compiled.constants,
         module.compiled.type_refs_resolved,
-        module.compiled.bytecode,
+        module.compiled.bytecode_ptr,
         start_ip
       );
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(Frame2 origin, int start_ip)
+    public unsafe void Init(Frame2 origin, int start_ip)
     {
       Init(
         //origin.fb,
@@ -214,13 +217,13 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Init(
+    internal unsafe void Init(
       //Fiber fb,
       //ValStack return_stack,
       Module module,
       Const[] constants,
       IType[] type_refs,
-      byte[] bytecode,
+      byte* bytecode,
       int start_ip)
     {
       //this.fb = fb;
