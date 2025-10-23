@@ -53,7 +53,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
             {
               var loc = new Location
               {
-                Uri = DocumentUri.Parse(kv.Key),
+                Uri = DocumentUri.File(kv.Key),
                 Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
               };
               refs.Add(loc);
@@ -76,7 +76,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
         {
           refs.Add(new Location
           {
-            Uri = DocumentUri.Parse(symb.origin.source_file),
+            Uri = DocumentUri.File(symb.origin.source_file),
             Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
           });
         }

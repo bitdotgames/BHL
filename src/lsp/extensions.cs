@@ -138,7 +138,7 @@ public static class Extensions
         server.TextDocument.PublishDiagnostics(
           new PublishDiagnosticsParams()
           {
-            Uri = DocumentUri.Parse(kv.Key),
+            Uri = DocumentUri.File(kv.Key),
             Diagnostics = kv.Value,
           });
       }
