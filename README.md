@@ -1,6 +1,6 @@
 # **B**ehaviour **H**ighlevel **L**anguage
 
-![CI](https://github.com/bitdotgames/bhl/workflows/CI/badge.svg?branch=master&event=push)
+![CI](https://github.com/bitdotgames/bhl/actions/workflows/main.yml/badge.svg)
 
 > **BHL** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines pseudo parallel execution primitives with familiar imperative coding style.
 
