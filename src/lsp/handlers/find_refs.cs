@@ -33,7 +33,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
 
   public override async Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken)
   {
-    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.Path, cancellationToken);
+    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.PathFixed(), cancellationToken);
 
     var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
 

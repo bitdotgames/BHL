@@ -60,6 +60,15 @@ public static class Extensions
     return new SourcePos(pos.Line + 1, pos.Character);
   }
 
+  public static string PathFixed(this DocumentUri uri)
+  {
+    string path = uri.Path;
+    //it's a fix for a weird Windows related problem when path looks as follows: /c:/bla/foo/bar
+    if(path.Length > 2 && path[0] == '/' && path[2] == ':')
+      path = path.Substring(1);
+    return path;
+  }
+
   public static void SetupForRootPath(this ProjectConf proj, string rootPath)
   {
     proj.proj_file = "default.proj";

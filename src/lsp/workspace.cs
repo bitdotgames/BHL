@@ -99,7 +99,7 @@ public class Workspace
 
   public BHLDocument GetOrLoadDocument(DocumentUri uri)
   {
-    if(Path2Doc.TryGetValue(uri.Path, out var document))
+    if(Path2Doc.TryGetValue(uri.PathFixed(), out var document))
       return document;
     else
       return LoadDocument(uri);
@@ -107,7 +107,7 @@ public class Workspace
 
   public BHLDocument LoadDocument(DocumentUri uri)
   {
-    byte[] buffer = File.ReadAllBytes(uri.Path);
+    byte[] buffer = File.ReadAllBytes(uri.PathFixed());
     string text = Encoding.UTF8.GetString(buffer);
     var document = new BHLDocument(uri);
     ParseDocument(document, text);
@@ -116,7 +116,7 @@ public class Workspace
 
   public BHLDocument FindDocument(DocumentUri uri)
   {
-    Path2Doc.TryGetValue(uri.Path, out var document);
+    Path2Doc.TryGetValue(uri.PathFixed(), out var document);
     return document;
   }
 
@@ -146,8 +146,8 @@ public class Workspace
   ANTLR_Processor ParseDocument(BHLDocument document, string text)
   {
     var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-    var proc = ParseFile(document.Uri.Path, ms);
-    Path2Proc[document.Uri.Path] = proc;
+    var proc = ParseFile(document.Uri.PathFixed(), ms);
+    Path2Proc[document.Uri.PathFixed()] = proc;
 
     var proc_bundle = new ProjectCompilationStateBundle(Types);
     proc_bundle.file2proc = Path2Proc;

@@ -257,7 +257,7 @@ public class TestLSPGoToDefinition : TestLSPShared, IDisposable
 
     var rsp = await GoToDefinition(srv, uri2, "EST() //native call");
 
-    AssertContains(rsp.First().Location!.Uri.Path, "test_lsp_go_to.cs");
+    AssertContains(rsp.First().Location!.Uri.PathFixed(), "test_lsp_go_to.cs");
     Assert.Equal(
       fn_TEST.origin.source_range.FromAntlr2Lsp().ToRange(),
       rsp.First().Location!.Range

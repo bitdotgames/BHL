@@ -305,7 +305,7 @@ public class TestLSPShared : BHL_TestBase
 
   public static async Task<LocationOrLocationLinks> GoToDefinition(TestLSPHost srv, DocumentUri uri, string needle)
   {
-    var pos = FindPos(File.ReadAllText(uri.Path), needle);
+    var pos = FindPos(File.ReadAllText(uri.PathFixed()), needle);
 
     return await srv.SendRequestAsync<DefinitionParams, LocationOrLocationLinks>(
       "textDocument/definition",
@@ -320,7 +320,7 @@ public class TestLSPShared : BHL_TestBase
   public static LocationOrLocationLinks GoToDefinitionRsp(DocumentUri uri, string needle, int end_line_offset = 0,
     int end_column_offset = 0)
   {
-    var start = FindPos(File.ReadAllText(uri.Path), needle);
+    var start = FindPos(File.ReadAllText(uri.PathFixed()), needle);
     var end = new bhl.SourcePos(start.line + end_line_offset, start.column + end_column_offset);
 
     var result = new LocationOrLocationLinks(
@@ -331,7 +331,7 @@ public class TestLSPShared : BHL_TestBase
 
   public static async Task<LocationContainer> FindReferences(TestLSPHost srv, DocumentUri uri, string needle)
   {
-    var pos = FindPos(File.ReadAllText(uri.Path), needle);
+    var pos = FindPos(File.ReadAllText(uri.PathFixed()), needle);
 
     var result =
       await srv.SendRequestAsync<ReferenceParams, LocationContainer>("textDocument/references",
@@ -365,7 +365,7 @@ public class TestLSPShared : BHL_TestBase
     var locations = new List<Location>();
     foreach(var un in uns)
     {
-      var start = FindPos(File.ReadAllText(un.uri.Path), un.needle);
+      var start = FindPos(File.ReadAllText(un.uri.PathFixed()), un.needle);
       var end = new bhl.SourcePos(start.line + un.end_line_offset, start.column + un.end_column_offset);
       var location = new Location()
       {
@@ -379,7 +379,7 @@ public class TestLSPShared : BHL_TestBase
 
   public static async Task<Hover> GetHover(TestLSPHost srv, DocumentUri uri, string needle)
   {
-    var pos = FindPos(File.ReadAllText(uri.Path), needle);
+    var pos = FindPos(File.ReadAllText(uri.PathFixed()), needle);
 
     var result =
       await srv.SendRequestAsync<HoverParams, Hover>("textDocument/hover",

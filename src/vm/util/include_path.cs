@@ -65,10 +65,6 @@ public class IncludePath
 
   string _FilePath2ModuleName(string full_path)
   {
-    //hack for Windows which converts to lowercase the drive letter
-    if(full_path.Length > 1 && full_path[1] == ':')
-      full_path = char.ToLower(full_path[0]) + full_path.Substring(1);
-
     string norm_path = "";
     for(int i = 0; i < items.Count; ++i)
     {
