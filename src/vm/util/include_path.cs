@@ -7,42 +7,42 @@ namespace bhl
 
 public class IncludePath
 {
-  List<string> items = new List<string>();
+  List<string> _items = new List<string>();
+  IReadOnlyList<string> Items => _items;
 
   public int Count
   {
-    get { return items.Count; }
+    get { return _items.Count; }
   }
 
   public string this[int i]
   {
-    get { return items[i]; }
-
-    set { items[i] = value; }
+    get { return _items[i]; }
   }
 
   public IncludePath()
-  {
-  }
+  {}
 
   public IncludePath(IList<string> items)
   {
-    this.items.AddRange(items);
+    foreach(string item in items)
+      Add(item);
   }
 
   public override string ToString()
   {
-    return string.Join(',', items);
+    return string.Join(',', _items);
   }
 
   public void Add(string path)
   {
-    items.Add(BuildUtils.NormalizeFilePath(path));
+    string normalized = BuildUtils.NormalizeFilePath(path);
+    _items.Add(normalized);
   }
 
   public void Clear()
   {
-    items.Clear();
+    _items.Clear();
   }
 
   public string ResolveImportPath(string self_path, string path)
@@ -66,9 +66,9 @@ public class IncludePath
   string _FilePath2ModuleName(string full_path)
   {
     string norm_path = "";
-    for(int i = 0; i < items.Count; ++i)
+    for(int i = 0; i < _items.Count; ++i)
     {
-      var inc_path = items[i];
+      var inc_path = _items[i];
       if(full_path.IndexOf(inc_path) == 0)
       {
         norm_path = full_path.Substring(inc_path.Length);

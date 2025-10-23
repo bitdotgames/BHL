@@ -87,7 +87,7 @@ public static partial class Tasks
 
       await Task.WhenAny(server.WaitForExit, Task.Delay(Timeout.Infinite, cts.Token));
     }
-    catch(OperationCanceledException e)
+    catch(OperationCanceledException)
     {
       Environment.Exit(0);
     }
