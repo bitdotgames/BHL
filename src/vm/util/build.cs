@@ -10,7 +10,7 @@ static public class BuildUtils
   static public string NormalizeFilePath(string file_path)
   {
     var path = Path.GetFullPath(file_path).Replace("\\", "/");
-    if(path[1] == ':' && char.IsUpper(path[2]))
+    if(path[1] == ':' && char.IsUpper(path[0]))
     {
       //path = char.ToLower(path[0]) + path.Substring(1);
       Span<char> span = path.ToCharArray();
