@@ -367,7 +367,7 @@ public partial class VM : INamedResolver
 
   //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
   //       1) args put into stack
-  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg  
+  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg
   public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
@@ -379,9 +379,12 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      unsafe
+      {
+        frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
-      PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
+        PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
+      }
     }
     else
     {

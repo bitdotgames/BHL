@@ -137,7 +137,10 @@ public partial class VM : INamedResolver
 
       if(native != null)
       {
-        frm.Init(fb, return_stack, null, null, null, null, VM.EXIT_FRAME_IP);
+        unsafe
+        {
+          frm.Init(fb, return_stack, null, null, null, null, VM.EXIT_FRAME_IP);
+        }
       }
       else
       {
