@@ -443,7 +443,7 @@ public class TestLSPShared : BHL_TestBase
     File.WriteAllText(full_path, text);
     if(files != null)
       files.Add(full_path);
-    var uri = DocumentUri.Parse("file://" + full_path);
+    var uri = DocumentUri.File(full_path);
     return uri;
   }
 
