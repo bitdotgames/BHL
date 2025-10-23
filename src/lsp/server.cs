@@ -57,15 +57,6 @@ public static class ServerFactory
                 break;
             }
           }
-          else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
-          {
-            proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
-            if(proj == null)
-            {
-              proj = new ProjectConf();
-              proj.SetupForRootPath(request.RootUri.Path);
-            }
-          }
           else if(!string.IsNullOrEmpty(request.RootPath)) // @deprecated in favour of `rootUri`.
           {
             proj = ProjectConf.TryReadFromDir(request.RootPath);
@@ -73,6 +64,15 @@ public static class ServerFactory
             {
               proj = new ProjectConf();
               proj.SetupForRootPath(request.RootPath);
+            }
+          }
+          else if(request.RootUri != null) // @deprecated in favour of `workspaceFolders`
+          {
+            proj = ProjectConf.TryReadFromDir(request.RootUri.Path);
+            if(proj == null)
+            {
+              proj = new ProjectConf();
+              proj.SetupForRootPath(request.RootUri.Path);
             }
           }
           else
