@@ -34,19 +34,20 @@ public struct DeferBlock
   BHS Execute(VM.ExecState exec)
   {
     //1. let's remeber the original ip in order to restore it once
-    //   the execution of this block is done (defer block can be 
+    //   the execution of this block is done (defer block can be
     //   located anywhere in the code)
     int ip_orig = exec.ip;
     exec.ip = this.ip;
 
     //2. let's create the execution region
-    exec.regions.Push(new VM.Region(frm, null, min_ip: ip, max_ip: max_ip));
+    exec.regions[exec.regions_count++]
+      = new VM.Region(frm, null, min_ip: ip, max_ip: max_ip);
     //3. and execute it
     var status = frm.vm.Execute(
       exec,
-      //NOTE: we re-use the existing exec.stack but limit the execution 
+      //NOTE: we re-use the existing exec.stack but limit the execution
       //      only up to the defer code block
-      exec.regions.Count - 1
+      exec.regions_count - 1
     );
     if(status != BHS.SUCCESS)
       throw new Exception("Defer execution invalid status: " + status);
@@ -102,7 +103,8 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
   {
     exec.stack_old = stack;
     exec.ip = min_ip;
-    exec.regions.Push(new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip));
+    exec.regions[exec.regions_count++] =
+      new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)
@@ -132,7 +134,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     for(int i = exec.frames_old.Count; i-- > 0;)
       exec.frames_old[i].Release();
     exec.frames_old.Clear();
-    exec.regions.Clear();
+    exec.regions_count = 0;
 
     DeferBlock.ExitScope(defers, exec);
   }
@@ -162,7 +164,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     this.max_ip = max_ip;
     exec.ip = min_ip;
     exec.stack_old = stack;
-    exec.regions.Push(new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip));
+    exec.regions[exec.regions_count++] =
+      new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)
@@ -175,7 +178,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
       if(exec.ip > min_ip && exec.ip < max_ip)
         ext_exec.ip = max_ip + 1;
-      //otherwise just assign ext_ip the last ip result (this is needed for break, continue) 
+      //otherwise just assign ext_ip the last ip result (this is needed for break, continue)
       else
         ext_exec.ip = exec.ip;
     }

@@ -113,7 +113,7 @@ public class TestPerf : BHL_TestBase
     }
     var region = new VM.Region();
     var status = BHS.SUCCESS;
-    ref var frame2 = ref fb.exec.PushFrame2();
+    ref var frame2 = ref fb.exec.PushFrame();
     fb.exec.funcs2[0](vm, fb.exec, ref region, ref frame2, ref status);
     Assert.Equal(610, fb.exec.stack.PopRelease().num);
   }
@@ -331,7 +331,7 @@ public class TestPerf : BHL_TestBase
   {
     var fn = exec.funcs2[func_ip];
 
-    ref var new_frame2 = ref exec.PushFrame2();
+    ref var new_frame2 = ref exec.PushFrame();
     new_frame2.Init(ref frame);
     //var frm = VM.Frame.New(vm);
     //frm.Init(curr_frame, exec.stack, func_ip);

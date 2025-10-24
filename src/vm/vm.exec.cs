@@ -37,7 +37,7 @@ public partial class VM : INamedResolver
   {
     public FrameOld frame;
 
-    public int frame2_idx;
+    public int frame_idx;
 
     public List<DeferBlock> defer_support;
 
@@ -59,11 +59,17 @@ public partial class VM : INamedResolver
     }
   }
 
+  //NOTE: This class represents an active execution unit in VM.
+  //      VM needs an active Frame and ExecState during Tick-ing.
+  //      E.g. Fiber contains an ExecState, each paral branch
+  //      contains its own ExecState.
   public class ExecState
   {
     internal int ip;
     internal Coroutine coroutine;
-    internal FixedStack<Region> regions = new FixedStack<Region>(32);
+
+    internal Region[] regions = new Region[32];
+    internal int regions_count = 0;
 
     public ValStack stack = new ValStack();
     //TODO: why is it here?
@@ -76,7 +82,7 @@ public partial class VM : INamedResolver
     public ValOldStack stack_old;
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Frame PushFrame2()
+    public ref Frame PushFrame()
     {
       if(frames_count == frames.Length)
         Array.Resize(ref frames, frames_count << 1);
@@ -85,7 +91,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Frame PopFrame2()
+    public ref Frame PopFrame()
     {
       return ref frames[frames_count--];
     }
@@ -140,7 +146,7 @@ public partial class VM : INamedResolver
   {
     var status = BHS.SUCCESS;
 
-    while(exec.regions.Count > exec_waterline_idx && status == BHS.SUCCESS)
+    while(exec.regions_count > exec_waterline_idx && status == BHS.SUCCESS)
       status = ExecuteOnce(exec);
 
     return status;
@@ -148,10 +154,10 @@ public partial class VM : INamedResolver
 
   unsafe BHS ExecuteOnce(ExecState exec)
   {
-    ref var region = ref exec.regions.Peek();
+    ref var region = ref exec.regions[exec.regions_count - 1];
     //var curr_frame = region.frame;
-    //TODO: looks like frame2_idx is not really needed since we always need the top frame?
-    ref var frame2 = ref exec.frames[region.frame2_idx];
+    //TODO: looks like frame_idx is not really needed since we always need the top frame?
+    ref var frame = ref exec.frames[region.frame_idx];
 
 #if BHL_DEBUG
     Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
@@ -163,7 +169,7 @@ public partial class VM : INamedResolver
 
     if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
-      exec.regions.Pop();
+      --exec.regions_count;
       return BHS.SUCCESS;
     }
 
@@ -172,8 +178,8 @@ public partial class VM : INamedResolver
       //curr_frame.ExitScope(null, exec);
 
       //exec.frames.Pop();
-      exec.regions.Pop();
-      exec.ip = frame2.return_ip + 1;
+      --exec.regions_count;
+      exec.ip = frame.return_ip + 1;
       //exec.ip = curr_frame.return_ip + 1;
       //exec.stack = curr_frame.return_stack;
 
@@ -187,10 +193,10 @@ public partial class VM : INamedResolver
 
     var status = BHS.SUCCESS;
 
-    var bc = frame2.bytecode;
+    var bc = frame.bytecode;
     var opcode = bc[exec.ip];
 
-    op_handlers[opcode](this, exec, ref region, null, ref frame2, bc, ref status);
+    op_handlers[opcode](this, exec, ref region, null, ref frame, bc, ref status);
 
     ++exec.ip;
     return status;
@@ -205,11 +211,11 @@ public partial class VM : INamedResolver
     init_exec.ip = 0;
     init_exec.stack_old = init_frame.stack;
     init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs_resolved, bytecode, 0);
-    init_exec.regions.Push(new VM.Region(init_frame, null, 0, bytecode.Length - 1));
+    init_exec.regions[init_exec.regions_count++] = new VM.Region(init_frame, null, 0, bytecode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;
 
-    while(init_exec.regions.Count > 0)
+    while(init_exec.regions_count > 0)
     {
       var status = ExecuteOnce(init_exec);
       if(status == BHS.RUNNING)
@@ -340,7 +346,7 @@ public partial class VM : INamedResolver
     new_frame.return_ip = exec.ip;
     exec.stack_old = new_frame.stack;
     exec.frames_old.Push(new_frame);
-    exec.regions.Push(new Region(new_frame, new_frame.defers));
+    exec.regions[exec.regions_count++] = new Region(new_frame, new_frame.defers);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = new_frame.start_ip - 1;
   }
@@ -357,7 +363,7 @@ public partial class VM : INamedResolver
     //let's remember ip to return to
     frame.return_ip = exec.ip;
     //exec.frames.Push(new_frame);
-    exec.regions.Push(new Region(null, null) { frame2_idx =  frame_idx2 });
+    exec.regions[exec.regions_count++] = new Region(null, null) { frame_idx =  frame_idx2 };
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -404,7 +410,7 @@ public partial class VM : INamedResolver
       exec.coroutine = null;
 
       exec.ip = EXIT_FRAME_IP - 1;
-      exec.regions.Pop();
+      --exec.regions_count;
 
       return status;
     }
@@ -1238,7 +1244,7 @@ public partial class VM : INamedResolver
 
     //var frm = Frame.New(vm);
     //frm.Init(curr_frame, exec.stack, func_ip);
-    ref var new_frame = ref exec.PushFrame2();
+    ref var new_frame = ref exec.PushFrame();
     new_frame.Init(frame, /*exec.stack,*/ func_ip);
     vm.Call2(exec, ref new_frame, exec.frames_count - 1, args_bits);
   }

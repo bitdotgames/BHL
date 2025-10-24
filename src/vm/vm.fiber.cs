@@ -157,7 +157,7 @@ public partial class VM : INamedResolver
       frm.fb = this;
       exec.ip = frm.start_ip;
       exec.frames_old.Push(frm);
-      exec.regions.Push(new Region(frm, frm.defers));
+      exec.regions[exec.regions_count++] = new Region(frm, frm.defers);
       exec.stack_old = frm.stack;
     }
 
@@ -170,9 +170,9 @@ public partial class VM : INamedResolver
       //exec.frames.Push(frm);
       var region = new Region(null, null)
       {
-        frame2_idx = frame_idx2
+        frame_idx = frame_idx2
       };
-      exec.regions.Push(region);
+      exec.regions[exec.regions_count++] = region;
       //really?
       //exec.stack = frm.stack;
     }
@@ -203,7 +203,7 @@ public partial class VM : INamedResolver
         exec.frames_old.Clear();
       }
 
-      exec.regions.Clear();
+      exec.regions_count = 0;
     }
 
     internal void Clear()
@@ -419,7 +419,7 @@ public partial class VM : INamedResolver
     Register(fb, null, opts);
 
     //var frame = Frame.New(this);
-    ref var frame2 = ref fb.exec.PushFrame2();
+    ref var frame2 = ref fb.exec.PushFrame();
     int frame2_idx = fb.exec.frames_count - 1;
 
     //checking native call
@@ -703,7 +703,7 @@ public partial class VM : INamedResolver
       //frm.Retain();
       //frm.Init(fb, fb.result, addr.module, addr.ip);
 
-      ref var frame2 = ref fb.exec.PushFrame2();
+      ref var frame2 = ref fb.exec.PushFrame();
       frame2.Init(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
