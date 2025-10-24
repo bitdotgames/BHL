@@ -150,14 +150,14 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastFloatToStr()
   {
     string bhl = @"
-    func string test(float k) 
+    func string test(float k)
     {
       return (string)k
     }
     ";
 
     var vm = MakeVM(bhl);
-    var str = Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().str;
+    var str = Execute(vm, "test", ValOld.NewNum(vm, 3)).result.PopRelease().str;
     AssertEqual(str, "3");
     CommonChecks(vm);
   }
@@ -166,7 +166,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestStrDecIsForbidden()
   {
     string bhl = @"
-    func test(int k) 
+    func test(int k)
     {
       return ""foo"" - k
     }
@@ -188,7 +188,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _int()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         int a = 11
         return ""what"" + a + ""now""
@@ -205,7 +205,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _int_and_float()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         int a = 11
         float b = 12.1
@@ -223,7 +223,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _arr_count_1()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         []int arr = [1, 2, 3]
         return ""what"" + arr.Count
@@ -240,7 +240,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _arr_count_2()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         []int arr = [1, 2, 3]
         return arr.Count + ""now""
@@ -257,7 +257,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _plus_equal()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         string s = ""???""
         s += 100
@@ -275,7 +275,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _empty_string_var()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         string s
         return s + ""hey"" + 1
@@ -292,7 +292,7 @@ public class TestTypeCasts : BHL_TestBase
     public void _bools()
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         bool t = true
         bool f = false
@@ -314,7 +314,7 @@ public class TestTypeCasts : BHL_TestBase
         A = 10
         B = 20
       }
-      func string test() 
+      func string test()
       {
         return Foo.A + ""hey"" + Foo.B
       }
@@ -336,8 +336,8 @@ public class TestTypeCasts : BHL_TestBase
     {
       return a + b
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo(1, 2.0)
     }
@@ -358,8 +358,8 @@ public class TestTypeCasts : BHL_TestBase
     {
       return a
     }
-      
-    func float test() 
+
+    func float test()
     {
       return bar(a : min(1, 0.3))
     }
@@ -378,14 +378,14 @@ public class TestTypeCasts : BHL_TestBase
   {
     string bhl = @"
 
-    func int test(float k) 
+    func int test(float k)
     {
       return (int)k
     }
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test", Val.NewFlt(vm, 3.9)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewFlt(vm, 3.9)).result.PopRelease().num;
     Assert.Equal(3, res);
     CommonChecks(vm);
   }
@@ -395,7 +395,7 @@ public class TestTypeCasts : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       int a = 11
       int b = 2
@@ -413,8 +413,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastIntToAny()
   {
     string bhl = @"
-      
-    func any test() 
+
+    func any test()
     {
       return (any)121
     }
@@ -435,8 +435,8 @@ public class TestTypeCasts : BHL_TestBase
     {
       return (int)a
     }
-      
-    func int test() 
+
+    func int test()
     {
       return foo(121)
     }
@@ -452,7 +452,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestInternalIntIsLong()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       return (int)(2147483647 + 2147483647)
     }
@@ -468,8 +468,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastStrToAny()
   {
     string bhl = @"
-      
-    func any test() 
+
+    func any test()
     {
       return (any)""foo""
     }
@@ -485,7 +485,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestSimpleIs()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
       int i = 1
       return i is int
@@ -518,7 +518,7 @@ public class TestTypeCasts : BHL_TestBase
   {
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         string s = ""hey""
         any foo = s
@@ -533,7 +533,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         int s = 42
         any foo = s
@@ -548,7 +548,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         float s = 42.1
         any foo = s
@@ -563,7 +563,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         bool s = true
         any foo = s
@@ -578,7 +578,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         string s = ""hey""
         any foo = s
@@ -601,7 +601,7 @@ public class TestTypeCasts : BHL_TestBase
       int foo
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14}
       return (f as Foo).foo
@@ -635,13 +635,13 @@ public class TestTypeCasts : BHL_TestBase
   public void TestIsForChildClass()
   {
     string bhl = @"
-    class Bar 
+    class Bar
     { }
 
     class Foo : Bar
     { }
 
-    func bool test() 
+    func bool test()
     {
       Foo f = {}
       return f is Bar
@@ -670,19 +670,19 @@ public class TestTypeCasts : BHL_TestBase
   public class TestIsForChildNativeClass : BHL_TestBase
   {
     private string bhl = @"
-      func bool test() 
+      func bool test()
       {
         var f = NewFooHiddenBar();
         return f is Bar
       }
 
-      func bool test2() 
+      func bool test2()
       {
         var b = NewFooHiddenBar() as Bar;
         return b != null
       }
 
-      func int test3() 
+      func int test3()
       {
         var b = NewFooHiddenBar() as Bar;
         return b.bar
@@ -692,11 +692,11 @@ public class TestTypeCasts : BHL_TestBase
     private Action<Types> ts_fn = (ts) =>
     {
       var cl1 = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeBar(), type); },
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeBar(), type); },
         typeof(NativeBar)
       );
       cl1.Define(new FieldSymbol(new Origin(), "bar", ts.T("int"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var bar = (NativeBar)ctx.obj;
           v.SetInt(bar.bar);
@@ -706,11 +706,11 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(cl1);
 
       var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var foo = (NativeFoo)ctx.obj;
           v.SetInt(foo.foo);
@@ -723,9 +723,9 @@ public class TestTypeCasts : BHL_TestBase
       cl2.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          stack.Push(Val.NewObj(frm.vm, new NativeBar(), ts.T("Foo").Get()));
+          stack.Push(ValOld.NewObj(frm.vm, new NativeBar(), ts.T("Foo").Get()));
           return null;
         }
       );
@@ -763,7 +763,7 @@ public class TestTypeCasts : BHL_TestBase
     string bhl = @"
       func bool test() {
         IFoo foo = new Foo
-        return foo is Foo 
+        return foo is Foo
       }
     ";
 
@@ -782,7 +782,7 @@ public class TestTypeCasts : BHL_TestBase
         new Origin(),
         "Foo",
         new List<ProxyType>() { ts.T("IFoo") },
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       ts.ns.Define(cl);
@@ -825,15 +825,15 @@ public class TestTypeCasts : BHL_TestBase
 
       var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>() { ts.T("IWow") },
         native_type: typeof(NativeWow),
-        creator: delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new NativeWow(), type); }
+        creator: delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeWow(), type); }
       );
       ts.ns.Define(cl);
       cl.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          stack.Push(Val.NewObj(frm.vm, new NativeWow(), ts.T("IWow").Get()));
+          stack.Push(ValOld.NewObj(frm.vm, new NativeWow(), ts.T("IWow").Get()));
           return null;
         }
       );
@@ -848,7 +848,7 @@ public class TestTypeCasts : BHL_TestBase
   public class TestAsForChildClass : BHL_TestBase
   {
     string bhl = @"
-    class Bar 
+    class Bar
     {
       int bar
     }
@@ -858,25 +858,25 @@ public class TestTypeCasts : BHL_TestBase
       int foo
     }
 
-    func Bar make_bar() 
+    func Bar make_bar()
     {
       Foo f = {foo: 14, bar: 41}
-      return f; 
+      return f;
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14, bar: 41}
       return (f as Bar).bar
     }
 
-    func int test2() 
+    func int test2()
     {
       Bar b = make_bar()
       return (b as Foo).foo
     }
 
-    func int test3() 
+    func int test3()
     {
       Bar b = make_bar()
       return (b as Bar).bar
@@ -912,7 +912,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastToChildTypeAndCallMethod()
   {
     string bhl = @"
-    class Bar 
+    class Bar
     {
       int bar
     }
@@ -931,7 +931,7 @@ public class TestTypeCasts : BHL_TestBase
       return (Foo)bar;
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14, bar: 41}
       return cast(f).getFoo()
@@ -947,7 +947,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastAnyToChildTypeAndCallMethod()
   {
     string bhl = @"
-    class Bar 
+    class Bar
     {
       int bar
     }
@@ -966,7 +966,7 @@ public class TestTypeCasts : BHL_TestBase
       return (Foo)bar;
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14, bar: 41}
       return cast(f).getFoo()
@@ -984,7 +984,7 @@ public class TestTypeCasts : BHL_TestBase
     string bhl = @"
     class Foo { }
 
-    func bool test() 
+    func bool test()
     {
       any o = null
       Foo f = (Foo)o
@@ -1004,7 +1004,7 @@ public class TestTypeCasts : BHL_TestBase
     class Bar { }
     class Foo { }
 
-    func test() 
+    func test()
     {
       Bar b = {}
       any o = b
@@ -1023,7 +1023,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestBadCastInRuntimeForNativeClass()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       Foo foo = {}
       any o = foo
@@ -1050,7 +1050,7 @@ public class TestTypeCasts : BHL_TestBase
     string bhl = @"
     class Bar { }
 
-    func test() 
+    func test()
     {
       Bar b = {}
       any o = b
@@ -1073,7 +1073,7 @@ public class TestTypeCasts : BHL_TestBase
     string bhl = @"
     class Bar { }
 
-    func test() 
+    func test()
     {
       Color c = {}
       any o = c
@@ -1094,8 +1094,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestNativeChildClassImplicitBaseCast()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       Color c = new ColorAlpha
       c.r = k*1
@@ -1107,7 +1107,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -1116,8 +1116,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestNativeChildClassExplicitBaseCast()
   {
     string bhl = @"
-      
-    func float test(float k) 
+
+    func float test(float k)
     {
       Color c = (Color)new ColorAlpha
       c.r = k*1
@@ -1129,7 +1129,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -1138,8 +1138,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestBindChildClassExplicitDownCast()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       ColorAlpha orig = new ColorAlpha
       orig.a = 1000
@@ -1163,8 +1163,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestIncompatibleImplicitClassCast()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       Foo tmp = new Color
       return 1
@@ -1177,7 +1177,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
+          delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
@@ -1197,8 +1197,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestIncompatibleExplicitClassCast()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Foo tmp = (Foo)new Color
     }
@@ -1210,7 +1210,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
+          delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
@@ -1298,7 +1298,7 @@ public class TestTypeCasts : BHL_TestBase
       func int GetBar()
     }
 
-    class Bar : IBar 
+    class Bar : IBar
     {
       func int GetBar()
       {
@@ -1309,7 +1309,7 @@ public class TestTypeCasts : BHL_TestBase
     class Foo : Bar
     { }
 
-    func bool test() 
+    func bool test()
     {
       Foo f = {}
       return f is IBar
@@ -1330,7 +1330,7 @@ public class TestTypeCasts : BHL_TestBase
       func int GetBar()
     }
 
-    class Bar : IBar 
+    class Bar : IBar
     {
       int bar
 
@@ -1345,7 +1345,7 @@ public class TestTypeCasts : BHL_TestBase
       int foo
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14, bar: 41}
       return (f as IBar).GetBar()
@@ -1366,7 +1366,7 @@ public class TestTypeCasts : BHL_TestBase
       int foo
     }
 
-    func int test() 
+    func int test()
     {
       Foo f = {foo: 14}
       any any_f = f
@@ -1384,7 +1384,7 @@ public class TestTypeCasts : BHL_TestBase
   {
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         string s = ""hey""
         any foo = s
@@ -1399,7 +1399,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         int s = 42
         any foo = s
@@ -1414,7 +1414,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func float test() 
+      func float test()
       {
         float s = 42.1
         any foo = s
@@ -1429,7 +1429,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         bool s = true
         any foo = s
@@ -1451,7 +1451,7 @@ public class TestTypeCasts : BHL_TestBase
       func string hey() {
         return ""hey""
       }
-      func string test() 
+      func string test()
       {
         func string() s = hey
         any foo = s
@@ -1466,7 +1466,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         func(string) s = trace
         any foo = s
@@ -1491,7 +1491,7 @@ public class TestTypeCasts : BHL_TestBase
       func string hey() {
         return ""hey""
       }
-      func bool test() 
+      func bool test()
       {
         func string() s = hey
         any foo = s
@@ -1510,7 +1510,7 @@ public class TestTypeCasts : BHL_TestBase
   {
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         []string s = [""hey"", ""wow""]
         any foo = s
@@ -1525,7 +1525,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         []int s = [10, 20]
         any foo = s
@@ -1540,7 +1540,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         []int s = [10, 20]
         any foo = s
@@ -1559,7 +1559,7 @@ public class TestTypeCasts : BHL_TestBase
   {
     {
       string bhl = @"
-      func string test() 
+      func string test()
       {
         []func string() s = [func string() { return ""hey"" }, func string () { return ""wow"" } ]
         any foo = s
@@ -1574,7 +1574,7 @@ public class TestTypeCasts : BHL_TestBase
 
     {
       string bhl = @"
-      func bool test() 
+      func bool test()
       {
         []func() s = [func() { }]
         any foo = s
@@ -1592,7 +1592,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestInterfaceAs()
   {
     string bhl = @"
-    interface IBar 
+    interface IBar
     {
       func int bar()
     }
@@ -1618,7 +1618,7 @@ public class TestTypeCasts : BHL_TestBase
       }
     }
 
-    func int test() 
+    func int test()
     {
       Wow w = {}
       int summ
@@ -1739,7 +1739,7 @@ public class TestTypeCasts : BHL_TestBase
   public void TestPassTypeAsArg()
   {
     string bhl = @"
-    func string name(Type t) 
+    func string name(Type t)
     {
       return t.Name
     }
@@ -1803,7 +1803,7 @@ public class TestTypeCasts : BHL_TestBase
 
       func string test()
       {
-        func() a 
+        func() a
         Type t = std.GetType(a)
         return t.Name
       }
@@ -1927,8 +1927,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastEnumToInt()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       return (int)EnumState.SPAWNED2
     }
@@ -1946,8 +1946,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastEnumToFloat()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       return (float)EnumState.SPAWNED
     }
@@ -1965,8 +1965,8 @@ public class TestTypeCasts : BHL_TestBase
   public void TestCastEnumToStr()
   {
     string bhl = @"
-      
-    func string test() 
+
+    func string test()
     {
       return (string)EnumState.SPAWNED2
     }
@@ -1990,8 +1990,8 @@ public class TestTypeCasts : BHL_TestBase
       A = 1
       B = 2
     }
-      
-    func int test() 
+
+    func int test()
     {
       return (int)Foo.B + (int)Foo.A
     }
@@ -2013,8 +2013,8 @@ public class TestTypeCasts : BHL_TestBase
       A = 1
       B = 2
     }
-      
-    func int test() 
+
+    func int test()
     {
       Foo f = (Foo)2
       return (int)f
@@ -2077,7 +2077,7 @@ public class TestTypeCasts : BHL_TestBase
     func StateHandler GetShootArrowState() {
       return (new PlayerState_AbilityBase).Init()
     }
-      
+
     func bool test() {
       return ((PlayerState_AbilityBase)GetShootArrowState()) != null
     }

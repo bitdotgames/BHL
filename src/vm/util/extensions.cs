@@ -51,7 +51,7 @@ public static class Extensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static Val PopRelease(this ValStack stack)
+  public static ValOld PopRelease(this ValOldStack stack)
   {
     var val = stack.Pop();
     val.Release();
@@ -59,13 +59,13 @@ public static class Extensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static void PushRetain(this ValStack stack, Val val)
+  public static void PushRetain(this ValOldStack stack, ValOld val)
   {
     val.Retain();
     stack.Push(val);
   }
 
-  public static void Assign(this ValStack stack, VM vm, int idx, Val val)
+  public static void Assign(this ValOldStack stack, VM vm, int idx, ValOld val)
   {
     var curr = stack[idx];
     if(curr != null)
@@ -80,7 +80,7 @@ public static class Extensions
     }
     else
     {
-      curr = Val.New(vm);
+      curr = ValOld.New(vm);
       curr.ValueCopyFrom(val);
       curr._refc?.Retain();
       stack[idx] = curr;

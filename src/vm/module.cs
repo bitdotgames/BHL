@@ -57,7 +57,7 @@ public class Module : INamedResolver
   //used for assigning incremental module indexes to native funcs
   public FuncNativeModuleIndexer nfunc_index = new FuncNativeModuleIndexer();
 
-  public ValStack gvar_vals = new ValStack(MAX_GLOBALS);
+  public ValOldStack gvar_vals = new ValOldStack(MAX_GLOBALS);
 
   //if set this mark is the index starting from which
   //*imported* module variables are stored in gvars

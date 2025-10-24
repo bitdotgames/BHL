@@ -13,11 +13,11 @@ public class BHL_TestBase
   protected static void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
-      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
       {
         var b = (float)stack.PopRelease().num;
         var a = (float)stack.PopRelease().num;
-        stack.Push(Val.NewFlt(frm.vm, a > b ? b : a));
+        stack.Push(ValOld.NewFlt(frm.vm, a > b ? b : a));
         return null;
       },
       new FuncArgSymbol("a", ts.T("float")),
@@ -30,12 +30,12 @@ public class BHL_TestBase
   {
     public int n;
 
-    public static void Decode(Val v, ref IntStruct dst)
+    public static void Decode(ValOld v, ref IntStruct dst)
     {
       dst.n = (int)v._num;
     }
 
-    public static void Encode(Val v, IntStruct src, IType type)
+    public static void Encode(ValOld v, IntStruct src, IType type)
     {
       v.type = type;
       v._num = src.n;
@@ -46,7 +46,7 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
-        delegate(VM.Frame frm, ref Val v, IType type)
+        delegate(VM.FrameOld frm, ref ValOld v, IType type)
         {
           var s = new IntStruct();
           IntStruct.Encode(v, s, type);
@@ -56,13 +56,13 @@ public class BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "n", Types.Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
           v.num = s.n;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
@@ -83,18 +83,18 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "StringClass",
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new StringClass(), type); }
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new StringClass(), type); }
       );
 
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "str", ts.T("string"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
           v.str = c.str;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (StringClass)ctx.obj;
           c.str = v.str;
@@ -108,7 +108,7 @@ public class BHL_TestBase
   public void BindFail(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "fail", ts.T("void"),
-      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
       {
         status = BHS.FAILURE;
         return null;
@@ -146,18 +146,18 @@ public class BHL_TestBase
   public ClassSymbolNative BindColor(Types ts, bool call_setup = true)
   {
     var cl = new ClassSymbolNative(new Origin(), "Color", null,
-      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Color(), type); },
+      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new Color(), type); },
       typeof(Color)
     );
 
     ts.ns.Define(cl);
     cl.Define(new FieldSymbol(new Origin(), "r", ts.T("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         v.SetFlt(c.r);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.r = (float)v.num;
@@ -165,12 +165,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol(new Origin(), "g", ts.T("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         v.SetFlt(c.g);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
       {
         var c = (Color)ctx.obj;
         c.g = (float)v.num;
@@ -180,7 +180,7 @@ public class BHL_TestBase
 
     {
       var m = new FuncSymbolNative(new Origin(), "Add", ts.T("Color"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)stack.PopRelease().num;
           var c = (Color)stack.PopRelease().obj;
@@ -189,7 +189,7 @@ public class BHL_TestBase
           newc.r = c.r + k;
           newc.g = c.g + k;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
           stack.Push(v);
 
           return null;
@@ -202,11 +202,11 @@ public class BHL_TestBase
 
     {
       var m = new FuncSymbolNative(new Origin(), "mult_summ", ts.T("float"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = stack.PopRelease().num;
           var c = (Color)stack.PopRelease().obj;
-          stack.Push(Val.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
+          stack.Push(ValOld.NewFlt(frm.vm, (c.r * k) + (c.g * k)));
           return null;
         },
         new FuncArgSymbol("k", ts.T("float"))
@@ -217,12 +217,12 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor", ts.T("Color"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var r = stack.PopRelease().num;
           var c = new Color();
           c.r = (float)r;
-          var v = Val.NewObj(frm.vm, c, ts.T("Color").Get());
+          var v = ValOld.NewObj(frm.vm, c, ts.T("Color").Get());
           stack.Push(v);
           return null;
         },
@@ -234,7 +234,7 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_null", ts.T("Color"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           stack.Push(frm.vm.Null);
           return null;
@@ -248,7 +248,7 @@ public class BHL_TestBase
       new Origin(),
       "ArrayT_Color",
       (v) => (Color)v.obj,
-      (_vm, itype, n) => Val.NewObj(_vm, n, cl),
+      (_vm, itype, n) => ValOld.NewObj(_vm, n, cl),
       ts.T("Color")
     );
     ts.ns.Define(arrT_Color);
@@ -265,19 +265,19 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "ColorAlpha", ts.T("Color"),
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new ColorAlpha(), type); },
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new ColorAlpha(), type); },
         typeof(ColorAlpha)
       );
 
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "a", ts.T("float"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           v.num = c.a;
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
           c.a = (float)v.num;
@@ -287,11 +287,11 @@ public class BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "mult_summ_alpha", ts.T("float"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var c = (ColorAlpha)stack.PopRelease().obj;
 
-            stack.Push(Val.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
+            stack.Push(ValOld.NewFlt(frm.vm, (c.r * c.a) + (c.g * c.a)));
 
             return null;
           }
@@ -318,7 +318,7 @@ public class BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "MasterStruct",
-        delegate(VM.Frame frm, ref Val v, IType type)
+        delegate(VM.FrameOld frm, ref ValOld v, IType type)
         {
           var o = new MasterStruct();
           o.child = new StringClass();
@@ -330,12 +330,12 @@ public class BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           v.SetObj(c.child, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           c.child = (StringClass)v._obj;
@@ -344,12 +344,12 @@ public class BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           v.SetObj(c.child2, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           c.child2 = (StringClass)v.obj;
@@ -358,12 +358,12 @@ public class BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -374,12 +374,12 @@ public class BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct.Encode(v, c.child_struct2, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
           IntStruct s = new IntStruct();
@@ -410,17 +410,17 @@ public class BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Foo(), type); }
+        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new Foo(), type); }
       );
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "hey", Types.Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           v.SetNum(f.hey);
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.hey = (int)v.num;
@@ -428,24 +428,24 @@ public class BHL_TestBase
         }
       ));
       cl.Define(new FieldSymbol(new Origin(), "colors", ts.T("ArrayT_Color"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           v.SetObj(f.colors, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.colors = (List<Color>)v.obj;
         }
       ));
       cl.Define(new FieldSymbol(new Origin(), "sub_color", ts.T("Color"),
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           v.SetObj(f.sub_color, fld.type.Get());
         },
-        delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
         {
           var f = (Foo)ctx.obj;
           f.sub_color = (Color)v.obj;
@@ -457,7 +457,7 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "PassthruFoo", ts.T("Foo"),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           stack.Push(stack.Pop());
           return null;
@@ -479,17 +479,17 @@ public class BHL_TestBase
   public ClassSymbolNative BindBar(Types ts)
   {
     var cl = new ClassSymbolNative(new Origin(), "Bar", null,
-      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(new Bar(), type); }
+      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new Bar(), type); }
     );
 
     ts.ns.Define(cl);
     cl.Define(new FieldSymbol(new Origin(), "Int", Types.Int,
-      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetNum(c.Int);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Int = (int)v.num;
@@ -497,12 +497,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol(new Origin(), "Flt", ts.T("float"),
-      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetFlt(c.Flt);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Flt = (float)v.num;
@@ -510,12 +510,12 @@ public class BHL_TestBase
       }
     ));
     cl.Define(new FieldSymbol(new Origin(), "Str", ts.T("string"),
-      delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         v.SetStr(c.Str);
       },
-      delegate(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+      delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
       {
         var c = (Bar)ctx.obj;
         c.Str = (string)v.obj;
@@ -530,7 +530,7 @@ public class BHL_TestBase
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "trace", Types.Void,
-      delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+      delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
       {
         string str = stack.PopRelease().str;
         //for extra debug
@@ -549,7 +549,7 @@ public class BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "log", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           string str = stack.PopRelease().str;
           Console.WriteLine(str);
@@ -639,14 +639,14 @@ public class BHL_TestBase
     return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
   }
 
-  public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
+  public VM.Fiber Execute(VM vm, string fn_name, params ValOld[] args)
   {
     return Execute(vm, fn_name, args?.Length ?? 0, args);
   }
 
-  public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params Val[] args)
+  public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params ValOld[] args)
   {
-    var fb = vm.Start(fn_name, args_info, new StackList<Val>(args));
+    var fb = vm.StartOld(fn_name, args_info, new StackList<ValOld>(args));
     const int LIMIT = 20;
     int c = 0;
     for(; c < LIMIT; ++c)
@@ -761,6 +761,9 @@ public class BHL_TestBase
     if(vm.vals_pool.BusyCount != 0)
       Console.WriteLine(vm.vals_pool.Dump());
 
+    if(vm.last_fiber != null)
+      CommonChecks(vm.last_fiber);
+
     Assert.Equal(0, vm.vals_pool.BusyCount);
     Assert.Equal(0, vm.vlsts_pool.BusyCount);
     Assert.Equal(0, vm.fptrs_pool.BusyCount);
@@ -768,6 +771,12 @@ public class BHL_TestBase
       Assert.Equal(0, vm.fibers_pool.BusyCount);
     if(check_coros)
       Assert.Equal(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
+  }
+
+  public static void CommonChecks(VM.Fiber fb)
+  {
+    Assert.Equal(0, fb.exec.frames_count);
+    Assert.Equal(0, fb.exec.stack.sp);
   }
 
   public static string TestDirPath()

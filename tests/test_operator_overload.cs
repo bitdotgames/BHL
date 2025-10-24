@@ -27,7 +27,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var ov = stack.PopRelease().obj;
           var cv = stack.PopRelease().obj;
@@ -35,14 +35,14 @@ public class TestOperatorOverload : BHL_TestBase
           //null comparison guard
           if(cv == null || ov == null)
           {
-            stack.Push(Val.NewBool(frm.vm, cv == ov));
+            stack.Push(ValOld.NewBool(frm.vm, cv == ov));
             return null;
           }
 
           var o = (Color)ov;
           var c = (Color)cv;
 
-          var v = Val.NewBool(frm.vm, c.r == o.r && c.g == o.g);
+          var v = ValOld.NewBool(frm.vm, c.r == o.r && c.g == o.g);
           stack.Push(v);
 
           return null;
@@ -502,7 +502,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = (Color)stack.PopRelease().obj;
           var c = (Color)stack.PopRelease().obj;
@@ -511,7 +511,7 @@ public class TestOperatorOverload : BHL_TestBase
           newc.r = c.r + o.r;
           newc.g = c.g + o.g;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
           stack.Push(v);
 
           return null;
@@ -547,7 +547,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var k = (float)stack.PopRelease().num;
           var c = (Color)stack.PopRelease().obj;
@@ -556,7 +556,7 @@ public class TestOperatorOverload : BHL_TestBase
           newc.r = c.r * k;
           newc.g = c.g * k;
 
-          var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
           stack.Push(v);
 
           return null;
@@ -594,7 +594,7 @@ public class TestOperatorOverload : BHL_TestBase
       var cl = BindColor(ts, call_setup: false);
       {
         var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var k = (float)stack.PopRelease().num;
             var c = (Color)stack.PopRelease().obj;
@@ -603,7 +603,7 @@ public class TestOperatorOverload : BHL_TestBase
             newc.r = c.r * k;
             newc.g = c.g * k;
 
-            var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+            var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
             stack.Push(v);
 
             return null;
@@ -616,7 +616,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       {
         var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var o = (Color)stack.PopRelease().obj;
             var c = (Color)stack.PopRelease().obj;
@@ -625,7 +625,7 @@ public class TestOperatorOverload : BHL_TestBase
             newc.r = c.r + o.r;
             newc.g = c.g + o.g;
 
-            var v = Val.NewObj(frm.vm, newc, ts.T("Color").Get());
+            var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
             stack.Push(v);
 
             return null;
@@ -671,12 +671,12 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = (Color)stack.PopRelease().obj;
           var c = (Color)stack.PopRelease().obj;
 
-          var v = Val.NewBool(frm.vm, c.r == o.r && c.g == o.g);
+          var v = ValOld.NewBool(frm.vm, c.r == o.r && c.g == o.g);
           stack.Push(v);
 
           return null;

@@ -458,7 +458,7 @@ public class TestYield : BHL_TestBase
       class Foo {
         func Bar bar() {
           var b = new Bar
-          b.ptr = coro func Hey() { 
+          b.ptr = coro func Hey() {
             yield()
             return new Hey
           }
@@ -510,7 +510,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int i = 0
       paral {
@@ -559,7 +559,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int i = 0
       paral {
@@ -592,7 +592,7 @@ public class TestYield : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int i = 0
       paral {
@@ -811,7 +811,7 @@ public class TestYield : BHL_TestBase
   public void TestCallNonExistingFunc()
   {
     string bhl = @"
-    coro func test() 
+    coro func test()
     {
       yield FOO()
     }
@@ -831,7 +831,7 @@ public class TestYield : BHL_TestBase
   public void TestCallNonExistingFuncInParal()
   {
     string bhl = @"
-    coro func test() 
+    coro func test()
     {
       paral {
         yield FOO()
@@ -880,9 +880,9 @@ public class TestYield : BHL_TestBase
     string bhl = @"
     import ""std""
 
-    coro func test() 
+    coro func test()
     {
-      while(yield std.NextTrue()) 
+      while(yield std.NextTrue())
       {
         trace(""."")
       }
@@ -908,12 +908,12 @@ public class TestYield : BHL_TestBase
     string bhl = @"
     import ""std""
 
-    coro func test() 
+    coro func test()
     {
       do
       {
         trace(""."")
-      }while(yield std.NextTrue()) 
+      }while(yield std.NextTrue())
     }
     ";
 

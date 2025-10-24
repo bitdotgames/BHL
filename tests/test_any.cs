@@ -96,7 +96,7 @@ public class TestAny : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -139,9 +139,9 @@ public class TestAny : BHL_TestBase
       BindColor(ts);
 
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_any", Types.Any,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
-          var v = Val.NewObj(frm.vm, new Color(), Types.Any);
+          var v = ValOld.NewObj(frm.vm, new Color(), Types.Any);
           stack.Push(v);
           return null;
         }

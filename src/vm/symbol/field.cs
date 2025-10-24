@@ -12,11 +12,11 @@ public enum FieldAttrib : byte
 
 public class FieldSymbol : VariableSymbol
 {
-  public delegate void FieldGetter(VM.Frame frm, Val v, ref Val res, FieldSymbol fld);
+  public delegate void FieldGetter(VM.FrameOld frm, ValOld v, ref ValOld res, FieldSymbol fld);
 
-  public delegate void FieldSetter(VM.Frame frm, ref Val v, Val nv, FieldSymbol fld);
+  public delegate void FieldSetter(VM.FrameOld frm, ref ValOld v, ValOld nv, FieldSymbol fld);
 
-  public delegate void FieldRef(VM.Frame frm, Val v, out Val res, FieldSymbol fld);
+  public delegate void FieldRef(VM.FrameOld frm, ValOld v, out ValOld res, FieldSymbol fld);
 
   public FieldGetter getter;
   public FieldSetter setter;
@@ -73,15 +73,15 @@ public class FieldSymbolScript : FieldSymbol
   {
   }
 
-  void Getter(VM.Frame frm, Val ctx, ref Val v, FieldSymbol fld)
+  void Getter(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx._obj;
+    var m = (IList<ValOld>)ctx._obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(VM.Frame frm, ref Val ctx, Val v, FieldSymbol fld)
+  void Setter(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx._obj;
+    var m = (IList<ValOld>)ctx._obj;
     var curr = m[scope_idx];
     for(int i = 0; i < curr._refs; ++i)
     {
@@ -92,9 +92,9 @@ public class FieldSymbolScript : FieldSymbol
     curr.ValueCopyFrom(v);
   }
 
-  void Getref(VM.Frame frm, Val ctx, out Val v, FieldSymbol fld)
+  void Getref(VM.FrameOld frm, ValOld ctx, out ValOld v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx._obj;
+    var m = (IList<ValOld>)ctx._obj;
     v = m[scope_idx];
   }
 

@@ -16,12 +16,12 @@ public class Types : INamedResolver
 
   static public ClassSymbolNative Type =
     new ClassSymbolNative(new Origin(), "Type",
-      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
+      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
     );
 
   static public ClassSymbolNative FiberRef =
     new ClassSymbolNative(new Origin(), "FiberRef",
-      delegate(VM.Frame frm, ref Val v, IType type) { v.SetObj(null, type); }
+      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
     );
 
   //NOTE: These are types which are parametrized with Any types. They are mostly used when
@@ -141,7 +141,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Count", Int,
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
         null
       );
       String.Define(fld);
@@ -149,11 +149,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "At", String,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           int idx = (int)stack.PopRelease().num;
           string self = stack.PopRelease().str;
-          stack.Push(Val.NewStr(frm.vm, self[idx].ToString()));
+          stack.Push(ValOld.NewStr(frm.vm, self[idx].ToString()));
           return null;
         },
         new FuncArgSymbol("i", Int)
@@ -163,11 +163,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           string s = stack.PopRelease().str;
           string self = stack.PopRelease().str;
-          stack.Push(Val.NewInt(frm.vm, self.IndexOf(s)));
+          stack.Push(ValOld.NewInt(frm.vm, self.IndexOf(s)));
           return null;
         },
         new FuncArgSymbol("s", String)
@@ -184,7 +184,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Name", String,
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _)
         {
           var t = (IType)ctx._obj;
           v.SetStr(t.GetName());
@@ -202,7 +202,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "IsRunning", Bool,
-        delegate(VM.Frame frm, Val ctx, ref Val v, FieldSymbol _)
+        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _)
         {
           var fb_ref = new VM.FiberRef(ctx);
           v.SetBool(fb_ref.IsRunning);
@@ -318,7 +318,7 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool Is(Val val, IType dest_type)
+  static public bool Is(ValOld val, IType dest_type)
   {
     //NOTE: special handling of native types - we need to go through C# type system.
     //      Make sense only if there's C# object is present - this way we can use C# reflection

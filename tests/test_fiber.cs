@@ -56,11 +56,11 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
     int a = 1, b = 2, c = 3;
-    var args = new Val[3];
-    args[0] = Val.NewNum(vm, a);
-    args[1] = Val.NewNum(vm, b);
-    args[2] = Val.NewNum(vm, c);
-    var fb = vm.Start("test", new StackList<Val>(args));
+    var args = new ValOld[3];
+    args[0] = ValOld.NewNum(vm, a);
+    args[1] = ValOld.NewNum(vm, b);
+    args[2] = ValOld.NewNum(vm, c);
+    var fb = vm.StartOld("test", new StackList<ValOld>(args));
     Assert.False(vm.Tick());
     Assert.Equal(6, fb.result.PopRelease().num);
     CommonChecks(vm);
@@ -148,10 +148,10 @@ public class TestFiber : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = stack.PopRelease().num;
-          stack.Push(Val.NewInt(frm.vm, n * 2));
+          stack.Push(ValOld.NewInt(frm.vm, n * 2));
           return null;
         },
         new FuncArgSymbol("n", Types.Int)
@@ -160,7 +160,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
+    var num = Execute(vm, "mult2", ValOld.NewInt(vm, 10)).result.PopRelease().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -177,10 +177,10 @@ public class TestFiber : BHL_TestBase
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
         def_args_num: 1,
-        cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        cb: delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-          stack.Push(Val.NewInt(frm.vm, n * 2));
+          stack.Push(ValOld.NewInt(frm.vm, n * 2));
           return null;
         },
         args: new FuncArgSymbol("n", Types.Int)
@@ -189,7 +189,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2", Val.NewInt(vm, 10)).result.PopRelease().num;
+    var num = Execute(vm, "mult2", ValOld.NewInt(vm, 10)).result.PopRelease().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -206,10 +206,10 @@ public class TestFiber : BHL_TestBase
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
         def_args_num: 1,
-        cb: delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        cb: delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-          stack.Push(Val.NewInt(frm.vm, n * 2));
+          stack.Push(ValOld.NewInt(frm.vm, n * 2));
           return null;
         },
         args: new FuncArgSymbol("n", Types.Int)
@@ -232,7 +232,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Execute(vm, "wait", Val.NewInt(vm, 0));
+    Execute(vm, "wait", ValOld.NewInt(vm, 0));
     CommonChecks(vm);
   }
 
@@ -250,7 +250,7 @@ public class TestFiber : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "native", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           log.Append("HERE");
           return null;
@@ -270,7 +270,7 @@ public class TestFiber : BHL_TestBase
     bool first_time = true;
     public StringBuilder log;
 
-    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
     {
       if(first_time)
       {
@@ -281,7 +281,7 @@ public class TestFiber : BHL_TestBase
         log.Append("HERE");
     }
 
-    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
     {
       first_time = true;
     }
@@ -302,7 +302,7 @@ public class TestFiber : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "yield_and_trace", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
             inst.log = log;
@@ -648,7 +648,7 @@ public class TestFiber : BHL_TestBase
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "STOP", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var val = stack.Pop();
           var fb_ref = new VM.FiberRef(val);
@@ -675,12 +675,12 @@ public class TestFiber : BHL_TestBase
     bool done;
     VM.FiberRef fb;
 
-    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
     {
       //first time
       if(!done)
       {
-        var val = exec.stack.Pop();
+        var val = exec.stack_old.Pop();
         fb = new VM.FiberRef(val);
         val.Release();
         status = BHS.RUNNING;
@@ -690,7 +690,7 @@ public class TestFiber : BHL_TestBase
         frm.vm.Stop(fb.Get());
     }
 
-    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
     {
       done = false;
     }
@@ -733,7 +733,7 @@ public class TestFiber : BHL_TestBase
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return CoroutinePool.New<YIELD_STOP>(frm.vm);
         },
@@ -1028,7 +1028,7 @@ public class TestFiber : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "say_here", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             log.Append("HERE;");
             return null;
@@ -1301,7 +1301,7 @@ public class TestFiber : BHL_TestBase
 
     //NOTE: in case of bug the defer block is going to use a stale Frame
     //      and it will lead to origin stack pointing to the new Frame's stack!
-    var frm = VM.Frame.New(vm);
+    var frm = VM.FrameOld.New(vm);
 
     ScriptMgr.instance.Tick();
 
@@ -1358,13 +1358,13 @@ public class TestFiber : BHL_TestBase
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
-      var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 10), Val.NewInt(vm, 20)));
+      var result = vm.Execute(fs, new StackList<ValOld>(ValOld.NewInt(vm, 10), ValOld.NewInt(vm, 20)));
       Assert.Equal(10, result.PopRelease().num);
       CommonChecks(vm);
     }
 
     {
-      var result = vm.Execute(fs, new StackList<Val>(Val.NewInt(vm, 2), Val.NewInt(vm, 1)));
+      var result = vm.Execute(fs, new StackList<ValOld>(ValOld.NewInt(vm, 2), ValOld.NewInt(vm, 1)));
       Assert.Equal(-1, result.PopRelease().num);
       CommonChecks(vm);
     }
@@ -1474,7 +1474,7 @@ public class TestFiber : BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "StartScriptInMgr", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           int spawns = (int)stack.PopRelease().num;
           var ptr = stack.Pop();
@@ -1504,7 +1504,7 @@ public class TestFiber : BHL_TestBase
       get { return active.Count > 0; }
     }
 
-    public void Start(VM.Frame origin, VM.FuncPtr ptr, ValStack stack)
+    public void Start(VM.FrameOld origin, VM.FuncPtr ptr, ValOldStack stack)
     {
       var fb = origin.vm.Start(ptr, origin);
       origin.vm.Detach(fb);

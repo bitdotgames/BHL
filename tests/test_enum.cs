@@ -79,7 +79,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }
@@ -98,7 +98,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 20)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }
@@ -121,7 +121,7 @@ public class TestEnum : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var res = Execute(vm, "test").result.Pop();
-    var lst = res.obj as IList<Val>;
+    var lst = res.obj as IList<ValOld>;
     Assert.Equal(2, lst.Count);
     Assert.Equal(20, lst[0].num);
     Assert.Equal(10, lst[1].num);
@@ -146,10 +146,10 @@ public class TestEnum : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var n = stack.PopRelease().num;
-            stack.Push(Val.NewBool(frm.vm, n == 20));
+            stack.Push(ValOld.NewBool(frm.vm, n == 20));
             return null;
           },
           new FuncArgSymbol("state", ts.T("EnumState"))

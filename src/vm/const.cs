@@ -55,16 +55,16 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public Val ToVal(VM vm)
+  public ValOld ToVal(VM vm)
   {
     if(type == ConstType.INT)
-      return Val.NewInt(vm, num);
+      return ValOld.NewInt(vm, num);
     else if(type == ConstType.FLT)
-      return Val.NewFlt(vm, num);
+      return ValOld.NewFlt(vm, num);
     else if(type == ConstType.BOOL)
-      return Val.NewBool(vm, num == 1);
+      return ValOld.NewBool(vm, num == 1);
     else if(type == ConstType.STR)
-      return Val.NewStr(vm, str);
+      return ValOld.NewStr(vm, str);
     else if(type == ConstType.NIL)
       return vm.Null;
     else

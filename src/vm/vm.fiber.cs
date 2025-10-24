@@ -20,15 +20,15 @@ public partial class VM : INamedResolver
       this.fiber = fiber;
     }
 
-    public FiberRef(Val val)
+    public FiberRef(ValOld val)
     {
       this.id = (int)val._num;
       this.fiber = (VM.Fiber)val._obj;
     }
 
-    public static Val Encode(VM vm, VM.Fiber fb)
+    public static ValOld Encode(VM vm, VM.Fiber fb)
     {
-      var val = Val.NewObj(vm, fb, Types.FiberRef);
+      var val = ValOld.NewObj(vm, fb, Types.FiberRef);
       //let's encode FiberRef into Val
       val._num = fb.id;
       return val;
@@ -62,12 +62,12 @@ public partial class VM : INamedResolver
       this.fb = fb;
     }
 
-    public Val Pop()
+    public ValOld Pop()
     {
       return fb.result.Pop();
     }
 
-    public Val PopRelease()
+    public ValOld PopRelease()
     {
       return fb.result.PopRelease();
     }
@@ -98,7 +98,7 @@ public partial class VM : INamedResolver
 
     public ExecState exec = new ExecState();
 
-    public ValStack result = new ValStack(Frame.MAX_STACK);
+    public ValOldStack result = new ValOldStack(FrameOld.MAX_STACK);
 
     //TODO: get rid of this one?
     public BHS status;
@@ -152,20 +152,20 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
-    internal void Attach(Frame frm)
+    internal void Attach(FrameOld frm)
     {
       frm.fb = this;
       exec.ip = frm.start_ip;
-      exec.frames.Push(frm);
+      exec.frames_old.Push(frm);
       exec.regions.Push(new Region(frm, frm.defers));
-      exec.stack = frm.stack;
+      exec.stack_old = frm.stack;
     }
 
-    internal void Attach2(ref Frame2 frame2, int frame_idx2)
+    internal void Attach2(ref Frame frame, int frame_idx2)
     {
       //do we need this?
       //frame2.fb = this;
-      exec.ip = frame2.start_ip;
+      exec.ip = frame.start_ip;
       //already pushed
       //exec.frames.Push(frm);
       var region = new Region(null, null)
@@ -179,28 +179,28 @@ public partial class VM : INamedResolver
 
     internal void ExitScopes()
     {
-      if(exec.frames.Count > 0)
+      if(exec.frames_old.Count > 0)
       {
         if(exec.coroutine != null)
         {
-          CoroutinePool.Del(exec.frames.Peek(), exec, exec.coroutine);
+          CoroutinePool.Del(exec.frames_old.Peek(), exec, exec.coroutine);
           exec.coroutine = null;
         }
 
-        for(int i = exec.frames.Count; i-- > 0;)
+        for(int i = exec.frames_old.Count; i-- > 0;)
         {
-          var frm = exec.frames[i];
+          var frm = exec.frames_old[i];
           frm.ExitScope(null, exec);
         }
 
         //NOTE: we need to release frames only after we actually exited their scopes
-        for(int i = exec.frames.Count; i-- > 0;)
+        for(int i = exec.frames_old.Count; i-- > 0;)
         {
-          var frm = exec.frames[i];
+          var frm = exec.frames_old[i];
           frm.Release();
         }
 
-        exec.frames.Clear();
+        exec.frames_old.Clear();
       }
 
       exec.regions.Clear();
@@ -242,15 +242,15 @@ public partial class VM : INamedResolver
       return stop_guard || exec.ip >= STOP_IP;
     }
 
-    static void GetCalls(VM.ExecState exec, List<VM.Frame> calls)
+    static void GetCalls(VM.ExecState exec, List<VM.FrameOld> calls)
     {
-      for(int i = 0; i < exec.frames.Count; ++i)
-        calls.Add(exec.frames[i]);
+      for(int i = 0; i < exec.frames_old.Count; ++i)
+        calls.Add(exec.frames_old[i]);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      var calls = new List<VM.Frame>();
+      var calls = new List<VM.FrameOld>();
       int coroutine_ip = -1;
       GetCalls(exec, calls);
       TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
@@ -305,7 +305,7 @@ public partial class VM : INamedResolver
       return Error.ToString(trace, format);
     }
 
-    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
+    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.FrameOld> calls)
     {
       if(i is SeqBlock si)
       {
@@ -374,10 +374,10 @@ public partial class VM : INamedResolver
 
   public Fiber Start(FuncAddr addr)
   {
-    return Start(addr, new StackList<Val>());
+    return Start(addr, new StackList<ValOld>());
   }
 
-  public Fiber Start(FuncAddr addr, StackList<Val> args)
+  public Fiber Start(FuncAddr addr, StackList<ValOld> args)
   {
     return Start(addr, args.Count, args);
   }
@@ -385,13 +385,13 @@ public partial class VM : INamedResolver
   //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
   //       1) args put into stack
   //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg
-  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
+  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<ValOld> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
     Register(fb, null, opts);
 
-    var frame = Frame.New(this);
+    var frame = FrameOld.New(this);
 
     //checking native call
     if(addr.fsn != null)
@@ -404,7 +404,7 @@ public partial class VM : INamedResolver
     {
       frame.Init(fb, fb.result, addr.module, addr.ip);
 
-      PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, frame, ValOld.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -412,7 +412,7 @@ public partial class VM : INamedResolver
     return fb;
   }
 
-  public Fiber Start2(FuncAddr addr, FuncArgsInfo args_info, StackList<Val2> args, FiberOptions opts = 0)
+  public Fiber Start2(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
@@ -420,7 +420,7 @@ public partial class VM : INamedResolver
 
     //var frame = Frame.New(this);
     ref var frame2 = ref fb.exec.PushFrame2();
-    int frame2_idx = fb.exec.frames2_count - 1;
+    int frame2_idx = fb.exec.frames_count - 1;
 
     //checking native call
     if(addr.fsn != null)
@@ -433,7 +433,7 @@ public partial class VM : INamedResolver
     {
       frame2.Init(/*fb, fb.result, */addr.module, addr.ip);
 
-      PassArgsAndAttach2(fb, ref frame2, frame2_idx, Val2.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach2(fb, ref frame2, frame2_idx, Val.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -442,17 +442,17 @@ public partial class VM : INamedResolver
   }
 
   [Obsolete("Use Start(FuncAddr, FuncArgsInfo args_info, StackList<Val> args) instead.")]
-  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params Val[] args)
+  public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params ValOld[] args)
   {
-    return Start(addr, cargs_bits, new StackList<Val>(args));
+    return Start(addr, cargs_bits, new StackList<ValOld>(args));
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, FiberOptions opts = 0)
+  public Fiber Start(FuncPtr ptr, FrameOld curr_frame, FiberOptions opts = 0)
   {
-    return Start(ptr, curr_frame, new StackList<Val>(), opts);
+    return Start(ptr, curr_frame, new StackList<ValOld>(), opts);
   }
 
-  public Fiber Start(FuncPtr ptr, Frame curr_frame, StackList<Val> args, FiberOptions opts = 0)
+  public Fiber Start(FuncPtr ptr, FrameOld curr_frame, StackList<ValOld> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = ptr.func_addr;
@@ -465,7 +465,7 @@ public partial class VM : INamedResolver
     if(ptr.native != null)
       PassArgsAndAttach(ptr.native, fb, frame, fb.result, args_info, args);
     else
-      PassArgsAndAttach(fb, frame, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, frame, ValOld.NewInt(this, args_info.bits), args);
 
     return fb;
   }
@@ -473,10 +473,10 @@ public partial class VM : INamedResolver
   static void PassArgsAndAttach(
     FuncSymbolNative fsn,
     Fiber fb,
-    Frame frame,
-    ValStack curr_stack,
+    FrameOld frame,
+    ValOldStack curr_stack,
     FuncArgsInfo args_info,
-    StackList <Val> args
+    StackList <ValOld> args
   )
   {
     for(int i = args.Count; i-- > 0;)
@@ -487,7 +487,7 @@ public partial class VM : INamedResolver
 
     fb.Attach(frame);
     //overriding exec.stack with passed curr_stack
-    fb.exec.stack = curr_stack;
+    fb.exec.stack_old = curr_stack;
 
     //passing args info as argument
     fb.exec.coroutine = fsn.cb(frame, curr_stack, args_info, ref fb.status);
@@ -500,9 +500,9 @@ public partial class VM : INamedResolver
 
   static void PassArgsAndAttach(
     Fiber fb,
-    Frame frame,
-    Val args_info,
-    StackList <Val> args
+    FrameOld frame,
+    ValOld args_info,
+    StackList <ValOld> args
   )
   {
     for(int i = args.Count; i-- > 0;)
@@ -519,26 +519,26 @@ public partial class VM : INamedResolver
 
   static void PassArgsAndAttach2(
     Fiber fb,
-    ref Frame2 frame2,
+    ref Frame frame,
     int frame_idx2,
-    Val2 args_info,
-    StackList <Val2> args
+    Val args_info,
+    StackList <Val> args
   )
   {
-    var stack = fb.exec.stack2;
+    var stack = fb.exec.stack;
     for(int i = args.Count; i-- > 0;)
     {
-      ref Val2 v = ref stack.Push();
+      ref Val v = ref stack.Push();
       v = args[i];
     }
 
     {
       //passing args info as a stack variable
-      ref Val2 v = ref stack.Push();
+      ref Val v = ref stack.Push();
       v = args_info;
     }
 
-    fb.Attach2(ref frame2, frame_idx2);
+    fb.Attach2(ref frame, frame_idx2);
   }
 
   public void Detach(Fiber fb)
@@ -621,9 +621,9 @@ public partial class VM : INamedResolver
 
     //NOTE: we manually create and own these
     VM.Fiber fb;
-    VM.Frame frm;
+    VM.FrameOld frm;
 
-    Val args_info_val;
+    ValOld args_info_val;
 
     public ScriptExecutor(VM vm)
     {
@@ -635,17 +635,17 @@ public partial class VM : INamedResolver
       fb.Retain();
 
       //NOTE: manually creating Frame
-      frm = new VM.Frame(vm);
+      frm = new VM.FrameOld(vm);
       //just for consistency with refcounting
       frm.Retain();
 
-      args_info_val = new Val(vm);
+      args_info_val = new ValOld(vm);
       args_info_val.num = 0;
       //let's own it forever
       args_info_val.Retain();
     }
 
-    public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
+    public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
     {
       var addr = new FuncAddr(fs);
 
@@ -685,16 +685,16 @@ public partial class VM : INamedResolver
       return new FiberResult(fb);
     }
 
-    public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
+    public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
       var addr = new FuncAddr(fs);
 
       fb.func_addr = addr;
       fb.stop_guard = false;
       //let's clean the stack from previous non popped results
-      while(fb.exec.stack2.sp > 0)
+      while(fb.exec.stack.sp > 0)
       {
-        ref var val = ref fb.exec.stack2.Pop();
+        ref var val = ref fb.exec.stack.Pop();
         val.Release();
       }
 
@@ -706,21 +706,21 @@ public partial class VM : INamedResolver
       ref var frame2 = ref fb.exec.PushFrame2();
       frame2.Init(addr.module, addr.ip);
 
-      var stack = fb.exec.stack2;
+      var stack = fb.exec.stack;
       for(int i = args.Count; i-- > 0;)
       {
-        ref Val2 v = ref stack.Push();
+        ref Val v = ref stack.Push();
         v = args[i];
       }
 
       {
         //passing args info as stack variable
-        ref Val2 v = ref stack.Push();
+        ref Val v = ref stack.Push();
         v._num = args_info.bits;
       }
 
       //fb.Attach(frm);
-      fb.Attach2(ref frame2, fb.exec.frames2_count - 1);
+      fb.Attach2(ref frame2, fb.exec.frames_count - 1);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");
@@ -737,22 +737,22 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult Execute(FuncSymbolScript fs)
   {
-    return Execute(fs, 0u, new StackList<Val>());
+    return Execute(fs, 0u, new StackList<ValOld>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult Execute2(FuncSymbolScript fs)
   {
-    return Execute2(fs, 0u, new StackList<Val2>());
+    return Execute2(fs, 0u, new StackList<Val>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult Execute(FuncSymbolScript fs, StackList<Val> args)
+  public FiberResult Execute(FuncSymbolScript fs, StackList<ValOld> args)
   {
     return Execute(fs, args.Count, args);
   }
 
-  public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
+  public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
   {
     ScriptExecutor executor;
     if(script_executors.Count == 0)
@@ -764,7 +764,7 @@ public partial class VM : INamedResolver
     return res;
   }
 
-  public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
+  public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
   {
     ScriptExecutor executor;
     if(script_executors.Count == 0)

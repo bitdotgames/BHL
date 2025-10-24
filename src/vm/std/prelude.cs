@@ -15,7 +15,7 @@ public static class Prelude
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return CoroutinePool.New<CoroutineYield>(frm.vm);
         }
@@ -26,7 +26,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           //TODO: use static instance for this case?
           return CoroutinePool.New<CoroutineSuspend>(frm.vm);
@@ -37,7 +37,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "wait", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return CoroutinePool.New<CoroutineWait>(frm.vm);
         },
@@ -48,7 +48,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var val_ptr = stack.Pop();
           var fb = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm);
@@ -63,7 +63,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var val = stack.Pop();
           var fb_ref = new VM.FiberRef(val);
@@ -79,7 +79,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           System.Diagnostics.Debugger.Break();
           return null;
@@ -90,7 +90,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return null;
         }
@@ -101,7 +101,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return null;
         }
@@ -114,7 +114,7 @@ public static class Prelude
 
 class CoroutineSuspend : Coroutine
 {
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
   {
     status = BHS.RUNNING;
   }
@@ -124,7 +124,7 @@ class CoroutineYield : Coroutine
 {
   bool first_time = true;
 
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
   {
     if(first_time)
     {
@@ -133,7 +133,7 @@ class CoroutineYield : Coroutine
     }
   }
 
-  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
   {
     first_time = true;
   }
@@ -143,11 +143,11 @@ class CoroutineWait : Coroutine
 {
   int end_stamp = -1;
 
-  public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
   {
     if(end_stamp == -1)
     {
-      int ms = (int)exec.stack.PopRelease()._num;
+      int ms = (int)exec.stack_old.PopRelease()._num;
       end_stamp = System.Environment.TickCount + ms;
     }
 
@@ -155,7 +155,7 @@ class CoroutineWait : Coroutine
       status = BHS.RUNNING;
   }
 
-  public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
   {
     end_stamp = -1;
   }

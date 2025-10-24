@@ -19,7 +19,7 @@ public partial class VM : INamedResolver
     public Module module;
     public int func_ip;
     public FuncSymbolNative native;
-    public ValStack upvals = new ValStack(Frame.MAX_LOCALS);
+    public ValOldStack upvals = new ValOldStack(FrameOld.MAX_LOCALS);
 
     public FuncAddr func_addr
     {
@@ -66,7 +66,7 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
-    public void Init(Frame origin, int func_ip)
+    public void Init(FrameOld origin, int func_ip)
     {
       this.module = origin.module;
       this.func_ip = func_ip;
@@ -131,9 +131,9 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
-    public Frame MakeFrame(VM vm, Fiber fb, ValStack return_stack)
+    public FrameOld MakeFrame(VM vm, Fiber fb, ValOldStack return_stack)
     {
-      var frm = Frame.New(vm);
+      var frm = FrameOld.New(vm);
 
       if(native != null)
       {

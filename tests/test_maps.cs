@@ -856,13 +856,13 @@ public class TestMaps : BHL_TestBase
 
     var map = ValMap.New(vm);
 
-    var k1 = Val.NewStr(vm, "1");
-    var k2 = Val.NewStr(vm, "2");
+    var k1 = ValOld.NewStr(vm, "1");
+    var k2 = ValOld.NewStr(vm, "2");
 
-    var v1 = Val.NewInt(vm, 10);
+    var v1 = ValOld.NewInt(vm, 10);
     map[k1] = v1;
 
-    var v2 = Val.NewInt(vm, 1);
+    var v2 = ValOld.NewInt(vm, 1);
     map[k2] = v2;
 
     Assert.Equal(2, map.Count);

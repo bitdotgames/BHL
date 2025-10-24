@@ -7,7 +7,7 @@ namespace bhl
 
 public partial class VM : INamedResolver
 {
-  public class Frame
+  public class FrameOld
   {
     public const int MAX_LOCALS = 64;
     public const int MAX_STACK = 32;
@@ -23,21 +23,21 @@ public partial class VM : INamedResolver
     public byte[] bytecode;
     public Const[] constants;
     public IType[] type_refs;
-    public ValStack locals = new ValStack(MAX_LOCALS);
-    public ValStack stack = new ValStack(MAX_STACK);
+    public ValOldStack locals = new ValOldStack(MAX_LOCALS);
+    public ValOldStack stack = new ValOldStack(MAX_STACK);
     public int start_ip;
     public int return_ip;
-    public ValStack return_stack;
+    public ValOldStack return_stack;
     public List<DeferBlock> defers = new List<DeferBlock>(2);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static public Frame New(VM vm)
+    static public FrameOld New(VM vm)
     {
-      Frame frm;
+      FrameOld frm;
       if(vm.frames_pool.stack.Count == 0)
       {
         ++vm.frames_pool.miss;
-        frm = new Frame(vm);
+        frm = new FrameOld(vm);
       }
       else
       {
@@ -54,7 +54,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static void Del(Frame frm)
+    static void Del(FrameOld frm)
     {
       if(frm.refs != 0)
         throw new Exception("Freeing invalid object, refs " + frm.refs);
@@ -67,13 +67,13 @@ public partial class VM : INamedResolver
     }
 
     //NOTE: use New() instead
-    internal Frame(VM vm)
+    internal FrameOld(VM vm)
     {
       this.vm = vm;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(Frame origin, ValStack return_stack, int start_ip)
+    public void Init(FrameOld origin, ValOldStack return_stack, int start_ip)
     {
       Init(
         origin.fb,
@@ -87,7 +87,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(Fiber fb, ValStack return_stack, Module module, int start_ip)
+    public void Init(Fiber fb, ValOldStack return_stack, Module module, int start_ip)
     {
       Init(
         fb,
@@ -103,7 +103,7 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Init(
       Fiber fb,
-      ValStack return_stack,
+      ValOldStack return_stack,
       Module module,
       Const[] constants,
       IType[] type_refs,
@@ -134,7 +134,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitScope(VM.Frame _, ExecState exec)
+    public void ExitScope(VM.FrameOld _, ExecState exec)
     {
       DeferBlock.ExitScope(defers, exec);
     }
@@ -165,7 +165,7 @@ public partial class VM : INamedResolver
     }
   }
 
-  public struct Frame2
+  public struct Frame
   {
     public Module module;
     public unsafe byte* bytecode;
@@ -178,7 +178,7 @@ public partial class VM : INamedResolver
     public int locals_idx2;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(ref Frame2 frame)
+    public void Init(ref Frame frame)
     {
       unsafe
       {
@@ -203,7 +203,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Init(Frame2 origin, int start_ip)
+    public unsafe void Init(Frame origin, int start_ip)
     {
       Init(
         //origin.fb,

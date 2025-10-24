@@ -20,7 +20,7 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val = Val.New(vm);
+    var val = ValOld.New(vm);
     val.SetBlob(ref orig, null);
 
     ref var b = ref val.GetBlob<StructBlob>();
@@ -41,12 +41,12 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = Val.New(vm);
+    var val2 = ValOld.New(vm);
     val2.ValueCopyFrom(val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
@@ -64,12 +64,12 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = Val.New(vm);
+    var val2 = ValOld.New(vm);
     val2.SetBlob(ref orig, null);
 
     val2.ValueCopyFrom(val1);
@@ -85,12 +85,12 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = Val.NewInt(vm, 10);
+    var val2 = ValOld.NewInt(vm, 10);
     val2.SetBlob(ref orig, null);
 
     val2.ValueCopyFrom(val1);
@@ -106,10 +106,10 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
-    var val2 = Val.New(vm);
+    var val2 = ValOld.New(vm);
     val2.SetBlob(ref orig, null);
 
     Assert.True(val1.IsValueEqual(val2));
@@ -123,10 +123,10 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
-    var val2 = Val.New(vm);
+    var val2 = ValOld.New(vm);
     val2.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
@@ -143,10 +143,10 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
-    var val2 = Val.New(vm);
+    var val2 = ValOld.New(vm);
     val2.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
@@ -162,10 +162,10 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
-    var val2 = Val.NewInt(vm, 10);
+    var val2 = ValOld.NewInt(vm, 10);
 
     Assert.False(val1.IsValueEqual(val2));
   }
@@ -178,10 +178,10 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = Val.New(vm);
+    var val1 = ValOld.New(vm);
     val1.SetBlob(ref orig, null);
 
-    var val2 = Val.NewObj(vm, /*using orig!*/ orig, null);
+    var val2 = ValOld.NewObj(vm, /*using orig!*/ orig, null);
 
     Assert.False(val1.IsValueEqual(val2));
   }

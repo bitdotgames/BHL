@@ -113,7 +113,7 @@ public partial class VM : INamedResolver
   {
     public Module module;
     public VariableSymbol vs;
-    public Val val;
+    public ValOld val;
   }
 
   public struct SymbolSpec : IEquatable<SymbolSpec>
@@ -155,20 +155,20 @@ public partial class VM : INamedResolver
     this.types = types;
     this.loader = loader;
 
-    init_frame = new Frame(this);
+    init_frame = new FrameOld(this);
 
-    null_val = new Val(this);
+    null_val = new ValOld(this);
     null_val.SetObj(null, Types.Null);
     //NOTE: we don't want to store it in the values pool,
     //      still we need to retain it so that it's never
     //      accidentally released when pushed/popped
     null_val.Retain();
 
-    true_val = new Val(this);
+    true_val = new ValOld(this);
     true_val.SetBool(true);
     true_val.Retain();
 
-    false_val = new Val(this);
+    false_val = new ValOld(this);
     false_val.SetBool(false);
     false_val.Retain();
   }

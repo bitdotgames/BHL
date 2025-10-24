@@ -6,13 +6,13 @@ using System.Runtime.CompilerServices;
 namespace bhl
 {
 
-public class ValMap : IDictionary<Val, Val>, IValRefcounted
+public class ValMap : IDictionary<ValOld, ValOld>, IValRefcounted
 {
   //NOTE: Since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason
   //      we store the key alongside with the value in a KeyValuePair
-  Dictionary<Val, KeyValuePair<Val, Val>> map =
-    new Dictionary<Val, KeyValuePair<Val, Val>>(new Comparer());
+  Dictionary<ValOld, KeyValuePair<ValOld, ValOld>> map =
+    new Dictionary<ValOld, KeyValuePair<ValOld, ValOld>>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
@@ -23,9 +23,9 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
   public VM vm;
 
   //TODO: make it 'poolable' in the future
-  public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<Val, Val>>
+  public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<ValOld, ValOld>>
   {
-    Dictionary<Val, KeyValuePair<Val, Val>>.Enumerator en;
+    Dictionary<ValOld, KeyValuePair<ValOld, ValOld>>.Enumerator en;
 
     public Enumerator(ValMap m)
     {
@@ -62,7 +62,7 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
       throw new NotImplementedException();
     }
 
-    KeyValuePair<Val, Val> IEnumerator<KeyValuePair<Val, Val>>.Current
+    KeyValuePair<ValOld, ValOld> IEnumerator<KeyValuePair<ValOld, ValOld>>.Current
     {
       get
       {
@@ -89,22 +89,22 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
     get { return false; }
   }
 
-  public ICollection<Val> Keys
+  public ICollection<ValOld> Keys
   {
     get { return map.Keys; }
   }
 
-  public ICollection<Val> Values
+  public ICollection<ValOld> Values
   {
     get { throw new NotImplementedException(); }
   }
 
-  public void Add(KeyValuePair<Val, Val> p)
+  public void Add(KeyValuePair<ValOld, ValOld> p)
   {
     throw new NotImplementedException();
   }
 
-  public void Add(Val k, Val v)
+  public void Add(ValOld k, ValOld v)
   {
     throw new NotImplementedException();
   }
@@ -121,14 +121,14 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
     map.Clear();
   }
 
-  public Val this[Val k]
+  public ValOld this[ValOld k]
   {
     get { return map[k].Value; }
-    set { map[k] = new KeyValuePair<Val, Val>(k, value); }
+    set { map[k] = new KeyValuePair<ValOld, ValOld>(k, value); }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetValueCopyAt(Val k, Val value)
+  public void SetValueCopyAt(ValOld k, ValOld value)
   {
     //NOTE: we are going to re-use the existing k/v,
     //      thus we need to decrease/increase user payload
@@ -142,28 +142,28 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
     else
     {
       k = k.CloneValue();
-      map[k] = new KeyValuePair<Val, Val>(k, value.CloneValue());
+      map[k] = new KeyValuePair<ValOld, ValOld>(k, value.CloneValue());
     }
   }
 
-  public bool TryGetValue(Val k, out Val v)
+  public bool TryGetValue(ValOld k, out ValOld v)
   {
     bool yes = map.TryGetValue(k, out var p);
     v = p.Value;
     return yes;
   }
 
-  public bool Contains(KeyValuePair<Val, Val> p)
+  public bool Contains(KeyValuePair<ValOld, ValOld> p)
   {
     throw new NotImplementedException();
   }
 
-  public bool ContainsKey(Val k)
+  public bool ContainsKey(ValOld k)
   {
     return map.ContainsKey(k);
   }
 
-  public bool Remove(Val k)
+  public bool Remove(ValOld k)
   {
     bool existed = map.TryGetValue(k, out var prev);
     bool removed = map.Remove(k);
@@ -176,17 +176,17 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
     return removed;
   }
 
-  public bool Remove(KeyValuePair<Val, Val> p)
+  public bool Remove(KeyValuePair<ValOld, ValOld> p)
   {
     throw new NotImplementedException();
   }
 
-  public void CopyTo(KeyValuePair<Val, Val>[] arr, int len)
+  public void CopyTo(KeyValuePair<ValOld, ValOld>[] arr, int len)
   {
     throw new NotImplementedException();
   }
 
-  public IEnumerator<KeyValuePair<Val, Val>> GetEnumerator()
+  public IEnumerator<KeyValuePair<ValOld, ValOld>> GetEnumerator()
   {
     return new Enumerator(this);
   }
@@ -260,9 +260,9 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
       throw new Exception("Unbalanced New/Del");
   }
 
-  class Comparer : IEqualityComparer<Val>
+  class Comparer : IEqualityComparer<ValOld>
   {
-    public bool Equals(Val a, Val b)
+    public bool Equals(ValOld a, ValOld b)
     {
       if(a == null && b == null)
         return true;
@@ -272,7 +272,7 @@ public class ValMap : IDictionary<Val, Val>, IValRefcounted
       return a.IsValueEqual(b);
     }
 
-    public int GetHashCode(Val v)
+    public int GetHashCode(ValOld v)
     {
       return v.GetValueHashCode();
     }

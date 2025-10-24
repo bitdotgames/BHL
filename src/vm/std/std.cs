@@ -11,7 +11,7 @@ public static class std
   {
     bool first_time = true;
 
-    public override void Tick(VM.Frame frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
     {
       if(first_time)
       {
@@ -19,10 +19,10 @@ public static class std
         first_time = false;
       }
       else
-        exec.stack.Push(frm.vm.True);
+        exec.stack_old.Push(frm.vm.True);
     }
 
-    public override void Cleanup(VM.Frame frm, VM.ExecState exec)
+    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
     {
       first_time = true;
     }
@@ -36,10 +36,10 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var o = stack.Pop();
-          stack.Push(Val.NewObj(frm.vm, o.type, Types.Type));
+          stack.Push(ValOld.NewObj(frm.vm, o.type, Types.Type));
           o.Release();
           return null;
         },
@@ -50,11 +50,11 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           var type = (IType)stack.PopRelease()._obj;
           var o = stack.Pop();
-          stack.Push(Val.NewBool(frm.vm, Types.Is(o, type)));
+          stack.Push(ValOld.NewBool(frm.vm, Types.Is(o, type)));
           o.Release();
           return null;
         },
@@ -66,7 +66,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           return CoroutinePool.New<CoroutineNextTrue>(frm.vm);
         }
@@ -87,7 +87,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var s = stack.PopRelease().str;
             Console.Write(s);
@@ -100,7 +100,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             var s = stack.PopRelease().str;
             Console.WriteLine(s);

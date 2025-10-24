@@ -93,7 +93,7 @@ public class TestLambda : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test", Val.NewNum(vm, 3)).result.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test", ValOld.NewNum(vm, 3)).result.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -908,7 +908,7 @@ public class TestLambda : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", Val.NewNum(vm, 3));
+    Execute(vm, "test", ValOld.NewNum(vm, 3));
     AssertEqual("HERE", log.ToString());
     CommonChecks(vm);
   }

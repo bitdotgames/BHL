@@ -15,7 +15,7 @@ public class TestParal : BHL_TestBase
       int a
       paral {
         {
-          yield suspend() 
+          yield suspend()
         }
         {
           yield()
@@ -64,12 +64,12 @@ public class TestParal : BHL_TestBase
     {
       int a
       paral {
-        yield suspend() 
+        yield suspend()
         {
           yield()
           a = 1
         }
-        yield suspend() 
+        yield suspend()
       }
       return a
     }
@@ -115,12 +115,12 @@ public class TestParal : BHL_TestBase
     {
       int a
       paral {
-        yield suspend() 
+        yield suspend()
         paral {
           yield()
           a = 1
         }
-        yield suspend() 
+        yield suspend()
       }
       return a
     }
@@ -168,14 +168,14 @@ public class TestParal : BHL_TestBase
     {
       int a
       paral {
-        yield suspend() 
+        yield suspend()
         yield coro func() {
           paral {
             yield()
             a = 1
           }
         } ()
-        yield suspend() 
+        yield suspend()
       }
       return a
     }
@@ -226,7 +226,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int n = 0
       while(true) {
@@ -257,7 +257,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int n = 0
       while(true) {
@@ -288,7 +288,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       int n = 0
       paral {
@@ -396,7 +396,7 @@ public class TestParal : BHL_TestBase
       return a
     }
 
-    func float test() 
+    func float test()
     {
       Color c = new Color
       int a = 0
@@ -426,7 +426,7 @@ public class TestParal : BHL_TestBase
       int a
       paral_all {
         {
-          yield suspend() 
+          yield suspend()
         }
         {
           yield()
@@ -483,7 +483,7 @@ public class TestParal : BHL_TestBase
       return a
     }
 
-    func float test() 
+    func float test()
     {
       Color c = new Color
       int a = 0
@@ -517,7 +517,7 @@ public class TestParal : BHL_TestBase
       return 0
     }
 
-    coro func int test() 
+    coro func int test()
     {
       int i = 0
       paral_all {
@@ -565,7 +565,7 @@ public class TestParal : BHL_TestBase
       trace(""B"")
     }
 
-    coro func test() 
+    coro func test()
     {
       paral {
         yield bar()
@@ -611,7 +611,7 @@ public class TestParal : BHL_TestBase
       trace(""B"")
     }
 
-    coro func test() 
+    coro func test()
     {
       paral_all {
         yield bar()
@@ -642,7 +642,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       paral {
         {
@@ -671,7 +671,7 @@ public class TestParal : BHL_TestBase
       return 0
     }
 
-    func int test() 
+    func int test()
     {
       paral {
         return foo()
@@ -698,7 +698,7 @@ public class TestParal : BHL_TestBase
       return 0
     }
 
-    func int test() 
+    func int test()
     {
       paral {
         paral {
@@ -731,7 +731,7 @@ public class TestParal : BHL_TestBase
       return 0
     }
 
-    func int test() 
+    func int test()
     {
       paral {
         paral {
@@ -752,7 +752,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       paral {
         {
@@ -779,7 +779,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       paral_all {
         {
@@ -801,7 +801,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       paral_all {
         yield()
@@ -821,7 +821,7 @@ public class TestParal : BHL_TestBase
   {
     string bhl = @"
 
-    coro func int test() 
+    coro func int test()
     {
       paral_all {
         {

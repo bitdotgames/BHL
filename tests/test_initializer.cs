@@ -10,13 +10,13 @@ public class TestInitializer : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int Int
       float Flt
       string Str
     }
-      
-    func test() 
+
+    func test()
     {
       Foo f = {Int: 10, Flt: 14.2, Str: ""Hey""}
       trace((string)f.Int + "";"" + (string)f.Flt + "";"" + f.Str)
@@ -169,8 +169,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonExplicitEmptyClass()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       ColorAlpha c = new ColorAlpha {}
       return c.r + c.g + c.a
@@ -188,8 +188,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonExplicitClass()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       ColorAlpha c = new ColorAlpha {a: 1, g: 10, r: 100}
       return c.r + c.g + c.a
@@ -207,8 +207,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonExplicitSubClass()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       Color c = new ColorAlpha {a: 1, g: 10, r: 100}
       ColorAlpha ca = (ColorAlpha)c
@@ -227,8 +227,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonExplicitSubClassNotCompatible()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       ColorAlpha c = new Color {g: 10, r: 100}
     }
@@ -255,8 +255,8 @@ public class TestInitializer : BHL_TestBase
     {
       return {r: 42}
     }
-      
-    func float test() 
+
+    func float test()
     {
       Color c = make()
       return c.r
@@ -277,11 +277,11 @@ public class TestInitializer : BHL_TestBase
 
     func Color make()
     {
-      return new Color 
+      return new Color
         {r: 42}
     }
-      
-    func float test() 
+
+    func float test()
     {
       Color c = make()
       return c.r
@@ -299,8 +299,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonExplicitNoSuchClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       any c = new Foo {}
     }
@@ -321,13 +321,13 @@ public class TestInitializer : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int Int
       float Flt
       string Str
     }
-      
-    func test() 
+
+    func test()
     {
       []Foo fs = [{Int: 10, Flt: 14.2, Str: ""Hey""}]
       Foo f = fs[0]
@@ -394,16 +394,16 @@ public class TestInitializer : BHL_TestBase
   {
     string bhl = @"
 
-    class Foo { 
+    class Foo {
       int Int
       float Flt
       string Str
     }
-      
-    func test() 
+
+    func test()
     {
       []Foo fs = [{Int: 10, Flt: 14.2, Str: ""Hey""},{Flt: 15.1, Int: 2, Str: ""Foo""}]
-      trace((string)fs[1].Int + "";"" + (string)fs[1].Flt + "";"" + fs[1].Str + ""-"" + 
+      trace((string)fs[1].Int + "";"" + (string)fs[1].Flt + "";"" + fs[1].Str + ""-"" +
            (string)fs[0].Int + "";"" + (string)fs[0].Flt + "";"" + fs[0].Str)
     }
     ";
@@ -425,7 +425,7 @@ public class TestInitializer : BHL_TestBase
     func int test()
     {
       []int a = []
-      return a.Count 
+      return a.Count
     }
     ";
 
@@ -694,8 +694,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayExplicit()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       []Color cs = [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
       ColorAlpha ca = (ColorAlpha)cs[0]
@@ -714,7 +714,7 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayInitializer()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       var ins = new []int [1, 10, 100]
 
@@ -731,8 +731,8 @@ public class TestInitializer : BHL_TestBase
   public void TestComplexJsonArrayInitializer()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       var cs = new []Color [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
       ColorAlpha ca = (ColorAlpha)cs[0]
@@ -751,10 +751,10 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayNewLineNotAllowed()
   {
     string bhl = @"
-      
-    func []int test() 
+
+    func []int test()
     {
-      return new []int 
+      return new []int
        [1, 2]
     }
     ";
@@ -778,8 +778,8 @@ public class TestInitializer : BHL_TestBase
     {
       return [new ColorAlpha {a:4}, {g:10}, new Color {r:100}]
     }
-      
-    func float test() 
+
+    func float test()
     {
       []Color cs = make()
       ColorAlpha ca = (ColorAlpha)cs[0]
@@ -804,8 +804,8 @@ public class TestInitializer : BHL_TestBase
       ColorAlpha ca = (ColorAlpha)cs[0]
       return ca.a + cs[1].g + cs[2].r
     }
-      
-    func float test() 
+
+    func float test()
     {
       return foo([new ColorAlpha {a:4}, {g:10}, new Color {r:100}])
     }
@@ -822,8 +822,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayExplicitSubClass()
   {
     string bhl = @"
-      
-    func float test() 
+
+    func float test()
     {
       []Color cs = [{r:1,g:2}, new ColorAlpha {g: 10, r: 100, a:2}]
       ColorAlpha c = (ColorAlpha)cs[1]
@@ -842,8 +842,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrayExplicitSubClassNotCompatible()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       []ColorAlpha c = [{r:1,g:2,a:100}, new Color {g: 10, r: 100}]
     }
@@ -866,8 +866,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonMasterStructWithClass()
   {
     string bhl = @"
-      
-    func string test() 
+
+    func string test()
     {
       MasterStruct n = {
         child : {str : ""hey""},
@@ -888,8 +888,8 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonMasterStructWithStruct()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       MasterStruct n = {
         child_struct : {n: 1},
@@ -910,7 +910,7 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonFuncArg()
   {
     string bhl = @"
-    func test(float b) 
+    func test(float b)
     {
       Foo f = PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]})
       trace((string)f.hey + (string)f.colors.Count + (string)f.colors[0].r + (string)f.colors[1].g + (string)f.colors[2].g)
@@ -926,7 +926,7 @@ public class TestInitializer : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", Val.NewNum(vm, 42));
+    Execute(vm, "test", ValOld.NewNum(vm, 42));
     AssertEqual("14232342", log.ToString());
     CommonChecks(vm);
   }
@@ -935,7 +935,7 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonFuncArgChainCall()
   {
     string bhl = @"
-    func test(float b) 
+    func test(float b)
     {
       trace((string)PassthruFoo({hey:142, colors:[{r:2}, {g:3}, {g:b}]}).colors.Count)
     }
@@ -950,7 +950,7 @@ public class TestInitializer : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", Val.NewNum(vm, 42));
+    Execute(vm, "test", ValOld.NewNum(vm, 42));
     AssertEqual("3", log.ToString());
     CommonChecks(vm);
   }
@@ -959,7 +959,7 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonArrInitForNativeClass()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       []Bar bs = [{Int: 10, Flt: 14.5, Str: ""Hey""}]
       Bar b = bs[0]
@@ -1025,7 +1025,7 @@ public class TestInitializer : BHL_TestBase
   public void TestJsonMapInitializer()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
       var ins = new [string]int [[""a"", 1], [""b"", 10], [""c"", 100]]
 

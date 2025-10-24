@@ -44,7 +44,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -62,7 +62,7 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -126,7 +126,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -144,7 +144,7 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -212,7 +212,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -230,7 +230,7 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -313,7 +313,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             throw new NullReferenceException();
           });
@@ -330,7 +330,7 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.True(vm.Tick());
     AssertError<Exception>(
       () => vm.Tick(),
@@ -387,7 +387,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -405,7 +405,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -467,7 +467,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -485,7 +485,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -597,7 +597,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             //emulating null reference
             frm = null;
@@ -617,7 +617,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     try
     {
       vm.Tick();
@@ -693,7 +693,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -711,7 +711,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.Start("test", Val.NewNum(vm, 3));
+    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
     Assert.Equal(3, fb.result.PopRelease().num);
 
@@ -778,7 +778,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -796,7 +796,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    vm.Start("test", Val.NewNum(vm, 3));
+    vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.True(vm.Tick());
 
     Assert.Equal(4, trace.Count);
@@ -858,7 +858,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -876,7 +876,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    vm.Start("test", Val.NewNum(vm, 3));
+    vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
 
     Assert.Equal(4, trace.Count);
@@ -944,7 +944,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -1041,7 +1041,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             //emulating null reference
             frm = null;
@@ -1147,7 +1147,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             //emulating null reference
             frm.fb.GetStackTrace();
@@ -1247,7 +1247,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -1342,7 +1342,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             frm.fb.GetStackTrace(trace);
             return null;
@@ -1443,7 +1443,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           object o = null;
           o.GetType();
@@ -1486,7 +1486,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
         {
           object o = null;
           o.GetType();

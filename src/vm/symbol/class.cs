@@ -139,9 +139,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_get = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldGetFuncName(fld), fld.type,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
-            var res = Val.New(frm.vm);
+            var res = ValOld.New(frm.vm);
             fld.getter(frm, null, ref res, fld);
             stack.Push(res);
             return null;
@@ -151,9 +151,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_set = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldSetFuncName(fld), fld.type,
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
-            Val ctx = null;
+            ValOld ctx = null;
             var val = stack.Pop();
             fld.setter(frm, ref ctx, val, fld);
             val.Release();
@@ -389,7 +389,7 @@ public class ClassSymbolScript : ClassSymbol
   {
   }
 
-  void ClassCreator(VM.Frame frm, ref Val data, IType type)
+  void ClassCreator(VM.FrameOld frm, ref ValOld data, IType type)
   {
     //NOTE: object's raw data is a list
     var vl = ValList.New(frm.vm);
@@ -442,14 +442,14 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   IList<ProxyType> tmp_implements;
 
   System.Type native_type;
-  Func<Val, object> native_object_getter;
+  Func<ValOld, object> native_object_getter;
 
   public ClassSymbolNative(
     Origin origin,
     string name,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<ValOld, object> native_object_getter = null
   )
     : this(
       origin, name,
@@ -465,7 +465,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<ValOld, object> native_object_getter = null
   )
     : this(
       origin, name,
@@ -481,7 +481,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     ProxyType proxy_super_class,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<ValOld, object> native_object_getter = null
   )
     : this(origin, name,
       proxy_super_class, null,
@@ -497,7 +497,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<ValOld, object> native_object_getter = null
   )
     : base(origin, name, creator)
   {
@@ -512,7 +512,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     return native_type;
   }
 
-  public object GetNativeObject(Val v)
+  public object GetNativeObject(ValOld v)
   {
     return native_object_getter?.Invoke(v) ?? v?._obj;
   }

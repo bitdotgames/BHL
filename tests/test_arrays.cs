@@ -39,7 +39,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Empty((lst.obj as IList<Val>));
+    Assert.Empty((lst.obj as IList<ValOld>));
     lst.Release();
     CommonChecks(vm);
   }
@@ -67,8 +67,8 @@ public class TestArrays : BHL_TestBase
   public void TestStringArrayIndex()
   {
     string bhl = @"
-      
-    func string test() 
+
+    func string test()
     {
       []string arr = new []string
       arr.Add(""bar"")
@@ -120,8 +120,8 @@ public class TestArrays : BHL_TestBase
       arr.RemoveAt(0)
       return arr
     }
-      
-    func []int test() 
+
+    func []int test()
     {
       return mkarray()
     }
@@ -131,7 +131,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var lst = fb.result.Pop();
-    Assert.Single((lst.obj as IList<Val>));
+    Assert.Single((lst.obj as IList<ValOld>));
     lst.Release();
     CommonChecks(vm);
   }
@@ -147,8 +147,8 @@ public class TestArrays : BHL_TestBase
       arr.Add(100)
       return arr
     }
-      
-    func int test() 
+
+    func int test()
     {
       return mkarray().Count
     }
@@ -173,8 +173,8 @@ public class TestArrays : BHL_TestBase
       arr.Add(100)
       return arr
     }
-      
-    func test() 
+
+    func test()
     {
       mkarray().RemoveAt(0)
     }
@@ -197,8 +197,8 @@ public class TestArrays : BHL_TestBase
       arr.Add(100)
       return arr
     }
-      
-    func test() 
+
+    func test()
     {
       mkarray().Add(300)
     }
@@ -214,7 +214,7 @@ public class TestArrays : BHL_TestBase
   {
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         []int arr = [1, 2, 10]
         return arr.IndexOf(2)
@@ -228,7 +228,7 @@ public class TestArrays : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         []int arr = [1, 2, 10]
         return arr.IndexOf(1)
@@ -242,7 +242,7 @@ public class TestArrays : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         []int arr = [1, 2, 10]
         return arr.IndexOf(10)
@@ -256,7 +256,7 @@ public class TestArrays : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         []int arr = [1, 2, 10]
         return arr.IndexOf(100)
@@ -273,8 +273,8 @@ public class TestArrays : BHL_TestBase
   public void TestStringArrayAssign()
   {
     string bhl = @"
-      
-    func []string test() 
+
+    func []string test()
     {
       []string arr = new []string
       arr.Add(""foo"")
@@ -288,7 +288,7 @@ public class TestArrays : BHL_TestBase
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
     var val = fb.result.Pop();
-    var lst = val.obj as IList<Val>;
+    var lst = val.obj as IList<ValOld>;
     Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "tst");
     AssertEqual(lst[1].str, "bar");
@@ -306,7 +306,7 @@ public class TestArrays : BHL_TestBase
       for(int i=0;i<3;i++) {
         ints.Add(i)
       }
-      
+
       int local_var_garbage = 10
       for(int i=0;i<ints.Count;i++) {
         trace((string)ints[i] + "";"")
@@ -341,8 +341,8 @@ public class TestArrays : BHL_TestBase
     {
       a.Add(100)
     }
-      
-    func int test() 
+
+    func int test()
     {
       []int a = new []int
       a.Add(1)
@@ -369,8 +369,8 @@ public class TestArrays : BHL_TestBase
     {
       a.Add(100)
     }
-      
-    func int test() 
+
+    func int test()
     {
       []int a = new []int
       a.Add(1)
@@ -395,8 +395,8 @@ public class TestArrays : BHL_TestBase
   public void TestArrayCount()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       []string arr = new []string
       arr.Add(""foo"")
@@ -416,8 +416,8 @@ public class TestArrays : BHL_TestBase
   public void TestClearArray()
   {
     string bhl = @"
-      
-    func string test() 
+
+    func string test()
     {
       []string arr = new []string
       arr.Add(""bar"")
@@ -438,7 +438,7 @@ public class TestArrays : BHL_TestBase
   {
     string bhl = @"
 
-    func int test1() 
+    func int test1()
     {
       []int arr = []
       arr.Add(14)
@@ -446,7 +446,7 @@ public class TestArrays : BHL_TestBase
       return arr[0]
     }
 
-    func int test2() 
+    func int test2()
     {
       []int arr = []
       arr.Add(14)
@@ -477,8 +477,8 @@ public class TestArrays : BHL_TestBase
       arr.Add(""foo"")
       arr.Add(""bar"")
     }
-      
-    func []string test() 
+
+    func []string test()
     {
       []string arr = make()
       add(arr)
@@ -489,7 +489,7 @@ public class TestArrays : BHL_TestBase
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").result.Pop();
 
-    var lst = res.obj as IList<Val>;
+    var lst = res.obj as IList<ValOld>;
     Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
@@ -512,8 +512,8 @@ public class TestArrays : BHL_TestBase
       []string arr = new []string
       return arr
     }
-      
-    coro func test() 
+
+    coro func test()
     {
       while(true) {
         []string arr = new []string
@@ -538,8 +538,8 @@ public class TestArrays : BHL_TestBase
   public void TestNativeClassArray()
   {
     string bhl = @"
-      
-    func string test(float k) 
+
+    func string test(float k)
     {
       ArrayT_Color cs = new ArrayT_Color
       Color c0 = new Color
@@ -564,7 +564,7 @@ public class TestArrays : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().str;
     AssertEqual(res, "3102030");
     CommonChecks(vm);
   }
@@ -574,7 +574,7 @@ public class TestArrays : BHL_TestBase
   {
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         ArrayT_Color cs = []
         Color c0 = {r:1}
@@ -594,7 +594,7 @@ public class TestArrays : BHL_TestBase
 
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         ArrayT_Color cs = []
         Color c0 = {r:1}
@@ -613,14 +613,14 @@ public class TestArrays : BHL_TestBase
     }
 
     //NOTE: Color is a class not a struct, and when we search
-    //      for a similar element in an array the 'value equality' 
-    //      routine is not used but rather the 'pointers equality' 
+    //      for a similar element in an array the 'value equality'
+    //      routine is not used but rather the 'pointers equality'
     //      one. Maybe it's an expected behavior, maybe not :(
     //      Need more feedback on this issue.
     //
     {
       string bhl = @"
-      func int test() 
+      func int test()
       {
         ArrayT_Color cs = []
         Color c0 = {r:1}
@@ -655,8 +655,8 @@ public class TestArrays : BHL_TestBase
       cs.Add(c1)
       return cs
     }
-      
-    func float test() 
+
+    func float test()
     {
       return mkarray()[1].r
     }
@@ -674,8 +674,8 @@ public class TestArrays : BHL_TestBase
   public void TestNativeSubClassArray()
   {
     string bhl = @"
-      
-    func string test(float k) 
+
+    func string test(float k)
     {
       Foo f = new Foo
       f.hey = 10
@@ -696,7 +696,7 @@ public class TestArrays : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", Val.NewNum(vm, 2)).result.PopRelease().str;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().str;
     AssertEqual(res, "2102030");
     CommonChecks(vm);
   }
@@ -708,7 +708,7 @@ public class TestArrays : BHL_TestBase
       new Origin(),
       "List_int",
       (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => ValOld.NewInt(_vm, n),
       Types.Int
     );
     ArrayInts.Setup();
@@ -716,12 +716,12 @@ public class TestArrays : BHL_TestBase
     var list = new List<int>();
 
     var vm = new VM();
-    var arr = Val.NewObj(vm, list, ArrayInts);
+    var arr = ValOld.NewObj(vm, list, ArrayInts);
 
     Assert.Equal(0, ArrayInts.ArrCount(arr));
 
     {
-      var val = Val.NewInt(vm, 10);
+      var val = ValOld.NewInt(vm, 10);
       ArrayInts.ArrAdd(arr, val);
       val.Release();
 
@@ -753,7 +753,7 @@ public class TestArrays : BHL_TestBase
   public void TestNativeListProxy()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       var lst = new List_int
       []int ns = lst
@@ -773,7 +773,7 @@ public class TestArrays : BHL_TestBase
         new Origin(),
         "List_int",
         (v) => (int)v._num,
-        (_vm, itype, n) => Val.NewInt(_vm, n),
+        (_vm, itype, n) => ValOld.NewInt(_vm, n),
         Types.Int
       );
       ArrayInts.Setup();
@@ -792,7 +792,7 @@ public class TestArrays : BHL_TestBase
   public void TestNativeListProxyForeach()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       var ns = new List_int
       ns.Add(100)
@@ -810,7 +810,7 @@ public class TestArrays : BHL_TestBase
         new Origin(),
         "List_int",
         (v) => (int)v._num,
-        (_vm, itype, n) => Val.NewInt(_vm, n),
+        (_vm, itype, n) => ValOld.NewInt(_vm, n),
         Types.Int
       );
       ArrayInts.Setup();
@@ -829,7 +829,7 @@ public class TestArrays : BHL_TestBase
   public void TestNativeListProxyForeachAsGenericType()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       []int ns = new List_int
       ns.Add(100)
@@ -847,7 +847,7 @@ public class TestArrays : BHL_TestBase
         new Origin(),
         "List_int",
         (v) => (int)v._num,
-        (_vm, itype, n) => Val.NewInt(_vm, n),
+        (_vm, itype, n) => ValOld.NewInt(_vm, n),
         Types.Int
       );
       ArrayInts.Setup();
@@ -869,7 +869,7 @@ public class TestArrays : BHL_TestBase
       new Origin(),
       "List_int",
       (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => ValOld.NewInt(_vm, n),
       Types.Int
     );
     ArrayInts1.Setup();
@@ -878,7 +878,7 @@ public class TestArrays : BHL_TestBase
       new Origin(),
       "List_int",
       (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => ValOld.NewInt(_vm, n),
       Types.Int
     );
     ArrayInts2.Setup();
@@ -887,7 +887,7 @@ public class TestArrays : BHL_TestBase
       new Origin(),
       "List_string",
       (v) => v.str,
-      (_vm, itype, n) => Val.NewStr(_vm, n),
+      (_vm, itype, n) => ValOld.NewStr(_vm, n),
       Types.String
     );
     ArrayString.Setup();
@@ -928,7 +928,7 @@ public class TestArrays : BHL_TestBase
       new Origin(),
       "List_int",
       (v) => (int)v._num,
-      (_vm, itype, n) => Val.NewInt(_vm, n),
+      (_vm, itype, n) => ValOld.NewInt(_vm, n),
       Types.Int
     );
     ArrayInts.Setup();
@@ -937,12 +937,12 @@ public class TestArrays : BHL_TestBase
 
     var vals = ValList.New(vm);
     {
-      var v1 = Val.NewInt(vm, 10);
+      var v1 = ValOld.NewInt(vm, 10);
       vals.Add(v1);
     }
 
     {
-      var v2 = Val.NewInt(vm, 20);
+      var v2 = ValOld.NewInt(vm, 20);
       vals.Add(v2);
     }
 
@@ -1003,10 +1003,10 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = Val.NewInt(vm, 10);
+    var v1 = ValOld.NewInt(vm, 10);
     lst.Add(v1);
 
-    var v2 = Val.NewInt(vm, 1);
+    var v2 = ValOld.NewInt(vm, 1);
     lst.Add(v2);
 
     Assert.Equal(2, lst.Count);
@@ -1022,7 +1022,7 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(1, lst[0].num);
 
     //adding an item implies ownership over it
-    lst.Add(Val.NewInt(vm, 20));
+    lst.Add(ValOld.NewInt(vm, 20));
     Assert.Equal(2, lst.Count);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(20, lst[1].num);
@@ -1040,7 +1040,7 @@ public class TestArrays : BHL_TestBase
     var lst = ValList.New(vm);
 
     {
-      var dv = Val.New(vm);
+      var dv = ValOld.New(vm);
       dv.Retain();
       lst.Add(dv);
       Assert.Equal(2, dv._refs);
@@ -1051,7 +1051,7 @@ public class TestArrays : BHL_TestBase
     }
 
     {
-      var dv = Val.New(vm);
+      var dv = ValOld.New(vm);
       dv.Retain();
       lst.Add(dv);
       Assert.Equal(2, dv._refs);
@@ -1076,13 +1076,13 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = Val.NewInt(vm, 10);
+    var v1 = ValOld.NewInt(vm, 10);
     lst.Add(v1);
 
-    var v2 = Val.NewInt(vm, 1);
+    var v2 = ValOld.NewInt(vm, 1);
     lst.Add(v2);
 
-    var v3 = Val.NewInt(vm, 13);
+    var v3 = ValOld.NewInt(vm, 13);
     lst.Add(v3);
 
     var sorted = lst.OrderBy(v => v.num).ToList();
@@ -1104,10 +1104,10 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = Val.NewInt(vm, 10);
+    var v1 = ValOld.NewInt(vm, 10);
     lst.Add(v1);
 
-    var v2 = Val.NewInt(vm, 1);
+    var v2 = ValOld.NewInt(vm, 1);
     lst.Add(v2);
 
     var ilst = (IList)lst;
@@ -1124,7 +1124,7 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(1, lst[0].num);
 
     //adding an item implies ownership over it
-    ilst.Add(Val.NewInt(vm, 20));
+    ilst.Add(ValOld.NewInt(vm, 20));
     Assert.Equal(2, ilst.Count);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(20, lst[1].num);
@@ -1143,7 +1143,7 @@ public class TestArrays : BHL_TestBase
       return cs
     }
 
-    func float test() 
+    func float test()
     {
       var cs = colors()
       return cs[1].r
@@ -1156,16 +1156,16 @@ public class TestArrays : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
-          delegate(VM.Frame frm, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             {
-              var dv0 = Val.New(frm.vm);
+              var dv0 = ValOld.New(frm.vm);
               var dvl = ValList.New(frm.vm);
               for(int i = 0; i < 10; ++i)
               {
                 var c = new Color();
                 c.r = i;
-                var tdv = Val.New(frm.vm);
+                var tdv = ValOld.New(frm.vm);
                 tdv.SetObj(c, ts.T("Color").Get());
                 dvl.Add(tdv);
               }
@@ -1192,10 +1192,10 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var dv1 = Val.NewInt(vm, 1);
+    var dv1 = ValOld.NewInt(vm, 1);
     lst.Add(dv1);
 
-    var dv2 = Val.NewInt(vm, 2);
+    var dv2 = ValOld.NewInt(vm, 2);
     lst.Add(dv2);
 
     int c = 0;
