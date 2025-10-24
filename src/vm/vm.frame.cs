@@ -174,8 +174,8 @@ public partial class VM : INamedResolver
     public int start_ip;
     public int return_ip;
 
-    public uint args_bits2;
-    public int locals_idx2;
+    public uint args_bits;
+    public int locals_idx;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(ref Frame frame)
@@ -189,11 +189,10 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Init(/*Fiber fb, ValStack return_stack,*/ Module module, int start_ip)
+    public unsafe void Init(/*Fiber fb*/ Module module, int start_ip)
     {
       Init(
         //fb,
-        //return_stack,
         module,
         module.compiled.constants,
         module.compiled.type_refs_resolved,
@@ -207,7 +206,6 @@ public partial class VM : INamedResolver
     {
       Init(
         //origin.fb,
-        //return_stack,
         origin.module,
         origin.constants,
         origin.type_refs,

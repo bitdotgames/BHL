@@ -63,9 +63,11 @@ public partial class VM : INamedResolver
   }
 
   //NOTE: This class represents an active execution unit in VM.
-  //      VM needs an active Frame and ExecState during Tick-ing.
-  //      E.g. Fiber contains an ExecState, each paral branch
-  //      contains its own ExecState.
+  //      VM needs an active ExecState during Tick-ing.
+  //      ExecState contains stack of Frames and code regions,
+  //      continuous Val stack
+  //      (Fiber contains an ExecState, each paral branch
+  //      contains its own ExecState)
   public class ExecState
   {
     internal int ip;
@@ -980,7 +982,7 @@ public partial class VM : INamedResolver
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val v = ref exec.stack.Push();
-    v._num = exec.stack.vals[frame.locals_idx2 + local_idx]._num;
+    v._num = exec.stack.vals[frame.locals_idx + local_idx]._num;
 
     //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
@@ -1148,13 +1150,13 @@ public partial class VM : INamedResolver
 
     int ret_start_offset = stack.sp - ret_num;
     //releasing all locals
-    for(int i = frame.locals_idx2; i < ret_start_offset; ++i)
+    for(int i = frame.locals_idx; i < ret_start_offset; ++i)
       stack.vals[i].Release();
 
-    int new_sp = frame.locals_idx2 + ret_num;
+    int new_sp = frame.locals_idx + ret_num;
 
     //moving returned values up
-    Array.Copy(stack.vals, ret_start_offset, stack.vals, frame.locals_idx2, ret_num);
+    Array.Copy(stack.vals, ret_start_offset, stack.vals, frame.locals_idx, ret_num);
 
     stack.sp = new_sp;
 
@@ -1466,8 +1468,8 @@ public partial class VM : INamedResolver
     //ref Val2 args_bits = ref stack.vals[--stack.sp];
     ref Val args_bits = ref stack.vals[stack.sp - 1];
 
-    frame.args_bits2 = (uint)args_bits._num;
-    frame.locals_idx2 = stack.sp - local_vars_num;
+    frame.args_bits = (uint)args_bits._num;
+    frame.locals_idx = stack.sp - local_vars_num;
     stack.Add(local_vars_num);
   }
 
