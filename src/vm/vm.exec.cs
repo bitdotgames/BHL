@@ -46,6 +46,7 @@ public partial class VM : INamedResolver
     public int min_ip;
     public int max_ip;
 
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public Region(
       FrameOld frame_old,
       int frame_idx,
