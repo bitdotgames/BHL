@@ -35,7 +35,7 @@ public partial class VM : INamedResolver
 
   public struct Region
   {
-    public FrameOld frame;
+    public FrameOld frame_old;
 
     public int frame_idx;
 
@@ -47,12 +47,15 @@ public partial class VM : INamedResolver
     public int max_ip;
 
     public Region(
-      FrameOld frame,
+      FrameOld frame_old,
+      int frame_idx,
       List<DeferBlock> defer_support,
       int min_ip = -1,
-      int max_ip = STOP_IP)
+      int max_ip = STOP_IP
+      )
     {
-      this.frame = frame;
+      this.frame_old = frame_old;
+      this.frame_idx = frame_idx;
       this.defer_support = defer_support;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
@@ -211,7 +214,8 @@ public partial class VM : INamedResolver
     init_exec.ip = 0;
     init_exec.stack_old = init_frame.stack;
     init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs_resolved, bytecode, 0);
-    init_exec.regions[init_exec.regions_count++] = new VM.Region(init_frame, null, 0, bytecode.Length - 1);
+    init_exec.regions[init_exec.regions_count++] =
+      new VM.Region(init_frame, -1, null, 0, bytecode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;
 
@@ -346,24 +350,25 @@ public partial class VM : INamedResolver
     new_frame.return_ip = exec.ip;
     exec.stack_old = new_frame.stack;
     exec.frames_old.Push(new_frame);
-    exec.regions[exec.regions_count++] = new Region(new_frame, new_frame.defers);
+    exec.regions[exec.regions_count++] = new Region(new_frame, -1, new_frame.defers);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = new_frame.start_ip - 1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Call2(ExecState exec, ref Frame frame, int frame_idx2, uint args_bits)
+  void Call(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
   {
     var stack = exec.stack;
 
+    //it's assumed passed values are already on the stack
+    //and we need to put on the top of the stack args_bits
     ref Val v = ref stack.Push();
     v.type = Types.Int;
     v._num = args_bits;
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
-    //exec.frames.Push(new_frame);
-    exec.regions[exec.regions_count++] = new Region(null, null) { frame_idx =  frame_idx2 };
+    exec.regions[exec.regions_count++] = new Region(null, frame_idx, null);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -1242,11 +1247,9 @@ public partial class VM : INamedResolver
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    //var frm = Frame.New(vm);
-    //frm.Init(curr_frame, exec.stack, func_ip);
     ref var new_frame = ref exec.PushFrame();
     new_frame.Init(frame, /*exec.stack,*/ func_ip);
-    vm.Call2(exec, ref new_frame, exec.frames_count - 1, args_bits);
+    vm.Call(exec, ref new_frame, exec.frames_count - 1, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

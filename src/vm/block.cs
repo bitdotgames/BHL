@@ -41,7 +41,7 @@ public struct DeferBlock
 
     //2. let's create the execution region
     exec.regions[exec.regions_count++]
-      = new VM.Region(frm, null, min_ip: ip, max_ip: max_ip);
+      = new VM.Region(frm, -1, null, min_ip: ip, max_ip: max_ip);
     //3. and execute it
     var status = frm.vm.Execute(
       exec,
@@ -104,7 +104,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     exec.stack_old = stack;
     exec.ip = min_ip;
     exec.regions[exec.regions_count++] =
-      new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip);
+      new VM.Region(frm, -1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)
@@ -165,7 +165,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.ip = min_ip;
     exec.stack_old = stack;
     exec.regions[exec.regions_count++] =
-      new VM.Region(frm, defers, min_ip: min_ip, max_ip: max_ip);
+      new VM.Region(frm, -1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)

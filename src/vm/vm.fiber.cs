@@ -157,21 +157,18 @@ public partial class VM : INamedResolver
       frm.fb = this;
       exec.ip = frm.start_ip;
       exec.frames_old.Push(frm);
-      exec.regions[exec.regions_count++] = new Region(frm, frm.defers);
+      exec.regions[exec.regions_count++] = new Region(frm, -1, frm.defers);
       exec.stack_old = frm.stack;
     }
 
-    internal void Attach2(ref Frame frame, int frame_idx2)
+    internal void Attach(ref Frame frame, int frame_idx)
     {
       //do we need this?
       //frame2.fb = this;
       exec.ip = frame.start_ip;
       //already pushed
       //exec.frames.Push(frm);
-      var region = new Region(null, null)
-      {
-        frame_idx = frame_idx2
-      };
+      var region = new Region(frame_old: null, frame_idx: frame_idx, defer_support: null);
       exec.regions[exec.regions_count++] = region;
       //really?
       //exec.stack = frm.stack;
@@ -538,7 +535,7 @@ public partial class VM : INamedResolver
       v = args_info;
     }
 
-    fb.Attach2(ref frame, frame_idx2);
+    fb.Attach(ref frame, frame_idx2);
   }
 
   public void Detach(Fiber fb)
@@ -720,7 +717,7 @@ public partial class VM : INamedResolver
       }
 
       //fb.Attach(frm);
-      fb.Attach2(ref frame2, fb.exec.frames_count - 1);
+      fb.Attach(ref frame2, fb.exec.frames_count - 1);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");
