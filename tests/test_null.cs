@@ -118,7 +118,7 @@ public class TestNull : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", vm.Null);
+    Execute(vm, "test", vm.NullOld);
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }

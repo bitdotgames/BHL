@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace bhl
 {
@@ -55,18 +56,36 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  public ValOld ToVal(VM vm)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void FillVal(ref Val v)
   {
-    if(type == ConstType.INT)
-      return ValOld.NewInt(vm, num);
+    if(type == ConstType.INT || type == ConstType.FLT)
+    {
+      v.type = Types.Int;
+      v._num = num;
+    }
     else if(type == ConstType.FLT)
-      return ValOld.NewFlt(vm, num);
-    else if(type == ConstType.BOOL)
-      return ValOld.NewBool(vm, num == 1);
+    {
+      v.type = Types.Float;
+      v._num = num;
+    }
     else if(type == ConstType.STR)
-      return ValOld.NewStr(vm, str);
+    {
+      v.type = Types.String;
+      v._obj = str;
+      v._refc = null;
+    }
+    else if(type == ConstType.BOOL)
+    {
+      v.type = Types.Bool;
+      v._num = num;
+    }
     else if(type == ConstType.NIL)
-      return vm.Null;
+    {
+      v.type = Types.Null;
+      v._obj = null;
+      v._refc = null;
+    }
     else
       throw new Exception("Bad type");
   }

@@ -216,7 +216,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.True(!fb.result.PopRelease().bval);
+    Assert.True(!fb.exec.stack.PopRelease().bval);
     CommonChecks(vm);
   }
 

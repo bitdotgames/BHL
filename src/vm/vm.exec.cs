@@ -116,7 +116,7 @@ public partial class VM : INamedResolver
   //special case 'null' value
   ValOld null_val = null;
 
-  public ValOld Null
+  public ValOld NullOld
   {
     get
     {
@@ -473,7 +473,7 @@ public partial class VM : INamedResolver
       exec.stack_old.Push(new_val);
     }
     else
-      exec.stack_old.Push(Null);
+      exec.stack_old.Push(NullOld);
 
     val.Release();
   }
@@ -811,10 +811,10 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void _OpcodeConstant(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var cn = curr_frame.constants[const_idx];
-    var cv = cn.ToVal(vm);
-    exec.stack_old.Push(cv);
+    //int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    //var cn = curr_frame.constants[const_idx];
+    //var cv = cn.ToVal(vm);
+    //exec.stack_old.Push(cv);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -824,10 +824,8 @@ public partial class VM : INamedResolver
     var cn = frame.constants[const_idx];
 
     ref Val v = ref exec.stack.Push();
-    v.type = Types.Int;
-    v._num = cn.num;
-    //v.SetInt(cn.num);
-    //++exec.sp;
+    //TODO: we might have specialized opcodes for different variable types
+    cn.FillVal(ref v);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1154,17 +1152,16 @@ public partial class VM : INamedResolver
     for(int i = frame.locals_idx; i < ret_start_offset; ++i)
       stack.vals[i].Release();
 
-    int new_sp = frame.locals_idx + ret_num;
-
     //moving returned values up
-    Array.Copy(stack.vals, ret_start_offset, stack.vals, frame.locals_idx, ret_num);
+    Array.Copy(
+      stack.vals,
+      ret_start_offset,
+      stack.vals,
+      frame.locals_idx,
+      ret_num);
 
-    stack.sp = new_sp;
-
-    //int stack_offset = exec.stack.Count;
-    //for(int i = 0; i < ret_num; ++i)
-    //  curr_frame.return_stack.Push(exec.stack[stack_offset - ret_num + i]);
-    //exec.stack.Count -= ret_num;
+    //stack pointer now at the last returned value
+    stack.sp = frame.locals_idx + ret_num;
 
     exec.ip = EXIT_FRAME_IP - 1;
   }

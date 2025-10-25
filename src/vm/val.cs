@@ -481,7 +481,7 @@ public class ValOld
 
   public bool is_null
   {
-    get { return this == vm.Null; }
+    get { return this == vm.NullOld; }
   }
 
   public VM vm;
