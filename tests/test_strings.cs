@@ -13,7 +13,7 @@ public class TestStrings : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -27,7 +27,7 @@ public class TestStrings : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    AssertEqual("B", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("B", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -45,7 +45,7 @@ public class TestStrings : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    AssertEqual("raBooF", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("raBooF", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -61,7 +61,7 @@ public class TestStrings : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(3, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -75,7 +75,7 @@ public class TestStrings : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -90,7 +90,7 @@ public class TestStrings : BHL_TestBase
       ";
       var vm = MakeVM(bhl);
       //like in C#
-      Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(0, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -106,7 +106,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("Hello world !", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("Hello world !", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -121,7 +121,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\n", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\n", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -136,7 +136,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\n\n", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\n\n", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -151,7 +151,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\n", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\n", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -166,7 +166,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\n\n", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\n\n", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -181,7 +181,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\n\\n", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\n\\n", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -196,7 +196,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\t", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\t", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -211,7 +211,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\t\t", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\t\t", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -226,7 +226,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\t", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\t", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -241,7 +241,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\t\t", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\t\t", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -256,7 +256,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("bar\\t\\t", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("bar\\t\\t", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -266,7 +266,7 @@ public class TestStrings : BHL_TestBase
     string bhl = "func string test() { return \"My name is \\\"Bar\\\", hello\" }";
 
     var vm = MakeVM(bhl);
-    AssertEqual("My name is \"Bar\", hello", Execute(vm, "test").result.PopRelease().str);
+    AssertEqual("My name is \"Bar\", hello", Execute(vm, "test").result_old.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -281,7 +281,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 3)).result.PopRelease().str;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().str;
     AssertEqual(res, "36");
     CommonChecks(vm);
   }

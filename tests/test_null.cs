@@ -20,7 +20,7 @@ public class TestNull : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 

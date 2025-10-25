@@ -20,7 +20,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -38,7 +38,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.False(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -56,7 +56,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.False(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -74,7 +74,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.True(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -94,7 +94,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -114,7 +114,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -324,7 +324,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    Assert.False(Execute(vm, "test").result.PopRelease().bval);
+    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 
@@ -340,7 +340,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    Assert.True(Execute(vm, "test").result.PopRelease().bval);
+    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
     CommonChecks(vm);
   }
 }

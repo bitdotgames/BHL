@@ -87,7 +87,7 @@ public class TestImport : BHL_TestBase
 
     var vm = new VM(ts, loader);
     vm.LoadModule("bhl1");
-    Assert.Equal(23, Execute(vm, "bhl1").result.PopRelease().num);
+    Assert.Equal(23, Execute(vm, "bhl1").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -232,7 +232,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(0, exec.cache_hits);
       Assert.Equal(3, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -255,7 +255,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(32, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
       Assert.Equal(1 + 1, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -302,7 +302,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(0, exec.cache_hits);
       Assert.Equal(3, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -326,7 +326,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(32, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
       Assert.Equal(1 + 1, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -384,7 +384,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23 + 1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23 + 1, Execute(vm, "test").result_old.PopRelease().num);
     }
 
     string new_file_test = @"
@@ -410,7 +410,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(24 + 2, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(24 + 2, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(3, exec.cache_hits);
       Assert.Equal(1, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -457,7 +457,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(0, exec.cache_hits);
       Assert.Equal(3, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -479,7 +479,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
       Assert.Equal(2, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -527,7 +527,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(42 + 1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(42 + 1, Execute(vm, "test").result_old.PopRelease().num);
     }
 
     string new_file_get = @"
@@ -549,7 +549,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(42 + 1 + 10, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(42 + 1 + 10, Execute(vm, "test").result_old.PopRelease().num);
       Assert.Equal(1, exec.cache_hits);
       Assert.Equal(2, exec.cache_miss);
       Assert.Equal(0, exec.cache_errs);
@@ -590,7 +590,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(30, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(30, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -657,7 +657,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -688,7 +688,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(12, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(12, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -728,7 +728,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -792,7 +792,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("main");
-    Assert.Equal(0, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(0, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -870,7 +870,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(4, Execute(vm, "test", ValOld.NewNum(vm, 2)).result.PopRelease().num);
+    Assert.Equal(4, Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -914,7 +914,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(23, Execute(vm, "test", ValOld.NewNum(vm, 23)).result.PopRelease().num);
+    Assert.Equal(23, Execute(vm, "test", ValOld.NewNum(vm, 23)).result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -957,7 +957,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(23, Execute(vm, "test", ValOld.NewNum(vm, 23)).result.PopRelease().num);
+    Assert.Equal(23, Execute(vm, "test", ValOld.NewNum(vm, 23)).result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1036,7 +1036,7 @@ public class TestImport : BHL_TestBase
     {
       var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
 
     string new_file_unit = @"
@@ -1052,7 +1052,7 @@ public class TestImport : BHL_TestBase
     {
       var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
-      Assert.Equal(32, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(32, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1092,7 +1092,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(exec, conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1126,7 +1126,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1160,7 +1160,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(files, use_cache: true));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1196,7 +1196,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("src/tests/test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1276,7 +1276,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("test");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1376,7 +1376,7 @@ public class TestImport : BHL_TestBase
     {
       var vm = await MakeVM(files);
       vm.LoadModule("test");
-      Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").result_old.PopRelease().num);
     }
 
     {
@@ -1384,7 +1384,7 @@ public class TestImport : BHL_TestBase
       System.IO.File.SetLastWriteTimeUtc(files[1], DateTime.UtcNow.AddSeconds(1));
       var vm = await MakeVM(files, use_cache: true);
       vm.LoadModule("test");
-      Assert.Equal(-1, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1420,7 +1420,7 @@ public class TestImport : BHL_TestBase
       var loader = new ModuleLoader(ts, await CompileFiles(conf));
       var vm = new VM(ts, loader);
       vm.LoadModule("tests/test");
-      Assert.Equal(23, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(23, Execute(vm, "test").result_old.PopRelease().num);
     }
   }
 
@@ -1487,9 +1487,9 @@ public class TestImport : BHL_TestBase
     var vm = await MakeVM(files);
 
     vm.LoadModule("bhl1");
-    Assert.Equal(1, Execute(vm, "test0").result.PopRelease().num);
-    Assert.Equal(10, Execute(vm, "test1").result.PopRelease().num);
-    Assert.Equal(100, Execute(vm, "test2").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test0").result_old.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test1").result_old.PopRelease().num);
+    Assert.Equal(100, Execute(vm, "test2").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1525,7 +1525,7 @@ public class TestImport : BHL_TestBase
     {
       var vm = await MakeVM(files);
       vm.LoadModule("bhl2");
-      AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
+      AssertEqual("Foo", Execute(vm, "test").result_old.PopRelease().str);
       CommonChecks(vm);
     }
 
@@ -1536,7 +1536,7 @@ public class TestImport : BHL_TestBase
       vm.LoadModule("bhl2");
       Assert.Equal(1, executor.cache_hits);
       Assert.Equal(1, executor.cache_miss);
-      AssertEqual("Foo", Execute(vm, "test").result.PopRelease().str);
+      AssertEqual("Foo", Execute(vm, "test").result_old.PopRelease().str);
       CommonChecks(vm);
     }
   }
@@ -1583,7 +1583,7 @@ public class TestImport : BHL_TestBase
     {
       var vm = await MakeVM(files);
       vm.LoadModule("bhl3");
-      Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -1593,7 +1593,7 @@ public class TestImport : BHL_TestBase
       var executor = new CompilationExecutor();
       var vm = await MakeVM(files, use_cache: true, executor: executor);
       vm.LoadModule("bhl3");
-      Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
   }

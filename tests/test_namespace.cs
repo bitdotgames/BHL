@@ -1201,8 +1201,8 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "foo.test").result.PopRelease().num);
-    Assert.Equal(0, Execute(vm, "bar.test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "foo.test").result_old.PopRelease().num);
+    Assert.Equal(0, Execute(vm, "bar.test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1240,7 +1240,7 @@ public class TestNamespace : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      Assert.Equal(1, Execute(vm, "bar.test").result.PopRelease().num);
+      Assert.Equal(1, Execute(vm, "bar.test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -1263,7 +1263,7 @@ public class TestNamespace : BHL_TestBase
       }
       ";
       var vm = MakeVM(bhl);
-      Assert.Equal(11, Execute(vm, "bar.test").result.PopRelease().num);
+      Assert.Equal(11, Execute(vm, "bar.test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
   }
@@ -1302,7 +1302,7 @@ public class TestNamespace : BHL_TestBase
 
     var cm = vm.FindModule("test");
     AssertEqual(cm.ns.Resolve("bar").name, "bar");
-    Assert.Equal(1, Execute(vm, "bar.wow").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "bar.wow").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1343,7 +1343,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(11, Execute(vm, "bar.test").result.PopRelease().num);
+    Assert.Equal(11, Execute(vm, "bar.test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1402,7 +1402,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    Assert.Equal(10, Execute(vm, "foo.test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "foo.test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1428,7 +1428,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(3, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1477,7 +1477,7 @@ public class TestNamespace : BHL_TestBase
       }
     );
     vm.LoadModule("bhl2");
-    Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(3, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1527,7 +1527,7 @@ public class TestNamespace : BHL_TestBase
   ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(11, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1548,7 +1548,7 @@ public class TestNamespace : BHL_TestBase
   ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1570,7 +1570,7 @@ public class TestNamespace : BHL_TestBase
     }
     ";
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "foo.test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "foo.test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1604,7 +1604,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(114.5, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(114.5, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1631,7 +1631,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1663,7 +1663,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1691,7 +1691,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1726,7 +1726,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1762,7 +1762,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(11, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1793,7 +1793,7 @@ public class TestNamespace : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(11, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1839,7 +1839,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(11, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(11, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1872,7 +1872,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1915,7 +1915,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1959,7 +1959,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -1998,7 +1998,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(42, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2036,7 +2036,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -2120,7 +2120,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl3");
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     Assert.True(vm.ResolveNamedByPath("foo.sub.Sub") is ClassSymbol);
     CommonChecks(vm);
   }
@@ -2224,7 +2224,7 @@ public class TestNamespace : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(120, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(120, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 

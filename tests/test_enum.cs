@@ -28,7 +28,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().num;
+    var res = Execute(vm, "test").result_old.PopRelease().num;
     Assert.Equal(30, res);
     CommonChecks(vm);
   }
@@ -60,7 +60,7 @@ public class TestEnum : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().num;
+    var res = Execute(vm, "test").result_old.PopRelease().num;
     Assert.Equal(3, res);
     CommonChecks(vm);
   }
@@ -79,7 +79,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }
@@ -98,7 +98,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result.PopRelease().num;
+    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }
@@ -120,7 +120,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.Pop();
+    var res = Execute(vm, "test").result_old.Pop();
     var lst = res.obj as IList<ValOld>;
     Assert.Equal(2, lst.Count);
     Assert.Equal(20, lst[0].num);
@@ -160,7 +160,7 @@ public class TestEnum : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result.PopRelease().bval;
+    var res = Execute(vm, "test").result_old.PopRelease().bval;
     Assert.True(res);
   }
 
@@ -183,7 +183,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
+    var res = Execute(vm, "test").result_old.PopRelease().num;
     Assert.Equal(2, res);
     CommonChecks(vm);
   }
@@ -207,7 +207,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
+    var res = Execute(vm, "test").result_old.PopRelease().num;
     Assert.Equal(-2, res);
     CommonChecks(vm);
   }
@@ -234,7 +234,7 @@ public class TestEnum : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result.PopRelease().num;
+    var res = Execute(vm, "test").result_old.PopRelease().num;
     Assert.Equal(2, res);
     CommonChecks(vm);
   }
@@ -356,7 +356,7 @@ public class TestEnum : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      Assert.True(Execute(vm, "test").result.PopRelease().bval);
+      Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
       CommonChecks(vm);
     }
 
@@ -377,7 +377,7 @@ public class TestEnum : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
 
@@ -402,7 +402,7 @@ public class TestEnum : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      Assert.Equal(2, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
       CommonChecks(vm);
     }
   }

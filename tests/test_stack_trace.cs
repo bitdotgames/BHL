@@ -64,7 +64,7 @@ public class TestStackTrace : BHL_TestBase
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -146,7 +146,7 @@ public class TestStackTrace : BHL_TestBase
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -232,7 +232,7 @@ public class TestStackTrace : BHL_TestBase
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -407,7 +407,7 @@ at test(..) in bhl1.bhl:10"
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -487,7 +487,7 @@ at test(..) in bhl1.bhl:10"
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(3, trace.Count);
 
@@ -713,7 +713,7 @@ at test(..) in bhl1.bhl:10"
     vm.LoadModule("bhl1");
     var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result.PopRelease().num);
+    Assert.Equal(3, fb.result_old.PopRelease().num);
 
     Assert.Equal(4, trace.Count);
 

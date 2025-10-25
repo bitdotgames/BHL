@@ -65,8 +65,10 @@ public partial class VM : INamedResolver
 
   //NOTE: This class represents an active execution unit in VM.
   //      VM needs an active ExecState during Tick-ing.
+  //
   //      ExecState contains stack of Frames and code regions,
   //      continuous Val stack
+  //
   //      (Fiber contains an ExecState, each paral branch
   //      contains its own ExecState)
   public class ExecState
@@ -782,12 +784,20 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void _OpcodeUnaryNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
+  {
+    //var stack = exec.stack_old;
+    //var operand = stack.PopRelease().num;
+    //stack.Push(ValOld.NewBool(vm, operand != 1));
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeUnaryNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var operand = stack.PopRelease().num;
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, operand != 1));
+    ref Val val = ref stack.vals[stack.sp - 1];
+    val._num = val._num != 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

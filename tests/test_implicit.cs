@@ -18,7 +18,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -36,7 +36,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(30, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(30, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -54,7 +54,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(30, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(30, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -95,7 +95,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(3, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(3, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -114,7 +114,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -180,7 +180,7 @@ public class TestImplicit : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(6, Execute(vm, "test").result_old.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
     }
@@ -205,7 +205,7 @@ public class TestImplicit : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(6, Execute(vm, "test").result_old.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
     }
@@ -230,7 +230,7 @@ public class TestImplicit : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(6, Execute(vm, "test").result.PopRelease().num);
+      Assert.Equal(6, Execute(vm, "test").result_old.PopRelease().num);
       AssertEqual("abc", log.ToString());
       CommonChecks(vm);
     }
@@ -276,7 +276,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(14, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(14, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 
@@ -299,7 +299,7 @@ public class TestImplicit : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(14, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(14, Execute(vm, "test").result_old.PopRelease().num);
     CommonChecks(vm);
   }
 

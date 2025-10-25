@@ -55,7 +55,7 @@ public partial class VM : INamedResolver
   {
     Fiber fb;
 
-    public int Count => fb.result.Count;
+    public int Count => fb.result_old.Count;
 
     public FiberResult(Fiber fb)
     {
@@ -64,18 +64,18 @@ public partial class VM : INamedResolver
 
     public ValOld Pop()
     {
-      return fb.result.Pop();
+      return fb.result_old.Pop();
     }
 
     public ValOld PopRelease()
     {
-      return fb.result.PopRelease();
+      return fb.result_old.PopRelease();
     }
   }
 
   public class Fiber : ITask
   {
-    public VM vm;
+    public readonly VM vm;
 
     internal FuncAddr func_addr;
     public FuncAddr FuncAddr => func_addr;
@@ -83,8 +83,7 @@ public partial class VM : INamedResolver
     internal FiberRef parent;
     public FiberRef Parent => parent;
 
-    internal List<FiberRef> children = new List<FiberRef>();
-
+    internal readonly List<FiberRef> children = new List<FiberRef>();
     public IReadOnlyList<FiberRef> Children => children;
 
     //NOTE: -1 means it's in released state,
@@ -96,9 +95,9 @@ public partial class VM : INamedResolver
 
     internal bool stop_guard;
 
-    public ExecState exec = new ExecState();
+    public readonly ExecState exec = new ExecState();
 
-    public ValOldStack result = new ValOldStack(FrameOld.MAX_STACK);
+    public ValOldStack result_old = new ValOldStack(FrameOld.MAX_STACK);
 
     //TODO: get rid of this one?
     public BHS status;
@@ -123,9 +122,9 @@ public partial class VM : INamedResolver
       fb.refs = 1;
       fb.stop_guard = false;
       //releasing non reclaimed results
-      while(fb.result.Count > 0)
+      while(fb.result_old.Count > 0)
       {
-        var val = fb.result.Pop();
+        var val = fb.result_old.Pop();
         val.Release();
       }
 
@@ -174,6 +173,7 @@ public partial class VM : INamedResolver
       //exec.stack = frm.stack;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ExitScopes()
     {
       if(exec.frames_old.Count > 0)
@@ -393,13 +393,13 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(fb, fb.result_old, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
-      PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
+      PassArgsAndAttach(addr.fsn, fb, frame, fb.result_old, args_info, args);
     }
     else
     {
-      frame.Init(fb, fb.result, addr.module, addr.ip);
+      frame.Init(fb, fb.result_old, addr.module, addr.ip);
 
       PassArgsAndAttach(fb, frame, ValOld.NewInt(this, args_info.bits), args);
     }
@@ -455,12 +455,12 @@ public partial class VM : INamedResolver
     fb.func_addr = ptr.func_addr;
     Register(fb, curr_frame.fb, opts);
 
-    var frame = ptr.MakeFrame(this, fb, fb.result);
+    var frame = ptr.MakeFrame(this, fb, fb.result_old);
 
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
-      PassArgsAndAttach(ptr.native, fb, frame, fb.result, args_info, args);
+      PassArgsAndAttach(ptr.native, fb, frame, fb.result_old, args_info, args);
     else
       PassArgsAndAttach(fb, frame, ValOld.NewInt(this, args_info.bits), args);
 
@@ -648,9 +648,9 @@ public partial class VM : INamedResolver
 
       fb.func_addr = addr;
       fb.stop_guard = false;
-      while(fb.result.Count > 0)
+      while(fb.result_old.Count > 0)
       {
-        var val = fb.result.Pop();
+        var val = fb.result_old.Pop();
         val.Release();
       }
 
@@ -658,7 +658,7 @@ public partial class VM : INamedResolver
 
       frm.Retain();
 
-      frm.Init(fb, fb.result, addr.module, addr.ip);
+      frm.Init(fb, fb.result_old, addr.module, addr.ip);
 
       for(int i = args.Count; i-- > 0;)
       {

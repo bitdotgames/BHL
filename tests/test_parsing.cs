@@ -21,7 +21,7 @@ public class TestParsing : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(10, Execute(vm, "test").result.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
   }
 
   public class TestReturnParseSpecialCasesForDeclVars : BHL_TestBase
