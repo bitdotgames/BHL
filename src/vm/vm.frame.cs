@@ -136,7 +136,7 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExitScope(VM.FrameOld _, ExecState exec)
     {
-      DeferBlock.ExitScope(defers, exec);
+      DeferBlock.ExitScopeOld(defers, exec);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -176,6 +176,10 @@ public partial class VM : INamedResolver
 
     public uint args_bits;
     public int locals_idx;
+
+    //TODO:
+    //public DeferBlock[] defers;
+    //public int defers_count;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(ref Frame frame)
@@ -217,7 +221,6 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void Init(
       //Fiber fb,
-      //ValStack return_stack,
       Module module,
       Const[] constants,
       IType[] type_refs,
@@ -225,13 +228,14 @@ public partial class VM : INamedResolver
       int start_ip)
     {
       //this.fb = fb;
-      //this.return_stack = return_stack;
       this.module = module;
       this.constants = constants;
       this.type_refs = type_refs;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       this.return_ip = -1;
+
+      //TODO: what about clearing defers here?
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

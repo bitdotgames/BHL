@@ -150,7 +150,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal BHS Execute(ExecState exec, int exec_waterline_idx = 0)
+  internal BHS ExecuteOld(ExecState exec, int exec_waterline_idx = 0)
   {
     var status = BHS.SUCCESS;
 
@@ -416,7 +416,7 @@ public partial class VM : INamedResolver
     }
     else if(status == BHS.FAILURE)
     {
-      CoroutinePool.Del(curr_frame, exec, exec.coroutine);
+      CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
       exec.ip = EXIT_FRAME_IP - 1;
@@ -426,7 +426,7 @@ public partial class VM : INamedResolver
     }
     else if(status == BHS.SUCCESS)
     {
-      CoroutinePool.Del(curr_frame, exec, exec.coroutine);
+      CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
       return status;
@@ -623,8 +623,12 @@ public partial class VM : INamedResolver
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
+
     l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
+    l_operand._num = l_operand.IsValueEqual(ref r_operand) ? 1 : 0;
+
+    //TODO: specialized opcode for simple numbers equality?
+    //l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -747,6 +751,17 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBitShr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
+    var stack = exec.stack;
+
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+    l_operand._num = (int)l_operand._num >> (int)r_operand._num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void _OpcodeBitShr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
+  {
     var stack = exec.stack_old;
     var r_operand = stack.Pop();
     var l_operand = stack.Pop();
@@ -812,10 +827,18 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeUnaryBitNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var operand = stack.PopRelease().num;
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewNum(vm, ~((int)operand)));
+    ref Val val = ref stack.vals[stack.sp - 1];
+    val._num = ~((int)val._num);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void _OpcodeUnaryBitNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
+  {
+    //var stack = exec.stack_old;
+    //var operand = stack.PopRelease().num;
+    //stack.Push(ValOld.NewNum(vm, ~((int)operand)));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

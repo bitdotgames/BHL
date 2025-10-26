@@ -176,11 +176,37 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ExitScopes()
     {
+      if(exec.frames_count > 0)
+      {
+        if(exec.coroutine != null)
+        {
+          CoroutinePool.Del(ref exec.frames[exec.frames_count-1], exec, exec.coroutine);
+          exec.coroutine = null;
+        }
+
+        for(int i = exec.frames_count; i-- > 0;)
+        {
+          ref var frm = ref exec.frames[i];
+          //TODO:
+          //if(frm.defers_count > 0)
+          //{
+          //  DeferBlock.ExitScope(exec, frm.defers, frm.defers_count);
+          //  frm.defers_count = 0;
+          //}
+        }
+        exec.frames_count = 0;
+      }
+
+      exec.regions_count = 0;
+    }
+
+    internal void ExitScopesOld()
+    {
       if(exec.frames_old.Count > 0)
       {
         if(exec.coroutine != null)
         {
-          CoroutinePool.Del(exec.frames_old.Peek(), exec, exec.coroutine);
+          CoroutinePool.DelOld(exec.frames_old.Peek(), exec, exec.coroutine);
           exec.coroutine = null;
         }
 
@@ -642,7 +668,7 @@ public partial class VM : INamedResolver
       args_info_val.Retain();
     }
 
-    public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
+    public FiberResult ExecuteOld(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
     {
       var addr = new FuncAddr(fs);
 
@@ -682,7 +708,7 @@ public partial class VM : INamedResolver
       return new FiberResult(fb);
     }
 
-    public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
+    public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
       var addr = new FuncAddr(fs);
 
@@ -697,11 +723,8 @@ public partial class VM : INamedResolver
 
       fb.Retain();
 
-      //frm.Retain();
-      //frm.Init(fb, fb.result, addr.module, addr.ip);
-
-      ref var frame2 = ref fb.exec.PushFrame();
-      frame2.Init(addr.module, addr.ip);
+      ref var frame = ref fb.exec.PushFrame();
+      frame.Init(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
       for(int i = args.Count; i-- > 0;)
@@ -716,40 +739,49 @@ public partial class VM : INamedResolver
         v._num = args_info.bits;
       }
 
-      //fb.Attach(frm);
-      fb.Attach(ref frame2, fb.exec.frames_count - 1);
+      fb.Attach(ref frame, fb.exec.frames_count - 1);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");
 
-      //let's clear stuff
-      //frm.Clear();
-
-      return new FiberResult(fb);
+      return fb.exec.stack;
     }
   }
 
+  //TODO: use pre-allocated array
   Stack<ScriptExecutor> script_executors = new Stack<ScriptExecutor>();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult Execute(FuncSymbolScript fs)
+  public FiberResult ExecuteOld(FuncSymbolScript fs)
   {
-    return Execute(fs, 0u, new StackList<ValOld>());
+    return ExecuteOld(fs, 0u, new StackList<ValOld>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult Execute2(FuncSymbolScript fs)
+  public ValStack Execute(FuncSymbolScript fs)
   {
-    return Execute2(fs, 0u, new StackList<Val>());
+    return Execute(fs, 0u, new StackList<Val>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult Execute(FuncSymbolScript fs, StackList<ValOld> args)
+  public FiberResult ExecuteOld(FuncSymbolScript fs, StackList<ValOld> args)
   {
-    return Execute(fs, args.Count, args);
+    return ExecuteOld(fs, args.Count, args);
   }
 
-  public FiberResult Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
+  public FiberResult ExecuteOld(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
+  {
+    ScriptExecutor executor;
+    if(script_executors.Count == 0)
+      executor = new ScriptExecutor(this);
+    else
+      executor = script_executors.Pop();
+    var res = executor.ExecuteOld(fs, args_info, args);
+    script_executors.Push(executor);
+    return res;
+  }
+
+  public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
   {
     ScriptExecutor executor;
     if(script_executors.Count == 0)
@@ -757,18 +789,6 @@ public partial class VM : INamedResolver
     else
       executor = script_executors.Pop();
     var res = executor.Execute(fs, args_info, args);
-    script_executors.Push(executor);
-    return res;
-  }
-
-  public FiberResult Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
-  {
-    ScriptExecutor executor;
-    if(script_executors.Count == 0)
-      executor = new ScriptExecutor(this);
-    else
-      executor = script_executors.Pop();
-    var res = executor.Execute2(fs, args_info, args);
     script_executors.Push(executor);
     return res;
   }

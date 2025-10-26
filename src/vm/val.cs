@@ -341,7 +341,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool IsValueEqual(Val o)
+  public bool IsValueEqual(ref Val o)
   {
     bool res =
         _num == o._num &&

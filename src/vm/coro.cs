@@ -18,11 +18,16 @@ public interface IInspectableCoroutine
 
 public abstract class Coroutine : ICoroutine
 {
+  internal VM vm;
   internal Pool<Coroutine> pool;
 
   public abstract void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status);
 
   public virtual void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+  {
+  }
+
+  public virtual void Cleanup(ref VM.Frame frm, VM.ExecState exec)
   {
   }
 }
@@ -94,6 +99,7 @@ public class CoroutinePool
 
     ++vm.coro_pool.news;
 
+    coro.vm = vm;
     coro.pool = pool;
 
 #if BHL_TEST
@@ -103,7 +109,23 @@ public class CoroutinePool
     return (T)coro;
   }
 
-  static public void Del(VM.FrameOld frm, VM.ExecState exec, Coroutine coro)
+  static public void Del(ref VM.Frame frm, VM.ExecState exec, Coroutine coro)
+  {
+    if(coro == null)
+      return;
+
+    var pool = coro.pool;
+
+    coro.Cleanup(ref frm, exec);
+
+    ++coro.vm.coro_pool.dels;
+    pool.stack.Push(coro);
+
+    if(pool.stack.Count > pool.miss)
+      throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
+  }
+
+  static public void DelOld(VM.FrameOld frm, VM.ExecState exec, Coroutine coro)
   {
     if(coro == null)
       return;
