@@ -926,7 +926,7 @@ public class TestInitializer : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", ValOld.NewNum(vm, 42));
+    ExecuteOld(vm, "test", ValOld.NewNum(vm, 42));
     AssertEqual("14232342", log.ToString());
     CommonChecks(vm);
   }
@@ -950,7 +950,7 @@ public class TestInitializer : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", ValOld.NewNum(vm, 42));
+    ExecuteOld(vm, "test", ValOld.NewNum(vm, 42));
     AssertEqual("3", log.ToString());
     CommonChecks(vm);
   }

@@ -41,7 +41,7 @@ public static class VMExtensions
     if(!vm.TryFindFuncAddr(func, out var addr))
       return null;
 
-    return vm.Start(addr, args_info, args, opts);
+    return vm.StartOld(addr, args_info, args, opts);
   }
 
   static public VM.Fiber Start(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args,
@@ -50,13 +50,13 @@ public static class VMExtensions
     if(!vm.TryFindFuncAddr(func, out var addr))
       return null;
 
-    return vm.Start2(addr, args_info, args, opts);
+    return vm.Start(addr, args_info, args, opts);
   }
 
   static public VM.Fiber StartOld(this VM vm, FuncSymbolScript fs, StackList<ValOld> args, VM.FiberOptions opts = 0)
   {
     var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
-    return vm.Start(addr, args.Count, args, opts);
+    return vm.StartOld(addr, args.Count, args, opts);
   }
 
   static public void Alloc(this Pool<ValOld> pool, VM vm, int num)

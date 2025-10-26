@@ -639,14 +639,32 @@ public class BHL_TestBase
     return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
   }
 
-  public VM.Fiber Execute(VM vm, string fn_name, params ValOld[] args)
+  public VM.Fiber ExecuteOld(VM vm, string fn_name, params ValOld[] args)
+  {
+    return ExecuteOld(vm, fn_name, args?.Length ?? 0, args);
+  }
+
+  public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
     return Execute(vm, fn_name, args?.Length ?? 0, args);
   }
 
-  public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params ValOld[] args)
+  public VM.Fiber ExecuteOld(VM vm, string fn_name, FuncArgsInfo args_info, params ValOld[] args)
   {
     var fb = vm.StartOld(fn_name, args_info, new StackList<ValOld>(args));
+    const int LIMIT = 20;
+    int c = 0;
+    for(; c < LIMIT; ++c)
+    {
+      if(!vm.Tick())
+        return fb;
+    }
+    throw new Exception("Too many iterations: " + c);
+  }
+
+  public VM.Fiber Execute(VM vm, string fn_name, FuncArgsInfo args_info, params Val[] args)
+  {
+    var fb = vm.Start(fn_name, args_info, new StackList<Val>(args));
     const int LIMIT = 20;
     int c = 0;
     for(; c < LIMIT; ++c)

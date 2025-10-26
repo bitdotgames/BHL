@@ -89,7 +89,7 @@ public class TestNull : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", ValOld.NewObj(vm, null, Types.Any));
+    ExecuteOld(vm, "test", ValOld.NewObj(vm, null, Types.Any));
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }
@@ -118,7 +118,7 @@ public class TestNull : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test", vm.NullOld);
+    ExecuteOld(vm, "test", vm.NullOld);
     AssertEqual("NULL;", log.ToString());
     CommonChecks(vm);
   }

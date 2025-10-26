@@ -97,6 +97,8 @@ public partial class VM : INamedResolver
 
     public readonly ExecState exec = new ExecState();
 
+    public ValStack Stack => exec.stack;
+
     public ValOldStack result_old = new ValOldStack(FrameOld.MAX_STACK);
 
     //TODO: get rid of this one?
@@ -397,18 +399,18 @@ public partial class VM : INamedResolver
 
   public Fiber Start(FuncAddr addr)
   {
-    return Start(addr, new StackList<ValOld>());
+    return Start(addr, 0, new StackList<Val>());
   }
 
-  public Fiber Start(FuncAddr addr, StackList<ValOld> args)
+  public Fiber StartOld(FuncAddr addr, StackList<ValOld> args)
   {
-    return Start(addr, args.Count, args);
+    return StartOld(addr, args.Count, args);
   }
 
   //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
   //       1) args put into stack
   //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg
-  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<ValOld> args, FiberOptions opts = 0)
+  public Fiber StartOld(FuncAddr addr, FuncArgsInfo args_info, StackList<ValOld> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
@@ -435,28 +437,28 @@ public partial class VM : INamedResolver
     return fb;
   }
 
-  public Fiber Start2(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
+  public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
     fb.func_addr = addr;
     Register(fb, null, opts);
 
-    //var frame = Frame.New(this);
-    ref var frame2 = ref fb.exec.PushFrame();
-    int frame2_idx = fb.exec.frames_count - 1;
+    int frame_idx = fb.exec.frames_count;
+    ref var frame = ref fb.exec.PushFrame();
 
     //checking native call
     if(addr.fsn != null)
     {
+      throw new NotImplementedException();
       //frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
 
       //PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
     }
     else
     {
-      frame2.Init(/*fb, fb.result, */addr.module, addr.ip);
+      frame.Init(/*fb, fb.result, */addr.module, addr.ip);
 
-      PassArgsAndAttach2(fb, ref frame2, frame2_idx, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, ref frame, frame_idx, Val.NewInt(this, args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -467,7 +469,7 @@ public partial class VM : INamedResolver
   [Obsolete("Use Start(FuncAddr, FuncArgsInfo args_info, StackList<Val> args) instead.")]
   public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params ValOld[] args)
   {
-    return Start(addr, cargs_bits, new StackList<ValOld>(args));
+    return StartOld(addr, cargs_bits, new StackList<ValOld>(args));
   }
 
   public Fiber Start(FuncPtr ptr, FrameOld curr_frame, FiberOptions opts = 0)
@@ -540,7 +542,7 @@ public partial class VM : INamedResolver
     fb.Attach(frame);
   }
 
-  static void PassArgsAndAttach2(
+  static void PassArgsAndAttach(
     Fiber fb,
     ref Frame frame,
     int frame_idx2,

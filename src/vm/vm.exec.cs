@@ -244,7 +244,7 @@ public partial class VM : INamedResolver
       fs = fs,
       ip = fs.ip_addr
     };
-    var fb = Start(addr, 0, default, FiberOptions.Detach);
+    var fb = StartOld(addr, 0, default, FiberOptions.Detach);
     if(Tick(fb))
       throw new Exception("Module '" + module.name + "' init function is still running");
   }
@@ -634,66 +634,61 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeNotEqual(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, !l_operand.IsValueEqual(r_operand)));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand.type = Types.Bool;
+    l_operand._num = !l_operand.IsValueEqual(ref r_operand) ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeLT(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num < r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num < r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeLTE(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num <= r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num <= r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGT(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num > r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num > r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGTE(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num >= r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num >= r_operand._num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -773,14 +768,12 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMod(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewFlt(vm, l_operand._num % r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand._num = l_operand._num % r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

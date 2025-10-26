@@ -96,7 +96,7 @@ public class TestAny : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }

@@ -157,7 +157,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var str = Execute(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().str;
+    var str = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().str;
     AssertEqual(str, "3");
     CommonChecks(vm);
   }
@@ -385,7 +385,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test", ValOld.NewFlt(vm, 3.9)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewFlt(vm, 3.9)).result_old.PopRelease().num;
     Assert.Equal(3, res);
     CommonChecks(vm);
   }
@@ -1107,7 +1107,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -1129,7 +1129,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }

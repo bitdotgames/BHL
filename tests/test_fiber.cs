@@ -160,7 +160,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
+    var num = ExecuteOld(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -189,7 +189,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
+    var num = ExecuteOld(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -232,7 +232,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Execute(vm, "wait", ValOld.NewInt(vm, 0));
+    ExecuteOld(vm, "wait", ValOld.NewInt(vm, 0));
     CommonChecks(vm);
   }
 

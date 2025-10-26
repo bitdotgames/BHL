@@ -79,7 +79,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }
@@ -98,7 +98,7 @@ public class TestEnum : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 20)).result_old.PopRelease().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
   }

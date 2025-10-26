@@ -564,7 +564,7 @@ public class TestArrays : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
     AssertEqual(res, "3102030");
     CommonChecks(vm);
   }
@@ -696,7 +696,7 @@ public class TestArrays : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
     AssertEqual(res, "2102030");
     CommonChecks(vm);
   }

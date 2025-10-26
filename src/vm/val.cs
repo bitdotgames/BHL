@@ -60,12 +60,29 @@ public struct Val
     set { SetBool(value); }
   }
 
+  //TODO:?
   //public bool is_null
   //{
   //  get { return this == vm.Null; }
   //}
 
+  //TODO: do we need it here?
   public VM vm;
+
+  public static implicit operator double(Val v)
+  {
+    return v._num;
+  }
+
+  public static implicit operator string(Val v)
+  {
+    return v.str;
+  }
+
+  public static implicit operator bool(Val v)
+  {
+    return v._num == 1;
+  }
 
   //NOTE: use New() instead
   internal Val(VM vm)
