@@ -760,29 +760,14 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeBitShr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
-  {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
-
-    stack.Push(ValOld.NewNum(vm, (int)l_operand._num >> (int)r_operand._num));
-
-    r_operand.Release();
-    l_operand.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBitShl(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewNum(vm, (int)l_operand._num << (int)r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    l_operand._num = (int)l_operand._num << (int)r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
