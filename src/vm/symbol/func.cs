@@ -47,7 +47,7 @@ public class FuncArgSymbol : VariableSymbol
 //TODO: add support for arbitrary amount of default arguments
 public struct FuncArgsInfo
 {
-  //NOTE: 6 bits are used for a total number of args passed (max 63), 
+  //NOTE: 6 bits are used for a total number of args passed (max 63),
   //      26 bits are reserved for default args set bits (max 26 default args)
   public const int ARGS_NUM_BITS = 6;
   public const uint ARGS_NUM_MASK = ((1 << ARGS_NUM_BITS) - 1);
@@ -55,13 +55,6 @@ public struct FuncArgsInfo
   public const int MAX_DEFAULT_ARGS = 32 - ARGS_NUM_BITS;
 
   public uint bits;
-
-  //NOTE: uints are for bits, ints are for arguments amounts
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static implicit operator FuncArgsInfo(uint bits) => new FuncArgsInfo(bits);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static implicit operator FuncArgsInfo(int num_args) => new FuncArgsInfo(num_args);
 
   //NOTE: setting all bits
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -136,8 +129,8 @@ public struct FuncArgsInfo
   }
 
   //NOTE: idx starts from 0, it's the idx of the default argument *within* default arguments,
-  //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }  
-  //           b is 0 default arg idx, c is 1 
+  //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }
+  //           b is 0 default arg idx, c is 1
   public bool UseDefaultArg(int idx, bool flag)
   {
     if(idx >= MAX_DEFAULT_ARGS)
@@ -165,7 +158,7 @@ public enum FuncSignatureAttrib : byte
   Coro           = 1,
   VariadicArgs   = 2,
 
-  //it's a mask which includes all enum bits, 
+  //it's a mask which includes all enum bits,
   //can be used e.g to convert FuncAttrib into FuncSignatureAttrib
   FuncAttribMask = 3
 }
@@ -402,7 +395,7 @@ public class FuncSymbolScript : FuncSymbol
 {
   public const uint CLASS_ID = 13;
 
-  //cached value of Module, it's set upon module loading in VM and 
+  //cached value of Module, it's set upon module loading in VM and
   internal Module _module;
 
   //used for up values resolving during parsing
@@ -656,8 +649,8 @@ public class LambdaSymbol : FuncSymbolScript
       local.name,
       local.scope_idx,
       src.scope_idx,
-      //TODO: should be the line of its usage              
-      //(in case of 'this' there's no associated parse tree, 
+      //TODO: should be the line of its usage
+      //(in case of 'this' there's no associated parse tree,
       // so we pass a line number)
       src.origin.source_line
     );
@@ -701,7 +694,7 @@ public class LambdaSymbol : FuncSymbolScript
         if(res is VariableSymbol vs && !(vs.scope is Namespace))
         {
           var local = AssignUpValues(vs, i + 1, my_idx);
-          //NOTE: returning local instead of an original variable since we need 
+          //NOTE: returning local instead of an original variable since we need
           //      proper index of the local variable in the local frame
           return local;
         }
@@ -725,7 +718,7 @@ public class LambdaSymbol : FuncSymbolScript
   VariableSymbol AssignUpValues(VariableSymbol vs, int from_idx, int to_idx)
   {
     VariableSymbol most_nested = null;
-    //now let's put this result into all nested lambda scopes 
+    //now let's put this result into all nested lambda scopes
     for(int j = from_idx; j <= to_idx; ++j)
     {
       if(fdecl_stack[j] is LambdaSymbol lmb)

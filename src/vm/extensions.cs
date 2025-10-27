@@ -7,32 +7,32 @@ public static class VMExtensions
 {
   static public VM.Fiber Start(this VM vm, string func)
   {
-    return vm.Start(func, 0u, new StackList<Val>());
+    return vm.Start(func, new FuncArgsInfo(0u), new StackList<Val>());
   }
 
   static public VM.Fiber StartOld(this VM vm, string func, ValOld arg1)
   {
-    return vm.StartOld(func, 1u, new StackList<ValOld>(arg1));
+    return vm.StartOld(func, new FuncArgsInfo(1u), new StackList<ValOld>(arg1));
   }
 
   static public VM.Fiber Start(this VM vm, string func, Val arg1)
   {
-    return vm.Start(func, 1u, new StackList<Val>(arg1));
+    return vm.Start(func, new FuncArgsInfo(1u), new StackList<Val>(arg1));
   }
 
   static public VM.Fiber StartOld(this VM vm, string func, ValOld arg1, ValOld arg2)
   {
-    return vm.StartOld(func, 2u, new StackList<ValOld>(arg1, arg2));
+    return vm.StartOld(func, new FuncArgsInfo(2u), new StackList<ValOld>(arg1, arg2));
   }
 
   static public VM.Fiber StartOld(this VM vm, string func, ValOld arg1, ValOld arg2, ValOld arg3)
   {
-    return vm.StartOld(func, 3u, new StackList<ValOld>(arg1, arg2, arg3));
+    return vm.StartOld(func, new FuncArgsInfo(3u), new StackList<ValOld>(arg1, arg2, arg3));
   }
 
   static public VM.Fiber StartOld(this VM vm, string func, StackList<ValOld> args)
   {
-    return vm.StartOld(func, args.Count, args);
+    return vm.StartOld(func, new FuncArgsInfo(args.Count), args);
   }
 
   static public VM.Fiber StartOld(this VM vm, string func, FuncArgsInfo args_info, StackList<ValOld> args,
@@ -56,7 +56,7 @@ public static class VMExtensions
   static public VM.Fiber StartOld(this VM vm, FuncSymbolScript fs, StackList<ValOld> args, VM.FiberOptions opts = 0)
   {
     var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
-    return vm.StartOld(addr, args.Count, args, opts);
+    return vm.StartOld(addr, new FuncArgsInfo(args.Count), args, opts);
   }
 
   static public void Alloc(this Pool<ValOld> pool, VM vm, int num)

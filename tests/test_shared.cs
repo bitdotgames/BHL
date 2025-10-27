@@ -641,12 +641,12 @@ public class BHL_TestBase
 
   public VM.Fiber ExecuteOld(VM vm, string fn_name, params ValOld[] args)
   {
-    return ExecuteOld(vm, fn_name, args?.Length ?? 0, args);
+    return ExecuteOld(vm, fn_name, new FuncArgsInfo(args?.Length ?? 0), args);
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
-    return Execute(vm, fn_name, args?.Length ?? 0, args);
+    return Execute(vm, fn_name, new FuncArgsInfo(args?.Length ?? 0), args);
   }
 
   public VM.Fiber ExecuteOld(VM vm, string fn_name, FuncArgsInfo args_info, params ValOld[] args)

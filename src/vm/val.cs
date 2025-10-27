@@ -62,9 +62,19 @@ public struct Val
     return v._num;
   }
 
+  public static implicit operator Val(double v)
+  {
+    return NewFlt(v);
+  }
+
   public static implicit operator int(Val v)
   {
     return (int)v._num;
+  }
+
+  public static implicit operator Val(int v)
+  {
+    return NewInt(v);
   }
 
   public static implicit operator string(Val v)
@@ -72,9 +82,19 @@ public struct Val
     return v.str;
   }
 
+  public static implicit operator Val(string v)
+  {
+    return NewStr(v);
+  }
+
   public static implicit operator bool(Val v)
   {
     return v._num == 1;
+  }
+
+  public static implicit operator Val(bool v)
+  {
+    return NewBool(v);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,7 +203,7 @@ public struct Val
     _refc?.Release();
   }
 
-  static public Val NewStr(VM vm, string s)
+  static public Val NewStr(string s)
   {
     return new Val
     {
@@ -201,7 +221,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static public Val NewNum(VM vm, long n)
+  static public Val NewNum(long n)
   {
     return new Val
     {
@@ -220,7 +240,7 @@ public struct Val
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static public Val NewInt(VM vm, double n)
+  static public Val NewInt(double n)
   {
     return new Val
     {
@@ -230,7 +250,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static public Val NewFlt(VM vm, double n)
+  static public Val NewFlt(double n)
   {
     return new Val
     {
@@ -247,7 +267,7 @@ public struct Val
     _num = n;
   }
 
-  static public Val NewBool(VM vm, bool b)
+  static public Val NewBool(bool b)
   {
     return new Val
     {
@@ -264,7 +284,7 @@ public struct Val
     _num = b ? 1 : 0;
   }
 
-  static public Val NewObj(VM vm, object o, IType type)
+  static public Val NewObj(object o, IType type)
   {
     return new Val
     {
@@ -274,7 +294,7 @@ public struct Val
     };
   }
 
-  static public Val NewObj(VM vm, IValRefcounted o, IType type)
+  static public Val NewObj(IValRefcounted o, IType type)
   {
     return new Val
     {

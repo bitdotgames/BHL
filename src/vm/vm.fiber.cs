@@ -403,12 +403,12 @@ public partial class VM : INamedResolver
 
   public Fiber Start(FuncAddr addr)
   {
-    return Start(addr, 0, new StackList<Val>());
+    return Start(addr, new FuncArgsInfo(0u), new StackList<Val>());
   }
 
   public Fiber StartOld(FuncAddr addr, StackList<ValOld> args)
   {
-    return StartOld(addr, args.Count, args);
+    return StartOld(addr, new FuncArgsInfo(args.Count), args);
   }
 
   //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
@@ -462,7 +462,7 @@ public partial class VM : INamedResolver
     {
       frame.Init(/*fb, fb.result, */addr.module, addr.ip);
 
-      PassArgsAndAttach(fb, ref frame, frame_idx, Val.NewInt(this, args_info.bits), args);
+      PassArgsAndAttach(fb, ref frame, frame_idx, Val.NewInt(args_info.bits), args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -473,7 +473,7 @@ public partial class VM : INamedResolver
   [Obsolete("Use Start(FuncAddr, FuncArgsInfo args_info, StackList<Val> args) instead.")]
   public Fiber Start(FuncAddr addr, uint cargs_bits = 0, params ValOld[] args)
   {
-    return StartOld(addr, cargs_bits, new StackList<ValOld>(args));
+    return StartOld(addr, new FuncArgsInfo(cargs_bits), new StackList<ValOld>(args));
   }
 
   public Fiber Start(FuncPtr ptr, FrameOld curr_frame, FiberOptions opts = 0)
@@ -756,19 +756,19 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult ExecuteOld(FuncSymbolScript fs)
   {
-    return ExecuteOld(fs, 0u, new StackList<ValOld>());
+    return ExecuteOld(fs, new FuncArgsInfo(0u), new StackList<ValOld>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs)
   {
-    return Execute(fs, 0u, new StackList<Val>());
+    return Execute(fs, new FuncArgsInfo(0u), new StackList<Val>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public FiberResult ExecuteOld(FuncSymbolScript fs, StackList<ValOld> args)
   {
-    return ExecuteOld(fs, args.Count, args);
+    return ExecuteOld(fs, new FuncArgsInfo(args.Count), args);
   }
 
   public FiberResult ExecuteOld(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
