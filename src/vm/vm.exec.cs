@@ -704,53 +704,49 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeAnd(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num == 1 && r_operand._num == 1));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    //l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num == 1 && r_operand._num == 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeOr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewBool(vm, l_operand._num == 1 || r_operand._num == 1));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    //l_operand.type = Types.Bool;
+    l_operand._num = l_operand._num == 1 || r_operand._num == 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBitAnd(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewNum(vm, (int)l_operand._num & (int)r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    //l_operand.type = Types.Int;
+    l_operand._num = (int)l_operand._num & (int)r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBitOr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewNum(vm, (int)l_operand._num | (int)r_operand._num));
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    r_operand.Release();
-    l_operand.Release();
+    //l_operand.type = Types.Int;
+    l_operand._num = (int)l_operand._num | (int)r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1043,10 +1039,12 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
+    //TODO: get rid of this opcode since we do this during InitFrame
+
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     //we must 'own' local refcounted objects
-    exec.stack.vals[frame.locals_offset + local_idx]._refc?.Retain();
+    //exec.stack.vals[frame.locals_offset + local_idx]._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1495,10 +1493,15 @@ public partial class VM : INamedResolver
     //let's pop args bits but store it in a Frame
     frame.args_bits = (uint)stack.vals[--stack.sp]._num;
     //locals starts at the index of the first pushed argument
-    frame.locals_offset = stack.sp - (int)(frame.args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int args_num = (int)(frame.args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    frame.locals_offset = stack.sp - args_num;
+
+    //let's 'own' passed args
+    for(int i = 0; i < args_num; i++)
+      exec.stack.vals[frame.locals_offset + i]._refc?.Retain();
 
     //let's reserve space for local variables
-    stack.Reserve(local_vars_num);
+    stack.Reserve(local_vars_num /* - args_num ? */);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1550,7 +1553,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodePop(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    exec.stack.vals[--exec.stack.sp].Release();
+    exec.stack.vals[--exec.stack.sp]._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
