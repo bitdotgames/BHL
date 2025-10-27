@@ -143,7 +143,7 @@ public partial class VM : INamedResolver
 
       fb.refs = -1;
 
-      fb.Clear();
+      fb.ExitScopes();
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
@@ -231,9 +231,11 @@ public partial class VM : INamedResolver
       exec.regions_count = 0;
     }
 
-    internal void Clear()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CleanStack()
     {
-      ExitScopes();
+      while(exec.stack.sp > 0)
+        exec.stack.PopRelease();
     }
 
     internal void AddChild(Fiber fb)
@@ -242,6 +244,7 @@ public partial class VM : INamedResolver
       children.Add(new FiberRef(fb));
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Retain()
     {
       if(refs == -1)
@@ -249,6 +252,7 @@ public partial class VM : INamedResolver
       ++refs;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Release()
     {
       if(refs == -1)
@@ -613,10 +617,10 @@ public partial class VM : INamedResolver
       StopChildren(fb);
   }
 
-  static bool _Stop(Fiber fb)
+  static void _Stop(Fiber fb)
   {
     if(fb.IsStopped())
-      return false;
+      return;
     fb.stop_guard = true;
 
     fb.ExitScopes();
@@ -627,7 +631,8 @@ public partial class VM : INamedResolver
 
     fb.Release();
 
-    return true;
+    if(fb.status == BHS.FAILURE)
+      fb.CleanStack();
   }
 
   public void StopChildren(Fiber fb)
@@ -717,12 +722,7 @@ public partial class VM : INamedResolver
       fb.func_addr = addr;
       fb.stop_guard = false;
       //let's clean the stack from previous non popped results
-      while(fb.exec.stack.sp > 0)
-      {
-        ref var val = ref fb.exec.stack.Pop();
-        val.Release();
-      }
-
+      fb.CleanStack();
       fb.Retain();
 
       ref var frame = ref fb.exec.PushFrame();
