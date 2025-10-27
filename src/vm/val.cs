@@ -193,20 +193,12 @@ public struct Val
   public void Retain()
   {
     _refc?.Retain();
-
-#if DEBUG_REFS
-    Console.WriteLine("INC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
-#endif
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Release()
   {
     _refc?.Release();
-
-#if DEBUG_REFS
-    Console.WriteLine("DEC: " + _refs + " " + this + " " + GetHashCode() + vm.last_fiber?.GetStackTrace()/* + " " + Environment.StackTrace*/);
-#endif
   }
 
   static public Val NewStr(VM vm, string s)
