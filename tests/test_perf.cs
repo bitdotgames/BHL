@@ -184,7 +184,7 @@ public class TestPerf : BHL_TestBase
 
     frame.args_bits = (uint)args_bits._num;
     frame.locals_offset = stack.sp - local_vars_num;
-    stack.Add(local_vars_num);
+    stack.Reserve(local_vars_num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

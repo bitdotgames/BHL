@@ -1489,14 +1489,14 @@ public partial class VM : INamedResolver
 
     var stack = exec.stack;
 
-    //ref Val args_bits = ref stack.vals[--stack.sp];
-    //TODO: should we rather pop it?
+    //TODO: args bits is a part of 'locals', do we really need it? why not popping it?
+    //      we store it in Frame anyway
     ref Val args_bits = ref stack.vals[stack.sp - 1];
 
     frame.args_bits = (uint)args_bits._num;
     frame.locals_offset = stack.sp - 1;
     //let's reserve space
-    stack.Add(local_vars_num);
+    stack.Reserve(local_vars_num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

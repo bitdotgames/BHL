@@ -429,7 +429,7 @@ public class ValStack
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
-  public void Add(int num)
+  public void Reserve(int num)
   {
     int needed = num - (vals.Length - sp);
     if(needed > 0)
