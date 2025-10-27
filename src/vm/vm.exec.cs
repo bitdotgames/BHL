@@ -1471,14 +1471,15 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip); //including args info
+    //including args info (maybe we don't need that?)
+    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
 
     var stack = exec.stack;
 
-    //TODO: args bits is a part of 'locals', do we really need it? why not popping it?
-    //      we store it in Frame anyway
-    frame.args_bits = (uint)stack.vals[stack.sp - 1]._num;
-    frame.locals_offset = stack.sp - local_vars_num;
+    //let's pop args bits but store it in a Frame
+    frame.args_bits = (uint)stack.vals[stack.sp--]._num;
+    //locals starts at the index of the first pushed argument
+    frame.locals_offset = stack.sp - (int)(frame.args_bits & FuncArgsInfo.ARGS_NUM_MASK);
 
     //let's reserve space for local variables
     stack.Reserve(local_vars_num);
