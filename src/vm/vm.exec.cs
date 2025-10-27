@@ -526,6 +526,23 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  internal void InitDefaultVal(IType type, ref Val v)
+  {
+    //TODO: make type responsible for default initialization
+    //      of the value
+    if(type == Types.Int)
+      v.SetNum(0);
+    else if(type == Types.Float)
+      v.SetFlt((double)0);
+    else if(type == Types.String)
+      v.SetStr("");
+    else if(type == Types.Bool)
+      v.SetBool(false);
+    else
+      v.type = type;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void _OpcodeAdd(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
     var stack = exec.stack_old;
@@ -1038,22 +1055,22 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArgRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     curr_frame.locals[local_idx] = exec.stack_old.Pop();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDeclVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var type = curr_frame.type_refs[type_idx];
 
-    var curr = curr_frame.locals[local_idx];
+    var type = frame.type_refs[type_idx];
+
+    ref var curr = ref exec.stack.vals[frame.locals_offset + local_idx];
     //NOTE: handling case when variables are 're-declared' within the nested loop
-    if(curr != null)
-      curr.Release();
-    curr_frame.locals[local_idx] = vm.MakeDefaultVal(type);
+    curr._refc?.Release();
+    vm.InitDefaultVal(type, ref curr);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

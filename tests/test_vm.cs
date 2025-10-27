@@ -575,7 +575,7 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").Stack.Pop().num;
+    double num = Execute(vm, "test").Stack.Pop();
     Assert.Equal(300, num);
     CommonChecks(vm);
   }

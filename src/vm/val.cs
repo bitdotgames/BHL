@@ -40,13 +40,11 @@ public struct Val
   public double num
   {
     get { return _num; }
-    set { SetFlt(value); }
   }
 
   public string str
   {
     get { return (string)_obj; }
-    set { SetStr(value); }
   }
 
   public object obj
@@ -57,7 +55,6 @@ public struct Val
   public bool bval
   {
     get { return _num == 1; }
-    set { SetBool(value); }
   }
 
   //TODO:?
@@ -106,6 +103,7 @@ public struct Val
     _num4 = 0;
     _refc = null;
 
+    //NOTE: it's assumed that blobs act like values
     if(_blob_size > 0)
     {
       ArrayPool<byte>.Shared.Return((byte[])_obj);
@@ -203,9 +201,11 @@ public struct Val
 
   static public Val NewStr(VM vm, string s)
   {
-    Val dv = default(Val);
-    dv.SetStr(s);
-    return dv;
+    return new Val
+    {
+      type = Types.String,
+      _obj = s,
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -217,11 +217,14 @@ public struct Val
     _refc = null;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewNum(VM vm, long n)
   {
-    Val dv = default(Val);
-    dv.SetNum(n);
-    return dv;
+    return new Val
+    {
+      type = Types.Int,
+      _num = n,
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -233,28 +236,24 @@ public struct Val
   }
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewInt(VM vm, double n)
   {
-    Val dv = default(Val);
-    dv.type = Types.Int;
-    dv._num = n;
-    return dv;
+    return new Val
+    {
+      type = Types.Int,
+      _num = n,
+    };
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewFlt(VM vm, double n)
   {
-    Val dv = default(Val);
-    dv.SetFlt(n);
-    return dv;
-  }
-
-  //NOTE: it's caller's responsibility to ensure 'int precision'
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetInt(double n)
-  {
-    Reset();
-    type = Types.Int;
-    _num = n;
+    return new Val
+    {
+      type = Types.Float,
+      _num = n,
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -267,9 +266,11 @@ public struct Val
 
   static public Val NewBool(VM vm, bool b)
   {
-    Val dv = default(Val);
-    dv.SetBool(b);
-    return dv;
+    return new Val
+    {
+      type = Types.Bool,
+      _obj = b ? 1 : 0,
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -282,42 +283,22 @@ public struct Val
 
   static public Val NewObj(VM vm, object o, IType type)
   {
-    Val dv = default(Val);
-    dv.SetObj(o, type);
-    return dv;
+    return new Val
+    {
+      type = type,
+      _obj = o,
+      _refc = o as IValRefcounted,
+    };
   }
 
   static public Val NewObj(VM vm, IValRefcounted o, IType type)
   {
-    Val dv = default(Val);
-    dv.SetObj(o, type);
-    return dv;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetObj(object o, IType type)
-  {
-    Reset();
-    this.type = type;
-    _obj = o;
-    _refc = o as IValRefcounted;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetObjNoRefc(object o, IType type)
-  {
-    Reset();
-    this.type = type;
-    _obj = o;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetObj(IValRefcounted o, IType type)
-  {
-    Reset();
-    this.type = type;
-    _obj = o;
-    _refc = o;
+    return new Val
+    {
+      type = type,
+      _obj = o,
+      _refc = o
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
