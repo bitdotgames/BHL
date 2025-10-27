@@ -57,18 +57,14 @@ public struct Val
     get { return _num == 1; }
   }
 
-  //TODO:?
-  //public bool is_null
-  //{
-  //  get { return this == vm.Null; }
-  //}
-
-  //TODO: do we need it here?
-  public VM vm;
-
   public static implicit operator double(Val v)
   {
     return v._num;
+  }
+
+  public static implicit operator int(Val v)
+  {
+    return (int)v._num;
   }
 
   public static implicit operator string(Val v)
@@ -79,18 +75,6 @@ public struct Val
   public static implicit operator bool(Val v)
   {
     return v._num == 1;
-  }
-
-  //NOTE: use New() instead
-  internal Val(VM vm)
-  {
-    this.vm = vm;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static public Val New()
-  {
-    return new Val();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -214,7 +198,6 @@ public struct Val
     Reset();
     type = Types.String;
     _obj = s;
-    _refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

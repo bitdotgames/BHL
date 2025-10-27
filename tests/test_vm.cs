@@ -348,161 +348,6 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
-  public void TestBindFunctionWithDefaultArgs()
-  {
-    string bhl = @"
-
-    func float test(int k)
-    {
-      return func_with_def(k)
-    }
-    ";
-
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      {
-        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
-            var a = stack.PopRelease().num;
-
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
-
-            return null;
-          },
-          new FuncArgSymbol("a", ts.T("float")),
-          new FuncArgSymbol("b", ts.T("float"))
-        );
-
-        ts.ns.Define(fn);
-      }
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
-    Assert.Equal(44, res);
-    CommonChecks(vm);
-  }
-
-  [Fact]
-  public void TestBindFunctionWithDefaultArgs2()
-  {
-    string bhl = @"
-
-    func float foo(float a)
-    {
-      return a
-    }
-
-    func float test(int k)
-    {
-      return func_with_def(k, foo(k)+1)
-    }
-    ";
-
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      {
-        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
-            var a = stack.PopRelease().num;
-
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
-
-            return null;
-          },
-          new FuncArgSymbol("a", ts.T("float")),
-          new FuncArgSymbol("b", ts.T("float"))
-        );
-
-        ts.ns.Define(fn);
-      }
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
-    Assert.Equal(42 + 43, res);
-    CommonChecks(vm);
-  }
-
-  [Fact]
-  public void TestBindFunctionWithDefaultArgs3()
-  {
-    string bhl = @"
-
-    func float test()
-    {
-      return func_with_def()
-    }
-    ";
-
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      {
-        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var a = args_info.IsDefaultArgUsed(0) ? 14 : stack.PopRelease().num;
-
-            stack.Push(ValOld.NewFlt(frm.vm, a));
-
-            return null;
-          },
-          new FuncArgSymbol("a", ts.T("float"))
-        );
-
-        ts.ns.Define(fn);
-      }
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(14, res);
-    CommonChecks(vm);
-  }
-
-  [Fact]
-  public void TestBindFunctionWithDefaultArgsOmittingSome()
-  {
-    string bhl = @"
-
-    func float test(int k)
-    {
-      return func_with_def(b : k)
-    }
-    ";
-
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      {
-        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 2,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
-          {
-            var b = args_info.IsDefaultArgUsed(1) ? 2 : stack.PopRelease().num;
-            var a = args_info.IsDefaultArgUsed(0) ? 10 : stack.PopRelease().num;
-
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
-
-            return null;
-          },
-          new FuncArgSymbol("a", Types.Int),
-          new FuncArgSymbol("b", Types.Int)
-        );
-
-        ts.ns.Define(fn);
-      }
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
-    Assert.Equal(52, res);
-    CommonChecks(vm);
-  }
-
-  [Fact]
   public void TestFailureBeforeReturn()
   {
     string bhl = @"
@@ -558,6 +403,25 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     vm.Tick();
     Assert.Equal(BHS.FAILURE, fb.status);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestSimpleIncrement()
+  {
+    string bhl = @"
+
+    func float test()
+    {
+      float k = 1
+      k++
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    double num = Execute(vm, "test").Stack.Pop();
+    Assert.Equal(2, num);
     CommonChecks(vm);
   }
 
@@ -1193,6 +1057,162 @@ public class TestVM : BHL_TestBase
       )
     );
   }
+
+  [Fact]
+  public void TestBindFunctionWithDefaultArgs()
+  {
+    string bhl = @"
+
+    func float test(int k)
+    {
+      return func_with_def(k)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
+            var a = stack.PopRelease().num;
+
+            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("float")),
+          new FuncArgSymbol("b", ts.T("float"))
+        );
+
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
+    Assert.Equal(44, res);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBindFunctionWithDefaultArgs2()
+  {
+    string bhl = @"
+
+    func float foo(float a)
+    {
+      return a
+    }
+
+    func float test(int k)
+    {
+      return func_with_def(k, foo(k)+1)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
+            var a = stack.PopRelease().num;
+
+            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("float")),
+          new FuncArgSymbol("b", ts.T("float"))
+        );
+
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
+    Assert.Equal(42 + 43, res);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBindFunctionWithDefaultArgs3()
+  {
+    string bhl = @"
+
+    func float test()
+    {
+      return func_with_def()
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var a = args_info.IsDefaultArgUsed(0) ? 14 : stack.PopRelease().num;
+
+            stack.Push(ValOld.NewFlt(frm.vm, a));
+
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("float"))
+        );
+
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = Execute(vm, "test").Stack.Pop().num;
+    Assert.Equal(14, res);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestBindFunctionWithDefaultArgsOmittingSome()
+  {
+    string bhl = @"
+
+    func float test(int k)
+    {
+      return func_with_def(b : k)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      {
+        var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 2,
+          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          {
+            var b = args_info.IsDefaultArgUsed(1) ? 2 : stack.PopRelease().num;
+            var a = args_info.IsDefaultArgUsed(0) ? 10 : stack.PopRelease().num;
+
+            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+
+            return null;
+          },
+          new FuncArgSymbol("a", Types.Int),
+          new FuncArgSymbol("b", Types.Int)
+        );
+
+        ts.ns.Define(fn);
+      }
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
+    Assert.Equal(52, res);
+    CommonChecks(vm);
+  }
+
 
   [Fact]
   public void TestFuncPtrReturnNonConsumed()

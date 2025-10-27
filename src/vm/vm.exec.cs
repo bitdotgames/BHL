@@ -1004,9 +1004,6 @@ public partial class VM : INamedResolver
     ref Val v = ref exec.stack.Push();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
     v = exec.stack.vals[frame.locals_offset + local_idx];
-
-    //TODO:?
-    //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1048,15 +1045,17 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    //we must 'own' local vars
-    exec.stack.vals[frame.locals_offset + local_idx].Retain();
+    //we must 'own' local refcounted objects
+    exec.stack.vals[frame.locals_offset + local_idx]._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArgRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    curr_frame.locals[local_idx] = exec.stack_old.Pop();
+    //TODO: how do we implement this? The only sane way - address Vals as indices :(
+    throw new NotImplementedException();
+    //curr_frame.locals[local_idx] = exec.stack_old.Pop();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1494,7 +1493,7 @@ public partial class VM : INamedResolver
     var stack = exec.stack;
 
     //let's pop args bits but store it in a Frame
-    frame.args_bits = (uint)stack.vals[stack.sp--]._num;
+    frame.args_bits = (uint)stack.vals[--stack.sp]._num;
     //locals starts at the index of the first pushed argument
     frame.locals_offset = stack.sp - (int)(frame.args_bits & FuncArgsInfo.ARGS_NUM_MASK);
 
