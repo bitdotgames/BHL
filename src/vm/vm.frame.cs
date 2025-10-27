@@ -175,7 +175,7 @@ public partial class VM : INamedResolver
     public int return_ip;
 
     public uint args_bits;
-    public int locals_idx;
+    public int locals_offset;
 
     //TODO:
     //public DeferBlock[] defers;

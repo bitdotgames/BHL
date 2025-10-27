@@ -183,7 +183,7 @@ public class TestPerf : BHL_TestBase
     ref Val args_bits = ref stack.vals[stack.sp - 1];
 
     frame.args_bits = (uint)args_bits._num;
-    frame.locals_idx = stack.sp - local_vars_num;
+    frame.locals_offset = stack.sp - local_vars_num;
     stack.Add(local_vars_num);
   }
 
@@ -210,7 +210,7 @@ public class TestPerf : BHL_TestBase
   )
   {
     ref Val v = ref exec.stack.Push();
-    v._num = exec.stack.vals[frame.locals_idx + local_idx]._num;
+    v._num = exec.stack.vals[frame.locals_offset + local_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -274,14 +274,14 @@ public class TestPerf : BHL_TestBase
 
     int ret_base = stack.sp - ret_num;
     //releasing all locals
-    for(int i = frame.locals_idx; i < ret_base; ++i)
+    for(int i = frame.locals_offset; i < ret_base; ++i)
       stack.vals[i].Release();
 
-    int new_sp = frame.locals_idx + ret_num;
+    int new_sp = frame.locals_offset + ret_num;
 
     //moving returned values up
     for(int i = 0; i < ret_num; ++i)
-      stack.vals[frame.locals_idx + i] = stack.vals[ret_base + i];
+      stack.vals[frame.locals_offset + i] = stack.vals[ret_base + i];
 
     stack.sp = new_sp;
   }

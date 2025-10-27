@@ -773,7 +773,7 @@ public partial class VM : INamedResolver
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand._num = l_operand._num % r_operand._num;
+    l_operand._num %= r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -796,10 +796,10 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeUnaryNeg(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var stack = exec.stack_old;
-    var operand = stack.PopRelease().num;
+    var stack = exec.stack;
 
-    stack.Push(ValOld.NewFlt(vm, operand * -1));
+    ref Val val = ref stack.vals[stack.sp - 1];
+    val._num *= -1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -992,18 +992,33 @@ public partial class VM : INamedResolver
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val v = ref exec.stack.Push();
-    v._num = exec.stack.vals[frame.locals_idx + local_idx]._num;
+    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
+    v = exec.stack.vals[frame.locals_offset + local_idx];
 
+    //TODO:?
     //exec.stack.PushRetain(curr_frame.locals[local_idx]);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeSetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
+  unsafe static void _OpcodeSetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
     int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
     var new_val = exec.stack_old.Pop();
     curr_frame.locals.Assign(vm, local_idx, new_val);
     new_val.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+    ref var new_val = ref exec.stack.Pop();
+    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
+    exec.stack.vals[frame.locals_offset + local_idx] = new_val;
+
+    //TODO:?
+    //new_val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1160,7 +1175,7 @@ public partial class VM : INamedResolver
 
     int ret_start_offset = stack.sp - ret_num;
     //releasing all locals
-    for(int i = frame.locals_idx; i < ret_start_offset; ++i)
+    for(int i = frame.locals_offset; i < ret_start_offset; ++i)
       stack.vals[i].Release();
 
     //moving returned values up
@@ -1168,11 +1183,11 @@ public partial class VM : INamedResolver
       stack.vals,
       ret_start_offset,
       stack.vals,
-      frame.locals_idx,
+      frame.locals_offset,
       ret_num);
 
     //stack pointer now at the last returned value
-    stack.sp = frame.locals_idx + ret_num;
+    stack.sp = frame.locals_offset + ret_num;
 
     exec.ip = EXIT_FRAME_IP - 1;
   }
@@ -1474,11 +1489,13 @@ public partial class VM : INamedResolver
 
     var stack = exec.stack;
 
-    //ref Val2 args_bits = ref stack.vals[--stack.sp];
+    //ref Val args_bits = ref stack.vals[--stack.sp];
+    //TODO: should we rather pop it?
     ref Val args_bits = ref stack.vals[stack.sp - 1];
 
     frame.args_bits = (uint)args_bits._num;
-    frame.locals_idx = stack.sp - local_vars_num;
+    frame.locals_offset = stack.sp - 1;
+    //let's reserve space
     stack.Add(local_vars_num);
   }
 
