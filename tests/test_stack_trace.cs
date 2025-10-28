@@ -44,7 +44,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -127,7 +127,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -214,7 +214,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -316,7 +316,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NullReferenceException();
           });
@@ -390,7 +390,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -471,7 +471,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -602,7 +602,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //emulating null reference
@@ -699,7 +699,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -785,7 +785,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -866,7 +866,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -953,7 +953,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1051,7 +1051,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //emulating null reference
@@ -1158,7 +1158,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //emulating null reference
@@ -1259,7 +1259,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1355,7 +1355,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1457,7 +1457,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
           object o = null;
           o.GetType();
@@ -1500,7 +1500,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
           object o = null;
           o.GetType();

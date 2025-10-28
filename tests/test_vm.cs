@@ -390,7 +390,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("float"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             status = BHS.FAILURE;
             return null;
@@ -960,10 +960,10 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo arg_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo arg_info, ref BHS status) =>
           {
-            stack.Push("foo");
-            stack.Push(42);
+            exec.stack.Push("foo");
+            exec.stack.Push(42);
             return null;
           }
         );
@@ -1013,12 +1013,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string", "int", "float"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo arg_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo arg_info, ref BHS status) =>
           {
-            stack.Push(42.5);
-            stack.Push(12);
-            stack.Push("foo");
-            stack.Push(104);
+            exec.stack.Push(42.5);
+            exec.stack.Push(12);
+            exec.stack.Push("foo");
+            exec.stack.Push(104);
             return null;
           }
         );
@@ -1073,12 +1073,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            double b = args_info.IsDefaultArgUsed(0) ? 2 : stack.Pop();
-            double a = stack.Pop();
+            double b = args_info.IsDefaultArgUsed(0) ? 2 : exec.stack.Pop();
+            double a = exec.stack.Pop();
 
-            stack.Push(a + b);
+            exec.stack.Push(a + b);
 
             return null;
           },
@@ -1091,7 +1091,7 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).Stack.Pop().num;
+    double res = Execute(vm, "test", 42).Stack.Pop();
     Assert.Equal(44, res);
     CommonChecks(vm);
   }
@@ -1116,12 +1116,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            double b = args_info.IsDefaultArgUsed(0) ? 2 : stack.Pop();
-            double a = stack.Pop();
+            double b = args_info.IsDefaultArgUsed(0) ? 2 : exec.stack.Pop();
+            double a = exec.stack.Pop();
 
-            stack.Push(a + b);
+            exec.stack.Push(a + b);
 
             return null;
           },
@@ -1154,11 +1154,11 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            double a = args_info.IsDefaultArgUsed(0) ? 14 : stack.Pop();
+            double a = args_info.IsDefaultArgUsed(0) ? 14 : exec.stack.Pop();
 
-            stack.Push(a);
+            exec.stack.Push(a);
 
             return null;
           },
@@ -1190,12 +1190,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 2,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            double b = args_info.IsDefaultArgUsed(1) ? 2 : stack.Pop();
-            double a = args_info.IsDefaultArgUsed(0) ? 10 : stack.Pop();
+            double b = args_info.IsDefaultArgUsed(1) ? 2 : exec.stack.Pop();
+            double a = args_info.IsDefaultArgUsed(0) ? 10 : exec.stack.Pop();
 
-            stack.Push(a + b);
+            exec.stack.Push(a + b);
 
             return null;
           },
@@ -3114,9 +3114,9 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer42", Types.Int,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          stack.Push(42);
+          exec.stack.Push(42);
           return null;
         }
       );
@@ -3142,12 +3142,12 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer", Types.Int,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          double b = stack.PopRelease();
-          double a = stack.PopRelease();
+          double b = exec.stack.Pop();
+          double a = exec.stack.Pop();
 
-          stack.Push(b - a);
+          exec.stack.Push(b - a);
           return null;
         },
         new FuncArgSymbol("a", ts.T("int")),
@@ -6556,7 +6556,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS _) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS _) =>
           {
             log.Append("FOO");
             return null;
@@ -7169,7 +7169,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_ref", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
 
@@ -8178,10 +8178,10 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Int,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.Pop();
-            stack.Push(42);
+            exec.stack.Pop();
+            exec.stack.Push(42);
             return null;
           },
           new FuncArgSymbol("b", ts.T("bool"))
@@ -8191,9 +8191,9 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "bar_fail", Types.Int,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.PopRelease();
+            exec.stack.Pop();
             status = BHS.FAILURE;
             return null;
           },
@@ -8296,7 +8296,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "hey", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>  { return null; },
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>  { return null; },
           new FuncArgSymbol("s", ts.T("string")),
           new FuncArgSymbol("i", Types.Int)
         );
@@ -8503,10 +8503,10 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("Foo"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
-            var fn_ptr = stack.Pop();
+            var fn_ptr = exec.stack.Pop();
             //exec.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
             fn_ptr.Release();
             return null;
@@ -9110,10 +9110,10 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "self", ts.T("Bar"),
-            (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+            (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
             {
-              var obj = stack.Pop().obj;
-              stack.Push(Val.NewObj(obj, ts.T("Bar").Get()));
+              var obj = exec.stack.Pop().obj;
+              exec.stack.Push(Val.NewObj(obj, ts.T("Bar").Get()));
               return null;
             }
           );
@@ -9122,9 +9122,9 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "ret_int", FuncAttrib.Coro, Types.Int, 0,
-            (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+            (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
             {
-              return CoroutinePool.New<Bar_ret_int>(exec.vm);
+              return CoroutinePool.New<Bar_ret_int>(vm);
             },
             new FuncArgSymbol("val", Types.Int),
             new FuncArgSymbol("ticks", Types.Int)
@@ -11457,9 +11457,9 @@ public class TestVM : BHL_TestBase
   FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "WaitTicks", FuncAttrib.Coro, Types.Void, 0,
-      (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+      (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
       {
-        return CoroutinePool.New<CoroutineWaitTicks>(exec.vm);
+        return CoroutinePool.New<CoroutineWaitTicks>(vm);
       },
       new FuncArgSymbol("ticks", Types.Int)
     );

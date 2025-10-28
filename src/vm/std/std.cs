@@ -36,10 +36,10 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var o = stack.Pop();
-          stack.Push(Val.NewObj(o.type, Types.Type));
+          var o = exec.stack.Pop();
+          exec.stack.Push(Val.NewObj(o.type, Types.Type));
           o.Release();
           return null;
         },
@@ -50,11 +50,11 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var type = (IType)stack.PopRelease()._obj;
-          var o = stack.Pop();
-          stack.Push(Types.Is(o, type));
+          var type = (IType)exec.stack.PopRelease()._obj;
+          var o = exec.stack.Pop();
+          exec.stack.Push(Types.Is(o, type));
           o.Release();
           return null;
         },
@@ -66,9 +66,9 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          return CoroutinePool.New<CoroutineNextTrue>(exec.vm);
+          return CoroutinePool.New<CoroutineNextTrue>(vm);
         }
       );
       std.Define(fn);
@@ -87,9 +87,9 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            string s = stack.Pop();
+            string s = exec.stack.Pop();
             Console.Write(s);
             return null;
           },
@@ -100,9 +100,9 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            string s = stack.Pop();
+            string s = exec.stack.Pop();
             Console.WriteLine(s);
             return null;
           },

@@ -3994,10 +3994,10 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getA", ts.T("int"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var f = (VirtFoo)stack.Pop().obj;
-            stack.Push(f.getA());
+            var f = (VirtFoo)exec.stack.Pop().obj;
+            exec.stack.Push(f.getA());
             return null;
           }
         );
@@ -4006,10 +4006,10 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getB", ts.T("int"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var f = (VirtFoo)stack.Pop().obj;
-            stack.Push(f.getB());
+            var f = (VirtFoo)exec.stack.Pop().obj;
+            exec.stack.Push(f.getB());
             return null;
           }
         );
@@ -4556,10 +4556,10 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       var m = new FuncSymbolNative(new Origin(), "static_foo", FuncAttrib.Static, ts.T("int"), 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var n = (int)stack.PopRelease().num;
-          stack.Push(NativeFoo.static_foo(n));
+          int n = exec.stack.Pop();
+          exec.stack.Push(NativeFoo.static_foo(n));
           return null;
         },
         new FuncArgSymbol("int", ts.T("int"))

@@ -366,15 +366,15 @@ public class TestVariadic : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "sum", FuncAttrib.VariadicArgs, Types.Int, 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var ns = stack.Pop();
+          var ns = exec.stack.Pop();
           var vs = (ValList)ns._obj;
           int sum = 0;
           for(int i = 0; i < vs.Count; ++i)
             sum += (int)vs[i].num;
-          ns.Release();
-          stack.Push(sum);
+          vs.Release();
+          exec.stack.Push(sum);
           return null;
         },
         new FuncArgSymbol("ns", ts.TArr("int"))

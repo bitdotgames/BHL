@@ -149,11 +149,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "At", String,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          int idx = stack.Pop();
-          string self = stack.Pop();
-          stack.Push(self[idx].ToString());
+          int idx = exec.stack.Pop();
+          string self = exec.stack.Pop();
+          exec.stack.Push(self[idx].ToString());
           return null;
         },
         new FuncArgSymbol("i", Int)
@@ -163,11 +163,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          string s = stack.Pop();
-          string self = stack.Pop();
-          stack.Push( self.IndexOf(s));
+          string s = exec.stack.Pop();
+          string self = exec.stack.Pop();
+          exec.stack.Push( self.IndexOf(s));
           return null;
         },
         new FuncArgSymbol("s", String)

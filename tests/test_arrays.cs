@@ -1148,11 +1148,11 @@ public class TestArrays : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
-          delegate(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             {
               var dv0 = new Val();
-              var dvl = ValList.New(exec.vm);
+              var dvl = ValList.New(vm);
               for(int i = 0; i < 10; ++i)
               {
                 var c = new Color();
@@ -1163,7 +1163,7 @@ public class TestArrays : BHL_TestBase
               }
 
               dv0.SetObj(dvl, Types.Array);
-              stack.Push(dv0);
+              exec.stack.Push(dv0);
             }
             return null;
           }

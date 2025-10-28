@@ -118,8 +118,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     //v.SetNum(MapCount(ctx));
   }
 
-  Coroutine BindAdd(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     var val = stack.Pop();
     var key = stack.Pop();
     var map = stack.Pop();
@@ -132,8 +134,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindContains(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindContains(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     ref var key = ref stack.Pop();
     ref var map = ref stack.Pop();
 
@@ -145,8 +149,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindTryGet(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindTryGet(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     ref var key = ref stack.Pop();
     ref var map = ref stack.Pop();
 
@@ -162,8 +168,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemove(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindRemove(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     ref var key = ref stack.Pop();
     ref var map = ref stack.Pop();
 
@@ -174,9 +182,9 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindClear(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
-    var map = stack.Pop();
+    var map = exec.stack.Pop();
 
     MapClear(map);
 
@@ -196,8 +204,10 @@ public abstract class MapTypeSymbol : ClassSymbol
     //v.SetBool(MapEnumeratorNext(ctx));
   }
 
-  Coroutine BindEnumeratorCurrent(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindEnumeratorCurrent(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     var en = stack.Pop();
 
     MapEnumeratorCurrent(en, out var key, out var val);

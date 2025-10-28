@@ -27,15 +27,15 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var ov = stack.PopRelease().obj;
-          var cv = stack.PopRelease().obj;
+          var ov = exec.stack.PopRelease().obj;
+          var cv = exec.stack.PopRelease().obj;
 
           //null comparison guard
           if(cv == null || ov == null)
           {
-            stack.Push(cv == ov);
+            exec.stack.Push(cv == ov);
             return null;
           }
 
@@ -43,7 +43,7 @@ public class TestOperatorOverload : BHL_TestBase
           var c = (Color)cv;
 
           var v = c.r == o.r && c.g == o.g;
-          stack.Push(v);
+          exec.stack.Push(v);
 
           return null;
         },
@@ -502,17 +502,17 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var o = (Color)stack.PopRelease().obj;
-          var c = (Color)stack.PopRelease().obj;
+          var o = (Color)exec.stack.PopRelease().obj;
+          var c = (Color)exec.stack.PopRelease().obj;
 
           var newc = new Color();
           newc.r = c.r + o.r;
           newc.g = c.g + o.g;
 
           var v = Val.NewObj(newc, ts.T("Color").Get());
-          stack.Push(v);
+          exec.stack.Push(v);
 
           return null;
         },
@@ -547,17 +547,17 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var k = (float)stack.PopRelease().num;
-          var c = (Color)stack.PopRelease().obj;
+          var k = (float)exec.stack.PopRelease().num;
+          var c = (Color)exec.stack.PopRelease().obj;
 
           var newc = new Color();
           newc.r = c.r * k;
           newc.g = c.g * k;
 
           var v = Val.NewObj(newc, ts.T("Color").Get());
-          stack.Push(v);
+          exec.stack.Push(v);
 
           return null;
         },
@@ -594,17 +594,17 @@ public class TestOperatorOverload : BHL_TestBase
       var cl = BindColor(ts, call_setup: false);
       {
         var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var k = (float)stack.PopRelease().num;
-            var c = (Color)stack.PopRelease().obj;
+            var k = (float)exec.stack.PopRelease().num;
+            var c = (Color)exec.stack.PopRelease().obj;
 
             var newc = new Color();
             newc.r = c.r * k;
             newc.g = c.g * k;
 
             var v = Val.NewObj(newc, ts.T("Color").Get());
-            stack.Push(v);
+            exec.stack.Push(v);
 
             return null;
           },
@@ -616,17 +616,17 @@ public class TestOperatorOverload : BHL_TestBase
 
       {
         var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var o = (Color)stack.PopRelease().obj;
-            var c = (Color)stack.PopRelease().obj;
+            var o = (Color)exec.stack.PopRelease().obj;
+            var c = (Color)exec.stack.PopRelease().obj;
 
             var newc = new Color();
             newc.r = c.r + o.r;
             newc.g = c.g + o.g;
 
             var v = Val.NewObj(newc, ts.T("Color").Get());
-            stack.Push(v);
+            exec.stack.Push(v);
 
             return null;
           },
@@ -671,12 +671,12 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var o = (Color)stack.Pop().obj;
-          var c = (Color)stack.Pop().obj;
+          var o = (Color)exec.stack.Pop().obj;
+          var c = (Color)exec.stack.Pop().obj;
 
-          stack.Push(c.r == o.r && c.g == o.g);
+          exec.stack.Push(c.r == o.r && c.g == o.g);
 
           return null;
         },

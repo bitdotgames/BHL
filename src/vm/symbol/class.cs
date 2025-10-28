@@ -139,12 +139,12 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_get = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldGetFuncName(fld), fld.type,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             var res = new Val();
             //fld.getter(null, null, ref res, fld);
-            stack.Push(res);
+            exec.stack.Push(res);
             return null;
           });
         this.GetModule().nfunc_index.Index(static_get);
@@ -152,11 +152,11 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_set = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldSetFuncName(fld), fld.type,
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NotImplementedException();
             Val ctx = null;
-            var val = stack.Pop();
+            var val = exec.stack.Pop();
             //fld.setter(null, ref ctx, val, fld);
             val.Release();
             return null;

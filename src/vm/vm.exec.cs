@@ -73,8 +73,6 @@ public partial class VM : INamedResolver
   //      contains its own ExecState)
   public class ExecState
   {
-    public VM vm;
-
     internal int ip;
     internal Coroutine coroutine;
 
@@ -404,10 +402,10 @@ public partial class VM : INamedResolver
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits, out BHS status)
+  static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits, out BHS status)
   {
     status = BHS.SUCCESS;
-    var new_coroutine = native.cb(exec, exec.stack, new FuncArgsInfo(args_bits), ref status);
+    var new_coroutine = native.cb(vm, exec, new FuncArgsInfo(args_bits), ref status);
 
     if(new_coroutine != null)
     {
@@ -959,7 +957,7 @@ public partial class VM : INamedResolver
     var class_type = (ArrayTypeSymbol)self.type;
     var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, exec.stack, new FuncArgsInfo(), ref _);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default, ref _);
     exec.stack.Push(self);
   }
 
@@ -1004,7 +1002,7 @@ public partial class VM : INamedResolver
     var class_type = (MapTypeSymbol)self.type;
     var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, exec.stack, new FuncArgsInfo(), ref _);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default, ref _);
     exec.stack.Push(self);
   }
 
@@ -1308,7 +1306,7 @@ public partial class VM : INamedResolver
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits, out var _status))
+    if(CallNative(vm, exec, nfunc_symb, args_bits, out var _status))
     {
       status = _status;
       //let's cancel ip incrementing
@@ -1328,7 +1326,7 @@ public partial class VM : INamedResolver
     var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits, out var _status))
+    if(CallNative(vm, exec, nfunc_symb, args_bits, out var _status))
     {
       status = _status;
       //let's cancel ip incrementing

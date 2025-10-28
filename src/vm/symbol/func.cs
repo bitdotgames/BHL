@@ -532,8 +532,8 @@ public class FuncSymbolVirtual : FuncSymbol
 public class FuncSymbolNative : FuncSymbol
 {
   public delegate Coroutine Cb(
+    VM vm,
     VM.ExecState exec,
-    ValStack stack,
     FuncArgsInfo args_info,
     ref BHS status
     );

@@ -146,10 +146,10 @@ public class TestEnum : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),
-          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var n = stack.Pop();
-            stack.Push( n == 20);
+            double n = exec.stack.Pop();
+            exec.stack.Push(n == 20);
             return null;
           },
           new FuncArgSymbol("state", ts.T("EnumState"))

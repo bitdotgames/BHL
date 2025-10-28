@@ -98,10 +98,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     //v.SetNum(ArrCount(ctx));
   }
 
-  Coroutine BindAdd(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = stack.Pop();
-    var arr = stack.Pop();
+    var stack = exec.stack;
+
+    ref var val = ref stack.Pop();
+    ref var arr = ref stack.Pop();
 
     ArrAdd(arr, val);
 
@@ -110,10 +112,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemoveAt(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindRemoveAt(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
-    int idx = (int)stack.PopRelease().num;
-    var arr = stack.Pop();
+    var stack = exec.stack;
+
+    int idx = stack.Pop();
+    ref var arr = ref stack.Pop();
 
     ArrRemoveAt(arr, idx);
 
@@ -121,8 +125,10 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindIndexOf(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindIndexOf(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
+    var stack = exec.stack;
+
     ref var val = ref stack.Pop();
     ref var arr = ref stack.Pop();
 
@@ -134,9 +140,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindClear(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
-    ref var arr = ref stack.Pop();
+    ref var arr = ref exec.stack.Pop();
 
     ArrClear(arr);
 
@@ -144,16 +150,17 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindInsert(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindInsert(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = stack.Pop();
-    var idx = stack.Pop();
-    var arr = stack.Pop();
+    var stack = exec.stack;
 
-    ArrInsert(arr, (int)idx._num, val);
+    ref var val = ref stack.Pop();
+    int idx = stack.Pop();
+    ref var arr = ref stack.Pop();
+
+    ArrInsert(arr, idx, val);
 
     arr.Release();
-    idx.Release();
     val.Release();
     return null;
   }
@@ -422,14 +429,14 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
     {
       var fn = new FuncSymbolNative(new Origin(), "At", item_type,
-        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
         {
-          int idx = (int)stack.PopRelease().num;
-          var arr = stack.Pop();
+          int idx = exec.stack.Pop();
+          var arr = exec.stack.Pop();
 
           var res = ArrGetAt(arr, idx);
 
-          stack.Push(res);
+          exec.stack.Push(res);
 
           arr.Release();
           return null;
