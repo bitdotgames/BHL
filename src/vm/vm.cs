@@ -286,7 +286,7 @@ public partial class VM : INamedResolver
     //      during execution for some reason (when stopped it's released)
     fb.Retain();
 
-    ExecuteOld(fb.exec);
+    Execute(fb.exec);
 
     fb.Release();
   }

@@ -43,7 +43,7 @@ public struct DeferBlock
     exec.regions[exec.regions_count++]
       = new VM.Region(frm, -1, null, min_ip: ip, max_ip: max_ip);
     //3. and execute it
-    frm.vm.ExecuteOld(
+    frm.vm.Execute(
       exec,
       //NOTE: we re-use the existing exec.stack but limit the execution
       //      only up to the defer code block
@@ -119,7 +119,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
   {
-    frm.vm.ExecuteOld(exec);
+    frm.vm.Execute(exec);
     ext_exec.ip = exec.ip;
   }
 
@@ -180,7 +180,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
   {
-    frm.vm.ExecuteOld(exec);
+    frm.vm.Execute(exec);
 
     if(exec.status == BHS.SUCCESS)
     {
