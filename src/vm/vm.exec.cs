@@ -163,7 +163,6 @@ public partial class VM : INamedResolver
   unsafe void ExecuteOnce(ExecState exec)
   {
     ref var region = ref exec.regions[exec.regions_count - 1];
-    //var curr_frame = region.frame;
     //TODO: looks like frame_idx is not really needed since we always need the top frame?
     ref var frame = ref exec.frames[region.frame_idx];
 
@@ -171,20 +170,18 @@ public partial class VM : INamedResolver
     Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
 #endif
 
-    //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
+    //1. if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)
     {
       ExecuteCoroutine(null, exec);
-      return;
     }
-
-    if(exec.ip < region.min_ip || exec.ip > region.max_ip)
+    //2. are we out of the current region?
+    else if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
       --exec.regions_count;
-      return;
     }
-
-    if(exec.ip == EXIT_FRAME_IP)
+    //3. exit frame requested
+    else if(exec.ip == EXIT_FRAME_IP)
     {
       //curr_frame.ExitScope(null, exec);
 
@@ -198,13 +195,15 @@ public partial class VM : INamedResolver
       ref var tmp = ref exec.frames[exec.frames_count--];
       tmp.Deinit();
     }
+    else
+    {
+      var bc = frame.bytecode;
+      var opcode = bc[exec.ip];
 
-    var bc = frame.bytecode;
-    var opcode = bc[exec.ip];
+      op_handlers[opcode](this, exec, ref region, null, ref frame, bc);
 
-    op_handlers[opcode](this, exec, ref region, null, ref frame, bc);
-
-    ++exec.ip;
+      ++exec.ip;
+    }
   }
 
   void ExecInitCode(Module module)
