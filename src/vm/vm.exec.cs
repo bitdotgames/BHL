@@ -73,6 +73,8 @@ public partial class VM : INamedResolver
   //      contains its own ExecState)
   public class ExecState
   {
+    public BHS status = BHS.SUCCESS;
+
     internal int ip;
     internal Coroutine coroutine;
 
@@ -150,18 +152,16 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal BHS ExecuteOld(ExecState exec, int exec_waterline_idx = 0)
+  internal void ExecuteOld(ExecState exec, int exec_waterline_idx = 0)
   {
-    var status = BHS.SUCCESS;
-
-    while(exec.regions_count > exec_waterline_idx && status == BHS.SUCCESS)
-      status = ExecuteOnce(exec);
-
-    return status;
+    while(exec.regions_count > exec_waterline_idx && exec.status == BHS.SUCCESS)
+      ExecuteOnce(exec);
   }
 
-  unsafe BHS ExecuteOnce(ExecState exec)
+  unsafe void ExecuteOnce(ExecState exec)
   {
+    exec.status = BHS.SUCCESS;
+
     ref var region = ref exec.regions[exec.regions_count - 1];
     //var curr_frame = region.frame;
     //TODO: looks like frame_idx is not really needed since we always need the top frame?
@@ -173,12 +173,15 @@ public partial class VM : INamedResolver
 
     //NOTE: if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)
-      return ExecuteCoroutine(null, exec);
+    {
+      ExecuteCoroutine(null, exec);
+      return;
+    }
 
     if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
       --exec.regions_count;
-      return BHS.SUCCESS;
+      return;
     }
 
     if(exec.ip == EXIT_FRAME_IP)
@@ -191,12 +194,9 @@ public partial class VM : INamedResolver
       //exec.ip = curr_frame.return_ip + 1;
       //exec.stack = curr_frame.return_stack;
 
-      //TODO: isn't it equal frame2?
+      //TODO: isn't it equal frame?
       ref var tmp = ref exec.frames[exec.frames_count--];
       tmp.Deinit();
-      //curr_frame.Release();
-
-      return BHS.SUCCESS;
     }
 
     var status = BHS.SUCCESS;
@@ -207,7 +207,6 @@ public partial class VM : INamedResolver
     op_handlers[opcode](this, exec, ref region, null, ref frame, bc, ref status);
 
     ++exec.ip;
-    return status;
   }
 
   void ExecInitCode(Module module)
@@ -226,9 +225,9 @@ public partial class VM : INamedResolver
 
     while(init_exec.regions_count > 0)
     {
-      var status = ExecuteOnce(init_exec);
-      if(status == BHS.RUNNING)
-        throw new Exception("Invalid state in init mode: " + status);
+      ExecuteOnce(init_exec);
+      if(init_exec.status == BHS.RUNNING)
+        throw new Exception("Invalid state in init mode: " + init_exec.status);
     }
   }
 
@@ -402,10 +401,9 @@ public partial class VM : INamedResolver
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits, out BHS status)
+  static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits)
   {
-    status = BHS.SUCCESS;
-    var new_coroutine = native.cb(vm, exec, new FuncArgsInfo(args_bits), ref status);
+    var new_coroutine = native.cb(vm, exec, new FuncArgsInfo(args_bits));
 
     if(new_coroutine != null)
     {
@@ -415,45 +413,40 @@ public partial class VM : INamedResolver
       exec.coroutine = new_coroutine;
       return true;
     }
-    else if(status != BHS.SUCCESS)
+    else if(exec.status != BHS.SUCCESS)
       return true;
     else
       return false;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static BHS ExecuteCoroutine(FrameOld curr_frame, ExecState exec)
+  static void ExecuteCoroutine(FrameOld curr_frame, ExecState exec)
   {
-    var status = BHS.SUCCESS;
+    exec.status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple
     //      bindings you won't forget to do it
     ++exec.ip;
-    exec.coroutine.Tick(curr_frame, exec, ref status);
+    exec.coroutine.Tick(curr_frame, exec);
 
-    if(status == BHS.RUNNING)
+    if(exec.status == BHS.RUNNING)
     {
       --exec.ip;
-      return status;
     }
-    else if(status == BHS.FAILURE)
+    else if(exec.status == BHS.FAILURE)
     {
       CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
 
       exec.ip = EXIT_FRAME_IP - 1;
       --exec.regions_count;
-
-      return status;
     }
-    else if(status == BHS.SUCCESS)
+    else if(exec.status == BHS.SUCCESS)
     {
       CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
       exec.coroutine = null;
-
-      return status;
     }
     else
-      throw new Exception("Bad status: " + status);
+      throw new Exception("Bad status: " + exec.status);
   }
 
   //TODO: make it more universal and robust
@@ -955,9 +948,8 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     self.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
-    var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default, ref _);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
     exec.stack.Push(self);
   }
 
@@ -1000,9 +992,8 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 3];
     self.Retain();
     var class_type = (MapTypeSymbol)self.type;
-    var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default, ref _);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
     exec.stack.Push(self);
   }
 
@@ -1306,9 +1297,9 @@ public partial class VM : INamedResolver
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(vm, exec, nfunc_symb, args_bits, out var _status))
+    if(CallNative(vm, exec, nfunc_symb, args_bits))
     {
-      status = _status;
+      status = exec.status;
       //let's cancel ip incrementing
       --exec.ip;
     }
@@ -1326,9 +1317,9 @@ public partial class VM : INamedResolver
     var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(vm, exec, nfunc_symb, args_bits, out var _status))
+    if(CallNative(vm, exec, nfunc_symb, args_bits))
     {
-      status = _status;
+      status = exec.status;
       //let's cancel ip incrementing
       --exec.ip;
     }

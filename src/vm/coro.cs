@@ -6,7 +6,7 @@ namespace bhl
 
 public interface ICoroutine
 {
-  void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status);
+  void Tick(VM.FrameOld frm, VM.ExecState exec);
   void Cleanup(VM.FrameOld frm, VM.ExecState exec);
 }
 
@@ -21,7 +21,7 @@ public abstract class Coroutine : ICoroutine
   internal VM vm;
   internal Pool<Coroutine> pool;
 
-  public abstract void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status);
+  public abstract void Tick(VM.FrameOld frm, VM.ExecState exec);
 
   public virtual void Cleanup(VM.FrameOld frm, VM.ExecState exec)
   {

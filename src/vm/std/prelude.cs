@@ -15,7 +15,7 @@ public static class Prelude
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return CoroutinePool.New<CoroutineYield>(vm);
         }
@@ -26,7 +26,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, Types.Void, 0,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           //TODO: use static instance for this case?
           return CoroutinePool.New<CoroutineSuspend>(vm);
@@ -37,7 +37,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "wait", FuncAttrib.Coro, Types.Void, 0,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return CoroutinePool.New<CoroutineWait>(vm);
         },
@@ -48,7 +48,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           throw new NotImplementedException();
           //var val_ptr = stack.Pop();
@@ -64,7 +64,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           throw new NotImplementedException();
           //var val = stack.Pop();
@@ -81,7 +81,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           System.Diagnostics.Debugger.Break();
           return null;
@@ -92,7 +92,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return null;
         }
@@ -103,7 +103,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return null;
         }
@@ -116,9 +116,9 @@ public static class Prelude
 
 class CoroutineSuspend : Coroutine
 {
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
   {
-    status = BHS.RUNNING;
+    exec.status = BHS.RUNNING;
   }
 }
 
@@ -126,11 +126,11 @@ class CoroutineYield : Coroutine
 {
   bool first_time = true;
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
   {
     if(first_time)
     {
-      status = BHS.RUNNING;
+      exec.status = BHS.RUNNING;
       first_time = false;
     }
   }
@@ -145,7 +145,7 @@ class CoroutineWait : Coroutine
 {
   int end_stamp = -1;
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
   {
     if(end_stamp == -1)
     {
@@ -154,7 +154,7 @@ class CoroutineWait : Coroutine
     }
 
     if(end_stamp > System.Environment.TickCount)
-      status = BHS.RUNNING;
+      exec.status = BHS.RUNNING;
   }
 
   public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)

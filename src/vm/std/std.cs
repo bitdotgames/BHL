@@ -11,11 +11,11 @@ public static class std
   {
     bool first_time = true;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
     {
       if(first_time)
       {
-        status = BHS.RUNNING;
+        exec.status = BHS.RUNNING;
         first_time = false;
       }
       else
@@ -36,7 +36,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var o = exec.stack.Pop();
           exec.stack.Push(Val.NewObj(o.type, Types.Type));
@@ -50,7 +50,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var type = (IType)exec.stack.PopRelease()._obj;
           var o = exec.stack.Pop();
@@ -66,7 +66,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return CoroutinePool.New<CoroutineNextTrue>(vm);
         }
@@ -87,7 +87,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             string s = exec.stack.Pop();
             Console.Write(s);
@@ -100,7 +100,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             string s = exec.stack.Pop();
             Console.WriteLine(s);

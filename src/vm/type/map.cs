@@ -118,7 +118,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     //v.SetNum(MapCount(ctx));
   }
 
-  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -134,7 +134,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindContains(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindContains(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -149,7 +149,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindTryGet(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindTryGet(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -168,7 +168,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemove(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindRemove(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -182,7 +182,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var map = exec.stack.Pop();
 
@@ -204,7 +204,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     //v.SetBool(MapEnumeratorNext(ctx));
   }
 
-  Coroutine BindEnumeratorCurrent(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindEnumeratorCurrent(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 

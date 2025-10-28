@@ -98,7 +98,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     //v.SetNum(ArrCount(ctx));
   }
 
-  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -112,7 +112,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemoveAt(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindRemoveAt(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -125,7 +125,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindIndexOf(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindIndexOf(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -140,7 +140,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     ref var arr = ref exec.stack.Pop();
 
@@ -150,7 +150,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindInsert(VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindInsert(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -429,7 +429,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
     {
       var fn = new FuncSymbolNative(new Origin(), "At", item_type,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           int idx = exec.stack.Pop();
           var arr = exec.stack.Pop();

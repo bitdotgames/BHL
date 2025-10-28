@@ -31,7 +31,7 @@ public struct DeferBlock
     this.max_ip = max_ip;
   }
 
-  BHS Execute(VM.ExecState exec)
+  void Execute(VM.ExecState exec)
   {
     //1. let's remeber the original ip in order to restore it once
     //   the execution of this block is done (defer block can be
@@ -43,18 +43,16 @@ public struct DeferBlock
     exec.regions[exec.regions_count++]
       = new VM.Region(frm, -1, null, min_ip: ip, max_ip: max_ip);
     //3. and execute it
-    var status = frm.vm.ExecuteOld(
+    frm.vm.ExecuteOld(
       exec,
       //NOTE: we re-use the existing exec.stack but limit the execution
       //      only up to the defer code block
       exec.regions_count - 1
     );
-    if(status != BHS.SUCCESS)
-      throw new Exception("Defer execution invalid status: " + status);
+    if(exec.status != BHS.SUCCESS)
+      throw new Exception("Defer execution invalid status: " + exec.status);
 
     exec.ip = ip_orig;
-
-    return status;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,9 +117,9 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
       new VM.Region(frm, -1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
   {
-    status = frm.vm.ExecuteOld(exec);
+    frm.vm.ExecuteOld(exec);
     ext_exec.ip = exec.ip;
   }
 
@@ -180,11 +178,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       new VM.Region(frm, -1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
   {
-    status = frm.vm.ExecuteOld(exec);
+    frm.vm.ExecuteOld(exec);
 
-    if(status == BHS.SUCCESS)
+    if(exec.status == BHS.SUCCESS)
     {
       //TODO: why doing this if there's a similar code in parent paral block
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
@@ -238,17 +236,17 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     defers.Clear();
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
   {
     exec.ip = min_ip;
 
-    status = BHS.RUNNING;
+    exec.status = BHS.RUNNING;
 
     for(i = 0; i < branches.Count; ++i)
     {
       var branch = branches[i];
-      branch.Tick(frm, exec, ref status);
-      if(status != BHS.RUNNING)
+      branch.Tick(frm, exec);
+      if(exec.status != BHS.RUNNING)
       {
         CoroutinePool.DelOld(frm, exec, branch);
         branches.RemoveAt(i);
@@ -298,29 +296,29 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     defers.Clear();
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec, ref BHS status)
+  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
   {
     exec.ip = min_ip;
 
     for(i = 0; i < branches.Count;)
     {
       var branch = branches[i];
-      branch.Tick(frm, exec, ref status);
+      branch.Tick(frm, exec);
       //let's check if we "jumped out" of the block (e.g return, break)
       if(frm.refs == -1 /*return executed*/ || exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
       {
         CoroutinePool.DelOld(frm, exec, branch);
         branches.RemoveAt(i);
-        status = BHS.SUCCESS;
+        exec.status = BHS.SUCCESS;
         return;
       }
 
-      if(status == BHS.SUCCESS)
+      if(exec.status == BHS.SUCCESS)
       {
         CoroutinePool.DelOld(frm, exec, branch);
         branches.RemoveAt(i);
       }
-      else if(status == BHS.FAILURE)
+      else if(exec.status == BHS.FAILURE)
       {
         CoroutinePool.DelOld(frm, exec, branch);
         branches.RemoveAt(i);
@@ -331,7 +329,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     }
 
     if(branches.Count > 0)
-      status = BHS.RUNNING;
+      exec.status = BHS.RUNNING;
     //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after this block
     else if(exec.ip > min_ip && exec.ip < max_ip)
       exec.ip = max_ip + 1;

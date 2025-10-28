@@ -797,7 +797,7 @@ public class TestInterface : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "create", ts.T("IFoo"),
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             var foo = new LocalFoo();
             var v = Val.NewObj(foo, ts.T("IFoo").Get()); //NOTE: we set IFoo type
@@ -829,7 +829,7 @@ public class TestInterface : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "X", ts.T("int"),
-            (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+            (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
             {
               var foo = (LocalFoo)exec.stack.Pop().obj;
               exec.stack.Push(foo.X());
@@ -841,7 +841,7 @@ public class TestInterface : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "Y", ts.T("int"),
-            (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+            (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
             {
               var foo = (LocalFoo)exec.stack.Pop().obj;
               exec.stack.Push(foo.Y());
@@ -968,7 +968,7 @@ public class TestInterface : BHL_TestBase
         "INativeFoo",
         null,
         new FuncSymbolNative(new Origin(), "foo", ts.T("int"),
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             int n = exec.stack.Pop();
             var f = (INativeFoo)exec.stack.Pop().obj;
@@ -987,7 +987,7 @@ public class TestInterface : BHL_TestBase
       ts.ns.Define(cl);
 
       var m = new FuncSymbolNative(new Origin(), "foo", ts.T("int"),
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           int n = exec.stack.Pop();
           var f = (NativeFoo)exec.stack.Pop().obj;

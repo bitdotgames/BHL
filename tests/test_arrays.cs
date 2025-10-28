@@ -1148,7 +1148,7 @@ public class TestArrays : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info, ref BHS status) =>
+          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             {
               var dv0 = new Val();
