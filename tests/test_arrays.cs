@@ -707,32 +707,28 @@ public class TestArrays : BHL_TestBase
     var ArrayInts = new NativeListTypeSymbol<int>(
       new Origin(),
       "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => ValOld.NewInt(_vm, n),
+      (v) => (int)v,
+      (itype, n) => n,
       Types.Int
     );
     ArrayInts.Setup();
 
     var list = new List<int>();
 
-    var vm = new VM();
-    var arr = ValOld.NewObj(vm, list, ArrayInts);
+    var arr = Val.NewObj(list, ArrayInts);
 
     Assert.Equal(0, ArrayInts.ArrCount(arr));
 
     {
-      var val = ValOld.NewInt(vm, 10);
-      ArrayInts.ArrAdd(arr, val);
-      val.Release();
+      ArrayInts.ArrAdd(arr, 10);
 
       Assert.Equal(1, ArrayInts.ArrCount(arr));
       Assert.Single(list);
     }
 
     {
-      var val = ArrayInts.ArrGetAt(arr, 0);
-      Assert.Equal(10, val.num);
-      val.Release();
+      int val = ArrayInts.ArrGetAt(arr, 0);
+      Assert.Equal(10, val);
 
       Assert.Equal(10, list[0]);
     }
@@ -743,10 +739,6 @@ public class TestArrays : BHL_TestBase
 
       Assert.Empty(list);
     }
-
-    arr.Release();
-
-    CommonChecks(vm);
   }
 
   [Fact]
@@ -772,8 +764,8 @@ public class TestArrays : BHL_TestBase
       var ArrayInts = new NativeListTypeSymbol<int>(
         new Origin(),
         "List_int",
-        (v) => (int)v._num,
-        (_vm, itype, n) => ValOld.NewInt(_vm, n),
+        (v) => v,
+        ( itype, n) => n,
         Types.Int
       );
       ArrayInts.Setup();
@@ -809,8 +801,8 @@ public class TestArrays : BHL_TestBase
       var ArrayInts = new NativeListTypeSymbol<int>(
         new Origin(),
         "List_int",
-        (v) => (int)v._num,
-        (_vm, itype, n) => ValOld.NewInt(_vm, n),
+        (v) => v,
+        (itype, n) => n,
         Types.Int
       );
       ArrayInts.Setup();
@@ -846,8 +838,8 @@ public class TestArrays : BHL_TestBase
       var ArrayInts = new NativeListTypeSymbol<int>(
         new Origin(),
         "List_int",
-        (v) => (int)v._num,
-        (_vm, itype, n) => ValOld.NewInt(_vm, n),
+        (v) => v,
+        (type, n) => n,
         Types.Int
       );
       ArrayInts.Setup();
@@ -868,8 +860,8 @@ public class TestArrays : BHL_TestBase
     var ArrayInts1 = new NativeListTypeSymbol<int>(
       new Origin(),
       "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => ValOld.NewInt(_vm, n),
+      (v) => v,
+      (itype, n) => n,
       Types.Int
     );
     ArrayInts1.Setup();
@@ -877,8 +869,8 @@ public class TestArrays : BHL_TestBase
     var ArrayInts2 = new NativeListTypeSymbol<int>(
       new Origin(),
       "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => ValOld.NewInt(_vm, n),
+      (v) => v,
+      (itype, n) => n,
       Types.Int
     );
     ArrayInts2.Setup();
@@ -886,8 +878,8 @@ public class TestArrays : BHL_TestBase
     var ArrayString = new NativeListTypeSymbol<string>(
       new Origin(),
       "List_string",
-      (v) => v.str,
-      (_vm, itype, n) => ValOld.NewStr(_vm, n),
+      (v) => v,
+      (itype, n) => n,
       Types.String
     );
     ArrayString.Setup();
@@ -927,8 +919,8 @@ public class TestArrays : BHL_TestBase
     var ArrayInts = new NativeListTypeSymbol<int>(
       new Origin(),
       "List_int",
-      (v) => (int)v._num,
-      (_vm, itype, n) => ValOld.NewInt(_vm, n),
+      (v) => v,
+      (itype, n) => n,
       Types.Int
     );
     ArrayInts.Setup();
@@ -1156,16 +1148,16 @@ public class TestArrays : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          delegate(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
           {
             {
-              var dv0 = ValOld.New(frm.vm);
-              var dvl = ValList.New(frm.vm);
+              var dv0 = new Val();
+              var dvl = ValList.New(exec.vm);
               for(int i = 0; i < 10; ++i)
               {
                 var c = new Color();
                 c.r = i;
-                var tdv = ValOld.New(frm.vm);
+                var tdv = new Val();
                 tdv.SetObj(c, ts.T("Color").Get());
                 dvl.Add(tdv);
               }

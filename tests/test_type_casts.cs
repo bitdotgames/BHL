@@ -692,7 +692,7 @@ public class TestTypeCasts : BHL_TestBase
     private Action<Types> ts_fn = (ts) =>
     {
       var cl1 = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeBar(), type); },
+        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeBar(), type); },
         typeof(NativeBar)
       );
       cl1.Define(new FieldSymbol(new Origin(), "bar", ts.T("int"),
@@ -706,7 +706,7 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(cl1);
 
       var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"),
@@ -723,9 +723,9 @@ public class TestTypeCasts : BHL_TestBase
       cl2.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"),
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          stack.Push(ValOld.NewObj(frm.vm, new NativeBar(), ts.T("Foo").Get()));
+          stack.Push(Val.NewObj(new NativeBar(), ts.T("Foo").Get()));
           return null;
         }
       );
@@ -782,7 +782,7 @@ public class TestTypeCasts : BHL_TestBase
         new Origin(),
         "Foo",
         new List<ProxyType>() { ts.T("IFoo") },
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       ts.ns.Define(cl);
@@ -825,15 +825,15 @@ public class TestTypeCasts : BHL_TestBase
 
       var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>() { ts.T("IWow") },
         native_type: typeof(NativeWow),
-        creator: delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeWow(), type); }
+        creator: delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeWow(), type); }
       );
       ts.ns.Define(cl);
       cl.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"),
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          stack.Push(ValOld.NewObj(frm.vm, new NativeWow(), ts.T("IWow").Get()));
+          stack.Push(Val.NewObj(new NativeWow(), ts.T("IWow").Get()));
           return null;
         }
       );
@@ -1177,7 +1177,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
+          delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
@@ -1210,7 +1210,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
+          delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }

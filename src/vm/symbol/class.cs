@@ -17,7 +17,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
 
   public TypeSet<InterfaceSymbol> implements = new TypeSet<InterfaceSymbol>();
 
-  //contains mapping of implemented interface methods indices 
+  //contains mapping of implemented interface methods indices
   //to actual class methods indices:
   //  [IFoo][0=>3,1=>1,1=>0]
   //  [IBar][0=>2,1=>0]
@@ -35,7 +35,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
   // we want to prevent resolving of attributes and methods at some point
   // since they might collide with types. For example:
   // class Foo {
-  //   a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type  
+  //   a.A a <-- here attribute 'a' will prevent proper resolving of 'a.A' type
   // }
   // setting this attribute controls this behavior
   internal bool _resolve_only_decl_members = false;
@@ -139,10 +139,11 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_get = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldGetFuncName(fld), fld.type,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var res = ValOld.New(frm.vm);
-            fld.getter(frm, null, ref res, fld);
+            throw new NotImplementedException();
+            var res = new Val();
+            //fld.getter(null, null, ref res, fld);
             stack.Push(res);
             return null;
           });
@@ -151,11 +152,12 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_set = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldSetFuncName(fld), fld.type,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            ValOld ctx = null;
+            throw new NotImplementedException();
+            Val ctx = null;
             var val = stack.Pop();
-            fld.setter(frm, ref ctx, val, fld);
+            //fld.setter(null, ref ctx, val, fld);
             val.Release();
             return null;
           });
@@ -165,7 +167,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         this.GetModule().gvar_index.Index(fld);
     }
 
-    //NOTE: we don't check if there are any parent symbols with the same name, 
+    //NOTE: we don't check if there are any parent symbols with the same name,
     //      they will be checked once the class is finally setup
     members.Add(sym);
   }
@@ -266,10 +268,10 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       var sym = curr_class.members[i];
 
       //for weird problems assert
-      //if(sym is ITyped typed && typed.GetIType() == null) 
+      //if(sym is ITyped typed && typed.GetIType() == null)
       //  throw new SymbolError(sym, "type for member '"+sym.name+"' was not resolved in class '"+name+"'");
 
-      //NOTE: we need to recalculate attribute index taking account all 
+      //NOTE: we need to recalculate attribute index taking account all
       //      parent classes
       if (sym is IScopeIndexed si && !sym.IsStatic())
         si.scope_idx = all_members.Count;
@@ -389,28 +391,30 @@ public class ClassSymbolScript : ClassSymbol
   {
   }
 
-  void ClassCreator(VM.FrameOld frm, ref ValOld data, IType type)
+  void ClassCreator(VM vm, ref Val data, IType type)
   {
+    throw new NotImplementedException();
     //NOTE: object's raw data is a list
-    var vl = ValList.New(frm.vm);
+    var vl = ValList.New(vm);
     data.SetObj(vl, type);
 
-    for (int i = 0; i < _all_members.Length; ++i)
+    for(int i = 0; i < _all_members.Length; ++i)
     {
       var m = _all_members[i];
       //NOTE: Members contain all kinds of symbols: methods and attributes,
-      //      however we need to properly setup attributes only. 
+      //      however we need to properly setup attributes only.
       //      Other members will be initialized with special case 'nil' value.
       //TODO:
-      //      Maybe we should store attributes and methods separately someday. 
-      if (m is VariableSymbol vs)
+      //      Maybe we should store attributes and methods separately someday.
+      if(m is VariableSymbol vs)
       {
         var mtype = vs.type.Get();
-        var v = frm.vm.MakeDefaultVal(mtype);
+        var v = new Val();
+        vm.InitDefaultVal(mtype, ref v);
         vl.Add(v);
       }
       else
-        vl.Add(frm.vm.NullOld.CloneValue());
+        vl.Add(vm.NullOld.CloneValue());
     }
   }
 
@@ -442,14 +446,14 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   IList<ProxyType> tmp_implements;
 
   System.Type native_type;
-  Func<ValOld, object> native_object_getter;
+  Func<Val, object> native_object_getter;
 
   public ClassSymbolNative(
     Origin origin,
     string name,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<ValOld, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null
   )
     : this(
       origin, name,
@@ -465,7 +469,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<ValOld, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null
   )
     : this(
       origin, name,
@@ -481,7 +485,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     ProxyType proxy_super_class,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<ValOld, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null
   )
     : this(origin, name,
       proxy_super_class, null,
@@ -497,7 +501,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<ValOld, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null
   )
     : base(origin, name, creator)
   {
@@ -514,7 +518,12 @@ public class ClassSymbolNative : ClassSymbol, INativeType
 
   public object GetNativeObject(ValOld v)
   {
-    return native_object_getter?.Invoke(v) ?? v?._obj;
+    throw new NotImplementedException();
+  }
+
+  public object GetNativeObject(Val v)
+  {
+    return native_object_getter?.Invoke(v) ?? v._obj;
   }
 
   public override void Setup()

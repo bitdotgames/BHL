@@ -9,8 +9,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestEqualityOverloadedForNativeClassAndNull()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1 = null
       if(c1 == null) {
@@ -27,7 +27,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var ov = stack.PopRelease().obj;
           var cv = stack.PopRelease().obj;
@@ -35,14 +35,14 @@ public class TestOperatorOverload : BHL_TestBase
           //null comparison guard
           if(cv == null || ov == null)
           {
-            stack.Push(ValOld.NewBool(frm.vm, cv == ov));
+            stack.Push(cv == ov);
             return null;
           }
 
           var o = (Color)ov;
           var c = (Color)cv;
 
-          var v = ValOld.NewBool(frm.vm, c.r == o.r && c.g == o.g);
+          var v = c.r == o.r && c.g == o.g;
           stack.Push(v);
 
           return null;
@@ -108,8 +108,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestCustomOperatorOverloadTypeMismatchForNativeClass()
   {
     string bhl = @"
-      
-    func Color test() 
+
+    func Color test()
     {
       Color c1 = {r:1,g:2}
       return c1 * ""hey""
@@ -140,8 +140,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestPlusNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -165,8 +165,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -190,8 +190,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestMultNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -215,8 +215,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestDivNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -240,8 +240,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestGtNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -265,8 +265,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestGteNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -290,8 +290,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestLtNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -315,8 +315,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestLteNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -340,8 +340,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestUnaryMinusNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2 = -c1
@@ -364,8 +364,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestBitAndNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -389,8 +389,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestBitOrNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -414,8 +414,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestLogicalAndNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -439,8 +439,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestLogicalOrNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       Color c2
@@ -464,8 +464,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestUnaryNotNotOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1
       bool a = !c1
@@ -488,8 +488,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestPlusOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func Color test() 
+
+    func Color test()
     {
       Color c1 = {r:1,g:2}
       Color c2 = {r:20,g:30}
@@ -502,7 +502,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var o = (Color)stack.PopRelease().obj;
           var c = (Color)stack.PopRelease().obj;
@@ -511,7 +511,7 @@ public class TestOperatorOverload : BHL_TestBase
           newc.r = c.r + o.r;
           newc.g = c.g + o.g;
 
-          var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = Val.NewObj(newc, ts.T("Color").Get());
           stack.Push(v);
 
           return null;
@@ -534,8 +534,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestMultOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func Color test() 
+
+    func Color test()
     {
       Color c1 = {r:1,g:2}
       Color c2 = c1 * 2
@@ -547,7 +547,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var k = (float)stack.PopRelease().num;
           var c = (Color)stack.PopRelease().obj;
@@ -556,7 +556,7 @@ public class TestOperatorOverload : BHL_TestBase
           newc.r = c.r * k;
           newc.g = c.g * k;
 
-          var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
+          var v = Val.NewObj(newc, ts.T("Color").Get());
           stack.Push(v);
 
           return null;
@@ -579,8 +579,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestOverloadedBinOpsPriorityForNativeClass()
   {
     string bhl = @"
-      
-    func Color test() 
+
+    func Color test()
     {
       Color c1 = {r:1,g:2}
       Color c2 = {r:10,g:20}
@@ -594,7 +594,7 @@ public class TestOperatorOverload : BHL_TestBase
       var cl = BindColor(ts, call_setup: false);
       {
         var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             var k = (float)stack.PopRelease().num;
             var c = (Color)stack.PopRelease().obj;
@@ -603,7 +603,7 @@ public class TestOperatorOverload : BHL_TestBase
             newc.r = c.r * k;
             newc.g = c.g * k;
 
-            var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
+            var v = Val.NewObj(newc, ts.T("Color").Get());
             stack.Push(v);
 
             return null;
@@ -616,7 +616,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       {
         var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             var o = (Color)stack.PopRelease().obj;
             var c = (Color)stack.PopRelease().obj;
@@ -625,7 +625,7 @@ public class TestOperatorOverload : BHL_TestBase
             newc.r = c.r + o.r;
             newc.g = c.g + o.g;
 
-            var v = ValOld.NewObj(frm.vm, newc, ts.T("Color").Get());
+            var v = Val.NewObj(newc, ts.T("Color").Get());
             stack.Push(v);
 
             return null;
@@ -649,8 +649,8 @@ public class TestOperatorOverload : BHL_TestBase
   public void TestEqualityOverloadedForNativeClass()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c1 = {r:1,g:2}
       Color c2 = {r:1,g:2}
@@ -671,13 +671,12 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var o = (Color)stack.PopRelease().obj;
-          var c = (Color)stack.PopRelease().obj;
+          var o = (Color)stack.Pop().obj;
+          var c = (Color)stack.Pop().obj;
 
-          var v = ValOld.NewBool(frm.vm, c.r == o.r && c.g == o.g);
-          stack.Push(v);
+          stack.Push(c.r == o.r && c.g == o.g);
 
           return null;
         },

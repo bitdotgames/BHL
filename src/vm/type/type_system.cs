@@ -16,12 +16,12 @@ public class Types : INamedResolver
 
   static public ClassSymbolNative Type =
     new ClassSymbolNative(new Origin(), "Type",
-      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
+      delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
     );
 
   static public ClassSymbolNative FiberRef =
     new ClassSymbolNative(new Origin(), "FiberRef",
-      delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(null, type); }
+      delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
     );
 
   //NOTE: These are types which are parametrized with Any types. They are mostly used when
@@ -104,7 +104,7 @@ public class Types : INamedResolver
   }
 
   //NOTE: each symbol belongs to a Module but there are also global static symbols,
-  //      for them we have a special static global Module 
+  //      for them we have a special static global Module
   static Module static_module = new Module(null);
 
   internal Dictionary<string, Module> modules = new Dictionary<string, Module>();
@@ -149,11 +149,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "At", String,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          int idx = (int)stack.PopRelease().num;
-          string self = stack.PopRelease().str;
-          stack.Push(ValOld.NewStr(frm.vm, self[idx].ToString()));
+          int idx = stack.Pop();
+          string self = stack.Pop();
+          stack.Push(self[idx].ToString());
           return null;
         },
         new FuncArgSymbol("i", Int)
@@ -163,11 +163,11 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          string s = stack.PopRelease().str;
-          string self = stack.PopRelease().str;
-          stack.Push(ValOld.NewInt(frm.vm, self.IndexOf(s)));
+          string s = stack.Pop();
+          string self = stack.Pop();
+          stack.Push( self.IndexOf(s));
           return null;
         },
         new FuncArgSymbol("s", String)
@@ -335,7 +335,7 @@ public class Types : INamedResolver
           nobj?.GetType() ?? val_intype.GetNativeType()
         ) ?? false;
       }
-      //special case for 'any' type being cast to native type 
+      //special case for 'any' type being cast to native type
       else if(val_type == Types.Any)
       {
         var dest_ntype = dest_intype.GetNativeType();
@@ -349,6 +349,40 @@ public class Types : INamedResolver
     }
     else
       return Is(val?.type, dest_type);
+  }
+
+  static public bool Is(Val val, IType dest_type)
+  {
+    //NOTE: special handling of native types - we need to go through C# type system.
+    //      Make sense only if there's C# object is present - this way we can use C# reflection
+    //      by getting the type of the object
+    if(dest_type is INativeType dest_intype)
+    {
+      throw new NotImplementedException();
+      //var val_type = val.type;
+
+      //if(val_type is INativeType val_intype)
+      //{
+      //  var dest_ntype = dest_intype.GetNativeType();
+      //  var nobj = val_intype.GetNativeObject(val);
+      //  return dest_ntype?.IsAssignableFrom(
+      //    nobj?.GetType() ?? val_intype.GetNativeType()
+      //  ) ?? false;
+      //}
+      ////special case for 'any' type being cast to native type
+      //else if(val_type == Types.Any)
+      //{
+      //  var dest_ntype = dest_intype.GetNativeType();
+      //  if(val.is_null && dest_ntype != null)
+      //    return true;
+      //  var nobj = val._obj;
+      //  return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
+      //}
+      //else
+      //  return false;
+    }
+    else
+      return Is(val.type, dest_type);
   }
 
   static public bool CheckCastIsPossible(IType dest_type, IType from_type)
@@ -428,7 +462,7 @@ public class Types : INamedResolver
     return true;
   }
 
-  //NOTE: SemanticError(..) is attached to rhs, not lhs. 
+  //NOTE: SemanticError(..) is attached to rhs, not lhs.
   //      Usually this is the case when expression (rhs) is passed
   //      to a func arg (lhs) and it this case it makes sense
   //      to report about the site where it's actually passed (rhs),

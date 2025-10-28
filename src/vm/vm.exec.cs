@@ -31,7 +31,7 @@ public partial class VM : INamedResolver
   public const int STOP_IP = int.MaxValue - 2;
   public const int EXIT_FRAME_IP = STOP_IP - 1;
 
-  public delegate void ClassCreator(VM.FrameOld frm, ref ValOld res, IType type);
+  public delegate void ClassCreator(VM vm, ref Val res, IType type);
 
   public struct Region
   {
@@ -73,6 +73,8 @@ public partial class VM : INamedResolver
   //      contains its own ExecState)
   public class ExecState
   {
+    public VM vm;
+
     internal int ip;
     internal Coroutine coroutine;
 
@@ -384,14 +386,35 @@ public partial class VM : INamedResolver
     ref Coroutine coroutine)
   {
     status = BHS.SUCCESS;
-    var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);
+    //var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);
+
+    //if(new_coroutine != null)
+    //{
+    //  //NOTE: since there's a new coroutine we want to skip ip incrementing
+    //  //      which happens below and proceed right to the execution of
+    //  //      the new coroutine
+    //  coroutine = new_coroutine;
+    //  return true;
+    //}
+    //else if(status != BHS.SUCCESS)
+    //  return true;
+    //else
+      return false;
+  }
+
+  //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits, out BHS status)
+  {
+    status = BHS.SUCCESS;
+    var new_coroutine = native.cb(exec, exec.stack, new FuncArgsInfo(args_bits), ref status);
 
     if(new_coroutine != null)
     {
       //NOTE: since there's a new coroutine we want to skip ip incrementing
       //      which happens below and proceed right to the execution of
       //      the new coroutine
-      coroutine = new_coroutine;
+      exec.coroutine = new_coroutine;
       return true;
     }
     else if(status != BHS.SUCCESS)
@@ -489,15 +512,14 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void HandleNew(FrameOld curr_frame, ValOldStack stack, IType type)
+  void HandleNew(ValStack stack, IType type)
   {
     var cls = type as ClassSymbol;
     if(cls == null)
       throw new Exception("Not a class symbol: " + type);
 
-    var val = ValOld.New(this);
-    cls.creator(curr_frame, ref val, cls);
-    stack.Push(val);
+    ref var val = ref stack.Push();
+    cls.creator(this, ref val, cls);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -901,27 +923,27 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrIdx(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 2];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = (int)exec.stack_old.PopRelease().num;
-    var arr = exec.stack_old.Pop();
+    int idx = exec.stack.Pop();
+    var arr = exec.stack.Pop();
 
     var res = class_type.ArrGetAt(arr, idx);
 
-    exec.stack_old.Push(res);
+    exec.stack.Push(res);
     arr.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrIdxW(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 2];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = (int)exec.stack_old.PopRelease().num;
-    var arr = exec.stack_old.Pop();
-    var val = exec.stack_old.Pop();
+    int idx = exec.stack.Pop();
+    var arr = exec.stack.Pop();
+    var val = exec.stack.Pop();
 
     class_type.ArrSetAt(arr, idx, val);
 
@@ -932,27 +954,27 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 2];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     self.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack_old, new FuncArgsInfo(), ref _);
-    exec.stack_old.Push(self);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, exec.stack, new FuncArgsInfo(), ref _);
+    exec.stack.Push(self);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapIdx(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 2];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (MapTypeSymbol)self.type;
 
-    var key = exec.stack_old.Pop();
-    var map = exec.stack_old.Pop();
+    var key = exec.stack.Pop();
+    var map = exec.stack.Pop();
 
     class_type.MapTryGet(map, key, out var res);
 
-    exec.stack_old.PushRetain(res);
+    exec.stack.PushRetain(res);
     key.Release();
     map.Release();
   }
@@ -960,12 +982,12 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapIdxW(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 2];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (MapTypeSymbol)self.type;
 
-    var key = exec.stack_old.Pop();
-    var map = exec.stack_old.Pop();
-    var val = exec.stack_old.Pop();
+    var key = exec.stack.Pop();
+    var map = exec.stack.Pop();
+    var val = exec.stack.Pop();
 
     class_type.MapSet(map, key, val);
 
@@ -977,13 +999,13 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes, ref BHS status)
   {
-    var self = exec.stack_old[exec.stack_old.Count - 3];
+    ref var self = ref exec.stack.vals[exec.stack.sp - 3];
     self.Retain();
     var class_type = (MapTypeSymbol)self.type;
     var _ = BHS.SUCCESS;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(curr_frame, exec.stack_old, new FuncArgsInfo(), ref _);
-    exec.stack_old.Push(self);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, exec.stack, new FuncArgsInfo(), ref _);
+    exec.stack.Push(self);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1286,7 +1308,7 @@ public partial class VM : INamedResolver
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(curr_frame, exec.stack_old, nfunc_symb, args_bits, out var _status, ref exec.coroutine))
+    if(CallNative(exec, nfunc_symb, args_bits, out var _status))
     {
       status = _status;
       //let's cancel ip incrementing
@@ -1306,7 +1328,7 @@ public partial class VM : INamedResolver
     var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(curr_frame, exec.stack_old, nfunc_symb, args_bits, out var _status, ref exec.coroutine))
+    if(CallNative(exec, nfunc_symb, args_bits, out var _status))
     {
       status = _status;
       //let's cancel ip incrementing
@@ -1633,7 +1655,7 @@ public partial class VM : INamedResolver
   {
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var type = curr_frame.type_refs[type_idx];
-    vm.HandleNew(curr_frame, exec.stack_old, type);
+    vm.HandleNew(exec.stack, type);
   }
 
   unsafe static void InitOpcodeHandlers()

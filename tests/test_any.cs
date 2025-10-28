@@ -139,10 +139,9 @@ public class TestAny : BHL_TestBase
       BindColor(ts);
 
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_any", Types.Any,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var v = ValOld.NewObj(frm.vm, new Color(), Types.Any);
-          stack.Push(v);
+          stack.Push().SetObj(new Color(), Types.Any);
           return null;
         }
       );

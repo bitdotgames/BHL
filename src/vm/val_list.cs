@@ -7,9 +7,9 @@ namespace bhl
 {
 
 //NOTE: in case of IList implementation ValList doesn't apply owning semantics
-public class ValList : IList<ValOld>, IList, IValRefcounted
+public class ValList : IList<Val>, IList, IValRefcounted
 {
-  List<ValOld> lst = new List<ValOld>();
+  List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
@@ -51,12 +51,12 @@ public class ValList : IList<ValOld>, IList, IValRefcounted
     get { throw new NotImplementedException(); }
   }
 
-  public void Add(ValOld dv)
+  public void Add(Val dv)
   {
     lst.Add(dv);
   }
 
-  public void AddRange(IList<ValOld> list)
+  public void AddRange(IList<Val> list)
   {
     for(int i = 0; i < list.Count; ++i)
       Add(list[i]);
@@ -64,7 +64,7 @@ public class ValList : IList<ValOld>, IList, IValRefcounted
 
   public void Remove(object value)
   {
-    lst.Remove((ValOld)value);
+    lst.Remove((Val)value);
   }
 
   public void RemoveAt(int idx)
@@ -105,38 +105,38 @@ public class ValList : IList<ValOld>, IList, IValRefcounted
   object IList.this[int index]
   {
     get => lst[index];
-    set => lst[index] = (ValOld)value;
+    set => lst[index] = (Val)value;
   }
 
-  public ValOld this[int i]
+  public Val this[int i]
   {
     get { return lst[i]; }
     set { lst[i] = value; }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetValueCopyAt(int i, ValOld val)
+  public void SetValueCopyAt(int i, Val val)
   {
     var curr = lst[i];
     //NOTE: we are going to re-use the existing Value,
     //      thus we need to decrease/increase user payload
-    //      refcounts properly 
+    //      refcounts properly
     curr._refc?.Release();
     curr.ValueCopyFrom(val);
     curr._refc?.Retain();
   }
 
-  public int IndexOf(ValOld dv)
+  public int IndexOf(Val dv)
   {
     return lst.IndexOf(dv);
   }
 
-  public bool Contains(ValOld dv)
+  public bool Contains(Val dv)
   {
     return IndexOf(dv) >= 0;
   }
 
-  public bool Remove(ValOld dv)
+  public bool Remove(Val dv)
   {
     int idx = IndexOf(dv);
     if(idx < 0)
@@ -145,7 +145,7 @@ public class ValList : IList<ValOld>, IList, IValRefcounted
     return true;
   }
 
-  public void CopyTo(ValOld[] array, int start_idx)
+  public void CopyTo(Val[] array, int start_idx)
   {
     int target_size = Count - start_idx;
     if(target_size > array.Length)
@@ -155,16 +155,16 @@ public class ValList : IList<ValOld>, IList, IValRefcounted
     {
       var tmp = array[j];
       array[j] = this[i];
-      tmp?.Release();
+      tmp.Release();
     }
   }
 
-  public void Insert(int pos, ValOld dv)
+  public void Insert(int pos, Val dv)
   {
     lst.Insert(pos, dv);
   }
 
-  public IEnumerator<ValOld> GetEnumerator()
+  public IEnumerator<Val> GetEnumerator()
   {
     return lst.GetEnumerator();
   }

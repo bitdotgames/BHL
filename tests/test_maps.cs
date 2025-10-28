@@ -57,7 +57,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       return m.Count
@@ -74,7 +74,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m[""hey""] = 42
@@ -93,7 +93,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func int test() 
+      func int test()
       {
         [string]int m = [[""hey"", 42]]
         return m[""hey""]
@@ -108,7 +108,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func int test() 
+      func int test()
       {
         [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
         return m[""hey""]
@@ -123,7 +123,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func int test() 
+      func int test()
       {
         [string]int m = [[""hey"", 42], [""foo"", 14], [""hey"", 43]]
         return m[""foo""]
@@ -264,7 +264,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m[""hey""] = 42
@@ -283,7 +283,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m[""hey""] = 42
@@ -302,7 +302,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m.Remove(""hey"")
@@ -320,7 +320,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m[""foo""] = 42
@@ -340,7 +340,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func int test() 
+    func int test()
     {
       [string]int m = []
       m[""hey""] = 42
@@ -361,7 +361,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool test() 
+      func bool test()
       {
         [string]int m = []
         return m.Contains(""hey"")
@@ -376,7 +376,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool test() 
+      func bool test()
       {
         [string]int m = []
         m[""hey""] = 42
@@ -392,7 +392,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool test() 
+      func bool test()
       {
         [string]int m = []
         m[""hey""] = 42
@@ -409,7 +409,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool test() 
+      func bool test()
       {
         [string]int m = []
         m[""hey""] = 42
@@ -426,7 +426,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool test() 
+      func bool test()
       {
         [string]int m = []
         m[""hey""] = 42
@@ -447,7 +447,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool,int test() 
+      func bool,int test()
       {
         [string]int m = []
         return m.TryGet(""bar"")
@@ -466,7 +466,7 @@ public class TestMaps : BHL_TestBase
     {
       string bhl = @"
 
-      func bool,int test() 
+      func bool,int test()
       {
         [string]int m = []
         m[""hey""] = 14
@@ -489,7 +489,7 @@ public class TestMaps : BHL_TestBase
   {
     string bhl = @"
 
-    func bool,int test() 
+    func bool,int test()
     {
       [string]int m = []
       m[""hey""] = 14
@@ -537,7 +537,7 @@ public class TestMaps : BHL_TestBase
   public void TestSimpleForeach()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
       [string]int m = [[""hey"", 14], [""bar"", 4]]
       foreach(string k,int v in m) {
@@ -560,7 +560,7 @@ public class TestMaps : BHL_TestBase
   {
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         [string]int m
         foreach(int v in m) {
@@ -580,7 +580,7 @@ public class TestMaps : BHL_TestBase
 
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         []int m
         foreach(int k,int v in m) {
@@ -600,7 +600,7 @@ public class TestMaps : BHL_TestBase
 
     {
       string bhl = @"
-      func test() 
+      func test()
       {
         [string]int m
         foreach(int k,string v in m) {
@@ -775,7 +775,7 @@ public class TestMaps : BHL_TestBase
       for(int i=0;i<3;i++) {
         m[i] = i
       }
-      
+
       int local_var_garbage = 10
       foreach(int k,int v in m) {
         trace((string)k + ""->"" + (string)v + "";"")
@@ -856,23 +856,18 @@ public class TestMaps : BHL_TestBase
 
     var map = ValMap.New(vm);
 
-    var k1 = ValOld.NewStr(vm, "1");
-    var k2 = ValOld.NewStr(vm, "2");
+    var k1 = Val.NewStr("1");
+    var k2 = Val.NewStr("2");
 
-    var v1 = ValOld.NewInt(vm, 10);
-    map[k1] = v1;
-
-    var v2 = ValOld.NewInt(vm, 1);
-    map[k2] = v2;
+    map[k1] = 10;
+    map[k2] = 1;
 
     Assert.Equal(2, map.Count);
 
-    //swapping items has now effect on ownership
     (map[k1], map[k2]) = (map[k2], map[k1]);
     Assert.Equal(1, map[k1].num);
     Assert.Equal(10, map[k2].num);
 
-    //removing an item still releases it
     map.Remove(k1);
     Assert.Single(map);
     Assert.Equal(10, map[k2].num);

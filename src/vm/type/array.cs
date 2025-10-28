@@ -87,17 +87,18 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
   }
 
-  void BindCreateArr(VM.FrameOld frame, ref ValOld v, IType type)
+  void BindCreateArr(VM vm, ref Val v, IType type)
   {
-    ArrCreate(frame.vm, ref v);
+    ArrCreate(vm, ref v);
   }
 
   void BindCount(VM.FrameOld frame, ValOld ctx, ref ValOld v, FieldSymbol fld)
   {
-    v.SetNum(ArrCount(ctx));
+    throw new NotImplementedException();
+    //v.SetNum(ArrCount(ctx));
   }
 
-  Coroutine BindAdd(VM.FrameOld frame, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindAdd(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var val = stack.Pop();
     var arr = stack.Pop();
@@ -109,7 +110,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemoveAt(VM.FrameOld frame, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindRemoveAt(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     int idx = (int)stack.PopRelease().num;
     var arr = stack.Pop();
@@ -120,22 +121,22 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindIndexOf(VM.FrameOld frame, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindIndexOf(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var val = stack.Pop();
-    var arr = stack.Pop();
+    ref var val = ref stack.Pop();
+    ref var arr = ref stack.Pop();
 
     int idx = ArrIndexOf(arr, val);
 
     val.Release();
     arr.Release();
-    stack.Push(ValOld.NewInt(frame.vm, idx));
+    stack.Push(idx);
     return null;
   }
 
-  Coroutine BindClear(VM.FrameOld frame, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindClear(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
-    var arr = stack.Pop();
+    ref var arr = ref stack.Pop();
 
     ArrClear(arr);
 
@@ -143,7 +144,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindInsert(VM.FrameOld frame, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+  Coroutine BindInsert(VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status)
   {
     var val = stack.Pop();
     var idx = stack.Pop();
@@ -162,15 +163,15 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     refs.Index(item_type);
   }
 
-  public abstract void ArrCreate(VM vm, ref ValOld arr);
-  public abstract int ArrCount(ValOld arr);
-  public abstract void ArrAdd(ValOld arr, ValOld val);
-  public abstract ValOld ArrGetAt(ValOld arr, int idx);
-  public abstract void ArrSetAt(ValOld arr, int idx, ValOld val);
-  public abstract void ArrRemoveAt(ValOld arr, int idx);
-  public abstract int ArrIndexOf(ValOld arr, ValOld val);
-  public abstract void ArrClear(ValOld arr);
-  public abstract void ArrInsert(ValOld arr, int idx, ValOld val);
+  public abstract void ArrCreate(VM vm, ref Val arr);
+  public abstract int ArrCount(Val arr);
+  public abstract void ArrAdd(Val arr, Val val);
+  public abstract Val ArrGetAt(Val arr, int idx);
+  public abstract void ArrSetAt(Val arr, int idx, Val val);
+  public abstract void ArrRemoveAt(Val arr, int idx);
+  public abstract int ArrIndexOf(Val arr, Val val);
+  public abstract void ArrClear(Val arr);
+  public abstract void ArrInsert(Val arr, int idx, Val val);
 }
 
 //NOTE: operates on IList<Val> (e.g ValList)
@@ -191,7 +192,7 @@ public class GenericArrayTypeSymbol :
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static ValList AsValList(ValOld arr)
+  static ValList AsValList(Val arr)
   {
     var lst = arr._obj as ValList;
     if(arr._obj != null && lst == null)
@@ -199,30 +200,30 @@ public class GenericArrayTypeSymbol :
     return lst;
   }
 
-  public override void ArrCreate(VM vm, ref ValOld arr)
+  public override void ArrCreate(VM vm, ref Val arr)
   {
     arr.SetObj(ValList.New(vm), this);
   }
 
-  public override int ArrCount(ValOld arr)
+  public override int ArrCount(Val arr)
   {
     return AsValList(arr).Count;
   }
 
-  public override void ArrAdd(ValOld arr, ValOld val)
+  public override void ArrAdd(Val arr, Val val)
   {
     var lst = AsValList(arr);
     lst.Add(val.CloneValue());
   }
 
-  public override int ArrIndexOf(ValOld arr, ValOld val)
+  public override int ArrIndexOf(Val arr, Val val)
   {
     var lst = AsValList(arr);
 
     int idx = -1;
     for(int i = 0; i < lst.Count; ++i)
     {
-      if(lst[i].IsValueEqual(val))
+      if(lst[i].IsValueEqual(ref val))
       {
         idx = i;
         break;
@@ -232,7 +233,7 @@ public class GenericArrayTypeSymbol :
     return idx;
   }
 
-  public override ValOld ArrGetAt(ValOld arr, int idx)
+  public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = AsValList(arr);
     var res = lst[idx];
@@ -240,25 +241,25 @@ public class GenericArrayTypeSymbol :
     return res;
   }
 
-  public override void ArrSetAt(ValOld arr, int idx, ValOld val)
+  public override void ArrSetAt(Val arr, int idx, Val val)
   {
     var lst = AsValList(arr);
     lst.SetValueCopyAt(idx, val);
   }
 
-  public override void ArrRemoveAt(ValOld arr, int idx)
+  public override void ArrRemoveAt(Val arr, int idx)
   {
     var lst = AsValList(arr);
     lst.RemoveAt(idx);
   }
 
-  public override void ArrClear(ValOld arr)
+  public override void ArrClear(Val arr)
   {
     var lst = AsValList(arr);
     lst.Clear();
   }
 
-  public override void ArrInsert(ValOld arr, int idx, ValOld val)
+  public override void ArrInsert(Val arr, int idx, Val val)
   {
     var lst = AsValList(arr);
     lst.Insert(idx, val.CloneValue());
@@ -277,7 +278,7 @@ public class GenericArrayTypeSymbol :
     {
       name = "[]" + item_type;
 
-      //NOTE: once we have all members unmarshalled we should actually Setup() the instance 
+      //NOTE: once we have all members unmarshalled we should actually Setup() the instance
       Setup();
     }
   }
@@ -328,7 +329,7 @@ public abstract class NativeListTypeSymbol :
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static IList AsIList(ValOld arr)
+  public static IList AsIList(Val arr)
   {
     var lst = arr._obj as IList;
     if(arr._obj != null && lst == null)
@@ -338,22 +339,22 @@ public abstract class NativeListTypeSymbol :
 
   public abstract IList CreateList(VM vm);
 
-  public override void ArrCreate(VM vm, ref ValOld arr)
+  public override void ArrCreate(VM vm, ref Val arr)
   {
     arr.SetObj(CreateList(vm), this);
   }
 
-  public override int ArrCount(ValOld arr)
+  public override int ArrCount(Val arr)
   {
     return AsIList(arr).Count;
   }
 
-  public override void ArrRemoveAt(ValOld arr, int idx)
+  public override void ArrRemoveAt(Val arr, int idx)
   {
     AsIList(arr).RemoveAt(idx);
   }
 
-  public override void ArrClear(ValOld arr)
+  public override void ArrClear(Val arr)
   {
     AsIList(arr).Clear();
   }
@@ -397,16 +398,16 @@ public abstract class NativeListTypeSymbol :
 //NOTE: operates on IList<T>
 public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 {
-  Func<ValOld, T> val2native;
-  public Func<ValOld, T> Val2Native => val2native;
+  Func<Val, T> val2native;
+  public Func<Val, T> Val2Native => val2native;
 
-  Func<VM, ProxyType, T, ValOld> native2val;
-  public Func<VM, ProxyType, T, ValOld> Native2Val => native2val;
+  Func<ProxyType, T, Val> native2val;
+  public Func<ProxyType, T, Val> Native2Val => native2val;
 
   public NativeListTypeSymbol(
     Origin origin, string name,
-    Func<ValOld, T> val2native,
-    Func<VM, ProxyType, T, ValOld> native2val,
+    Func<Val, T> val2native,
+    Func<ProxyType, T, Val> native2val,
     ProxyType item_type
   )
     : base(origin, name, item_type)
@@ -421,7 +422,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
     {
       var fn = new FuncSymbolNative(new Origin(), "At", item_type,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           int idx = (int)stack.PopRelease().num;
           var arr = stack.Pop();
@@ -444,31 +445,31 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
     return new List<T>();
   }
 
-  public override void ArrAdd(ValOld arr, ValOld val)
+  public override void ArrAdd(Val arr, Val val)
   {
     var lst = (IList<T>)arr._obj;
     lst.Add(val2native(val));
   }
 
-  public override void ArrInsert(ValOld arr, int idx, ValOld val)
+  public override void ArrInsert(Val arr, int idx, Val val)
   {
     var lst = (IList<T>)arr._obj;
     lst.Insert(idx, val2native(val));
   }
 
-  public override ValOld ArrGetAt(ValOld arr, int idx)
+  public override Val ArrGetAt(Val arr, int idx)
   {
     var lst = (IList<T>)arr._obj;
-    return native2val(arr.vm, item_type, lst[idx]);
+    return native2val(item_type, lst[idx]);
   }
 
-  public override void ArrSetAt(ValOld arr, int idx, ValOld val)
+  public override void ArrSetAt(Val arr, int idx, Val val)
   {
     var lst = (IList<T>)arr._obj;
     lst[idx] = val2native(val);
   }
 
-  public override int ArrIndexOf(ValOld arr, ValOld val)
+  public override int ArrIndexOf(Val arr, Val val)
   {
     var lst = (IList<T>)arr._obj;
     return lst.IndexOf(val2native(val));

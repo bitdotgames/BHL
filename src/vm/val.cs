@@ -182,14 +182,14 @@ public struct Val
     return a.SequenceEqual(b);
   }
 
-  //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-  //public Val CloneValue()
-  //{
-  //  var copy = Val.New(vm);
-  //  copy.ValueCopyFrom(this);
-  //  copy._refc?.Retain();
-  //  return copy;
-  //}
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public Val CloneValue()
+  {
+    var copy = new Val();
+    copy.ValueCopyFrom(this);
+    copy._refc?.Retain();
+    return copy;
+  }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Retain()
@@ -304,6 +304,14 @@ public struct Val
     };
   }
 
+  public void SetObj(object o, IType type)
+  {
+    Reset();
+    this.type = type;
+    _obj = o;
+    _refc = o as IValRefcounted;
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBlob<T>(ref T val, IType type) where T : unmanaged
   {
@@ -396,6 +404,25 @@ public class ValStack
       Array.Resize(ref vals, sp << 1);
 
     return ref vals[sp++];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public void Push(Val v)
+  {
+    if(sp == vals.Length)
+      Array.Resize(ref vals, sp << 1);
+
+    vals[sp++] = v;
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public void PushRetain(Val v)
+  {
+    if(sp == vals.Length)
+      Array.Resize(ref vals, sp << 1);
+
+    v._refc?.Retain();
+    vals[sp++] = v;
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]

@@ -15,9 +15,9 @@ public static class Prelude
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          return CoroutinePool.New<CoroutineYield>(frm.vm);
+          return CoroutinePool.New<CoroutineYield>(exec.vm);
         }
       );
       YieldFunc = fn;
@@ -26,10 +26,10 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           //TODO: use static instance for this case?
-          return CoroutinePool.New<CoroutineSuspend>(frm.vm);
+          return CoroutinePool.New<CoroutineSuspend>(exec.vm);
         }
       );
       m.ns.Define(fn);
@@ -37,9 +37,9 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "wait", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          return CoroutinePool.New<CoroutineWait>(frm.vm);
+          return CoroutinePool.New<CoroutineWait>(exec.vm);
         },
         new FuncArgSymbol("ms", Types.Int)
       );
@@ -48,12 +48,13 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var val_ptr = stack.Pop();
-          var fb = frm.vm.Start((VM.FuncPtr)val_ptr._obj, frm);
-          val_ptr.Release();
-          stack.Push(VM.FiberRef.Encode(frm.vm, fb));
+          throw new NotImplementedException();
+          //var val_ptr = stack.Pop();
+          //var fb = exec.vm.Start((VM.FuncPtr)val_ptr._obj, null);
+          //val_ptr.Release();
+          //stack.Push(VM.FiberRef.Encode(exec.vm, fb));
           return null;
         },
         new FuncArgSymbol("p", m.TFunc(true /*is coro*/, "void"))
@@ -63,13 +64,14 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var val = stack.Pop();
-          var fb_ref = new VM.FiberRef(val);
-          var fb = fb_ref.Get();
-          fb?.Stop();
-          val.Release();
+          throw new NotImplementedException();
+          //var val = stack.Pop();
+          //var fb_ref = new VM.FiberRef(val);
+          //var fb = fb_ref.Get();
+          //fb?.Stop();
+          //fb?.Release();
           return null;
         },
         new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))
@@ -79,7 +81,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           System.Diagnostics.Debugger.Break();
           return null;
@@ -90,7 +92,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           return null;
         }
@@ -101,7 +103,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           return null;
         }

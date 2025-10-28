@@ -148,10 +148,10 @@ public class TestFiber : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var n = stack.PopRelease().num;
-          stack.Push(ValOld.NewInt(frm.vm, n * 2));
+          double n = stack.Pop();
+          stack.Push(n * 2);
           return null;
         },
         new FuncArgSymbol("n", Types.Int)
@@ -177,10 +177,10 @@ public class TestFiber : BHL_TestBase
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
         def_args_num: 1,
-        cb: delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        cb: (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-          stack.Push(ValOld.NewInt(frm.vm, n * 2));
+          var n = args_info.CountArgs() == 0 ? 1 : stack.Pop().num;
+          stack.Push(n * 2);
           return null;
         },
         args: new FuncArgSymbol("n", Types.Int)
@@ -206,10 +206,10 @@ public class TestFiber : BHL_TestBase
     {
       var fn = new FuncSymbolNative(new Origin(), "mult2", Types.Int,
         def_args_num: 1,
-        cb: delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        cb: (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var n = args_info.CountArgs() == 0 ? 1 : stack.PopRelease().num;
-          stack.Push(ValOld.NewInt(frm.vm, n * 2));
+          stack.Push(n * 2);
           return null;
         },
         args: new FuncArgSymbol("n", Types.Int)
@@ -250,7 +250,7 @@ public class TestFiber : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "native", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           log.Append("HERE");
           return null;
@@ -302,9 +302,9 @@ public class TestFiber : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "yield_and_trace", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var inst = CoroutinePool.New<TraceAfterYield>(frm.vm);
+            var inst = CoroutinePool.New<TraceAfterYield>(exec.vm);
             inst.log = log;
             return inst;
           }
@@ -648,12 +648,13 @@ public class TestFiber : BHL_TestBase
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "STOP", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var val = stack.Pop();
-          var fb_ref = new VM.FiberRef(val);
-          fb_ref.Get().Stop();
-          val.Release();
+          throw new NotImplementedException();
+          //var val = stack.Pop();
+          //var fb_ref = new VM.FiberRef(val);
+          //fb_ref.Get().Stop();
+          //val.Release();
           return null;
         },
         new FuncArgSymbol("fb", ts.T(Types.FiberRef))
@@ -733,9 +734,9 @@ public class TestFiber : BHL_TestBase
       BindTrace(ts, log);
 
       var fn = new FuncSymbolNative(new Origin(), "YIELD_STOP", FuncAttrib.Coro, Types.Void, 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          return CoroutinePool.New<YIELD_STOP>(frm.vm);
+          return CoroutinePool.New<YIELD_STOP>(exec.vm);
         },
         new FuncArgSymbol("fb", ts.T(Types.FiberRef))
       );
@@ -1028,7 +1029,7 @@ public class TestFiber : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "say_here", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             log.Append("HERE;");
             return null;
@@ -1474,13 +1475,16 @@ public class TestFiber : BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "StartScriptInMgr", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           int spawns = (int)stack.PopRelease().num;
           var ptr = stack.Pop();
 
           for(int i = 0; i < spawns; ++i)
-            ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
+          {
+            throw new NotImplementedException();
+            //ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
+          }
 
           ptr.Release();
 

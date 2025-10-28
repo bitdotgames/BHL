@@ -18,8 +18,8 @@ public class TestEnum : BHL_TestBase
   public void TestBindEnum()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       return (int)EnumState.SPAWNED + (int)EnumState.SPAWNED2
     }
@@ -43,8 +43,8 @@ public class TestEnum : BHL_TestBase
   public void TestBindEnumNative()
   {
     string bhl = @"
-      
-    func int test() 
+
+    func int test()
     {
       return (int)NativeEnum.Foo + (int)NativeEnum.Bar
     }
@@ -69,8 +69,8 @@ public class TestEnum : BHL_TestBase
   public void TestEqEnum()
   {
     string bhl = @"
-      
-    func bool test(EnumState state) 
+
+    func bool test(EnumState state)
     {
       return state == EnumState.SPAWNED2
     }
@@ -88,8 +88,8 @@ public class TestEnum : BHL_TestBase
   public void TestNotEqEnum()
   {
     string bhl = @"
-      
-    func bool test(EnumState state) 
+
+    func bool test(EnumState state)
     {
       return state != EnumState.SPAWNED
     }
@@ -107,8 +107,8 @@ public class TestEnum : BHL_TestBase
   public void TestEnumArray()
   {
     string bhl = @"
-      
-    func []EnumState test() 
+
+    func []EnumState test()
     {
       []EnumState arr = new []EnumState
       arr.Add(EnumState.SPAWNED2)
@@ -133,8 +133,8 @@ public class TestEnum : BHL_TestBase
   public void TestPassEnumToNativeFunc()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       return StateIs(state : EnumState.SPAWNED2)
     }
@@ -146,10 +146,10 @@ public class TestEnum : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var n = stack.PopRelease().num;
-            stack.Push(ValOld.NewBool(frm.vm, n == 20));
+            var n = stack.Pop();
+            stack.Push( n == 20);
             return null;
           },
           new FuncArgSymbol("state", ts.T("EnumState"))
@@ -174,10 +174,10 @@ public class TestEnum : BHL_TestBase
       A = 1
       B = 2
     }
-      
-    func int test() 
+
+    func int test()
     {
-      Foo f = Foo.B 
+      Foo f = Foo.B
       return (int)f
     }
     ";
@@ -198,10 +198,10 @@ public class TestEnum : BHL_TestBase
       A = 1
       B = -2
     }
-      
-    func int test() 
+
+    func int test()
     {
-      Foo f = Foo.B 
+      Foo f = Foo.B
       return (int)f
     }
     ";
@@ -230,7 +230,7 @@ public class TestEnum : BHL_TestBase
       A = 1
       B = 2
     }
-      
+
     ";
 
     var vm = MakeVM(bhl);
@@ -349,7 +349,7 @@ public class TestEnum : BHL_TestBase
         B = 2
       }
 
-      func bool test() 
+      func bool test()
       {
         return Foo.B == 2
       }
@@ -369,7 +369,7 @@ public class TestEnum : BHL_TestBase
         B = 2
       }
 
-      func int test() 
+      func int test()
       {
         int tmp = Foo.B
         return tmp
@@ -390,12 +390,12 @@ public class TestEnum : BHL_TestBase
         B = 2
       }
 
-      func int get(int a) 
+      func int get(int a)
       {
         return a
       }
 
-      func int test() 
+      func int test()
       {
         return get(Foo.B)
       }

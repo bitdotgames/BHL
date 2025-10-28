@@ -412,7 +412,7 @@ public class TestClass : BHL_TestBase
       BindColor(ts);
 
       var cl = new ClassSymbolNative(new Origin(), "ColorNested", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new ColorNested(), type); }
+        (VM vm, ref Val v, IType type) => { v.SetObj(new ColorNested(), type); }
       );
 
       ts.ns.Define(cl);
@@ -514,7 +514,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type)
+        (VM vm, ref Val v, IType type) =>
         {
           //dummy
         }
@@ -558,7 +558,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type)
+        (VM vm, ref Val v, IType type) =>
         {
           //dummy
         }
@@ -3959,7 +3959,7 @@ public class TestClass : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new VirtFoo(), type); },
+        (VM vm, ref Val v, IType type) => { v.SetObj(new VirtFoo(), type); },
         typeof(VirtFoo)
       );
       ts.ns.Define(cl);
@@ -3994,11 +3994,10 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getA", ts.T("int"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var f = (VirtFoo)stack.PopRelease().obj;
-            var v = ValOld.NewNum(frm.vm, f.getA());
-            stack.Push(v);
+            var f = (VirtFoo)stack.Pop().obj;
+            stack.Push(f.getA());
             return null;
           }
         );
@@ -4007,11 +4006,10 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getB", ts.T("int"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var f = (VirtFoo)stack.PopRelease().obj;
-            var v = ValOld.NewNum(frm.vm, f.getB());
-            stack.Push(v);
+            var f = (VirtFoo)stack.Pop().obj;
+            stack.Push(f.getB());
             return null;
           }
         );
@@ -4022,7 +4020,7 @@ public class TestClass : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new VirtBar(), type); },
+        (VM vm, ref Val v, IType type) => { v.SetObj(new VirtBar(), type); },
         typeof(VirtBar)
       );
 
@@ -4553,15 +4551,15 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new NativeFoo(), type); }
+        (VM vm, ref Val v, IType type) => { v.SetObj(new NativeFoo(), type); }
       );
       ts.ns.Define(cl);
 
       var m = new FuncSymbolNative(new Origin(), "static_foo", FuncAttrib.Static, ts.T("int"), 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var n = (int)stack.PopRelease().num;
-          stack.Push(ValOld.NewInt(frm.vm, NativeFoo.static_foo(n)));
+          stack.Push(NativeFoo.static_foo(n));
           return null;
         },
         new FuncArgSymbol("int", ts.T("int"))
@@ -4779,7 +4777,7 @@ public class TestClass : BHL_TestBase
       {
         {
           var cl = new ClassSymbolNative(new Origin(), "C", ts.T("B"),
-            delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new C(), type); }
+            (VM vm, ref Val v, IType type) => { v.SetObj(new C(), type); }
           );
 
           ts.ns.Define(cl);
@@ -4800,7 +4798,7 @@ public class TestClass : BHL_TestBase
 
         {
           var cl = new ClassSymbolNative(new Origin(), "B", ts.T("A"),
-            delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new B(), type); }
+            (VM vm, ref Val v, IType type) => { v.SetObj(new B(), type); }
           );
 
           ts.ns.Define(cl);
@@ -4834,7 +4832,7 @@ public class TestClass : BHL_TestBase
 
         {
           var cl = new ClassSymbolNative(new Origin(), "A",
-            delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new A(), type); }
+            (VM vm, ref Val v, IType type) => { v.SetObj(new A(), type); }
           );
 
           ts.ns.Define(cl);

@@ -343,7 +343,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual(fb.Stack.PopRelease().str, "Hello");
+    Assert.Equal("Hello", fb.Stack.PopRelease().str);
     CommonChecks(vm);
   }
 
@@ -390,7 +390,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("float"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             status = BHS.FAILURE;
             return null;
@@ -527,7 +527,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("HERE", log.ToString());
+    Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -560,7 +560,7 @@ public class TestVM : BHL_TestBase
     var num = fb.Stack.Pop().num;
     var str = fb.Stack.PopRelease().str;
     Assert.Equal(300, num);
-    AssertEqual(str, "bar");
+    Assert.Equal("bar", str);
     CommonChecks(vm);
   }
 
@@ -609,7 +609,7 @@ public class TestVM : BHL_TestBase
     var num = fb.Stack.Pop().num;
     var str = fb.Stack.PopRelease().str;
     Assert.Equal(100, num);
-    AssertEqual(str, "bar");
+    Assert.Equal("bar", str);
     CommonChecks(vm);
   }
 
@@ -637,7 +637,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
     Assert.Equal(100, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "bar");
+    Assert.Equal("bar", fb.Stack.Pop().str);
     CommonChecks(vm);
   }
 
@@ -662,7 +662,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
     Assert.Equal(100, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "bar");
+    Assert.Equal("bar", fb.Stack.Pop().str);
     CommonChecks(vm);
   }
 
@@ -689,7 +689,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
     Assert.Equal(100, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "bar");
+    Assert.Equal("bar", fb.Stack.Pop().str);
     CommonChecks(vm);
   }
 
@@ -960,10 +960,10 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo arg_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo arg_info, ref BHS status) =>
           {
-            stack.Push(ValOld.NewStr(frm.vm, "foo"));
-            stack.Push(ValOld.NewNum(frm.vm, 42));
+            stack.Push("foo");
+            stack.Push(42);
             return null;
           }
         );
@@ -974,7 +974,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
     Assert.Equal(42, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "foo");
+    Assert.Equal("foo", fb.Stack.Pop().str);
     CommonChecks(vm);
   }
 
@@ -992,7 +992,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
     Assert.Equal(100, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "foo");
+    Assert.Equal("foo", fb.Stack.Pop().str);
     Assert.Equal(3, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
@@ -1013,12 +1013,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string", "int", "float"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo arg_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo arg_info, ref BHS status) =>
           {
-            stack.Push(ValOld.NewFlt(frm.vm, 42.5));
-            stack.Push(ValOld.NewNum(frm.vm, 12));
-            stack.Push(ValOld.NewStr(frm.vm, "foo"));
-            stack.Push(ValOld.NewNum(frm.vm, 104));
+            stack.Push(42.5);
+            stack.Push(12);
+            stack.Push("foo");
+            stack.Push(104);
             return null;
           }
         );
@@ -1029,7 +1029,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     var fb = Execute(vm, "test");
     Assert.Equal(104, fb.Stack.Pop().num);
-    AssertEqual(fb.Stack.PopRelease().str, "foo");
+    Assert.Equal("foo", fb.Stack.Pop().str);
     Assert.Equal(12, fb.Stack.Pop().num);
     Assert.Equal(42.5, fb.Stack.Pop().num);
     CommonChecks(vm);
@@ -1073,12 +1073,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
-            var a = stack.PopRelease().num;
+            double b = args_info.IsDefaultArgUsed(0) ? 2 : stack.Pop();
+            double a = stack.Pop();
 
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+            stack.Push(a + b);
 
             return null;
           },
@@ -1116,12 +1116,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var b = args_info.IsDefaultArgUsed(0) ? 2 : stack.PopRelease().num;
-            var a = stack.PopRelease().num;
+            double b = args_info.IsDefaultArgUsed(0) ? 2 : stack.Pop();
+            double a = stack.Pop();
 
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+            stack.Push(a + b);
 
             return null;
           },
@@ -1154,11 +1154,11 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var a = args_info.IsDefaultArgUsed(0) ? 14 : stack.PopRelease().num;
+            double a = args_info.IsDefaultArgUsed(0) ? 14 : stack.Pop();
 
-            stack.Push(ValOld.NewFlt(frm.vm, a));
+            stack.Push(a);
 
             return null;
           },
@@ -1190,12 +1190,12 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 2,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var b = args_info.IsDefaultArgUsed(1) ? 2 : stack.PopRelease().num;
-            var a = args_info.IsDefaultArgUsed(0) ? 10 : stack.PopRelease().num;
+            double b = args_info.IsDefaultArgUsed(1) ? 2 : stack.Pop();
+            double a = args_info.IsDefaultArgUsed(0) ? 10 : stack.Pop();
 
-            stack.Push(ValOld.NewFlt(frm.vm, a + b));
+            stack.Push(a + b);
 
             return null;
           },
@@ -2811,7 +2811,7 @@ public class TestVM : BHL_TestBase
     var fn = (FuncSymbolScript)vm.ResolveNamedByPath("test");
     Assert.Equal(1 + 1 /*for now*/, fn.local_vars_num);
 
-    AssertEqual("2foo", log.ToString());
+    Assert.Equal("2foo", log.ToString());
     CommonChecks(vm);
   }
 
@@ -2845,7 +2845,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
 
-    AssertEqual("2foo", log.ToString());
+    Assert.Equal("2foo", log.ToString());
 
     var fn = (FuncSymbolScript)vm.ResolveNamedByPath("test");
     Assert.Equal(2, fn.local_vars_num);
@@ -3097,7 +3097,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(c, ts_fn);
     vm.Start("test");
     Assert.False(vm.Tick());
-    AssertEqual("foo", log.ToString());
+    Assert.Equal("foo", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3114,9 +3114,9 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer42", Types.Int,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          stack.Push(ValOld.NewNum(frm.vm, 42));
+          stack.Push(42);
           return null;
         }
       );
@@ -3124,7 +3124,7 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "test").Stack.Pop().num;
+    double num = Execute(vm, "test").Stack.Pop();
     Assert.Equal(42, num);
     CommonChecks(vm);
   }
@@ -3142,12 +3142,12 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer", Types.Int,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
-          var b = stack.PopRelease().num;
-          var a = stack.PopRelease().num;
+          double b = stack.PopRelease();
+          double a = stack.PopRelease();
 
-          stack.Push(ValOld.NewFlt(frm.vm, b - a));
+          stack.Push(b - a);
           return null;
         },
         new FuncArgSymbol("a", ts.T("int")),
@@ -3317,7 +3317,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("Hey", log.ToString());
+    Assert.Equal("Hey", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3558,7 +3558,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3584,7 +3584,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("OK", log.ToString());
+    Assert.Equal("OK", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3610,7 +3610,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("OK", log.ToString());
+    Assert.Equal("OK", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3634,7 +3634,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("ELSE", log.ToString());
+    Assert.Equal("ELSE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -3661,7 +3661,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("ELSE", log.ToString());
+    Assert.Equal("ELSE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4212,7 +4212,7 @@ public class TestVM : BHL_TestBase
     vm.Tick();
     Assert.Equal(BHS.FAILURE, fb.status);
 
-    AssertEqual("01", log.ToString());
+    Assert.Equal("01", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4443,7 +4443,7 @@ public class TestVM : BHL_TestBase
 
     var str = log.ToString();
 
-    AssertEqual("1;1;1;1;1;", str);
+    Assert.Equal("1;1;1;1;1;", str);
 
     for(int i = 0; i < 5; ++i)
       vm.Tick();
@@ -4452,7 +4452,7 @@ public class TestVM : BHL_TestBase
 
     str = log.ToString();
 
-    AssertEqual("1;1;1;1;1;" + "1;1;1;1;1;", str);
+    Assert.Equal("1;1;1;1;1;" + "1;1;1;1;1;", str);
 
     vm.Stop(fb);
 
@@ -4490,7 +4490,7 @@ public class TestVM : BHL_TestBase
     vm.Tick();
     Assert.Equal(BHS.FAILURE, fb.status);
 
-    AssertEqual("01", log.ToString());
+    Assert.Equal("01", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4697,7 +4697,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("0;3;10;", log.ToString());
+    Assert.Equal("0;3;10;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4719,7 +4719,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("210", log.ToString());
+    Assert.Equal("210", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4741,7 +4741,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("12", log.ToString());
+    Assert.Equal("12", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4765,7 +4765,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
+    Assert.Equal("0,0;0,1;1,0;1,1;2,0;2,1;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4795,7 +4795,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("012", log.ToString());
+    Assert.Equal("012", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4841,7 +4841,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("012", log.ToString());
+    Assert.Equal("012", log.ToString());
     CommonChecks(vm);
   }
 
@@ -4865,7 +4865,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("012", log.ToString());
+    Assert.Equal("012", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5030,7 +5030,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5056,7 +5056,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123321", log.ToString());
+    Assert.Equal("123321", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5084,7 +5084,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5108,7 +5108,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5130,7 +5130,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5157,7 +5157,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5187,7 +5187,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5216,7 +5216,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("142536", log.ToString());
+    Assert.Equal("142536", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5241,7 +5241,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("12", log.ToString());
+    Assert.Equal("12", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5268,7 +5268,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123123", log.ToString());
+    Assert.Equal("123123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5293,7 +5293,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
+    Assert.Equal("1,1;1,2;1,3;2,1;2,2;2,3;3,1;3,2;3,3;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5317,7 +5317,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
+    Assert.Equal("1,20;1,30;2,20;2,30;3,20;3,30;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -5905,7 +5905,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("Test");
     Assert.False(vm.Tick());
-    AssertEqual(fb.Stack.PopRelease().str, "Hello world !");
+    Assert.Equal("Hello world !", fb.Stack.Pop().str);
     CommonChecks(vm);
   }
 
@@ -5996,7 +5996,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
-    AssertEqual("HEY", log.ToString());
+    Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6022,7 +6022,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.False(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
-    AssertEqual("HEYBAR", log.ToString());
+    Assert.Equal("HEYBAR", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6156,7 +6156,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(3 * 2 + 3 * 10, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
-    AssertEqual("whathey", log.ToString());
+    Assert.Equal("whathey", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6225,7 +6225,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
-    AssertEqual("HEY", log.ToString());
+    Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6250,7 +6250,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
-    AssertEqual("HEY", log.ToString());
+    Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6279,7 +6279,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     ExecuteOld(vm, "test", ValOld.NewNum(vm, 3));
-    AssertEqual("01234", log.ToString());
+    Assert.Equal("01234", log.ToString());
     Assert.Equal(2, vm.frames_pool.MissCount);
     CommonChecks(vm);
   }
@@ -6422,7 +6422,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var cl = new ClassSymbolNative(new Origin(), "refbool",
-          delegate(VM.FrameOld frm, ref ValOld v, IType type) { }
+          delegate(VM vm, ref Val v, IType type) { }
         );
         ts.ns.Define(cl);
       }
@@ -6536,7 +6536,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     ExecuteOld(vm, "test", ValOld.NewNum(vm, 3));
-    AssertEqual("HERE", log.ToString());
+    Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -6556,7 +6556,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS _)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS _) =>
           {
             log.Append("FOO");
             return null;
@@ -6568,7 +6568,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("FOO", log.ToString());
+    Assert.Equal("FOO", log.ToString());
     CommonChecks(vm);
   }
 
@@ -7169,13 +7169,15 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_ref", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            var b = stack.Pop();
-            var a = stack.PopRelease().num;
+            throw new NotImplementedException();
 
-            b.num = a * 2;
-            b.Release();
+            //ref var b = ref stack.Pop();
+            //double a = stack.Pop();
+
+            //b._num = a * 2;
+            //b.Release();
             return null;
           },
           new FuncArgSymbol("a", ts.T("float")),
@@ -7844,11 +7846,11 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       Assert.True(vm.TryFindFuncAddr("test", out var addr));
-      AssertEqual("test", addr.symbol.name);
+      Assert.Equal("test", addr.symbol.name);
     }
     {
       Assert.True(vm.TryFindFuncAddr("start", out var addr));
-      AssertEqual("start", addr.symbol.name);
+      Assert.Equal("start", addr.symbol.name);
     }
 
     CommonChecks(vm);
@@ -8064,7 +8066,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("BARFOO", log.ToString());
+    Assert.Equal("BARFOO", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8103,7 +8105,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("BARFOO", log.ToString());
+    Assert.Equal("BARFOO", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8176,10 +8178,10 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Int,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.PopRelease();
-            stack.Push(ValOld.NewNum(frm.vm, 42));
+            stack.Pop();
+            stack.Push(42);
             return null;
           },
           new FuncArgSymbol("b", ts.T("bool"))
@@ -8189,7 +8191,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "bar_fail", Types.Int,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             stack.PopRelease();
             status = BHS.FAILURE;
@@ -8294,7 +8296,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "hey", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status) { return null; },
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>  { return null; },
           new FuncArgSymbol("s", ts.T("string")),
           new FuncArgSymbol("i", Types.Int)
         );
@@ -8501,10 +8503,11 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("Foo"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
+            throw new NotImplementedException();
             var fn_ptr = stack.Pop();
-            frm.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
+            //exec.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
             fn_ptr.Release();
             return null;
           },
@@ -8517,7 +8520,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual(log.ToString(), "HERE");
+    Assert.Equal(log.ToString(), "HERE");
     CommonChecks(vm);
   }
 
@@ -8555,7 +8558,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8591,7 +8594,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8648,7 +8651,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
     Assert.Equal(BHS.FAILURE, fb.status);
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8706,7 +8709,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
     Assert.Equal(BHS.FAILURE, fb.status);
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8766,7 +8769,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
     Assert.Equal(BHS.FAILURE, fb.status);
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8810,7 +8813,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8863,7 +8866,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("233", log.ToString());
+    Assert.Equal("233", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8904,7 +8907,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8950,7 +8953,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -8994,7 +8997,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9031,7 +9034,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9097,7 +9100,7 @@ public class TestVM : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Bar",
-          delegate(VM.FrameOld frm, ref ValOld v, IType type)
+          delegate(VM vm, ref Val v, IType type)
           {
             //fake object
             v.SetObj(null, type);
@@ -9107,10 +9110,10 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "self", ts.T("Bar"),
-            delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+            (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
             {
-              var obj = stack.PopRelease().obj;
-              stack.Push(ValOld.NewObj(frm.vm, obj, ts.T("Bar").Get()));
+              var obj = stack.Pop().obj;
+              stack.Push(Val.NewObj(obj, ts.T("Bar").Get()));
               return null;
             }
           );
@@ -9119,9 +9122,9 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "ret_int", FuncAttrib.Coro, Types.Int, 0,
-            delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+            (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
             {
-              return CoroutinePool.New<Bar_ret_int>(frm.vm);
+              return CoroutinePool.New<Bar_ret_int>(exec.vm);
             },
             new FuncArgSymbol("val", Types.Int),
             new FuncArgSymbol("ticks", Types.Int)
@@ -9134,7 +9137,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1 2;10 20;", log.ToString());
+    Assert.Equal("1 2;10 20;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9266,8 +9269,8 @@ public class TestVM : BHL_TestBase
 
     Assert.Equal(100500, Execute(vm, "test1").Stack.Pop().num);
     Assert.Equal(100500, Execute(vm, "test2").Stack.Pop().num);
-    AssertEqual(ExecuteOld(vm, "test3", ValOld.NewNum(vm, 0)).result_old.PopRelease().str, "default value");
-    AssertEqual(ExecuteOld(vm, "test3", ValOld.NewNum(vm, 2)).result_old.PopRelease().str, "second value");
+    Assert.Equal("default value", ExecuteOld(vm, "test3", ValOld.NewNum(vm, 0)).result_old.PopRelease().str);
+    Assert.Equal("second value", ExecuteOld(vm, "test3", ValOld.NewNum(vm, 2)).result_old.PopRelease().str);
 
     CommonChecks(vm);
   }
@@ -9314,7 +9317,7 @@ public class TestVM : BHL_TestBase
     Assert.Equal(0, Execute(vm, "test1").Stack.Pop().num);
 
     Execute(vm, "test2");
-    AssertEqual("012012011223", log.ToString());
+    Assert.Equal("012012011223", log.ToString());
 
     CommonChecks(vm);
   }
@@ -9664,7 +9667,7 @@ public class TestVM : BHL_TestBase
     Assert.Equal(0, Execute(vm, "test1").Stack.Pop().num);
 
     Execute(vm, "test2");
-    AssertEqual("32103210", log.ToString());
+    Assert.Equal("32103210", log.ToString());
 
     CommonChecks(vm);
   }
@@ -9839,7 +9842,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9865,7 +9868,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9896,7 +9899,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("1,1;1,2;2,1;2,2;", log.ToString());
+    Assert.Equal("1,1;1,2;2,1;2,2;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9920,7 +9923,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("123", log.ToString());
+    Assert.Equal("123", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9944,7 +9947,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
     CommonChecks(vm);
   }
 
@@ -9974,7 +9977,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("OK;", log.ToString());
+    Assert.Equal("OK;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -10004,7 +10007,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("OK;", log.ToString());
+    Assert.Equal("OK;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -10031,7 +10034,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("OK;", log.ToString());
+    Assert.Equal("OK;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -10065,7 +10068,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("OK;", log.ToString());
+    Assert.Equal("OK;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -10099,7 +10102,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("OK;", log.ToString());
+    Assert.Equal("OK;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -11012,7 +11015,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     vm.Stop(fb);
 
-    AssertEqual("A1A1", log.ToString());
+    Assert.Equal("A1A1", log.ToString());
     CommonChecks(vm);
   }
 
@@ -11108,7 +11111,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11128,7 +11131,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test").result_old.PopRelease();
-    AssertEqual("INC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11150,7 +11153,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11171,7 +11174,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC2;INC3;DEC2;INC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11193,7 +11196,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;INC3;DEC0;DEC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;INC3;DEC0;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11214,7 +11217,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11247,7 +11250,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;REFS2;INC2;INC3;INC4;DEC3;REFS4;DEC2;INC3;DEC2;REFS3;DEC1;DEC0;",
+    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;REFS2;INC2;INC3;INC4;DEC3;REFS4;DEC2;INC3;DEC2;REFS3;DEC1;DEC0;",
       logs.ToString());
     CommonChecks(vm);
   }
@@ -11269,7 +11272,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11292,7 +11295,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC1;INC2;DEC1;INC2;DEC1;DEC0;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11319,7 +11322,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11349,7 +11352,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;HERE;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;HERE;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11382,7 +11385,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -11454,9 +11457,9 @@ public class TestVM : BHL_TestBase
   FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "WaitTicks", FuncAttrib.Coro, Types.Void, 0,
-      delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+      (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
       {
-        return CoroutinePool.New<CoroutineWaitTicks>(frm.vm);
+        return CoroutinePool.New<CoroutineWaitTicks>(exec.vm);
       },
       new FuncArgSymbol("ticks", Types.Int)
     );
@@ -11495,7 +11498,7 @@ public class TestVM : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "RefC", null,
-        delegate(VM.FrameOld frm, ref ValOld v, IType type) { v.SetObj(new RefC(logs), type); }
+        delegate(VM vm, ref Val v, IType type) { v.SetObj(new RefC(logs), type); }
       );
       {
         var vs = new FieldSymbol(new Origin(), "refs", Types.Int,

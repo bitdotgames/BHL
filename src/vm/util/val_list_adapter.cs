@@ -11,7 +11,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
 {
   internal Pool<ValList<T>> pool;
 
-  Func<ValOld, T> val2native;
+  Func<Val, T> val2native;
 
   ValList val_list;
 
@@ -35,7 +35,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     return _pool;
   }
 
-  static public ValList<T> New(ValList val_list, Func<ValOld, T> val2native)
+  static public ValList<T> New(ValList val_list, Func<Val, T> val2native)
   {
     var pool = GetPool();
 
@@ -59,7 +59,7 @@ public class ValList<T> : IList<T>, IValRefcounted, IDisposable
     return vls;
   }
 
-  public ValList(ValList val_list, Func<ValOld, T> val2native)
+  public ValList(ValList val_list, Func<Val, T> val2native)
   {
     this.val_list = val_list;
     this.val2native = val2native;

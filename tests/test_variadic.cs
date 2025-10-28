@@ -332,7 +332,7 @@ public class TestVariadic : BHL_TestBase
       return val
     }
 
-    coro func test() 
+    coro func test()
     {
       paral_all {
         foo(1, yield ret_int(val: 2, ticks: 1))
@@ -366,7 +366,7 @@ public class TestVariadic : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "sum", FuncAttrib.VariadicArgs, Types.Int, 0,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           var ns = stack.Pop();
           var vs = (ValList)ns._obj;
@@ -374,7 +374,7 @@ public class TestVariadic : BHL_TestBase
           for(int i = 0; i < vs.Count; ++i)
             sum += (int)vs[i].num;
           ns.Release();
-          stack.Push(ValOld.NewInt(frm.vm, sum));
+          stack.Push(sum);
           return null;
         },
         new FuncArgSymbol("ns", ts.TArr("int"))

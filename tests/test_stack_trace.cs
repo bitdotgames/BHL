@@ -44,9 +44,10 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -126,9 +127,10 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -212,9 +214,10 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -313,7 +316,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
             throw new NullReferenceException();
           });
@@ -387,9 +390,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -467,9 +471,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -597,11 +602,12 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
+            throw new NotImplementedException();
             //emulating null reference
-            frm = null;
-            frm.fb = null;
+            //frame.fb = null;
+            //frame.fb.Id;
             return null;
           });
         ts.ns.Define(fn);
@@ -693,9 +699,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -778,9 +785,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -858,9 +866,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -944,9 +953,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1041,11 +1051,12 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
+            throw new NotImplementedException();
             //emulating null reference
-            frm = null;
-            frm.fb = null;
+            //frame.fb = null;
+            //frame.fb.Id =
             return null;
           });
         ts.ns.Define(fn);
@@ -1147,12 +1158,13 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
+            throw new NotImplementedException();
             //emulating null reference
-            frm.fb.GetStackTrace();
-            frm = null;
-            frm.fb = null;
+            //frame.fb.GetStackTrace();
+            //frame.fb = null;
+            //frame.fb.Id
             return null;
           });
         ts.ns.Define(fn);
@@ -1247,9 +1259,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1342,9 +1355,10 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            frm.fb.GetStackTrace(trace);
+            throw new NotImplementedException();
+            //frame.fb.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1443,7 +1457,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           object o = null;
           o.GetType();
@@ -1486,7 +1500,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+        (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
         {
           object o = null;
           o.GetType();

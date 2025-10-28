@@ -1275,9 +1275,9 @@ public class TestNamespace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.Push(ValOld.NewInt(frm.vm, 1));
+            stack.Push(1);
             return null;
           }
         );
@@ -1313,9 +1313,9 @@ public class TestNamespace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.Push(ValOld.NewInt(frm.vm, 1));
+            stack.Push(1);
             return null;
           }
         );
@@ -1323,9 +1323,9 @@ public class TestNamespace : BHL_TestBase
       }
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          delegate(VM.FrameOld frm, ValOldStack stack, FuncArgsInfo args_info, ref BHS status)
+          (VM.ExecState exec, ValStack stack, FuncArgsInfo args_info, ref BHS status) =>
           {
-            stack.Push(ValOld.NewInt(frm.vm, 10));
+            stack.Push(10);
             return null;
           }
         );
