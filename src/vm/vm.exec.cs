@@ -35,8 +35,6 @@ public partial class VM : INamedResolver
 
   public struct Region
   {
-    public FrameOld frame_old;
-
     public int frame_idx;
 
     public List<DeferBlock> defer_support;
@@ -48,14 +46,12 @@ public partial class VM : INamedResolver
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public Region(
-      FrameOld frame_old,
       int frame_idx,
       List<DeferBlock> defer_support,
       int min_ip = -1,
       int max_ip = STOP_IP
       )
     {
-      this.frame_old = frame_old;
       this.frame_idx = frame_idx;
       this.defer_support = defer_support;
       this.min_ip = min_ip;
@@ -216,7 +212,7 @@ public partial class VM : INamedResolver
     init_exec.stack_old = init_frame.stack;
     init_frame.Init(null, null, module, module.compiled.constants, module.compiled.type_refs_resolved, bytecode, 0);
     init_exec.regions[init_exec.regions_count++] =
-      new VM.Region(init_frame, -1, null, 0, bytecode.Length - 1);
+      new VM.Region(-1, null, 0, bytecode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_frame.locals = init_frame.module.gvar_vals;
 
@@ -351,7 +347,7 @@ public partial class VM : INamedResolver
     new_frame.return_ip = exec.ip;
     exec.stack_old = new_frame.stack;
     exec.frames_old.Push(new_frame);
-    exec.regions[exec.regions_count++] = new Region(new_frame, -1, new_frame.defers);
+    exec.regions[exec.regions_count++] = new Region(-1, new_frame.defers);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = new_frame.start_ip - 1;
   }
@@ -369,7 +365,7 @@ public partial class VM : INamedResolver
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
-    exec.regions[exec.regions_count++] = new Region(null, frame_idx, null);
+    exec.regions[exec.regions_count++] = new Region(frame_idx, null);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
