@@ -106,8 +106,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     ArrAdd(arr, val);
 
-    val.Release();
-    arr.Release();
+    //TODO: not really needed?
+    //val.Release();
+    //arr.Release();
     return null;
   }
 
@@ -120,7 +121,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     ArrRemoveAt(arr, idx);
 
-    arr.Release();
+    //TODO: not really needed?
+    //arr.Release();
     return null;
   }
 
@@ -133,8 +135,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     int idx = ArrIndexOf(arr, val);
 
-    val.Release();
-    arr.Release();
+    //TODO: not really needed?
+    //val.Release();
+    //arr.Release();
     stack.Push(idx);
     return null;
   }
@@ -145,7 +148,8 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     ArrClear(arr);
 
-    arr.Release();
+    //TODO: not really needed?
+    //arr.Release();
     return null;
   }
 
@@ -159,8 +163,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
 
     ArrInsert(arr, idx, val);
 
-    arr.Release();
-    val.Release();
+    //TODO: not really needed?
+    //arr.Release();
+    //val.Release();
     return null;
   }
 

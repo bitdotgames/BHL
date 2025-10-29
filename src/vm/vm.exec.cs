@@ -827,7 +827,8 @@ public partial class VM : INamedResolver
     var res = class_type.ArrGetAt(arr, idx);
 
     exec.stack.Push(res);
-    arr.Release();
+    //TODO: not really needed?
+    //arr.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -842,15 +843,17 @@ public partial class VM : INamedResolver
 
     class_type.ArrSetAt(arr, idx, val);
 
-    val.Release();
-    arr.Release();
+    //TODO: not really needed?
+    //val.Release();
+    //arr.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    self.Retain();
+    //TODO: not really needed?
+    //self.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
     ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
@@ -943,6 +946,9 @@ public partial class VM : INamedResolver
     ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
     current._refc?.Release();
     current = new_val;
+    //TODO: think better about this one, currently it's an ugly hotfix,
+    //      looks like we need to do that on each Pop() operation?
+    new_val._refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

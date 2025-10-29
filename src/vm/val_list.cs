@@ -124,6 +124,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
     curr._refc?.Release();
     curr.ValueCopyFrom(val);
     curr._refc?.Retain();
+    lst[i] = curr;
   }
 
   public int IndexOf(Val dv)
