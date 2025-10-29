@@ -694,7 +694,7 @@ public class TestClass : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(42, ExecuteOld(vm, "test", ValOld.NewNum(vm, 42)).result_old.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test", 42).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -750,7 +750,7 @@ public class TestClass : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    AssertEqual("0;0;;", Execute(vm, "test").result_old.PopRelease().str);
+    AssertEqual("0;0;;", Execute(vm, "test").Stack.Pop().str);
     CommonChecks(vm);
   }
 

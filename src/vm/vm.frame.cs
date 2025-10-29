@@ -194,10 +194,9 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Init(/*Fiber fb*/ Module module, int start_ip)
+    public unsafe void Init(Module module, int start_ip)
     {
       Init(
-        //fb,
         module,
         module.compiled.constants,
         module.compiled.type_refs_resolved,
@@ -210,7 +209,6 @@ public partial class VM : INamedResolver
     public unsafe void Init(Frame origin, int start_ip)
     {
       Init(
-        //origin.fb,
         origin.module,
         origin.constants,
         origin.type_refs,
@@ -221,7 +219,6 @@ public partial class VM : INamedResolver
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void Init(
-      //Fiber fb,
       Module module,
       Const[] constants,
       IType[] type_refs,

@@ -931,12 +931,18 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var new_val = ref exec.stack.Pop();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
-    exec.stack.vals[frame.locals_offset + local_idx] = new_val;
 
-    //TODO:?
-    //new_val.Release();
+    ref var new_val = ref exec.stack.Pop();
+    //NOTE: Retaining an existing value increments refs counter
+    //      and in case of newly created class it's 1 already
+    //      so it doesn't make sense?
+    //      Our refcounted objects are assumed to have refs counter = 1
+    //      when they are created.
+    //new_val._refc?.Retain();
+    ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
+    current._refc?.Release();
+    current = new_val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1166,7 +1172,7 @@ public partial class VM : INamedResolver
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
     ref var new_frame = ref exec.PushFrame();
-    new_frame.Init(frame, /*exec.stack,*/ func_ip);
+    new_frame.Init(frame, func_ip);
     vm.Call(exec, ref new_frame, exec.frames_count - 1, args_bits);
   }
 
@@ -1211,11 +1217,11 @@ public partial class VM : INamedResolver
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    var func_mod = curr_frame.module._imported[import_idx];
+    var func_mod = frame.module._imported[import_idx];
 
-    var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_mod, func_ip);
-    vm.Call(exec, frm, args_bits);
+    ref var new_frame = ref exec.PushFrame();
+    new_frame.Init(func_mod, func_ip);
+    vm.Call(exec, ref new_frame, exec.frames_count - 1, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
