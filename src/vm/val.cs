@@ -451,7 +451,6 @@ public class ValStack
     int needed = num - (vals.Length - sp);
     if(needed > 0)
       Array.Resize(ref vals, vals.Length + needed);
-    sp += num;
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
