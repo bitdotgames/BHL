@@ -40,7 +40,7 @@ public class TestClass : BHL_TestBase
       var vm = MakeVM(c);
       var fb = vm.Start("test");
       Assert.False(vm.Tick());
-      Assert.True(fb.result_old.PopRelease().bval);
+      Assert.True(fb.Stack.Pop());
       CommonChecks(vm);
     }
 
@@ -59,7 +59,7 @@ public class TestClass : BHL_TestBase
       var vm = MakeVM(bhl);
       var fb = vm.Start("test");
       Assert.False(vm.Tick());
-      Assert.True(fb.result_old.PopRelease().bval);
+      Assert.True(fb.Stack.Pop());
       CommonChecks(vm);
     }
   }

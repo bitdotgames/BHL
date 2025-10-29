@@ -391,12 +391,11 @@ public class ClassSymbolScript : ClassSymbol
   {
   }
 
-  void ClassCreator(VM vm, ref Val data, IType type)
+  void ClassCreator(VM vm, ref Val instance, IType type)
   {
-    throw new NotImplementedException();
     //NOTE: object's raw data is a list
     var vl = ValList.New(vm);
-    data.SetObj(vl, type);
+    instance.SetObj(vl, type);
 
     for(int i = 0; i < _all_members.Length; ++i)
     {
@@ -410,7 +409,7 @@ public class ClassSymbolScript : ClassSymbol
       {
         var mtype = vs.type.Get();
         var v = new Val();
-        vm.InitDefaultVal(mtype, ref v);
+        VM.InitDefaultVal(mtype, ref v);
         vl.Add(v);
       }
       else

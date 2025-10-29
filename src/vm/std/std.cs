@@ -19,7 +19,7 @@ public static class std
         first_time = false;
       }
       else
-        exec.stack_old.Push(frm.vm.True);
+        exec.stack_old.Push(frm.vm.TrueOld);
     }
 
     public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)

@@ -119,7 +119,6 @@ public partial class VM : INamedResolver
 
   //special case 'null' value
   ValOld null_val = null;
-
   public ValOld NullOld
   {
     get
@@ -130,8 +129,7 @@ public partial class VM : INamedResolver
   }
 
   ValOld true_val = null;
-
-  public ValOld True
+  public ValOld TrueOld
   {
     get
     {
@@ -141,8 +139,7 @@ public partial class VM : INamedResolver
   }
 
   ValOld false_val = null;
-
-  public ValOld False
+  public ValOld FalseOld
   {
     get
     {
@@ -150,6 +147,11 @@ public partial class VM : INamedResolver
       return false_val;
     }
   }
+
+  public static readonly Val Null = Val.NewObj(null, Types.Null);
+  public static readonly Val True = Val.NewBool(true);
+  public static readonly Val False = Val.NewBool(false);
+
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal void Execute(ExecState exec, int exec_waterline_idx = 0)
@@ -473,78 +475,15 @@ public partial class VM : INamedResolver
     exec.stack_old.Push(new_val);
   }
 
-  void HandleTypeAs(ExecState exec, IType cast_type, bool force_type)
-  {
-    var val = exec.stack_old.Pop();
-
-    if(Types.Is(val, cast_type))
-    {
-      var new_val = ValOld.New(this);
-      new_val.ValueCopyFrom(val);
-      if(force_type)
-        new_val.type = cast_type;
-      new_val._refc?.Retain();
-      exec.stack_old.Push(new_val);
-    }
-    else
-      exec.stack_old.Push(NullOld);
-
-    val.Release();
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void HandleTypeIs(ExecState exec, IType type)
-  {
-    var val = exec.stack_old.Pop();
-    exec.stack_old.Push(ValOld.NewBool(this, Types.Is(val, type)));
-    val.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void HandleNew(ValStack stack, IType type)
-  {
-    var cls = type as ClassSymbol;
-    if(cls == null)
-      throw new Exception("Not a class symbol: " + type);
-
-    ref var val = ref stack.Push();
-    cls.creator(this, ref val, cls);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal ValOld MakeDefaultVal(IType type)
-  {
-    var v = ValOld.New(this);
-    InitDefaultVal(type, v);
-    return v;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal void InitDefaultVal(IType type, ValOld v)
+  internal static void InitDefaultVal(IType type, ref Val v)
   {
     //TODO: make type responsible for default initialization
     //      of the value
     if(type == Types.Int)
       v.SetNum(0);
     else if(type == Types.Float)
-      v.SetFlt((double)0);
-    else if(type == Types.String)
-      v.SetStr("");
-    else if(type == Types.Bool)
-      v.SetBool(false);
-    else
-      v.type = type;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal void InitDefaultVal(IType type, ref Val v)
-  {
-    //TODO: make type responsible for default initialization
-    //      of the value
-    if(type == Types.Int)
-      v.SetNum(0);
-    else if(type == Types.Float)
-      v.SetFlt((double)0);
+      v.SetFlt(0);
     else if(type == Types.String)
       v.SetStr("");
     else if(type == Types.Bool)
@@ -874,16 +813,34 @@ public partial class VM : INamedResolver
     bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
     var as_type = curr_frame.type_refs[cast_type_idx];
 
-    vm.HandleTypeAs(exec, as_type, force_type);
+    //TODO: in case of ref we can simply replace this value
+    var val = exec.stack.vals[exec.stack.sp - 1];
+
+    if(Types.Is(val, as_type))
+    {
+      var new_val = new Val();
+      new_val.ValueCopyFrom(val);
+      if(force_type)
+        new_val.type = as_type;
+      new_val._refc?.Retain();
+      exec.stack.vals[exec.stack.sp - 1] = new_val;
+    }
+    else
+      exec.stack.vals[exec.stack.sp - 1] = Null;
+
+    //TODO: find out whether we actually need it
+    val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeTypeIs(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var as_type = curr_frame.type_refs[cast_type_idx];
+    var as_type = frame.type_refs[cast_type_idx];
 
-    vm.HandleTypeIs(exec, as_type);
+    var val = exec.stack.Pop();
+    exec.stack.Push(Types.Is(val, as_type));
+    val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1076,7 +1033,7 @@ public partial class VM : INamedResolver
     ref var curr = ref exec.stack.vals[frame.locals_offset + local_idx];
     //NOTE: handling case when variables are 're-declared' within the nested loop
     curr._refc?.Release();
-    vm.InitDefaultVal(type, ref curr);
+    InitDefaultVal(type, ref curr);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1639,8 +1596,14 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeNew(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var type = curr_frame.type_refs[type_idx];
-    vm.HandleNew(exec.stack, type);
+    var type = frame.type_refs[type_idx];
+
+    var cls = type as ClassSymbol;
+    if(cls == null)
+      throw new Exception("Not a class symbol: " + type);
+
+    ref var val = ref exec.stack.Push();
+    cls.creator(vm, ref val, cls);
   }
 
   unsafe static void InitOpcodeHandlers()
