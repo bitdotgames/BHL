@@ -1130,6 +1130,9 @@ public partial class VM : INamedResolver
     exec.ip = EXIT_FRAME_IP - 1;
   }
 
+  //TODO: we don't really need this opcode,
+  //      we can encode amount of returned values in InitFrame:
+  //      this way OpcodeReturn will be enough
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeReturnVal(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
