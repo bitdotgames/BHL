@@ -247,10 +247,12 @@ public partial class VM : INamedResolver
       for(int i = locals_offset; i < ret_start_offset; ++i)
       {
         ref var val = ref stack.vals[i];
+        //TODO: what about blob?
         if(val._refc != null)
         {
           val._refc.Release();
           val._refc = null;
+          val._obj = null;
         }
       }
 

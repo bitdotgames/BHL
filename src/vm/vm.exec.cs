@@ -716,23 +716,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeUnaryBitNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    //var stack = exec.stack_old;
-    //var operand = stack.PopRelease().num;
-    //stack.Push(ValOld.NewNum(vm, ~((int)operand)));
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeConstant(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    //int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    //var cn = curr_frame.constants[const_idx];
-    //var cv = cn.ToVal(vm);
-    //exec.stack_old.Push(cv);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeConstant(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
