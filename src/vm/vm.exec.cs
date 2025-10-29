@@ -1003,9 +1003,10 @@ public partial class VM : INamedResolver
     //NOTE: we retain only the payload since we make the copy of the value
     //      and the new res already has refs = 1 while payload's refcount
     //      is not incremented
-    res._refc?.Retain();
+    //TODO: not really needed?
+    //res._refc?.Retain();
     exec.stack.Push(res);
-    //TODO: not really needed
+    //TODO: not really needed?
     //obj.Release();
   }
 
@@ -1033,7 +1034,7 @@ public partial class VM : INamedResolver
     ref var val = ref exec.stack.Pop();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(vm, ref obj, val, field_symb);
-    //TODO: not really needed
+    //TODO: not really needed?
     //val.Release();
     //obj.Release();
   }
@@ -1047,7 +1048,8 @@ public partial class VM : INamedResolver
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(vm, ref obj, val, field_symb);
-    val.Release();
+    //TODO: not really needed?
+    //val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

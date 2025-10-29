@@ -82,6 +82,7 @@ public class FieldSymbolScript : FieldSymbol
 
   void Setter(VM vm, ref Val ctx, Val v, FieldSymbol fld)
   {
+    //TODO: use raw array for that?
     var m = (IList<Val>)ctx._obj;
     var curr = m[scope_idx];
 

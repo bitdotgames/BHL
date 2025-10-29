@@ -557,8 +557,8 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(c);
     var fb = Execute(vm, "test");
-    var num = fb.Stack.Pop().num;
-    var str = fb.Stack.PopRelease().str;
+    double num = fb.Stack.Pop();
+    var str = fb.Stack.Pop();
     Assert.Equal(300, num);
     Assert.Equal("bar", str);
     CommonChecks(vm);
@@ -582,7 +582,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
-    var num = fb.Stack.Pop().num;
+    double num = fb.Stack.Pop();
     Assert.Equal(200, num);
     CommonChecks(vm);
   }
