@@ -245,7 +245,14 @@ public partial class VM : INamedResolver
       int ret_start_offset = stack.sp - return_args_num;
       //releasing all locals
       for(int i = locals_offset; i < ret_start_offset; ++i)
-        stack.vals[i].Release();
+      {
+        ref var val = ref stack.vals[i];
+        if(val._refc != null)
+        {
+          val._refc.Release();
+          val._refc = null;
+        }
+      }
 
       //moving returned values up
       Array.Copy(

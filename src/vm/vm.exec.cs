@@ -446,32 +446,6 @@ public partial class VM : INamedResolver
       throw new Exception("Bad status: " + exec.status);
   }
 
-  //TODO: make it more universal and robust
-  void HandleTypeCast(ExecState exec, IType cast_type, bool force_type)
-  {
-    var new_val = ValOld.New(this);
-    var val = exec.stack_old.Pop();
-
-    if(cast_type == Types.Int)
-      new_val.SetNum((long)val._num);
-    else if(cast_type == Types.String && val.type != Types.String)
-      new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
-    else
-    {
-      //NOTE: extra type check in case cast type is instantiable object (e.g class)
-      if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
-        throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-      new_val.ValueCopyFrom(val);
-      if(force_type)
-        new_val.type = cast_type;
-      new_val._refc?.Retain();
-    }
-
-    val.Release();
-
-    exec.stack_old.Push(new_val);
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal static void InitDefaultVal(IType type, ref Val v)
   {
@@ -513,21 +487,11 @@ public partial class VM : INamedResolver
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num += r_operand._num;
-    //r_operand.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeSub(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
-
-    stack.Push(ValOld.NewFlt(vm, l_operand._num - r_operand._num));
-
-    r_operand.Release();
-    l_operand.Release();
+    //TODO: add separate opcode Concat for strings
+    if(l_operand.type == Types.String)
+      l_operand._obj = (string)l_operand._obj + (string)r_operand._obj;
+    else
+      l_operand._num += r_operand._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -558,19 +522,6 @@ public partial class VM : INamedResolver
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
     l_operand._num *= r_operand._num;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeEqual(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
-
-    stack.Push(ValOld.NewBool(vm, l_operand.IsValueEqual(r_operand)));
-
-    r_operand.Release();
-    l_operand.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -798,9 +749,31 @@ public partial class VM : INamedResolver
     int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
 
-    var cast_type = curr_frame.type_refs[cast_type_idx];
+    var cast_type = frame.type_refs[cast_type_idx];
 
-    vm.HandleTypeCast(exec, cast_type, force_type);
+    //TODO: make it more universal and robust
+    var new_val = new Val();
+    ref var val = ref exec.stack.Pop();
+
+    //TODO: can we do that 'inplace'?
+    if(cast_type == Types.Int)
+      new_val.SetNum((long)val._num);
+    else if(cast_type == Types.String && val.type != Types.String)
+      new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    else
+    {
+      //NOTE: extra type check in case cast type is instantiable object (e.g class)
+      if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+        throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
+      new_val.ValueCopyFrom(val);
+      if(force_type)
+        new_val.type = cast_type;
+      new_val._refc?.Retain();
+    }
+
+    //val.Release();
+
+    exec.stack.Push(new_val);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1047,7 +1020,8 @@ public partial class VM : INamedResolver
     //      is not incremented
     res._refc?.Retain();
     exec.stack.Push(res);
-    obj.Release();
+    //TODO: not really needed
+    //obj.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1074,8 +1048,9 @@ public partial class VM : INamedResolver
     ref var val = ref exec.stack.Pop();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(vm, ref obj, val, field_symb);
-    val.Release();
-    obj.Release();
+    //TODO: not really needed
+    //val.Release();
+    //obj.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1114,19 +1089,6 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeReturn(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    exec.ip = EXIT_FRAME_IP - 1;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeReturnVal(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
-
-    int stack_offset = exec.stack_old.Count;
-    for(int i = 0; i < ret_num; ++i)
-      curr_frame.return_stack.Push(exec.stack_old[stack_offset - ret_num + i]);
-    exec.stack_old.Count -= ret_num;
-
     exec.ip = EXIT_FRAME_IP - 1;
   }
 
