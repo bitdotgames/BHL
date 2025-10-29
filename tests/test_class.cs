@@ -606,8 +606,8 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
-    var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    double res = Execute(vm, "test", 2).Stack.Pop();
     Assert.Equal(2, res);
     CommonChecks(vm);
   }
@@ -2801,7 +2801,7 @@ public class TestClass : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    //AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", log.ToString());
+    AssertEqual("NULL;NOTNULL;EQ;NOTNULL;", log.ToString());
     CommonChecks(vm);
   }
 

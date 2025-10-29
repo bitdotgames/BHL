@@ -185,17 +185,14 @@ public partial class VM : INamedResolver
     //3. exit frame requested
     else if(exec.ip == EXIT_FRAME_IP)
     {
-      //curr_frame.ExitScope(null, exec);
+      //for defers
+      //frame.ExitScope(null, exec);
 
-      //exec.frames.Pop();
       --exec.regions_count;
       exec.ip = frame.return_ip + 1;
-      //exec.ip = curr_frame.return_ip + 1;
-      //exec.stack = curr_frame.return_stack;
 
-      //TODO: isn't it equal frame?
-      ref var tmp = ref exec.frames[exec.frames_count--];
-      tmp.Deinit();
+      frame.Exit(exec.stack);
+      --exec.frames_count;
     }
     else
     {
@@ -1138,23 +1135,7 @@ public partial class VM : INamedResolver
   {
     int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
 
-    var stack = exec.stack;
-
-    int ret_start_offset = stack.sp - ret_num;
-    //releasing all locals
-    for(int i = frame.locals_offset; i < ret_start_offset; ++i)
-      stack.vals[i].Release();
-
-    //moving returned values up
-    Array.Copy(
-      stack.vals,
-      ret_start_offset,
-      stack.vals,
-      frame.locals_offset,
-      ret_num);
-
-    //stack pointer now at the last returned value
-    stack.sp = frame.locals_offset + ret_num;
+    frame.return_args_num = ret_num;
 
     exec.ip = EXIT_FRAME_IP - 1;
   }
@@ -1461,6 +1442,7 @@ public partial class VM : INamedResolver
     //locals starts at the index of the first pushed argument
     int args_num = args_info.CountArgs();
     frame.locals_offset = stack.sp - args_num;
+    frame.return_args_num = 0;
 
     //let's 'own' passed args
     for(int i = 0; i < args_num; i++)
@@ -1468,6 +1450,8 @@ public partial class VM : INamedResolver
 
     //let's reserve space for local variables
     stack.Reserve(local_vars_num /* - args_num ? */);
+    //temporary stack lives after local variables
+    stack.sp += local_vars_num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

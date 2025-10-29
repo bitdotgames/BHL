@@ -176,6 +176,7 @@ public partial class VM : INamedResolver
 
     public FuncArgsInfo args_info;
     public int locals_offset;
+    public int return_args_num;
 
     //TODO:
     //public DeferBlock[] defers;
@@ -239,8 +240,24 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Deinit()
-    {}
+    public void Exit(ValStack stack)
+    {
+      int ret_start_offset = stack.sp - return_args_num;
+      //releasing all locals
+      for(int i = locals_offset; i < ret_start_offset; ++i)
+        stack.vals[i].Release();
+
+      //moving returned values up
+      Array.Copy(
+        stack.vals,
+        ret_start_offset,
+        stack.vals,
+        locals_offset,
+        return_args_num);
+
+      //stack pointer now at the last returned value
+      stack.sp = locals_offset + return_args_num;
+    }
   }
 }
 
