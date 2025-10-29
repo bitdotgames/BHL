@@ -174,7 +174,7 @@ public partial class VM : INamedResolver
     public int start_ip;
     public int return_ip;
 
-    public uint args_bits;
+    public FuncArgsInfo args_info;
     public int locals_offset;
 
     //TODO:

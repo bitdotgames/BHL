@@ -179,11 +179,11 @@ public class TestPerf : BHL_TestBase
   {
     var stack = exec.stack;
 
-    //ref Val2 args_bits = ref stack.vals[--stack.sp];
-    ref Val args_bits = ref stack.vals[stack.sp - 1];
+    ref Val args_bits = ref stack.vals[--stack.sp];
 
-    frame.args_bits = (uint)args_bits._num;
-    frame.locals_offset = stack.sp - local_vars_num;
+    var args_info = new FuncArgsInfo((uint)stack.vals[--stack.sp]);
+    frame.args_info = args_info;
+    frame.locals_offset = stack.sp - args_info.CountArgs();
     stack.Reserve(local_vars_num);
   }
 

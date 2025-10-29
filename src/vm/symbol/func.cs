@@ -131,6 +131,7 @@ public struct FuncArgsInfo
   //NOTE: idx starts from 0, it's the idx of the default argument *within* default arguments,
   //      e.g: func Foo(int a, int b = 1, int c = 2) { .. }
   //           b is 0 default arg idx, c is 1
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool UseDefaultArg(int idx, bool flag)
   {
     if(idx >= MAX_DEFAULT_ARGS)

@@ -125,7 +125,7 @@ public class TestClass : BHL_TestBase
 
     vm.LoadModule("bhl2");
 
-    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(10, (int)Execute(vm, "test").Stack.Pop());
     CommonChecks(vm);
   }
 
@@ -187,7 +187,7 @@ public class TestClass : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test").Stack.Pop());
     CommonChecks(vm);
   }
 

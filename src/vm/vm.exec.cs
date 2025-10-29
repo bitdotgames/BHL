@@ -1455,9 +1455,10 @@ public partial class VM : INamedResolver
     var stack = exec.stack;
 
     //let's pop args bits but store it in a Frame
-    frame.args_bits = (uint)stack.vals[--stack.sp]._num;
+    var args_info = new FuncArgsInfo((uint)stack.vals[--stack.sp]._num);
+    frame.args_info = args_info;
     //locals starts at the index of the first pushed argument
-    int args_num = (int)(frame.args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int args_num = args_info.CountArgs();
     frame.locals_offset = stack.sp - args_num;
 
     //let's 'own' passed args
@@ -1550,8 +1551,7 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeJumpPeekZ(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    var v = exec.stack_old.Peek();
-    if(v.bval == false)
+    if(exec.stack.vals[exec.stack.sp - 1]._num != 1)
       exec.ip += offset;
   }
 
@@ -1559,8 +1559,7 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeJumpPeekNZ(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    var v = exec.stack_old.Peek();
-    if(v.bval == true)
+    if(exec.stack.vals[exec.stack.sp - 1]._num == 1)
       exec.ip += offset;
   }
 
@@ -1569,11 +1568,8 @@ public partial class VM : INamedResolver
   {
     byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
     int jump_pos = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    uint args_bits = (uint)curr_frame.locals[curr_frame.locals.Count - 1]._num;
-    var args_info = new FuncArgsInfo(args_bits);
-    //Console.WriteLine("DEF ARG: " + def_arg_idx + ", jump pos " + jump_pos + ", used " + args_info.IsDefaultArgUsed(def_arg_idx) + " " + args_bits);
     //NOTE: if default argument is not used we need to jump out of default argument calculation code
-    if(!args_info.IsDefaultArgUsed(def_arg_idx))
+    if(!frame.args_info.IsDefaultArgUsed(def_arg_idx))
       exec.ip += jump_pos;
   }
 
