@@ -606,7 +606,7 @@ public class TestClass : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
-    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    var vm = MakeVM(bhl, ts_fn);
     double res = Execute(vm, "test", 2).Stack.Pop();
     Assert.Equal(2, res);
     CommonChecks(vm);
