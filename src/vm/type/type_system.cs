@@ -141,7 +141,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Count", Int,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
         null
       );
       String.Define(fld);
@@ -184,7 +184,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Name", String,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _)
         {
           var t = (IType)ctx._obj;
           v.SetStr(t.GetName());
@@ -202,10 +202,11 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "IsRunning", Bool,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol _)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _)
         {
-          var fb_ref = new VM.FiberRef(ctx);
-          v.SetBool(fb_ref.IsRunning);
+          throw new NotImplementedException();
+          //var fb_ref = new VM.FiberRef(ctx);
+          //v.SetBool(fb_ref.IsRunning);
         },
         null //no setter
       );

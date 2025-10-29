@@ -92,10 +92,9 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     ArrCreate(vm, ref v);
   }
 
-  void BindCount(VM.FrameOld frame, ValOld ctx, ref ValOld v, FieldSymbol fld)
+  void BindCount(VM vm, Val ctx, ref Val v, FieldSymbol fld)
   {
-    throw new NotImplementedException();
-    //v.SetNum(ArrCount(ctx));
+    v.SetNum(ArrCount(ctx));
   }
 
   Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info)

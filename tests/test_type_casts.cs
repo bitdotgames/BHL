@@ -696,7 +696,7 @@ public class TestTypeCasts : BHL_TestBase
         typeof(NativeBar)
       );
       cl1.Define(new FieldSymbol(new Origin(), "bar", ts.T("int"),
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var bar = (NativeBar)ctx.obj;
           v.SetInt(bar.bar);
@@ -710,7 +710,7 @@ public class TestTypeCasts : BHL_TestBase
         typeof(NativeFoo)
       );
       cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"),
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var foo = (NativeFoo)ctx.obj;
           v.SetInt(foo.foo);

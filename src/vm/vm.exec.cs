@@ -1040,29 +1040,30 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    var obj = exec.stack_old.Pop();
+    ref var obj = ref exec.stack.Pop();
     var class_symb = (ClassSymbol)obj.type;
-    var res = ValOld.New(vm);
+    var res = new Val();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.getter(curr_frame, obj, ref res, field_symb);
+    field_symb.getter(vm, obj, ref res, field_symb);
     //NOTE: we retain only the payload since we make the copy of the value
     //      and the new res already has refs = 1 while payload's refcount
     //      is not incremented
     res._refc?.Retain();
-    exec.stack_old.Push(res);
+    exec.stack.Push(res);
     obj.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeRefAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
+    throw new NotImplementedException();
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    var obj = exec.stack_old.Pop();
+
+    ref var obj = ref exec.stack.Pop();
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    ValOld res;
-    field_symb.getref(curr_frame, obj, out res, field_symb);
-    exec.stack_old.PushRetain(res);
+    field_symb.getref(vm, obj, out var res, field_symb);
+    exec.stack.PushRetain(res);
     obj.Release();
   }
 
@@ -1071,11 +1072,11 @@ public partial class VM : INamedResolver
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    var obj = exec.stack_old.Pop();
+    ref var obj = ref exec.stack.Pop();
     var class_symb = (ClassSymbol)obj.type;
-    var val = exec.stack_old.Pop();
+    ref var val = ref exec.stack.Pop();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.setter(curr_frame, ref obj, val, field_symb);
+    field_symb.setter(vm, ref obj, val, field_symb);
     val.Release();
     obj.Release();
   }
@@ -1084,11 +1085,11 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeSetAttrInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    var val = exec.stack_old.Pop();
-    var obj = exec.stack_old.Peek();
+    ref var val = ref exec.stack.Pop();
+    ref var obj = ref exec.stack.Peek();
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.setter(curr_frame, ref obj, val, field_symb);
+    field_symb.setter(vm, ref obj, val, field_symb);
     val.Release();
   }
 

@@ -250,6 +250,14 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetInt(double n)
+  {
+    Reset();
+    type = Types.Int;
+    _num = n;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewFlt(double n)
   {
     return new Val
@@ -429,6 +437,12 @@ public class ValStack
   public ref Val Pop()
   {
     return ref vals[--sp];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val Peek()
+  {
+    return ref vals[sp - 1];
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]

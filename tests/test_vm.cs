@@ -11502,7 +11502,7 @@ public class TestVM : BHL_TestBase
       );
       {
         var vs = new FieldSymbol(new Origin(), "refs", Types.Int,
-          delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld) { v.num = ((RefC)ctx.obj)._refs; },
+          delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { v._num = ((RefC)ctx.obj)._refs; },
           //read only property
           null
         );

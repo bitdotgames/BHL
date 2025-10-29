@@ -343,7 +343,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    double res = Execute(vm, "test", 2).Stack.Pop();
     Assert.Equal(1202, res);
     CommonChecks(vm);
   }
@@ -418,12 +418,12 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "c", ts.T("Color"),
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           v.SetObj(cn.c, ts.T("Color").Get());
         },
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj;
@@ -524,7 +524,7 @@ public class TestClass : BHL_TestBase
 
       cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
         null, //no getter
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
         {
           //dummy
         }
@@ -567,7 +567,7 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           //dummy
         },
@@ -2669,7 +2669,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    double res = Execute(vm, "test", 2).Stack.Pop();
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -2741,7 +2741,7 @@ public class TestClass : BHL_TestBase
         ts.ns.Define(cl);
 
         cl.Define(new FieldSymbol(new Origin(), "sub", ts.T("Bar"),
-          delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld) { }, null
+          delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { }, null
         ));
         cl.Setup();
       }
@@ -3965,12 +3965,12 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "a", Types.Int,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           v.SetNum(f.a);
         },
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           f.a = (int)v.num;
@@ -3979,12 +3979,12 @@ public class TestClass : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol(new Origin(), "b", Types.Int,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           v.SetNum(f.b);
         },
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           f.b = (int)v.num;
@@ -4025,12 +4025,12 @@ public class TestClass : BHL_TestBase
       );
 
       cl.Define(new FieldSymbol(new Origin(), "new_a", Types.Int,
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
         {
           var b = (VirtBar)ctx.obj;
           v.SetNum(b.new_a);
         },
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
         {
           var b = (VirtBar)ctx.obj;
           b.new_a = (int)v.num;
@@ -4737,8 +4737,8 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "static_bar", FieldAttrib.Static, ts.T("int"),
-        delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld) { v.SetInt(NativeFoo.static_bar); },
-        delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld) { NativeFoo.static_bar = (int)v.num; }
+        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { v.SetInt(NativeFoo.static_bar); },
+        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld) { NativeFoo.static_bar = (int)v.num; }
       ));
       cl.Setup();
     });
@@ -4783,12 +4783,12 @@ public class TestClass : BHL_TestBase
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "c", ts.T("int"),
-            delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
             {
               var c = (C)ctx.obj;
               v.SetInt(c.c);
             },
-            delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
             {
               var c = (C)ctx.obj;
               c.c = (int)v.num;
@@ -4804,12 +4804,12 @@ public class TestClass : BHL_TestBase
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "b", ts.T("int"),
-            delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               v.SetInt(b.b);
             },
-            delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               b.b = (int)v.num;
@@ -4817,12 +4817,12 @@ public class TestClass : BHL_TestBase
           ));
 
           cl.Define(new FieldSymbol(new Origin(), "b2", ts.T("int"),
-            delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               v.SetInt(b.b2);
             },
-            delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               b.b2 = (int)v.num;
@@ -4838,25 +4838,25 @@ public class TestClass : BHL_TestBase
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "a", ts.T("int"),
-            delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               v.SetInt(a.a);
             },
-            delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
-              a.a = (int)v.num;
+              a.a = (int)v._num;
             }
           ));
 
           cl.Define(new FieldSymbol(new Origin(), "a2", ts.T("int"),
-            delegate(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               v.SetInt(a.a2);
             },
-            delegate(VM.FrameOld frm, ref ValOld ctx, ValOld v, FieldSymbol fld)
+            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               a.a2 = (int)v.num;

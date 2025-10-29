@@ -112,7 +112,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     MapCreate(vm, ref v);
   }
 
-  void BindGetCount(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+  void BindGetCount(VM vm, Val ctx, ref Val v, FieldSymbol fld)
   {
     throw new NotImplementedException();
     //v.SetNum(MapCount(ctx));
@@ -192,13 +192,13 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  void BindGetEnumerator(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+  void BindGetEnumerator(VM vm, Val ctx, ref Val v, FieldSymbol fld)
   {
     throw new NotImplementedException();
     //v.SetObj(MapGetEnumerator(ctx), enumerator_type);
   }
 
-  void BindEnumeratorNext(VM.FrameOld frm, ValOld ctx, ref ValOld v, FieldSymbol fld)
+  void BindEnumeratorNext(VM vm, Val ctx, ref Val v, FieldSymbol fld)
   {
     throw new NotImplementedException();
     //v.SetBool(MapEnumeratorNext(ctx));
