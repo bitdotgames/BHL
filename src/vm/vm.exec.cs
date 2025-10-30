@@ -438,23 +438,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeAdd(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    var stack = exec.stack_old;
-    var r_operand = stack.Pop();
-    var l_operand = stack.Pop();
-
-    //TODO: add Opcodes.Concat?
-    if((r_operand.type == Types.String) && (l_operand.type == Types.String))
-      stack.Push(ValOld.NewStr(vm, (string)l_operand._obj + (string)r_operand._obj));
-    else
-      stack.Push(ValOld.NewFlt(vm, l_operand._num + r_operand._num));
-
-    r_operand.Release();
-    l_operand.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeAdd(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
@@ -655,14 +638,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeUnaryNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    //var stack = exec.stack_old;
-    //var operand = stack.PopRelease().num;
-    //stack.Push(ValOld.NewBool(vm, operand != 1));
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeUnaryNot(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
@@ -696,7 +671,7 @@ public partial class VM : INamedResolver
     var cn = frame.constants[const_idx];
 
     ref Val v = ref exec.stack.Push();
-    //TODO: we might have specialized opcodes for different variable types
+    //TODO: we might have specialized opcodes for different variable types?
     cn.FillVal(ref v);
   }
 
@@ -708,29 +683,38 @@ public partial class VM : INamedResolver
 
     var cast_type = frame.type_refs[cast_type_idx];
 
-    //TODO: make it more universal and robust
-    var new_val = new Val();
-    ref var val = ref exec.stack.Pop();
+    ref var val = ref exec.stack.vals[exec.stack.sp - 1];
 
-    //TODO: can we do that 'inplace'?
     if(cast_type == Types.Int)
-      new_val.SetNum((long)val._num);
+    {
+      val._refc?.Release();
+      exec.stack.vals[exec.stack.sp - 1] = Val.NewNum((long)val._num);
+    }
     else if(cast_type == Types.String && val.type != Types.String)
-      new_val.SetStr(val.num.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    {
+      val._refc?.Release();
+      exec.stack.vals[exec.stack.sp - 1] =
+        Val.NewStr(val._num.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
     else
     {
+      //NOTE: previous overly complicated implementation
+      //var new_val = new Val();
+      ////NOTE: extra type check in case cast type is instantiable object (e.g class)
+      //if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+      //  throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
+      //new_val.ValueCopyFrom(val);
+      //if(force_type)
+      //  new_val.type = cast_type;
+      //new_val._refc?.Retain();
+      //exec.stack.Push(new_val);
+
       //NOTE: extra type check in case cast type is instantiable object (e.g class)
       if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-      new_val.ValueCopyFrom(val);
       if(force_type)
-        new_val.type = cast_type;
-      new_val._refc?.Retain();
+        val.type = cast_type;
     }
-
-    //val.Release();
-
-    exec.stack.Push(new_val);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -740,23 +724,27 @@ public partial class VM : INamedResolver
     bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
     var as_type = curr_frame.type_refs[cast_type_idx];
 
-    //TODO: in case of ref we can simply replace this value
-    var val = exec.stack.vals[exec.stack.sp - 1];
+    ref var val = ref exec.stack.vals[exec.stack.sp - 1];
 
     if(Types.Is(val, as_type))
     {
-      var new_val = new Val();
-      new_val.ValueCopyFrom(val);
+      //NOTE: previous implementation
+      //var new_val = new Val();
+      //new_val.ValueCopyFrom(val);
+      //if(force_type)
+      //  new_val.type = as_type;
+      //new_val._refc?.Retain();
+      //exec.stack.vals[exec.stack.sp - 1] = new_val;
+
       if(force_type)
-        new_val.type = as_type;
-      new_val._refc?.Retain();
-      exec.stack.vals[exec.stack.sp - 1] = new_val;
+        val.type = as_type;
     }
     else
+    {
+      val._refc?.Release();
       exec.stack.vals[exec.stack.sp - 1] = Null;
+    }
 
-    //TODO: find out whether we actually need it
-    val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -767,7 +755,7 @@ public partial class VM : INamedResolver
 
     var val = exec.stack.Pop();
     exec.stack.Push(Types.Is(val, as_type));
-    val.Release();
+    val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -776,7 +764,7 @@ public partial class VM : INamedResolver
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var type = curr_frame.type_refs[type_idx];
 
-    exec.stack_old.Push(ValOld.NewObj(vm, type, Types.Type));
+    exec.stack.Push(Val.NewObj(type, Types.Type));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -799,13 +787,14 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    exec.stack.Pop(out var idx);
-    exec.stack.Pop(out var arr);
+    int idx = exec.stack.Pop();
+    ref var arr = ref exec.stack.Peek();
 
     var res = class_type.ArrGetAt(arr, idx);
 
-    exec.stack.Push(res);
     arr._refc?.Release();
+    //let's replace with the result
+    arr = res;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -814,7 +803,7 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    exec.stack.Pop(out var idx);
+    int idx = exec.stack.Pop();
     exec.stack.Pop(out var arr);
     exec.stack.Pop(out var val);
 
@@ -828,8 +817,7 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    //TODO: not really needed?
-    //self.Retain();
+    self._refc?.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
     ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
@@ -842,14 +830,16 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (MapTypeSymbol)self.type;
 
-    var key = exec.stack.Pop();
-    var map = exec.stack.Pop();
+    exec.stack.Pop(out var key);
+    exec.stack.Pop(out var map);
 
     class_type.MapTryGet(map, key, out var res);
 
-    exec.stack.PushRetain(res);
-    key.Release();
-    map.Release();
+    res._refc?.Retain();
+    exec.stack.Push(res);
+
+    key._refc?.Release();
+    map._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -858,33 +848,26 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (MapTypeSymbol)self.type;
 
-    var key = exec.stack.Pop();
-    var map = exec.stack.Pop();
-    var val = exec.stack.Pop();
+    exec.stack.Pop(out var key);
+    exec.stack.Pop(out var map);
+    exec.stack.Pop(out var val);
 
     class_type.MapSet(map, key, val);
 
-    key.Release();
-    val.Release();
-    map.Release();
+    key._refc?.Release();
+    val._refc?.Release();
+    map._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     ref var self = ref exec.stack.vals[exec.stack.sp - 3];
-    self.Retain();
+    self._refc?.Retain();
     var class_type = (MapTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
     ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
     exec.stack.Push(self);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeGetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-    exec.stack_old.PushRetain(curr_frame.locals[local_idx]);
   }
 
   unsafe static void OpcodeGetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
@@ -965,6 +948,7 @@ public partial class VM : INamedResolver
     ref var curr = ref exec.stack.vals[frame.locals_offset + local_idx];
     //NOTE: handling case when variables are 're-declared' within the nested loop
     curr._refc?.Release();
+
     InitDefaultVal(type, ref curr);
   }
 
@@ -972,14 +956,18 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    exec.stack.Pop(out var obj);
+
+    ref var obj = ref exec.stack.Peek();
     var class_symb = (ClassSymbol)obj.type;
-    var res = new Val();
+
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    var res = new Val();
     field_symb.getter(vm, obj, ref res, field_symb);
+
     res._refc?.Retain();
-    exec.stack.Push(res);
     obj._refc?.Release();
+    //let's replace the value on the stack
+    obj = res;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1001,27 +989,30 @@ public partial class VM : INamedResolver
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    ref var obj = ref exec.stack.Pop();
+    exec.stack.Pop(out var obj);
+    exec.stack.Pop(out var val);
+
     var class_symb = (ClassSymbol)obj.type;
-    ref var val = ref exec.stack.Pop();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(vm, ref obj, val, field_symb);
-    //TODO: not really needed?
-    //val.Release();
-    //obj.Release();
+
+    val._refc?.Release();
+    obj._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetAttrInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    ref var val = ref exec.stack.Pop();
+
+    exec.stack.Pop(out var val);
     ref var obj = ref exec.stack.Peek();
+
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(vm, ref obj, val, field_symb);
-    //TODO: not really needed?
-    //val.Release();
+
+    val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1506,6 +1497,8 @@ public partial class VM : INamedResolver
     if(cls == null)
       throw new Exception("Not a class symbol: " + type);
 
+    //NOTE: we don't increment refcounted here since the new instance
+    //      is not attached to any variable and is expected to have refs == 1
     ref var val = ref exec.stack.Push();
     cls.creator(vm, ref val, cls);
   }

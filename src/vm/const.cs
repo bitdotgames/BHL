@@ -59,9 +59,6 @@ public class Const : IEquatable<Const>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void FillVal(ref Val v)
   {
-    //let's cleanup refcounted (what about blob???)
-    v._refc = null;
-
     if(type == ConstType.INT || type == ConstType.FLT)
     {
       v.type = Types.Int;
@@ -86,6 +83,7 @@ public class Const : IEquatable<Const>
     {
       v.type = Types.Null;
       v._obj = null;
+      v._refc = null;
     }
     else
       throw new Exception("Bad type");
