@@ -821,14 +821,13 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = exec.stack.Pop();
-    var arr = exec.stack.Pop();
+    exec.stack.Pop(out var idx);
+    exec.stack.Pop(out var arr);
 
     var res = class_type.ArrGetAt(arr, idx);
 
     exec.stack.Push(res);
-    //TODO: not really needed?
-    //arr.Release();
+    arr._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -837,15 +836,14 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = exec.stack.Pop();
-    var arr = exec.stack.Pop();
-    var val = exec.stack.Pop();
+    exec.stack.Pop(out var idx);
+    exec.stack.Pop(out var arr);
+    exec.stack.Pop(out var val);
 
     class_type.ArrSetAt(arr, idx, val);
 
-    //TODO: not really needed?
-    //val.Release();
-    //arr.Release();
+    val._refc?.Release();
+    arr._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -918,6 +916,7 @@ public partial class VM : INamedResolver
     ref Val v = ref exec.stack.Push();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
     v = exec.stack.vals[frame.locals_offset + local_idx];
+    v._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -936,19 +935,13 @@ public partial class VM : INamedResolver
 
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
 
-    ref var new_val = ref exec.stack.Pop();
-    //NOTE: Retaining an existing value increments refs counter
-    //      and in case of newly created class it's 1 already
-    //      so it doesn't make sense?
-    //      Our refcounted objects are assumed to have refs counter = 1
-    //      when they are created.
-    //new_val._refc?.Retain();
+    exec.stack.Pop(out var new_val);
     ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
     current._refc?.Release();
     current = new_val;
-    //TODO: think better about this one, currently it's an ugly hotfix,
-    //      looks like we need to do that on each Pop() operation?
-    new_val._refc = null;
+    //these below cancel each other
+    //new_val._refc?.Retain();
+    //new_val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

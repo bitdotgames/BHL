@@ -440,6 +440,14 @@ public class ValStack
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public void Pop(out Val res)
+  {
+    ref var tmp = ref vals[--sp];
+    res = tmp; //making a copy
+    tmp._refc = null; //cleaning up stack value
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
   public ref Val Peek()
   {
     return ref vals[sp - 1];
