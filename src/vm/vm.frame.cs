@@ -253,13 +253,14 @@ public partial class VM : INamedResolver
         }
       }
 
-      //moving returned values up
-      Array.Copy(
-        stack.vals,
-        ret_start_offset,
-        stack.vals,
-        locals_offset,
-        return_args_num);
+      //moving returned values up the stack
+      for(int i = 0; i < return_args_num; ++i)
+      {
+        stack.Pop(out var val);
+        //NOTE: refcounted vals are already retained by GetVar opcode,
+        //      no need to do that
+        stack.vals[locals_offset + i] = val;
+      }
 
       //stack pointer now at the last returned value
       stack.sp = locals_offset + return_args_num;

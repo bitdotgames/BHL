@@ -372,28 +372,6 @@ public partial class VM : INamedResolver
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(FrameOld curr_frame, ValOldStack curr_stack, FuncSymbolNative native, uint args_bits, out BHS status,
-    ref Coroutine coroutine)
-  {
-    status = BHS.SUCCESS;
-    //var new_coroutine = native.cb(curr_frame, curr_stack, new FuncArgsInfo(args_bits), ref status);
-
-    //if(new_coroutine != null)
-    //{
-    //  //NOTE: since there's a new coroutine we want to skip ip incrementing
-    //  //      which happens below and proceed right to the execution of
-    //  //      the new coroutine
-    //  coroutine = new_coroutine;
-    //  return true;
-    //}
-    //else if(status != BHS.SUCCESS)
-    //  return true;
-    //else
-      return false;
-  }
-
-  //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits)
   {
     var new_coroutine = native.cb(vm, exec, new FuncArgsInfo(args_bits));
@@ -994,19 +972,14 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    ref var obj = ref exec.stack.Pop();
+    exec.stack.Pop(out var obj);
     var class_symb = (ClassSymbol)obj.type;
     var res = new Val();
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.getter(vm, obj, ref res, field_symb);
-    //NOTE: we retain only the payload since we make the copy of the value
-    //      and the new res already has refs = 1 while payload's refcount
-    //      is not incremented
-    //TODO: not really needed?
-    //res._refc?.Retain();
+    res._refc?.Retain();
     exec.stack.Push(res);
-    //TODO: not really needed?
-    //obj.Release();
+    obj._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1256,15 +1229,14 @@ public partial class VM : INamedResolver
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int self_idx = exec.stack_old.Count - args_num - 1;
-    var self = exec.stack_old[self_idx];
+    int self_idx = exec.stack.sp - args_num - 1;
+    ref var self = ref exec.stack.vals[self_idx];
 
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    if(CallNative(curr_frame, exec.stack_old, func_symb, args_bits, out var _status, ref exec.coroutine))
+    if(CallNative(vm, exec, func_symb, args_bits))
     {
-      exec.status = _status;
       //let's cancel ip incrementing
       --exec.ip;
     }
@@ -1330,9 +1302,8 @@ public partial class VM : INamedResolver
     var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
     var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
-    if(CallNative(curr_frame, exec.stack_old, func_symb, args_bits, out var _status, ref exec.coroutine))
+    if(CallNative(vm, exec, func_symb, args_bits))
     {
-      exec.status = _status;
       //let's cancel ip incrementing
       --exec.ip;
     }
@@ -1350,11 +1321,10 @@ public partial class VM : INamedResolver
     if(ptr.native != null)
     {
       bool return_status =
-        CallNative(curr_frame, exec.stack_old, ptr.native, args_bits, out var _status, ref exec.coroutine);
+        CallNative(vm, exec, ptr.native, args_bits);
       val_ptr.Release();
       if(return_status)
       {
-        exec.status = _status;
         //let's cancel ip incrementing
         --exec.ip;
       }
@@ -1395,9 +1365,11 @@ public partial class VM : INamedResolver
     frame.locals_offset = stack.sp - args_num;
     frame.return_args_num = 0;
 
+    //NOTE: it's assumed that refcounted args are pushed with refcounted values,
+    //      so the action below is not required
     //let's 'own' passed args
-    for(int i = 0; i < args_num; i++)
-      exec.stack.vals[frame.locals_offset + i]._refc?.Retain();
+    //for(int i = 0; i < args_num; i++)
+    //  exec.stack.vals[frame.locals_offset + i]._refc?.Retain();
 
     //let's reserve space for local variables
     stack.Reserve(local_vars_num /* - args_num ? */);

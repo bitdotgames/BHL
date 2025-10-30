@@ -101,14 +101,13 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var val = ref stack.Pop();
-    ref var arr = ref stack.Pop();
+    stack.Pop(out var val);
+    stack.Pop(out var arr);
 
     ArrAdd(arr, val);
 
-    //TODO: not really needed?
-    //val.Release();
-    //arr.Release();
+    val._refc?.Release();
+    arr._refc?.Release();
     return null;
   }
 
@@ -116,13 +115,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    int idx = stack.Pop();
-    ref var arr = ref stack.Pop();
+    stack.Pop(out var idx);
+    stack.Pop(out var arr);
 
     ArrRemoveAt(arr, idx);
 
-    //TODO: not really needed?
-    //arr.Release();
+    arr._refc?.Release();
     return null;
   }
 
@@ -130,26 +128,24 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var val = ref stack.Pop();
-    ref var arr = ref stack.Pop();
+    stack.Pop(out var val);
+    stack.Pop(out var arr);
 
     int idx = ArrIndexOf(arr, val);
 
-    //TODO: not really needed?
-    //val.Release();
-    //arr.Release();
+    val._refc?.Release();
+    arr._refc?.Release();
     stack.Push(idx);
     return null;
   }
 
   Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
-    ref var arr = ref exec.stack.Pop();
+    exec.stack.Pop(out var arr);
 
     ArrClear(arr);
 
-    //TODO: not really needed?
-    //arr.Release();
+    arr._refc?.Release();
     return null;
   }
 
@@ -157,15 +153,14 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var val = ref stack.Pop();
-    int idx = stack.Pop();
-    ref var arr = ref stack.Pop();
+    stack.Pop(out var val);
+    stack.Pop(out var idx);
+    stack.Pop(out var arr);
 
     ArrInsert(arr, idx, val);
 
-    //TODO: not really needed?
-    //arr.Release();
-    //val.Release();
+    arr._refc?.Release();
+    val._refc?.Release();
     return null;
   }
 

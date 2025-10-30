@@ -1,4 +1,3 @@
-
 using System;
 using System.Text;
 using bhl;
@@ -233,7 +232,7 @@ public class TestARC : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -263,7 +262,7 @@ public class TestARC : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    Assert.Equal("INC1;INC2;DEC1;HERE;DEC0;", logs.ToString());
+    Assert.Equal("INC1;HERE;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
@@ -296,7 +295,7 @@ public class TestARC : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;INC2;DEC1;INC2;INC3;DEC2;INC3;INC4;DEC3;DEC2;DEC1;DEC0;", logs.ToString());
+    Assert.Equal("INC1;INC2;DEC1;INC2;INC3;DEC2;DEC1;DEC0;", logs.ToString());
     CommonChecks(vm);
   }
 
