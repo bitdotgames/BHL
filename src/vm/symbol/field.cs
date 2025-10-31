@@ -81,13 +81,17 @@ public class FieldSymbolScript : FieldSymbol
 
   void Setter(VM vm, ref Val ctx, Val v, FieldSymbol fld)
   {
-    //TODO: use raw array for that?
-    var m = (IList<Val>)ctx._obj;
-    var curr = m[scope_idx];
-    v._refc?.Retain();
-    //TODO: what about blob?
-    curr._refc?.Release();
-    m[scope_idx] = v;
+    var lst = (ValList)ctx._obj;
+    lst.SetValueCopyAt(scope_idx, v);
+
+    ////TODO: ValList.SetValueCopyAt() does the same
+    //var lst = (IList<Val>)ctx._obj;
+    //var curr = lst[scope_idx];
+    //var refc = curr._refc;
+    //v._refc?.Retain();
+    //curr.ValueCopyFrom(v);
+    //refc?.Release();
+    //lst[scope_idx] = curr;
 
     //previous overly complicated implementation
     //if(curr._refc != null)

@@ -51,9 +51,9 @@ public class ValList : IList<Val>, IList, IValRefcounted
     get { throw new NotImplementedException(); }
   }
 
-  public void Add(Val dv)
+  public void Add(Val v)
   {
-    lst.Add(dv);
+    lst.Add(v);
   }
 
   public void AddRange(IList<Val> list)
@@ -70,7 +70,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   public void RemoveAt(int idx)
   {
     var dv = lst[idx];
-    dv.Release();
+    dv._refc?.Release();
     lst.RemoveAt(idx);
   }
 
@@ -82,7 +82,7 @@ public class ValList : IList<Val>, IList, IValRefcounted
   public void Clear()
   {
     for(int i = 0; i < Count; ++i)
-      lst[i].Release();
+      lst[i]._refc?.Release();
 
     lst.Clear();
   }
@@ -115,31 +115,30 @@ public class ValList : IList<Val>, IList, IValRefcounted
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetValueCopyAt(int i, Val val)
+  public void SetValueCopyAt(int i, Val v)
   {
+    //TODO: use raw array for that?
     var curr = lst[i];
-    //NOTE: we are going to re-use the existing Value,
-    //      thus we need to decrease/increase user payload
-    //      refcounts properly
-    curr._refc?.Release();
-    curr.ValueCopyFrom(val);
-    curr._refc?.Retain();
+    var refc = curr._refc;
+    v._refc?.Retain();
+    curr.ValueCopyFrom(v);
+    refc?.Release();
     lst[i] = curr;
   }
 
-  public int IndexOf(Val dv)
+  public int IndexOf(Val v)
   {
-    return lst.IndexOf(dv);
+    return lst.IndexOf(v);
   }
 
-  public bool Contains(Val dv)
+  public bool Contains(Val v)
   {
-    return IndexOf(dv) >= 0;
+    return IndexOf(v) >= 0;
   }
 
-  public bool Remove(Val dv)
+  public bool Remove(Val v)
   {
-    int idx = IndexOf(dv);
+    int idx = IndexOf(v);
     if(idx < 0)
       return false;
     RemoveAt(idx);
@@ -156,13 +155,13 @@ public class ValList : IList<Val>, IList, IValRefcounted
     {
       var tmp = array[j];
       array[j] = this[i];
-      tmp.Release();
+      tmp._refc?.Release();
     }
   }
 
-  public void Insert(int pos, Val dv)
+  public void Insert(int pos, Val v)
   {
-    lst.Insert(pos, dv);
+    lst.Insert(pos, v);
   }
 
   public IEnumerator<Val> GetEnumerator()
@@ -179,7 +178,6 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public void Retain()
   {
-    //Console.WriteLine("== RETAIN " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     ++_refs;
@@ -187,8 +185,6 @@ public class ValList : IList<Val>, IList, IValRefcounted
 
   public void Release()
   {
-    //Console.WriteLine("== RELEASE " + refs + " " + GetHashCode() + " " + Environment.StackTrace);
-
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     if(_refs == 0)
