@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace bhl
 {
@@ -9,6 +10,7 @@ namespace bhl
 //NOTE: in case of IList implementation ValList doesn't apply owning semantics
 public class ValList : IList<Val>, IList, IValRefcounted
 {
+  //TODO: use raw array?
   List<Val> lst = new List<Val>();
 
   //NOTE: -1 means it's in released state,
@@ -114,16 +116,15 @@ public class ValList : IList<Val>, IList, IValRefcounted
     set { lst[i] = value; }
   }
 
+  //NOTE: we don't Retain the added value, it's the caller's responsibility
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetValueCopyAt(int i, Val v)
+  public void ReplaceAt(int i, Val v)
   {
-    //TODO: use raw array for that?
-    var curr = lst[i];
+    var span = CollectionsMarshal.AsSpan(lst);
+    ref var curr = ref span[i];
     var refc = curr._refc;
-    v._refc?.Retain();
     curr.ValueCopyFrom(v);
     refc?.Release();
-    lst[i] = curr;
   }
 
   public int IndexOf(Val v)

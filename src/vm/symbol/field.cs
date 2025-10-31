@@ -82,7 +82,8 @@ public class FieldSymbolScript : FieldSymbol
   void Setter(VM vm, ref Val ctx, Val v, FieldSymbol fld)
   {
     var lst = (ValList)ctx._obj;
-    lst.SetValueCopyAt(scope_idx, v);
+    v._refc?.Retain();
+    lst.ReplaceAt(scope_idx, v);
 
     ////TODO: ValList.SetValueCopyAt() does the same
     //var lst = (IList<Val>)ctx._obj;
