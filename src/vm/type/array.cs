@@ -430,14 +430,14 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
       var fn = new FuncSymbolNative(new Origin(), "At", item_type,
         (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          int idx = exec.stack.Pop();
-          var arr = exec.stack.Pop();
+          int idx = exec.stack.PopFast();
+          ref var arr = ref exec.stack.Peek();
 
           var res = ArrGetAt(arr, idx);
 
-          exec.stack.Push(res);
+          arr._refc?.Release();
+          arr = res;
 
-          arr.Release();
           return null;
         },
         new FuncArgSymbol("idx", Types.Int)

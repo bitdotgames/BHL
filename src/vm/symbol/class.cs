@@ -156,9 +156,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
           {
             throw new NotImplementedException();
             Val ctx = null;
-            var val = exec.stack.Pop();
+            exec.stack.Pop(out var val);
             //fld.setter(null, ref ctx, val, fld);
-            val.Release();
+            val._refc?.Release();
             return null;
           });
         this.GetModule().nfunc_index.Index(static_set);

@@ -423,22 +423,7 @@ public class ValStack
     vals[sp++] = v;
   }
 
-  [MethodImpl (MethodImplOptions.AggressiveInlining)]
-  public void PushRetain(Val v)
-  {
-    if(sp == vals.Length)
-      Array.Resize(ref vals, sp << 1);
-
-    v._refc?.Retain();
-    vals[sp++] = v;
-  }
-
-  [MethodImpl (MethodImplOptions.AggressiveInlining)]
-  public ref Val Pop()
-  {
-    return ref vals[--sp];
-  }
-
+  //NOTE: extraction version which cleans the stack value
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
   public void Pop(out Val res)
   {
@@ -448,9 +433,41 @@ public class ValStack
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public Val PopRelease()
+  {
+    ref var tmp = ref vals[--sp];
+    var res = tmp; //making a copy
+    tmp._refc = null; //cleaning up stack value
+    res._refc?.Release();
+    return res;
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public Val Pop()
+  {
+    ref var tmp = ref vals[--sp];
+    var res = tmp; //making a copy
+    tmp._refc = null; //cleaning up stack value
+    return res;
+  }
+
+  //NOTE: super light version for cases when you know what you are doing
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val PopFast()
+  {
+    return ref vals[--sp];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
   public ref Val Peek()
   {
     return ref vals[sp - 1];
+  }
+
+  [MethodImpl (MethodImplOptions.AggressiveInlining)]
+  public ref Val Peek(int n)
+  {
+    return ref vals[sp - n];
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -459,14 +476,6 @@ public class ValStack
     int needed = num - (vals.Length - sp);
     if(needed > 0)
       Array.Resize(ref vals, vals.Length + needed);
-  }
-
-  [MethodImpl (MethodImplOptions.AggressiveInlining)]
-  public ref Val PopRelease()
-  {
-    ref var val = ref vals[--sp];
-    val.Release();
-    return ref val;
   }
 }
 

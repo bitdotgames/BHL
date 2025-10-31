@@ -151,9 +151,9 @@ public class Types : INamedResolver
       var m = new FuncSymbolNative(new Origin(), "At", String,
         (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          int idx = exec.stack.Pop();
-          string self = exec.stack.Pop();
-          exec.stack.Push(self[idx].ToString());
+          int idx = exec.stack.PopFast();
+          ref var self = ref exec.stack.Peek();
+          self = self.str[idx].ToString();
           return null;
         },
         new FuncArgSymbol("i", Int)
@@ -165,9 +165,9 @@ public class Types : INamedResolver
       var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
         (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          string s = exec.stack.Pop();
-          string self = exec.stack.Pop();
-          exec.stack.Push( self.IndexOf(s));
+          string s = exec.stack.PopFast();
+          ref var self = ref exec.stack.Peek();
+          self = self.str.IndexOf(s);
           return null;
         },
         new FuncArgSymbol("s", String)

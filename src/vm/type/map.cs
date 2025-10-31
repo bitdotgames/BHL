@@ -122,15 +122,15 @@ public abstract class MapTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    var val = stack.Pop();
-    var key = stack.Pop();
-    var map = stack.Pop();
+    stack.Pop(out var val);
+    stack.Pop(out var key);
+    stack.Pop(out var map);
 
     MapSet(map, key, val);
 
-    key.Release();
-    val.Release();
-    map.Release();
+    key._refc?.Release();
+    val._refc?.Release();
+    map._refc?.Release();
     return null;
   }
 
@@ -138,14 +138,14 @@ public abstract class MapTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var key = ref stack.Pop();
-    ref var map = ref stack.Pop();
+    stack.Pop(out var key);
+    ref var map = ref stack.Peek();
 
     bool yes = MapContainsKey(map, key);
 
-    key.Release();
-    map.Release();
-    stack.Push(yes);
+    key._refc?.Release();
+    map._refc?.Release();
+    map = yes;
     return null;
   }
 
@@ -153,18 +153,21 @@ public abstract class MapTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var key = ref stack.Pop();
-    ref var map = ref stack.Pop();
+    ref var key = ref stack.Peek(1);
+    ref var map = ref stack.Peek(2);
 
     bool yes = MapTryGet(map, key, out var val);
 
-    key.Release();
-    map.Release();
+    key._refc?.Release();
+    map._refc?.Release();
     if(yes)
-      stack.PushRetain(val);
+    {
+      val._refc?.Retain();
+      map = val;
+    }
     else
-      stack.Push(new Val()); /*just dummy value*/
-    stack.Push(yes);
+      map = new Val();
+    key = yes;
     return null;
   }
 
@@ -172,23 +175,23 @@ public abstract class MapTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    ref var key = ref stack.Pop();
-    ref var map = ref stack.Pop();
+    stack.Pop(out var key);
+    stack.Pop(out var map);
 
     MapRemove(map, key);
 
-    key.Release();
-    map.Release();
+    key._refc?.Release();
+    map._refc?.Release();
     return null;
   }
 
   Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
   {
-    var map = exec.stack.Pop();
+    exec.stack.Pop(out var map);
 
     MapClear(map);
 
-    map.Release();
+    map._refc?.Release();
     return null;
   }
 
@@ -208,13 +211,17 @@ public abstract class MapTypeSymbol : ClassSymbol
   {
     var stack = exec.stack;
 
-    var en = stack.Pop();
+    stack.Pop(out var en);
 
     MapEnumeratorCurrent(en, out var key, out var val);
 
-    stack.PushRetain(val);
-    stack.PushRetain(key);
-    en.Release();
+    val._refc?.Retain();
+    stack.Push(val);
+
+    key._refc?.Retain();
+    stack.Push(key);
+    
+    en._refc?.Release();
     return null;
   }
 

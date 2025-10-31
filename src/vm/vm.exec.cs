@@ -683,18 +683,19 @@ public partial class VM : INamedResolver
 
     var cast_type = frame.type_refs[cast_type_idx];
 
-    ref var val = ref exec.stack.vals[exec.stack.sp - 1];
+    ref var val = ref exec.stack.Peek();
 
     if(cast_type == Types.Int)
     {
       val._refc?.Release();
-      exec.stack.vals[exec.stack.sp - 1] = Val.NewNum((long)val._num);
+      val = Val.NewNum((long)val._num);
     }
     else if(cast_type == Types.String && val.type != Types.String)
     {
       val._refc?.Release();
-      exec.stack.vals[exec.stack.sp - 1] =
-        Val.NewStr(val._num.ToString(System.Globalization.CultureInfo.InvariantCulture));
+      val = Val.NewStr(
+        val._num.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        );
     }
     else
     {
@@ -724,7 +725,7 @@ public partial class VM : INamedResolver
     bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
     var as_type = curr_frame.type_refs[cast_type_idx];
 
-    ref var val = ref exec.stack.vals[exec.stack.sp - 1];
+    ref var val = ref exec.stack.Peek();
 
     if(Types.Is(val, as_type))
     {
@@ -742,7 +743,7 @@ public partial class VM : INamedResolver
     else
     {
       val._refc?.Release();
-      exec.stack.vals[exec.stack.sp - 1] = Null;
+      val = Null;
     }
 
   }
@@ -753,9 +754,10 @@ public partial class VM : INamedResolver
     int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var as_type = frame.type_refs[cast_type_idx];
 
-    var val = exec.stack.Pop();
-    exec.stack.Push(Types.Is(val, as_type));
-    val._refc?.Release();
+    ref var val = ref exec.stack.Peek();
+    var refc = val._refc;
+    val = Types.Is(val, as_type);
+    refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -787,7 +789,7 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = exec.stack.Pop();
+    int idx = exec.stack.PopFast();
     ref var arr = ref exec.stack.Peek();
 
     var res = class_type.ArrGetAt(arr, idx);
@@ -803,7 +805,7 @@ public partial class VM : INamedResolver
     ref var self = ref exec.stack.vals[exec.stack.sp - 2];
     var class_type = (ArrayTypeSymbol)self.type;
 
-    int idx = exec.stack.Pop();
+    int idx = exec.stack.PopFast();
     exec.stack.Pop(out var arr);
     exec.stack.Pop(out var val);
 
@@ -976,12 +978,13 @@ public partial class VM : INamedResolver
     throw new NotImplementedException();
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    ref var obj = ref exec.stack.Pop();
+    ref var obj = ref exec.stack.PopFast();
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.getref(vm, obj, out var res, field_symb);
-    exec.stack.PushRetain(res);
-    obj.Release();
+    res._refc?.Retain();
+    obj._refc.Release();
+    obj = res;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

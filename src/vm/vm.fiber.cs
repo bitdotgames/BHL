@@ -234,7 +234,10 @@ public partial class VM : INamedResolver
     internal void CleanStack()
     {
       while(exec.stack.sp > 0)
-        exec.stack.PopRelease();
+      {
+        exec.stack.Pop(out var val);
+        val._refc?.Release();
+      }
     }
 
     internal void AddChild(Fiber fb)

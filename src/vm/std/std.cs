@@ -38,9 +38,9 @@ public static class std
       var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
         (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          var o = exec.stack.Pop();
-          exec.stack.Push(Val.NewObj(o.type, Types.Type));
-          o.Release();
+          ref var o = ref exec.stack.Peek();
+          o._refc?.Release();
+          o = Val.NewObj(o.type, Types.Type);
           return null;
         },
         new FuncArgSymbol("o", ts.T("any"))
@@ -52,10 +52,12 @@ public static class std
       var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
         (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          var type = (IType)exec.stack.PopRelease()._obj;
-          var o = exec.stack.Pop();
-          exec.stack.Push(Types.Is(o, type));
-          o.Release();
+          ref var type = ref exec.stack.PopFast();
+          type._refc?.Release();
+          ref var o = ref exec.stack.Peek();
+          var refc = o._refc;
+          o = Types.Is(o, (IType)type._obj);
+          refc?.Release();
           return null;
         },
         new FuncArgSymbol("o", ts.T("any")),
@@ -89,7 +91,7 @@ public static class std
         var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            string s = exec.stack.Pop();
+            string s = exec.stack.PopFast();
             Console.Write(s);
             return null;
           },
@@ -102,7 +104,7 @@ public static class std
         var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            string s = exec.stack.Pop();
+            string s = exec.stack.PopFast();
             Console.WriteLine(s);
             return null;
           },
