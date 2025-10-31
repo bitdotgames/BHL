@@ -1348,10 +1348,12 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    //including args info (maybe we don't need that?)
-    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    //TODO: remove args info from local variables
+    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip) - 1;
 
     var stack = exec.stack;
+
+    //NOTE: it's assumed that refcounted args are pushed with refcounted values,
 
     //let's pop args bits but store it in a Frame
     var args_info = new FuncArgsInfo((uint)stack.vals[--stack.sp]._num);
@@ -1361,16 +1363,12 @@ public partial class VM : INamedResolver
     frame.locals_offset = stack.sp - args_num;
     frame.return_args_num = 0;
 
-    //NOTE: it's assumed that refcounted args are pushed with refcounted values,
-    //      so the action below is not required
-    //let's 'own' passed args
-    //for(int i = 0; i < args_num; i++)
-    //  exec.stack.vals[frame.locals_offset + i]._refc?.Retain();
-
-    //let's reserve space for local variables
-    stack.Reserve(local_vars_num /* - args_num ? */);
+    //let's reserve space for local variables, however passed variables are
+    //already on the stack, let's take that into account
+    int rest_local_vars_num = local_vars_num - args_num;
+    stack.Reserve(rest_local_vars_num);
     //temporary stack lives after local variables
-    stack.sp += local_vars_num;
+    stack.sp += rest_local_vars_num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

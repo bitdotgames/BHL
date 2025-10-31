@@ -607,7 +607,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = Execute(vm, "test");
     var num = fb.Stack.Pop().num;
-    var str = fb.Stack.PopRelease().str;
+    var str = fb.Stack.Pop().str;
     Assert.Equal(100, num);
     Assert.Equal("bar", str);
     CommonChecks(vm);

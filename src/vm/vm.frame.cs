@@ -252,14 +252,30 @@ public partial class VM : INamedResolver
           val._obj = null;
         }
       }
+      //moving returned values up
+      //NOTE: returned vals are already retained by GetVar opcode,
+      //      no need to do that
+      Array.Copy(
+        stack.vals,
+        ret_start_offset,
+        stack.vals,
+        locals_offset,
+        return_args_num
+        );
 
-      //moving returned values up the stack
-      for(int i = 0; i < return_args_num; ++i)
+      //need to clean stack leftover
+      int local_vars_num = ret_start_offset - locals_offset;
+      int leftover = local_vars_num - return_args_num;
+      for(int i = 0; i < leftover; ++i)
       {
-        stack.Pop(out var val);
-        //NOTE: refcounted vals are already retained by GetVar opcode,
-        //      no need to do that
-        stack.vals[locals_offset + i] = val;
+        ref var val = ref stack.vals[ret_start_offset + i];
+        //TODO: what about blob?
+        if(val._refc != null)
+        {
+          val._refc.Release();
+          val._refc = null;
+          val._obj = null;
+        }
       }
 
       //stack pointer now at the last returned value
