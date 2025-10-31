@@ -900,6 +900,8 @@ public partial class VM : INamedResolver
 
     exec.stack.Pop(out var new_val);
     ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var refc = current._refc;
+    //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
     //these below cancel each other

@@ -71,8 +71,7 @@ public class FieldSymbolScript : FieldSymbol
   //marshall factory version
   public FieldSymbolScript()
     : this(null, "", new ProxyType())
-  {
-  }
+  {}
 
   void Getter(VM vm, Val ctx, ref Val v, FieldSymbol fld)
   {
@@ -85,19 +84,22 @@ public class FieldSymbolScript : FieldSymbol
     //TODO: use raw array for that?
     var m = (IList<Val>)ctx._obj;
     var curr = m[scope_idx];
+    v._refc?.Retain();
+    //TODO: what about blob?
+    curr._refc?.Release();
+    m[scope_idx] = v;
 
-    if(curr._refc != null)
-    {
-      //TODO: this looks suspicious, can it be simplified?
-      for(int i = 0; i < curr._refc.refs; ++i)
-      {
-        v._refc?.Retain();
-        curr._refc.Release();
-      }
-    }
-
-    curr.ValueCopyFrom(v);
-    m[scope_idx] = curr;
+    //previous overly complicated implementation
+    //if(curr._refc != null)
+    //{
+    //  for(int i = 0; i < curr._refc.refs; ++i)
+    //  {
+    //    v._refc?.Retain();
+    //    curr._refc.Release();
+    //  }
+    //}
+    //curr.ValueCopyFrom(v);
+    //m[scope_idx] = curr;
   }
 
   void Getref(VM vm, Val ctx, out Val v, FieldSymbol fld)

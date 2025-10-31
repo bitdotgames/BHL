@@ -299,6 +299,58 @@ public class TestARC : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestRefCountForUserClassAttrSet()
+  {
+    string bhl = @"
+
+    class Foo {
+    }
+
+    class Bar {
+      Foo foo
+    }
+
+    func test()
+    {
+      var foo = new Foo
+      var bar = new Bar
+      bar.foo = foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestRefCountForUserClassAttrGetSet()
+  {
+    string bhl = @"
+
+    class Foo {
+    }
+
+    class Bar {
+      Foo foo
+    }
+
+    func test()
+    {
+      var foo = new Foo
+      var bar1 = new Bar
+      bar1.foo = foo
+      var bar2 = new Bar
+      bar2.foo = bar1.foo
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
   void BindRefC(Types ts, StringBuilder logs)
   {
     {
