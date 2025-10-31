@@ -588,6 +588,30 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestMultiReturnVarsWithSeveralLocals()
+  {
+    string bhl = @"
+    func float,float foo()
+    {
+      return 300,100
+    }
+
+    func float test()
+    {
+      float f0 = 1
+      float f1,float f2 = foo()
+      return f1-f2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var fb = Execute(vm, "test");
+    double num = fb.Stack.Pop();
+    Assert.Equal(200, num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestMultiReturnVarAssign2()
   {
     string bhl = @"

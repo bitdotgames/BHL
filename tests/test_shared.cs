@@ -798,6 +798,14 @@ public class BHL_TestBase
   {
     Assert.Equal(0, fb.exec.frames_count);
     Assert.Equal(0, fb.exec.stack.sp);
+    //let's ensure that stack is properly cleaned up
+    for(int i = 0; i < fb.exec.stack.vals.Length; ++i)
+    {
+      var val = fb.exec.stack.vals[i];
+      Assert.Equal(0, val._blob_size);
+      Assert.Null(val._obj);
+      Assert.Null(val._refc);
+    }
   }
 
   public static string TestDirPath()

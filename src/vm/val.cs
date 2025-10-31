@@ -430,6 +430,7 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
+    tmp._obj = null; //cleaning up stack value
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -438,6 +439,7 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     var res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
+    tmp._obj = null; //cleaning up stack value
     res._refc?.Release();
     return res;
   }
@@ -448,6 +450,7 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     var res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
+    tmp._obj = null; //cleaning up stack value
     return res;
   }
 

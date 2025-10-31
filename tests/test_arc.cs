@@ -379,6 +379,32 @@ public class TestARC : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestMultiReturnAndLocalVariables()
+  {
+    string bhl = @"
+
+    class Foo {
+    }
+
+    func Foo,Foo make() {
+      return new Foo, new Foo
+    }
+
+    func test()
+    {
+      var foo1 = new Foo
+      var foo2 = new Foo
+      var foo3 = new Foo
+      var foo4, var foo5 = make()
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
   void BindRefC(Types ts, StringBuilder logs)
   {
     {

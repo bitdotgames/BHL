@@ -249,10 +249,10 @@ public partial class VM : INamedResolver
         //TODO: what about blob?
         if(val._refc != null)
         {
-          val._refc.Release();
+          val._refc?.Release();
           val._refc = null;
-          val._obj = null;
         }
+        val._obj = null;
       }
 
       if(return_args_num > 0)
@@ -278,8 +278,8 @@ public partial class VM : INamedResolver
           {
             val._refc.Release();
             val._refc = null;
-            val._obj = null;
           }
+          val._obj = null;
         }
       }
 
