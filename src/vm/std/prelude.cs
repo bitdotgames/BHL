@@ -116,7 +116,7 @@ public static class Prelude
 
 class CoroutineSuspend : Coroutine
 {
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+  public override void Tick(VM.ExecState exec)
   {
     exec.status = BHS.RUNNING;
   }
@@ -126,7 +126,7 @@ class CoroutineYield : Coroutine
 {
   bool first_time = true;
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+  public override void Tick(VM.ExecState exec)
   {
     if(first_time)
     {
@@ -135,7 +135,7 @@ class CoroutineYield : Coroutine
     }
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+  public override void Cleanup(VM.ExecState exec)
   {
     first_time = true;
   }
@@ -145,11 +145,11 @@ class CoroutineWait : Coroutine
 {
   int end_stamp = -1;
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+  public override void Tick(VM.ExecState exec)
   {
     if(end_stamp == -1)
     {
-      int ms = (int)exec.stack_old.PopRelease()._num;
+      int ms = exec.stack.PopFast();
       end_stamp = System.Environment.TickCount + ms;
     }
 
@@ -157,7 +157,7 @@ class CoroutineWait : Coroutine
       exec.status = BHS.RUNNING;
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+  public override void Cleanup(VM.ExecState exec)
   {
     end_stamp = -1;
   }

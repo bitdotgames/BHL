@@ -56,7 +56,7 @@ public struct DeferBlock
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal static void ExitScopeOld(List<DeferBlock> defers, VM.ExecState exec)
+  internal static void ExitScope(VM.ExecState exec, List<DeferBlock> defers)
   {
     if(defers.Count == 0)
       return;
@@ -109,36 +109,38 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     return exec.coroutine;
   }
 
-  public void Init(VM.FrameOld frm, ValOldStack stack, int min_ip, int max_ip)
+  public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {
-    exec.stack_old = stack;
+    exec.vm = ext_exec.vm;
+    exec.fiber = ext_exec.fiber;
+    exec.stack = ext_exec.stack;
     exec.ip = min_ip;
     exec.regions[exec.regions_count++] =
       new VM.Region(-1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
+  public override void Tick(VM.ExecState ext_exec)
   {
-    frm.vm.Execute(exec);
+    ext_exec.vm.Execute(exec);
     ext_exec.ip = exec.ip;
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState _)
+  public void Cleanup(VM.ExecState _)
   {
-    ExitScope(frm, exec, defers);
+    ExitScope(exec, defers);
   }
 
-  public static void ExitScope(VM.FrameOld frm, VM.ExecState exec, List<DeferBlock> defers)
+  public static void ExitScope(VM.ExecState exec, List<DeferBlock> defers)
   {
     if(exec.coroutine != null)
     {
-      CoroutinePool.DelOld(frm, exec, exec.coroutine);
+      CoroutinePool.Del(exec, exec.coroutine);
       exec.coroutine = null;
     }
 
     //NOTE: 1. first we exit the scope for all dangling frames
     for(int i = exec.frames_old.Count; i-- > 0;)
-      exec.frames_old[i].ExitScope(null, exec);
+      exec.frames_old[i].ExitScope(exec);
 
     //NOTE: 2. then we release frames only after exiting them
     for(int i = exec.frames_old.Count; i-- > 0;)
@@ -146,7 +148,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     exec.frames_old.Clear();
     exec.regions_count = 0;
 
-    DeferBlock.ExitScopeOld(defers, exec);
+    DeferBlock.ExitScope(exec, defers);
   }
 }
 
@@ -168,19 +170,21 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     return exec.coroutine;
   }
 
-  public void Init(VM.FrameOld frm, int min_ip, int max_ip)
+  public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+    exec.vm = ext_exec.vm;
+    exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
     exec.stack_old = stack;
     exec.regions[exec.regions_count++] =
       new VM.Region(-1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState ext_exec)
+  public override void Tick(VM.ExecState ext_exec)
   {
-    frm.vm.Execute(exec);
+    exec.vm.Execute(exec);
 
     if(exec.status == BHS.SUCCESS)
     {
@@ -194,15 +198,16 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState _)
+  public override void Cleanup(VM.ExecState _)
   {
-    SeqBlock.ExitScope(frm, exec, defers);
+    SeqBlock.ExitScope(exec, defers);
 
     //NOTE: let's clean the local stack
     for(int i = stack.Count; i-- > 0;)
     {
       var val = stack[i];
-      val.Release();
+      val._refc?.Release();
+      val._refc = null;
     }
 
     stack.Clear();
@@ -236,7 +241,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     defers.Clear();
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+  public override void Tick(VM.ExecState exec)
   {
     exec.ip = min_ip;
 
@@ -245,10 +250,10 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     for(i = 0; i < branches.Count; ++i)
     {
       var branch = branches[i];
-      branch.Tick(frm, exec);
+      branch.Tick(exec);
       if(exec.status != BHS.RUNNING)
       {
-        CoroutinePool.DelOld(frm, exec, branch);
+        CoroutinePool.Del(exec, branch);
         branches.RemoveAt(i);
         //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
         if(exec.ip > min_ip && exec.ip < max_ip)
@@ -258,14 +263,14 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+  public void Cleanup(VM.ExecState exec)
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
     for(i = 0; i < branches.Count; ++i)
-      CoroutinePool.DelOld(frm, exec, branches[i]);
+      CoroutinePool.Del(exec, branches[i]);
     branches.Clear();
-    DeferBlock.ExitScopeOld(defers, exec);
+    DeferBlock.ExitScope(exec, defers);
   }
 }
 
@@ -296,18 +301,19 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     defers.Clear();
   }
 
-  public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+  public override void Tick(VM.ExecState exec)
   {
     exec.ip = min_ip;
 
     for(i = 0; i < branches.Count;)
     {
       var branch = branches[i];
-      branch.Tick(frm, exec);
+      branch.Tick(exec);
       //let's check if we "jumped out" of the block (e.g return, break)
-      if(frm.refs == -1 /*return executed*/ || exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
+      throw new NotImplementedException();
+      if(/*frm.refs == -1  ||*/ exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
       {
-        CoroutinePool.DelOld(frm, exec, branch);
+        CoroutinePool.Del(exec, branch);
         branches.RemoveAt(i);
         exec.status = BHS.SUCCESS;
         return;
@@ -315,12 +321,12 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
 
       if(exec.status == BHS.SUCCESS)
       {
-        CoroutinePool.DelOld(frm, exec, branch);
+        CoroutinePool.Del(exec, branch);
         branches.RemoveAt(i);
       }
       else if(exec.status == BHS.FAILURE)
       {
-        CoroutinePool.DelOld(frm, exec, branch);
+        CoroutinePool.Del(exec, branch);
         branches.RemoveAt(i);
         return;
       }
@@ -335,14 +341,14 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
       exec.ip = max_ip + 1;
   }
 
-  public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+  public override void Cleanup(VM.ExecState exec)
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
     for(i = 0; i < branches.Count; ++i)
-      CoroutinePool.DelOld(frm, exec, branches[i]);
+      CoroutinePool.Del(exec, branches[i]);
     branches.Clear();
-    DeferBlock.ExitScopeOld(defers, exec);
+    DeferBlock.ExitScope(exec, defers);
   }
 }
 

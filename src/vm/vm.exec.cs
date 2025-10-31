@@ -71,6 +71,9 @@ public partial class VM : INamedResolver
   {
     public BHS status = BHS.SUCCESS;
 
+    public VM vm;
+    public Fiber fiber;
+
     internal int ip;
     internal Coroutine coroutine;
 
@@ -78,14 +81,15 @@ public partial class VM : INamedResolver
     internal int regions_count = 0;
 
     public ValStack stack = new ValStack();
-    //TODO: why is it here?
-    public Const[] constants = new Const[16];
 
     public Frame[] frames = new Frame[256];
     public int frames_count = 0;
 
     internal FixedStack<FrameOld> frames_old = new FixedStack<FrameOld>(256);
     public ValOldStack stack_old;
+
+    public ExecState()
+    {}
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public ref Frame PushFrame()
@@ -171,7 +175,7 @@ public partial class VM : INamedResolver
     //1. if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)
     {
-      ExecuteCoroutine(null, exec);
+      ExecuteCoroutine(ref frame, exec);
     }
     //2. are we out of the current region?
     else if(exec.ip < region.min_ip || exec.ip > region.max_ip)
@@ -301,13 +305,13 @@ public partial class VM : INamedResolver
       if(is_paral)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(this);
-        br.Init(curr_frame, ip + 1, ip + size);
+        br.Init(exec, ip + 1, ip + size);
         return (br, null, br.defers);
       }
       else
       {
         var seq = CoroutinePool.New<SeqBlock>(this);
-        seq.Init(curr_frame, exec.stack_old, ip + 1, ip + size);
+        seq.Init(exec, ip + 1, ip + size);
         return (seq, null, seq.defers);
       }
     }
@@ -391,13 +395,13 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void ExecuteCoroutine(FrameOld curr_frame, ExecState exec)
+  static void ExecuteCoroutine(ref Frame frame, ExecState exec)
   {
     exec.status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple
     //      bindings you won't forget to do it
     ++exec.ip;
-    exec.coroutine.Tick(curr_frame, exec);
+    exec.coroutine.Tick(exec);
 
     if(exec.status == BHS.RUNNING)
     {
@@ -405,7 +409,7 @@ public partial class VM : INamedResolver
     }
     else if(exec.status == BHS.FAILURE)
     {
-      CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
+      CoroutinePool.Del(exec, exec.coroutine);
       exec.coroutine = null;
 
       exec.ip = EXIT_FRAME_IP - 1;
@@ -413,7 +417,7 @@ public partial class VM : INamedResolver
     }
     else if(exec.status == BHS.SUCCESS)
     {
-      CoroutinePool.DelOld(curr_frame, exec, exec.coroutine);
+      CoroutinePool.Del(exec, exec.coroutine);
       exec.coroutine = null;
     }
     else

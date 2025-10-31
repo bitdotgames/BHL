@@ -11,7 +11,7 @@ public static class std
   {
     bool first_time = true;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+    public override void Tick(VM.ExecState exec)
     {
       if(first_time)
       {
@@ -19,10 +19,10 @@ public static class std
         first_time = false;
       }
       else
-        exec.stack_old.Push(frm.vm.TrueOld);
+        exec.stack.Push(VM.True);
     }
 
-    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+    public void Cleanup(VM.ExecState exec)
     {
       first_time = true;
     }

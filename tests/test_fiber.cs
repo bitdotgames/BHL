@@ -270,7 +270,7 @@ public class TestFiber : BHL_TestBase
     bool first_time = true;
     public StringBuilder log;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+    public override void Tick(VM.ExecState exec)
     {
       if(first_time)
       {
@@ -281,7 +281,7 @@ public class TestFiber : BHL_TestBase
         log.Append("HERE");
     }
 
-    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+    public override void Cleanup(VM.ExecState exec)
     {
       first_time = true;
     }
@@ -676,22 +676,23 @@ public class TestFiber : BHL_TestBase
     bool done;
     VM.FiberRef fb;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+    public override void Tick(VM.ExecState exec)
     {
       //first time
       if(!done)
       {
-        var val = exec.stack_old.Pop();
-        fb = new VM.FiberRef(val);
+        var val = exec.stack.Pop();
+        throw new NotImplementedException();
+        //fb = new VM.FiberRef(val);
         val.Release();
         exec.status = BHS.RUNNING;
         done = true;
       }
       else
-        frm.vm.Stop(fb.Get());
+        exec.vm.Stop(fb.Get());
     }
 
-    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+    public override void Cleanup(VM.ExecState exec)
     {
       done = false;
     }

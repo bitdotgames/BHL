@@ -181,7 +181,7 @@ public partial class VM : INamedResolver
       {
         if(exec.coroutine != null)
         {
-          CoroutinePool.Del(ref exec.frames[exec.frames_count-1], exec, exec.coroutine);
+          CoroutinePool.Del(exec, exec.coroutine);
           exec.coroutine = null;
         }
 
@@ -196,35 +196,6 @@ public partial class VM : INamedResolver
           //}
         }
         exec.frames_count = 0;
-      }
-
-      exec.regions_count = 0;
-    }
-
-    internal void ExitScopesOld()
-    {
-      if(exec.frames_old.Count > 0)
-      {
-        if(exec.coroutine != null)
-        {
-          CoroutinePool.DelOld(exec.frames_old.Peek(), exec, exec.coroutine);
-          exec.coroutine = null;
-        }
-
-        for(int i = exec.frames_old.Count; i-- > 0;)
-        {
-          var frm = exec.frames_old[i];
-          frm.ExitScope(null, exec);
-        }
-
-        //NOTE: we need to release frames only after we actually exited their scopes
-        for(int i = exec.frames_old.Count; i-- > 0;)
-        {
-          var frm = exec.frames_old[i];
-          frm.Release();
-        }
-
-        exec.frames_old.Clear();
       }
 
       exec.regions_count = 0;

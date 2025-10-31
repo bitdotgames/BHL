@@ -91,32 +91,32 @@ public class TestPerf : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestFibonacciAOT()
-  {
-    var vm = new VM();
-    var fb = VM.Fiber.New(vm);
-    fb.exec.funcs2[0] = __fib;
-    fb.exec.constants[0] = new Const(0);
-    fb.exec.constants[1] = new Const(1);
-    fb.exec.constants[2] = new Const(2);
+  //[Fact]
+  //public void TestFibonacciAOT()
+  //{
+  //  var vm = new VM();
+  //  var fb = VM.Fiber.New(vm);
+  //  fb.exec.funcs2[0] = __fib;
+  //  fb.exec.constants[0] = new Const(0);
+  //  fb.exec.constants[1] = new Const(1);
+  //  fb.exec.constants[2] = new Const(2);
 
-    {
-      ref Val v = ref fb.exec.stack.Push();
-      v.type = Types.Int;
-      v._num = 15;
-    }
-    {
-      //passing args info as a stack variable
-      ref Val v = ref fb.exec.stack.Push();
-      v._num = 1;
-    }
-    var region = new VM.Region();
-    var status = BHS.SUCCESS;
-    ref var frame = ref fb.exec.PushFrame();
-    fb.exec.funcs2[0](vm, fb.exec, ref region, ref frame, ref status);
-    Assert.Equal(610, fb.exec.stack.PopRelease().num);
-  }
+  //  {
+  //    ref Val v = ref fb.exec.stack.Push();
+  //    v.type = Types.Int;
+  //    v._num = 15;
+  //  }
+  //  {
+  //    //passing args info as a stack variable
+  //    ref Val v = ref fb.exec.stack.Push();
+  //    v._num = 1;
+  //  }
+  //  var region = new VM.Region();
+  //  var status = BHS.SUCCESS;
+  //  ref var frame = ref fb.exec.PushFrame();
+  //  fb.exec.funcs2[0](vm, fb.exec, ref region, ref frame, ref status);
+  //  Assert.Equal(610, fb.exec.stack.PopRelease().num);
+  //}
 
   static void __fib(
     VM vm,
@@ -225,11 +225,12 @@ public class TestPerf : BHL_TestBase
     int const_idx
   )
   {
-    var cn = exec.constants[const_idx];
+    throw new NotImplementedException();
+    //var cn = exec.constants[const_idx];
 
-    ref Val v = ref exec.stack.Push();
-    v.type = Types.Int;
-    v._num = cn.num;
+    //ref Val v = ref exec.stack.Push();
+    //v.type = Types.Int;
+    //v._num = cn.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -134,9 +134,9 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitScope(VM.FrameOld _, ExecState exec)
+    public void ExitScope(ExecState exec)
     {
-      DeferBlock.ExitScopeOld(defers, exec);
+      DeferBlock.ExitScope(exec, defers);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -3994,11 +3994,11 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     {
-      var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 1)).Stack.Pop().num;
+      double num = Execute(vm, "test", 1).Stack.Pop();
       Assert.Equal(2, num);
     }
     {
-      var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 10)).Stack.Pop().num;
+      double num = Execute(vm, "test", 10).Stack.Pop();
       Assert.Equal(3, num);
     }
     CommonChecks(vm);
@@ -4523,8 +4523,6 @@ public class TestVM : BHL_TestBase
     for(int i = 0; i < 5; ++i)
       vm.Tick();
     Assert.Equal(0, fb.exec.stack.sp);
-    Assert.Equal(4, vm.vals_pool.MissCount);
-    Assert.Equal(3, vm.vals_pool.IdleCount);
 
     vm.Stop(fb);
     CommonChecks(vm);
@@ -9045,14 +9043,14 @@ public class TestVM : BHL_TestBase
     int ticks;
     int ret;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+    public override void Tick(VM.ExecState exec)
     {
       if(first_time)
       {
-        ticks = (int)exec.stack_old.PopRelease().num;
-        ret = (int)exec.stack_old.PopRelease().num;
+        ticks = exec.stack.Pop();
+        ret = exec.stack.Pop();
         //self
-        exec.stack_old.PopRelease();
+        exec.stack.PopRelease();
         first_time = false;
       }
 
@@ -9062,11 +9060,11 @@ public class TestVM : BHL_TestBase
       }
       else
       {
-        exec.stack_old.Push(ValOld.NewNum(frm.vm, ret));
+        exec.stack.Push(ret);
       }
     }
 
-    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+    public override void Cleanup(VM.ExecState exec)
     {
       first_time = true;
     }
@@ -11140,7 +11138,7 @@ public class TestVM : BHL_TestBase
     int c;
     int ticks_ttl;
 
-    public override void Tick(VM.FrameOld frm, VM.ExecState exec)
+    public override void Tick(VM.ExecState exec)
     {
       //first time
       if(c++ == 0)
@@ -11152,7 +11150,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public override void Cleanup(VM.FrameOld frm, VM.ExecState exec)
+    public override void Cleanup(VM.ExecState exec)
     {
       c = 0;
       ticks_ttl = 0;
