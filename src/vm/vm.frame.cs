@@ -242,46 +242,6 @@ public partial class VM : INamedResolver
       int ret_start_offset = stack.sp - return_args_num;
       int local_vars_num = ret_start_offset - locals_offset;
 
-      //TODO: more optimal algorithm
-      //int locals_leftover_num = local_vars_num - return_args_num;
-      //int intersecting_num = local_vars_num - return_args_num;
-
-      //for(int i = 0; i < intersecting_num; ++i)
-      //{
-      //  ref var local = ref stack.vals[locals_offset + i];
-      //  ref var ret = ref stack.vals[ret_start_offset + i];
-      //  //let's release local
-      //  if(local._refc != null)
-      //  {
-      //    //TODO: what about blob?
-      //    local._refc.Release();
-      //    local._refc = null;
-      //  }
-
-      //  //let's copy returned value over local
-      //  local = ret;
-
-      //  //let's clean stack
-      //  if(ret._refc != null)
-      //  {
-      //    //TODO: what about blob?
-      //    ret._refc = null;
-      //  }
-      //}
-
-      ////let's clean local leftover
-      //for(int i = 0; i < locals_leftover_num; ++i)
-      //{
-      //  ref var val = ref stack.vals[locals_offset + i];
-      //  //let's release local
-      //  if(val._refc != null)
-      //  {
-      //    //TODO: what about blob?
-      //    val._refc.Release();
-      //    val._refc = null;
-      //  }
-      //}
-
       //releasing all locals
       for(int i = locals_offset; i < ret_start_offset; ++i)
       {
@@ -294,28 +254,32 @@ public partial class VM : INamedResolver
           val._obj = null;
         }
       }
-      //moving returned values up
-      //NOTE: returned vals are already retained by GetVar opcode,
-      //      no need to do that
-      Array.Copy(
-        stack.vals,
-        ret_start_offset,
-        stack.vals,
-        locals_offset,
-        return_args_num
+
+      if(return_args_num > 0)
+      {
+        //moving returned values up
+        //NOTE: returned vals are already retained by GetVar opcode,
+        //      no need to do that
+        Array.Copy(
+          stack.vals,
+          ret_start_offset,
+          stack.vals,
+          locals_offset,
+          return_args_num
         );
 
-      //need to clean stack leftover
-      int leftover = local_vars_num - return_args_num;
-      for(int i = 0; i < leftover; ++i)
-      {
-        ref var val = ref stack.vals[ret_start_offset + i];
-        //TODO: what about blob?
-        if(val._refc != null)
+        //need to clean stack leftover
+        int leftover = local_vars_num - return_args_num;
+        for(int i = 0; i < leftover; ++i)
         {
-          val._refc.Release();
-          val._refc = null;
-          val._obj = null;
+          ref var val = ref stack.vals[ret_start_offset + i];
+          //TODO: what about blob?
+          if(val._refc != null)
+          {
+            val._refc.Release();
+            val._refc = null;
+            val._obj = null;
+          }
         }
       }
 

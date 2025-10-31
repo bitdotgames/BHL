@@ -1170,7 +1170,7 @@ public partial class VM : INamedResolver
 
     //NOTE: using convention where built-in global module is always at index 0
     //      and imported modules are at (import_idx + 1)
-    var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
+    var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
     if(CallNative(vm, exec, nfunc_symb, args_bits))
