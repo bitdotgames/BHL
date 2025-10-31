@@ -240,6 +240,48 @@ public partial class VM : INamedResolver
     public void Exit(ValStack stack)
     {
       int ret_start_offset = stack.sp - return_args_num;
+      int local_vars_num = ret_start_offset - locals_offset;
+
+      //TODO: more optimal algorithm
+      //int locals_leftover_num = local_vars_num - return_args_num;
+      //int intersecting_num = local_vars_num - return_args_num;
+
+      //for(int i = 0; i < intersecting_num; ++i)
+      //{
+      //  ref var local = ref stack.vals[locals_offset + i];
+      //  ref var ret = ref stack.vals[ret_start_offset + i];
+      //  //let's release local
+      //  if(local._refc != null)
+      //  {
+      //    //TODO: what about blob?
+      //    local._refc.Release();
+      //    local._refc = null;
+      //  }
+
+      //  //let's copy returned value over local
+      //  local = ret;
+
+      //  //let's clean stack
+      //  if(ret._refc != null)
+      //  {
+      //    //TODO: what about blob?
+      //    ret._refc = null;
+      //  }
+      //}
+
+      ////let's clean local leftover
+      //for(int i = 0; i < locals_leftover_num; ++i)
+      //{
+      //  ref var val = ref stack.vals[locals_offset + i];
+      //  //let's release local
+      //  if(val._refc != null)
+      //  {
+      //    //TODO: what about blob?
+      //    val._refc.Release();
+      //    val._refc = null;
+      //  }
+      //}
+
       //releasing all locals
       for(int i = locals_offset; i < ret_start_offset; ++i)
       {
@@ -264,7 +306,6 @@ public partial class VM : INamedResolver
         );
 
       //need to clean stack leftover
-      int local_vars_num = ret_start_offset - locals_offset;
       int leftover = local_vars_num - return_args_num;
       for(int i = 0; i < leftover; ++i)
       {
