@@ -332,18 +332,16 @@ public class TestPerf : BHL_TestBase
     uint args_bits
     )
   {
-    var fn = exec.funcs2[func_ip];
+    //var fn = frame.module.funcs[func_ip];
 
-    ref var new_frame2 = ref exec.PushFrame();
-    new_frame2.Init(ref frame);
-    //var frm = VM.Frame.New(vm);
-    //frm.Init(curr_frame, exec.stack, func_ip);
+    //ref var new_frame2 = ref exec.PushFrame();
+    //new_frame2.Init(ref frame);
 
-    ref Val v = ref exec.stack.Push();
-    v.type = Types.Int;
-    v._num = args_bits;
+    //ref Val v = ref exec.stack.Push();
+    //v.type = Types.Int;
+    //v._num = args_bits;
 
-    fn(vm, exec, ref region, ref new_frame2, ref status);
+    //fn(vm, exec, ref region, ref new_frame2, ref status);
   }
 
 }

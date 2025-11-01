@@ -46,8 +46,7 @@ public class TestStackTrace : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -63,9 +62,9 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -129,8 +128,7 @@ public class TestStackTrace : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);

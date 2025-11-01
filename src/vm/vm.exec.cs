@@ -25,40 +25,6 @@ public partial class VM : INamedResolver
     InitOpcodeHandlers();
   }
 
-  //NOTE: why -2? we reserve some space before int.MaxValue so that
-  //      increasing some ip couple of times after it was assigned
-  //      a 'STOP_IP' value won't overflow int.MaxValue
-  public const int STOP_IP = int.MaxValue - 2;
-  public const int EXIT_FRAME_IP = STOP_IP - 1;
-
-  public delegate void ClassCreator(VM vm, ref Val res, IType type);
-
-  public struct Region
-  {
-    public int frame_idx;
-
-    public List<DeferBlock> defer_support;
-
-    //NOTE: if current ip is not within *inclusive* range of these values
-    //      the frame context execution is considered to be done
-    public int min_ip;
-    public int max_ip;
-
-    [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public Region(
-      int frame_idx,
-      List<DeferBlock> defer_support,
-      int min_ip = -1,
-      int max_ip = STOP_IP
-      )
-    {
-      this.frame_idx = frame_idx;
-      this.defer_support = defer_support;
-      this.min_ip = min_ip;
-      this.max_ip = max_ip;
-    }
-  }
-
   //NOTE: This class represents an active execution unit in VM.
   //      VM needs an active ExecState during Tick-ing.
   //
@@ -106,11 +72,119 @@ public partial class VM : INamedResolver
       return ref frames[frames_count--];
     }
 
-    public delegate void LocalFunc(
-      VM vm, ExecState exec, ref Region region,
-      ref Frame frame, ref BHS status
-    );
-    public LocalFunc[] funcs2 = new LocalFunc[16];
+    void GetCalls(List<VM.Frame> calls)
+    {
+      for(int i = 0; i < frames_count; ++i)
+        calls.Add(frames[i]);
+    }
+
+    public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      var calls = new List<VM.Frame>();
+      int coroutine_ip = -1;
+      GetCalls(calls);
+      TryGetTraceInfo(coroutine, ref coroutine_ip, calls);
+
+      for(int i = 0; i < calls.Count; ++i)
+      {
+        var frm = calls[i];
+
+        var item = new TraceItem();
+
+        //NOTE: information about frame ip is taken from the 'next' frame, however
+        //      for the last frame we have a special case. In this case there's no
+        //      'next' frame and we should consider taking ip from Fiber or an active
+        //      coroutine
+        if(i == calls.Count - 1)
+        {
+          item.ip = coroutine_ip == -1 ? this.ip : coroutine_ip;
+        }
+        else
+        {
+          //NOTE: retrieving last ip for the current Frame which
+          //      turns out to be return_ip assigned to the next Frame
+          var next = calls[i + 1];
+          item.ip = next.return_ip;
+        }
+
+        if(frm.module != null)
+        {
+          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
+          //NOTE: if symbol is missing it's a lambda
+          if(fsymb == null)
+            item.file = frm.module.name + ".bhl";
+          else
+            item.file = fsymb._module.name + ".bhl";
+          item.func = fsymb == null ? "?" : fsymb.name;
+          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
+        }
+        else
+        {
+          item.file = "?";
+          item.func = "?";
+        }
+
+        info.Insert(0, item);
+      }
+    }
+
+    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
+    {
+      if(i is SeqBlock si)
+      {
+        si.exec.GetCalls(calls);
+        if(!TryGetTraceInfo(si.exec.coroutine, ref ip, calls))
+          ip = si.exec.ip;
+        return true;
+      }
+      else if(i is ParalBranchBlock bi)
+      {
+        bi.exec.GetCalls(calls);
+        if(!TryGetTraceInfo(bi.exec.coroutine, ref ip, calls))
+          ip = bi.exec.ip;
+        return true;
+      }
+      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
+        return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
+      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
+        return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
+      else
+        return false;
+    }
+  }
+
+  //NOTE: why -2? we reserve some space before int.MaxValue so that
+  //      increasing some ip couple of times after it was assigned
+  //      a 'STOP_IP' value won't overflow int.MaxValue
+  public const int STOP_IP = int.MaxValue - 2;
+  public const int EXIT_FRAME_IP = STOP_IP - 1;
+
+  public delegate void ClassCreator(VM vm, ref Val res, IType type);
+
+  public struct Region
+  {
+    public int frame_idx;
+
+    public List<DeferBlock> defer_support;
+
+    //NOTE: if current ip is not within *inclusive* range of these values
+    //      the frame context execution is considered to be done
+    public int min_ip;
+    public int max_ip;
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public Region(
+      int frame_idx,
+      List<DeferBlock> defer_support,
+      int min_ip = -1,
+      int max_ip = STOP_IP
+      )
+    {
+      this.frame_idx = frame_idx;
+      this.defer_support = defer_support;
+      this.min_ip = min_ip;
+      this.max_ip = max_ip;
+    }
   }
 
   //fake frame used for module's init code

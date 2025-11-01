@@ -150,6 +150,8 @@ public partial class VM : INamedResolver
     internal Fiber(VM vm)
     {
       this.vm = vm;
+      exec.vm = vm;
+      exec.fiber = this;
     }
 
     internal void Attach(FrameOld frm)
@@ -163,15 +165,9 @@ public partial class VM : INamedResolver
 
     internal void Attach(ref Frame frame, int frame_idx)
     {
-      //do we need this?
-      //frame.fb = this;
       exec.ip = frame.start_ip;
-      //already pushed
-      //exec.frames.Push(frm);
       var region = new Region(frame_idx: frame_idx, defer_support: null);
       exec.regions[exec.regions_count++] = region;
-      //really?
-      //exec.stack = frm.stack;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -252,52 +248,7 @@ public partial class VM : INamedResolver
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      var calls = new List<VM.FrameOld>();
-      int coroutine_ip = -1;
-      GetCalls(exec, calls);
-      TryGetTraceInfo(exec.coroutine, ref coroutine_ip, calls);
-
-      for(int i = 0; i < calls.Count; ++i)
-      {
-        var frm = calls[i];
-
-        var item = new TraceItem();
-
-        //NOTE: information about frame ip is taken from the 'next' frame, however
-        //      for the last frame we have a special case. In this case there's no
-        //      'next' frame and we should consider taking ip from Fiber or an active
-        //      coroutine
-        if(i == calls.Count - 1)
-        {
-          item.ip = coroutine_ip == -1 ? frm.fb.exec.ip : coroutine_ip;
-        }
-        else
-        {
-          //NOTE: retrieving last ip for the current Frame which
-          //      turns out to be return_ip assigned to the next Frame
-          var next = calls[i + 1];
-          item.ip = next.return_ip;
-        }
-
-        if(frm.module != null)
-        {
-          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
-          //NOTE: if symbol is missing it's a lambda
-          if(fsymb == null)
-            item.file = frm.module.name + ".bhl";
-          else
-            item.file = fsymb._module.name + ".bhl";
-          item.func = fsymb == null ? "?" : fsymb.name;
-          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
-        }
-        else
-        {
-          item.file = "?";
-          item.func = "?";
-        }
-
-        info.Insert(0, item);
-      }
+      exec.GetStackTrace(info);
     }
 
     public string GetStackTrace(Error.TraceFormat format = Error.TraceFormat.Compact)
@@ -305,30 +256,6 @@ public partial class VM : INamedResolver
       var trace = new List<TraceItem>();
       GetStackTrace(trace);
       return Error.ToString(trace, format);
-    }
-
-    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.FrameOld> calls)
-    {
-      if(i is SeqBlock si)
-      {
-        GetCalls(si.exec, calls);
-        if(!TryGetTraceInfo(si.exec.coroutine, ref ip, calls))
-          ip = si.exec.ip;
-        return true;
-      }
-      else if(i is ParalBranchBlock bi)
-      {
-        GetCalls(bi.exec, calls);
-        if(!TryGetTraceInfo(bi.exec.coroutine, ref ip, calls))
-          ip = bi.exec.ip;
-        return true;
-      }
-      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
-        return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
-      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
-        return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
-      else
-        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
