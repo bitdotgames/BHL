@@ -66,13 +66,6 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
-    public void Init(FrameOld origin, int func_ip)
-    {
-      this.module = origin.module;
-      this.func_ip = func_ip;
-      this.native = null;
-    }
-
     public void Init(Module module, int func_ip)
     {
       this.module = module;
@@ -131,7 +124,7 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
-    public FrameOld MakeFrame(VM vm, Fiber fb, ValOldStack return_stack)
+    public FrameOld MakeFrameOld(VM vm, Fiber fb, ValOldStack return_stack)
     {
       var frm = FrameOld.New(vm);
 
@@ -156,6 +149,30 @@ public partial class VM : INamedResolver
       }
 
       return frm;
+    }
+
+    public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame)
+    {
+      if(native != null)
+      {
+        frame.Init(origin_frame, VM.EXIT_FRAME_IP);
+      }
+      else
+      {
+        frame.Init(module, func_ip);
+
+        for(int i = 0; i < upvals.Count; ++i)
+        {
+          throw new NotImplementedException();
+          //var upval = upvals[i];
+          //if(upval != null)
+          //{
+          //  frm.locals.Count = i + 1;
+          //  upval.Retain();
+          //  frm.locals[i] = upval;
+          //}
+        }
+      }
     }
 
     public override string ToString()

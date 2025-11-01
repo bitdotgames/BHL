@@ -1139,11 +1139,11 @@ public partial class VM : INamedResolver
   {
     int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
-    var func_symb = curr_frame.module.func_index.index[func_idx];
+    var func_symb = frame.module.func_index.index[func_idx];
 
     var ptr = FuncPtr.New(vm);
-    ptr.Init(curr_frame.module, func_symb.ip_addr);
-    exec.stack_old.Push(ValOld.NewObj(vm, ptr, func_symb.signature));
+    ptr.Init(frame.module, func_symb.ip_addr);
+    exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1152,12 +1152,12 @@ public partial class VM : INamedResolver
     int import_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     int func_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
-    var func_mod = curr_frame.module._imported[import_idx];
+    var func_mod = frame.module._imported[import_idx];
     var func_symb = func_mod.func_index.index[func_idx];
 
     var ptr = FuncPtr.New(vm);
     ptr.Init(func_mod, func_symb.ip_addr);
-    exec.stack_old.Push(ValOld.NewObj(vm, ptr, func_symb.signature));
+    exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1168,23 +1168,24 @@ public partial class VM : INamedResolver
 
     //NOTE: using convention where built-in global module is always at index 0
     //      and imported modules are at (import_idx + 1)
-    var func_mod = import_idx == 0 ? vm.types.module : curr_frame.module._imported[import_idx - 1];
+    var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index.index[func_idx];
 
     var ptr = FuncPtr.New(vm);
     ptr.Init(nfunc_symb);
-    exec.stack_old.Push(ValOld.NewObj(vm, ptr, nfunc_symb.signature));
+    exec.stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGetFuncPtrFromVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int local_var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    var val = curr_frame.locals[local_var_idx];
-    val.Retain();
-    exec.stack_old.Push(val);
+    ref var val = ref exec.stack.vals[frame.locals_offset +  local_var_idx];
+    val._refc?.Retain();
+    exec.stack.Push(val);
   }
 
+  //TODO: this is a very suspicious opcode which should be rethought
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeLastArgToTop(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
@@ -1192,21 +1193,10 @@ public partial class VM : INamedResolver
     //      so that it fullfills Opcode.Call requirements
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int arg_idx = exec.stack_old.Count - args_num - 1;
-    var arg = exec.stack_old[arg_idx];
-    exec.stack_old.RemoveAt(arg_idx);
-    exec.stack_old.Push(arg);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeCallLocal(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-    var frm = FrameOld.New(vm);
-    frm.Init(curr_frame, exec.stack_old, func_ip);
-    vm.Call(exec, frm, args_bits);
+    int arg_idx = exec.stack.sp - args_num - 1;
+    var arg = exec.stack.vals[arg_idx];
+    exec.stack.RemoveAt(arg_idx);
+    exec.stack.Push(arg);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1215,9 +1205,10 @@ public partial class VM : INamedResolver
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
+    int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.Init(frame, func_ip);
-    vm.Call(exec, ref new_frame, exec.frames_count - 1, args_bits);
+    vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1263,9 +1254,10 @@ public partial class VM : INamedResolver
 
     var func_mod = frame.module._imported[import_idx];
 
+    int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.Init(func_mod, func_ip);
-    vm.Call(exec, ref new_frame, exec.frames_count - 1, args_bits);
+    vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1384,7 +1376,7 @@ public partial class VM : INamedResolver
   {
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    var val_ptr = exec.stack_old.Pop();
+    exec.stack.Pop(out var val_ptr);
     var ptr = (FuncPtr)val_ptr._obj;
 
     //checking if it's a native call
@@ -1392,7 +1384,7 @@ public partial class VM : INamedResolver
     {
       bool return_status =
         CallNative(vm, exec, ptr.native, args_bits);
-      val_ptr.Release();
+      ptr.Release();
       if(return_status)
       {
         //let's cancel ip incrementing
@@ -1401,22 +1393,12 @@ public partial class VM : INamedResolver
     }
     else
     {
-      var frm = ptr.MakeFrame(vm, curr_frame.fb, exec.stack_old);
-      val_ptr.Release();
-      vm.Call(exec, frm, args_bits);
+      int new_frame_idx = exec.frames_count;
+      ref var new_frame = ref exec.PushFrame();
+      ptr.InitFrame(exec, ref frame, ref new_frame);
+      ptr.Release();
+      vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
     }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeInitFrame(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
-    var args_bits = exec.stack_old.Pop();
-    curr_frame.locals.Count = local_vars_num;
-    //NOTE: we need to store arg info bits locally so that
-    //      this information will be available to func
-    //      args related opcodes
-    curr_frame.locals[local_vars_num - 1] = args_bits;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1450,8 +1432,8 @@ public partial class VM : INamedResolver
   {
     short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
     var ptr = FuncPtr.New(vm);
-    ptr.Init(curr_frame, exec.ip + 1);
-    exec.stack_old.Push(ValOld.NewObj(vm, ptr, Types.Any /*TODO: should be a FuncPtr type*/));
+    ptr.Init(frame.module, exec.ip + 1);
+    exec.stack.Push(Val.NewObj(ptr, Types.Any /*TODO: should be a FuncPtr type*/));
 
     exec.ip += offset;
   }
@@ -1486,15 +1468,16 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodePop(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    exec.stack_old.PopRelease();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodePop(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    exec.stack.vals[--exec.stack.sp]._refc?.Release();
+    ref var val = ref exec.stack.vals[--exec.stack.sp];
+    if(val._refc != null)
+    {
+      val._refc.Release();
+      val._refc = null;
+    }
+    //TODO: what about blob
+    val._obj = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

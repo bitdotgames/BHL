@@ -480,6 +480,20 @@ public class ValStack
     if(needed > 0)
       Array.Resize(ref vals, vals.Length + needed);
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void RemoveAt(int idx)
+  {
+    if(idx == --sp)
+      return;
+    Array.Copy(
+      vals,
+      idx + 1,
+      vals,
+      idx,
+      vals.Length - idx - 1
+      );
+  }
 }
 
 public class ValOld

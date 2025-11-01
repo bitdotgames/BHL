@@ -144,9 +144,9 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -231,9 +231,9 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -331,7 +331,7 @@ public class TestStackTrace : BHL_TestBase
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.True(vm.Tick());
     AssertError<Exception>(
       () => vm.Tick(),
@@ -407,9 +407,9 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -488,9 +488,9 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(3, trace.Count);
 
@@ -602,10 +602,9 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
             //emulating null reference
-            //frame.fb = null;
-            //frame.fb.Id;
+            exec.fiber = null;
+            int id = exec.fiber.Id;
             return null;
           });
         ts.ns.Define(fn);
@@ -621,7 +620,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     try
     {
       vm.Tick();
@@ -699,8 +698,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -716,9 +714,9 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    var fb = vm.StartOld("test", ValOld.NewNum(vm, 3));
+    var fb = vm.Start("test", 3);
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
 
     Assert.Equal(4, trace.Count);
 
@@ -785,8 +783,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -802,7 +799,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    vm.StartOld("test", ValOld.NewNum(vm, 3));
+    vm.Start("test", 3);
     Assert.True(vm.Tick());
 
     Assert.Equal(4, trace.Count);
@@ -866,8 +863,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -883,7 +879,7 @@ at test(..) in bhl1.bhl:10"
       ts_fn
     );
     vm.LoadModule("bhl1");
-    vm.StartOld("test", ValOld.NewNum(vm, 3));
+    vm.Start("test", 3);
     Assert.False(vm.Tick());
 
     Assert.Equal(4, trace.Count);

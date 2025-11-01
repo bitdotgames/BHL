@@ -225,7 +225,6 @@ public partial class VM : INamedResolver
       byte* bytecode,
       int start_ip)
     {
-      //this.fb = fb;
       this.module = module;
       this.constants = constants;
       this.type_refs = type_refs;

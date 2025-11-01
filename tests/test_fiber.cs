@@ -56,13 +56,13 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
     int a = 1, b = 2, c = 3;
-    var args = new ValOld[3];
-    args[0] = ValOld.NewNum(vm, a);
-    args[1] = ValOld.NewNum(vm, b);
-    args[2] = ValOld.NewNum(vm, c);
-    var fb = vm.StartOld("test", new StackList<ValOld>(args));
+    var args = new Val[3];
+    args[0] = a;
+    args[1] = b;
+    args[2] = c;
+    var fb = vm.Start("test", new StackList<Val>(args));
     Assert.False(vm.Tick());
-    Assert.Equal(6, fb.result_old.PopRelease().num);
+    Assert.Equal(6, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -1509,10 +1509,10 @@ public class TestFiber : BHL_TestBase
       get { return active.Count > 0; }
     }
 
-    public void Start(VM.FrameOld origin, VM.FuncPtr ptr, ValOldStack stack)
+    public void Start(VM.ExecState exec, ref VM.Frame origin, VM.FuncPtr ptr)
     {
-      var fb = origin.vm.Start(ptr, origin);
-      origin.vm.Detach(fb);
+      var fb = exec.vm.Start(exec, ptr, ref origin, new StackList<Val>());
+      exec.vm.Detach(fb);
       active.Add(fb);
     }
 
