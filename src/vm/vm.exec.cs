@@ -272,6 +272,8 @@ public partial class VM : INamedResolver
     {
       var bc = frame.bytecode;
       var opcode = bc[exec.ip];
+      //NOTE: temporary casting for better debug info
+      var _opcode = (Opcodes)opcode;
 
       op_handlers[opcode](this, exec, ref region, null, ref frame, bc);
 
@@ -864,12 +866,10 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrIdx(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    var class_type = (ArrayTypeSymbol)self.type;
-
     int idx = exec.stack.PopFast();
     ref var arr = ref exec.stack.Peek();
 
+    var class_type = (ArrayTypeSymbol)arr.type;
     var res = class_type.ArrGetAt(arr, idx);
 
     arr._refc?.Release();
@@ -880,13 +880,11 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrIdxW(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    var class_type = (ArrayTypeSymbol)self.type;
-
     int idx = exec.stack.PopFast();
     exec.stack.Pop(out var arr);
     exec.stack.Pop(out var val);
 
+    var class_type = (ArrayTypeSymbol)arr.type;
     class_type.ArrSetAt(arr, idx, val);
 
     val._refc?.Release();
@@ -896,7 +894,8 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
+    //taking copy not ref since during Pop in binding operator stack will be cleared
+    var self = exec.stack.vals[exec.stack.sp - 2];
     self._refc?.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
@@ -907,12 +906,10 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapIdx(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    var class_type = (MapTypeSymbol)self.type;
-
     exec.stack.Pop(out var key);
     exec.stack.Pop(out var map);
 
+    var class_type = (MapTypeSymbol)map.type;
     class_type.MapTryGet(map, key, out var res);
 
     res._refc?.Retain();
@@ -925,13 +922,11 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapIdxW(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 2];
-    var class_type = (MapTypeSymbol)self.type;
-
     exec.stack.Pop(out var key);
     exec.stack.Pop(out var map);
     exec.stack.Pop(out var val);
 
+    var class_type = (MapTypeSymbol)map.type;
     class_type.MapSet(map, key, val);
 
     key._refc?.Release();
@@ -942,7 +937,8 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeMapAddInplace(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    ref var self = ref exec.stack.vals[exec.stack.sp - 3];
+    //taking copy not ref since during Pop in binding operator stack will be cleared
+    var self = exec.stack.vals[exec.stack.sp - 3];
     self._refc?.Retain();
     var class_type = (MapTypeSymbol)self.type;
     //NOTE: Add must be at 0 index

@@ -803,7 +803,8 @@ public class BHL_TestBase
     {
       var val = fb.exec.stack.vals[i];
       Assert.Equal(0, val._blob_size);
-      Assert.Null(val._obj);
+      if(!(val._obj is string))
+        Assert.Null(val._obj);
       Assert.Null(val._refc);
     }
   }

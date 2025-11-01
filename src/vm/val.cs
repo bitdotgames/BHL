@@ -439,8 +439,8 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     var res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
-    tmp._obj = null; //cleaning up stack value
     res._refc?.Release();
+    tmp._obj = null; //cleaning up stack value
     return res;
   }
 
