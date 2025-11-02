@@ -134,12 +134,6 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitScope(ExecState exec)
-    {
-      DeferBlock.ExitScope(exec, defers);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Retain()
     {
       //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);

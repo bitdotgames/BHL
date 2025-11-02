@@ -140,7 +140,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
 
     //NOTE: 1. first we exit the scope for all dangling frames
     for(int i = exec.frames_old.Count; i-- > 0;)
-      exec.frames_old[i].ExitScope(exec);
+      DeferBlock.ExitScope(exec, exec.frames_old[i].defers);
 
     //NOTE: 2. then we release frames only after exiting them
     for(int i = exec.frames_old.Count; i-- > 0;)
