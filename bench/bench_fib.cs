@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
@@ -12,10 +13,11 @@ using bhl;
 public class BenchFibonacciAssorted : BHL_TestBase
 {
   VM vm;
-  VM vm_aot;
   FuncSymbolScript fs_simple;
-  VM.ExecState.LocalFunc[] funcs_aot = new VM.ExecState.LocalFunc[8];
-  Const[] const_aot = new Const[8];
+
+  //VM vm_aot;
+  //VM.ExecState.LocalFunc[] funcs_aot = new VM.ExecState.LocalFunc[8];
+  //Const[] const_aot = new Const[8];
 
   //FuncSymbolScript fs_imported;
   //FuncSymbolScript fs_class_imported;
@@ -225,6 +227,25 @@ public class BenchFibonacciAssorted : BHL_TestBase
     }
   }
 
+  static int fib_refl(int x)
+  {
+    if(x == 0) {
+      return 0;
+    } else {
+      if(x == 1) {
+        return 1;
+      } else {
+        MethodInfo mi1 = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
+        object v1 = mi1.Invoke(null, new object[] { x - 1 });
+
+        MethodInfo mi2 = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
+        object v2 = mi2.Invoke(null, new object[] { x - 2 });
+
+        return (int)v1 + (int)v2;
+      }
+    }
+  }
+
   [Benchmark(Baseline = true)]
   public void FibonacciDotNet()
   {
@@ -232,7 +253,14 @@ public class BenchFibonacciAssorted : BHL_TestBase
   }
 
   [Benchmark]
-  public void FibonacciSimple()
+  public void FibonacciDotNetRefl()
+  {
+    MethodInfo mi = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
+    mi.Invoke(null, new object[] { 15 });
+  }
+
+  [Benchmark]
+  public void FibonacciBHLSimple()
   {
     vm.Execute(fs_simple);
   }
