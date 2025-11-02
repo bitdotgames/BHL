@@ -10502,12 +10502,10 @@ public class TestVM : BHL_TestBase
     {
       //first time
       if(c++ == 0)
-        ticks_ttl = (int)exec.stack_old.PopRelease().num;
+        ticks_ttl = exec.stack.Pop();
 
       if(ticks_ttl-- > 0)
-      {
         exec.status = BHS.RUNNING;
-      }
     }
 
     public override void Cleanup(VM.ExecState exec)
