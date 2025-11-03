@@ -120,7 +120,7 @@ public class TestRefs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num;
+    double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(3, num);
     CommonChecks(vm);
   }
@@ -149,7 +149,7 @@ public class TestRefs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num;
+    double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(8, num);
     CommonChecks(vm);
   }
