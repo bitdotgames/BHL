@@ -2128,7 +2128,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(vd.VARIADIC() != null)
           {
             if(vd.REF() != null)
-              AddError(vd.REF(), "pass by ref not allowed");
+              AddError(vd.REF(), "pass by 'ref' not allowed");
 
             if(i != fparams.funcParamDeclare().Length - 1)
               AddError(vd, "variadic argument must be last");
@@ -2140,7 +2140,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             ++default_args_num;
           }
           else if(vd.assignExp() != null)
+          {
+            if(vd.REF() != null)
+              AddError(vd.REF(), "default values for 'ref' argument not allowed");
             ++default_args_num;
+          }
         }
 
         sig.AddArg(tp);

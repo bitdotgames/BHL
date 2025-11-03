@@ -303,37 +303,22 @@ public class TestRefs : BHL_TestBase
   }
 
   [Fact]
-  public void TestPassByRefNullValue()
+  public void TestPassByRefForDefaultArgsNotAllowed()
   {
     string bhl = @"
-
-    func float foo(ref float k = null)
+    func foo(ref float k = 1)
     {
-      if((any)k != null) {
-        k = k + 1
-        return k
-      } else {
-        return 1
-      }
-    }
-
-    func float,float test()
-    {
-      float res = 0
-      float k = 10
-      res = res + foo()
-      res = res + foo(ref k)
-      return res,k
     }
     ";
 
-    var vm = MakeVM(bhl);
-    var fb = Execute(vm, "test", 3);
-    double num1 = fb.Stack.Pop();
-    double num2 = fb.Stack.Pop();
-    Assert.Equal(12, num1);
-    Assert.Equal(11, num2);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "default values for 'ref' argument not allowed",
+      new PlaceAssert(bhl, @"
+    func foo(ref float k = 1)
+-------------^"
+      )
+    );
   }
 
   [Fact]

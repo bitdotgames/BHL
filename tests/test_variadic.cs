@@ -229,7 +229,7 @@ public class TestVariadic : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "pass by ref not allowed",
+      "pass by 'ref' not allowed",
       new PlaceAssert(bhl, @"
     func sum(ref ...[]int ns) {
 -------------^"
