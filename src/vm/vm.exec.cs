@@ -957,62 +957,35 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeSetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-    var new_val = exec.stack_old.Pop();
-    curr_frame.locals.Assign(vm, local_idx, new_val);
-    new_val.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
+    //TODO: we copy the whole value (we can have specialized opcodes for numbers)
 
     exec.stack.Pop(out var new_val);
     ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
-    var refc = current._refc;
     //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
+
     //these below cancel each other
     //new_val._refc?.Retain();
     //new_val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeArgVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    var arg_val = exec.stack_old.Pop();
-    var loc_var = ValOld.New(vm);
-    loc_var.ValueCopyFrom(arg_val);
-    loc_var._refc?.Retain();
-    curr_frame.locals[local_idx] = loc_var;
-    arg_val.Release();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     //TODO: get rid of this opcode since we do this during InitFrame
-
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-
-    //we must 'own' local refcounted objects
-    //exec.stack.vals[frame.locals_offset + local_idx]._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeArgRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
+    //TODO: get rid of this opcode since we do this during InitFrame
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    //TODO: how do we implement this? The only sane way - address Vals as indices :(
-    throw new NotImplementedException();
-    //curr_frame.locals[local_idx] = exec.stack_old.Pop();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1031,21 +1004,50 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeRefVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
+    byte* bytes)
   {
-    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    //TODO: get rid of this opcode since we do this during InitFrame
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var obj = ref exec.stack.Peek();
-    var class_symb = (ClassSymbol)obj.type;
+    ref var val = ref exec.stack.Push();
+    //TODO:
+    //val.type = Types.RefType;
+    val._num = frame.locals_offset + local_idx;
+    val._obj = exec.stack;
+  }
 
-    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    var res = new Val();
-    field_symb.getter(vm, obj, ref res, field_symb);
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
+    byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    res._refc?.Retain();
-    obj._refc?.Release();
-    //let's replace the value on the stack
-    obj = res;
+    exec.stack.Pop(out var new_val);
+
+    ref var reference = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var stack = (ValStack)reference._obj;
+    ref var referenced_val = ref stack.vals[(int)reference._num];
+    //TODO: what about blob?
+    referenced_val._refc?.Release();
+    referenced_val = new_val;
+
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
+    byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+    ref var reference = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var stack = (ValStack)reference._obj;
+    ref var referenced_val = ref stack.vals[(int)reference._num];
+
+    ref Val v = ref exec.stack.Push();
+    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
+    v = referenced_val;
+    v._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1060,6 +1062,24 @@ public partial class VM : INamedResolver
     field_symb.getref(vm, obj, out var res, field_symb);
     res._refc?.Retain();
     obj._refc.Release();
+    obj = res;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  {
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    ref var obj = ref exec.stack.Peek();
+    var class_symb = (ClassSymbol)obj.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    var res = new Val();
+    field_symb.getter(vm, obj, ref res, field_symb);
+
+    res._refc?.Retain();
+    obj._refc?.Release();
+    //let's replace the value on the stack
     obj = res;
   }
 
@@ -1610,13 +1630,17 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
+    op_handlers[(int)Opcodes.RefVar] = OpcodeRefVar;
+    op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
+    op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
+    op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;
+
     op_handlers[(int)Opcodes.ArgVar] = OpcodeArgVar;
     op_handlers[(int)Opcodes.ArgRef] = OpcodeArgRef;
 
     op_handlers[(int)Opcodes.LastArgToTop] = OpcodeLastArgToTop;
 
     op_handlers[(int)Opcodes.GetAttr] = OpcodeGetAttr;
-    op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;
     op_handlers[(int)Opcodes.SetAttr] = OpcodeSetAttr;
     op_handlers[(int)Opcodes.SetAttrInplace] = OpcodeSetAttrInplace;
 

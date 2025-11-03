@@ -1533,9 +1533,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
 
           ast = new AST_Call(
-            fld_symb != null && !is_global
-              ? (is_write ? EnumCall.MVARW : EnumCall.MVAR)
-              : (is_global ? (is_write ? EnumCall.GVARW : EnumCall.GVAR) : (is_write ? EnumCall.VARW : EnumCall.VAR)),
+            GetVarAccessMode(
+              is_write: is_write,
+              is_global: is_global,
+              is_ref: var_symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref,
+              make_ref: PeekCallByRef(),
+              is_field: fld_symb != null
+              ),
             line,
             var_symb,
             0,
@@ -1627,6 +1631,29 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddArrIndex(arracc, ref type, line, write);
 
     return name_symb;
+  }
+
+  static EnumCall GetVarAccessMode(
+    bool is_write = false,
+    bool is_global = false,
+    bool is_ref = false,
+    bool make_ref = false,
+    bool is_field = false
+    )
+  {
+    if(is_global)
+      return is_write ? EnumCall.GVARW : EnumCall.GVAR;
+
+    if(is_field)
+      return is_write ? EnumCall.MVARW : EnumCall.MVAR;
+
+    if(make_ref)
+      return EnumCall.MKREF;
+
+    if(is_ref)
+      return is_write ? EnumCall.REFW : EnumCall.REF;
+
+    return is_write ? EnumCall.VARW : EnumCall.VAR;
   }
 
   bool AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
@@ -1963,7 +1990,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       PopAddOptimizeAST();
       PopJsonType();
 
-      if(!ok || !types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
+      if(!ok ||
+         !types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))
       {
         PopAST();
         return;
@@ -4656,7 +4684,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         LSP_SetSymbol(vd_name, var_symb);
 
         bool is_global = var_symb.scope is Namespace;
-        var ast = new AST_Call(is_global ? EnumCall.GVARW : EnumCall.VARW, start_line, var_symb);
+        var ast = new AST_Call(
+          GetVarAccessMode(
+            is_global: is_global,
+            is_write: true,
+            is_ref: var_symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref
+          ),
+          start_line,
+          var_symb);
         var_ast.AddChild(ast);
       }
       else if(vproxy.VarAccessAt(i) != null)

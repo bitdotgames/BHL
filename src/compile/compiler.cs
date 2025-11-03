@@ -724,6 +724,24 @@ public class ModuleCompiler : AST_Visitor
         Opcodes.MapAddInplace
       )
     );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.RefVar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetRef,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetRef,
+        1 /*local idx*/
+      )
+    );
   }
 
   static void DeclareOpcode(Definition def)
@@ -1245,6 +1263,21 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VAR:
       {
         Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+      }
+        break;
+      case EnumCall.MKREF:
+      {
+        Emit(Opcodes.RefVar, new int[] {ast.symb_idx}, ast.line_num);
+      }
+        break;
+      case EnumCall.REF:
+      {
+        Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
+      }
+        break;
+      case EnumCall.REFW:
+      {
+        Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.GVAR:

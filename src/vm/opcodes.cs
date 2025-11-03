@@ -11,11 +11,13 @@ public enum Opcodes
   SetVar                = 6,
   GetVar                = 7,
   DeclVar               = 8,
+  //TODO: not needed
   ArgVar                = 9,
   SetGVar               = 10,
   GetGVar               = 11,
   InitFrame             = 12,
   Return                = 14,
+  //TODO: not needed
   ReturnVal             = 15,
   Jump                  = 16,
   JumpZ                 = 17,
@@ -36,11 +38,15 @@ public enum Opcodes
   GetFuncPtr            = 40,
   GetFuncNativePtr      = 41,
   GetFuncPtrFromVar     = 42,
+  //TODO: not really needed?
   LastArgToTop          = 44,
   GetAttr               = 45,
   RefAttr               = 46,
   SetAttr               = 47,
+  //TODO: used for json alike array initialization,
+  //      can be replaced with more low-level opcodes?
   SetAttrInplace        = 48,
+  //TODO: not needed
   ArgRef                = 49,
   UnaryNot              = 50,
   UnaryNeg              = 51,
@@ -69,15 +75,22 @@ public enum Opcodes
   Dec                   = 82,
   ArrIdx                = 83,
   ArrIdxW               = 84,
-  ArrAddInplace         = 85,  //TODO: used for json alike array initialization,
+  //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
+  ArrAddInplace         = 85,
 
   BitShr                = 86,
   BitShl                = 87,
 
   MapIdx                = 91,
   MapIdxW               = 92,
-  MapAddInplace         = 93,  //TODO: used for json alike array initialization,
+  //TODO: used for json alike array initialization,
+  //      can be replaced with more low-level opcodes?
+  MapAddInplace         = 93,
+
+  RefVar               = 94,
+  GetRef                = 95,
+  SetRef                = 96,
 
   Nop                   = 99,
   MAX                   = 100

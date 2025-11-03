@@ -29,14 +29,14 @@ public class TestRefs : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
           .EmitThen(Opcodes.ArgRef, new int[] { 0 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.GetRef, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.Add)
-          .EmitThen(Opcodes.SetVar, new int[] { 0 })
+          .EmitThen(Opcodes.SetRef, new int[] { 0 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
           .EmitThen(Opcodes.ArgVar, new int[] { 0 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
+          .EmitThen(Opcodes.RefVar, new int[] { 0 })
           .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
@@ -45,7 +45,7 @@ public class TestRefs : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c);
-    var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num;
+    double num = Execute(vm, "test",  3).Stack.Pop();
     Assert.Equal(4, num);
     CommonChecks(vm);
   }
