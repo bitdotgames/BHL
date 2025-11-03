@@ -132,12 +132,12 @@ public class TestRefs : BHL_TestBase
 
     func bar(ref float b)
     {
-      b = b * 2
+      b = b * 2 //8
     }
 
     func foo(ref float a)
     {
-      a = a + 1
+      a = a + 1 //4
       bar(ref a)
     }
 

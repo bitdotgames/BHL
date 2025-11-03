@@ -1648,7 +1648,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       return is_write ? EnumCall.MVARW : EnumCall.MVAR;
 
     if(make_ref)
-      return EnumCall.MKREF;
+    {
+      if(!is_ref)
+        return EnumCall.MKREF;
+      else //if it's a ref already we just need to pass it further
+        return EnumCall.VAR;
+    }
 
     if(is_ref)
       return is_write ? EnumCall.REFW : EnumCall.REF;
