@@ -98,6 +98,14 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref Val Unref()
+  {
+    var stack = (ValStack)_obj;
+    int idx = (int)_num;
+    return ref stack.vals[idx];
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Reset()
   {
     type = null;

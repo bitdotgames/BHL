@@ -172,7 +172,7 @@ public class TestRefs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num;
+    double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(6, num);
     CommonChecks(vm);
   }
@@ -195,13 +195,10 @@ public class TestRefs : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "func_with_ref", Types.Void,
           (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
+            ref var b = ref exec.stack.Pop().Unref();
+            double a = exec.stack.Pop();
 
-            //ref var b = ref stack.Pop();
-            //double a = stack.Pop();
-
-            //b._num = a * 2;
-            //b.Release();
+            b._num = a * 2;
             return null;
           },
           new FuncArgSymbol("a", ts.T("float")),
@@ -213,7 +210,7 @@ public class TestRefs : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num;
+    double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(6, num);
     CommonChecks(vm);
   }
