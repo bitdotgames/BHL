@@ -1588,6 +1588,9 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.TypeIs] = OpcodeTypeIs;
     op_handlers[(int)Opcodes.Typeof] = OpcodeTypeof;
 
+    //NOTE: Of these 2 only Opcode.Inc is used for incrementing a hidden
+    //      variable in foreach loop. Opcode.Dec is not used anywhere.
+    //      Maybe they could be used for actual operators for restricted cases.
     op_handlers[(int)Opcodes.Inc] = OpcodeInc;
     op_handlers[(int)Opcodes.Dec] = OpcodeDec;
 
