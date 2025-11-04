@@ -309,9 +309,14 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
     return signature.ret_type.Get();
   }
 
+  public int GetReturnedArgsNum()
+  {
+    return signature.GetReturnedArgsNum();
+  }
+
   public int GetTotalArgsNum()
   {
-    return signature.arg_types.Count;
+    return signature.GetArgsNum();
   }
 
   public abstract int GetDefaultArgsNum();
@@ -402,9 +407,14 @@ public class FuncSymbolScript : FuncSymbol
   //used for up values resolving during parsing
   internal LocalScope _current_scope;
 
-  public int local_vars_num;
-  public int default_args_num;
-  public int ip_addr;
+  internal int _local_vars_num;
+  public int local_vars_num => _local_vars_num;
+
+  internal int _default_args_num;
+  public int  default_args_num => _default_args_num;
+
+  internal int _ip_addr;
+  public int ip_addr => _ip_addr;
 
   public FuncSymbolScript(
     Origin origin,
@@ -416,8 +426,8 @@ public class FuncSymbolScript : FuncSymbol
     : base(origin, name, sig)
   {
     this.name = name;
-    this.default_args_num = default_args_num;
-    this.ip_addr = ip_addr;
+    this._default_args_num = default_args_num;
+    this._ip_addr = ip_addr;
   }
 
   //symbol factory version
@@ -437,14 +447,14 @@ public class FuncSymbolScript : FuncSymbol
     if(!(sym is FuncArgSymbol))
       throw new Exception("Only func arguments allowed, got: " + sym.GetType().Name);
 
-    ++local_vars_num;
+    ++_local_vars_num;
 
     base.Define(sym);
   }
 
   public override int GetDefaultArgsNum()
   {
-    return default_args_num;
+    return _default_args_num;
   }
 
   public override uint ClassId()
@@ -456,9 +466,9 @@ public class FuncSymbolScript : FuncSymbol
   {
     base.Sync(ctx);
 
-    marshall.Marshall.Sync(ctx, ref local_vars_num);
-    marshall.Marshall.Sync(ctx, ref default_args_num);
-    marshall.Marshall.Sync(ctx, ref ip_addr);
+    marshall.Marshall.Sync(ctx, ref _local_vars_num);
+    marshall.Marshall.Sync(ctx, ref _default_args_num);
+    marshall.Marshall.Sync(ctx, ref _ip_addr);
   }
 }
 
@@ -476,7 +486,7 @@ public class FuncSymbolVirtual : FuncSymbol
   }
 
   public FuncSymbolVirtual(FuncSymbolScript proto)
-    : this(proto.origin, proto.name, proto.signature, proto.default_args_num)
+    : this(proto.origin, proto.name, proto.signature, proto._default_args_num)
   {
     //NOTE: directly adding arguments avoiding Define
     for(int m = 0; m < proto.members.Count; ++m)

@@ -580,7 +580,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.InitFrame,
-        1 /*total local vars*/
+        1 /*total local vars*/, 1 /*returned args num*/
       )
     );
     DeclareOpcode(
@@ -592,12 +592,6 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.Return
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ReturnVal,
-        1 /*returned amount*/
       )
     );
     DeclareOpcode(
@@ -951,15 +945,17 @@ public class ModuleCompiler : AST_Visitor
 
     func_decls.Push(fsymb);
 
-    fsymb.ip_addr = GetCodeSize();
+    fsymb._ip_addr = GetCodeSize();
 
     Emit(Opcodes.InitFrame,
-      new int[] { fsymb.local_vars_num + 1 /*cargs bits*/ },
+      new int[] { fsymb._local_vars_num, fsymb.GetReturnedArgsNum() },
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
 
-    Emit(Opcodes.Return, null, ast.last_line_num);
+    //let's insert return only if the previous instruction is not return as well
+    if(Peek().op != Opcodes.Return)
+      Emit(Opcodes.Return, null, ast.last_line_num);
 
     func_decls.Pop();
 
@@ -971,7 +967,7 @@ public class ModuleCompiler : AST_Visitor
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
     Emit(Opcodes.InitFrame,
-      new int[] { ast.local_vars_num + 1 /*cargs bits*/ },
+      new int[] { ast.local_vars_num, ast.symbol.GetReturnedArgsNum()},
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
@@ -1308,7 +1304,7 @@ public class ModuleCompiler : AST_Visitor
           Pop();
           var fsymb = (FuncSymbolScript)ast.symb;
           var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
-          PatchLater(call_op, (inst) => inst.operands[0] = fsymb.ip_addr);
+          PatchLater(call_op, (inst) => inst.operands[0] = fsymb._ip_addr);
         }
         else if(instr.op == Opcodes.GetFuncPtr)
         {
@@ -1320,7 +1316,7 @@ public class ModuleCompiler : AST_Visitor
           //imports list is filled later so we need to take that into account
           PatchLater(call_op, (inst) =>
           {
-            inst.operands[1] = fsymb.ip_addr;
+            inst.operands[1] = fsymb._ip_addr;
             if(inst.operands[1] == -1)
               throw new Exception("Could not link func '" + fsymb.name + "' from module '" + fmod.name + "'");
           });
@@ -1534,11 +1530,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    //using simpler version if there are no returned values
-    if(ast.num > 0)
-      Emit(Opcodes.ReturnVal, new int[] { ast.num }, ast.line_num);
-    else
-      Emit(Opcodes.Return, null, ast.line_num);
+    Emit(Opcodes.Return, null, ast.line_num);
   }
 
   public override void DoVisit(AST_Break ast)

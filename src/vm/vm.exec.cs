@@ -314,7 +314,7 @@ public partial class VM : INamedResolver
     {
       module = module,
       fs = fs,
-      ip = fs.ip_addr
+      ip = fs._ip_addr
     };
     var fb = StartOld(addr, new FuncArgsInfo(0), default, FiberOptions.Detach);
     if(Tick(fb))
@@ -1127,19 +1127,6 @@ public partial class VM : INamedResolver
     exec.ip = EXIT_FRAME_IP - 1;
   }
 
-  //TODO: we don't really need this opcode,
-  //      we can encode amount of returned values in InitFrame:
-  //      this way OpcodeReturn will be enough
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeReturnVal(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int ret_num = Bytecode.Decode8(bytes, ref exec.ip);
-
-    frame.return_args_num = ret_num;
-
-    exec.ip = EXIT_FRAME_IP - 1;
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGetFuncLocalPtr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
@@ -1148,7 +1135,7 @@ public partial class VM : INamedResolver
     var func_symb = frame.module.func_index.index[func_idx];
 
     var ptr = FuncPtr.New(vm);
-    ptr.Init(frame.module, func_symb.ip_addr);
+    ptr.Init(frame.module, func_symb._ip_addr);
     exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
   }
 
@@ -1162,7 +1149,7 @@ public partial class VM : INamedResolver
     var func_symb = func_mod.func_index.index[func_idx];
 
     var ptr = FuncPtr.New(vm);
-    ptr.Init(func_mod, func_symb.ip_addr);
+    ptr.Init(func_mod, func_symb._ip_addr);
     exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
   }
 
@@ -1282,7 +1269,7 @@ public partial class VM : INamedResolver
     var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
 
     var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb.ip_addr);
+    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
     frm.locals.Count = 1;
     frm.locals[0] = self;
@@ -1326,7 +1313,7 @@ public partial class VM : INamedResolver
     var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
     var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb.ip_addr);
+    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
     frm.locals.Count = 1;
     frm.locals[0] = self;
@@ -1352,7 +1339,7 @@ public partial class VM : INamedResolver
     var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
     var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb.ip_addr);
+    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
     frm.locals.Count = 1;
     frm.locals[0] = self;
@@ -1410,8 +1397,8 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    //TODO: remove args info from local variables
-    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip) - 1;
+    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    int return_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
 
     var stack = exec.stack;
 
@@ -1423,7 +1410,7 @@ public partial class VM : INamedResolver
     //locals starts at the index of the first pushed argument
     int args_num = args_info.CountArgs();
     frame.locals_offset = stack.sp - args_num;
-    frame.return_args_num = 0;
+    frame.return_args_num = return_vars_num;
 
     //let's reserve space for local variables, however passed variables are
     //already on the stack, let's take that into account
@@ -1633,7 +1620,6 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.Nop] = OpcodeNop;
 
     op_handlers[(int)Opcodes.Return] = OpcodeReturn;
-    op_handlers[(int)Opcodes.ReturnVal] = OpcodeReturnVal;
 
     op_handlers[(int)Opcodes.GetFuncLocalPtr] = OpcodeGetFuncLocalPtr;
     op_handlers[(int)Opcodes.GetFuncPtr] = OpcodeGetFuncPtr;

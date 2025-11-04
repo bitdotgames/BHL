@@ -27,17 +27,16 @@ public class TestRefs : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 0 })
           .EmitThen(Opcodes.GetRef, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.Add)
           .EmitThen(Opcodes.SetRef, new int[] { 0 })
           .EmitThen(Opcodes.Return)
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.RefVar, new int[] { 0 })
           .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -491,13 +490,13 @@ public class TestRefs : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.Add)
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
           .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Wow")) })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
@@ -511,7 +510,6 @@ public class TestRefs : BHL_TestBase
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetAttr, new int[] { 0 })
           .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);

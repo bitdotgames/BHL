@@ -100,9 +100,9 @@ public class Module : INamedResolver
     FuncSymbolScript fsymb = null;
     ns.ForAllLocalSymbols(delegate(Symbol s)
     {
-      if(s is FuncSymbolScript ftmp && ftmp.ip_addr == ip)
+      if(s is FuncSymbolScript ftmp && ftmp._ip_addr == ip)
         fsymb = ftmp;
-      else if(s is FuncSymbolVirtual fsv && fsv.GetTopOverride() is FuncSymbolScript fssv && fssv.ip_addr == ip)
+      else if(s is FuncSymbolVirtual fsv && fsv.GetTopOverride() is FuncSymbolScript fssv && fssv._ip_addr == ip)
         fsymb = fssv;
     });
     return fsymb;
@@ -213,7 +213,7 @@ public class Module : INamedResolver
     if(fss.GetModule()?.name != name)
       return;
 
-    if(fss.ip_addr == -1)
+    if(fss._ip_addr == -1)
       throw new Exception("Func " + fss.GetFullTypePath() + " ip_addr is not set, module '" + name + "'");
 
     //for faster runtime module lookups we cache it here and also it serves as a guard the symbol was setup

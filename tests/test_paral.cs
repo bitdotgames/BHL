@@ -33,7 +33,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
@@ -43,7 +43,6 @@ public class TestParal : BHL_TestBase
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -82,7 +81,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 42})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
@@ -94,7 +93,6 @@ public class TestParal : BHL_TestBase
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -133,7 +131,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 54})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
@@ -148,7 +146,6 @@ public class TestParal : BHL_TestBase
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -188,14 +185,14 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 74})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 46})
           .EmitThen(Opcodes.Lambda, new int[] { 29 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1 })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
@@ -209,7 +206,6 @@ public class TestParal : BHL_TestBase
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);

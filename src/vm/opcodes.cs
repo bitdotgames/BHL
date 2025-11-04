@@ -15,8 +15,6 @@ public enum Opcodes
   GetGVar               = 11,
   InitFrame             = 12,
   Return                = 14,
-  //TODO: not needed
-  ReturnVal             = 15,
   Jump                  = 16,
   JumpZ                 = 17,
   JumpPeekZ             = 18,

@@ -136,6 +136,21 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     return true;
   }
 
+  public int GetArgsNum()
+  {
+    return arg_types.Count;
+  }
+
+  public int GetReturnedArgsNum()
+  {
+    var type = ret_type.Get();
+    if(type is VoidSymbol)
+      return 0;
+    if(type is TupleType tuple_type)
+      return tuple_type.Count;
+    return 1;
+  }
+
   public override int GetHashCode()
   {
     return name.GetHashCode();

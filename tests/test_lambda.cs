@@ -50,21 +50,19 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
           .EmitThen(Opcodes.Return)
           //test
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitThen(Opcodes.Lambda, new int[] { 9 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 0, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -381,22 +379,20 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
           .EmitThen(Opcodes.Return)
           //test
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitThen(Opcodes.Lambda, new int[] { 7 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -432,17 +428,17 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
           .EmitThen(Opcodes.Return)
           //test
-          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 2, 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitThen(Opcodes.SetVar, new int[] { 1 })
           //lambda
           .EmitThen(Opcodes.Lambda, new int[] { 19 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 3 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 3, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 5) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
@@ -450,13 +446,11 @@ public class TestLambda : BHL_TestBase
           .EmitThen(Opcodes.Add)
           .EmitThen(Opcodes.GetVar, new int[] { 2 })
           .EmitThen(Opcodes.Add)
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
           .EmitThen(Opcodes.UseUpval, new int[] { 1, 2, 0 })
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -494,32 +488,29 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
           .EmitThen(Opcodes.Return)
           //test
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitThen(Opcodes.Lambda, new int[] { 41 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1})
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Lambda, new int[] { 13 })
-          .EmitThen(Opcodes.InitFrame, new int[] { 2 + 1 /*args info*/ })
+          .EmitThen(Opcodes.InitFrame, new int[] { 2, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 1 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.UseUpval, new int[] { 0, 1, 0 })
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);

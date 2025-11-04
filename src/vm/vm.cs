@@ -91,7 +91,7 @@ public partial class VM : INamedResolver
     {
       module = fss._module;
       fs = fss;
-      ip = fss.ip_addr;
+      ip = fss._ip_addr;
       fsn = null;
       _symbol = fs;
     }
@@ -189,7 +189,7 @@ public partial class VM : INamedResolver
       module = module,
 
       fs = fss,
-      ip = fss?.ip_addr ?? -1,
+      ip = fss?._ip_addr ?? -1,
 
       fsn = fss != null ? null : fs as FuncSymbolNative,
     };

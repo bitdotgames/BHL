@@ -41,7 +41,7 @@ public static class VMExtensions
 
   static public VM.Fiber Star(this VM vm, FuncSymbolScript fs, StackList<Val> args, VM.FiberOptions opts = 0)
   {
-    var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs.ip_addr };
+    var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs._ip_addr };
     return vm.Start(addr, new FuncArgsInfo(args.Count), args, opts);
   }
 

@@ -26,13 +26,12 @@ public class TestClass : BHL_TestBase
       var expected =
           new ModuleCompiler()
             .UseCode()
-            .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+            .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
             .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
             .EmitThen(Opcodes.SetVar, new int[] { 0 })
             .EmitThen(Opcodes.GetVar, new int[] { 0 })
             .EmitThen(Opcodes.Constant, new int[] { 0 })
             .EmitThen(Opcodes.NotEqual)
-            .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
             .EmitThen(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -1252,12 +1251,11 @@ public class TestClass : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1265,7 +1263,6 @@ public class TestClass : BHL_TestBase
           .EmitThen(Opcodes.SetAttr, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.CallMethod, new int[] { 1, 0 })
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -2568,13 +2565,12 @@ public class TestClass : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/})
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstNullIdx(c) })
           .EmitThen(Opcodes.NotEqual)
-          .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
           .EmitThen(Opcodes.Return)
       ;
     AssertEqual(c, expected);

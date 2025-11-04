@@ -2305,7 +2305,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     //NOTE: since lambda func symbol is currently compile-time only,
     //      we need to reflect local variables number in AST
     //      (for regular funcs this number is taken from a symbol)
-    ast.local_vars_num = lmb_symb.local_vars_num;
+    ast.local_vars_num = lmb_symb._local_vars_num;
 
     return ast;
   }
@@ -3761,9 +3761,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
 
     //TODO: why not storing the amount of default arguments in signature?
-    func_ast.symbol.default_args_num = func_ast.GetDefaultArgsNum();
+    func_ast.symbol._default_args_num = func_ast.GetDefaultArgsNum();
     if(func_ast.symbol.attribs.HasFlag(FuncAttrib.VariadicArgs))
-      ++func_ast.symbol.default_args_num;
+      ++func_ast.symbol._default_args_num;
   }
 
   void Pass_ParseFuncBlock(ParserPass pass)

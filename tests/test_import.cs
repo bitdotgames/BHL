@@ -53,33 +53,30 @@ public class TestImport : BHL_TestBase
     AssertEqual(loader.Load("bhl1", ts),
       new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
         .EmitThen(Opcodes.Return)
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 0, 1 })
         .EmitThen(Opcodes.Constant, new int[] { 0 })
         .EmitThen(Opcodes.Call, new int[] { 0, 3, 1 })
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
     );
     AssertEqual(loader.Load("bhl2", ts),
       new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
         .EmitThen(Opcodes.Return)
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 0, 1 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
         .EmitThen(Opcodes.Call, new int[] { 0, 0, 1 })
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
     );
     AssertEqual(loader.Load("bhl3", ts),
       new ModuleCompiler()
         .UseCode()
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
         .EmitThen(Opcodes.GetVar, new int[] { 0 })
-        .EmitThen(Opcodes.ReturnVal, new int[] { 1 })
         .EmitThen(Opcodes.Return)
-        .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/ })
+        .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
         .EmitThen(Opcodes.Return)
     );
 

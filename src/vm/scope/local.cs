@@ -32,7 +32,7 @@ public class LocalScope : IScope, IEnumerable<Symbol>
   {
     if (fallback is FuncSymbolScript fss)
       //start with func arguments number
-      next_idx = fss.local_vars_num;
+      next_idx = fss._local_vars_num;
     else if (fallback is LocalScope fallback_ls)
       next_idx = fallback_ls.next_idx;
     func_owner._current_scope = this;
@@ -90,8 +90,8 @@ public class LocalScope : IScope, IEnumerable<Symbol>
     if (sym is IScopeIndexed si && si.scope_idx == -1)
       si.scope_idx = next_idx;
 
-    if (next_idx >= func_owner.local_vars_num)
-      func_owner.local_vars_num = next_idx + 1;
+    if (next_idx >= func_owner._local_vars_num)
+      func_owner._local_vars_num = next_idx + 1;
 
     ++next_idx;
 

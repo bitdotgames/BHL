@@ -280,7 +280,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       {
         if (fss.attribs.HasFlag(FuncAttrib.Virtual))
         {
-          if (fss.default_args_num > 0)
+          if (fss._default_args_num > 0)
             throw new SymbolError(sym,
               "virtual methods are not allowed to have default arguments in class '" + name + "'");
 
@@ -290,7 +290,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         }
         else if (fss.attribs.HasFlag(FuncAttrib.Override))
         {
-          if (fss.default_args_num > 0)
+          if (fss._default_args_num > 0)
             throw new SymbolError(sym,
               "virtual methods are not allowed to have default arguments in class '" + name + "'");
 
