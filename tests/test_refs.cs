@@ -123,6 +123,32 @@ public class TestRefs : BHL_TestBase
   }
 
   [Fact]
+  public void TestIncrementDecrementRef()
+  {
+    string bhl = @"
+
+    func foo(ref float a)
+    {
+      a++
+      a++
+      a++
+      a--
+    }
+
+    func float test(float k)
+    {
+      foo(ref k)
+      return k
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    double num = Execute(vm, "test", 3).Stack.Pop();
+    Assert.Equal(5, num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestPassByRefNested()
   {
     string bhl = @"

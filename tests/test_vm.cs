@@ -7046,7 +7046,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    Assert.Equal(log.ToString(), "HERE");
+    Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }
 
