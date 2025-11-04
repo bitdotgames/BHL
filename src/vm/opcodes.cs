@@ -11,8 +11,6 @@ public enum Opcodes
   SetVar                = 6,
   GetVar                = 7,
   DeclVar               = 8,
-  //TODO: not needed
-  ArgVar                = 9,
   SetGVar               = 10,
   GetGVar               = 11,
   InitFrame             = 12,
@@ -46,8 +44,6 @@ public enum Opcodes
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
   SetAttrInplace        = 48,
-  //TODO: not needed
-  ArgRef                = 49,
   UnaryNot              = 50,
   UnaryNeg              = 51,
   And                   = 52,

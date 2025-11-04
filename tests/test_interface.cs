@@ -453,7 +453,6 @@ public class TestInterface : BHL_TestBase
           new ModuleCompiler()
             .UseCode()
             .EmitThen(Opcodes.InitFrame, new int[] { 1 + 1 /*this*/ + 1 /*args info*/ })
-            .EmitThen(Opcodes.ArgVar, new int[] { 1 })
             .EmitThen(Opcodes.GetVar, new int[] { 1 })
             .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
             .EmitThen(Opcodes.Add)

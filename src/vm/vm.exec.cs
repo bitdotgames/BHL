@@ -975,20 +975,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeArgVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    //TODO: get rid of this opcode since we do this during InitFrame
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeArgRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    //TODO: get rid of this opcode since we do this during InitFrame
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDeclVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
@@ -1634,9 +1620,6 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
     op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;
-
-    op_handlers[(int)Opcodes.ArgVar] = OpcodeArgVar;
-    op_handlers[(int)Opcodes.ArgRef] = OpcodeArgRef;
 
     op_handlers[(int)Opcodes.LastArgToTop] = OpcodeLastArgToTop;
 

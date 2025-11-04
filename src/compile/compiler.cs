@@ -429,12 +429,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.ArgVar,
-        1 /*local idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.SetVar,
         1 /*local idx*/
       )
@@ -455,12 +449,6 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.GetGVar,
         3 /*idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.ArgRef,
-        1 /*local idx*/
       )
     );
     DeclareOpcode(
@@ -1732,13 +1720,8 @@ public class ModuleCompiler : AST_Visitor
     {
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
     }
-    //check if it's not a module scope var (global)
     else if(func_decls.Count > 0)
     {
-      if(ast.is_ref)
-        Emit(Opcodes.ArgRef, new int[] { (int)ast.symb_idx });
-      else
-        Emit(Opcodes.ArgVar, new int[] { (int)ast.symb_idx });
     }
     else
     {
