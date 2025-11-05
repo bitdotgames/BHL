@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace bhl
 {
 
-public interface IValRefcounted
+public interface IRefcounted
 {
   int refs { get ; }
   void Retain();
@@ -25,7 +25,7 @@ public struct Val
 
   //NOTE: it's a cached version of _obj cast to IValRefcounted for
   //      less casting in refcounting routines
-  public IValRefcounted _refc;
+  public IRefcounted _refc;
 
   //NOTE: extra values below are for efficient encoding of small structs,
   //      e.g Vector3, Color, etc
@@ -100,9 +100,8 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref Val Unref()
   {
-    var stack = (ValStack)_obj;
-    int idx = (int)_num;
-    return ref stack.vals[idx];
+    var val_ref = (ValRef)_obj;
+    return ref val_ref.val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -306,11 +305,11 @@ public struct Val
     {
       type = type,
       _obj = o,
-      _refc = o as IValRefcounted,
+      _refc = o as IRefcounted,
     };
   }
 
-  static public Val NewObj(IValRefcounted o, IType type)
+  static public Val NewObj(IRefcounted o, IType type)
   {
     return new Val
     {
@@ -325,7 +324,7 @@ public struct Val
     Reset();
     this.type = type;
     _obj = o;
-    _refc = o as IValRefcounted;
+    _refc = o as IRefcounted;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -504,6 +503,87 @@ public class ValStack
   }
 }
 
+public class ValRef : IRefcounted
+{
+  //NOTE: below members are semi-public, one can use them for
+  //      fast access in case you know what you are doing
+
+  //NOTE: -1 means it's in released state
+  public int _refs;
+
+  public int refs => _refs;
+
+  public VM vm;
+
+  public Val val;
+
+  //NOTE: use New() instead
+  internal ValRef(VM vm)
+  {
+    this.vm = vm;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public ValRef New(VM vm)
+  {
+    ValRef vr;
+    if(vm.vrefs_pool.stack.Count == 0)
+    {
+      ++vm.vrefs_pool.miss;
+      vr = new ValRef(vm);
+    }
+    else
+    {
+      ++vm.vrefs_pool.hits;
+      vr = vm.vrefs_pool.stack.Pop();
+    }
+
+    vr._refs = 1;
+    vr.val = default;
+    return vr;
+  }
+
+  static void Del(ValRef vr)
+  {
+    //NOTE: we don't Reset immediately, giving a caller
+    //      a chance to access its properties
+    if(vr._refs != 0)
+      throw new Exception("Deleting invalid object, refs " + vr._refs);
+    vr._refs = -1;
+
+    vr.vm.vrefs_pool.stack.Push(vr);
+    if(vr.vm.vrefs_pool.stack.Count > vr.vm.vrefs_pool.miss)
+      throw new Exception("Unbalanced New/Del " + vr.vm.vrefs_pool.stack.Count + " " + vr.vm.vrefs_pool.miss);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Retain()
+  {
+    val._refc?.Retain();
+
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+
+    ++_refs;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Release()
+  {
+    val._refc?.Release();
+
+    if(_refs == -1)
+      throw new Exception("Invalid state(-1)");
+    else if(_refs == 0)
+      throw new Exception("Double free(0)");
+
+    --_refs;
+
+    if(_refs == 0)
+      Del(this);
+  }
+}
+
 public class ValOld
 {
   public IType type;
@@ -519,7 +599,7 @@ public class ValOld
 
   //NOTE: it's a cached version of _obj cast to IValRefcounted for
   //      less casting in refcounting routines
-  public IValRefcounted _refc;
+  public IRefcounted _refc;
 
   //NOTE: extra values below are for efficient encoding of small structs,
   //      e.g Vector3, Color, etc
@@ -856,7 +936,7 @@ public class ValOld
     return dv;
   }
 
-  static public ValOld NewObj(VM vm, IValRefcounted o, IType type)
+  static public ValOld NewObj(VM vm, IRefcounted o, IType type)
   {
     ValOld dv = NewNoReset(vm);
     dv.SetObj(o, type);
@@ -869,7 +949,7 @@ public class ValOld
     Reset();
     this.type = type;
     _obj = o;
-    _refc = o as IValRefcounted;
+    _refc = o as IRefcounted;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -881,7 +961,7 @@ public class ValOld
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetObj(IValRefcounted o, IType type)
+  public void SetObj(IRefcounted o, IType type)
   {
     Reset();
     this.type = type;

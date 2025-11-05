@@ -7,7 +7,7 @@ namespace bhl
 {
 
 //TODO: writing is not implemented yet
-public class ValList<T> : IList<T>, IValRefcounted, IDisposable
+public class ValList<T> : IList<T>, IRefcounted, IDisposable
 {
   internal Pool<ValList<T>> pool;
 

@@ -990,17 +990,19 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeRefVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
+  unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
     byte* bytes)
   {
-    //TODO: get rid of this opcode since we do this during InitFrame
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var val = ref exec.stack.Push();
-    //TODO:
-    //val.type = Types.RefType;
-    val._num = frame.locals_offset + local_idx;
-    val._obj = exec.stack;
+    ref var orig_val = ref exec.stack.vals[frame.locals_offset + local_idx];
+
+    //replacing existing val with ValRef
+    var new_val = new Val();
+    var vr = ValRef.New(vm);
+    vr.val = orig_val;
+    new_val._refc = vr;
+    orig_val = new_val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1011,12 +1013,12 @@ public partial class VM : INamedResolver
 
     exec.stack.Pop(out var new_val);
 
-    ref var reference = ref exec.stack.vals[frame.locals_offset + local_idx];
-    var stack = (ValStack)reference._obj;
-    ref var referenced_val = ref stack.vals[(int)reference._num];
+    ref var ref_val_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)ref_val_holder._refc;
     //TODO: what about blob?
-    referenced_val._refc?.Release();
-    referenced_val = new_val;
+    new_val._refc?.Retain();
+    val_ref.val._refc?.Release();
+    val_ref.val = new_val;
 
   }
 
@@ -1026,13 +1028,11 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var reference = ref exec.stack.vals[frame.locals_offset + local_idx];
-    var stack = (ValStack)reference._obj;
-    ref var referenced_val = ref stack.vals[(int)reference._num];
+    ref var ref_val_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)ref_val_holder._refc;
 
     ref Val v = ref exec.stack.Push();
-    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
-    v = referenced_val;
+    v = val_ref.val;
     v._refc?.Retain();
   }
 
@@ -1606,7 +1606,7 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
-    op_handlers[(int)Opcodes.RefVar] = OpcodeRefVar;
+    op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
     op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;

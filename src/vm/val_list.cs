@@ -8,7 +8,7 @@ namespace bhl
 {
 
 //NOTE: in case of IList implementation ValList doesn't apply owning semantics
-public class ValList : IList<Val>, IList, IValRefcounted
+public class ValList : IList<Val>, IList, IRefcounted
 {
   //TODO: use raw array?
   List<Val> lst = new List<Val>();

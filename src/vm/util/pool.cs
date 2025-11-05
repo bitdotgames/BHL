@@ -5,6 +5,7 @@ namespace bhl
 
 public class Pool<T> where T : class
 {
+  //TODO: use simple array?
   internal Stack<T> stack = new Stack<T>();
   internal int hits;
   internal int miss;

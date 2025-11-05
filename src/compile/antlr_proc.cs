@@ -1485,7 +1485,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
           else //func ptr member of class
           {
-            PeekAST().AddChild(new AST_Call(EnumCall.MVAR, line, var_symb, 0, name));
+            PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, var_symb, 0, name));
             ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
           }
@@ -1521,10 +1521,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         if(var_symb != null)
         {
           bool is_write = write && arracc == null;
-          bool is_global = var_symb.scope is Namespace;
           var fld_symb = var_symb as FieldSymbol;
-          if(fld_symb != null && fld_symb.attribs.HasFlag(FieldAttrib.Static))
-            is_global = true;
 
           if(scope is InterfaceSymbol)
           {
@@ -1532,21 +1529,21 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             return name_symb;
           }
 
+          bool pass_as_ref = PeekCallByRef();
+          //we need to mark the variable as reference once it's passed as ref
+          if(!var_symb._ref_created && pass_as_ref)
+            var_symb._ref_created = true;
+
           ast = new AST_Call(
-            GetVarAccessMode(
-              is_write: is_write,
-              is_global: is_global,
-              is_ref: var_symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref,
-              make_ref: PeekCallByRef(),
-              is_field: fld_symb != null
-              ),
+            is_write ? EnumCall.VARW : EnumCall.VAR,
             line,
             var_symb,
             0,
-            name
-          );
+            name,
+            pass_as_ref
+            );
           //handling passing by ref for class fields
-          if(fld_symb != null && PeekCallByRef())
+          if(fld_symb != null && pass_as_ref)
           {
             if(scope is ClassSymbolNative)
             {
@@ -1558,12 +1555,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
           else if(fld_symb != null && scope is ClassSymbolNative)
           {
-            if(ast.type == EnumCall.MVAR && fld_symb.getter == null)
+            if(ast.type == EnumCall.VAR && fld_symb.getter == null)
             {
               AddError(name, "get operation is not defined");
               return name_symb;
             }
-            else if(ast.type == EnumCall.MVARW && fld_symb.setter == null)
+            else if(ast.type == EnumCall.VARW && fld_symb.setter == null)
             {
               AddError(name, "set operation is not defined");
               return name_symb;
@@ -1631,34 +1628,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       AddArrIndex(arracc, ref type, line, write);
 
     return name_symb;
-  }
-
-  static EnumCall GetVarAccessMode(
-    bool is_write = false,
-    bool is_global = false,
-    bool is_ref = false,
-    bool make_ref = false,
-    bool is_field = false
-    )
-  {
-    if(is_global)
-      return is_write ? EnumCall.GVARW : EnumCall.GVAR;
-
-    if(is_field)
-      return is_write ? EnumCall.MVARW : EnumCall.MVAR;
-
-    if(make_ref)
-    {
-      if(!is_ref)
-        return EnumCall.MKREF;
-      else //if it's a ref already we just need to pass it further
-        return EnumCall.VAR;
-    }
-
-    if(is_ref)
-      return is_write ? EnumCall.REFW : EnumCall.REF;
-
-    return is_write ? EnumCall.VARW : EnumCall.VAR;
   }
 
   bool AddArrIndex(bhlParser.ArrAccessContext arracc, ref IType type, int line, bool write)
@@ -4692,15 +4661,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         var_ann.eval_type = var_symb.type.Get();
         LSP_SetSymbol(vd_name, var_symb);
 
-        bool is_global = var_symb.scope is Namespace;
-        var ast = new AST_Call(
-          GetVarAccessMode(
-            is_global: is_global,
-            is_write: true,
-            is_ref: var_symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref
-          ),
-          start_line,
-          var_symb);
+        var ast = new AST_Call(EnumCall.VARW, start_line, var_symb);
         var_ast.AddChild(ast);
       }
       else if(vproxy.VarAccessAt(i) != null)
@@ -4922,7 +4883,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(write)
       return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb, 0, name);
     else
-      return new AST_VarDecl(symb, is_ref);
+      return new AST_VarDecl(symb);
   }
 
   bool ProcAssignToVar(
@@ -5538,7 +5499,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
       //declaring counter var
-      PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, is_ref: false));
+      PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb));
 
       //declaring iterating var
       if(iter_ast_decl != null)
@@ -5552,7 +5513,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var bin_op = new AST_BinaryOpExp(EnumBinaryOp.LT, ctx.Start.Line);
       bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_cnt_symb));
       bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_tmp_symb));
-      bin_op.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, arr_type.Resolve("Count")));
+      bin_op.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, arr_type.Resolve("Count")));
       cond.AddChild(bin_op);
       ast.AddChild(cond);
 
@@ -5696,7 +5657,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
 
       //let's call GetEnumerator
-      PeekAST().AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, map_type.Resolve("$Enumerator")));
+      PeekAST().AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_type.Resolve("$Enumerator")));
       PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, map_tmp_en_symb));
 
       //declaring iterating val
@@ -5712,7 +5673,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       //while condition
       var cond = new AST_Block(BlockType.SEQ);
       cond.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_tmp_en_symb));
-      cond.AddChild(new AST_Call(EnumCall.MVAR, ctx.Start.Line, map_type.enumerator_type.Resolve("Next")));
+      cond.AddChild(new AST_Call(EnumCall.VAR, ctx.Start.Line, map_type.enumerator_type.Resolve("Next")));
       ast.AddChild(cond);
 
       //while body

@@ -772,6 +772,7 @@ public class BHL_TestBase
     if(vm.last_fiber != null)
       CommonChecks(vm.last_fiber);
 
+    Assert.Equal(0, vm.vrefs_pool.BusyCount);
     Assert.Equal(0, vm.vals_pool.BusyCount);
     Assert.Equal(0, vm.vlsts_pool.BusyCount);
     Assert.Equal(0, vm.fptrs_pool.BusyCount);

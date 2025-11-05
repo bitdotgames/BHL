@@ -335,12 +335,7 @@ public enum EnumCall
 {
   VAR             = 1,
   VARW            = 2,
-  MVAR            = 10,
-  MVARW           = 11,
-  MVARREF         = 12,
-  MKREF           = 13,
-  REF             = 14,
-  REFW            = 15,
+  MVARREF         = 12, //TODO: remove this one for now
   FUNC            = 3,
   MFUNC           = 30,
   ARR_IDX         = 4,
@@ -350,9 +345,7 @@ public enum EnumCall
   GET_ADDR        = 5,
   FUNC_VAR        = 6,
   FUNC_MVAR       = 7,
-  LMBD            = 8,
-  GVAR            = 50,
-  GVARW           = 51,
+  LMBD            = 8
 }
 
 public class AST_Call  : AST_Tree
@@ -360,6 +353,7 @@ public class AST_Call  : AST_Tree
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symb;
+  public bool pass_as_ref;
   public ITerminalNode node;
 
   public int symb_idx
@@ -385,13 +379,15 @@ public class AST_Call  : AST_Tree
     int line_num,
     Symbol symb,
     uint cargs_bits = 0,
-    ITerminalNode node = null
+    ITerminalNode node = null,
+    bool pass_as_ref = false
   )
   {
     this.type = type;
     this.line_num = line_num;
     this.symb = symb;
     this.cargs_bits = cargs_bits;
+    this.pass_as_ref = pass_as_ref;
     this.node = node;
   }
 }
@@ -455,29 +451,22 @@ public class AST_Literal : IAST
 
 public class AST_VarDecl : AST_Tree
 {
-  public string name = "";
-  public IType type;
+  public VariableSymbol symb;
+  public IType type => symb?.type.Get();
   public int symb_idx;
-  public bool is_func_arg;
-  public bool is_ref;
 
-  public AST_VarDecl(VariableSymbol symb, bool is_ref = false)
-    : this(symb.name, is_ref, symb is FuncArgSymbol, symb.type.Get(), symb.scope_idx)
-  {
-  }
+  public AST_VarDecl(VariableSymbol symb)
+    : this(symb, symb.scope_idx)
+  {}
 
   //class static field version
   public AST_VarDecl(FieldSymbol symb, int global_idx)
-    : this(symb.name, false, false, symb.type.Get(), global_idx)
-  {
-  }
+    : this((VariableSymbol)symb, global_idx)
+  {}
 
-  public AST_VarDecl(string name, bool is_ref, bool is_func_arg, IType type, int symb_idx)
+  private AST_VarDecl(VariableSymbol symb, int symb_idx)
   {
-    this.name = name;
-    this.type = type;
-    this.is_ref = is_ref;
-    this.is_func_arg = is_func_arg;
+    this.symb = symb;
     this.symb_idx = symb_idx;
   }
 }
@@ -731,7 +720,7 @@ public class AST_Dumper : AST_Visitor
 
   public override void DoVisit(AST_VarDecl node)
   {
-    Console.Write("(VARDECL " + node.name);
+    Console.Write("(VARDECL " + node.symb.name);
     VisitChildren(node);
     Console.Write(")");
   }

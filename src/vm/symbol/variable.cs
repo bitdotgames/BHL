@@ -16,7 +16,8 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 
 #if BHL_FRONT
-  //referenced upvalue, keep in mind it can be a 'local' variable from the   
+  internal bool _ref_created;
+  //referenced upvalue, keep in mind it can be a 'local' variable from the
   //outer lambda wrapping the current one
   internal VariableSymbol _upvalue;
 #endif

@@ -424,7 +424,7 @@ public class TestARC : BHL_TestBase
     }
   }
 
-  public class RefC : IValRefcounted
+  public class RefC : IRefcounted
   {
     public int _refs;
     public StringBuilder logs;

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace bhl
 {
 
-public class RefcList<T> : List<T>, IValRefcounted, IDisposable
+public class RefcList<T> : List<T>, IRefcounted, IDisposable
 {
   internal Pool<RefcList<T>> pool;
 

@@ -82,7 +82,7 @@ public enum Opcodes
   //      can be replaced with more low-level opcodes?
   MapAddInplace         = 93,
 
-  RefVar               = 94,
+  MakeRef               = 94,
   GetRef                = 95,
   SetRef                = 96,
 

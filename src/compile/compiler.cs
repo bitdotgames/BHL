@@ -708,7 +708,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.RefVar,
+        Opcodes.MakeRef,
         1 /*local idx*/
       )
     );
@@ -1237,61 +1237,72 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Call ast)
   {
+    bool is_global = ast.symb?.scope is Namespace;
+    var fs = ast.symb as FieldSymbol;
+    if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static))
+      is_global = true;
+    bool is_ref =
+      ast.symb is VariableSymbol vs && vs._ref_created ||
+      ast.symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref;
+
     switch(ast.type)
     {
-      case EnumCall.VARW:
-      {
-        Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
       case EnumCall.VAR:
       {
-        Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
-      case EnumCall.MKREF:
-      {
-        Emit(Opcodes.RefVar, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
-      case EnumCall.REF:
-      {
-        Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
-      case EnumCall.REFW:
-      {
-        Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
-      case EnumCall.GVAR:
-      {
-        //NOTE: native static fields are implemented as native functions
-        if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+        if(is_global)
         {
-          var cs_mod = cs.GetModule();
-          var get_var_op = Emit(Opcodes.CallNative,
-            new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0 }, ast.line_num);
-          TrySetFuncInstructionImportModule(get_var_op, cs_mod);
+          //NOTE: native static fields are implemented as native functions
+          if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          {
+            var cs_mod = cs.GetModule();
+            var get_var_op = Emit(Opcodes.CallNative,
+              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0 }, ast.line_num);
+            TrySetFuncInstructionImportModule(get_var_op, cs_mod);
+          }
+          else
+            //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+            Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
         }
+        else if(fs != null)
+        {
+          if(ast.symb_idx == -1)
+            throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+          VisitChildren(ast);
+          Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
+        }
+        else if(is_ref && !ast.pass_as_ref)
+          Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
-      case EnumCall.GVARW:
+      case EnumCall.VARW:
       {
-        //NOTE: native static fields are implemented as native functions
-        if(ast.symb is FieldSymbol fs && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+        if(is_global)
         {
-          var cs_mod = cs.GetModule();
-          var set_var_op = Emit(Opcodes.CallNative,
-            new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0 }, ast.line_num);
-          TrySetFuncInstructionImportModule(set_var_op, cs_mod);
+          //NOTE: native static fields are implemented as native functions
+          if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          {
+            var cs_mod = cs.GetModule();
+            var set_var_op = Emit(Opcodes.CallNative,
+              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0 }, ast.line_num);
+            TrySetFuncInstructionImportModule(set_var_op, cs_mod);
+          }
+          else
+            //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
+            Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
         }
+        else if(fs != null)
+        {
+          if(ast.symb_idx == -1)
+            throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+          VisitChildren(ast);
+          Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
+        }
+        else if(is_ref)
+          Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-          Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
+          Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.FUNC:
@@ -1344,26 +1355,6 @@ public class ModuleCompiler : AST_Visitor
         }
         else
           Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
-      }
-        break;
-      case EnumCall.MVAR:
-      {
-        if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
-
-        VisitChildren(ast);
-
-        Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
-      }
-        break;
-      case EnumCall.MVARW:
-      {
-        if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
-
-        VisitChildren(ast);
-
-        Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.MFUNC:
@@ -1693,8 +1684,10 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_VarDecl ast)
   {
+    bool is_func_arg = ast.symb is FuncArgSymbol;
+
     //checking of there are default args
-    if(ast.is_func_arg && ast.children.Count > 0)
+    if(is_func_arg && ast.children.Count > 0)
     {
       var fsymb = func_decls.Peek();
       int symb_idx = (int)ast.symb_idx;
@@ -1708,13 +1701,19 @@ public class ModuleCompiler : AST_Visitor
       AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
     }
 
-    if(!ast.is_func_arg)
+    if(!is_func_arg)
     {
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
+      if(ast.symb._ref_created)
+        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
     }
+    //check if we are inside any function scope
     else if(func_decls.Count > 0)
     {
+      if(ast.symb._ref_created)
+        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
     }
+    //global var then
     else
     {
       Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type)});

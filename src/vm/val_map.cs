@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace bhl
 {
 
-public class ValMap : IDictionary<Val, Val>, IValRefcounted
+public class ValMap : IDictionary<Val, Val>, IRefcounted
 {
   //NOTE: Since we track the lifetime of the key as well as of a value
   //      we need to efficiently access the added key, for this reason

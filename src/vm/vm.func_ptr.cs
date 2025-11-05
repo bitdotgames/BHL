@@ -6,7 +6,7 @@ namespace bhl
 
 public partial class VM : INamedResolver
 {
-  public class FuncPtr : IValRefcounted
+  public class FuncPtr : IRefcounted
   {
     //NOTE: -1 means it's in released state,
     //      public only for quick inspection
