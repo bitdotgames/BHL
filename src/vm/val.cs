@@ -100,7 +100,8 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref Val Unref()
   {
-    var val_ref = (ValRef)_obj;
+    var val_ref = (ValRef)_refc;
+    val_ref.Release();
     return ref val_ref.val;
   }
 
