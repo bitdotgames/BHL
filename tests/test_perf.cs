@@ -278,7 +278,7 @@ public class TestPerf : BHL_TestBase
     int ret_base = stack.sp - ret_num;
     //releasing all locals
     for(int i = frame.locals_offset; i < ret_base; ++i)
-      stack.vals[i].Release();
+      stack.vals[i].ReleaseData();
 
     int new_sp = frame.locals_offset + ret_num;
 

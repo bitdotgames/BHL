@@ -7034,7 +7034,7 @@ public class TestVM : BHL_TestBase
             throw new NotImplementedException();
             var fn_ptr = exec.stack.Pop();
             //exec.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
-            fn_ptr.Release();
+            fn_ptr.ReleaseData();
             return null;
           },
           new FuncArgSymbol("fn", ts.TFunc(ts.TArr(Types.Int)))

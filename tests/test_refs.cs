@@ -34,7 +34,7 @@ public class TestRefs : BHL_TestBase
           .EmitThen(Opcodes.SetRef, new int[] { 0 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
-          .EmitThen(Opcodes.MakeRef, new int[] { 0 })
+          .EmitThen(Opcodes.DeclRef, new int[] { 0 })
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
           .EmitThen(Opcodes.GetRef, new int[] { 0 })

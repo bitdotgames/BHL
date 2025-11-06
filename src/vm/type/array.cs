@@ -219,7 +219,7 @@ public class GenericArrayTypeSymbol :
   public override void ArrAdd(Val arr, Val val)
   {
     var lst = AsValList(arr);
-    lst.Add(val.CloneValue());
+    lst.Add(val.Clone());
   }
 
   public override int ArrIndexOf(Val arr, Val val)
@@ -229,7 +229,7 @@ public class GenericArrayTypeSymbol :
     int idx = -1;
     for(int i = 0; i < lst.Count; ++i)
     {
-      if(lst[i].IsValueEqual(ref val))
+      if(lst[i].IsDataEqual(ref val))
       {
         idx = i;
         break;
@@ -243,7 +243,7 @@ public class GenericArrayTypeSymbol :
   {
     var lst = AsValList(arr);
     var res = lst[idx];
-    res.Retain();
+    res.RetainData();
     return res;
   }
 
@@ -269,7 +269,7 @@ public class GenericArrayTypeSymbol :
   public override void ArrInsert(Val arr, int idx, Val val)
   {
     var lst = AsValList(arr);
-    lst.Insert(idx, val.CloneValue());
+    lst.Insert(idx, val.Clone());
   }
 
   public override uint ClassId()

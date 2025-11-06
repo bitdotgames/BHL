@@ -702,7 +702,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.MakeRef,
+        Opcodes.DeclRef,
         1 /*local idx*/
       )
     );
@@ -1237,9 +1237,8 @@ public class ModuleCompiler : AST_Visitor
     var fs = ast.symb as FieldSymbol;
     if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static))
       is_global = true;
-    bool is_ref =
-      ast.symb is VariableSymbol vs && vs._ref_created ||
-      ast.symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref;
+    bool is_ref_created = ast.symb is VariableSymbol vs && vs._ref_created;
+    bool is_ref = is_ref_created || ast.symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref;
 
     switch(ast.type)
     {
@@ -1273,7 +1272,11 @@ public class ModuleCompiler : AST_Visitor
       }
         break;
       case EnumCall.VARW:
+      case EnumCall.VARWDCL:
       {
+        if(ast.type == EnumCall.VARWDCL && is_ref_created)
+          Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
+
         if(is_global)
         {
           //NOTE: native static fields are implemented as native functions
@@ -1674,32 +1677,34 @@ public class ModuleCompiler : AST_Visitor
   {
     bool is_func_arg = ast.symb is FuncArgSymbol;
 
-    //checking of there are default args
+    //checking if there are default args
     if(is_func_arg && ast.children.Count > 0)
     {
-      var fsymb = func_decls.Peek();
-      int symb_idx = (int)ast.symb_idx;
+      var curr_func = func_decls.Peek();
+      int symb_idx = ast.symb_idx;
       //let's take into account 'this' special case, which is
       //stored at 0 idx and is not part of func args
       //(which are stored in the very beginning)
-      if(fsymb.scope is ClassSymbol)
+      if(curr_func.scope is ClassSymbol)
         --symb_idx;
-      var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - fsymb.GetRequiredArgsNum(), 0 /*patched later*/ });
-      VisitChildren(ast);
+      var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
+      //NOTE: already done before
+      //VisitChildren(ast);
       AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
     }
 
     if(!is_func_arg)
     {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
       if(ast.symb._ref_created)
-        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
+      else
+        Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
     }
     //check if we are inside any function scope
     else if(func_decls.Count > 0)
     {
       if(ast.symb._ref_created)
-        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
     }
     //global var then
     else

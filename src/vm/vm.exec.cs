@@ -570,7 +570,7 @@ public partial class VM : INamedResolver
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand._num = l_operand.IsValueEqual(ref r_operand) ? 1 : 0;
+    l_operand._num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0;
 
     //TODO: specialized opcode for simple numbers equality?
     //l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
@@ -585,7 +585,7 @@ public partial class VM : INamedResolver
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand._num = !l_operand.IsValueEqual(ref r_operand) ? 1 : 0;
+    l_operand._num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -990,7 +990,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
+  unsafe static void OpcodeDeclRef(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame,
     byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
@@ -1016,10 +1016,8 @@ public partial class VM : INamedResolver
     ref var val_ref_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
     //TODO: what about blob?
-    new_val._refc?.Retain();
     val_ref.val._refc?.Release();
     val_ref.val = new_val;
-
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1591,7 +1589,7 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
-    op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
+    op_handlers[(int)Opcodes.DeclRef] = OpcodeDeclRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
 

@@ -335,6 +335,9 @@ public enum EnumCall
 {
   VAR             = 1,
   VARW            = 2,
+  //TODO: do we really need this special case when we decl a var and write to it?
+  //      (currently it's used for declaration of refs)
+  VARWDCL         = 10,
   FUNC            = 3,
   MFUNC           = 30,
   ARR_IDX         = 4,

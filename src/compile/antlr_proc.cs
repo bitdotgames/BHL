@@ -4373,9 +4373,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     AST_Tree ast = assign_exp != null
       ?
-      //NOTE: we're in the global 'init' code, we use VARW instead of GVARW
-      (AST_Tree)new AST_Call(EnumCall.VARW, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME())
-      : (AST_Tree)new AST_VarDecl(pass.gvar_symb);
+      new AST_Call(EnumCall.VARWDCL, vd.NAME().Symbol.Line, pass.gvar_symb, 0, vd.NAME())
+      : new AST_VarDecl(pass.gvar_symb);
 
     if(exp_ast != null)
       PeekAST().AddChild(exp_ast);
@@ -4871,9 +4870,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     LSP_SetSymbol(name, symb);
 
     if(write)
-      return new AST_Call(EnumCall.VARW, name.Symbol.Line, symb, 0, name);
-    else
-      return new AST_VarDecl(symb);
+      return new AST_Call(EnumCall.VARWDCL, name.Symbol.Line, symb, 0, name);
+    return new AST_VarDecl(symb);
   }
 
   bool ProcAssignToVar(

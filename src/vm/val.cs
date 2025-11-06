@@ -126,7 +126,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void ValueCopyFrom(Val o)
+  public void CopyDataFrom(Val o)
   {
     type = o.type;
     _num = o._num;
@@ -191,22 +191,22 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public Val CloneValue()
+  public Val Clone()
   {
     var copy = new Val();
-    copy.ValueCopyFrom(this);
+    copy.CopyDataFrom(this);
     copy._refc?.Retain();
     return copy;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Retain()
+  public void RetainData()
   {
     _refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Release()
+  public void ReleaseData()
   {
     _refc?.Release();
   }
@@ -358,7 +358,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public bool IsValueEqual(ref Val o)
+  public bool IsDataEqual(ref Val o)
   {
     bool res =
         _num == o._num &&
@@ -371,7 +371,7 @@ public struct Val
     return res;
   }
 
-  public int GetValueHashCode()
+  public int GetDataHashCode()
   {
     return
       _num.GetHashCode()

@@ -114,8 +114,8 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     var en = map.GetEnumerator();
     while(en.MoveNext())
     {
-      en.Current.Key.Release();
-      en.Current.Value.Value.Release();
+      en.Current.Key.ReleaseData();
+      en.Current.Value.Value.ReleaseData();
     }
 
     map.Clear();
@@ -136,7 +136,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     if(map.TryGetValue(k, out var curr))
     {
       curr.Value._refc?.Release();
-      curr.Value.ValueCopyFrom(value);
+      curr.Value.CopyDataFrom(value);
       curr.Value._refc?.Retain();
     }
     else
@@ -170,8 +170,8 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     bool removed = map.Remove(k);
     if(existed)
     {
-      prev.Key.Release();
-      prev.Value.Release();
+      prev.Key.ReleaseData();
+      prev.Value.ReleaseData();
     }
 
     return removed;
@@ -270,12 +270,12 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
       //else if(a == null || b == null)
       //  return false;
 
-      return a.IsValueEqual(ref b);
+      return a.IsDataEqual(ref b);
     }
 
     public int GetHashCode(Val v)
     {
-      return v.GetValueHashCode();
+      return v.GetDataHashCode();
     }
   }
 }

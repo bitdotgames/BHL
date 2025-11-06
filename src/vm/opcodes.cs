@@ -10,7 +10,7 @@ public enum Opcodes
   Mul                   = 5,
   SetVar                = 6,
   GetVar                = 7,
-  DeclVar               = 8,
+  DeclVar               = 8, //TODO: obsolete?
   SetGVar               = 10,
   GetGVar               = 11,
   InitFrame             = 12,
@@ -81,7 +81,7 @@ public enum Opcodes
   //      can be replaced with more low-level opcodes?
   MapAddInplace         = 93,
 
-  MakeRef               = 94,
+  DeclRef               = 94,
   GetRef                = 95,
   SetRef                = 96,
 

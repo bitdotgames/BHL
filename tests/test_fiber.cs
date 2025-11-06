@@ -684,7 +684,7 @@ public class TestFiber : BHL_TestBase
         var val = exec.stack.Pop();
         throw new NotImplementedException();
         //fb = new VM.FiberRef(val);
-        val.Release();
+        val.ReleaseData();
         exec.status = BHS.RUNNING;
         done = true;
       }
@@ -1487,7 +1487,7 @@ public class TestFiber : BHL_TestBase
             //ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
           }
 
-          ptr.Release();
+          ptr.ReleaseData();
 
           return null;
         },

@@ -39,7 +39,7 @@ public class TestArrays : BHL_TestBase
     Assert.False(vm.Tick());
     var lst = fb.Stack.Pop();
     Assert.Empty(lst.obj as IList<Val>);
-    lst.Release();
+    lst.ReleaseData();
     CommonChecks(vm);
   }
 
@@ -131,7 +131,7 @@ public class TestArrays : BHL_TestBase
     Assert.False(vm.Tick());
     var lst = fb.Stack.Pop();
     Assert.Single((lst.obj as IList<Val>));
-    lst.Release();
+    lst.ReleaseData();
     CommonChecks(vm);
   }
 
@@ -291,7 +291,7 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "tst");
     AssertEqual(lst[1].str, "bar");
-    val.Release();
+    val.ReleaseData();
     CommonChecks(vm);
   }
 
@@ -406,7 +406,7 @@ public class TestArrays : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.PopRelease().num;
+    var res = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(2, res);
     CommonChecks(vm);
   }
@@ -427,7 +427,7 @@ public class TestArrays : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.PopRelease().str;
+    var res = Execute(vm, "test").Stack.Pop().str;
     AssertEqual(res, "foo");
     CommonChecks(vm);
   }
@@ -455,8 +455,8 @@ public class TestArrays : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(42, Execute(vm, "test2").result_old.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(42, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -486,9 +486,9 @@ public class TestArrays : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.Pop();
+    var res = Execute(vm, "test").Stack.Pop();
 
-    var lst = res.obj as IList<ValOld>;
+    var lst = res.obj as IList<Val>;
     Assert.Equal(2, lst.Count);
     AssertEqual(lst[0].str, "foo");
     AssertEqual(lst[1].str, "bar");
@@ -496,7 +496,7 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(1, vm.vlsts_pool.MissCount);
     Assert.Equal(0, vm.vlsts_pool.IdleCount);
 
-    res.Release();
+    res.ReleaseData();
 
     CommonChecks(vm);
   }
@@ -563,8 +563,8 @@ public class TestArrays : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
-    AssertEqual(res, "3102030");
+    var res = Execute(vm, "test",  2).Stack.Pop().str;
+    Assert.Equal("3102030", res);
     CommonChecks(vm);
   }
 
@@ -587,7 +587,7 @@ public class TestArrays : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(0, Execute(vm, "test").result_old.PopRelease().num);
+      Assert.Equal(0, Execute(vm, "test").Stack.Pop().num);
       CommonChecks(vm);
     }
 
@@ -607,7 +607,7 @@ public class TestArrays : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+      Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
       CommonChecks(vm);
     }
 
@@ -633,7 +633,7 @@ public class TestArrays : BHL_TestBase
       var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
       var vm = MakeVM(bhl, ts_fn);
-      Assert.Equal(-1, Execute(vm, "test").result_old.PopRelease().num);
+      Assert.Equal(-1, Execute(vm, "test").Stack.Pop().num);
       CommonChecks(vm);
     }
   }
@@ -664,7 +664,7 @@ public class TestArrays : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result_old.PopRelease().num;
+    var res = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(10, res);
     CommonChecks(vm);
   }
@@ -1059,7 +1059,6 @@ public class TestArrays : BHL_TestBase
     CommonChecks(vm);
   }
 
-
   [Fact]
   public void TestValListSort()
   {
@@ -1086,7 +1085,6 @@ public class TestArrays : BHL_TestBase
 
     CommonChecks(vm);
   }
-
 
   [Fact]
   public void TestValListAsIList()
@@ -1172,7 +1170,7 @@ public class TestArrays : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
