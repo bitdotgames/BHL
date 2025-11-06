@@ -172,7 +172,7 @@ public class TestRefs : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes:true);
+    var vm = MakeVM(bhl);
     double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(8, num);
     CommonChecks(vm);
