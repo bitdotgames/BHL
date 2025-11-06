@@ -505,13 +505,6 @@ public class TestArrays : BHL_TestBase
   public void TestArrayPoolInInfiniteLoop()
   {
     string bhl = @"
-
-    func []string make()
-    {
-      []string arr = new []string
-      return arr
-    }
-
     coro func test()
     {
       while(true) {
@@ -695,8 +688,8 @@ public class TestArrays : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().str;
-    AssertEqual(res, "2102030");
+    var res = Execute(vm, "test", 2).Stack.Pop().str;
+    Assert.Equal("2102030", res);
     CommonChecks(vm);
   }
 
@@ -775,7 +768,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual(log.ToString(), "200;300");
+    Assert.Equal("200;300", log.ToString());
     CommonChecks(vm);
   }
 
@@ -812,7 +805,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual(log.ToString(), "100;200;");
+    Assert.Equal("100;200;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -927,15 +920,8 @@ public class TestArrays : BHL_TestBase
     var vm = new VM();
 
     var vals = ValList.New(vm);
-    {
-      var v1 = ValOld.NewInt(vm, 10);
-      vals.Add(v1);
-    }
-
-    {
-      var v2 = ValOld.NewInt(vm, 20);
-      vals.Add(v2);
-    }
+    vals.Add(10);
+    vals.Add(20);
 
     var vals_typed = ValList<int>.New(vals, ArrayInts.Val2Native);
 
@@ -994,15 +980,11 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = ValOld.NewInt(vm, 10);
-    lst.Add(v1);
-
-    var v2 = ValOld.NewInt(vm, 1);
-    lst.Add(v2);
+    lst.Add(10);
+    lst.Add(1);
 
     Assert.Equal(2, lst.Count);
 
-    //swapping items has now effect on ownership
     (lst[0], lst[1]) = (lst[1], lst[0]);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(10, lst[1].num);
@@ -1012,8 +994,7 @@ public class TestArrays : BHL_TestBase
     Assert.Single(lst);
     Assert.Equal(1, lst[0].num);
 
-    //adding an item implies ownership over it
-    lst.Add(ValOld.NewInt(vm, 20));
+    lst.Add(20);
     Assert.Equal(2, lst.Count);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(20, lst[1].num);
@@ -1031,27 +1012,27 @@ public class TestArrays : BHL_TestBase
     var lst = ValList.New(vm);
 
     {
-      var dv = ValOld.New(vm);
-      dv.Retain();
-      lst.Add(dv);
-      Assert.Equal(2, dv._refs);
+      var vr = ValRef.New(vm);
+      vr.Retain();
+      lst.Add(Val.NewObj(vr, null));
+      Assert.Equal(2, vr._refs);
 
       lst.Clear();
-      Assert.Equal(1, dv._refs);
-      dv.Release();
+      Assert.Equal(1, vr._refs);
+      vr.Release();
     }
 
     {
-      var dv = ValOld.New(vm);
-      dv.Retain();
-      lst.Add(dv);
-      Assert.Equal(2, dv._refs);
+      var vr = ValRef.New(vm);
+      vr.Retain();
+      lst.Add(Val.NewObj(vr, null));
+      Assert.Equal(2, vr._refs);
 
       lst.RemoveAt(0);
-      Assert.Equal(1, dv._refs);
+      Assert.Equal(1, vr._refs);
 
       lst.Clear();
-      dv.Release();
+      vr.Release();
     }
 
     lst.Release();
@@ -1066,14 +1047,9 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = ValOld.NewInt(vm, 10);
-    lst.Add(v1);
-
-    var v2 = ValOld.NewInt(vm, 1);
-    lst.Add(v2);
-
-    var v3 = ValOld.NewInt(vm, 13);
-    lst.Add(v3);
+    lst.Add(10);
+    lst.Add(1);
+    lst.Add(13);
 
     var sorted = lst.OrderBy(v => v.num).ToList();
     Assert.Equal(3, sorted.Count);
@@ -1093,11 +1069,8 @@ public class TestArrays : BHL_TestBase
 
     var lst = ValList.New(vm);
 
-    var v1 = ValOld.NewInt(vm, 10);
-    lst.Add(v1);
-
-    var v2 = ValOld.NewInt(vm, 1);
-    lst.Add(v2);
+    lst.Add(10);
+    lst.Add(1);
 
     var ilst = (IList)lst;
     Assert.Equal(2, ilst.Count);
@@ -1113,7 +1086,7 @@ public class TestArrays : BHL_TestBase
     Assert.Equal(1, lst[0].num);
 
     //adding an item implies ownership over it
-    ilst.Add(ValOld.NewInt(vm, 20));
+    ilst.Add(Val.NewInt(20));
     Assert.Equal(2, ilst.Count);
     Assert.Equal(1, lst[0].num);
     Assert.Equal(20, lst[1].num);
@@ -1180,21 +1153,17 @@ public class TestArrays : BHL_TestBase
     var vm = new VM();
 
     var lst = ValList.New(vm);
-
-    var dv1 = ValOld.NewInt(vm, 1);
-    lst.Add(dv1);
-
-    var dv2 = ValOld.NewInt(vm, 2);
-    lst.Add(dv2);
+    lst.Add(1);
+    lst.Add(2);
 
     int c = 0;
     foreach(var tmp in lst)
     {
       ++c;
       if(c == 1)
-        Assert.Equal(tmp.num, dv1.num);
+        Assert.Equal(1, tmp.num);
       else if(c == 2)
-        Assert.Equal(tmp.num, dv2.num);
+        Assert.Equal(2, tmp.num);
     }
 
     Assert.Equal(2, c);
