@@ -1531,7 +1531,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
           bool pass_as_ref = PeekCallByRef();
           //we need to mark the variable as reference once it's passed as ref
-          if(!var_symb._ref_origin && pass_as_ref)
+          if(!var_symb._is_ref && pass_as_ref)
             var_symb._ref_origin = true;
 
           ast = new AST_Call(
@@ -4750,19 +4750,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var assign_exp = ctx.assignExp();
     bool is_ref = ctx.REF() != null;
-    bool is_null_ref = false;
-
-    if(is_ref && assign_exp != null)
-    {
-      //NOTE: super special case for 'null refs'
-      if(assign_exp.exp().GetText() == "null")
-        is_null_ref = true;
-      else
-      {
-        AddError(name, "'ref' is not allowed to have a default value");
-        return null;
-      }
-    }
 
     AST_Interim exp_ast = null;
     if(assign_exp != null)
@@ -4794,7 +4781,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     PeekAST().AddChild(decl_ast);
 
-    if(assign_exp != null && !is_null_ref)
+    if(assign_exp != null)
       types.CheckAssign(Annotate(name), Annotate(assign_exp), errors);
     return null;
   }

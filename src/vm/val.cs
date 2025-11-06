@@ -560,8 +560,6 @@ public class ValRef : IRefcounted
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Retain()
   {
-    val._refc?.Retain();
-
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
 
@@ -571,8 +569,6 @@ public class ValRef : IRefcounted
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Release()
   {
-    val._refc?.Release();
-
     if(_refs == -1)
       throw new Exception("Invalid state(-1)");
     else if(_refs == 0)
@@ -581,7 +577,10 @@ public class ValRef : IRefcounted
     --_refs;
 
     if(_refs == 0)
+    {
+      val._refc?.Release();
       Del(this);
+    }
   }
 }
 

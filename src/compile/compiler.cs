@@ -1416,7 +1416,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+        Emit(ast.symb is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;

@@ -54,7 +54,6 @@ public partial class VM : INamedResolver
       if(ptr._refs != 0)
         throw new Exception("Freeing invalid object, refs " + ptr._refs);
 
-      //Console.WriteLine("DEL " + ptr.GetHashCode() + " " + Environment.StackTrace);
       ptr._refs = -1;
 
       ptr.Clear();
@@ -100,8 +99,6 @@ public partial class VM : INamedResolver
 
     public void Retain()
     {
-      //Console.WriteLine("RTN " + GetHashCode() + " " + Environment.StackTrace);
-
       if(_refs == -1)
         throw new Exception("Invalid state(-1)");
       ++_refs;
@@ -109,8 +106,6 @@ public partial class VM : INamedResolver
 
     public void Release()
     {
-      //Console.WriteLine("REL " + GetHashCode() + " " + Environment.StackTrace);
-
       if(_refs == -1)
         throw new Exception("Invalid state(-1)");
       if(_refs == 0)

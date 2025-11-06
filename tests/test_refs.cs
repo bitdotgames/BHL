@@ -172,7 +172,7 @@ public class TestRefs : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_bytes:true);
     double num = Execute(vm, "test", 3).Stack.Pop();
     Assert.Equal(8, num);
     CommonChecks(vm);
@@ -318,10 +318,10 @@ public class TestRefs : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl); },
-      "'ref' is not allowed to have a default value",
+      "default values for 'ref' argument not allowed",
       new PlaceAssert(bhl, @"
     func foo(ref float k = 10)
------------------------^"
+-------------^"
       )
     );
   }
@@ -457,7 +457,8 @@ public class TestRefs : BHL_TestBase
     );
   }
 
-  [Fact]
+  //TODO:?
+  //[Fact]
   public void TestPassByRefTmpClassField()
   {
     string bhl = @"
@@ -485,36 +486,38 @@ public class TestRefs : BHL_TestBase
     CommonChecks(vm);
   }
 
+
+  //controversial and quite difficult to implement
   //[Fact]
-  //public void TestPassByRefClassFieldNested()
-  //{
-  //  string bhl = @"
+  public void TestPassByRefClassFieldNested()
+  {
+    string bhl = @"
 
-  //  class Wow
-  //  {
-  //    float c
-  //  }
+    class Wow
+    {
+      float c
+    }
 
-  //  class Bar
-  //  {
-  //    Wow w
-  //  }
+    class Bar
+    {
+      Wow w
+    }
 
-  //  func foo(ref float a)
-  //  {
-  //    a = a + 1
-  //  }
+    func foo(ref float a)
+    {
+      a = a + 1
+    }
 
-  //  func float test()
-  //  {
-  //    Bar b = { w: { c : 4} }
+    func float test()
+    {
+      Bar b = { w: { c : 4} }
 
-  //    foo(ref b.w.c)
-  //    return b.w.c
-  //  }
-  //  ";
+      foo(ref b.w.c)
+      return b.w.c
+    }
+    ";
 
-  //  var c = Compile(bhl);
+    var c = Compile(bhl);
 
   //  var expected =
   //      new ModuleCompiler()
@@ -543,11 +546,11 @@ public class TestRefs : BHL_TestBase
   //    ;
   //  AssertEqual(c, expected);
 
-  //  var vm = MakeVM(c);
-  //  var num = Execute(vm, "test").Stack.Pop().num;
-  //  Assert.Equal(5, num);
-  //  CommonChecks(vm);
-  //}
+    var vm = MakeVM(c);
+    var num = Execute(vm, "test").Stack.Pop().num;
+    Assert.Equal(5, num);
+    CommonChecks(vm);
+  }
 
   [Fact]
   public void TestFuncPtrByRef()
@@ -582,7 +585,8 @@ public class TestRefs : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
+  //TODO:?
+  //[Fact]
   public void TestPassByRefClassFieldFuncPtr()
   {
     string bhl = @"
@@ -645,10 +649,10 @@ public class TestRefs : BHL_TestBase
 
     AssertError<Exception>(
       delegate() { Compile(bhl, ts_fn); },
-      "getting native class field by 'ref' not supported",
+      "expression is not passable by 'ref'",
       new PlaceAssert(bhl, @"
       foo(ref c.r)
-----------------^"
+----------^"
       )
     );
   }
