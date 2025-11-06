@@ -471,12 +471,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.RefAttr,
-        2 /*member idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.GetFuncLocalPtr,
         3 /*func idx*/
       )
@@ -1390,16 +1384,6 @@ public class ModuleCompiler : AST_Visitor
           else
             throw new Exception("Unsupported type: " + mfunc.GetType().Name);
         }
-      }
-        break;
-      case EnumCall.MVARREF:
-      {
-        if(ast.symb_idx == -1)
-          throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
-
-        VisitChildren(ast);
-
-        Emit(Opcodes.RefAttr, new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.ARR_IDX:

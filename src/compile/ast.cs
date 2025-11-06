@@ -335,7 +335,6 @@ public enum EnumCall
 {
   VAR             = 1,
   VARW            = 2,
-  MVARREF         = 12, //TODO: remove this one for now
   FUNC            = 3,
   MFUNC           = 30,
   ARR_IDX         = 4,

@@ -37,7 +37,6 @@ public enum Opcodes
   //TODO: not really needed?
   LastArgToTop          = 44,
   GetAttr               = 45,
-  RefAttr               = 46,
   SetAttr               = 47,
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?

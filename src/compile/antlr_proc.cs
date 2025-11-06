@@ -1542,18 +1542,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             name,
             pass_as_ref
             );
-          //handling passing by ref for class fields
-          if(fld_symb != null && pass_as_ref)
-          {
-            if(scope is ClassSymbolNative)
-            {
-              AddError(name, "getting native class field by 'ref' not supported");
-              return name_symb;
-            }
 
-            ast.type = EnumCall.MVARREF;
-          }
-          else if(fld_symb != null && scope is ClassSymbolNative)
+          if(fld_symb != null && scope is ClassSymbolNative)
           {
             if(ast.type == EnumCall.VAR && fld_symb.getter == null)
             {
@@ -1839,7 +1829,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(is_ref)
           {
             if(!(na.ca.exp() is bhlParser.ExpChainContext ca_chain_exp) ||
-               !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsVarAccess))
+               !(new ExpChain(ca_chain_exp, ca_chain_exp.chainExp()).IsSimpleVarAccess))
             {
               AddError(na.ca, "expression is not passable by 'ref'");
               PopAST();
@@ -5884,6 +5874,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       {
         return items.Count > 0 &&
                items.At(items.Count - 1) is bhlParser.CallArgsContext;
+      }
+    }
+
+    public bool IsSimpleVarAccess
+    {
+      get
+      {
+        return items.Count == 0 && name_ctx != null;
       }
     }
 

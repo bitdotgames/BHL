@@ -1037,21 +1037,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeRefAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    throw new NotImplementedException();
-    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-
-    ref var obj = ref exec.stack.PopFast();
-    var class_symb = (ClassSymbol)obj.type;
-    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.getref(vm, obj, out var res, field_symb);
-    res._refc?.Retain();
-    obj._refc.Release();
-    obj = res;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGetAttr(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -1609,7 +1594,6 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
-    op_handlers[(int)Opcodes.RefAttr] = OpcodeRefAttr;
 
     op_handlers[(int)Opcodes.LastArgToTop] = OpcodeLastArgToTop;
 

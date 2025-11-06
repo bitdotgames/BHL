@@ -371,7 +371,7 @@ public class TestRefs : BHL_TestBase
   }
 
   [Fact]
-  public void TestPassByRefClassField()
+  public void TestPassByRefClassFieldIsNotAllowed()
   {
     string bhl = @"
 
@@ -381,52 +381,53 @@ public class TestRefs : BHL_TestBase
     }
 
     func foo(ref float a)
-    {
-      a = a + 1
-    }
+    {}
 
-    func float test()
+    func test()
     {
-      Bar b = { a: 10}
-
+      Bar b = {}
       foo(ref b.a)
-      return b.a
     }
     ";
 
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(11, num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "expression is not passable by 'ref'",
+      new PlaceAssert(bhl, @"
+      foo(ref b.a)
+----------^"
+      )
+    );
   }
 
   [Fact]
-  public void TestPassByRefArrayItem()
+  public void TestPassByRefArrayItemNotAllowed()
   {
     string bhl = @"
 
     func foo(ref float a)
-    {
-      a = a + 1
-    }
+    {}
 
-    func float test()
+    func void test()
     {
-      []float fs = [1,10,20]
+      []float fs = [1,10]
 
       foo(ref fs[1])
-      return fs[0] + fs[1] + fs[2]
     }
     ";
 
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(32, num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "expression is not passable by 'ref'",
+      new PlaceAssert(bhl, @"
+      foo(ref fs[1])
+----------^"
+      )
+    );
   }
 
   [Fact]
-  public void TestPassByRefArrayObj()
+  public void TestPassByRefArrayObjNotAllowed()
   {
     string bhl = @"
 
@@ -436,23 +437,24 @@ public class TestRefs : BHL_TestBase
     }
 
     func foo(ref float a)
-    {
-      a = a + 1
-    }
+    {}
 
-    func float test()
+    func test()
     {
       []Bar bs = [{f:1},{f:10},{f:20}]
 
       foo(ref bs[1].f)
-      return bs[0].f + bs[1].f + bs[2].f
     }
     ";
 
-    var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(32, num);
-    CommonChecks(vm);
+    AssertError<Exception>(
+      delegate() { Compile(bhl); },
+      "expression is not passable by 'ref'",
+      new PlaceAssert(bhl, @"
+      foo(ref bs[1].f)
+----------^"
+      )
+    );
   }
 
   [Fact]
@@ -483,69 +485,69 @@ public class TestRefs : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact]
-  public void TestPassByRefClassFieldNested()
-  {
-    string bhl = @"
+  //[Fact]
+  //public void TestPassByRefClassFieldNested()
+  //{
+  //  string bhl = @"
 
-    class Wow
-    {
-      float c
-    }
+  //  class Wow
+  //  {
+  //    float c
+  //  }
 
-    class Bar
-    {
-      Wow w
-    }
+  //  class Bar
+  //  {
+  //    Wow w
+  //  }
 
-    func foo(ref float a)
-    {
-      a = a + 1
-    }
+  //  func foo(ref float a)
+  //  {
+  //    a = a + 1
+  //  }
 
-    func float test()
-    {
-      Bar b = { w: { c : 4} }
+  //  func float test()
+  //  {
+  //    Bar b = { w: { c : 4} }
 
-      foo(ref b.w.c)
-      return b.w.c
-    }
-    ";
+  //    foo(ref b.w.c)
+  //    return b.w.c
+  //  }
+  //  ";
 
-    var c = Compile(bhl);
+  //  var c = Compile(bhl);
 
-    var expected =
-        new ModuleCompiler()
-          .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitThen(Opcodes.Add)
-          .EmitThen(Opcodes.SetVar, new int[] { 0 })
-          .EmitThen(Opcodes.Return)
-          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
-          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
-          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Wow")) })
-          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
-          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-          .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
-          .EmitThen(Opcodes.SetVar, new int[] { 0 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.RefAttr, new int[] { 0 })
-          .EmitThen(Opcodes.RefAttr, new int[] { 0 })
-          .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-          .EmitThen(Opcodes.GetAttr, new int[] { 0 })
-          .EmitThen(Opcodes.Return)
-      ;
-    AssertEqual(c, expected);
+  //  var expected =
+  //      new ModuleCompiler()
+  //        .UseCode()
+  //        .EmitThen(Opcodes.InitFrame, new int[] { 1 })
+  //        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
+  //        .EmitThen(Opcodes.Add)
+  //        .EmitThen(Opcodes.SetVar, new int[] { 0 })
+  //        .EmitThen(Opcodes.Return)
+  //        .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
+  //        .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
+  //        .EmitThen(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Wow")) })
+  //        .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
+  //        .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+  //        .EmitThen(Opcodes.SetAttrInplace, new int[] { 0 })
+  //        .EmitThen(Opcodes.SetVar, new int[] { 0 })
+  //        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //        .EmitThen(Opcodes.RefAttr, new int[] { 0 })
+  //        .EmitThen(Opcodes.RefAttr, new int[] { 0 })
+  //        .EmitThen(Opcodes.CallLocal, new int[] { 0, 1 })
+  //        .EmitThen(Opcodes.GetVar, new int[] { 0 })
+  //        .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+  //        .EmitThen(Opcodes.GetAttr, new int[] { 0 })
+  //        .EmitThen(Opcodes.Return)
+  //    ;
+  //  AssertEqual(c, expected);
 
-    var vm = MakeVM(c);
-    var num = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(5, num);
-    CommonChecks(vm);
-  }
+  //  var vm = MakeVM(c);
+  //  var num = Execute(vm, "test").Stack.Pop().num;
+  //  Assert.Equal(5, num);
+  //  CommonChecks(vm);
+  //}
 
   [Fact]
   public void TestFuncPtrByRef()
