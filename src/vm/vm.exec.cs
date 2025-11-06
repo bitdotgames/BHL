@@ -1414,12 +1414,9 @@ public partial class VM : INamedResolver
 
     var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1]._obj;
 
-    //TODO: amount of local variables must be known ahead and
-    //      initialized during Frame initialization
-    //TODO: push upvals instead!
-    //NOTE: we need to reflect the updated max amount of locals,
-    //      otherwise they might not be cleared upon Frame exit
     addr.upvals.Reserve(func_ptr_local_idx + 1);
+    //TODO: push upvals instead (can there be gaps?)
+    addr.upvals.sp = func_ptr_local_idx + 1;
 
     ref var upval = ref exec.stack.vals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
@@ -1434,8 +1431,6 @@ public partial class VM : INamedResolver
       addr.upvals.vals[func_ptr_local_idx] = upval;
     }
 
-    //there can be gaps?
-    addr.upvals.sp = func_ptr_local_idx + 1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

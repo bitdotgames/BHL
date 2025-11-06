@@ -189,7 +189,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = ExecuteOld(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
+    var num = Execute(vm, "mult2", 10).Stack.Pop().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -208,7 +208,7 @@ public class TestFiber : BHL_TestBase
         def_args_num: 1,
         cb: (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          var n = args_info.CountArgs() == 0 ? 1 : exec.stack.PopRelease().num;
+          var n = args_info.CountArgs() == 0 ? 1 : exec.stack.Pop().num;
           exec.stack.Push(n * 2);
           return null;
         },
@@ -218,7 +218,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "mult2").result_old.PopRelease().num;
+    var num = Execute(vm, "mult2").Stack.Pop().num;
     Assert.Equal(2, num);
     CommonChecks(vm);
   }

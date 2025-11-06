@@ -349,16 +349,15 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      throw new NotImplementedException();
-      //frame.Init(fb, fb.result, addr.module, null, null, null, VM.EXIT_FRAME_IP);
+      frame.Init(addr.module, VM.EXIT_FRAME_IP);
 
-      //PassArgsAndAttach(addr.fsn, fb, frame, fb.result, args_info, args);
+      PassArgsAndAttach(addr.fsn, fb, ref frame, frame_idx, args_info, args);
     }
     else
     {
-      frame.Init(/*fb, fb.result, */addr.module, addr.ip);
+      frame.Init(addr.module, addr.ip);
 
-      PassArgsAndAttach(fb, ref frame, frame_idx, Val.NewInt(args_info.bits), args);
+      PassArgsAndAttach(fb, ref frame, frame_idx, args_info, args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -385,12 +384,9 @@ public partial class VM : INamedResolver
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
-    {
-      throw new NotImplementedException();
-      //PassArgsAndAttach(ptr.native, new_fiber, new_frame, new_fiber.result_old, args_info, args);
-    }
+      PassArgsAndAttach(ptr.native, new_fiber, ref new_frame, new_frame_idx, args_info, args);
     else
-      PassArgsAndAttach(new_fiber, ref new_frame, new_frame_idx, args_info.bits, args);
+      PassArgsAndAttach(new_fiber, ref new_frame, new_frame_idx, args_info, args);
 
     return new_fiber;
   }
@@ -446,7 +442,7 @@ public partial class VM : INamedResolver
     Fiber fb,
     ref Frame frame,
     int frame_idx,
-    Val args_info,
+    FuncArgsInfo args_info,
     StackList <Val> args
   )
   {
@@ -460,10 +456,42 @@ public partial class VM : INamedResolver
     {
       //passing args info as a stack variable
       ref Val v = ref stack.Push();
-      v = args_info;
+      v = Val.NewInt(args_info.bits);
     }
 
     fb.Attach(ref frame, frame_idx);
+  }
+
+  static void PassArgsAndAttach(
+    FuncSymbolNative fsn,
+    Fiber fb,
+    ref Frame frame,
+    int frame_idx,
+    FuncArgsInfo args_info,
+    StackList <Val> args
+  )
+  {
+    var stack = fb.exec.stack;
+    for(int i = args.Count; i-- > 0;)
+    {
+      ref Val v = ref stack.Push();
+      v = args[i];
+    }
+
+    frame.args_info = args_info;
+
+    fb.Attach(ref frame, frame_idx);
+
+    //passing args info as argument
+    fb.exec.coroutine = fsn.cb(fb.exec, args_info);
+    //NOTE: let's consider all values on stack after callback execution
+    //      as returned arguments, this way they won't be cleared upon Frame exiting
+    frame.return_args_num = fb.exec.stack.sp;
+    //NOTE: before executing a coroutine VM will increment ip optimistically
+    //      but we need it to remain at the same position so that it points at
+    //      the fake return opcode
+    if(fb.exec.coroutine != null)
+      --fb.exec.ip;
   }
 
   public void Detach(Fiber fb)
