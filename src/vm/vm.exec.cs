@@ -259,8 +259,7 @@ public partial class VM : INamedResolver
     //3. exit frame requested
     else if(exec.ip == EXIT_FRAME_IP)
     {
-      //for defers
-      //frame.ExitScope(null, exec);
+      DeferBlock.ExitScope(exec, region.defer_support);
 
       --exec.regions_count;
       exec.ip = frame.return_ip + 1;
@@ -322,17 +321,18 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  Coroutine ProcBlockOpcode(
+  unsafe Coroutine ProcBlockOpcode(
     ExecState exec,
-    FrameOld curr_frame,
-    List<DeferBlock> defer_support
+    byte* bytes,
+    ref List<DeferBlock> defer_support
   )
   {
     var (block_coro, block_paral_branches, block_defer_support) = _ProcBlockOpcode(
       ref exec.ip,
-      curr_frame, exec,
+      exec,
+      bytes,
       out var block_size,
-      defer_support,
+      ref defer_support,
       false
     );
 
@@ -346,10 +346,9 @@ public partial class VM : INamedResolver
 
         var (branch_coro, _, _) = _ProcBlockOpcode(
           ref tmp_ip,
-          curr_frame,
-          exec,
+          exec, bytes,
           out var tmp_size,
-          block_defer_support,
+          ref block_defer_support,
           true
         );
 
@@ -364,18 +363,19 @@ public partial class VM : INamedResolver
     return block_coro;
   }
 
-  (Coroutine, List<Coroutine>, List<DeferBlock>) _ProcBlockOpcode(
+  unsafe (Coroutine, List<Coroutine>, List<DeferBlock>) _ProcBlockOpcode(
     ref int ip,
-    FrameOld curr_frame,
     ExecState exec,
+    byte* bytes,
     out int size,
-    List<DeferBlock> defer_support,
+    ref List<DeferBlock> defer_support,
     bool is_paral
   )
   {
-    var type = (BlockType)Bytecode.Decode8(curr_frame.bytecode, ref ip);
-    size = (int)Bytecode.Decode16(curr_frame.bytecode, ref ip);
+    var type = (BlockType)Bytecode.Decode8(bytes, ref ip);
+    size = (int)Bytecode.Decode16(bytes, ref ip);
 
+    //TODO: make separate opcodes for these
     if(type == BlockType.SEQ)
     {
       if(is_paral)
@@ -405,7 +405,9 @@ public partial class VM : INamedResolver
     }
     else if(type == BlockType.DEFER)
     {
-      var d = new DeferBlock(curr_frame, ip + 1, ip + size);
+      var d = new DeferBlock(ip + 1, ip + size);
+      if(defer_support == null)
+        defer_support = new List<DeferBlock>();
       defer_support.Add(d);
       //NOTE: we need to skip the defer block
       ip += size;
@@ -1504,7 +1506,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBlock(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    var new_coroutine = vm.ProcBlockOpcode(exec, curr_frame, region.defer_support);
+    var new_coroutine = vm.ProcBlockOpcode(exec, bytes, ref region.defer_support);
     if(new_coroutine != null)
     {
       //NOTE: since there's a new coroutine we want to skip ip incrementing

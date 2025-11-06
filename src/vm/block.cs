@@ -20,13 +20,11 @@ public enum BlockType
 
 public struct DeferBlock
 {
-  public VM.FrameOld frm;
   public int ip;
   public int max_ip;
 
-  public DeferBlock(VM.FrameOld frm, int ip, int max_ip)
+  public DeferBlock(int ip, int max_ip)
   {
-    this.frm = frm;
     this.ip = ip;
     this.max_ip = max_ip;
   }
@@ -41,9 +39,9 @@ public struct DeferBlock
 
     //2. let's create the execution region
     exec.regions[exec.regions_count++]
-      = new VM.Region(-1, null, min_ip: ip, max_ip: max_ip);
+      = new VM.Region(exec.frames_count - 1, null, min_ip: ip, max_ip: max_ip);
     //3. and execute it
-    frm.vm.Execute(
+    exec.vm.Execute(
       exec,
       //NOTE: we re-use the existing exec.stack but limit the execution
       //      only up to the defer code block
@@ -58,7 +56,7 @@ public struct DeferBlock
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal static void ExitScope(VM.ExecState exec, List<DeferBlock> defers)
   {
-    if(defers.Count == 0)
+    if(defers?.Count == 0)
       return;
 
     var coro_orig = exec.coroutine;
