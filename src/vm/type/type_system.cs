@@ -16,12 +16,12 @@ public class Types : INamedResolver
 
   static public ClassSymbolNative Type =
     new ClassSymbolNative(new Origin(), "Type",
-      delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
     );
 
   static public ClassSymbolNative FiberRef =
     new ClassSymbolNative(new Origin(), "FiberRef",
-      delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
+      delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
     );
 
   //NOTE: These are types which are parametrized with Any types. They are mostly used when
@@ -141,7 +141,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Count", Int,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol _) { v.SetInt(ctx.str.Length); },
         null
       );
       String.Define(fld);
@@ -184,7 +184,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "Name", String,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol _)
         {
           var t = (IType)ctx._obj;
           v.SetStr(t.GetName());
@@ -202,7 +202,7 @@ public class Types : INamedResolver
 
     {
       var fld = new FieldSymbol(new Origin(), "IsRunning", Bool,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol _)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol _)
         {
           throw new NotImplementedException();
           //var fb_ref = new VM.FiberRef(ctx);

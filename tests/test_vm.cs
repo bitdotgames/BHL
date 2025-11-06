@@ -7626,7 +7626,7 @@ public class TestVM : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Bar",
-          delegate(VM vm, ref Val v, IType type)
+          delegate(VM.ExecState exec, ref Val v, IType type)
           {
             //fake object
             v.SetObj(null, type);

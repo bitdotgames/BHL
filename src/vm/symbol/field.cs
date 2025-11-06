@@ -13,11 +13,11 @@ public enum FieldAttrib : byte
 
 public class FieldSymbol : VariableSymbol
 {
-  public delegate void FieldGetter(VM vm, Val v, ref Val res, FieldSymbol fld);
+  public delegate void FieldGetter(VM.ExecState exec, Val v, ref Val res, FieldSymbol fld);
 
-  public delegate void FieldSetter(VM vm, ref Val v, Val nv, FieldSymbol fld);
+  public delegate void FieldSetter(VM.ExecState exec, ref Val v, Val nv, FieldSymbol fld);
 
-  public delegate void FieldRef(VM vm, Val v, out Val res, FieldSymbol fld);
+  public delegate void FieldRef(VM.ExecState exec, Val v, out Val res, FieldSymbol fld);
 
   public FieldGetter getter;
   public FieldSetter setter;
@@ -65,7 +65,6 @@ public class FieldSymbolScript : FieldSymbol
   {
     this.getter = Getter;
     this.setter = Setter;
-    this.getref = Getref;
   }
 
   //marshall factory version
@@ -73,45 +72,17 @@ public class FieldSymbolScript : FieldSymbol
     : this(null, "", new ProxyType())
   {}
 
-  void Getter(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+  void Getter(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx._obj;
     v.ValueCopyFrom(m[scope_idx]);
   }
 
-  void Setter(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+  void Setter(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
   {
     var lst = (ValList)ctx._obj;
     v._refc?.Retain();
     lst.ReplaceAt(scope_idx, v);
-
-    ////TODO: ValList.SetValueCopyAt() does the same
-    //var lst = (IList<Val>)ctx._obj;
-    //var curr = lst[scope_idx];
-    //var refc = curr._refc;
-    //v._refc?.Retain();
-    //curr.ValueCopyFrom(v);
-    //refc?.Release();
-    //lst[scope_idx] = curr;
-
-    //previous overly complicated implementation
-    //if(curr._refc != null)
-    //{
-    //  for(int i = 0; i < curr._refc.refs; ++i)
-    //  {
-    //    v._refc?.Retain();
-    //    curr._refc.Release();
-    //  }
-    //}
-    //curr.ValueCopyFrom(v);
-    //m[scope_idx] = curr;
-  }
-
-  void Getref(VM vm, Val ctx, out Val v, FieldSymbol fld)
-  {
-    throw new NotImplementedException();
-    var m = (IList<Val>)ctx._obj;
-    v = m[scope_idx];
   }
 
   public override uint ClassId()

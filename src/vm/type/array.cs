@@ -87,12 +87,12 @@ public abstract class ArrayTypeSymbol : ClassSymbol
   {
   }
 
-  void BindCreateArr(VM vm, ref Val v, IType type)
+  void BindCreateArr(VM.ExecState exec, ref Val v, IType type)
   {
-    ArrCreate(vm, ref v);
+    ArrCreate(exec, ref v);
   }
 
-  void BindCount(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+  void BindCount(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
     v.SetNum(ArrCount(ctx));
   }
@@ -169,7 +169,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     refs.Index(item_type);
   }
 
-  public abstract void ArrCreate(VM vm, ref Val arr);
+  public abstract void ArrCreate(VM.ExecState exec, ref Val arr);
   public abstract int ArrCount(Val arr);
   public abstract void ArrAdd(Val arr, Val val);
   public abstract Val ArrGetAt(Val arr, int idx);
@@ -206,9 +206,9 @@ public class GenericArrayTypeSymbol :
     return lst;
   }
 
-  public override void ArrCreate(VM vm, ref Val arr)
+  public override void ArrCreate(VM.ExecState exec, ref Val arr)
   {
-    arr.SetObj(ValList.New(vm), this);
+    arr.SetObj(ValList.New(exec.vm), this);
   }
 
   public override int ArrCount(Val arr)
@@ -346,9 +346,9 @@ public abstract class NativeListTypeSymbol :
 
   public abstract IList CreateList(VM vm);
 
-  public override void ArrCreate(VM vm, ref Val arr)
+  public override void ArrCreate(VM.ExecState exec, ref Val arr)
   {
-    arr.SetObj(CreateList(vm), this);
+    arr.SetObj(CreateList(exec.vm), this);
   }
 
   public override int ArrCount(Val arr)

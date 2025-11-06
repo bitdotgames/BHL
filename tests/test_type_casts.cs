@@ -686,11 +686,11 @@ public class TestTypeCasts : BHL_TestBase
     private Action<Types> ts_fn = (ts) =>
     {
       var cl1 = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeBar(), type); },
+        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeBar(), type); },
         typeof(NativeBar)
       );
       cl1.Define(new FieldSymbol(new Origin(), "bar", ts.T("int"),
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var bar = (NativeBar)ctx.obj;
           v.SetInt(bar.bar);
@@ -700,11 +700,11 @@ public class TestTypeCasts : BHL_TestBase
       ts.ns.Define(cl1);
 
       var cl2 = new ClassSymbolNative(new Origin(), "Foo", null,
-        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       cl2.Define(new FieldSymbol(new Origin(), "foo", ts.T("int"),
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var foo = (NativeFoo)ctx.obj;
           v.SetInt(foo.foo);
@@ -776,7 +776,7 @@ public class TestTypeCasts : BHL_TestBase
         new Origin(),
         "Foo",
         new List<ProxyType>() { ts.T("IFoo") },
-        delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
+        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeFoo(), type); },
         typeof(NativeFoo)
       );
       ts.ns.Define(cl);
@@ -819,7 +819,7 @@ public class TestTypeCasts : BHL_TestBase
 
       var cl = new ClassSymbolNative(new Origin(), "Wow", new List<ProxyType>() { ts.T("IWow") },
         native_type: typeof(NativeWow),
-        creator: delegate(VM vm, ref Val v, IType type) { v.SetObj(new NativeWow(), type); }
+        creator: delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new NativeWow(), type); }
       );
       ts.ns.Define(cl);
       cl.Setup();
@@ -1171,7 +1171,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
+          delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }
@@ -1204,7 +1204,7 @@ public class TestTypeCasts : BHL_TestBase
 
       {
         var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-          delegate(VM vm, ref Val v, IType type) { v.SetObj(null, type); }
+          delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(null, type); }
         );
         ts.ns.Define(cl);
       }

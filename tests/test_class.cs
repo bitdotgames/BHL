@@ -411,18 +411,18 @@ public class TestClass : BHL_TestBase
       BindColor(ts);
 
       var cl = new ClassSymbolNative(new Origin(), "ColorNested", null,
-        (VM vm, ref Val v, IType type) => { v.SetObj(new ColorNested(), type); }
+        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new ColorNested(), type); }
       );
 
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "c", ts.T("Color"),
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           v.SetObj(cn.c, ts.T("Color").Get());
         },
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var cn = (ColorNested)ctx.obj;
           cn.c = (Color)v.obj;
@@ -513,7 +513,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        (VM vm, ref Val v, IType type) =>
+        (VM.ExecState exec, ref Val v, IType type) =>
         {
           //dummy
         }
@@ -523,7 +523,7 @@ public class TestClass : BHL_TestBase
 
       cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
         null, //no getter
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           //dummy
         }
@@ -557,7 +557,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        (VM vm, ref Val v, IType type) =>
+        (VM.ExecState exec, ref Val v, IType type) =>
         {
           //dummy
         }
@@ -566,7 +566,7 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "x", ts.T("int"),
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           //dummy
         },
@@ -2737,7 +2737,7 @@ public class TestClass : BHL_TestBase
         ts.ns.Define(cl);
 
         cl.Define(new FieldSymbol(new Origin(), "sub", ts.T("Bar"),
-          delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { }, null
+          delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) { }, null
         ));
         cl.Setup();
       }
@@ -3955,18 +3955,18 @@ public class TestClass : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "Foo", null,
-        (VM vm, ref Val v, IType type) => { v.SetObj(new VirtFoo(), type); },
+        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new VirtFoo(), type); },
         typeof(VirtFoo)
       );
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "a", Types.Int,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           v.SetNum(f.a);
         },
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           f.a = (int)v.num;
@@ -3975,12 +3975,12 @@ public class TestClass : BHL_TestBase
       ));
 
       cl.Define(new FieldSymbol(new Origin(), "b", Types.Int,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           v.SetNum(f.b);
         },
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var f = (VirtFoo)ctx.obj;
           f.b = (int)v.num;
@@ -4016,17 +4016,17 @@ public class TestClass : BHL_TestBase
 
     {
       var cl = new ClassSymbolNative(new Origin(), "Bar", ts.T("Foo"),
-        (VM vm, ref Val v, IType type) => { v.SetObj(new VirtBar(), type); },
+        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new VirtBar(), type); },
         typeof(VirtBar)
       );
 
       cl.Define(new FieldSymbol(new Origin(), "new_a", Types.Int,
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var b = (VirtBar)ctx.obj;
           v.SetNum(b.new_a);
         },
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var b = (VirtBar)ctx.obj;
           b.new_a = (int)v.num;
@@ -4547,7 +4547,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var cl = new ClassSymbolNative(new Origin(), "NativeFoo", null,
-        (VM vm, ref Val v, IType type) => { v.SetObj(new NativeFoo(), type); }
+        (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new NativeFoo(), type); }
       );
       ts.ns.Define(cl);
 
@@ -4733,8 +4733,8 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       cl.Define(new FieldSymbol(new Origin(), "static_bar", FieldAttrib.Static, ts.T("int"),
-        delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { v.SetInt(NativeFoo.static_bar); },
-        delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld) { NativeFoo.static_bar = (int)v.num; }
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) { v.SetInt(NativeFoo.static_bar); },
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld) { NativeFoo.static_bar = (int)v.num; }
       ));
       cl.Setup();
     });
@@ -4773,18 +4773,18 @@ public class TestClass : BHL_TestBase
       {
         {
           var cl = new ClassSymbolNative(new Origin(), "C", ts.T("B"),
-            (VM vm, ref Val v, IType type) => { v.SetObj(new C(), type); }
+            (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new C(), type); }
           );
 
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "c", ts.T("int"),
-            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
             {
               var c = (C)ctx.obj;
               v.SetInt(c.c);
             },
-            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var c = (C)ctx.obj;
               c.c = (int)v.num;
@@ -4794,18 +4794,18 @@ public class TestClass : BHL_TestBase
 
         {
           var cl = new ClassSymbolNative(new Origin(), "B", ts.T("A"),
-            (VM vm, ref Val v, IType type) => { v.SetObj(new B(), type); }
+            (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new B(), type); }
           );
 
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "b", ts.T("int"),
-            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               v.SetInt(b.b);
             },
-            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               b.b = (int)v.num;
@@ -4813,12 +4813,12 @@ public class TestClass : BHL_TestBase
           ));
 
           cl.Define(new FieldSymbol(new Origin(), "b2", ts.T("int"),
-            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               v.SetInt(b.b2);
             },
-            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var b = (B)ctx.obj;
               b.b2 = (int)v.num;
@@ -4828,18 +4828,18 @@ public class TestClass : BHL_TestBase
 
         {
           var cl = new ClassSymbolNative(new Origin(), "A",
-            (VM vm, ref Val v, IType type) => { v.SetObj(new A(), type); }
+            (VM.ExecState exec, ref Val v, IType type) => { v.SetObj(new A(), type); }
           );
 
           ts.ns.Define(cl);
 
           cl.Define(new FieldSymbol(new Origin(), "a", ts.T("int"),
-            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               v.SetInt(a.a);
             },
-            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               a.a = (int)v._num;
@@ -4847,12 +4847,12 @@ public class TestClass : BHL_TestBase
           ));
 
           cl.Define(new FieldSymbol(new Origin(), "a2", ts.T("int"),
-            delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               v.SetInt(a.a2);
             },
-            delegate(VM vm, ref Val ctx, Val v, FieldSymbol fld)
+            delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
               a.a2 = (int)v.num;

@@ -107,15 +107,14 @@ public abstract class MapTypeSymbol : ClassSymbol
     refs.Index(val_type);
   }
 
-  void BindCreateMap(VM vm, ref Val v, IType type)
+  void BindCreateMap(VM.ExecState exec, ref Val v, IType type)
   {
-    MapCreate(vm, ref v);
+    MapCreate(exec, ref v);
   }
 
-  void BindGetCount(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+  void BindGetCount(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
-    throw new NotImplementedException();
-    //v.SetNum(MapCount(ctx));
+    v.SetNum(MapCount(ctx));
   }
 
   Coroutine BindAdd(VM.ExecState exec, FuncArgsInfo args_info)
@@ -195,16 +194,14 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  void BindGetEnumerator(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+  void BindGetEnumerator(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
-    throw new NotImplementedException();
-    //v.SetObj(MapGetEnumerator(ctx), enumerator_type);
+    v.SetObj(MapGetEnumerator(ctx), enumerator_type);
   }
 
-  void BindEnumeratorNext(VM vm, Val ctx, ref Val v, FieldSymbol fld)
+  void BindEnumeratorNext(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
-    throw new NotImplementedException();
-    //v.SetBool(MapEnumeratorNext(ctx));
+    v.SetBool(MapEnumeratorNext(ctx));
   }
 
   Coroutine BindEnumeratorCurrent(VM.ExecState exec, FuncArgsInfo args_info)
@@ -225,7 +222,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     return null;
   }
 
-  public abstract void MapCreate(VM vm, ref Val map);
+  public abstract void MapCreate(VM.ExecState exec, ref Val map);
   public abstract int MapCount(Val map);
   public abstract bool MapTryGet(Val map, Val key, out Val val);
   public abstract void MapSet(Val map, Val key, Val val);
@@ -260,9 +257,9 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
     return dict;
   }
 
-  public override void MapCreate(VM vm, ref Val map)
+  public override void MapCreate(VM.ExecState exec, ref Val map)
   {
-    map.SetObj(ValMap.New(vm), this);
+    map.SetObj(ValMap.New(exec.vm), this);
   }
 
   public override int MapCount(Val map)

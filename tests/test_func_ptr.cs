@@ -518,7 +518,7 @@ public class TestFuncPtrs : BHL_TestBase
     {
       {
         var cl = new ClassSymbolNative(new Origin(), "refbool",
-          delegate(VM vm, ref Val v, IType type) { }
+          delegate(VM.ExecState exec, ref Val v, IType type) { }
         );
         ts.ns.Define(cl);
       }

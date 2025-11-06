@@ -409,11 +409,11 @@ public class TestARC : BHL_TestBase
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "RefC", null,
-        delegate(VM vm, ref Val v, IType type) { v.SetObj(new RefC(logs), type); }
+        delegate(VM.ExecState exec, ref Val v, IType type) { v.SetObj(new RefC(logs), type); }
       );
       {
         var vs = new FieldSymbol(new Origin(), "refs", Types.Int,
-          delegate(VM vm, Val ctx, ref Val v, FieldSymbol fld) { v._num = ((RefC)ctx.obj)._refs; },
+          delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) { v._num = ((RefC)ctx.obj)._refs; },
           //read only property
           null
         );

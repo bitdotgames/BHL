@@ -159,7 +159,7 @@ public partial class VM : INamedResolver
   public const int STOP_IP = int.MaxValue - 2;
   public const int EXIT_FRAME_IP = STOP_IP - 1;
 
-  public delegate void ClassCreator(VM vm, ref Val res, IType type);
+  public delegate void ClassCreator(VM.ExecState exec, ref Val res, IType type);
 
   public struct Region
   {
@@ -1013,8 +1013,8 @@ public partial class VM : INamedResolver
 
     exec.stack.Pop(out var new_val);
 
-    ref var ref_val_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
-    var val_ref = (ValRef)ref_val_holder._refc;
+    ref var val_ref_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
     //TODO: what about blob?
     new_val._refc?.Retain();
     val_ref.val._refc?.Release();
@@ -1028,8 +1028,8 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var ref_val_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
-    var val_ref = (ValRef)ref_val_holder._refc;
+    ref var val_ref_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
 
     ref Val v = ref exec.stack.Push();
     v = val_ref.val;
@@ -1046,7 +1046,7 @@ public partial class VM : INamedResolver
 
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     var res = new Val();
-    field_symb.getter(vm, obj, ref res, field_symb);
+    field_symb.getter(exec, obj, ref res, field_symb);
 
     res._refc?.Retain();
     obj._refc?.Release();
@@ -1064,7 +1064,7 @@ public partial class VM : INamedResolver
 
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.setter(vm, ref obj, val, field_symb);
+    field_symb.setter(exec, ref obj, val, field_symb);
 
     val._refc?.Release();
     obj._refc?.Release();
@@ -1080,7 +1080,7 @@ public partial class VM : INamedResolver
 
     var class_symb = (ClassSymbol)obj.type;
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-    field_symb.setter(vm, ref obj, val, field_symb);
+    field_symb.setter(exec, ref obj, val, field_symb);
 
     val._refc?.Release();
   }
@@ -1538,7 +1538,7 @@ public partial class VM : INamedResolver
     //NOTE: we don't increment refcounted here since the new instance
     //      is not attached to any variable and is expected to have refs == 1
     ref var val = ref exec.stack.Push();
-    cls.creator(vm, ref val, cls);
+    cls.creator(exec, ref val, cls);
   }
 
   unsafe static void InitOpcodeHandlers()

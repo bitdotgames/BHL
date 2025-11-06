@@ -391,10 +391,10 @@ public class ClassSymbolScript : ClassSymbol
   {
   }
 
-  void ClassCreator(VM vm, ref Val instance, IType type)
+  void ClassCreator(VM.ExecState exec, ref Val instance, IType type)
   {
     //NOTE: object's raw data is a list
-    var vl = ValList.New(vm);
+    var vl = ValList.New(exec.vm);
     instance.SetObj(vl, type);
 
     for(int i = 0; i < _all_members.Length; ++i)
@@ -413,7 +413,7 @@ public class ClassSymbolScript : ClassSymbol
         vl.Add(v);
       }
       else
-        vl.Add(vm.NullOld.CloneValue());
+        vl.Add(exec.vm.NullOld.CloneValue());
     }
   }
 
