@@ -217,7 +217,7 @@ public class TestRefs : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_ref", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ref var b = ref exec.stack.Pop().Unref();
             double a = exec.stack.Pop();

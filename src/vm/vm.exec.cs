@@ -454,7 +454,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits)
   {
-    var new_coroutine = native.cb(vm, exec, new FuncArgsInfo(args_bits));
+    var new_coroutine = native.cb(exec, new FuncArgsInfo(args_bits));
 
     if(new_coroutine != null)
     {
@@ -899,7 +899,7 @@ public partial class VM : INamedResolver
     self._refc?.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
     exec.stack.Push(self);
   }
 
@@ -942,7 +942,7 @@ public partial class VM : INamedResolver
     self._refc?.Retain();
     var class_type = (MapTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(vm, exec, default);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
     exec.stack.Push(self);
   }
 

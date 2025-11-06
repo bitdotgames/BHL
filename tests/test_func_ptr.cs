@@ -652,7 +652,7 @@ public class TestFuncPtrs : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             log.Append("FOO");
             return null;

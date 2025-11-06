@@ -1147,11 +1147,11 @@ public class TestArrays : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "get_colors", ts.TArr("Color"),
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             {
               var dv0 = new Val();
-              var dvl = ValList.New(vm);
+              var dvl = ValList.New(exec.vm);
               for(int i = 0; i < 10; ++i)
               {
                 var c = new Color();

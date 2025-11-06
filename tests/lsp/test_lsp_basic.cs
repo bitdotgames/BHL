@@ -97,7 +97,7 @@ public class TestLSPBasic : TestLSPShared
   public void TestNativeSymbolReflection()
   {
     var fn = new FuncSymbolNative(new Origin(), "test", Types.Void,
-      (VM vm, VM.ExecState exec, FuncArgsInfo args_info) => null);
+      (VM.ExecState exec, FuncArgsInfo args_info) => null);
     Assert.EndsWith("test_lsp_basic.cs", fn.origin.source_file);
     Assert.True(fn.origin.source_range.start.line > 0);
   }

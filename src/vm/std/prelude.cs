@@ -15,9 +15,9 @@ public static class Prelude
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          return CoroutinePool.New<CoroutineYield>(vm);
+          return CoroutinePool.New<CoroutineYield>(exec.vm);
         }
       );
       YieldFunc = fn;
@@ -26,10 +26,10 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, Types.Void, 0,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           //TODO: use static instance for this case?
-          return CoroutinePool.New<CoroutineSuspend>(vm);
+          return CoroutinePool.New<CoroutineSuspend>(exec.vm);
         }
       );
       m.ns.Define(fn);
@@ -37,9 +37,9 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "wait", FuncAttrib.Coro, Types.Void, 0,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          return CoroutinePool.New<CoroutineWait>(vm);
+          return CoroutinePool.New<CoroutineWait>(exec.vm);
         },
         new FuncArgSymbol("ms", Types.Int)
       );
@@ -48,7 +48,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           throw new NotImplementedException();
           //var val_ptr = stack.Pop();
@@ -64,7 +64,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           throw new NotImplementedException();
           //var val = stack.Pop();
@@ -81,7 +81,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           System.Diagnostics.Debugger.Break();
           return null;
@@ -92,7 +92,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return null;
         }
@@ -103,7 +103,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           return null;
         }

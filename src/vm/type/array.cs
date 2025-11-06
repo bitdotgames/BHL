@@ -97,7 +97,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     v.SetNum(ArrCount(ctx));
   }
 
-  Coroutine BindAdd(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
+  Coroutine BindAdd(VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -111,7 +111,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindRemoveAt(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
+  Coroutine BindRemoveAt(VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -124,7 +124,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindIndexOf(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
+  Coroutine BindIndexOf(VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -139,7 +139,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindClear(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
+  Coroutine BindClear(VM.ExecState exec, FuncArgsInfo args_info)
   {
     exec.stack.Pop(out var arr);
 
@@ -149,7 +149,7 @@ public abstract class ArrayTypeSymbol : ClassSymbol
     return null;
   }
 
-  Coroutine BindInsert(VM vm, VM.ExecState exec, FuncArgsInfo args_info)
+  Coroutine BindInsert(VM.ExecState exec, FuncArgsInfo args_info)
   {
     var stack = exec.stack;
 
@@ -429,7 +429,7 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
     {
       var fn = new FuncSymbolNative(new Origin(), "At", item_type,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           int idx = exec.stack.PopFast();
           ref var arr = ref exec.stack.Peek();

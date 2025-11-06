@@ -414,7 +414,7 @@ public partial class VM : INamedResolver
     fb.exec.stack_old = curr_stack;
 
     //passing args info as argument
-    fb.exec.coroutine = fsn.cb(fb.vm, fb.exec, args_info);
+    fb.exec.coroutine = fsn.cb(fb.exec, args_info);
     //NOTE: before executing a coroutine VM will increment ip optimistically
     //      but we need it to remain at the same position so that it points at
     //      the fake return opcode

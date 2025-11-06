@@ -44,7 +44,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             exec.GetStackTrace(trace);
             return null;
@@ -126,7 +126,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             exec.GetStackTrace(trace);
             return null;
@@ -212,7 +212,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -314,7 +314,7 @@ public class TestStackTrace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "fatal_error", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NullReferenceException();
           });
@@ -388,7 +388,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -469,7 +469,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -600,7 +600,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             //emulating null reference
             exec.fiber = null;
@@ -696,7 +696,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             exec.GetStackTrace(trace);
             return null;
@@ -781,7 +781,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             exec.GetStackTrace(trace);
             return null;
@@ -861,7 +861,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             exec.GetStackTrace(trace);
             return null;
@@ -947,7 +947,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1045,7 +1045,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //emulating null reference
@@ -1152,7 +1152,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //emulating null reference
@@ -1253,7 +1253,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1349,7 +1349,7 @@ at test(..) in bhl1.bhl:10"
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
-          (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             throw new NotImplementedException();
             //frame.fb.GetStackTrace(trace);
@@ -1451,7 +1451,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           object o = null;
           o.GetType();
@@ -1494,7 +1494,7 @@ at test(..) in bhl1.bhl:10"
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "borked", Types.Void,
-        (VM vm, VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           object o = null;
           o.GetType();
