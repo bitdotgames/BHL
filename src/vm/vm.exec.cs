@@ -1590,7 +1590,7 @@ public partial class VM : INamedResolver
 
     //NOTE: Of these 2 only Opcode.Inc is used for incrementing a hidden
     //      variable in foreach loop. Opcode.Dec is not used anywhere.
-    //      Maybe they could be used for actual operators for restricted cases.
+    //      Maybe they could be used for actual operators for some restricted cases.
     op_handlers[(int)Opcodes.Inc] = OpcodeInc;
     op_handlers[(int)Opcodes.Dec] = OpcodeDec;
 
