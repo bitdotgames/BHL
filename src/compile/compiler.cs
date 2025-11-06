@@ -965,7 +965,9 @@ public class ModuleCompiler : AST_Visitor
       ast.symbol.origin.source_line
     );
     VisitChildren(ast);
-    Emit(Opcodes.Return, null, ast.last_line_num);
+    //let's insert return only if the previous instruction is not return as well
+    if(Peek().op != Opcodes.Return)
+      Emit(Opcodes.Return, null, ast.last_line_num);
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
@@ -1505,7 +1507,9 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Return ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.Return, null, ast.line_num);
+    //let's insert return only if the previous instruction is not return as well
+    if(Peek().op != Opcodes.Return)
+      Emit(Opcodes.Return, null, ast.line_num);
   }
 
   public override void DoVisit(AST_Break ast)

@@ -53,11 +53,11 @@ public class TestLambda : BHL_TestBase
           .EmitThen(Opcodes.InitFrame, new int[] { 0, 0 })
           .EmitThen(Opcodes.Return)
           //test
-          .EmitThen(Opcodes.InitFrame, new int[] { 1, 0 })
+          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           //lambda
-          .EmitThen(Opcodes.Lambda, new int[] { 9 })
+          .EmitThen(Opcodes.Lambda, new int[] { 8 })
           .EmitThen(Opcodes.InitFrame, new int[] { 0, 1 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitThen(Opcodes.Return)
@@ -70,7 +70,7 @@ public class TestLambda : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(123, fb.result_old.PopRelease().num);
+    Assert.Equal(123, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
