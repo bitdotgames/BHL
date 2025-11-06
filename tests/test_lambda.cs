@@ -543,7 +543,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes: true);
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(3, num);
     CommonChecks(vm);
