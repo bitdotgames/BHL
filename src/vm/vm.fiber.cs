@@ -184,6 +184,7 @@ public partial class VM : INamedResolver
         for(int i = exec.frames_count; i-- > 0;)
         {
           ref var frm = ref exec.frames[i];
+          frm.Exit(exec.stack);
           //TODO:
           //if(frm.defers_count > 0)
           //{
