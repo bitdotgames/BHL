@@ -289,8 +289,8 @@ public class TestArrays : BHL_TestBase
     var val = fb.Stack.Pop();
     var lst = val.obj as IList<Val>;
     Assert.Equal(2, lst.Count);
-    AssertEqual(lst[0].str, "tst");
-    AssertEqual(lst[1].str, "bar");
+    Assert.Equal("tst", lst[0].str);
+    Assert.Equal("bar", lst[1].str);
     val.ReleaseData();
     CommonChecks(vm);
   }
@@ -328,7 +328,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual(log.ToString(), "0;1;2;0;1;2;");
+    Assert.Equal("0;1;2;0;1;2;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -428,7 +428,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var res = Execute(vm, "test").Stack.Pop().str;
-    AssertEqual(res, "foo");
+    Assert.Equal("foo", res);
     CommonChecks(vm);
   }
 
@@ -490,8 +490,8 @@ public class TestArrays : BHL_TestBase
 
     var lst = res.obj as IList<Val>;
     Assert.Equal(2, lst.Count);
-    AssertEqual(lst[0].str, "foo");
-    AssertEqual(lst[1].str, "bar");
+    Assert.Equal("foo", lst[0].str);
+    Assert.Equal("bar", lst[1].str);
 
     Assert.Equal(1, vm.vlsts_pool.MissCount);
     Assert.Equal(0, vm.vlsts_pool.IdleCount);
@@ -842,7 +842,7 @@ public class TestArrays : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual(log.ToString(), "100;200;");
+    Assert.Equal("100;200;", log.ToString());
     CommonChecks(vm);
   }
 

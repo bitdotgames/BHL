@@ -33,7 +33,6 @@ public enum Opcodes
   GetFuncLocalPtr       = 39,
   GetFuncPtr            = 40,
   GetFuncNativePtr      = 41,
-  GetFuncPtrFromVar     = 42,
   //TODO: not really needed?
   LastArgToTop          = 44,
   GetAttr               = 45,

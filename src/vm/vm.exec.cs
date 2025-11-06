@@ -950,10 +950,10 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref Val v = ref exec.stack.Push();
+    ref Val new_val = ref exec.stack.Push();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
-    v = exec.stack.vals[frame.locals_offset + local_idx];
-    v._refc?.Retain();
+    new_val = exec.stack.vals[frame.locals_offset + local_idx];
+    new_val._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1150,15 +1150,6 @@ public partial class VM : INamedResolver
     var ptr = FuncPtr.New(vm);
     ptr.Init(nfunc_symb);
     exec.stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeGetFuncPtrFromVar(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
-  {
-    int local_var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    ref var val = ref exec.stack.vals[frame.locals_offset +  local_var_idx];
-    val._refc?.Retain();
-    exec.stack.Push(val);
   }
 
   //TODO: this is a very suspicious opcode which should be rethought
@@ -1609,7 +1600,6 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.GetFuncLocalPtr] = OpcodeGetFuncLocalPtr;
     op_handlers[(int)Opcodes.GetFuncPtr] = OpcodeGetFuncPtr;
     op_handlers[(int)Opcodes.GetFuncNativePtr] = OpcodeGetFuncNativePtr;
-    op_handlers[(int)Opcodes.GetFuncPtrFromVar] = OpcodeGetFuncPtrFromVar;
 
     op_handlers[(int)Opcodes.CallLocal] = OpcodeCallLocal;
     op_handlers[(int)Opcodes.CallGlobNative] = OpcodeCallGlobNative;

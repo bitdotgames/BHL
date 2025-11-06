@@ -495,12 +495,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetFuncPtrFromVar,
-        1 /*local idx*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.CallLocal,
         3 /*func ip*/, 4 /*args bits*/
       )
@@ -1421,7 +1415,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncPtrFromVar, new int[] {ast.symb_idx}, ast.line_num);
+        Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
