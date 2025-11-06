@@ -200,7 +200,7 @@ public class TestParal : BHL_TestBase
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
-          .EmitThen(Opcodes.UseUpval, new int[] { 0, 0, 0 })
+          .EmitThen(Opcodes.CaptureUpval, new int[] { 0, 0, 0 })
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})

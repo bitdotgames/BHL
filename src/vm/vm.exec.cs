@@ -1406,32 +1406,36 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeUseUpval(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeCaptureUpval(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    int up_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
-    int local_idx = (int)Bytecode.Decode8(bytes, ref exec.ip);
+    int frame_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int func_ptr_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
 
-    var addr = (FuncPtr)exec.stack_old.Peek()._obj;
+    var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1]._obj;
 
     //TODO: amount of local variables must be known ahead and
     //      initialized during Frame initialization
+    //TODO: push upvals instead!
     //NOTE: we need to reflect the updated max amount of locals,
     //      otherwise they might not be cleared upon Frame exit
-    addr.upvals.Count = local_idx + 1;
+    addr.upvals.Reserve(func_ptr_local_idx + 1);
 
-    var upval = curr_frame.locals[up_idx];
+    ref var upval = ref exec.stack.vals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
     {
-      var copy = ValOld.New(vm);
-      copy.ValueCopyFrom(upval);
-      addr.upvals[local_idx] = copy;
+      var copy = new Val();
+      copy.CopyDataFrom(upval);
+      addr.upvals.vals[func_ptr_local_idx] = copy;
     }
     else
     {
-      upval.Retain();
-      addr.upvals[local_idx] = upval;
+      upval._refc?.Retain();
+      addr.upvals.vals[func_ptr_local_idx] = upval;
     }
+
+    //there can be gaps?
+    addr.upvals.sp = func_ptr_local_idx + 1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1615,7 +1619,7 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.InitFrame] = OpcodeInitFrame;
 
     op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
-    op_handlers[(int)Opcodes.UseUpval] = OpcodeUseUpval;
+    op_handlers[(int)Opcodes.CaptureUpval] = OpcodeCaptureUpval;
 
     op_handlers[(int)Opcodes.Pop] = OpcodePop;
     op_handlers[(int)Opcodes.Jump] = OpcodeJump;

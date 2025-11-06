@@ -561,7 +561,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.UseUpval,
+        Opcodes.CaptureUpval,
         1 /*upval src idx*/, 1 /*local dst idx*/, 1 /*flags*/
       )
     );
@@ -965,7 +965,7 @@ public class ModuleCompiler : AST_Visitor
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
-      Emit(Opcodes.UseUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
+      Emit(Opcodes.CaptureUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -1231,8 +1231,9 @@ public class ModuleCompiler : AST_Visitor
     var fs = ast.symb as FieldSymbol;
     if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static))
       is_global = true;
-    bool is_ref_created = ast.symb is VariableSymbol vs && vs._ref_created;
-    bool is_ref = is_ref_created || ast.symb is FuncArgSymbol fvar_symb && fvar_symb.is_ref;
+    var vs = ast.symb as VariableSymbol;
+    bool is_ref_origin = vs?._ref_origin ?? false;
+    bool is_ref = vs?._is_ref ?? false;
 
     switch(ast.type)
     {
@@ -1268,7 +1269,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VARW:
       case EnumCall.VARWDCL:
       {
-        if(ast.type == EnumCall.VARWDCL && is_ref_created)
+        if(ast.type == EnumCall.VARWDCL && is_ref_origin)
           Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
 
         if(is_global)
@@ -1689,7 +1690,7 @@ public class ModuleCompiler : AST_Visitor
 
     if(!is_func_arg)
     {
-      if(ast.symb._ref_created)
+      if(ast.symb._ref_origin)
         Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
@@ -1697,7 +1698,7 @@ public class ModuleCompiler : AST_Visitor
     //check if we are inside any function scope
     else if(func_decls.Count > 0)
     {
-      if(ast.symb._ref_created)
+      if(ast.symb._ref_origin)
         Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
     }
     //global var then

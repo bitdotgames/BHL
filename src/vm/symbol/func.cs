@@ -666,6 +666,10 @@ public class LambdaSymbol : FuncSymbolScript
       src.origin.source_line
     );
     upval.mode = DetectCaptureMode(src);
+    //NOTE: the 'strong' referenced value must be a reference as well
+    if(upval.mode == UpvalMode.STRONG)
+      src._ref_origin = true;
+
     upvals.Add(upval);
 
     return local;

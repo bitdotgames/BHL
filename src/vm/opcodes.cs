@@ -62,7 +62,7 @@ public enum Opcodes
   Block                 = 76,
   New                   = 77,
   Lambda                = 78,
-  UseUpval              = 79,
+  CaptureUpval              = 79,
   Inc                   = 81,
   Dec                   = 82,
   ArrIdx                = 83,

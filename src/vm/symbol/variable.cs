@@ -16,10 +16,15 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   }
 
 #if BHL_FRONT
-  internal bool _ref_created;
+  internal bool _ref_origin;
   //referenced upvalue, keep in mind it can be a 'local' variable from the
   //outer lambda wrapping the current one
   internal VariableSymbol _upvalue;
+  internal bool _is_ref =>
+    _ref_origin ||
+    (this is FuncArgSymbol fs && fs.is_ref) ||
+    (_upvalue?._is_ref ?? false)
+    ;
 #endif
 
   public VariableSymbol(Origin origin, string name, ProxyType type)

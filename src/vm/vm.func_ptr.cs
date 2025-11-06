@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace bhl
 {
@@ -19,7 +20,7 @@ public partial class VM : INamedResolver
     public Module module;
     public int func_ip;
     public FuncSymbolNative native;
-    public ValOldStack upvals = new ValOldStack(FrameOld.MAX_LOCALS);
+    public ValStack upvals = new ValStack(8);
 
     public FuncAddr func_addr
     {
@@ -92,13 +93,9 @@ public partial class VM : INamedResolver
       this.module = null;
       this.func_ip = -1;
       this.native = null;
-      for(int i = upvals.Count; i-- > 0;)
-      {
-        //NOTE: let's check if it exists
-        upvals[i]?.Release();
-      }
-
-      upvals.Clear();
+      for(int i = upvals.sp; i-- > 0;)
+        upvals.vals[i]._refc?.Release();
+      upvals.sp = 0;
     }
 
     public void Retain()
@@ -124,33 +121,6 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
-    public FrameOld MakeFrameOld(VM vm, Fiber fb, ValOldStack return_stack)
-    {
-      var frm = FrameOld.New(vm);
-
-      if(native != null)
-      {
-        frm.Init(fb, return_stack, null, null, null, null, VM.EXIT_FRAME_IP);
-      }
-      else
-      {
-        frm.Init(fb, return_stack, module, func_ip);
-
-        for(int i = 0; i < upvals.Count; ++i)
-        {
-          var upval = upvals[i];
-          if(upval != null)
-          {
-            frm.locals.Count = i + 1;
-            upval.Retain();
-            frm.locals[i] = upval;
-          }
-        }
-      }
-
-      return frm;
-    }
-
     public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame)
     {
       if(native != null)
@@ -161,23 +131,21 @@ public partial class VM : INamedResolver
       {
         frame.Init(module, func_ip);
 
-        for(int i = 0; i < upvals.Count; ++i)
+        for(int i = 0; i < upvals.sp; ++i)
         {
-          throw new NotImplementedException();
-          //var upval = upvals[i];
-          //if(upval != null)
-          //{
-          //  frm.locals.Count = i + 1;
-          //  upval.Retain();
-          //  frm.locals[i] = upval;
-          //}
+          //TODO: the logic below must be refactored
+          ref var upval = ref upvals.vals[i];
+          exec.stack.Reserve(exec.stack.sp + i + 1);
+          ref var local_var = ref exec.stack.vals[exec.stack.sp + i];
+          local_var = upval;
+          local_var._refc?.Retain();
         }
       }
     }
 
     public override string ToString()
     {
-      return "(FPTR refs:" + _refs + ",upvals:" + upvals.Count + " " + this.GetHashCode() + ")";
+      return "(FPTR refs:" + _refs + ",upvals:" + upvals.sp + " " + this.GetHashCode() + ")";
     }
   }
 }
