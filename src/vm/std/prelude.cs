@@ -50,11 +50,14 @@ public static class Prelude
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          throw new NotImplementedException();
-          //var val_ptr = stack.Pop();
-          //var fb = vm.Start((VM.FuncPtr)val_ptr._obj, null);
-          //val_ptr.Release();
-          //stack.Push(VM.FiberRef.Encode(vm, fb));
+          var val_ptr = exec.stack.Pop();
+          var fb = exec.vm.Start(
+            exec, (VM.FuncPtr)val_ptr._obj,
+            ref exec.frames[exec.frames_count - 1],
+            default
+            );
+          val_ptr._refc.Release();
+          exec.stack.Push(VM.FiberRef.Encode(fb));
           return null;
         },
         new FuncArgSymbol("p", m.TFunc(true /*is coro*/, "void"))

@@ -26,9 +26,9 @@ public partial class VM : INamedResolver
       this.fiber = (VM.Fiber)val._obj;
     }
 
-    public static ValOld Encode(VM vm, VM.Fiber fb)
+    public static Val Encode(VM.Fiber fb)
     {
-      var val = ValOld.NewObj(vm, fb, Types.FiberRef);
+      var val = Val.NewObj(fb, Types.FiberRef);
       //let's encode FiberRef into Val
       val._num = fb.id;
       return val;
@@ -484,14 +484,15 @@ public partial class VM : INamedResolver
 
     //passing args info as argument
     fb.exec.coroutine = fsn.cb(fb.exec, args_info);
-    //NOTE: let's consider all values on stack after callback execution
-    //      as returned arguments, this way they won't be cleared upon Frame exiting
-    frame.return_args_num = fb.exec.stack.sp;
     //NOTE: before executing a coroutine VM will increment ip optimistically
     //      but we need it to remain at the same position so that it points at
     //      the fake return opcode
     if(fb.exec.coroutine != null)
       --fb.exec.ip;
+    else
+      //NOTE: let's consider all values on stack after callback execution
+      //      as returned arguments, this way they won't be cleared upon Frame exiting
+      frame.return_args_num = fb.exec.stack.sp;
   }
 
   public void Detach(Fiber fb)

@@ -19,7 +19,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
-    AssertEqual("test", fb.FuncAddr.symbol.name);
+    Assert.Equal("test", fb.FuncAddr.symbol.name);
     Assert.False(vm.Tick());
     Assert.Equal(10, fb.result_old.PopRelease().num);
     CommonChecks(vm);
@@ -160,7 +160,7 @@ public class TestFiber : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = ExecuteOld(vm, "mult2", ValOld.NewInt(vm, 10)).result_old.PopRelease().num;
+    var num = Execute(vm, "mult2", 10).Stack.Pop().num;
     Assert.Equal(20, num);
     CommonChecks(vm);
   }
@@ -232,7 +232,7 @@ public class TestFiber : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    ExecuteOld(vm, "wait", ValOld.NewInt(vm, 0));
+    Execute(vm, "wait", 0);
     CommonChecks(vm);
   }
 
@@ -261,7 +261,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("HERE", log.ToString());
+    Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -315,7 +315,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("HERE", log.ToString());
+    Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }
 
@@ -344,7 +344,7 @@ public class TestFiber : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
+    Assert.Equal("FOO1FOO1FOO2FOO2", log.ToString());
     CommonChecks(vm);
   }
 
@@ -385,7 +385,7 @@ public class TestFiber : BHL_TestBase
 
     vm.LoadModule("bhl1");
     Execute(vm, "test");
-    AssertEqual("FOO1FOO1FOO2FOO2", log.ToString());
+    Assert.Equal("FOO1FOO1FOO2FOO2", log.ToString());
     CommonChecks(vm);
   }
 
@@ -410,7 +410,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("done", log.ToString());
+    Assert.Equal("done", log.ToString());
     CommonChecks(vm);
   }
 
@@ -451,7 +451,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("1340", log.ToString());
+    Assert.Equal("1340", log.ToString());
     CommonChecks(vm);
   }
 
@@ -479,7 +479,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
 
     Execute(vm, "test");
-    AssertEqual("1: 1;2: 0;", log.ToString());
+    Assert.Equal("1: 1;2: 0;", log.ToString());
     CommonChecks(vm);
   }
 
@@ -521,7 +521,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("1340", log.ToString());
+    Assert.Equal("1340", log.ToString());
     CommonChecks(vm);
   }
 
@@ -564,7 +564,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("1340", log.ToString());
+    Assert.Equal("1340", log.ToString());
     CommonChecks(vm);
   }
 
@@ -607,7 +607,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("3140", log.ToString());
+    Assert.Equal("3140", log.ToString());
     CommonChecks(vm);
   }
 
@@ -667,7 +667,7 @@ public class TestFiber : BHL_TestBase
     vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("3140", log.ToString());
+    Assert.Equal("3140", log.ToString());
     CommonChecks(vm);
   }
 
@@ -750,7 +750,7 @@ public class TestFiber : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    AssertEqual("3140", log.ToString());
+    Assert.Equal("3140", log.ToString());
     CommonChecks(vm);
   }
 
@@ -830,7 +830,7 @@ public class TestFiber : BHL_TestBase
       Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
-      AssertEqual("HERE;", log.ToString());
+      Assert.Equal("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
       Assert.Empty(cs);
@@ -840,7 +840,7 @@ public class TestFiber : BHL_TestBase
       Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
-      AssertEqual("HERE;HERE;", log.ToString());
+      Assert.Equal("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
       Assert.Empty(cs);
@@ -888,7 +888,7 @@ public class TestFiber : BHL_TestBase
       Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
-      AssertEqual("HERE;", log.ToString());
+      Assert.Equal("HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
       Assert.Single(cs);
@@ -902,7 +902,7 @@ public class TestFiber : BHL_TestBase
       Assert.True(vm.Tick());
       ScriptMgr.instance.Tick();
 
-      AssertEqual("HERE;HERE;", log.ToString());
+      Assert.Equal("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
       Assert.Equal(2, cs.Count);
@@ -997,7 +997,7 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(2, cs.Count);
     Assert.True(cs[0] != cs[1]);
 
-    AssertEqual("HERE;HERE;", log.ToString());
+    Assert.Equal("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
@@ -1049,7 +1049,7 @@ public class TestFiber : BHL_TestBase
     var cs = ScriptMgr.instance.active;
     Assert.Empty(cs);
 
-    AssertEqual("HERE;HERE;", log.ToString());
+    Assert.Equal("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
@@ -1095,15 +1095,15 @@ public class TestFiber : BHL_TestBase
 
       var cs = ScriptMgr.instance.active;
       Assert.Equal(2, cs.Count);
-      AssertEqual("say_here", cs[0].FuncAddr.symbol.name);
-      AssertEqual("say_here", cs[1].FuncAddr.symbol.name);
+      Assert.Equal("say_here", cs[0].FuncAddr.symbol.name);
+      Assert.Equal("say_here", cs[1].FuncAddr.symbol.name);
     }
 
     {
       Assert.False(vm.Tick());
       ScriptMgr.instance.Tick();
 
-      AssertEqual("HERE;HERE;", log.ToString());
+      Assert.Equal("HERE;HERE;", log.ToString());
 
       var cs = ScriptMgr.instance.active;
       Assert.Empty(cs);
@@ -1154,7 +1154,7 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(2, cs.Count);
     Assert.True(cs[0] != cs[1]);
 
-    AssertEqual("HERE;HERE;", log.ToString());
+    Assert.Equal("HERE;HERE;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
@@ -1202,7 +1202,7 @@ public class TestFiber : BHL_TestBase
     Assert.True(cs[1] != cs[2]);
     Assert.True(cs[0] != cs[2]);
 
-    AssertEqual("1;2;3;", log.ToString());
+    Assert.Equal("1;2;3;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
@@ -1252,7 +1252,7 @@ public class TestFiber : BHL_TestBase
     Assert.True(cs[1] != cs[2]);
     Assert.True(cs[0] != cs[2]);
 
-    AssertEqual("2;2;2;", log.ToString());
+    Assert.Equal("2;2;2;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
@@ -1297,7 +1297,7 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
 
-    AssertEqual("", log.ToString());
+    Assert.Equal("", log.ToString());
 
     ScriptMgr.instance.Tick();
 
@@ -1307,7 +1307,7 @@ public class TestFiber : BHL_TestBase
 
     ScriptMgr.instance.Tick();
 
-    AssertEqual("2;", log.ToString());
+    Assert.Equal("2;", log.ToString());
 
     Assert.True(!ScriptMgr.instance.Busy);
 
@@ -1464,10 +1464,10 @@ public class TestFiber : BHL_TestBase
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
-      vm.ExecuteOld(fs);
+      vm.Execute(fs);
       vm.Tick();
       vm.Tick();
-      AssertEqual("1011", log.ToString());
+      Assert.Equal("1011", log.ToString());
       CommonChecks(vm);
     }
   }
