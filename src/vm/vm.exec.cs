@@ -167,11 +167,11 @@ public partial class VM : INamedResolver
     public int count;
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public void Add(DeferBlock block)
+    public ref DeferBlock Add()
     {
       if(count == blocks.Length)
         Array.Resize(ref blocks, count << 1);
-      blocks[count++] = block;
+      return ref blocks[count++];
     }
   }
 
@@ -189,13 +189,13 @@ public partial class VM : INamedResolver
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public Region(
       int frame_idx,
-      DeferSupport defer_support,
+      DeferSupport defers,
       int min_ip = -1,
       int max_ip = STOP_IP
       )
     {
       this.frame_idx = frame_idx;
-      this.defers = defer_support;
+      this.defers = defers;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -435,7 +435,7 @@ public partial class VM : INamedResolver
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
-    exec.regions[exec.regions_count++] = new Region(frame_idx, null);
+    exec.regions[exec.regions_count++] = new Region(frame_idx, frame.defers);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -1517,8 +1517,10 @@ public partial class VM : INamedResolver
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    var d = new DeferBlock(exec.ip + 1, exec.ip + size);
-    region.defers.Add(d);
+    ref var d = ref region.defers.Add();
+    d.ip = exec.ip + 1;
+    d.max_ip = exec.ip + size;
+
     //NOTE: we need to skip the defer block
     exec.ip += size;
   }

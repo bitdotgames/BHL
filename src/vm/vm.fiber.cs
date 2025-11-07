@@ -157,7 +157,7 @@ public partial class VM : INamedResolver
     internal void Attach(ref Frame frame, int frame_idx)
     {
       exec.ip = frame.start_ip;
-      var region = new Region(frame_idx: frame_idx, defer_support: null);
+      var region = new Region(frame_idx: frame_idx, defers: frame.defers);
       exec.regions[exec.regions_count++] = region;
     }
 
