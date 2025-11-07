@@ -1490,9 +1490,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
             AddCallArgs(ftype, cargs, ref ast);
           }
 
-          type = ftype.ret_type.Get();
+          type = ftype.return_type.Get();
           if(type == null)
-            AddError(name, "type '" + ftype.ret_type + "' not found");
+            AddError(name, "type '" + ftype.return_type + "' not found");
         }
         else if(func_symb != null)
         {
@@ -1606,9 +1606,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       ast = new AST_Call(EnumCall.LMBD, line, null);
       AddCallArgs(ftype, cargs, ref ast);
-      type = ftype.ret_type.Get();
+      type = ftype.return_type.Get();
       if(type == null)
-        AddError(name, "type '" + ftype.ret_type + "' not found");
+        AddError(name, "type '" + ftype.return_type + "' not found");
     }
 
     if(ast != null)

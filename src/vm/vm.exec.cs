@@ -404,9 +404,6 @@ public partial class VM : INamedResolver
     }
     else if(exec.status == BHS.SUCCESS)
     {
-      //NOTE: let's consider all values on stack after callback execution
-      //      as returned arguments, this way they won't be cleared upon Frame exiting
-      frame.return_args_num = exec.stack.sp;
       CoroutinePool.Del(exec, exec.coroutine);
       exec.coroutine = null;
     }

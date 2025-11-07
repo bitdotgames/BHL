@@ -393,6 +393,7 @@ public partial class VM : INamedResolver
     }
 
     frame.args_info = args_info;
+    frame.return_args_num = fsn.GetReturnedArgsNum();
 
     fb.Attach(ref frame, frame_idx);
 
@@ -403,10 +404,6 @@ public partial class VM : INamedResolver
     //      the fake return opcode
     if(fb.exec.coroutine != null)
       --fb.exec.ip;
-    else
-      //NOTE: let's consider all values on stack after callback execution
-      //      as returned arguments, this way they won't be cleared upon Frame exiting
-      frame.return_args_num = fb.exec.stack.sp;
   }
 
   public void Detach(Fiber fb)

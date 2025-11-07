@@ -118,7 +118,6 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
       if(frame.defers.count > 0)
         DeferBlock.ExitScope(exec, frame.defers);
     }
-
     exec.frames_count = 0;
     exec.regions_count = 0;
 
@@ -171,10 +170,10 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       exec.stack.Push(local_stack.vals[i]);
 
     ext_exec.vm.Execute(exec);
-
-    //let's restore external stack stack pointer
-    ext_exec.stack.sp = ext_sp_backup;
     ext_exec.status = exec.status;
+
+    //let's restore external stack's sp
+    ext_exec.stack.sp = ext_sp_backup;
     //let's restore our own stack
     exec.stack = local_stack;
 

@@ -12,7 +12,10 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   //full type name
   string name;
 
-  public ProxyType ret_type;
+  public ProxyType return_type => _return_type;
+  ProxyType _return_type;
+  //unknown, cache it on request
+  int _return_args_num = -1;
 
   //TODO: include arg names as well since we support named args?
   public List<ProxyType> arg_types = new List<ProxyType>();
@@ -38,7 +41,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   public FuncSignature(FuncSignatureAttrib attribs, ProxyType ret_type, params ProxyType[] arg_types)
   {
     this.attribs = attribs;
-    this.ret_type = ret_type;
+    this._return_type = ret_type;
     foreach(var arg_type in arg_types)
       this.arg_types.Add(arg_type);
     Update();
@@ -47,7 +50,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   public FuncSignature(FuncSignatureAttrib attribs, ProxyType ret_type, List<ProxyType> arg_types)
   {
     this.attribs = attribs;
-    this.ret_type = ret_type;
+    this._return_type = ret_type;
     this.arg_types = arg_types;
     Update();
   }
@@ -71,7 +74,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
       _signature_buf = new StringBuilder();
 
     _signature_buf.Append("func ");
-    _signature_buf.Append(ret_type.ToString());
+    _signature_buf.Append(_return_type.ToString());
     _signature_buf.Append('(');
     if((attribs & FuncSignatureAttrib.Coro) != 0)
       _signature_buf.Insert(0, "coro ");
@@ -97,14 +100,15 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 
   public void IndexTypeRefs(TypeRefIndex refs)
   {
-    refs.Index(ret_type);
+    refs.Index(_return_type);
     refs.Index(arg_types);
   }
 
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref _attribs);
-    marshall.Marshall.SyncTypeRef(ctx, ref ret_type);
+    marshall.Marshall.Sync(ctx, ref _return_args_num);
+    marshall.Marshall.SyncTypeRef(ctx, ref _return_type);
     marshall.Marshall.SyncTypeRefs(ctx, arg_types);
     if(ctx.is_read)
       Update();
@@ -126,7 +130,7 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
     //TODO: 'non-coro' function is a subset of a 'coro' one
     if(attribs.HasFlag(FuncSignatureAttrib.Coro) && !o.attribs.HasFlag(FuncSignatureAttrib.Coro))
       return false;
-    if(!ret_type.Equals(o.ret_type))
+    if(!_return_type.Equals(o._return_type))
       return false;
     if(arg_types.Count != o.arg_types.Count)
       return false;
@@ -143,12 +147,17 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
 
   public int GetReturnedArgsNum()
   {
-    var type = ret_type.Get();
-    if(type is VoidSymbol)
-      return 0;
-    if(type is TupleType tuple_type)
-      return tuple_type.Count;
-    return 1;
+    if(_return_args_num == -1)
+    {
+      var type = _return_type.Get();
+      if(type is VoidSymbol)
+        _return_args_num = 0;
+      else if(type is TupleType tuple_type)
+        _return_args_num = tuple_type.Count;
+      else
+        _return_args_num = 1;
+    }
+    return _return_args_num;
   }
 
   public override int GetHashCode()

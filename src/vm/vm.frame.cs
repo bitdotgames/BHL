@@ -222,6 +222,10 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Exit(ValStack stack)
     {
+      //NOTE: let's consider all values on stack after callback execution
+      //      as returned arguments, this way they won't be cleared upon Frame exiting
+      //frame.return_args_num = fb.exec.stack.sp;
+
       int ret_start_offset = stack.sp - return_args_num;
       int local_vars_num = ret_start_offset - locals_offset;
 

@@ -306,7 +306,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
 
   public IType GetReturnType()
   {
-    return signature.ret_type.Get();
+    return signature.return_type.Get();
   }
 
   public int GetReturnedArgsNum()
@@ -379,7 +379,7 @@ public abstract class FuncSymbol : Symbol, ITyped, IScope,
   public override string ToString()
   {
     string buf =
-      "func " + signature.ret_type + " " + name + "(";
+      "func " + signature.return_type + " " + name + "(";
     if(signature.attribs.HasFlag(FuncSignatureAttrib.Coro))
       buf = "coro " + buf;
     for(int i = 0; i < signature.arg_types.Count; ++i)

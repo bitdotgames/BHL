@@ -59,7 +59,7 @@ public class TestInterface : BHL_TestBase
     Assert.Equal(2, hey.arg_types.Count);
     Assert.Equal(Types.Int, hey.arg_types[0].Get());
     Assert.Equal(Types.Float, hey.arg_types[1].Get());
-    Assert.Equal(Types.Void, hey.ret_type.Get());
+    Assert.Equal(Types.Void, hey.return_type.Get());
   }
 
   [Fact]
@@ -84,13 +84,13 @@ public class TestInterface : BHL_TestBase
     Assert.Equal(2, hey.arg_types.Count);
     Assert.Equal(Types.Int, hey.arg_types[0].Get());
     Assert.Equal(Types.Float, hey.arg_types[1].Get());
-    Assert.Equal(Types.Bool, hey.ret_type.Get());
+    Assert.Equal(Types.Bool, hey.return_type.Get());
 
     var bar = symb.FindMethod("bar").signature;
     Assert.True(bar != null);
     Assert.Single(bar.arg_types);
     Assert.Equal(Types.String, bar.arg_types[0].Get());
-    var tuple = (TupleType)bar.ret_type.Get();
+    var tuple = (TupleType)bar.return_type.Get();
     Assert.Equal(2, tuple.Count);
     AssertEqual("Bar", tuple[0].ToString());
     Assert.Equal(Types.Int, tuple[1].Get());
@@ -127,13 +127,13 @@ public class TestInterface : BHL_TestBase
       Assert.Equal(2, hey.arg_types.Count);
       Assert.Equal(Types.Int, hey.arg_types[0].Get());
       Assert.Equal(Types.Float, hey.arg_types[1].Get());
-      Assert.Equal(Types.Bool, hey.ret_type.Get());
+      Assert.Equal(Types.Bool, hey.return_type.Get());
 
       var bar = symb.FindMethod("bar").signature;
       Assert.True(bar != null);
       Assert.Single(bar.arg_types);
       Assert.Equal(Types.String, bar.arg_types[0].Get());
-      var tuple = (TupleType)bar.ret_type.Get();
+      var tuple = (TupleType)bar.return_type.Get();
       Assert.Equal(2, tuple.Count);
       AssertEqual("Bar", tuple[0].ToString());
       Assert.Equal(Types.Int, tuple[1].Get());
@@ -149,7 +149,7 @@ public class TestInterface : BHL_TestBase
       Assert.True(bar != null);
       Assert.Single(bar.arg_types);
       Assert.Equal(Types.String, bar.arg_types[0].Get());
-      var tuple = (TupleType)bar.ret_type.Get();
+      var tuple = (TupleType)bar.return_type.Get();
       Assert.Equal(2, tuple.Count);
       AssertEqual("Bar", tuple[0].ToString());
       Assert.Equal(Types.Int, tuple[1].Get());
