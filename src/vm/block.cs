@@ -23,12 +23,6 @@ public struct DeferBlock
   public int ip;
   public int max_ip;
 
-  public DeferBlock(int ip, int max_ip)
-  {
-    this.ip = ip;
-    this.max_ip = max_ip;
-  }
-
   void Execute(VM.ExecState exec)
   {
     //1. let's remeber the original ip in order to restore it once
@@ -104,7 +98,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     ext_exec.ip = exec.ip;
   }
 
-  public void Cleanup(VM.ExecState _)
+  public override void Cleanup(VM.ExecState _)
   {
     ExitScope(exec, defers);
   }
@@ -157,9 +151,12 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.vm = ext_exec.vm;
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
+    //temporary
+    exec.stack = ext_exec.stack;
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
+    //let's copy ext_exec's frame data
     new_frame = ext_exec.frames[ext_exec.frames_count - 1];
 
     exec.regions[exec.regions_count++] =
@@ -168,7 +165,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.ExecState ext_exec)
   {
-    exec.vm.Execute(exec);
+    ext_exec.vm.Execute(exec);
+    ext_exec.status = exec.status;
 
     if(exec.status == BHS.SUCCESS)
     {
@@ -187,11 +185,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     SeqBlock.ExitScope(exec, defers);
 
     //NOTE: let's clean the local stack
-    while(exec.stack.sp > 0)
-    {
-      exec.stack.Pop(out var val);
-      val._refc?.Release();
-    }
+    //while(exec.stack.sp > 0)
+    //{
+    //  exec.stack.Pop(out var val);
+    //  val._refc?.Release();
+    //}
   }
 }
 
@@ -244,7 +242,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  public void Cleanup(VM.ExecState exec)
+  public override void Cleanup(VM.ExecState exec)
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
