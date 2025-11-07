@@ -336,93 +336,6 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe Coroutine ProcBlockOpcode(
-    ExecState exec,
-    byte* bytes,
-    DeferSupport defer_support
-  )
-  {
-    var (block_coro, block_paral_branches, block_defer_support) = _ProcBlockOpcode(
-      ref exec.ip,
-      exec,
-      bytes,
-      out var block_size,
-      defer_support,
-      false
-    );
-
-    //NOTE: let's process paral block (add branches and defers)
-    if(block_paral_branches != null)
-    {
-      int tmp_ip = exec.ip;
-      while(tmp_ip < (exec.ip + block_size))
-      {
-        ++tmp_ip;
-
-        var (branch_coro, _, _) = _ProcBlockOpcode(
-          ref tmp_ip,
-          exec, bytes,
-          out var tmp_size,
-          block_defer_support,
-          true
-        );
-
-        if(branch_coro != null)
-        {
-          block_paral_branches.Add(branch_coro);
-          tmp_ip += tmp_size;
-        }
-      }
-    }
-
-    return block_coro;
-  }
-
-  unsafe (Coroutine, List<Coroutine>, DeferSupport) _ProcBlockOpcode(
-    ref int ip,
-    ExecState exec,
-    byte* bytes,
-    out int size,
-    DeferSupport defer_support,
-    bool is_paral
-  )
-  {
-    var type = (BlockType)Bytecode.Decode8(bytes, ref ip);
-    size = (int)Bytecode.Decode16(bytes, ref ip);
-
-    //TODO: make separate opcodes for these
-    if(type == BlockType.SEQ)
-    {
-      if(is_paral)
-      {
-        var br = CoroutinePool.New<ParalBranchBlock>(this);
-        br.Init(exec, ip + 1, ip + size);
-        return (br, null, br.defers);
-      }
-      else
-      {
-        var seq = CoroutinePool.New<SeqBlock>(this);
-        seq.Init(exec, ip + 1, ip + size);
-        return (seq, null, seq.defers);
-      }
-    }
-    else if(type == BlockType.PARAL)
-    {
-      var paral = CoroutinePool.New<ParalBlock>(this);
-      paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches, paral.defers);
-    }
-    else if(type == BlockType.PARAL_ALL)
-    {
-      var paral = CoroutinePool.New<ParalAllBlock>(this);
-      paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches, paral.defers);
-    }
-    else
-      throw new Exception("Not supported block type: " + type);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Call(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
   {
     var stack = exec.stack;
@@ -1500,7 +1413,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBlock(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    var new_coroutine = vm.ProcBlockOpcode(exec, bytes, region.defers);
+    var new_coroutine = ProcBlockOpcode(exec, bytes);
     if(new_coroutine != null)
     {
       //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -1511,6 +1424,87 @@ public partial class VM : INamedResolver
       --exec.ip;
     }
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static unsafe Coroutine ProcBlockOpcode(ExecState exec, byte* bytes)
+  {
+    var (block_coro, block_paral_branches) = _ProcBlockOpcode(
+      ref exec.ip,
+      exec,
+      bytes,
+      out var block_size,
+      false
+    );
+
+    //NOTE: let's process paral block (add branches and defers)
+    if(block_paral_branches != null)
+    {
+      int tmp_ip = exec.ip;
+      while(tmp_ip < (exec.ip + block_size))
+      {
+        ++tmp_ip;
+
+        var (branch_coro, _) = _ProcBlockOpcode(
+          ref tmp_ip,
+          exec, bytes,
+          out var tmp_size,
+          true
+        );
+
+        if(branch_coro != null)
+        {
+          block_paral_branches.Add(branch_coro);
+          tmp_ip += tmp_size;
+        }
+      }
+    }
+
+    return block_coro;
+  }
+
+  static unsafe (Coroutine, List<Coroutine>) _ProcBlockOpcode(
+    ref int ip,
+    ExecState exec,
+    byte* bytes,
+    out int size,
+    bool is_paral
+  )
+  {
+    var type = (BlockType)Bytecode.Decode8(bytes, ref ip);
+    size = (int)Bytecode.Decode16(bytes, ref ip);
+
+    //TODO: make separate opcodes for these
+    if(type == BlockType.SEQ)
+    {
+      if(is_paral)
+      {
+        var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
+        br.Init(exec, ip + 1, ip + size);
+        return (br, null);
+      }
+      else
+      {
+        var seq = CoroutinePool.New<SeqBlock>(exec.vm);
+        seq.Init(exec, ip + 1, ip + size);
+        return (seq, null);
+      }
+    }
+    else if(type == BlockType.PARAL)
+    {
+      var paral = CoroutinePool.New<ParalBlock>(exec.vm);
+      paral.Init(ip + 1, ip + size);
+      return (paral, paral.branches);
+    }
+    else if(type == BlockType.PARAL_ALL)
+    {
+      var paral = CoroutinePool.New<ParalAllBlock>(exec.vm);
+      paral.Init(ip + 1, ip + size);
+      return (paral, paral.branches);
+    }
+    else
+      throw new Exception("Not supported block type: " + type);
+  }
+
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDefer(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
