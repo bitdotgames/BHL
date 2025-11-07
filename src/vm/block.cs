@@ -151,8 +151,6 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.vm = ext_exec.vm;
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
-    //temporary
-    exec.stack = ext_exec.stack;
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
@@ -165,8 +163,20 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.ExecState ext_exec)
   {
+    var local_stack = exec.stack;
+    int ext_sp_backup = ext_exec.stack.sp;
+    //let's push our values onto the external stack
+    exec.stack = ext_exec.stack;
+    for(int i = 0; i < local_stack.sp; i++)
+      exec.stack.Push(local_stack.vals[i]);
+
     ext_exec.vm.Execute(exec);
+
+    //let's restore external stack stack pointer
+    ext_exec.stack.sp = ext_sp_backup;
     ext_exec.status = exec.status;
+    //let's restore our own stack
+    exec.stack = local_stack;
 
     if(exec.status == BHS.SUCCESS)
     {
@@ -185,11 +195,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     SeqBlock.ExitScope(exec, defers);
 
     //NOTE: let's clean the local stack
-    //while(exec.stack.sp > 0)
-    //{
-    //  exec.stack.Pop(out var val);
-    //  val._refc?.Release();
-    //}
+    while(exec.stack.sp > 0)
+    {
+      exec.stack.Pop(out var val);
+      val._refc?.Release();
+    }
   }
 }
 
