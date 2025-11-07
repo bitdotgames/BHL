@@ -43,19 +43,27 @@ public partial class VM : INamedResolver
     internal int ip;
     internal Coroutine coroutine;
 
-    internal Region[] regions = new Region[32];
+    internal Region[] regions;
     internal int regions_count = 0;
 
-    public ValStack stack = new ValStack();
+    public ValStack stack;
 
-    public Frame[] frames = new Frame[256];
+    public Frame[] frames;
     public int frames_count = 0;
 
     internal FixedStack<FrameOld> frames_old = new FixedStack<FrameOld>(256);
     public ValOldStack stack_old;
 
-    public ExecState()
-    {}
+    public ExecState(
+      int regions_capacity = 32,
+      int frames_capacity = 256,
+      int stack_capacity = 512
+      )
+    {
+      regions = new Region[regions_capacity];
+      frames = new Frame[frames_capacity];
+      stack = new ValStack(stack_capacity);
+    }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public ref Frame PushFrame()

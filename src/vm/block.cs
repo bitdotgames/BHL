@@ -137,7 +137,6 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
-  public ValOldStack stack = new ValOldStack(VM.FrameOld.MAX_STACK);
   public VM.ExecState exec = new VM.ExecState();
   public VM.DeferSupport defers = new VM.DeferSupport();
 
@@ -158,9 +157,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.vm = ext_exec.vm;
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
-    exec.stack_old = stack;
+
+    int new_frame_idx = exec.frames_count;
+    ref var new_frame = ref exec.PushFrame();
+    new_frame = ext_exec.frames[ext_exec.frames_count - 1];
+
     exec.regions[exec.regions_count++] =
-      new VM.Region(-1, defers, min_ip: min_ip, max_ip: max_ip);
+      new VM.Region(new_frame_idx, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.ExecState ext_exec)
@@ -184,14 +187,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     SeqBlock.ExitScope(exec, defers);
 
     //NOTE: let's clean the local stack
-    for(int i = stack.Count; i-- > 0;)
+    while(exec.stack.sp > 0)
     {
-      var val = stack[i];
+      exec.stack.Pop(out var val);
       val._refc?.Release();
-      val._refc = null;
     }
-
-    stack.Clear();
   }
 }
 
