@@ -21,7 +21,7 @@ public class TestFiber : BHL_TestBase
     var fb = vm.Start("test");
     Assert.Equal("test", fb.FuncAddr.symbol.name);
     Assert.False(vm.Tick());
-    Assert.Equal(10, fb.result_old.PopRelease().num);
+    Assert.Equal(10, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -39,7 +39,7 @@ public class TestFiber : BHL_TestBase
     var fb = vm.Start("test");
     fb.Retain();
     Assert.False(vm.Tick());
-    Assert.Equal(6, fb.result_old.PopRelease().num);
+    Assert.Equal(6, fb.Stack.Pop().num);
     fb.Release();
     CommonChecks(vm);
   }
