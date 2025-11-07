@@ -35,10 +35,10 @@ public class TestParal : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 30})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Paral, new int[] { 28 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
+          .EmitThen(Opcodes.Seq, new int[] { 14 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
@@ -51,7 +51,7 @@ public class TestParal : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -83,14 +83,14 @@ public class TestParal : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 42})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Paral, new int[] { 42 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 14})
+          .EmitThen(Opcodes.Seq, new int[] { 14 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
@@ -101,7 +101,7 @@ public class TestParal : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -133,17 +133,17 @@ public class TestParal : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 54})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Paral, new int[] { 54 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 26})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Seq, new int[] { 26 })
+          .EmitThen(Opcodes.Paral, new int[] { 22 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
+          .EmitThen(Opcodes.Seq, new int[] { 6 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
@@ -153,7 +153,7 @@ public class TestParal : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -187,23 +187,23 @@ public class TestParal : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 74})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Paral, new int[] { 74 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 46})
+          .EmitThen(Opcodes.Seq, new int[] { 46 })
           .EmitThen(Opcodes.Lambda, new int[] { 29 })
           .EmitThen(Opcodes.InitFrame, new int[] { 1 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.PARAL, 22})
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Paral, new int[] { 22 })
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 6})
+          .EmitThen(Opcodes.Seq, new int[] { 6 })
           .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitThen(Opcodes.SetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
           .EmitThen(Opcodes.CaptureUpval, new int[] { 0, 0, 0 })
           .EmitThen(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitThen(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitThen(Opcodes.Block, new int[] { (int)BlockType.SEQ, 8})
+          .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.GetVar, new int[] { 0 })
           .EmitThen(Opcodes.Return)
@@ -213,7 +213,7 @@ public class TestParal : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -243,7 +243,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(1, num);
     CommonChecks(vm);
   }
@@ -274,7 +274,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(1, num);
     CommonChecks(vm);
   }
@@ -311,7 +311,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(2, num);
     CommonChecks(vm);
   }
@@ -347,7 +347,7 @@ public class TestParal : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -378,7 +378,7 @@ public class TestParal : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -409,7 +409,7 @@ public class TestParal : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -465,7 +465,7 @@ public class TestParal : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -496,7 +496,7 @@ public class TestParal : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(152, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(152, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -537,7 +537,7 @@ public class TestParal : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -651,7 +651,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -677,7 +677,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -706,7 +706,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -739,7 +739,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -766,7 +766,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -788,7 +788,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -808,7 +808,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -835,7 +835,7 @@ public class TestParal : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 

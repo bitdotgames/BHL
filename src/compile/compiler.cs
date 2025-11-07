@@ -573,13 +573,13 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Block,
-        1 /*type*/, 2 /*len*/
+        Opcodes.Defer,
+        2 /*len*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Defer,
+        Opcodes.Seq,
         2 /*len*/
       )
     );
@@ -1142,7 +1142,17 @@ public class ModuleCompiler : AST_Visitor
 
     ctrl_blocks.Add(ast);
 
-    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0 /*patched later*/});
+    Opcodes block_type_op;
+    if(ast.type == BlockType.PARAL)
+      block_type_op = Opcodes.Paral;
+    else if(ast.type == BlockType.PARAL_ALL)
+      block_type_op = Opcodes.ParalAll;
+    else if(ast.type == BlockType.SEQ)
+      block_type_op = Opcodes.Seq;
+    else
+      throw new Exception("Not supported block type: " + ast.type);
+
+    var block_op = Emit(block_type_op, new int[] { 0 /*patched later*/});
 
     for(int i = 0; i < ast.children.Count; ++i)
     {
@@ -1172,7 +1182,7 @@ public class ModuleCompiler : AST_Visitor
       HasOffsetsTo(block_op);
 
     if(need_block)
-      AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
+      AddOffsetFromTo(block_op, Peek());
     else
       head.Remove(block_op);
   }

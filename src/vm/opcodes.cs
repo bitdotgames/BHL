@@ -60,7 +60,7 @@ public enum Opcodes
   TypeIs                = 67,
   Typeof                = 68,
 
-  Block                 = 70,
+  Seq                   = 70,
   Defer                 = 71,
   Paral                 = 72,
   ParalAll              = 73,

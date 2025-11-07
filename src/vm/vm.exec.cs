@@ -1410,59 +1410,90 @@ public partial class VM : INamedResolver
       exec.ip += jump_pos;
   }
 
+  //TODO: it's just a region with its own defers?
+  //      there's no need in SeqBlock instance
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeBlock(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeSeq(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    var new_coroutine = ProcBlockOpcode(exec, bytes);
-    if(new_coroutine != null)
-    {
-      //NOTE: since there's a new coroutine we want to skip ip incrementing
-      //      which happens below and proceed right to the execution of
-      //      the new coroutine
-      exec.coroutine = new_coroutine;
-      //let's cancel ip incrementing
-      --exec.ip;
-    }
+    int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    var seq = CoroutinePool.New<SeqBlock>(vm);
+    seq.Init(exec, exec.ip + 1, exec.ip + size);
+
+    //NOTE: since there's a new coroutine we want to skip ip incrementing
+    //      which happens below and proceed right to the execution of
+    //      the new coroutine
+    exec.coroutine = seq;
+    //let's cancel ip incrementing
+    --exec.ip;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static unsafe Coroutine ProcBlockOpcode(ExecState exec, byte* bytes)
+  unsafe static void OpcodeParal(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    var (block_coro, block_paral_branches) = _ProcBlockOpcode(
-      ref exec.ip,
-      exec,
-      bytes,
-      out var block_size,
-      false
-    );
+    int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    //NOTE: let's process paral block (add branches and defers)
-    if(block_paral_branches != null)
+    var paral = CoroutinePool.New<ParalBlock>(vm);
+    paral.Init(exec.ip + 1, exec.ip + size);
+
+    int tmp_ip = exec.ip;
+    while(tmp_ip < (exec.ip + size))
     {
-      int tmp_ip = exec.ip;
-      while(tmp_ip < (exec.ip + block_size))
-      {
-        ++tmp_ip;
+      ++tmp_ip;
 
-        var (branch_coro, _) = _ProcBlockOpcode(
-          ref tmp_ip,
-          exec, bytes,
-          out var tmp_size,
-          true
-        );
+      var branch= FetchBlockBranch(
+        ref tmp_ip,
+        exec, bytes,
+        out var tmp_size,
+        true
+      );
 
-        if(branch_coro != null)
-        {
-          block_paral_branches.Add(branch_coro);
-          tmp_ip += tmp_size;
-        }
-      }
+      paral.branches.Add(branch);
+      tmp_ip += tmp_size;
     }
 
-    return block_coro;
+    //NOTE: since there's a new coroutine we want to skip ip incrementing
+    //      which happens below and proceed right to the execution of
+    //      the new coroutine
+    exec.coroutine = paral;
+    //let's cancel ip incrementing
+    --exec.ip;
   }
 
-  static unsafe (Coroutine, List<Coroutine>) _ProcBlockOpcode(
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeParalAll(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  {
+    int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    var paral = CoroutinePool.New<ParalAllBlock>(vm);
+    paral.Init(exec.ip + 1, exec.ip + size);
+
+    int tmp_ip = exec.ip;
+    while(tmp_ip < (exec.ip + size))
+    {
+      ++tmp_ip;
+
+      var branch = FetchBlockBranch(
+        ref tmp_ip,
+        exec, bytes,
+        out var tmp_size,
+        true
+      );
+
+      paral.branches.Add(branch);
+      tmp_ip += tmp_size;
+    }
+
+    //NOTE: since there's a new coroutine we want to skip ip incrementing
+    //      which happens below and proceed right to the execution of
+    //      the new coroutine
+    exec.coroutine = paral;
+    //let's cancel ip incrementing
+    --exec.ip;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static unsafe Coroutine FetchBlockBranch(
     ref int ip,
     ExecState exec,
     byte* bytes,
@@ -1470,36 +1501,36 @@ public partial class VM : INamedResolver
     bool is_paral
   )
   {
-    var type = (BlockType)Bytecode.Decode8(bytes, ref ip);
+    var type = (Opcodes)bytes[ip];
     size = (int)Bytecode.Decode16(bytes, ref ip);
 
     //TODO: make separate opcodes for these
-    if(type == BlockType.SEQ)
+    if(type == Opcodes.Seq)
     {
       if(is_paral)
       {
         var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
         br.Init(exec, ip + 1, ip + size);
-        return (br, null);
+        return br;
       }
       else
       {
         var seq = CoroutinePool.New<SeqBlock>(exec.vm);
         seq.Init(exec, ip + 1, ip + size);
-        return (seq, null);
+        return seq;
       }
     }
-    else if(type == BlockType.PARAL)
+    else if(type == Opcodes.Paral)
     {
       var paral = CoroutinePool.New<ParalBlock>(exec.vm);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches);
+      return paral;
     }
-    else if(type == BlockType.PARAL_ALL)
+    else if(type == Opcodes.ParalAll)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(exec.vm);
       paral.Init(ip + 1, ip + size);
-      return (paral, paral.branches);
+      return paral;
     }
     else
       throw new Exception("Not supported block type: " + type);
@@ -1630,8 +1661,10 @@ public partial class VM : INamedResolver
 
     op_handlers[(int)Opcodes.DefArg] = OpcodeDefArg;
 
-    op_handlers[(int)Opcodes.Block] = OpcodeBlock;
     op_handlers[(int)Opcodes.Defer] = OpcodeDefer;
+    op_handlers[(int)Opcodes.Seq] = OpcodeSeq;
+    op_handlers[(int)Opcodes.Paral] = OpcodeParal;
+    op_handlers[(int)Opcodes.ParalAll] = OpcodeParalAll;
 
     op_handlers[(int)Opcodes.New] = OpcodeNew;
   }
