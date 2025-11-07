@@ -529,7 +529,10 @@ public partial class VM : INamedResolver
       frame.Init(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
-      for(int i = args.Count; i-- > 0;)
+      //NOTE: we push arguments using their 'natural' order since
+      //      they are located exactly in this order in Frame's
+      //      local arguments (stack is a part of contiguous memory)
+      for(int i = 0; i < args.Count; ++i)
       {
         ref Val v = ref stack.Push();
         v = args[i];
@@ -562,7 +565,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs, StackList<Val> args)
   {
-    return Execute(fs, new FuncArgsInfo(args.Count), new StackList<Val>());
+    return Execute(fs, new FuncArgsInfo(args.Count), args);
   }
 
   public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)

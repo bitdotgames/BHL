@@ -296,6 +296,7 @@ public partial class VM : INamedResolver
     if(fb.IsStopped())
       return false;
 
+    //NOTE: try/catch commented for better debugging during heavy code changes
     //try
     {
       _Tick(fb);
