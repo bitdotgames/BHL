@@ -3127,7 +3127,7 @@ public class TestVM : BHL_TestBase
     string bhl = @"
     func int test()
     {
-      return answer(1, 2)
+      return answer(11, 12)
     }
     ";
 
@@ -3149,6 +3149,26 @@ public class TestVM : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
+    var num = Execute(vm, "test").Stack.Pop().num;
+    Assert.Equal(1, num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestSimpleFuncWithSeveralArgs()
+  {
+    string bhl = @"
+    func int answer(int a, int b)
+    {
+      return b - a
+    }
+    func int test()
+    {
+      return answer(11, 12)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(1, num);
     CommonChecks(vm);
