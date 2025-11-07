@@ -83,7 +83,7 @@ public class TestParal : BHL_TestBase
           .UseCode()
           .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitThen(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
-          .EmitThen(Opcodes.Paral, new int[] { 42 })
+          .EmitThen(Opcodes.Paral, new int[] { 39 })
           .EmitThen(Opcodes.Seq, new int[] { 8 })
           .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitThen(Opcodes.Seq, new int[] { 14 })
