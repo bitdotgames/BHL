@@ -172,20 +172,7 @@ public partial class VM : INamedResolver
     public int locals_offset;
     public int return_args_num;
 
-    //TODO:
-    //public DeferBlock[] defers;
-    //public int defers_count;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Init(ref Frame frame)
-    {
-      unsafe
-      {
-        bytecode = frame.bytecode;
-      }
-      constants = frame.constants;
-      type_refs = frame.type_refs;
-    }
+    public DeferSupport defers;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void Init(Module module, int start_ip)
@@ -224,9 +211,12 @@ public partial class VM : INamedResolver
       this.type_refs = type_refs;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
-      this.return_ip = -1;
+      return_ip = -1;
 
-      //TODO: what about clearing defers here?
+      if(defers == null)
+        defers = new DeferSupport();
+      else
+        defers.count = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

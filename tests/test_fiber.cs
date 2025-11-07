@@ -1332,14 +1332,14 @@ public class TestFiber : BHL_TestBase
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
-      var result = vm.ExecuteOld(fs);
-      Assert.Equal(10, result.PopRelease().num);
+      var result = vm.Execute(fs);
+      Assert.Equal(10, result.Pop().num);
       CommonChecks(vm);
     }
 
     {
-      var result = vm.ExecuteOld(fs);
-      Assert.Equal(10, result.PopRelease().num);
+      var result = vm.Execute(fs);
+      Assert.Equal(10, result.Pop().num);
       CommonChecks(vm);
     }
   }
@@ -1360,14 +1360,14 @@ public class TestFiber : BHL_TestBase
       (FuncSymbolScript)new VM.SymbolSpec(TestModuleName, "test").LoadModuleSymbol(vm).symbol;
 
     {
-      var result = vm.ExecuteOld(fs, new StackList<ValOld>(ValOld.NewInt(vm, 10), ValOld.NewInt(vm, 20)));
-      Assert.Equal(10, result.PopRelease().num);
+      var result = vm.Execute(fs, new StackList<Val>(10, 20));
+      Assert.Equal(10, result.Pop().num);
       CommonChecks(vm);
     }
 
     {
-      var result = vm.ExecuteOld(fs, new StackList<ValOld>(ValOld.NewInt(vm, 2), ValOld.NewInt(vm, 1)));
-      Assert.Equal(-1, result.PopRelease().num);
+      var result = vm.Execute(fs, new StackList<Val>(2, 1));
+      Assert.Equal(-1, result.Pop().num);
       CommonChecks(vm);
     }
   }
@@ -1399,8 +1399,8 @@ public class TestFiber : BHL_TestBase
     Assert.NotEqual(0, trampoline1);
 
     {
-      var result = vm.ExecuteOld(test_fs1);
-      Assert.Equal(10, result.PopRelease().num);
+      var result = vm.Execute(test_fs1);
+      Assert.Equal(10, result.Pop().num);
       CommonChecks(vm);
     }
 
@@ -1409,8 +1409,8 @@ public class TestFiber : BHL_TestBase
     Assert.Equal(trampoline1_copy, trampoline1);
 
     {
-      var result = vm.ExecuteOld(test2_fs1);
-      Assert.Equal(20, result.PopRelease().num);
+      var result = vm.Execute(test2_fs1);
+      Assert.Equal(20, result.Pop().num);
       CommonChecks(vm);
     }
   }

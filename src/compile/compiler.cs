@@ -579,6 +579,24 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.Defer,
+        2 /*len*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Paral,
+        2 /*len*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.ParalAll,
+        2 /*len*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Return
       )
     );
@@ -1165,9 +1183,9 @@ public class ModuleCompiler : AST_Visitor
     if(parent_block != null)
       ctrl_block_has_defers.Add(parent_block);
 
-    var block_op = Emit(Opcodes.Block, new int[] { (int)ast.type, 0 /*patched later*/});
+    var block_op = Emit(Opcodes.Defer, new int[] { 0 /*patched later*/});
     VisitChildren(ast);
-    AddOffsetFromTo(block_op, Peek(), operand_idx: 1);
+    AddOffsetFromTo(block_op, Peek());
   }
 
   public override void DoVisit(AST_TypeCast ast)

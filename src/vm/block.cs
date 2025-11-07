@@ -54,35 +54,16 @@ public struct DeferBlock
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal static void ExitScope(VM.ExecState exec, List<DeferBlock> defers)
-  {
-    if(defers?.Count == 0)
-      return;
-
-    var coro_orig = exec.coroutine;
-    for(int i = defers.Count; i-- > 0;)
-    {
-      var d = defers[i];
-      exec.coroutine = null;
-      //TODO: do we need ensure that status is SUCCESS?
-      /*var status = */
-      d.Execute(exec);
-    }
-
-    exec.coroutine = coro_orig;
-    defers.Clear();
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal static void ExitScope(VM.ExecState exec, DeferBlock[] defers, int defers_count)
+  internal static void ExitScope(VM.ExecState exec, VM.DeferSupport defers)
   {
     var coro_orig = exec.coroutine;
-    for(int i = defers_count; i-- > 0;)
+    for(int i = defers.count; i-- > 0;)
     {
       exec.coroutine = null;
-      defers[i].Execute(exec);
+      defers.blocks[i].Execute(exec);
     }
     exec.coroutine = coro_orig;
+    defers.count = 0;
   }
 
   public override string ToString()
@@ -95,7 +76,7 @@ public struct DeferBlock
 public class SeqBlock : Coroutine, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
-  public List<DeferBlock> defers = new List<DeferBlock>(2);
+  public VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -128,7 +109,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     ExitScope(exec, defers);
   }
 
-  public static void ExitScope(VM.ExecState exec, List<DeferBlock> defers)
+  public static void ExitScope(VM.ExecState exec, VM.DeferSupport defers)
   {
     if(exec.coroutine != null)
     {
@@ -136,17 +117,19 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
       exec.coroutine = null;
     }
 
-    //NOTE: 1. first we exit the scope for all dangling frames
-    for(int i = exec.frames_old.Count; i-- > 0;)
-      DeferBlock.ExitScope(exec, exec.frames_old[i].defers);
+    //we exit the scope for all dangling frames
+    for(int i = exec.frames_count; i-- > 0;)
+    {
+      ref var frame = ref exec.frames[i];
+      if(frame.defers.count > 0)
+        DeferBlock.ExitScope(exec, frame.defers);
+    }
 
-    //NOTE: 2. then we release frames only after exiting them
-    for(int i = exec.frames_old.Count; i-- > 0;)
-      exec.frames_old[i].Release();
-    exec.frames_old.Clear();
+    exec.frames_count = 0;
     exec.regions_count = 0;
 
-    DeferBlock.ExitScope(exec, defers);
+    if(defers.count > 0)
+      DeferBlock.ExitScope(exec, defers);
   }
 }
 
@@ -156,7 +139,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   public int max_ip;
   public ValOldStack stack = new ValOldStack(VM.FrameOld.MAX_STACK);
   public VM.ExecState exec = new VM.ExecState();
-  public List<DeferBlock> defers = new List<DeferBlock>(1);
+  public VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -218,7 +201,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
   public int max_ip;
   public int i;
   public List<Coroutine> branches = new List<Coroutine>();
-  public List<DeferBlock> defers = new List<DeferBlock>(1);
+  public VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -236,7 +219,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     this.max_ip = max_ip;
     i = 0;
     branches.Clear();
-    defers.Clear();
+    defers.count = 0;
   }
 
   public override void Tick(VM.ExecState exec)
@@ -268,7 +251,9 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     for(i = 0; i < branches.Count; ++i)
       CoroutinePool.Del(exec, branches[i]);
     branches.Clear();
-    DeferBlock.ExitScope(exec, defers);
+
+    if(defers.count > 0)
+      DeferBlock.ExitScope(exec, defers);
   }
 }
 
@@ -278,7 +263,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
   public int max_ip;
   public int i;
   public List<Coroutine> branches = new List<Coroutine>();
-  public List<DeferBlock> defers = new List<DeferBlock>(1);
+  public VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -296,7 +281,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     this.max_ip = max_ip;
     i = 0;
     branches.Clear();
-    defers.Clear();
+    defers.count = 0;
   }
 
   public override void Tick(VM.ExecState exec)
@@ -346,7 +331,9 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     for(i = 0; i < branches.Count; ++i)
       CoroutinePool.Del(exec, branches[i]);
     branches.Clear();
-    DeferBlock.ExitScope(exec, defers);
+
+    if(defers.count > 0)
+      DeferBlock.ExitScope(exec, defers);
   }
 }
 

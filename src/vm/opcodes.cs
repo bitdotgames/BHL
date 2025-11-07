@@ -59,7 +59,12 @@ public enum Opcodes
   TypeAs                = 66,
   TypeIs                = 67,
   Typeof                = 68,
-  Block                 = 76,
+
+  Block                 = 70,
+  Defer                 = 71,
+  Paral                 = 72,
+  ParalAll              = 73,
+
   New                   = 77,
   Lambda                = 78,
   CaptureUpval          = 79, //TODO: split it into capture 'ref' and 'val'

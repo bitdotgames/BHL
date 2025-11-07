@@ -154,15 +154,6 @@ public partial class VM : INamedResolver
       exec.fiber = this;
     }
 
-    internal void Attach(FrameOld frm)
-    {
-      frm.fb = this;
-      exec.ip = frm.start_ip;
-      exec.frames_old.Push(frm);
-      exec.regions[exec.regions_count++] = new Region(-1, frm.defers);
-      exec.stack_old = frm.stack;
-    }
-
     internal void Attach(ref Frame frame, int frame_idx)
     {
       exec.ip = frame.start_ip;
@@ -307,36 +298,6 @@ public partial class VM : INamedResolver
     return Start(addr, new FuncArgsInfo(0u), new StackList<Val>());
   }
 
-  //NOTE: args passed to the Fiber will be released during actual func call, this is what happens:
-  //       1) args put into stack
-  //       2) ArgVar opcode pops arg from the stack, copies the value and releases the popped arg
-  public Fiber StartOld(FuncAddr addr, FuncArgsInfo args_info, StackList<ValOld> args, FiberOptions opts = 0)
-  {
-    var fb = Fiber.New(this);
-    fb.func_addr = addr;
-    Register(fb, null, opts);
-
-    var frame = FrameOld.New(this);
-
-    //checking native call
-    if(addr.fsn != null)
-    {
-      frame.Init(fb, fb.result_old, addr.module, null, null, null, VM.EXIT_FRAME_IP);
-
-      PassArgsAndAttach(addr.fsn, fb, frame, fb.result_old, args_info, args);
-    }
-    else
-    {
-      frame.Init(fb, fb.result_old, addr.module, addr.ip);
-
-      PassArgsAndAttach(fb, frame, ValOld.NewInt(this, args_info.bits), args);
-    }
-
-    if(opts.HasFlag(FiberOptions.Retain))
-      fb.Retain();
-    return fb;
-  }
-
   public Fiber Start(FuncAddr addr, FuncArgsInfo args_info, StackList<Val> args, FiberOptions opts = 0)
   {
     var fb = Fiber.New(this);
@@ -389,53 +350,6 @@ public partial class VM : INamedResolver
       PassArgsAndAttach(new_fiber, ref new_frame, new_frame_idx, args_info, args);
 
     return new_fiber;
-  }
-
-  static void PassArgsAndAttach(
-    FuncSymbolNative fsn,
-    Fiber fb,
-    FrameOld frame,
-    ValOldStack curr_stack,
-    FuncArgsInfo args_info,
-    StackList <ValOld> args
-  )
-  {
-    for(int i = args.Count; i-- > 0;)
-    {
-      var arg = args[i];
-      curr_stack.Push(arg);
-    }
-
-    fb.Attach(frame);
-    //overriding exec.stack with passed curr_stack
-    fb.exec.stack_old = curr_stack;
-
-    //passing args info as argument
-    fb.exec.coroutine = fsn.cb(fb.exec, args_info);
-    //NOTE: before executing a coroutine VM will increment ip optimistically
-    //      but we need it to remain at the same position so that it points at
-    //      the fake return opcode
-    if(fb.exec.coroutine != null)
-      --fb.exec.ip;
-  }
-
-  static void PassArgsAndAttach(
-    Fiber fb,
-    FrameOld frame,
-    ValOld args_info,
-    StackList <ValOld> args
-  )
-  {
-    for(int i = args.Count; i-- > 0;)
-    {
-      var arg = args[i];
-      frame.stack.Push(arg);
-    }
-
-    //passing args info as stack variable
-    frame.stack.Push(args_info);
-
-    fb.Attach(frame);
   }
 
   static void PassArgsAndAttach(
@@ -600,46 +514,6 @@ public partial class VM : INamedResolver
       args_info_val.Retain();
     }
 
-    public FiberResult ExecuteOld(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
-    {
-      var addr = new FuncAddr(fs);
-
-      fb.func_addr = addr;
-      fb.stop_guard = false;
-      while(fb.result_old.Count > 0)
-      {
-        var val = fb.result_old.Pop();
-        val.Release();
-      }
-
-      fb.Retain();
-
-      frm.Retain();
-
-      frm.Init(fb, fb.result_old, addr.module, addr.ip);
-
-      for(int i = args.Count; i-- > 0;)
-      {
-        var arg = args[i];
-        frm.stack.Push(arg);
-      }
-
-      //passing args info as stack variable
-      args_info_val.Retain();
-      args_info_val._num = args_info.bits;
-      frm.stack.Push(args_info_val);
-
-      fb.Attach(frm);
-
-      if(vm.Tick(fb))
-        throw new Exception($"Not expected to be running: {fs}");
-
-      //let's clear stuff
-      frm.Clear();
-
-      return new FiberResult(fb);
-    }
-
     public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
       var addr = new FuncAddr(fs);
@@ -680,33 +554,15 @@ public partial class VM : INamedResolver
   Stack<ScriptExecutor> script_executors = new Stack<ScriptExecutor>();
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult ExecuteOld(FuncSymbolScript fs)
-  {
-    return ExecuteOld(fs, new FuncArgsInfo(0u), new StackList<ValOld>());
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs)
   {
     return Execute(fs, new FuncArgsInfo(0u), new StackList<Val>());
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public FiberResult ExecuteOld(FuncSymbolScript fs, StackList<ValOld> args)
+  public ValStack Execute(FuncSymbolScript fs, StackList<Val> args)
   {
-    return ExecuteOld(fs, new FuncArgsInfo(args.Count), args);
-  }
-
-  public FiberResult ExecuteOld(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<ValOld> args)
-  {
-    ScriptExecutor executor;
-    if(script_executors.Count == 0)
-      executor = new ScriptExecutor(this);
-    else
-      executor = script_executors.Pop();
-    var res = executor.ExecuteOld(fs, args_info, args);
-    script_executors.Push(executor);
-    return res;
+    return Execute(fs, new FuncArgsInfo(args.Count), new StackList<Val>());
   }
 
   public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
@@ -720,38 +576,6 @@ public partial class VM : INamedResolver
     script_executors.Push(executor);
     return res;
   }
-
-  //public void Execute2(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val2> args)
-  //{
-  //  var fb = VM.Fiber.New(this);
-
-  //  var addr = new FuncAddr(fs);
-  //  fb.func_addr = addr;
-
-  //  ref var frame2 = ref fb.exec.PushFrame2();
-  //  frame2.Init(addr.module, addr.ip);
-
-  //  var stack = fb.exec.stack2;
-  //  for(int i = args.Count; i-- > 0;)
-  //  {
-  //    ref Val2 v = ref stack.Push();
-  //    v = args[i];
-  //  }
-
-  //  {
-  //    //passing args info as stack variable
-  //    ref Val2 v = ref stack.Push();
-  //    v._num = args_info.bits;
-  //  }
-
-  //  fb.Attach2(ref frame2, fb.exec.frames2_count - 1);
-
-  //  if(Tick(fb))
-  //    throw new Exception($"Not expected to be running: {fs}");
-
-  //  //not needed, Tick(..) does it
-  //  //fb.Release();
-  //}
 }
 
 }

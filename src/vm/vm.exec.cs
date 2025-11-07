@@ -161,11 +161,25 @@ public partial class VM : INamedResolver
 
   public delegate void ClassCreator(VM.ExecState exec, ref Val res, IType type);
 
+  public class DeferSupport
+  {
+    public DeferBlock[] blocks = new DeferBlock[1];
+    public int count;
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public void Add(DeferBlock block)
+    {
+      if(count == blocks.Length)
+        Array.Resize(ref blocks, count << 1);
+      blocks[count++] = block;
+    }
+  }
+
   public struct Region
   {
     public int frame_idx;
 
-    public List<DeferBlock> defer_support;
+    public DeferSupport defers;
 
     //NOTE: if current ip is not within *inclusive* range of these values
     //      the frame context execution is considered to be done
@@ -175,13 +189,13 @@ public partial class VM : INamedResolver
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public Region(
       int frame_idx,
-      List<DeferBlock> defer_support,
+      DeferSupport defer_support,
       int min_ip = -1,
       int max_ip = STOP_IP
       )
     {
       this.frame_idx = frame_idx;
-      this.defer_support = defer_support;
+      this.defers = defer_support;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -259,7 +273,8 @@ public partial class VM : INamedResolver
     //3. exit frame requested
     else if(exec.ip == EXIT_FRAME_IP)
     {
-      DeferBlock.ExitScope(exec, region.defer_support);
+      if(frame.defers.count > 0)
+        DeferBlock.ExitScope(exec, frame.defers);
 
       --exec.regions_count;
       exec.ip = frame.return_ip + 1;
@@ -315,7 +330,7 @@ public partial class VM : INamedResolver
       fs = fs,
       ip = fs._ip_addr
     };
-    var fb = StartOld(addr, new FuncArgsInfo(0), default, FiberOptions.Detach);
+    var fb = Start(addr, new FuncArgsInfo(0), default, FiberOptions.Detach);
     if(Tick(fb))
       throw new Exception("Module '" + module.name + "' init function is still running");
   }
@@ -324,7 +339,7 @@ public partial class VM : INamedResolver
   unsafe Coroutine ProcBlockOpcode(
     ExecState exec,
     byte* bytes,
-    ref List<DeferBlock> defer_support
+    DeferSupport defer_support
   )
   {
     var (block_coro, block_paral_branches, block_defer_support) = _ProcBlockOpcode(
@@ -332,7 +347,7 @@ public partial class VM : INamedResolver
       exec,
       bytes,
       out var block_size,
-      ref defer_support,
+      defer_support,
       false
     );
 
@@ -348,7 +363,7 @@ public partial class VM : INamedResolver
           ref tmp_ip,
           exec, bytes,
           out var tmp_size,
-          ref block_defer_support,
+          block_defer_support,
           true
         );
 
@@ -363,12 +378,12 @@ public partial class VM : INamedResolver
     return block_coro;
   }
 
-  unsafe (Coroutine, List<Coroutine>, List<DeferBlock>) _ProcBlockOpcode(
+  unsafe (Coroutine, List<Coroutine>, DeferSupport) _ProcBlockOpcode(
     ref int ip,
     ExecState exec,
     byte* bytes,
     out int size,
-    ref List<DeferBlock> defer_support,
+    DeferSupport defer_support,
     bool is_paral
   )
   {
@@ -403,35 +418,8 @@ public partial class VM : INamedResolver
       paral.Init(ip + 1, ip + size);
       return (paral, paral.branches, paral.defers);
     }
-    else if(type == BlockType.DEFER)
-    {
-      var d = new DeferBlock(ip + 1, ip + size);
-      if(defer_support == null)
-        defer_support = new List<DeferBlock>();
-      defer_support.Add(d);
-      //NOTE: we need to skip the defer block
-      ip += size;
-      return (null, null, null);
-    }
     else
       throw new Exception("Not supported block type: " + type);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Call(ExecState exec, FrameOld new_frame, uint args_bits)
-  {
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    for(int i = 0; i < args_num; ++i)
-      new_frame.stack.Push(exec.stack_old.Pop());
-    new_frame.stack.Push(ValOld.NewInt(this, args_bits));
-
-    //let's remember ip to return to
-    new_frame.return_ip = exec.ip;
-    exec.stack_old = new_frame.stack;
-    exec.frames_old.Push(new_frame);
-    exec.regions[exec.regions_count++] = new Region(-1, new_frame.defers);
-    //since ip will be incremented below we decrement it intentionally here
-    exec.ip = new_frame.start_ip - 1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1238,22 +1226,24 @@ public partial class VM : INamedResolver
     int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    //TODO: use a simpler schema where 'self' is passed on the top
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int self_idx = exec.stack_old.Count - args_num - 1;
-    var self = exec.stack_old[self_idx];
-    exec.stack_old.RemoveAt(self_idx);
+    throw new NotImplementedException();
 
-    var class_type = (ClassSymbolScript)self.type;
-    var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
+    ////TODO: use a simpler schema where 'self' is passed on the top
+    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    //int self_idx = exec.stack_old.Count - args_num - 1;
+    //var self = exec.stack_old[self_idx];
+    //exec.stack_old.RemoveAt(self_idx);
 
-    var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
+    //var class_type = (ClassSymbolScript)self.type;
+    //var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
 
-    frm.locals.Count = 1;
-    frm.locals[0] = self;
+    //var frm = FrameOld.New(vm);
+    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
-    vm.Call(exec, frm, args_bits);
+    //frm.locals.Count = 1;
+    //frm.locals[0] = self;
+
+    //vm.Call(exec, frm, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1282,22 +1272,24 @@ public partial class VM : INamedResolver
     int virt_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    //TODO: use a simpler schema where 'self' is passed on the top
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int self_idx = exec.stack_old.Count - args_num - 1;
-    var self = exec.stack_old[self_idx];
-    exec.stack_old.RemoveAt(self_idx);
+    throw new NotImplementedException();
 
-    var class_type = (ClassSymbol)self.type;
-    var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
+    ////TODO: use a simpler schema where 'self' is passed on the top
+    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    //int self_idx = exec.stack_old.Count - args_num - 1;
+    //var self = exec.stack_old[self_idx];
+    //exec.stack_old.RemoveAt(self_idx);
 
-    var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
+    //var class_type = (ClassSymbol)self.type;
+    //var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
-    frm.locals.Count = 1;
-    frm.locals[0] = self;
+    //var frm = FrameOld.New(vm);
+    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
-    vm.Call(exec, frm, args_bits);
+    //frm.locals.Count = 1;
+    //frm.locals[0] = self;
+
+    //vm.Call(exec, frm, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1307,23 +1299,25 @@ public partial class VM : INamedResolver
     int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    //TODO: use a simpler schema where 'self' is passed on the top
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int self_idx = exec.stack_old.Count - args_num - 1;
-    var self = exec.stack_old[self_idx];
-    exec.stack_old.RemoveAt(self_idx);
+    throw new NotImplementedException();
 
-    var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
-    var class_type = (ClassSymbol)self.type;
-    var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
+    ////TODO: use a simpler schema where 'self' is passed on the top
+    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    //int self_idx = exec.stack_old.Count - args_num - 1;
+    //var self = exec.stack_old[self_idx];
+    //exec.stack_old.RemoveAt(self_idx);
 
-    var frm = FrameOld.New(vm);
-    frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
+    //var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
+    //var class_type = (ClassSymbol)self.type;
+    //var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
-    frm.locals.Count = 1;
-    frm.locals[0] = self;
+    //var frm = FrameOld.New(vm);
+    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
 
-    vm.Call(exec, frm, args_bits);
+    //frm.locals.Count = 1;
+    //frm.locals[0] = self;
+
+    //vm.Call(exec, frm, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1506,7 +1500,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeBlock(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
   {
-    var new_coroutine = vm.ProcBlockOpcode(exec, bytes, ref region.defer_support);
+    var new_coroutine = vm.ProcBlockOpcode(exec, bytes, region.defers);
     if(new_coroutine != null)
     {
       //NOTE: since there's a new coroutine we want to skip ip incrementing
@@ -1516,6 +1510,17 @@ public partial class VM : INamedResolver
       //let's cancel ip incrementing
       --exec.ip;
     }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeDefer(VM vm, ExecState exec, ref Region region, FrameOld curr_frame, ref Frame frame, byte* bytes)
+  {
+    int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    var d = new DeferBlock(exec.ip + 1, exec.ip + size);
+    region.defers.Add(d);
+    //NOTE: we need to skip the defer block
+    exec.ip += size;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1630,6 +1635,7 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.DefArg] = OpcodeDefArg;
 
     op_handlers[(int)Opcodes.Block] = OpcodeBlock;
+    op_handlers[(int)Opcodes.Defer] = OpcodeDefer;
 
     op_handlers[(int)Opcodes.New] = OpcodeNew;
   }
