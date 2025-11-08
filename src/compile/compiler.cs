@@ -579,7 +579,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Seq,
+        Opcodes.Scope,
         2 /*len*/
       )
     );
@@ -1148,7 +1148,7 @@ public class ModuleCompiler : AST_Visitor
     else if(ast.type == BlockType.PARAL_ALL)
       block_type_op = Opcodes.ParalAll;
     else if(ast.type == BlockType.SEQ)
-      block_type_op = Opcodes.Seq;
+      block_type_op = Opcodes.Scope;
     else
       throw new Exception("Not supported block type: " + ast.type);
 

@@ -1433,16 +1433,12 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeSeq(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeScope(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
     var sub_region = new Region(region.frame_idx, exec.ip + 1, exec.ip + size);
     exec.regions[exec.regions_count++] = sub_region;
-
-    //????
-    //let's cancel ip incrementing
-    //--exec.ip;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1518,7 +1514,7 @@ public partial class VM : INamedResolver
     var type = (Opcodes)bytes[ip];
     size = (int)Bytecode.Decode16(bytes, ref ip);
 
-    if(type == Opcodes.Seq)
+    if(type == Opcodes.Scope)
     {
       var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
       br.Init(exec, ip + 1, ip + size);
@@ -1668,7 +1664,7 @@ public partial class VM : INamedResolver
     op_handlers[(int)Opcodes.DefArg] = OpcodeDefArg;
 
     op_handlers[(int)Opcodes.Defer] = OpcodeDefer;
-    op_handlers[(int)Opcodes.Seq] = OpcodeSeq;
+    op_handlers[(int)Opcodes.Scope] = OpcodeScope;
     op_handlers[(int)Opcodes.Paral] = OpcodeParal;
     op_handlers[(int)Opcodes.ParalAll] = OpcodeParalAll;
 
