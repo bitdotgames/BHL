@@ -99,7 +99,7 @@ public partial class VM : INamedResolver
 
     public ValStack Stack => exec.stack;
 
-    public ValOldStack result_old = new ValOldStack(FrameOld.MAX_STACK);
+    public ValOldStack result_old = new ValOldStack(32);
 
     public BHS status => exec.status;
 
@@ -230,12 +230,6 @@ public partial class VM : INamedResolver
     public bool IsStopped()
     {
       return stop_guard || exec.ip >= STOP_IP;
-    }
-
-    static void GetCalls(VM.ExecState exec, List<VM.FrameOld> calls)
-    {
-      for(int i = 0; i < exec.frames_old.Count; ++i)
-        calls.Add(exec.frames_old[i]);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
@@ -487,9 +481,6 @@ public partial class VM : INamedResolver
 
     //NOTE: we manually create and own these
     VM.Fiber fb;
-    VM.FrameOld frm;
-
-    ValOld args_info_val;
 
     public ScriptExecutor(VM vm)
     {
@@ -499,16 +490,6 @@ public partial class VM : INamedResolver
       fb = new VM.Fiber(vm);
       //just for consistency with refcounting
       fb.Retain();
-
-      //NOTE: manually creating Frame
-      frm = new VM.FrameOld(vm);
-      //just for consistency with refcounting
-      frm.Retain();
-
-      args_info_val = new ValOld(vm);
-      args_info_val.num = 0;
-      //let's own it forever
-      args_info_val.Retain();
     }
 
     public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)

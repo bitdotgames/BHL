@@ -763,14 +763,12 @@ public class BHL_TestBase
     //forced cleanup of module globals
     vm.UnloadModules();
 
-    if(check_frames)
-      Assert.Equal(0, vm.frames_pool.BusyCount);
     //for extra debug
     if(vm.vals_pool.BusyCount != 0)
       Console.WriteLine(vm.vals_pool.Dump());
 
     if(vm.last_fiber != null)
-      CommonChecks(vm.last_fiber);
+      CommonChecks(vm.last_fiber, check_frames);
 
     Assert.Equal(0, vm.vrefs_pool.BusyCount);
     Assert.Equal(0, vm.vals_pool.BusyCount);
@@ -782,9 +780,10 @@ public class BHL_TestBase
       Assert.Equal(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }
 
-  public static void CommonChecks(VM.Fiber fb)
+  public static void CommonChecks(VM.Fiber fb, bool check_frames = true)
   {
-    Assert.Equal(0, fb.exec.frames_count);
+    if(check_frames)
+      Assert.Equal(0, fb.exec.frames_count);
     Assert.Equal(0, fb.exec.stack.sp);
     //let's ensure that stack is properly cleaned up
     for(int i = 0; i < fb.exec.stack.vals.Length; ++i)

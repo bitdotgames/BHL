@@ -155,7 +155,7 @@ public partial class VM : INamedResolver
     this.types = types;
     this.loader = loader;
 
-    init_frame = new FrameOld(this);
+    init_frame = new Frame();
 
     null_val = new ValOld(this);
     null_val.SetObj(null, Types.Null);

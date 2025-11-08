@@ -374,9 +374,9 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    ExecuteOld(vm, "test", ValOld.NewNum(vm, 3));
+    Execute(vm, "test", 3);
     Assert.Equal("01234", log.ToString());
-    Assert.Equal(2, vm.frames_pool.MissCount);
+    Assert.Equal(2, vm.last_fiber.exec.frames_count);
     CommonChecks(vm);
   }
 

@@ -1301,17 +1301,11 @@ public class TestFiber : BHL_TestBase
 
     ScriptMgr.instance.Tick();
 
-    //NOTE: in case of bug the defer block is going to use a stale Frame
-    //      and it will lead to origin stack pointing to the new Frame's stack!
-    var frm = VM.FrameOld.New(vm);
-
     ScriptMgr.instance.Tick();
 
     Assert.Equal("2;", log.ToString());
 
     Assert.True(!ScriptMgr.instance.Busy);
-
-    frm.Release();
 
     CommonChecks(vm);
   }

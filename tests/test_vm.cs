@@ -8926,47 +8926,6 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
-  public void TestFrameCache()
-  {
-    string bhl = @"
-
-    coro func foo()
-    {
-      yield()
-    }
-
-    coro func test()
-    {
-      yield foo()
-    }
-    ";
-
-    var vm = MakeVM(bhl);
-
-    {
-      vm.Start("test");
-      Assert.Equal(1, vm.frames_pool.MissCount);
-      Assert.Equal(0, vm.frames_pool.IdleCount);
-      vm.Tick();
-      Assert.Equal(2, vm.frames_pool.MissCount);
-      Assert.Equal(0, vm.frames_pool.IdleCount);
-      vm.Tick();
-      Assert.Equal(2, vm.frames_pool.MissCount);
-      Assert.Equal(2, vm.frames_pool.IdleCount);
-    }
-
-    //no new allocs
-    {
-      vm.Start("test");
-      vm.Tick();
-      vm.Tick();
-      Assert.Equal(2, vm.frames_pool.MissCount);
-      Assert.Equal(2, vm.frames_pool.IdleCount);
-    }
-    CommonChecks(vm);
-  }
-
-  [Fact]
   public void TestRegisterModule()
   {
     string bhl = @"
