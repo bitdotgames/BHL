@@ -237,30 +237,9 @@ public partial class VM : INamedResolver
     }
   }
 
-  ValOld true_val = null;
-  public ValOld TrueOld
-  {
-    get
-    {
-      true_val.Retain();
-      return true_val;
-    }
-  }
-
-  ValOld false_val = null;
-  public ValOld FalseOld
-  {
-    get
-    {
-      false_val.Retain();
-      return false_val;
-    }
-  }
-
   public static readonly Val Null = Val.NewObj(null, Types.Null);
   public static readonly Val True = Val.NewBool(true);
   public static readonly Val False = Val.NewBool(false);
-
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal void Execute(ExecState exec, int exec_waterline_idx = 0)
@@ -276,10 +255,6 @@ public partial class VM : INamedResolver
     ref var region = ref exec.regions[exec.regions_count - 1];
     //TODO: looks like frame_idx is not really needed since we always need the top frame?
     ref var frame = ref exec.frames[region.frame_idx];
-
-#if BHL_DEBUG
-    Console.WriteLine("EXEC TICK " + curr_frame.fb.tick + " " + exec.GetHashCode() + ":" + exec.regions.Count + ":" + exec.frames.Count + " (" + curr_frame.GetHashCode() + "," + curr_frame.fb.id + ") IP " + exec.ip + "(min:" + item.min_ip + ", max:" + item.max_ip + ")" + (exec.ip > -1 && exec.ip < curr_frame.bytecode.Length ? " OP " + (Opcodes)curr_frame.bytecode[exec.ip] : " OP ? ") + " CORO " + exec.coroutine?.GetType().Name + "(" + exec.coroutine?.GetHashCode() + ")" + " DEFERABLE " + item.defer_support?.GetType().Name + "(" + item.defer_support?.GetHashCode() + ") " + curr_frame.bytecode.Length /* + " " + curr_frame.fb.GetStackTrace()*/ /* + " " + Environment.StackTrace*/);
-#endif
 
     //1. if there's an active coroutine it has priority over simple 'code following' via ip
     if(exec.coroutine != null)

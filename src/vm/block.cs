@@ -53,11 +53,15 @@ public struct DeferBlock
   }
 }
 
-//TODO: do we actually need this one?
+//NOTE: currently SeqBlock is only needed scoped defers
 public class SeqBlock : Coroutine, IInspectableCoroutine
 {
   public VM.ExecState exec = new VM.ExecState();
   public VM.DeferSupport defers = new VM.DeferSupport();
+
+  //TODO: Region == Frame
+  int frames_offset;
+  int regions_offset;
 
   public int Count
   {
@@ -71,26 +75,40 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
 
   public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {
-    exec.vm = ext_exec.vm;
-    exec.fiber = ext_exec.fiber;
+    exec.vm  = ext_exec.vm;
+    exec.fiber  = ext_exec.fiber;
     exec.stack = ext_exec.stack;
     exec.ip = min_ip;
+    exec.frames = ext_exec.frames;
+    exec.frames_count = ext_exec.frames_count;
+    exec.regions = ext_exec.regions;
+    exec.regions_count = ext_exec.regions_count;
+
+    frames_offset = exec.frames_count;
+    regions_offset = exec.regions_count;
+
     exec.regions[exec.regions_count++] =
-      new VM.Region(-1, defers, min_ip: min_ip, max_ip: max_ip);
+      new VM.Region(exec.frames_count - 1, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.ExecState ext_exec)
   {
     ext_exec.vm.Execute(exec);
+    ext_exec.status = exec.status;
     ext_exec.ip = exec.ip;
   }
 
   public override void Cleanup(VM.ExecState _)
   {
-    ExitScope(exec, defers);
+    ExitScope(exec, defers, frames_offset, regions_offset);
   }
 
-  public static void ExitScope(VM.ExecState exec, VM.DeferSupport defers)
+  public static void ExitScope(
+    VM.ExecState exec,
+    VM.DeferSupport defers,
+    int frames_offset = 0,
+    int regions_offset = 0
+    )
   {
     if(exec.coroutine != null)
     {
@@ -99,17 +117,19 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     }
 
     //we exit the scope for all dangling frames
-    for(int i = exec.frames_count; i-- > 0;)
+    for(int i = exec.frames_count; i-- > frames_offset;)
     {
       ref var frame = ref exec.frames[i];
       if(frame.defers.count > 0)
         frame.defers.ExitScope(exec);
     }
-    exec.frames_count = 0;
-    exec.regions_count = 0;
+    exec.regions_count = regions_offset;
 
     if(defers.count > 0)
       defers.ExitScope(exec);
+
+    //let's keep frames count until defers have exited scope above
+    exec.frames_count = frames_offset;
   }
 }
 
@@ -138,13 +158,14 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
 
-    int new_frame_idx = exec.frames_count;
-    ref var new_frame = ref exec.PushFrame();
+    int fake_frame_idx = exec.frames_count;
+    //creating a 'fake' frame just because we need a region,
+    ref var fake_frame = ref exec.PushFrame();
     //let's copy ext_exec's frame data
-    new_frame = ext_exec.frames[ext_exec.frames_count - 1];
+    fake_frame = ext_exec.frames[ext_exec.frames_count - 1];
 
     exec.regions[exec.regions_count++] =
-      new VM.Region(new_frame_idx, defers, min_ip: min_ip, max_ip: max_ip);
+      new VM.Region(fake_frame_idx, defers, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.ExecState ext_exec)
@@ -158,8 +179,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       exec.stack.Push(local_stack.vals[i]);
 
     ext_exec.vm.Execute(exec);
-    ext_exec.status = exec.status;
 
+    ext_exec.status = exec.status;
     //let's restore external stack's sp
     ext_exec.stack.sp = ext_sp_backup;
     //let's restore our own stack
