@@ -107,6 +107,9 @@ public class FuncSignature : IEphemeralType, IEquatable<FuncSignature>
   public void Sync(marshall.SyncContext ctx)
   {
     marshall.Marshall.Sync(ctx, ref _attribs);
+    //let's update internal attribute so that it's cached
+    if(!ctx.is_read && _return_args_num == -1)
+      GetReturnedArgsNum();
     marshall.Marshall.Sync(ctx, ref _return_args_num);
     marshall.Marshall.SyncTypeRef(ctx, ref _return_type);
     marshall.Marshall.SyncTypeRefs(ctx, arg_types);
