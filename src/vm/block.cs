@@ -56,10 +56,11 @@ public struct DeferBlock
 //NOTE: currently SeqBlock is only needed scoped defers
 public class SeqBlock : Coroutine, IInspectableCoroutine
 {
-  public VM.ExecState exec = new VM.ExecState();
+  //NOTE: external exec state data will be used
+  public VM.ExecState exec = new VM.ExecState(0, 0, 0);
   public VM.DeferSupport defers = new VM.DeferSupport();
 
-  //TODO: Region == Frame
+  //TODO: Region == Frame?
   int frames_offset;
   int regions_offset;
 
@@ -75,6 +76,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
 
   public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {
+    //NOTE: cloning everything except active coroutine
     exec.vm  = ext_exec.vm;
     exec.fiber  = ext_exec.fiber;
     exec.stack = ext_exec.stack;
@@ -93,7 +95,7 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.ExecState ext_exec)
   {
-    ext_exec.vm.Execute(exec);
+    ext_exec.vm.Execute(exec, regions_offset);
     ext_exec.status = exec.status;
     ext_exec.ip = exec.ip;
   }
