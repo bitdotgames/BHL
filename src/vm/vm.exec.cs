@@ -181,6 +181,19 @@ public partial class VM : INamedResolver
         Array.Resize(ref blocks, count << 1);
       return ref blocks[count++];
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ExitScope(VM.ExecState exec)
+    {
+      var coro_orig = exec.coroutine;
+      for(int i = count; i-- > 0;)
+      {
+        exec.coroutine = null;
+        blocks[i].Execute(exec);
+      }
+      exec.coroutine = coro_orig;
+      count = 0;
+    }
   }
 
   public struct Region
@@ -282,7 +295,7 @@ public partial class VM : INamedResolver
     else if(exec.ip == EXIT_FRAME_IP)
     {
       if(frame.defers.count > 0)
-        DeferBlock.ExitScope(exec, frame.defers);
+        frame.defers.ExitScope(exec);
 
       --exec.regions_count;
       exec.ip = frame.return_ip + 1;

@@ -23,7 +23,7 @@ public struct DeferBlock
   public int ip;
   public int max_ip;
 
-  void Execute(VM.ExecState exec)
+  internal void Execute(VM.ExecState exec)
   {
     //1. let's remeber the original ip in order to restore it once
     //   the execution of this block is done (defer block can be
@@ -45,19 +45,6 @@ public struct DeferBlock
       throw new Exception("Defer execution invalid status: " + exec.status);
 
     exec.ip = ip_orig;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal static void ExitScope(VM.ExecState exec, VM.DeferSupport defers)
-  {
-    var coro_orig = exec.coroutine;
-    for(int i = defers.count; i-- > 0;)
-    {
-      exec.coroutine = null;
-      defers.blocks[i].Execute(exec);
-    }
-    exec.coroutine = coro_orig;
-    defers.count = 0;
   }
 
   public override string ToString()
@@ -116,13 +103,13 @@ public class SeqBlock : Coroutine, IInspectableCoroutine
     {
       ref var frame = ref exec.frames[i];
       if(frame.defers.count > 0)
-        DeferBlock.ExitScope(exec, frame.defers);
+        frame.defers.ExitScope(exec);
     }
     exec.frames_count = 0;
     exec.regions_count = 0;
 
     if(defers.count > 0)
-      DeferBlock.ExitScope(exec, defers);
+      defers.ExitScope(exec);
   }
 }
 
@@ -164,6 +151,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   {
     var local_stack = exec.stack;
     int ext_sp_backup = ext_exec.stack.sp;
+    //TODO: the code below is not efficient
     //let's push our values onto the external stack
     exec.stack = ext_exec.stack;
     for(int i = 0; i < local_stack.sp; i++)
@@ -260,7 +248,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     branches.Clear();
 
     if(defers.count > 0)
-      DeferBlock.ExitScope(exec, defers);
+      defers.ExitScope(exec);
   }
 }
 
@@ -340,7 +328,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
     branches.Clear();
 
     if(defers.count > 0)
-      DeferBlock.ExitScope(exec, defers);
+      defers.ExitScope(exec);
   }
 }
 
