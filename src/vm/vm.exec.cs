@@ -275,7 +275,6 @@ public partial class VM : INamedResolver
   unsafe void ExecuteOnce(ExecState exec)
   {
     ref var region = ref exec.regions[exec.regions_count - 1];
-    //TODO: looks like frame_idx is not really needed since we always need the top frame?
     ref var frame = ref exec.frames[region.frame_idx];
 
     //1. if there's an active coroutine it has priority over simple 'code following' via ip
@@ -897,10 +896,6 @@ public partial class VM : INamedResolver
     //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
-
-    //these below cancel each other
-    //new_val._refc?.Retain();
-    //new_val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
