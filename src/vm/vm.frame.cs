@@ -14,12 +14,11 @@ public partial class VM : INamedResolver
     public IType[] type_refs;
     public int start_ip;
     public int return_ip;
+    public int regions_mark;
 
     public FuncArgsInfo args_info;
     public int locals_offset;
     public int return_args_num;
-
-    public DeferSupport defers;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public unsafe void SetupForModule(Module module, int start_ip)
@@ -46,15 +45,11 @@ public partial class VM : INamedResolver
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       return_ip = -1;
+      regions_mark = -1;
 
       //caching for faster access
       constants = module.compiled.constants;
       type_refs = module.compiled.type_refs_resolved;
-
-      if(defers == null)
-        defers = new DeferSupport();
-      else
-        defers.count = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -157,7 +157,8 @@ public partial class VM : INamedResolver
     internal void Attach(ref Frame frame, int frame_idx)
     {
       exec.ip = frame.start_ip;
-      var region = new Region(frame_idx: frame_idx, defers: frame.defers);
+      frame.regions_mark = exec.regions_count;
+      var region = new Region(frame_idx);
       exec.regions[exec.regions_count++] = region;
     }
 
@@ -305,13 +306,11 @@ public partial class VM : INamedResolver
     if(addr.fsn != null)
     {
       frame.SetupForModule(addr.module, VM.EXIT_FRAME_IP);
-
       PassArgsAndAttach(addr.fsn, fb, ref frame, frame_idx, args_info, args);
     }
     else
     {
       frame.SetupForModule(addr.module, addr.ip);
-
       PassArgsAndAttach(fb, ref frame, frame_idx, args_info, args);
     }
 

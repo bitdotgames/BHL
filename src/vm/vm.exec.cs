@@ -136,14 +136,7 @@ public partial class VM : INamedResolver
 
     static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
     {
-      if(i is SeqBlock si)
-      {
-        si.exec.GetCalls(calls);
-        if(!TryGetTraceInfo(si.exec.coroutine, ref ip, calls))
-          ip = si.exec.ip;
-        return true;
-      }
-      else if(i is ParalBranchBlock bi)
+      if(i is ParalBranchBlock bi)
       {
         bi.exec.GetCalls(calls);
         if(!TryGetTraceInfo(bi.exec.coroutine, ref ip, calls))
@@ -156,6 +149,39 @@ public partial class VM : INamedResolver
         return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
       else
         return false;
+    }
+
+    public void ExitScope(
+      VM.DeferSupport defers,
+      int frames_offset = 0,
+      int regions_offset = 0
+    )
+    {
+      if(coroutine != null)
+      {
+        CoroutinePool.Del(this, coroutine);
+        coroutine = null;
+      }
+
+      //we exit the scope for all dangling frames
+      for(int i = frames_count; i-- > frames_offset;)
+      {
+        ref var frame = ref frames[i];
+
+        for(int r = regions_count; r-- > frame.regions_mark;)
+        {
+          ref var tmp_region = ref regions[i];
+          if(tmp_region.defers != null && tmp_region.defers.count > 0)
+            tmp_region.defers.ExitScope(this);
+        }
+      }
+      regions_count = regions_offset;
+
+      if(defers.count > 0)
+        defers.ExitScope(this);
+
+      //let's keep frames count until defers have exited scope above
+      frames_count = frames_offset;
     }
   }
 
@@ -208,13 +234,11 @@ public partial class VM : INamedResolver
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
     public Region(
       int frame_idx,
-      DeferSupport defers,
       int min_ip = -1,
       int max_ip = STOP_IP
       )
     {
       this.frame_idx = frame_idx;
-      this.defers = defers;
       this.min_ip = min_ip;
       this.max_ip = max_ip;
     }
@@ -262,15 +286,22 @@ public partial class VM : INamedResolver
     //2. are we out of the current region?
     else if(exec.ip < region.min_ip || exec.ip > region.max_ip)
     {
+      if(region.defers != null && region.defers.count > 0)
+        region.defers.ExitScope(exec);
       --exec.regions_count;
     }
     //3. exit frame requested
     else if(exec.ip == EXIT_FRAME_IP)
     {
-      if(frame.defers.count > 0)
-        frame.defers.ExitScope(exec);
+      //exiting all regions which belong to us
+      for(int i = exec.regions_count; i-- > frame.regions_mark;)
+      {
+        ref var tmp_region = ref exec.regions[i];
+        if(tmp_region.defers != null && tmp_region.defers.count > 0)
+          tmp_region.defers.ExitScope(exec);
+      }
+      exec.regions_count = frame.regions_mark;
 
-      --exec.regions_count;
       exec.ip = frame.return_ip + 1;
 
       frame.Exit(exec.stack);
@@ -299,7 +330,7 @@ public partial class VM : INamedResolver
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
     init_exec.regions[init_exec.regions_count++] =
-      new VM.Region(-1, null, 0, module.compiled.initcode.Length - 1);
+      new VM.Region(-1, 0, module.compiled.initcode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     //TODO:
     //init_exec.stack.vals = init_frame.module.gvar_vals;
@@ -342,7 +373,8 @@ public partial class VM : INamedResolver
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
-    exec.regions[exec.regions_count++] = new Region(frame_idx, frame.defers);
+    frame.regions_mark = exec.regions_count;
+    exec.regions[exec.regions_count++] = new Region(frame_idx);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -1254,7 +1286,6 @@ public partial class VM : INamedResolver
     {
       bool return_status =
         CallNative(vm, exec, ptr.native, args_bits);
-      ptr.Release();
       if(return_status)
       {
         //let's cancel ip incrementing
@@ -1266,9 +1297,9 @@ public partial class VM : INamedResolver
       int new_frame_idx = exec.frames_count;
       ref var new_frame = ref exec.PushFrame();
       ptr.InitFrame(exec, ref frame, ref new_frame);
-      ptr.Release();
       vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
     }
+    ptr.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1401,22 +1432,17 @@ public partial class VM : INamedResolver
       exec.ip += jump_pos;
   }
 
-  //TODO: it's just a region with its own defers?
-  //      there's no need in SeqBlock instance
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSeq(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    var seq = CoroutinePool.New<SeqBlock>(vm);
-    seq.Init(exec, exec.ip + 1, exec.ip + size);
+    var sub_region = new Region(region.frame_idx, exec.ip + 1, exec.ip + size);
+    exec.regions[exec.regions_count++] = sub_region;
 
-    //NOTE: since there's a new coroutine we want to skip ip incrementing
-    //      which happens below and proceed right to the execution of
-    //      the new coroutine
-    exec.coroutine = seq;
+    //????
     //let's cancel ip incrementing
-    --exec.ip;
+    //--exec.ip;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1435,8 +1461,7 @@ public partial class VM : INamedResolver
       var branch= FetchBlockBranch(
         ref tmp_ip,
         exec, bytes,
-        out var tmp_size,
-        true
+        out var tmp_size
       );
 
       paral.branches.Add(branch);
@@ -1467,8 +1492,7 @@ public partial class VM : INamedResolver
       var branch = FetchBlockBranch(
         ref tmp_ip,
         exec, bytes,
-        out var tmp_size,
-        true
+        out var tmp_size
       );
 
       paral.branches.Add(branch);
@@ -1488,28 +1512,17 @@ public partial class VM : INamedResolver
     ref int ip,
     ExecState exec,
     byte* bytes,
-    out int size,
-    bool is_paral
+    out int size
   )
   {
     var type = (Opcodes)bytes[ip];
     size = (int)Bytecode.Decode16(bytes, ref ip);
 
-    //TODO: make separate opcodes for these
     if(type == Opcodes.Seq)
     {
-      if(is_paral)
-      {
-        var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
-        br.Init(exec, ip + 1, ip + size);
-        return br;
-      }
-      else
-      {
-        var seq = CoroutinePool.New<SeqBlock>(exec.vm);
-        seq.Init(exec, ip + 1, ip + size);
-        return seq;
-      }
+      var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
+      br.Init(exec, ip + 1, ip + size);
+      return br;
     }
     else if(type == Opcodes.Paral)
     {
@@ -1527,11 +1540,13 @@ public partial class VM : INamedResolver
       throw new Exception("Not supported block type: " + type);
   }
 
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDefer(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    if(region.defers == null)
+      region.defers = new DeferSupport();
 
     ref var d = ref region.defers.Add();
     d.ip = exec.ip + 1;
