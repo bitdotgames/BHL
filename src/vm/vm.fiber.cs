@@ -304,13 +304,13 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.Init(addr.module, VM.EXIT_FRAME_IP);
+      frame.SetupForModule(addr.module, VM.EXIT_FRAME_IP);
 
       PassArgsAndAttach(addr.fsn, fb, ref frame, frame_idx, args_info, args);
     }
     else
     {
-      frame.Init(addr.module, addr.ip);
+      frame.SetupForModule(addr.module, addr.ip);
 
       PassArgsAndAttach(fb, ref frame, frame_idx, args_info, args);
     }
@@ -504,7 +504,7 @@ public partial class VM : INamedResolver
 
       int frame_idx = fb.exec.frames_count;
       ref var frame = ref fb.exec.PushFrame();
-      frame.Init(addr.module, addr.ip);
+      frame.SetupForModule(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
       //NOTE: we push arguments using their 'natural' order since

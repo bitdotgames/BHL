@@ -120,11 +120,11 @@ public partial class VM : INamedResolver
     {
       if(native != null)
       {
-        frame.Init(origin_frame, VM.EXIT_FRAME_IP);
+        frame.SetupForOrigin(origin_frame, VM.EXIT_FRAME_IP);
       }
       else
       {
-        frame.Init(module, func_ip);
+        frame.SetupForModule(module, func_ip);
 
         for(int i = 0; i < upvals.sp; ++i)
         {

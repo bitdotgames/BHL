@@ -39,7 +39,7 @@ public class Module : INamedResolver
 
   public bool is_compiled
   {
-    get { return compiled != CompiledModule.None; }
+    get { return compiled != CompiledModule.Empty; }
   }
 
   public ModulePath path;
@@ -74,7 +74,7 @@ public class Module : INamedResolver
   //until this moment we don't know about other modules
   internal Module[] _imported;
 
-  public CompiledModule compiled = CompiledModule.None;
+  public CompiledModule compiled = CompiledModule.Empty;
 
   public Module(Types ts, ModulePath path)
     : this(ts, path, new Namespace())
@@ -175,6 +175,8 @@ public class Module : INamedResolver
           sns.module = this;
       }
     );
+
+    compiled.ResolveTypeRefs();
   }
 
   public void ImportGlobalVars()

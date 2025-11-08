@@ -502,7 +502,6 @@ public class TestDefer : BHL_TestBase
       defer {
         trace(""foo2"")
       }
-      return
     }
 
     func test() {

@@ -289,15 +289,12 @@ public partial class VM : INamedResolver
     }
   }
 
-  unsafe void ExecInitCode(Module module)
+  void ExecInitByteCode(Module module)
   {
-    if(module.compiled.initcode?.Length == 0)
+    if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
 
-    fixed (byte* bytecode = module.compiled.initcode)
-    {
-      init_frame.Init(module, module.compiled.constants, module.compiled.type_refs_resolved, bytecode, 0);
-    }
+    init_frame.SetupForModuleInit(module);
 
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
@@ -1074,7 +1071,7 @@ public partial class VM : INamedResolver
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
-    new_frame.Init(frame, func_ip);
+    new_frame.SetupForOrigin(frame, func_ip);
     vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
@@ -1123,7 +1120,7 @@ public partial class VM : INamedResolver
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
-    new_frame.Init(func_mod, func_ip);
+    new_frame.SetupForModule(func_mod, func_ip);
     vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
   }
 

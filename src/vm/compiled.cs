@@ -56,52 +56,24 @@ public class CompiledModule
 {
   const uint HEADER_VERSION = 2;
 
-  public static CompiledModule None = new CompiledModule();
+  public static CompiledModule Empty = new CompiledModule();
 
   //normalized imported module names
   public List<string> imports;
   public int total_gvars_num;
   public byte[] initcode;
   public byte[] bytecode;
+  public unsafe byte* bytecode_ptr;
+  public unsafe byte* initcode_ptr;
 
-  unsafe byte* _bytecode_ptr;
-  public unsafe byte* bytecode_ptr
-  {
-    get
-    {
-      if(_bytecode_ptr == null)
-      {
-        fixed(byte* ptr = bytecode)
-        {
-          _bytecode_ptr = ptr;
-        }
-      }
-      return _bytecode_ptr;
-    }
-  }
   public Const[] constants;
   public TypeRefIndex type_refs;
-  IType[] _type_refs_resolved;
-
-  public IType[] type_refs_resolved
-  {
-    get
-    {
-      if(_type_refs_resolved == null)
-      {
-        _type_refs_resolved = new IType[type_refs.Count];
-        for (int i = 0; i < type_refs.Count; ++i)
-          _type_refs_resolved[i] = type_refs.all[i].Get();
-      }
-
-      return _type_refs_resolved;
-    }
-  }
+  public IType[] type_refs_resolved;
 
   public Ip2SrcLine ip2src_line;
   public int init_func_idx = -1;
 
-  public CompiledModule(
+  public unsafe CompiledModule(
     int init_func_idx,
     List<string> imports,
     int total_gvars_num,
@@ -118,6 +90,16 @@ public class CompiledModule
     this.type_refs = type_refs;
     this.initcode = initcode;
     this.bytecode = bytecode;
+
+    fixed(byte * ptr = bytecode)
+    {
+      this.bytecode_ptr = ptr;
+    }
+    fixed(byte * ptr = initcode)
+    {
+      this.initcode_ptr = ptr;
+    }
+
     this.ip2src_line = ip2src_line;
   }
 
@@ -133,6 +115,16 @@ public class CompiledModule
       new Ip2SrcLine()
     )
   {
+  }
+
+  public void ResolveTypeRefs()
+  {
+    if(type_refs_resolved == null)
+    {
+      type_refs_resolved = new IType[type_refs.Count];
+      for (int i = 0; i < type_refs.Count; ++i)
+        type_refs_resolved[i] = type_refs.all[i].Get();
+    }
   }
 
   static public Module FromStream(

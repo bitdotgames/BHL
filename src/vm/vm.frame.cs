@@ -1,4 +1,5 @@
 using System;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -21,43 +22,34 @@ public partial class VM : INamedResolver
     public DeferSupport defers;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Init(Module module, int start_ip)
+    public unsafe void SetupForModule(Module module, int start_ip)
     {
-      Init(
-        module,
-        module.compiled.constants,
-        module.compiled.type_refs_resolved,
-        module.compiled.bytecode_ptr,
-        start_ip
-      );
+      Init(module, module.compiled.bytecode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void Init(Frame origin, int start_ip)
+    public unsafe void SetupForModuleInit(Module module, int start_ip = 0)
     {
-      Init(
-        origin.module,
-        origin.constants,
-        origin.type_refs,
-        origin.bytecode,
-        start_ip
-      );
+      Init(module, module.compiled.initcode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal unsafe void Init(
-      Module module,
-      Const[] constants,
-      IType[] type_refs,
-      byte* bytecode,
-      int start_ip)
+    public unsafe void SetupForOrigin(Frame origin, int start_ip)
+    {
+      Init(origin.module, origin.bytecode, start_ip);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    unsafe void Init(Module module, byte* bytecode, int start_ip)
     {
       this.module = module;
-      this.constants = constants;
-      this.type_refs = type_refs;
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       return_ip = -1;
+
+      //caching for faster access
+      constants = module.compiled.constants;
+      type_refs = module.compiled.type_refs_resolved;
 
       if(defers == null)
         defers = new DeferSupport();
