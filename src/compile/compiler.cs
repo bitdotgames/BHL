@@ -771,7 +771,7 @@ public class ModuleCompiler : AST_Visitor
   }
 
   //NOTE: for testing purposes only
-  public ModuleCompiler EmitThen(Opcodes op, params int[] operands)
+  public ModuleCompiler EmitChain(Opcodes op, params int[] operands)
   {
     Emit(op, operands);
     return this;

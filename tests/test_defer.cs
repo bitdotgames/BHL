@@ -30,13 +30,13 @@ public class TestDefer : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 0, 0})
-          .EmitThen(Opcodes.Defer, new int[] { 12 })
-          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
-          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-          .EmitThen(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
-          .EmitThen(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
-          .EmitThen(Opcodes.Return)
+          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0})
+          .EmitChain(Opcodes.Defer, new int[] { 12 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
+          .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
+          .EmitChain(Opcodes.Return)
       ;
 
     AssertEqual(c, expected);

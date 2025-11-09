@@ -357,9 +357,9 @@ public class TestYield : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1 /*args info*/})
-          .EmitThen(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
-          .EmitThen(Opcodes.Return)
+          .EmitChain(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+          .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
+          .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 
