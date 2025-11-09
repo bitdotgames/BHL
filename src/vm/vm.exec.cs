@@ -73,9 +73,16 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Frame PopFrame()
+    public ref Region PushRegion(int frame_idx, int min_ip = -1, int max_ip = STOP_IP)
     {
-      return ref frames[frames_count--];
+      if(regions_count == regions.Length)
+        Array.Resize(ref regions, regions_count << 1);
+
+      ref var region = ref regions[regions_count++];
+      region.frame_idx = frame_idx;
+      region.min_ip = min_ip;
+      region.max_ip = max_ip;
+      return ref region;
     }
 
     void GetCalls(List<VM.Frame> calls)
@@ -218,8 +225,7 @@ public partial class VM : INamedResolver
     {
       ip = frame.start_ip;
       frame.regions_mark = regions_count;
-      var region = new Region(frame_idx);
-      regions[regions_count++] = region;
+      PushRegion(frame_idx);
     }
 
     internal void StartFrameRegion(
@@ -318,18 +324,6 @@ public partial class VM : INamedResolver
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
-
-    [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public Region(
-      int frame_idx,
-      int min_ip = -1,
-      int max_ip = STOP_IP
-      )
-    {
-      this.frame_idx = frame_idx;
-      this.min_ip = min_ip;
-      this.max_ip = max_ip;
-    }
   }
 
   //fake frame used for module's init code
@@ -360,6 +354,7 @@ public partial class VM : INamedResolver
       ExecuteOnce(exec);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe void ExecuteOnce(ExecState exec)
   {
     ref var region = ref exec.regions[exec.regions_count - 1];
@@ -381,7 +376,7 @@ public partial class VM : INamedResolver
     //3. exit frame requested
     else if(exec.ip == EXIT_FRAME_IP)
     {
-      //exiting all regions which belong to us
+      //exiting all regions which belong to the frame
       for(int i = exec.regions_count; i-- > frame.regions_mark;)
       {
         ref var tmp_region = ref exec.regions[i];
@@ -417,8 +412,7 @@ public partial class VM : INamedResolver
 
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
-    init_exec.regions[init_exec.regions_count++] =
-      new VM.Region(-1, 0, module.compiled.initcode.Length - 1);
+    init_exec.PushRegion(-1, 0, module.compiled.initcode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     //TODO:
     //init_exec.stack.vals = init_frame.module.gvar_vals;
@@ -451,18 +445,16 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Call(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
   {
-    var stack = exec.stack;
-
     //it's assumed passed values are already on the stack
     //and we need to put on the top of the stack args_bits
-    ref Val v = ref stack.Push();
+    ref Val v = ref exec.stack.Push();
     v.type = Types.Int;
     v._num = args_bits;
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
     frame.regions_mark = exec.regions_count;
-    exec.regions[exec.regions_count++] = new Region(frame_idx);
+    exec.PushRegion(frame_idx);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -1526,8 +1518,7 @@ public partial class VM : INamedResolver
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    var sub_region = new Region(region.frame_idx, exec.ip + 1, exec.ip + size);
-    exec.regions[exec.regions_count++] = sub_region;
+    exec.PushRegion(region.frame_idx, exec.ip + 1, exec.ip + size);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

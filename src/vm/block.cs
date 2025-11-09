@@ -32,8 +32,7 @@ public struct DeferBlock
     exec.ip = this.ip;
 
     //2. let's create the execution region
-    exec.regions[exec.regions_count++]
-      = new VM.Region(exec.frames_count - 1, min_ip: ip, max_ip: max_ip);
+    exec.PushRegion(exec.frames_count - 1, min_ip: ip, max_ip: max_ip);
     //3. and execute it
     exec.vm.Execute(
       exec,
@@ -74,6 +73,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   {
     this.min_ip = min_ip;
     this.max_ip = max_ip;
+
     exec.vm = ext_exec.vm;
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
@@ -84,30 +84,15 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     //let's copy ext_exec's frame data
     fake_frame = ext_exec.frames[ext_exec.frames_count - 1];
 
-    var region = new VM.Region(fake_frame_idx, min_ip: min_ip, max_ip: max_ip)
-    {
-      defers = defers
-    };
-    exec.regions[exec.regions_count++] = region;
+    ref var region = ref exec.PushRegion(fake_frame_idx, min_ip: min_ip, max_ip: max_ip);
+    region.defers = defers;
   }
 
   public override void Tick(VM.ExecState ext_exec)
   {
-    var local_stack = exec.stack;
-    int ext_sp_backup = ext_exec.stack.sp;
-    //TODO: the code below is not efficient
-    //let's push our values onto the external stack
-    exec.stack = ext_exec.stack;
-    for(int i = 0; i < local_stack.sp; i++)
-      exec.stack.Push(local_stack.vals[i]);
-
-    ext_exec.vm.Execute(exec);
+    exec.vm.Execute(exec);
 
     ext_exec.status = exec.status;
-    //let's restore external stack's sp
-    ext_exec.stack.sp = ext_sp_backup;
-    //let's restore our own stack
-    exec.stack = local_stack;
 
     if(exec.status == BHS.SUCCESS)
     {

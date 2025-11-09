@@ -23,7 +23,7 @@ public class TestPerf : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_bytes:true);
     {
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
       var fb = vm.Start("fib", 15);
