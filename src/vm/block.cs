@@ -34,8 +34,7 @@ public struct DeferBlock
     //2. let's create the execution region
     exec.PushRegion(exec.frames_count - 1, min_ip: ip, max_ip: max_ip);
     //3. and execute it
-    exec.vm.Execute(
-      exec,
+    exec.Execute(
       //NOTE: we re-use the existing exec.stack but limit the execution
       //      only up to the defer code block
       exec.regions_count - 1
@@ -78,6 +77,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
 
+    //TODO: this is ugly, we must reference current frame from ext_exec instead
     int fake_frame_idx = exec.frames_count;
     //creating a 'fake' frame just because we need a region,
     ref var fake_frame = ref exec.PushFrame();
@@ -90,7 +90,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.ExecState ext_exec)
   {
-    exec.vm.Execute(exec);
+    exec.Execute();
 
     ext_exec.status = exec.status;
 
