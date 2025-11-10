@@ -270,12 +270,12 @@ public partial class VM : INamedResolver
     if(addr.fsn != null)
     {
       frame.SetupForModule(addr.module, VM.EXIT_FRAME_IP);
-      fb.exec.StartFrameRegion(addr.fsn, ref frame, frame_idx, args_info, args);
+      fb.exec.PushFrameRegion(addr.fsn, ref frame, frame_idx, args_info, args);
     }
     else
     {
       frame.SetupForModule(addr.module, addr.ip);
-      fb.exec.StartFrameRegion(ref frame, frame_idx, args_info, args);
+      fb.exec.PushFrameRegion(ref frame, frame_idx, args_info, args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -302,9 +302,9 @@ public partial class VM : INamedResolver
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
-      new_fiber.exec.StartFrameRegion(ptr.native, ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.PushFrameRegion(ptr.native, ref new_frame, new_frame_idx, args_info, args);
     else
-      new_fiber.exec.StartFrameRegion(ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.PushFrameRegion(ref new_frame, new_frame_idx, args_info, args);
 
     return new_fiber;
   }
@@ -431,7 +431,7 @@ public partial class VM : INamedResolver
         v._num = args_info.bits;
       }
 
-      fb.exec.StartFrameRegion(ref frame, frame_idx);
+      fb.exec.PushFrameRegion(ref frame, frame_idx);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");

@@ -50,7 +50,7 @@ public class TestFiber : BHL_TestBase
     string bhl = @"
     func int test(int a, int b, int c)
     {
-      return a + b + c
+      return a - b - c
     }
     ";
 
@@ -62,7 +62,7 @@ public class TestFiber : BHL_TestBase
     args[2] = c;
     var fb = vm.Start("test", new StackList<Val>(args));
     Assert.False(vm.Tick());
-    Assert.Equal(6, fb.Stack.Pop().num);
+    Assert.Equal(-4, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 

@@ -221,21 +221,23 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void StartFrameRegion(ref Frame frame, int frame_idx)
+    internal void PushFrameRegion(ref Frame frame, int frame_idx)
     {
       ip = frame.start_ip;
       frame.regions_mark = regions_count;
       PushRegion(frame_idx);
     }
 
-    internal void StartFrameRegion(
+    internal void PushFrameRegion(
       ref Frame frame,
       int frame_idx,
       FuncArgsInfo args_info,
       StackList <Val> args
     )
     {
-      for(int i = args.Count; i-- > 0;)
+      //NOTE: since variables will be set as local variables
+      //      we traverse them in natural order
+      for(int i = 0; i < args.Count; ++i)
       {
         ref Val v = ref stack.Push();
         v = args[i];
@@ -247,10 +249,10 @@ public partial class VM : INamedResolver
         v = Val.NewInt(args_info.bits);
       }
 
-      StartFrameRegion(ref frame, frame_idx);
+      PushFrameRegion(ref frame, frame_idx);
     }
 
-    internal void StartFrameRegion(
+    internal void PushFrameRegion(
       FuncSymbolNative fsn,
       ref Frame frame,
       int frame_idx,
@@ -267,7 +269,7 @@ public partial class VM : INamedResolver
       frame.args_info = args_info;
       frame.return_vars_num = fsn.GetReturnedArgsNum();
 
-      StartFrameRegion(ref frame, frame_idx);
+      PushFrameRegion(ref frame, frame_idx);
 
       //passing args info as argument
       coroutine = fsn.cb(this, args_info);
