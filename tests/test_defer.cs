@@ -1279,6 +1279,47 @@ public class TestDefer : BHL_TestBase
   }
 
   [Fact]
+  public void TestParalAllFailureWithDefers()
+  {
+    string bhl = @"
+
+    coro func test()
+    {
+      defer {
+        trace(""1"")
+      }
+      paral_all {
+        {
+          defer {
+            trace(""4"")
+          }
+          yield()
+          fail()
+        }
+      }
+      trace(""6"")
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+      BindFail(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+    Assert.True(vm.Tick());
+    Assert.Equal("", log.ToString());
+    //TODO: VM.Tick() returns BHS.SUCCESS when all fibers exited
+    //      regardless of their individual exit status
+    Assert.False(vm.Tick());
+    Assert.Equal("41", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestParalAllFailureWithMultiSeqDefers()
   {
     string bhl = @"

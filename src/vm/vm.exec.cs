@@ -267,7 +267,7 @@ public partial class VM : INamedResolver
       //1. if there's an active coroutine it has priority over simple 'code following' via ip
       if(coroutine != null)
       {
-        ExecuteCoroutine(ref frame, this);
+        ExecuteCoroutine(ref frame, ref region, this);
       }
       //2. are we out of the current region?
       else if(ip < region.min_ip || ip > region.max_ip)
@@ -453,7 +453,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void ExecuteCoroutine(ref Frame frame, ExecState exec)
+  static void ExecuteCoroutine(ref Frame frame, ref Region region, ExecState exec)
   {
     exec.status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple
@@ -471,6 +471,9 @@ public partial class VM : INamedResolver
       exec.coroutine = null;
 
       exec.ip = EXIT_FRAME_IP - 1;
+
+      if(region.defers != null && region.defers.count > 0)
+        region.defers.ExitScope(exec);
       --exec.regions_count;
     }
     else if(exec.status == BHS.SUCCESS)
