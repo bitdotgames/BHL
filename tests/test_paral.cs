@@ -656,6 +656,32 @@ public class TestParal : BHL_TestBase
   }
 
   [Fact]
+  public void TestParalCallSubFunc()
+  {
+    string bhl = @"
+    func int foo()
+    {
+      return 1;
+    }
+
+    coro func int test()
+    {
+      paral {
+        {
+          foo()
+        }
+        yield suspend()
+      }
+      return 2
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(2, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestParalReturnFromSubFunc()
   {
     string bhl = @"

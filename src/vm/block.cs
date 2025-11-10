@@ -78,14 +78,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.ip = min_ip;
 
     //TODO: this is ugly, can we reference current frame from ext_exec instead?
-    int fake_frame_idx = exec.frames_count;
+    int copied_frame_idx = exec.frames_count;
     //creating a frame copy just because a region must reference a frame
     ref var frame_copy = ref exec.PushFrame();
     //let's copy ext_exec's frame data
     frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
 
-    ref var region = ref exec.PushRegion(fake_frame_idx, min_ip: min_ip, max_ip: max_ip);
-    region.defers = defers;
+    exec.PushRegion(copied_frame_idx, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.ExecState ext_exec)
@@ -108,27 +107,6 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Cleanup(VM.ExecState ext_exec)
   {
-    ExitScope(exec);
-
-    //let's detect if there was a return and if so let's copy dangling stack data
-    if(exec.ip == VM.EXIT_FRAME_IP)
-    {
-      ref var top_frame = ref exec.frames[ext_exec.frames_count - 1];
-      for(int i = top_frame.locals_offset; i < top_frame.return_vars_num; ++i)
-      {
-        ref var val = ref exec.stack.vals[i];
-        ext_exec.stack.Push(val);
-        val._refc = null;
-        val._obj = null;
-      }
-    }
-
-    exec.stack.sp = 0;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void ExitScope(VM.ExecState exec)
-  {
     if(exec.coroutine != null)
     {
       CoroutinePool.Del(exec, exec.coroutine);
@@ -149,10 +127,26 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       frame.CleanLocals(exec.stack);
     }
 
+    if(defers.count > 0)
+      defers.ExitScope(exec);
+
+    //let's detect if there was a return and if so let's copy dangling stack data
+    if(exec.frames_count == 1 && exec.ip == VM.EXIT_FRAME_IP)
+    {
+      ref var top_frame = ref exec.frames[exec.frames_count - 1];
+      for(int i = top_frame.locals_offset; i < (top_frame.locals_offset + top_frame.return_vars_num); ++i)
+      {
+        ref var val = ref exec.stack.vals[i];
+        ext_exec.stack.Push(val);
+        val._refc = null;
+        val._obj = null;
+      }
+    }
+
+    exec.stack.sp = 0;
     exec.regions_count = 0;
     exec.frames_count = 0;
   }
-
 }
 
 public class ParalBlock : Coroutine, IInspectableCoroutine

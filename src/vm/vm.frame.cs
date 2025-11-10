@@ -17,6 +17,7 @@ public partial class VM : INamedResolver
     public int regions_mark;
 
     public FuncArgsInfo args_info;
+    public int locals_vars_num;
     public int locals_offset;
     public ValStack locals;
     public int return_vars_num;
@@ -56,10 +57,8 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void CleanLocals(ValStack stack)
     {
-      int ret_start_offset = stack.sp - return_vars_num;
-
       //releasing all locals
-      for(int i = locals_offset; i < ret_start_offset; ++i)
+      for(int i = locals_offset; i < locals_offset + locals_vars_num; ++i)
       {
         ref var val = ref locals.vals[i];
         //TODO: what about blob?
@@ -76,7 +75,6 @@ public partial class VM : INamedResolver
     public void ReturnVars(ValStack stack)
     {
       int ret_start_offset = stack.sp - return_vars_num;
-      int local_vars_num = ret_start_offset - locals_offset;
 
       //moving returned values up
       //NOTE: returned vals are already retained by GetVar opcode,
@@ -90,7 +88,7 @@ public partial class VM : INamedResolver
       );
 
       //need to clean stack leftover
-      int leftover = local_vars_num - return_vars_num;
+      int leftover = locals_vars_num - return_vars_num;
       for(int i = 0; i <= leftover; ++i)
       {
         ref var val = ref stack.vals[ret_start_offset + i];

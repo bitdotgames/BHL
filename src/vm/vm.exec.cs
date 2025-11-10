@@ -236,6 +236,7 @@ public partial class VM : INamedResolver
 
       frame.args_info = args_info;
       frame.return_vars_num = fsn.GetReturnedArgsNum();
+      frame.locals_vars_num = 0;
 
       PushFrameRegion(ref frame, frame_idx);
 
@@ -287,14 +288,14 @@ public partial class VM : INamedResolver
         }
         regions_count = frame.regions_mark;
 
-        ip = frame.return_ip + 1;
-
         frame.CleanLocals(stack);
         if(frame.return_vars_num > 0)
           frame.ReturnVars(stack);
         //stack pointer now at the last returned value
         stack.sp = frame.locals_offset + frame.return_vars_num;
         --frames_count;
+
+        ip = frame.return_ip + 1;
       }
       else
       {
@@ -1353,7 +1354,7 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
-    int local_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    int locals_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
     int return_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
 
     var stack = exec.stack;
@@ -1365,13 +1366,14 @@ public partial class VM : INamedResolver
     frame.args_info = args_info;
     //locals starts at the index of the first pushed argument
     int args_num = args_info.CountArgs();
+    frame.locals_vars_num = locals_vars_num;
     frame.locals_offset = stack.sp - args_num;
     frame.locals = stack;
     frame.return_vars_num = return_vars_num;
 
     //let's reserve space for local variables, however passed variables are
     //already on the stack, let's take that into account
-    int rest_local_vars_num = local_vars_num - args_num;
+    int rest_local_vars_num = locals_vars_num - args_num;
     stack.Reserve(rest_local_vars_num);
     //temporary stack lives after local variables
     stack.sp += rest_local_vars_num;
