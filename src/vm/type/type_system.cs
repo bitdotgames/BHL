@@ -319,14 +319,14 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool Is(ValOld val, IType dest_type)
+  static public bool Is(Val val, IType dest_type)
   {
     //NOTE: special handling of native types - we need to go through C# type system.
     //      Make sense only if there's C# object is present - this way we can use C# reflection
     //      by getting the type of the object
     if(dest_type is INativeType dest_intype)
     {
-      var val_type = val?.type;
+      var val_type = val.type;
 
       if(val_type is INativeType val_intype)
       {
@@ -340,47 +340,13 @@ public class Types : INamedResolver
       else if(val_type == Types.Any)
       {
         var dest_ntype = dest_intype.GetNativeType();
-        if(val.is_null && dest_ntype != null)
+        if(val.type == Types.Null && dest_ntype != null)
           return true;
         var nobj = val._obj;
         return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
       }
       else
         return false;
-    }
-    else
-      return Is(val?.type, dest_type);
-  }
-
-  static public bool Is(Val val, IType dest_type)
-  {
-    //NOTE: special handling of native types - we need to go through C# type system.
-    //      Make sense only if there's C# object is present - this way we can use C# reflection
-    //      by getting the type of the object
-    if(dest_type is INativeType dest_intype)
-    {
-      throw new NotImplementedException();
-      //var val_type = val.type;
-
-      //if(val_type is INativeType val_intype)
-      //{
-      //  var dest_ntype = dest_intype.GetNativeType();
-      //  var nobj = val_intype.GetNativeObject(val);
-      //  return dest_ntype?.IsAssignableFrom(
-      //    nobj?.GetType() ?? val_intype.GetNativeType()
-      //  ) ?? false;
-      //}
-      ////special case for 'any' type being cast to native type
-      //else if(val_type == Types.Any)
-      //{
-      //  var dest_ntype = dest_intype.GetNativeType();
-      //  if(val.is_null && dest_ntype != null)
-      //    return true;
-      //  var nobj = val._obj;
-      //  return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
-      //}
-      //else
-      //  return false;
     }
     else
       return Is(val.type, dest_type);

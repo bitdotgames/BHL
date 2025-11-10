@@ -763,10 +763,6 @@ public class BHL_TestBase
     //forced cleanup of module globals
     vm.UnloadModules();
 
-    //for extra debug
-    if(vm.vals_pool.BusyCount != 0)
-      Console.WriteLine(vm.vals_pool.Dump());
-
     if(vm.last_fiber != null)
       CommonChecks(vm.last_fiber, check_frames);
 

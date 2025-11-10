@@ -128,10 +128,10 @@ public class EnumSymbolNative : EnumSymbol, INativeType
     return native_type;
   }
 
-  public object GetNativeObject(ValOld v)
+  public object GetNativeObject(Val v)
   {
     //TODO: is it valid?
-    return v?._num;
+    return v._num;
   }
 }
 

@@ -45,32 +45,6 @@ public static class VMExtensions
     return vm.Start(addr, new FuncArgsInfo(args.Count), args, opts);
   }
 
-  static public void Alloc(this Pool<ValOld> pool, VM vm, int num)
-  {
-    for(int i = 0; i < num; ++i)
-    {
-      ++pool.miss;
-      var tmp = new ValOld(vm);
-      pool.stack.Push(tmp);
-    }
-  }
-
-  static public string Dump(this Pool<ValOld> pool)
-  {
-    string res = "=== Val POOL ===\n";
-    res += "busy:" + pool.BusyCount + " idle:" + pool.IdleCount + "\n";
-
-    var dvs = new ValOld[pool.stack.Count];
-    pool.stack.CopyTo(dvs, 0);
-    for(int i = dvs.Length; i-- > 0;)
-    {
-      var v = dvs[i];
-      res += v + " (refs:" + v._refs + ") " + v.GetHashCode() + "\n";
-    }
-
-    return res;
-  }
-
   static public VM.ModuleSymbol LoadModuleSymbol(this VM.SymbolSpec spec, VM vm)
   {
     var err = vm.TryLoadModuleSymbol(spec, out var ms);

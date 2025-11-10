@@ -16,7 +16,7 @@ public interface ITyped
 public interface INativeType
 {
   System.Type GetNativeType();
-  object GetNativeObject(ValOld v);
+  object GetNativeObject(Val v);
 }
 
 public interface ITypeRefIndexable

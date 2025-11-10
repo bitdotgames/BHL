@@ -515,11 +515,6 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     return native_type;
   }
 
-  public object GetNativeObject(ValOld v)
-  {
-    throw new NotImplementedException();
-  }
-
   public object GetNativeObject(Val v)
   {
     return native_object_getter?.Invoke(v) ?? v._obj;

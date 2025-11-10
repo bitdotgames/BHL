@@ -162,9 +162,9 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
     return native_type;
   }
 
-  public object GetNativeObject(ValOld v)
+  public object GetNativeObject(Val v)
   {
-    return v?._obj;
+    return v._obj;
   }
 
   public void Setup()
