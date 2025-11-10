@@ -84,7 +84,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     //let's copy ext_exec's frame data
     frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
 
-    exec.PushRegion(copied_frame_idx, min_ip: min_ip, max_ip: max_ip);
+    ref var region = ref exec.PushRegion(copied_frame_idx, min_ip: min_ip, max_ip: max_ip);
+    region.defers = defers;
   }
 
   public override void Tick(VM.ExecState ext_exec)

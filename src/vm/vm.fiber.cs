@@ -51,28 +51,6 @@ public partial class VM : INamedResolver
     }
   }
 
-  public struct FiberResult
-  {
-    Fiber fb;
-
-    public int Count => fb.result_old.Count;
-
-    public FiberResult(Fiber fb)
-    {
-      this.fb = fb;
-    }
-
-    public ValOld Pop()
-    {
-      return fb.result_old.Pop();
-    }
-
-    public ValOld PopRelease()
-    {
-      return fb.result_old.PopRelease();
-    }
-  }
-
   public class Fiber : ITask
   {
     public readonly VM vm;
