@@ -54,15 +54,14 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CleanLocalsAndReturnVars(ValStack stack)
+    public void CleanLocals(ValStack stack)
     {
       int ret_start_offset = stack.sp - return_vars_num;
-      int local_vars_num = ret_start_offset - locals_offset;
 
       //releasing all locals
       for(int i = locals_offset; i < ret_start_offset; ++i)
       {
-        ref var val = ref stack.vals[i];
+        ref var val = ref locals.vals[i];
         //TODO: what about blob?
         if(val._refc != null)
         {
@@ -71,33 +70,34 @@ public partial class VM : INamedResolver
         }
         val._obj = null;
       }
+    }
 
-      if(return_vars_num > 0)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ReturnVars(ValStack stack)
+    {
+      int ret_start_offset = stack.sp - return_vars_num;
+      int local_vars_num = ret_start_offset - locals_offset;
+
+      //moving returned values up
+      //NOTE: returned vals are already retained by GetVar opcode,
+      //      no need to do that
+      Array.Copy(
+        stack.vals,
+        ret_start_offset,
+        stack.vals,
+        locals_offset,
+        return_vars_num
+      );
+
+      //need to clean stack leftover
+      int leftover = local_vars_num - return_vars_num;
+      for(int i = 0; i <= leftover; ++i)
       {
-        //moving returned values up
-        //NOTE: returned vals are already retained by GetVar opcode,
-        //      no need to do that
-        Array.Copy(
-          stack.vals,
-          ret_start_offset,
-          stack.vals,
-          locals_offset,
-          return_vars_num
-        );
-
-        //need to clean stack leftover
-        int leftover = local_vars_num - return_vars_num;
-        for(int i = 0; i <= leftover; ++i)
-        {
-          ref var val = ref stack.vals[ret_start_offset + i];
-          //TODO: what about blob?
-          val._refc = null;
-          val._obj = null;
-        }
+        ref var val = ref stack.vals[ret_start_offset + i];
+        //TODO: what about blob?
+        val._refc = null;
+        val._obj = null;
       }
-
-      //stack pointer now at the last returned value
-      stack.sp = locals_offset + return_vars_num;
     }
   }
 }

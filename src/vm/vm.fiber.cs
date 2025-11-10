@@ -142,7 +142,7 @@ public partial class VM : INamedResolver
 
       fb.refs = -1;
 
-      fb.exec.ExitScopes();
+      fb.exec.Stop();
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
@@ -362,7 +362,7 @@ public partial class VM : INamedResolver
       return;
     fb.stop_guard = true;
 
-    fb.exec.ExitScopes();
+    fb.exec.Stop();
 
     //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.

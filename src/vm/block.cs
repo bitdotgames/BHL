@@ -77,12 +77,12 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
 
-    //TODO: this is ugly, we must reference current frame from ext_exec instead
+    //TODO: this is ugly, can we reference current frame from ext_exec instead?
     int fake_frame_idx = exec.frames_count;
-    //creating a 'fake' frame just because we need a region,
-    ref var fake_frame = ref exec.PushFrame();
+    //creating a frame copy just because a region must reference a frame
+    ref var frame_copy = ref exec.PushFrame();
     //let's copy ext_exec's frame data
-    fake_frame = ext_exec.frames[ext_exec.frames_count - 1];
+    frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
 
     ref var region = ref exec.PushRegion(fake_frame_idx, min_ip: min_ip, max_ip: max_ip);
     region.defers = defers;
@@ -106,16 +106,25 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  public override void Cleanup(VM.ExecState _)
+  public override void Cleanup(VM.ExecState ext_exec)
   {
-    exec.ExitScope(defers);
+    //let's ignore 'copied' frame
+    exec.ExitScope(defers, frames_offset: 1);
 
-    //NOTE: let's clean the local stack
-    while(exec.stack.sp > 0)
+    //let's detect if there was a return and if so let's copy dangling stack data
+    if(exec.ip == VM.EXIT_FRAME_IP)
     {
-      exec.stack.Pop(out var val);
-      val._refc?.Release();
+      ref var top_frame = ref exec.frames[ext_exec.frames_count - 1];
+      for(int i = top_frame.locals_offset; i < top_frame.return_vars_num; ++i)
+      {
+        ref var val = ref exec.stack.vals[i];
+        ext_exec.stack.Push(val);
+        val._refc = null;
+        val._obj = null;
+      }
     }
+
+    exec.stack.sp = 0;
   }
 }
 

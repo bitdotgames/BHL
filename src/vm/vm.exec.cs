@@ -158,7 +158,8 @@ public partial class VM : INamedResolver
         return false;
     }
 
-    public void ExitScope(
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ExitScope(
       VM.DeferSupport defers,
       int frames_offset = 0,
       int regions_offset = 0
@@ -181,6 +182,7 @@ public partial class VM : INamedResolver
           if(tmp_region.defers != null && tmp_region.defers.count > 0)
             tmp_region.defers.ExitScope(this);
         }
+        frame.CleanLocals(stack);
       }
       regions_count = regions_offset;
 
@@ -191,9 +193,8 @@ public partial class VM : INamedResolver
       frames_count = frames_offset;
     }
 
-    //TODO: is it similar to the method above?
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ExitScopes()
+    internal void Stop()
     {
       if(frames_count > 0)
       {
@@ -205,14 +206,16 @@ public partial class VM : INamedResolver
 
         for(int i = frames_count; i-- > 0;)
         {
-          ref var frm = ref frames[i];
-          frm.CleanLocalsAndReturnVars(stack);
-          //TODO:
-          //if(frm.defers_count > 0)
-          //{
-          //  DeferBlock.ExitScope(exec, frm.defers, frm.defers_count);
-          //  frm.defers_count = 0;
-          //}
+          ref var frame = ref frames[i];
+
+          for(int r = regions_count; r-- > frame.regions_mark;)
+          {
+            ref var tmp_region = ref regions[i];
+            if(tmp_region.defers != null && tmp_region.defers.count > 0)
+              tmp_region.defers.ExitScope(this);
+          }
+
+          frame.CleanLocals(stack);
         }
         frames_count = 0;
       }
@@ -321,7 +324,11 @@ public partial class VM : INamedResolver
 
         ip = frame.return_ip + 1;
 
-        frame.CleanLocalsAndReturnVars(stack);
+        frame.CleanLocals(stack);
+        if(frame.return_vars_num > 0)
+          frame.ReturnVars(stack);
+        //stack pointer now at the last returned value
+        stack.sp = frame.locals_offset + frame.return_vars_num;
         --frames_count;
       }
       else
