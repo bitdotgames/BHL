@@ -97,7 +97,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     if(exec.status == BHS.SUCCESS)
     {
       //TODO: why doing this if there's a similar code in parent paral block
-      //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after block
+      //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
       if(exec.ip > min_ip && exec.ip < max_ip)
         ext_exec.ip = max_ip + 1;
       //otherwise just assign ext_ip the last ip result (this is needed for break, continue)
@@ -108,8 +108,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Cleanup(VM.ExecState ext_exec)
   {
-    //let's ignore 'copied' frame
-    exec.ExitScope(defers, frames_offset: 1);
+    ExitScope(exec);
 
     //let's detect if there was a return and if so let's copy dangling stack data
     if(exec.ip == VM.EXIT_FRAME_IP)
@@ -126,6 +125,34 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
     exec.stack.sp = 0;
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static void ExitScope(VM.ExecState exec)
+  {
+    if(exec.coroutine != null)
+    {
+      CoroutinePool.Del(exec, exec.coroutine);
+      exec.coroutine = null;
+    }
+
+    //we exit the scope for all dangling frames
+    for(int i = exec.frames_count; i-- > 1/*let's ignore the copied frame*/;)
+    {
+      ref var frame = ref exec.frames[i];
+
+      for(int r = exec.regions_count; r-- > frame.regions_mark;)
+      {
+        ref var tmp_region = ref exec.regions[i];
+        if(tmp_region.defers != null && tmp_region.defers.count > 0)
+          tmp_region.defers.ExitScope(exec);
+      }
+      frame.CleanLocals(exec.stack);
+    }
+
+    exec.regions_count = 0;
+    exec.frames_count = 0;
+  }
+
 }
 
 public class ParalBlock : Coroutine, IInspectableCoroutine

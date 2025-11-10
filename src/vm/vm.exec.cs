@@ -159,41 +159,6 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ExitScope(
-      VM.DeferSupport defers,
-      int frames_offset = 0,
-      int regions_offset = 0
-    )
-    {
-      if(coroutine != null)
-      {
-        CoroutinePool.Del(this, coroutine);
-        coroutine = null;
-      }
-
-      //we exit the scope for all dangling frames
-      for(int i = frames_count; i-- > frames_offset;)
-      {
-        ref var frame = ref frames[i];
-
-        for(int r = regions_count; r-- > frame.regions_mark;)
-        {
-          ref var tmp_region = ref regions[i];
-          if(tmp_region.defers != null && tmp_region.defers.count > 0)
-            tmp_region.defers.ExitScope(this);
-        }
-        frame.CleanLocals(stack);
-      }
-      regions_count = regions_offset;
-
-      if(defers.count > 0)
-        defers.ExitScope(this);
-
-      //let's keep frames count until defers have exited scope above
-      frames_count = frames_offset;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Stop()
     {
       if(frames_count > 0)
