@@ -215,7 +215,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -240,7 +240,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -272,7 +272,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(52, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(52, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -336,7 +336,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(10, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(10, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -501,7 +501,7 @@ public class TestYield : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(1, fb.result_old.PopRelease().num);
+    Assert.Equal(1, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -531,7 +531,7 @@ public class TestYield : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    Assert.Equal(3, fb.result_old.PopRelease().num);
+    Assert.Equal(3, fb.Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -582,8 +582,8 @@ public class TestYield : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.False(vm.Tick());
-    var val = fb.result_old.PopRelease();
-    Assert.Equal(3, val.num);
+    double val = fb.Stack.Pop();
+    Assert.Equal(3, val);
     CommonChecks(vm);
   }
 
@@ -610,7 +610,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(5, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(5, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -675,7 +675,7 @@ public class TestYield : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(42, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 

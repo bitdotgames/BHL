@@ -10,7 +10,7 @@ public class TestPreproc : BHL_TestBase
   public void TestIfMissingDefine()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
 #if FOO
       return false
@@ -20,7 +20,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -28,7 +28,7 @@ public class TestPreproc : BHL_TestBase
   public void TestIfDefineExists()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
 #if FOO
       return false
@@ -38,7 +38,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.False(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -46,7 +46,7 @@ public class TestPreproc : BHL_TestBase
   public void TestIfNotMissingDefine()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
 #if !FOO
       return false
@@ -56,7 +56,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.False(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -64,7 +64,7 @@ public class TestPreproc : BHL_TestBase
   public void TestIfNotDefineExists()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
 #if !FOO
       return false
@@ -74,7 +74,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -82,11 +82,11 @@ public class TestPreproc : BHL_TestBase
   public void TestElseMissingDefine()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
 #if FOO
       return 1
-#else 
+#else
       return 2
 #endif
       return 3
@@ -94,7 +94,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(2, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(2, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -102,11 +102,11 @@ public class TestPreproc : BHL_TestBase
   public void TestElseDefineExists()
   {
     string bhl = @"
-    func int test() 
+    func int test()
     {
 #if FOO
       return 1
-#else 
+#else
       return 2
 #endif
       return 3
@@ -114,7 +114,7 @@ public class TestPreproc : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl, defines: new HashSet<string>() {"FOO"});
-    Assert.Equal(1, Execute(vm, "test").result_old.PopRelease().num);
+    Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -122,7 +122,7 @@ public class TestPreproc : BHL_TestBase
   public void TestDanglingEndif()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
   #endif
     }
@@ -142,7 +142,7 @@ public class TestPreproc : BHL_TestBase
   public void TestDoubleElse()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
   #if FOO
   #else
@@ -165,7 +165,7 @@ public class TestPreproc : BHL_TestBase
   public void TestNotClosedIf()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
   #if FOO
     }
@@ -185,7 +185,7 @@ public class TestPreproc : BHL_TestBase
   public void TestWeirdIf()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
   #if
   #endif
@@ -206,7 +206,7 @@ public class TestPreproc : BHL_TestBase
   public void TestErrorReportingFromParser()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
       return
 #if FOO
@@ -229,7 +229,7 @@ public class TestPreproc : BHL_TestBase
   public void TestErrorReportingFromParser2()
   {
     string bhl = @"
-    func bool test() 
+    func bool test()
     {
 #if !FOO
       return 10
@@ -251,7 +251,7 @@ public class TestPreproc : BHL_TestBase
   public void TestErrorReportingPreserveLines()
   {
     string bhl = @"
-    func test() 
+    func test()
     {
 #if SERVER
       some junk
@@ -282,7 +282,7 @@ func test()
 {
   //кек
   #if SERVER
-  
+
   #endif
 }
 ";
@@ -300,7 +300,7 @@ func test()
 {
   #if SERVER
   //你好
-  
+
   #endif
 }
 ";
@@ -324,7 +324,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    Assert.False(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.False(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -340,7 +340,7 @@ func bool test()
 ";
 
     var vm = MakeVM(bhl);
-    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 }

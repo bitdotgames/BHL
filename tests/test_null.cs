@@ -9,8 +9,8 @@ public class TestNull : BHL_TestBase
   public void TestStructCanBeNull()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       IntStruct c = null
       return c == null
@@ -20,7 +20,7 @@ public class TestNull : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(Execute(vm, "test").result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test").Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -28,8 +28,8 @@ public class TestNull : BHL_TestBase
   public void TestNullWithEncodedStruct()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       IntStruct c = null
       IntStruct c2 = {n: 1}
@@ -69,8 +69,8 @@ public class TestNull : BHL_TestBase
   public void TestNullPassedAsNullObj()
   {
     string bhl = @"
-      
-    func test(StringClass c) 
+
+    func test(StringClass c)
     {
       if(c != null) {
         trace(""NEVER;"")
@@ -98,8 +98,8 @@ public class TestNull : BHL_TestBase
   public void TestNullPassedFromAbove()
   {
     string bhl = @"
-      
-    func test(StringClass c) 
+
+    func test(StringClass c)
     {
       if(c != null) {
         trace(""NEVER;"")
@@ -127,8 +127,8 @@ public class TestNull : BHL_TestBase
   public void TestSetNullObjFromUserBinding()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       Color c = mkcolor_null()
       if(c == null) {
@@ -154,8 +154,8 @@ public class TestNull : BHL_TestBase
   public void TestNullIncompatible()
   {
     string bhl = @"
-      
-    func bool test() 
+
+    func bool test()
     {
       return 0 == null
     }
@@ -175,8 +175,8 @@ public class TestNull : BHL_TestBase
   public void TestNullArray()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       []Color cs = null
       []Color cs2 = new []Color
@@ -216,8 +216,8 @@ public class TestNull : BHL_TestBase
   public void TestNullArrayByDefault()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       []Color cs
       if(cs == null) {
@@ -243,8 +243,8 @@ public class TestNull : BHL_TestBase
   public void TestNullFuncPtr()
   {
     string bhl = @"
-      
-    func test() 
+
+    func test()
     {
       func() fn = null
       func() fn2 = func () { }
@@ -284,8 +284,8 @@ public class TestNull : BHL_TestBase
         trace(""NOT NULL;"")
       }
     }
-      
-    func test() 
+
+    func test()
     {
       foo(1)
       foo(2, func int(int a) { return a})

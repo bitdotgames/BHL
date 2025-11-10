@@ -36,7 +36,7 @@ public class TestAny : BHL_TestBase
     var vm = MakeVM(c);
     var fb = vm.Start("test");
     Assert.False(vm.Tick());
-    Assert.True(fb.result_old.PopRelease().bval);
+    Assert.True(fb.Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -53,7 +53,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.PopRelease().bval;
+    var res = Execute(vm, "test").Stack.Pop().bval;
     Assert.True(res);
     CommonChecks(vm);
   }
@@ -71,7 +71,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.PopRelease().bval;
+    var res = Execute(vm, "test").Stack.Pop().bval;
     Assert.True(res);
     CommonChecks(vm);
   }
@@ -95,7 +95,7 @@ public class TestAny : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).result_old.PopRelease().num;
+    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -113,7 +113,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = Execute(vm, "test").result_old.PopRelease().bval;
+    var res = Execute(vm, "test").Stack.Pop().bval;
     Assert.True(res);
     CommonChecks(vm);
   }
@@ -148,7 +148,7 @@ public class TestAny : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result_old.PopRelease().num;
+    var res = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(110, res);
     CommonChecks(vm);
   }
@@ -169,7 +169,7 @@ public class TestAny : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = Execute(vm, "test").result_old.PopRelease().bval;
+    var res = Execute(vm, "test").Stack.Pop().bval;
     Assert.True(res);
     CommonChecks(vm);
   }
@@ -220,7 +220,7 @@ public class TestAny : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColor(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(1111, num);
     CommonChecks(vm);
   }
@@ -277,7 +277,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(1111, num);
     CommonChecks(vm);
   }
@@ -397,7 +397,7 @@ public class TestAny : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var num = Execute(vm, "test").result_old.PopRelease().num;
+    var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(10 + 1111, num);
     CommonChecks(vm);
   }

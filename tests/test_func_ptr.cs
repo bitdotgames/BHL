@@ -91,7 +91,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
@@ -117,7 +117,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.False(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.False(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
     Assert.Equal("HEYBAR", log.ToString());
     CommonChecks(vm);
   }
@@ -273,7 +273,7 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -293,7 +293,7 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -320,7 +320,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
@@ -345,7 +345,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).result_old.PopRelease().bval);
+    Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }

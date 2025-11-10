@@ -27,8 +27,8 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(0, Execute(vm, "test2").result_old.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -54,8 +54,8 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(3 * 1 + 3 * 2 + 3 * 3, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(0, Execute(vm, "test2").result_old.PopRelease().num);
+    Assert.Equal(3 * 1 + 3 * 2 + 3 * 3, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -81,8 +81,8 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(30 + 1 + 2 + 3, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(10, Execute(vm, "test2").result_old.PopRelease().num);
+    Assert.Equal(30 + 1 + 2 + 3, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(10, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -113,9 +113,9 @@ public class TestVariadic : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(0, Execute(vm, "test2").result_old.PopRelease().num);
-    Assert.Equal(6, Execute(vm, "test3").result_old.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
+    Assert.Equal(6, Execute(vm, "test3").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -383,8 +383,8 @@ public class TestVariadic : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(6, Execute(vm, "test1").result_old.PopRelease().num);
-    Assert.Equal(0, Execute(vm, "test2").result_old.PopRelease().num);
+    Assert.Equal(6, Execute(vm, "test1").Stack.Pop().num);
+    Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
   }
 }

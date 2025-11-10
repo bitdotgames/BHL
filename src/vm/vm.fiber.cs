@@ -77,8 +77,6 @@ public partial class VM : INamedResolver
 
     public ValStack Stack => exec.stack;
 
-    public ValOldStack result_old = new ValOldStack(32);
-
     public BHS status => exec.status;
 
     static public Fiber New(VM vm)
@@ -100,13 +98,6 @@ public partial class VM : INamedResolver
 
       fb.refs = 1;
       fb.stop_guard = false;
-      //releasing non reclaimed results
-      while(fb.result_old.Count > 0)
-      {
-        var val = fb.result_old.Pop();
-        val.Release();
-      }
-
       fb.parent.Clear();
       fb.children.Clear();
 
@@ -132,6 +123,8 @@ public partial class VM : INamedResolver
       exec.fiber = this;
     }
 
+    //TODO: Probably not the best name. This routine is called both in case
+    //      of normal completion and in case of interruption.
     internal void Finalize()
     {
       if(IsStopped())

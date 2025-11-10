@@ -524,7 +524,7 @@ public class TestOperatorOverload : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = (Color)Execute(vm, "test").result_old.PopRelease().obj;
+    var res = (Color)Execute(vm, "test").Stack.Pop().obj;
     Assert.Equal(21, res.r);
     Assert.Equal(32, res.g);
     CommonChecks(vm);
@@ -569,7 +569,7 @@ public class TestOperatorOverload : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = (Color)Execute(vm, "test").result_old.PopRelease().obj;
+    var res = (Color)Execute(vm, "test").Stack.Pop().obj;
     Assert.Equal(2, res.r);
     Assert.Equal(4, res.g);
     CommonChecks(vm);
@@ -639,7 +639,7 @@ public class TestOperatorOverload : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = (Color)Execute(vm, "test").result_old.PopRelease().obj;
+    var res = (Color)Execute(vm, "test").Stack.Pop().obj;
     Assert.Equal(21, res.r);
     Assert.Equal(42, res.g);
     CommonChecks(vm);
