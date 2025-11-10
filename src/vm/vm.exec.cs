@@ -510,7 +510,7 @@ public partial class VM : INamedResolver
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
     //TODO: add separate opcode Concat for strings
-    if(l_operand.type == Types.String && r_operand.type == Types.String)
+    if(l_operand.type == Types.String)
       l_operand._obj = (string)l_operand._obj + (string)r_operand._obj;
     else
       l_operand._num += r_operand._num;

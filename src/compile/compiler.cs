@@ -1711,8 +1711,12 @@ public class ModuleCompiler : AST_Visitor
       if(curr_func.scope is ClassSymbol)
         --symb_idx;
       var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
-      //need to visit default arguments init code
+      //might need to visit default arguments init code
       VisitChildren(ast);
+      if(ast.symb._ref_origin)
+        Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
+      else
+        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
       AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
     }
 
