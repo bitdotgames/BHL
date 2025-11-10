@@ -288,7 +288,7 @@ public struct Val
     return new Val
     {
       type = Types.Bool,
-      _obj = b ? 1 : 0,
+      _num = b ? 1 : 0,
     };
   }
 
