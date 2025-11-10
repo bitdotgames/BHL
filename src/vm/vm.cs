@@ -295,7 +295,10 @@ public partial class VM : INamedResolver
 
       //Checking if there's no running couroutine
       if(fb.status != BHS.RUNNING)
+      {
         fb.Finalize();
+        fb.Release();
+      }
     }
     //catch(Exception e)
     //{

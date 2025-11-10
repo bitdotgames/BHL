@@ -144,8 +144,6 @@ public partial class VM : INamedResolver
       //      this way Fiber breaks its current Frame execution loop.
       exec.ip = STOP_IP + 1;
 
-      Release();
-
       if(status == BHS.FAILURE)
         CleanStack();
     }
@@ -334,6 +332,7 @@ public partial class VM : INamedResolver
       {
         fb.Finalize();
         fb.CleanStack();
+        fb.Release();
       }
       //catch(Exception e)
       //{
