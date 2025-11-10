@@ -73,7 +73,7 @@ public static class Prelude
           var fb_ref = new VM.FiberRef(val);
           var fb = fb_ref.Get();
           fb?.Stop();
-          fb?.Release();
+          //NOTE: we don't release it since we don't own it
           return null;
         },
         new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))

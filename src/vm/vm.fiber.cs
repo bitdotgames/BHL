@@ -333,23 +333,24 @@ public partial class VM : INamedResolver
   {
     if(!fb.IsStopped())
     {
-      try
+      //TODO: uncomment once all tests pass
+      //try
       {
         _Stop(fb);
       }
-      catch(Exception e)
-      {
-        var trace = new List<VM.TraceItem>();
-        try
-        {
-          fb.GetStackTrace(trace);
-        }
-        catch(Exception)
-        {
-        }
+      //catch(Exception e)
+      //{
+      //  var trace = new List<VM.TraceItem>();
+      //  try
+      //  {
+      //    fb.GetStackTrace(trace);
+      //  }
+      //  catch(Exception)
+      //  {
+      //  }
 
-        throw new Error(trace, e);
-      }
+      //  throw new Error(trace, e);
+      //}
     }
 
     if(with_children)
