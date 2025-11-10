@@ -281,7 +281,7 @@ public class TestStrings : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().str;
+    var res = Execute(vm, "test", 3).Stack.Pop().str;
     AssertEqual(res, "36");
     CommonChecks(vm);
   }

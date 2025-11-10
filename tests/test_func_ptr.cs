@@ -91,7 +91,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
+    Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
@@ -117,7 +117,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.False(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
+    Assert.False(Execute(vm, "test", 3).Stack.Pop().bval);
     Assert.Equal("HEYBAR", log.ToString());
     CommonChecks(vm);
   }
@@ -143,7 +143,7 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(14, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
+    Assert.Equal(14, Execute(vm, "test", 3).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -168,8 +168,8 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
-    Assert.Equal(8, ExecuteOld(vm, "test", ValOld.NewNum(vm, 4)).Stack.Pop().num);
+    Assert.Equal(6, Execute(vm, "test", 3).Stack.Pop().num);
+    Assert.Equal(8, Execute(vm, "test", 4).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -200,8 +200,8 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(9 + 12, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
-    Assert.Equal(12 + 15, ExecuteOld(vm, "test", ValOld.NewNum(vm, 4)).Stack.Pop().num);
+    Assert.Equal(9 + 12, Execute(vm, "test", 3).Stack.Pop().num);
+    Assert.Equal(12 + 15, Execute(vm, "test", 4).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -222,8 +222,8 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(3 + 8, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
-    Assert.Equal(4 + 10, ExecuteOld(vm, "test", ValOld.NewNum(vm, 4)).Stack.Pop().num);
+    Assert.Equal(3 + 8, Execute(vm, "test", 3).Stack.Pop().num);
+    Assert.Equal(4 + 10, Execute(vm, "test", 4).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -251,7 +251,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(3 * 2 + 3 * 10, ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().num);
+    Assert.Equal(3 * 2 + 3 * 10, Execute(vm, "test", 3).Stack.Pop().num);
     Assert.Equal("whathey", log.ToString());
     CommonChecks(vm);
   }
@@ -273,7 +273,7 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
+    Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -293,7 +293,7 @@ public class TestFuncPtrs : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
+    Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     CommonChecks(vm);
   }
 
@@ -320,7 +320,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.True(ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().bval);
+    Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
   }
@@ -631,7 +631,7 @@ public class TestFuncPtrs : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
     var vm = MakeVM(bhl, ts_fn);
-    ExecuteOld(vm, "test", ValOld.NewNum(vm, 3));
+    Execute(vm, "test", 3);
     Assert.Equal("HERE", log.ToString());
     CommonChecks(vm);
   }

@@ -364,7 +364,7 @@ public class TestClass : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num;
+    var res = Execute(vm, "test", 2).Stack.Pop().num;
     Assert.Equal(60, res);
     CommonChecks(vm);
   }
@@ -433,7 +433,7 @@ public class TestClass : BHL_TestBase
     });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num;
+    var res = Execute(vm, "test", 2).Stack.Pop().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }

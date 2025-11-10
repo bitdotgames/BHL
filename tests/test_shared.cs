@@ -642,11 +642,6 @@ public class BHL_TestBase
     return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
   }
 
-  public VM.Fiber ExecuteOld(VM vm, string fn_name, params ValOld[] args)
-  {
-    throw new NotImplementedException();
-  }
-
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
   {
     return Execute(vm, fn_name, new FuncArgsInfo(args?.Length ?? 0), args);

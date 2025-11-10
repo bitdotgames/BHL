@@ -865,7 +865,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(4, ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num);
+    Assert.Equal(4, Execute(vm, "test", 2).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -909,7 +909,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(23, ExecuteOld(vm, "test", ValOld.NewNum(vm, 23)).Stack.Pop().num);
+    Assert.Equal(23, Execute(vm, "test", 23).Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -952,7 +952,7 @@ public class TestImport : BHL_TestBase
     );
 
     vm.LoadModule("bhl1");
-    Assert.Equal(23, ExecuteOld(vm, "test", ValOld.NewNum(vm, 23)).Stack.Pop().num);
+    Assert.Equal(23, Execute(vm, "test", 23).Stack.Pop().num);
     CommonChecks(vm);
   }
 

@@ -153,7 +153,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var str = ExecuteOld(vm, "test", ValOld.NewNum(vm, 3)).Stack.Pop().str;
+    var str = Execute(vm, "test", 3).Stack.Pop().str;
     AssertEqual(str, "3");
     CommonChecks(vm);
   }
@@ -381,7 +381,7 @@ public class TestTypeCasts : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var res = ExecuteOld(vm, "test", ValOld.NewFlt(vm, 3.9)).Stack.Pop().num;
+    var res = Execute(vm, "test", 3.9).Stack.Pop().num;
     Assert.Equal(3, res);
     CommonChecks(vm);
   }
@@ -1101,7 +1101,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num;
+    var res = Execute(vm, "test", 2).Stack.Pop().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
@@ -1123,7 +1123,7 @@ public class TestTypeCasts : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindColorAlpha(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    var res = ExecuteOld(vm, "test", ValOld.NewNum(vm, 2)).Stack.Pop().num;
+    var res = Execute(vm, "test", 2).Stack.Pop().num;
     Assert.Equal(202, res);
     CommonChecks(vm);
   }
