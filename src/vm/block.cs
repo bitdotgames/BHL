@@ -55,7 +55,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 {
   public int min_ip;
   public int max_ip;
-  public VM.ExecState exec = new VM.ExecState();
+  public VM.ExecState exec =
+    new VM.ExecState(regions_capacity: 32, frames_capacity: 32, stack_capacity: 128);
   public VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
@@ -78,13 +79,12 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.ip = min_ip;
 
     //TODO: this is ugly, can we reference current frame from ext_exec instead?
-    int copied_frame_idx = exec.frames_count;
     //creating a frame copy just because a region must reference a frame
     ref var frame_copy = ref exec.PushFrame();
     //let's copy ext_exec's frame data
     frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
 
-    ref var region = ref exec.PushRegion(copied_frame_idx, min_ip: min_ip, max_ip: max_ip);
+    ref var region = ref exec.PushRegion(0, min_ip: min_ip, max_ip: max_ip);
     region.defers = defers;
   }
 
@@ -96,7 +96,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
     if(exec.status == BHS.SUCCESS)
     {
-      //TODO: why doing this if there's a similar code in parent paral block
+      //TODO: why doing this if there's a similar code in parent paral block?
       //if the execution didn't "jump out" of the block (e.g. break) proceed to the ip after the block
       if(exec.ip > min_ip && exec.ip < max_ip)
         ext_exec.ip = max_ip + 1;
@@ -106,7 +106,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  //TODO: this Cleanup is executed by ParalBlock
+  //TODO: this Cleanup is executed by Paral/ParalAll
   public override void Cleanup(VM.ExecState ext_exec)
   {
     if(exec.coroutine != null)

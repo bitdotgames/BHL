@@ -11,7 +11,7 @@ public enum UpvalMode
   COPY   = 1
 }
 
-public partial class VM : INamedResolver
+public partial class VM
 {
   public unsafe delegate void BytecodeHandler(
     VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes
@@ -267,7 +267,7 @@ public partial class VM : INamedResolver
       //1. if there's an active coroutine it has priority over simple 'code following' via ip
       if(coroutine != null)
       {
-        ExecuteCoroutine(ref frame, ref region, this);
+        ExecuteCoroutine(ref region, this);
       }
       //2. are we out of the current region?
       else if(ip < region.min_ip || ip > region.max_ip)
@@ -416,7 +416,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Call(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
+  static internal void CallLocal(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
   {
     //it's assumed passed values are already on the stack
     //and we need to put on the top of the stack args_bits
@@ -434,7 +434,7 @@ public partial class VM : INamedResolver
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(VM vm, ExecState exec, FuncSymbolNative native, uint args_bits)
+  static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits)
   {
     var new_coroutine = native.cb(exec, new FuncArgsInfo(args_bits));
 
@@ -453,7 +453,7 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static void ExecuteCoroutine(ref Frame frame, ref Region region, ExecState exec)
+  static void ExecuteCoroutine(ref Region region, ExecState exec)
   {
     exec.status = BHS.SUCCESS;
     //NOTE: optimistically stepping forward so that for simple
@@ -1138,7 +1138,7 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeLastArgToTop(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
-    //      so that it fullfills Opcode.Call requirements
+    //      so that it fulfills Opcode.Call requirements
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
     int arg_idx = exec.stack.sp - args_num - 1;
@@ -1156,7 +1156,7 @@ public partial class VM : INamedResolver
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.SetupForOrigin(frame, func_ip);
-    vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
+    CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1167,7 +1167,7 @@ public partial class VM : INamedResolver
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(vm, exec, nfunc_symb, args_bits))
+    if(CallNative(exec, nfunc_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1186,7 +1186,7 @@ public partial class VM : INamedResolver
     var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(vm, exec, nfunc_symb, args_bits))
+    if(CallNative(exec, nfunc_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1205,7 +1205,7 @@ public partial class VM : INamedResolver
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.SetupForModule(func_mod, func_ip);
-    vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
+    CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1247,7 +1247,7 @@ public partial class VM : INamedResolver
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    if(CallNative(vm, exec, func_symb, args_bits))
+    if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1318,7 +1318,7 @@ public partial class VM : INamedResolver
     var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
     var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
-    if(CallNative(vm, exec, func_symb, args_bits))
+    if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1337,7 +1337,7 @@ public partial class VM : INamedResolver
     if(ptr.native != null)
     {
       bool return_status =
-        CallNative(vm, exec, ptr.native, args_bits);
+        CallNative(exec, ptr.native, args_bits);
       if(return_status)
       {
         //let's cancel ip incrementing
@@ -1349,7 +1349,7 @@ public partial class VM : INamedResolver
       int new_frame_idx = exec.frames_count;
       ref var new_frame = ref exec.PushFrame();
       ptr.InitFrame(exec, ref frame, ref new_frame);
-      vm.Call(exec, ref new_frame, new_frame_idx, args_bits);
+      CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
     }
     ptr.Release();
   }
@@ -1418,7 +1418,6 @@ public partial class VM : INamedResolver
       upval._refc?.Retain();
       addr.upvals.vals[func_ptr_local_idx] = upval;
     }
-
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
