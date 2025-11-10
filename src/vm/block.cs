@@ -105,6 +105,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     }
   }
 
+  //TODO: this Cleanup is executed by ParalBlock
   public override void Cleanup(VM.ExecState ext_exec)
   {
     if(exec.coroutine != null)
@@ -113,7 +114,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       exec.coroutine = null;
     }
 
-    //we exit the scope for all dangling frames
+    //we exit the scope for all dangling frames which were not exited normally
     for(int i = exec.frames_count; i-- > 1/*let's ignore the copied frame*/;)
     {
       ref var frame = ref exec.frames[i];
@@ -130,11 +131,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     if(defers.count > 0)
       defers.ExitScope(exec);
 
-    //let's detect if there was a return and if so let's copy dangling stack data
+    //let's detect if there was a return and there was no other frames,
+    //except the 'copied one', in this case we need to copy dangling
+    //expected amount of returned vars from the current frame
     if(exec.frames_count == 1 && exec.ip == VM.EXIT_FRAME_IP)
     {
-      ref var top_frame = ref exec.frames[exec.frames_count - 1];
-      for(int i = top_frame.locals_offset; i < (top_frame.locals_offset + top_frame.return_vars_num); ++i)
+      ref var frame_copy = ref exec.frames[exec.frames_count - 1];
+      for(int i = 0; i < frame_copy.return_vars_num; ++i)
       {
         ref var val = ref exec.stack.vals[i];
         ext_exec.stack.Push(val);
