@@ -20,7 +20,7 @@ public partial class VM : INamedResolver
       this.fiber = fiber;
     }
 
-    public FiberRef(ValOld val)
+    public FiberRef(Val val)
     {
       this.id = (int)val._num;
       this.fiber = (VM.Fiber)val._obj;

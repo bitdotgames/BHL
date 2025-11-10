@@ -69,12 +69,11 @@ public static class Prelude
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          throw new NotImplementedException();
-          //var val = stack.Pop();
-          //var fb_ref = new VM.FiberRef(val);
-          //var fb = fb_ref.Get();
-          //fb?.Stop();
-          //fb?.Release();
+          var val = exec.stack.Pop();
+          var fb_ref = new VM.FiberRef(val);
+          var fb = fb_ref.Get();
+          fb?.Stop();
+          fb?.Release();
           return null;
         },
         new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))

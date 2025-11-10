@@ -1503,14 +1503,13 @@ public partial class VM : INamedResolver
     while(tmp_ip < (exec.ip + size))
     {
       ++tmp_ip;
-
-      var branch= FetchBlockBranch(
+      FetchBlock(
         ref tmp_ip,
         exec, bytes,
+        paral.branches,
+        paral.defers,
         out var tmp_size
       );
-
-      paral.branches.Add(branch);
       tmp_ip += tmp_size;
     }
 
@@ -1534,14 +1533,14 @@ public partial class VM : INamedResolver
     while(tmp_ip < (exec.ip + size))
     {
       ++tmp_ip;
-
-      var branch = FetchBlockBranch(
+      FetchBlock(
         ref tmp_ip,
         exec, bytes,
+        paral.branches,
+        paral.defers,
         out var tmp_size
       );
 
-      paral.branches.Add(branch);
       tmp_ip += tmp_size;
     }
 
@@ -1554,10 +1553,12 @@ public partial class VM : INamedResolver
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static unsafe Coroutine FetchBlockBranch(
+  static unsafe void FetchBlock(
     ref int ip,
     ExecState exec,
     byte* bytes,
+    List<Coroutine> branches,
+    VM.DeferSupport defers,
     out int size
   )
   {
@@ -1568,19 +1569,25 @@ public partial class VM : INamedResolver
     {
       var br = CoroutinePool.New<ParalBranchBlock>(exec.vm);
       br.Init(exec, ip + 1, ip + size);
-      return br;
+      branches.Add(br);
     }
     else if(type == Opcodes.Paral)
     {
       var paral = CoroutinePool.New<ParalBlock>(exec.vm);
       paral.Init(ip + 1, ip + size);
-      return paral;
+      branches.Add(paral);
     }
     else if(type == Opcodes.ParalAll)
     {
       var paral = CoroutinePool.New<ParalAllBlock>(exec.vm);
       paral.Init(ip + 1, ip + size);
-      return paral;
+      branches.Add(paral);
+    }
+    else if(type == Opcodes.Defer)
+    {
+      ref var d = ref defers.Add();
+      d.ip = ip + 1;
+      d.max_ip = ip + size;
     }
     else
       throw new Exception("Not supported block type: " + type);
