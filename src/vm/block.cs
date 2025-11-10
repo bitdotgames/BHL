@@ -131,9 +131,10 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     if(defers.count > 0)
       defers.ExitScope(exec);
 
-    //let's detect if there was a return and there was no other frames,
-    //except the 'copied one', in this case we need to copy dangling
-    //expected amount of returned vars from the current frame
+    //Let's detect if there was a return and there was no other frames
+    //except the 'copied one'. In this case we need to copy dangling
+    //expected amount of returned vars designated by copied frame.
+    //Otherwise, normal procedure of return happens within ExecState.Execute(..)
     if(exec.frames_count == 1 && exec.ip == VM.EXIT_FRAME_IP)
     {
       ref var frame_copy = ref exec.frames[exec.frames_count - 1];
@@ -250,7 +251,6 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
       var branch = branches[i];
       branch.Tick(exec);
       //let's check if we "jumped out" of the block (e.g return, break)
-      throw new NotImplementedException();
       if(/*frm.refs == -1  ||*/ exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
       {
         CoroutinePool.Del(exec, branch);
