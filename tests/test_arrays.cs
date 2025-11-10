@@ -26,11 +26,11 @@ public class TestArrays : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitThen(Opcodes.InitFrame, new int[] { 1, 1 })
-          .EmitThen(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) })
-          .EmitThen(Opcodes.SetVar, new int[] { 0 })
-          .EmitThen(Opcodes.GetVar, new int[] { 0 })
-          .EmitThen(Opcodes.Return)
+          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) })
+          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
 

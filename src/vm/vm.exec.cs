@@ -73,9 +73,16 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Frame PopFrame()
+    public ref Region PushRegion(int frame_idx, int min_ip = -1, int max_ip = STOP_IP)
     {
-      return ref frames[frames_count--];
+      if(regions_count == regions.Length)
+        Array.Resize(ref regions, regions_count << 1);
+
+      ref var region = ref regions[regions_count++];
+      region.frame_idx = frame_idx;
+      region.min_ip = min_ip;
+      region.max_ip = max_ip;
+      return ref region;
     }
 
     void GetCalls(List<VM.Frame> calls)
@@ -183,6 +190,151 @@ public partial class VM : INamedResolver
       //let's keep frames count until defers have exited scope above
       frames_count = frames_offset;
     }
+
+    //TODO: is it similar to the method above?
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ExitScopes()
+    {
+      if(frames_count > 0)
+      {
+        if(coroutine != null)
+        {
+          CoroutinePool.Del(this, coroutine);
+          coroutine = null;
+        }
+
+        for(int i = frames_count; i-- > 0;)
+        {
+          ref var frm = ref frames[i];
+          frm.CleanLocalsAndReturnVars(stack);
+          //TODO:
+          //if(frm.defers_count > 0)
+          //{
+          //  DeferBlock.ExitScope(exec, frm.defers, frm.defers_count);
+          //  frm.defers_count = 0;
+          //}
+        }
+        frames_count = 0;
+      }
+
+      regions_count = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void StartFrameRegion(ref Frame frame, int frame_idx)
+    {
+      ip = frame.start_ip;
+      frame.regions_mark = regions_count;
+      PushRegion(frame_idx);
+    }
+
+    internal void StartFrameRegion(
+      ref Frame frame,
+      int frame_idx,
+      FuncArgsInfo args_info,
+      StackList <Val> args
+    )
+    {
+      for(int i = args.Count; i-- > 0;)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      {
+        //passing args info as a stack variable
+        ref Val v = ref stack.Push();
+        v = Val.NewInt(args_info.bits);
+      }
+
+      StartFrameRegion(ref frame, frame_idx);
+    }
+
+    internal void StartFrameRegion(
+      FuncSymbolNative fsn,
+      ref Frame frame,
+      int frame_idx,
+      FuncArgsInfo args_info,
+      StackList <Val> args
+    )
+    {
+      for(int i = args.Count; i-- > 0;)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      frame.args_info = args_info;
+      frame.return_vars_num = fsn.GetReturnedArgsNum();
+
+      StartFrameRegion(ref frame, frame_idx);
+
+      //passing args info as argument
+      coroutine = fsn.cb(this, args_info);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(coroutine != null)
+        --ip;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Execute(int region_stop_idx = 0)
+    {
+      status = BHS.SUCCESS;
+
+      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
+        ExecuteOnce();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal unsafe void ExecuteOnce()
+    {
+      ref var region = ref regions[regions_count - 1];
+      //TODO: looks like frame_idx is not really needed since we always need the top frame?
+      ref var frame = ref frames[region.frame_idx];
+
+      //1. if there's an active coroutine it has priority over simple 'code following' via ip
+      if(coroutine != null)
+      {
+        ExecuteCoroutine(ref frame, this);
+      }
+      //2. are we out of the current region?
+      else if(ip < region.min_ip || ip > region.max_ip)
+      {
+        if(region.defers != null && region.defers.count > 0)
+          region.defers.ExitScope(this);
+        --regions_count;
+      }
+      //3. exit frame requested
+      else if(ip == EXIT_FRAME_IP)
+      {
+        //exiting all regions which belong to the frame
+        for(int i = regions_count; i-- > frame.regions_mark;)
+        {
+          ref var tmp_region = ref regions[i];
+          if(tmp_region.defers != null && tmp_region.defers.count > 0)
+            tmp_region.defers.ExitScope(this);
+        }
+        regions_count = frame.regions_mark;
+
+        ip = frame.return_ip + 1;
+
+        frame.CleanLocalsAndReturnVars(stack);
+        --frames_count;
+      }
+      else
+      {
+        var bc = frame.bytecode;
+        var opcode = bc[ip];
+        //NOTE: temporary casting for better debug info
+        var _opcode = (Opcodes)opcode;
+
+        op_handlers[opcode](vm, this, ref region,  ref frame, bc);
+
+        ++ip;
+      }
+    }
   }
 
   //NOTE: why -2? we reserve some space before int.MaxValue so that
@@ -230,18 +382,6 @@ public partial class VM : INamedResolver
     //      the frame context execution is considered to be done
     public int min_ip;
     public int max_ip;
-
-    [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public Region(
-      int frame_idx,
-      int min_ip = -1,
-      int max_ip = STOP_IP
-      )
-    {
-      this.frame_idx = frame_idx;
-      this.min_ip = min_ip;
-      this.max_ip = max_ip;
-    }
   }
 
   //fake frame used for module's init code
@@ -262,63 +402,6 @@ public partial class VM : INamedResolver
   public static readonly Val Null = Val.NewObj(null, Types.Null);
   public static readonly Val True = Val.NewBool(true);
   public static readonly Val False = Val.NewBool(false);
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  internal void Execute(ExecState exec, int region_stop_idx = 0)
-  {
-    exec.status = BHS.SUCCESS;
-
-    while(exec.regions_count > region_stop_idx && exec.status == BHS.SUCCESS)
-      ExecuteOnce(exec);
-  }
-
-  unsafe void ExecuteOnce(ExecState exec)
-  {
-    ref var region = ref exec.regions[exec.regions_count - 1];
-    ref var frame = ref exec.frames[region.frame_idx];
-
-    //1. if there's an active coroutine it has priority over simple 'code following' via ip
-    if(exec.coroutine != null)
-    {
-      ExecuteCoroutine(ref frame, exec);
-    }
-    //2. are we out of the current region?
-    else if(exec.ip < region.min_ip || exec.ip > region.max_ip)
-    {
-      if(region.defers != null && region.defers.count > 0)
-        region.defers.ExitScope(exec);
-      --exec.regions_count;
-    }
-    //3. exit frame requested
-    else if(exec.ip == EXIT_FRAME_IP)
-    {
-      //exiting all regions which belong to us
-      for(int i = exec.regions_count; i-- > frame.regions_mark;)
-      {
-        ref var tmp_region = ref exec.regions[i];
-        if(tmp_region.defers != null && tmp_region.defers.count > 0)
-          tmp_region.defers.ExitScope(exec);
-      }
-      exec.regions_count = frame.regions_mark;
-
-      exec.ip = frame.return_ip + 1;
-
-      frame.Exit(exec.stack);
-      --exec.frames_count;
-    }
-    else
-    {
-      var bc = frame.bytecode;
-      var opcode = bc[exec.ip];
-      //NOTE: temporary casting for better debug info
-      var _opcode = (Opcodes)opcode;
-
-      op_handlers[opcode](this, exec, ref region,  ref frame, bc);
-
-      ++exec.ip;
-    }
-  }
-
   void ExecInitByteCode(Module module)
   {
     if((module.compiled.initcode?.Length ?? 0) == 0)
@@ -328,15 +411,14 @@ public partial class VM : INamedResolver
 
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
-    init_exec.regions[init_exec.regions_count++] =
-      new VM.Region(-1, 0, module.compiled.initcode.Length - 1);
+    init_exec.PushRegion(-1, 0, module.compiled.initcode.Length - 1);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     //TODO:
     //init_exec.stack.vals = init_frame.module.gvar_vals;
 
     while(init_exec.regions_count > 0)
     {
-      ExecuteOnce(init_exec);
+      init_exec.ExecuteOnce();
       if(init_exec.status == BHS.RUNNING)
         throw new Exception("Invalid state in init mode: " + init_exec.status);
     }
@@ -362,18 +444,16 @@ public partial class VM : INamedResolver
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Call(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
   {
-    var stack = exec.stack;
-
     //it's assumed passed values are already on the stack
     //and we need to put on the top of the stack args_bits
-    ref Val v = ref stack.Push();
+    ref Val v = ref exec.stack.Push();
     v.type = Types.Int;
     v._num = args_bits;
 
     //let's remember ip to return to
     frame.return_ip = exec.ip;
     frame.regions_mark = exec.regions_count;
-    exec.regions[exec.regions_count++] = new Region(frame_idx);
+    exec.PushRegion(frame_idx);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;
   }
@@ -781,14 +861,14 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeInc(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    ++exec.stack.vals[frame.locals_offset + var_idx]._num;
+    ++frame.locals[frame.locals_offset + var_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDec(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    --exec.stack.vals[frame.locals_offset + var_idx]._num;
+    --frame.locals[frame.locals_offset + var_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -880,7 +960,7 @@ public partial class VM : INamedResolver
 
     ref Val new_val = ref exec.stack.Push();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
-    new_val = exec.stack.vals[frame.locals_offset + local_idx];
+    new_val = frame.locals[frame.locals_offset + local_idx];
     new_val._refc?.Retain();
   }
 
@@ -892,7 +972,7 @@ public partial class VM : INamedResolver
     //TODO: we copy the whole value (we can have specialized opcodes for numbers)
 
     exec.stack.Pop(out var new_val);
-    ref var current = ref exec.stack.vals[frame.locals_offset + local_idx];
+    ref var current = ref frame.locals[frame.locals_offset + local_idx];
     //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
@@ -906,7 +986,7 @@ public partial class VM : INamedResolver
 
     var type = frame.type_refs[type_idx];
 
-    ref var curr = ref exec.stack.vals[frame.locals_offset + local_idx];
+    ref var curr = ref frame.locals[frame.locals_offset + local_idx];
     //NOTE: handling case when variables are 're-declared' within the nested loop
     curr._refc?.Release();
 
@@ -919,7 +999,7 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var orig_val = ref exec.stack.vals[frame.locals_offset + local_idx];
+    ref var orig_val = ref frame.locals[frame.locals_offset + local_idx];
 
     //replacing existing val with ValRef
     var new_val = new Val();
@@ -937,7 +1017,7 @@ public partial class VM : INamedResolver
 
     exec.stack.Pop(out var new_val);
 
-    ref var val_ref_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    ref var val_ref_holder = ref frame.locals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
     //TODO: what about blob?
     val_ref.val._refc?.Release();
@@ -950,7 +1030,7 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var val_ref_holder = ref exec.stack.vals[frame.locals_offset + local_idx];
+    ref var val_ref_holder = ref frame.locals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
 
     ref Val v = ref exec.stack.Push();
@@ -1313,7 +1393,8 @@ public partial class VM : INamedResolver
     //locals starts at the index of the first pushed argument
     int args_num = args_info.CountArgs();
     frame.locals_offset = stack.sp - args_num;
-    frame.return_args_num = return_vars_num;
+    frame.locals = stack.vals;
+    frame.return_vars_num = return_vars_num;
 
     //let's reserve space for local variables, however passed variables are
     //already on the stack, let's take that into account
@@ -1347,7 +1428,7 @@ public partial class VM : INamedResolver
     //TODO: push upvals instead (can there be gaps?)
     addr.upvals.sp = func_ptr_local_idx + 1;
 
-    ref var upval = ref exec.stack.vals[frame.locals_offset + frame_local_idx];
+    ref var upval = ref frame.locals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
     {
       var copy = new Val();
@@ -1432,8 +1513,7 @@ public partial class VM : INamedResolver
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    var sub_region = new Region(region.frame_idx, exec.ip + 1, exec.ip + size);
-    exec.regions[exec.regions_count++] = sub_region;
+    exec.PushRegion(region.frame_idx, exec.ip + 1, exec.ip + size);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1536,8 +1616,7 @@ public partial class VM : INamedResolver
   {
     int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
 
-    if(region.defers == null)
-      region.defers = new DeferSupport();
+    region.defers ??= new DeferSupport();
 
     ref var d = ref region.defers.Add();
     d.ip = exec.ip + 1;
@@ -1553,8 +1632,7 @@ public partial class VM : INamedResolver
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var type = frame.type_refs[type_idx];
 
-    var cls = type as ClassSymbol;
-    if(cls == null)
+    if(type is not ClassSymbol cls)
       throw new Exception("Not a class symbol: " + type);
 
     //NOTE: we don't increment refcounted here since the new instance

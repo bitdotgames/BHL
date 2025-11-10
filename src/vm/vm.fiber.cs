@@ -142,7 +142,7 @@ public partial class VM : INamedResolver
 
       fb.refs = -1;
 
-      fb.ExitScopes();
+      fb.exec.ExitScopes();
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
@@ -152,42 +152,6 @@ public partial class VM : INamedResolver
       this.vm = vm;
       exec.vm = vm;
       exec.fiber = this;
-    }
-
-    internal void Attach(ref Frame frame, int frame_idx)
-    {
-      exec.ip = frame.start_ip;
-      frame.regions_mark = exec.regions_count;
-      var region = new Region(frame_idx);
-      exec.regions[exec.regions_count++] = region;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ExitScopes()
-    {
-      if(exec.frames_count > 0)
-      {
-        if(exec.coroutine != null)
-        {
-          CoroutinePool.Del(exec, exec.coroutine);
-          exec.coroutine = null;
-        }
-
-        for(int i = exec.frames_count; i-- > 0;)
-        {
-          ref var frm = ref exec.frames[i];
-          frm.Exit(exec.stack);
-          //TODO:
-          //if(frm.defers_count > 0)
-          //{
-          //  DeferBlock.ExitScope(exec, frm.defers, frm.defers_count);
-          //  frm.defers_count = 0;
-          //}
-        }
-        exec.frames_count = 0;
-      }
-
-      exec.regions_count = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -306,12 +270,12 @@ public partial class VM : INamedResolver
     if(addr.fsn != null)
     {
       frame.SetupForModule(addr.module, VM.EXIT_FRAME_IP);
-      PassArgsAndAttach(addr.fsn, fb, ref frame, frame_idx, args_info, args);
+      fb.exec.StartFrameRegion(addr.fsn, ref frame, frame_idx, args_info, args);
     }
     else
     {
       frame.SetupForModule(addr.module, addr.ip);
-      PassArgsAndAttach(fb, ref frame, frame_idx, args_info, args);
+      fb.exec.StartFrameRegion(ref frame, frame_idx, args_info, args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -338,65 +302,11 @@ public partial class VM : INamedResolver
     var args_info = new FuncArgsInfo(args.Count);
 
     if(ptr.native != null)
-      PassArgsAndAttach(ptr.native, new_fiber, ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.StartFrameRegion(ptr.native, ref new_frame, new_frame_idx, args_info, args);
     else
-      PassArgsAndAttach(new_fiber, ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.StartFrameRegion(ref new_frame, new_frame_idx, args_info, args);
 
     return new_fiber;
-  }
-
-  static void PassArgsAndAttach(
-    Fiber fb,
-    ref Frame frame,
-    int frame_idx,
-    FuncArgsInfo args_info,
-    StackList <Val> args
-  )
-  {
-    var stack = fb.exec.stack;
-    for(int i = args.Count; i-- > 0;)
-    {
-      ref Val v = ref stack.Push();
-      v = args[i];
-    }
-
-    {
-      //passing args info as a stack variable
-      ref Val v = ref stack.Push();
-      v = Val.NewInt(args_info.bits);
-    }
-
-    fb.Attach(ref frame, frame_idx);
-  }
-
-  static void PassArgsAndAttach(
-    FuncSymbolNative fsn,
-    Fiber fb,
-    ref Frame frame,
-    int frame_idx,
-    FuncArgsInfo args_info,
-    StackList <Val> args
-  )
-  {
-    var stack = fb.exec.stack;
-    for(int i = args.Count; i-- > 0;)
-    {
-      ref Val v = ref stack.Push();
-      v = args[i];
-    }
-
-    frame.args_info = args_info;
-    frame.return_args_num = fsn.GetReturnedArgsNum();
-
-    fb.Attach(ref frame, frame_idx);
-
-    //passing args info as argument
-    fb.exec.coroutine = fsn.cb(fb.exec, args_info);
-    //NOTE: before executing a coroutine VM will increment ip optimistically
-    //      but we need it to remain at the same position so that it points at
-    //      the fake return opcode
-    if(fb.exec.coroutine != null)
-      --fb.exec.ip;
   }
 
   public void Detach(Fiber fb)
@@ -452,7 +362,7 @@ public partial class VM : INamedResolver
       return;
     fb.stop_guard = true;
 
-    fb.ExitScopes();
+    fb.exec.ExitScopes();
 
     //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
     //      this way Fiber breaks its current Frame execution loop.
@@ -521,7 +431,7 @@ public partial class VM : INamedResolver
         v._num = args_info.bits;
       }
 
-      fb.Attach(ref frame, frame_idx);
+      fb.exec.StartFrameRegion(ref frame, frame_idx);
 
       if(vm.Tick(fb))
         throw new Exception($"Not expected to be running: {fs}");
