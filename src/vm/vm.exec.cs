@@ -159,7 +159,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Stop()
+    internal void Reset()
     {
       if(frames_count > 0)
       {

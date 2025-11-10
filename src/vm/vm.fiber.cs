@@ -120,7 +120,7 @@ public partial class VM : INamedResolver
 
       fb.refs = -1;
 
-      fb.exec.Stop();
+      fb.exec.Reset();
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
@@ -130,6 +130,24 @@ public partial class VM : INamedResolver
       this.vm = vm;
       exec.vm = vm;
       exec.fiber = this;
+    }
+
+    internal void Finalize()
+    {
+      if(IsStopped())
+        return;
+      stop_guard = true;
+
+      exec.Reset();
+
+      //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
+      //      this way Fiber breaks its current Frame execution loop.
+      exec.ip = STOP_IP + 1;
+
+      Release();
+
+      if(status == BHS.FAILURE)
+        CleanStack();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,7 +332,8 @@ public partial class VM : INamedResolver
       //TODO: uncomment once all tests pass
       //try
       {
-        _Stop(fb);
+        fb.Finalize();
+        fb.CleanStack();
       }
       //catch(Exception e)
       //{
@@ -333,24 +352,6 @@ public partial class VM : INamedResolver
 
     if(with_children)
       StopChildren(fb);
-  }
-
-  static void _Stop(Fiber fb)
-  {
-    if(fb.IsStopped())
-      return;
-    fb.stop_guard = true;
-
-    fb.exec.Stop();
-
-    //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
-    //      this way Fiber breaks its current Frame execution loop.
-    fb.exec.ip = STOP_IP + 1;
-
-    fb.Release();
-
-    if(fb.status == BHS.FAILURE)
-      fb.CleanStack();
   }
 
   public void StopChildren(Fiber fb)

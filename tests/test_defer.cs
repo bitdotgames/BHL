@@ -77,7 +77,7 @@ public class TestDefer : BHL_TestBase
   }
 
   [Fact]
-  public void TestDeferCallFuncWithSeveralArgs()
+  public void TestDeferCallFuncWithSeveralDefaultArgs()
   {
     string bhl = @"
 

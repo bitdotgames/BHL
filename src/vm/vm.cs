@@ -295,7 +295,7 @@ public partial class VM : INamedResolver
 
       //Checking if there's no running couroutine
       if(fb.status != BHS.RUNNING)
-        _Stop(fb);
+        fb.Finalize();
     }
     //catch(Exception e)
     //{
