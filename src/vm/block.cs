@@ -252,6 +252,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
       var branch = branches[i];
       branch.Tick(exec);
       //let's check if we "jumped out" of the block (e.g return, break)
+      //NOTE: commented is a leftover from previous implementation, is it obsolete?
       if(/*frm.refs == -1  ||*/ exec.ip < (min_ip - 1) || exec.ip > (max_ip + 1))
       {
         CoroutinePool.Del(exec, branch);
