@@ -862,14 +862,14 @@ public partial class VM : INamedResolver
   unsafe static void OpcodeInc(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    ++frame.locals[frame.locals_offset + var_idx]._num;
+    ++frame.locals.vals[frame.locals_offset + var_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDec(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    --frame.locals[frame.locals_offset + var_idx]._num;
+    --frame.locals.vals[frame.locals_offset + var_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -961,7 +961,7 @@ public partial class VM : INamedResolver
 
     ref Val new_val = ref exec.stack.Push();
     //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
-    new_val = frame.locals[frame.locals_offset + local_idx];
+    new_val = frame.locals.vals[frame.locals_offset + local_idx];
     new_val._refc?.Retain();
   }
 
@@ -973,7 +973,7 @@ public partial class VM : INamedResolver
     //TODO: we copy the whole value (we can have specialized opcodes for numbers)
 
     exec.stack.Pop(out var new_val);
-    ref var current = ref frame.locals[frame.locals_offset + local_idx];
+    ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
     //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
@@ -987,7 +987,7 @@ public partial class VM : INamedResolver
 
     var type = frame.type_refs[type_idx];
 
-    ref var curr = ref frame.locals[frame.locals_offset + local_idx];
+    ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
     //NOTE: handling case when variables are 're-declared' within the nested loop
     curr._refc?.Release();
 
@@ -1000,7 +1000,7 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var orig_val = ref frame.locals[frame.locals_offset + local_idx];
+    ref var orig_val = ref frame.locals.vals[frame.locals_offset + local_idx];
 
     //replacing existing val with ValRef
     var new_val = new Val();
@@ -1018,7 +1018,7 @@ public partial class VM : INamedResolver
 
     exec.stack.Pop(out var new_val);
 
-    ref var val_ref_holder = ref frame.locals[frame.locals_offset + local_idx];
+    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
     //TODO: what about blob?
     val_ref.val._refc?.Release();
@@ -1031,7 +1031,7 @@ public partial class VM : INamedResolver
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var val_ref_holder = ref frame.locals[frame.locals_offset + local_idx];
+    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
 
     ref Val v = ref exec.stack.Push();
@@ -1394,7 +1394,7 @@ public partial class VM : INamedResolver
     //locals starts at the index of the first pushed argument
     int args_num = args_info.CountArgs();
     frame.locals_offset = stack.sp - args_num;
-    frame.locals = stack.vals;
+    frame.locals = stack;
     frame.return_vars_num = return_vars_num;
 
     //let's reserve space for local variables, however passed variables are
@@ -1429,7 +1429,7 @@ public partial class VM : INamedResolver
     //TODO: push upvals instead (can there be gaps?)
     addr.upvals.sp = func_ptr_local_idx + 1;
 
-    ref var upval = ref frame.locals[frame.locals_offset + frame_local_idx];
+    ref var upval = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
     {
       var copy = new Val();

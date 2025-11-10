@@ -18,7 +18,7 @@ public partial class VM : INamedResolver
 
     public FuncArgsInfo args_info;
     public int locals_offset;
-    public Val[] locals;
+    public ValStack locals;
     public int return_vars_num;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
