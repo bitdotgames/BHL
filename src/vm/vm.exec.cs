@@ -293,7 +293,6 @@ public partial class VM : INamedResolver
     internal unsafe void ExecuteOnce()
     {
       ref var region = ref regions[regions_count - 1];
-      //TODO: looks like frame_idx is not really needed since we always need the top frame?
       ref var frame = ref frames[region.frame_idx];
 
       //1. if there's an active coroutine it has priority over simple 'code following' via ip
