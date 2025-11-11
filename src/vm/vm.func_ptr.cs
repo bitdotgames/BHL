@@ -133,21 +133,23 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame)
+    public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame, uint args_bits)
     {
       if(native != null)
       {
-        frame.SetupForOrigin(origin_frame, VM.EXIT_FRAME_IP);
+        frame.InitWithOrigin(origin_frame, VM.EXIT_FRAME_IP);
       }
       else
       {
-        frame.SetupForModule(module, func_ip);
+        frame.InitWithModule(module, func_ip);
 
+        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         for(int i = 0; i < upvals.Count; ++i)
         {
           ref var upval = ref upvals.Values[i];
-          exec.stack.Reserve(exec.stack.sp + upval.frame_local_idx + 1);
-          ref var local_var = ref exec.stack.vals[exec.stack.sp + upval.frame_local_idx];
+          int local_idx = exec.stack.sp - args_num + upval.frame_local_idx;
+          exec.stack.Reserve(local_idx + 1);
+          ref var local_var = ref exec.stack.vals[local_idx];
           local_var = upval.val;
           local_var._refc?.Retain();
         }

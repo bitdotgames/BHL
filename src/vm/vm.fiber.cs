@@ -256,12 +256,12 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.SetupForModule(addr.module, VM.EXIT_FRAME_IP);
+      frame.InitWithModule(addr.module, VM.EXIT_FRAME_IP);
       fb.exec.PushFrameRegion(addr.fsn, ref frame, frame_idx, args_info, args);
     }
     else
     {
-      frame.SetupForModule(addr.module, addr.ip);
+      frame.InitWithModule(addr.module, addr.ip);
       fb.exec.PushFrameRegion(ref frame, frame_idx, args_info, args);
     }
 
@@ -284,7 +284,7 @@ public partial class VM : INamedResolver
 
     int new_frame_idx = new_fiber.exec.frames_count;
     ref var new_frame = ref new_fiber.exec.PushFrame();
-    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame);
+    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame, 0/*used for upvals, not needed here*/);
 
     var args_info = new FuncArgsInfo(args.Count);
 
@@ -385,7 +385,7 @@ public partial class VM : INamedResolver
 
       int frame_idx = fb.exec.frames_count;
       ref var frame = ref fb.exec.PushFrame();
-      frame.SetupForModule(addr.module, addr.ip);
+      frame.InitWithModule(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
       //NOTE: we push arguments using their 'natural' order since

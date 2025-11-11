@@ -23,19 +23,19 @@ public partial class VM : INamedResolver
     public int return_vars_num;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void SetupForModule(Module module, int start_ip)
+    public unsafe void InitWithModule(Module module, int start_ip)
     {
       Init(module, module.compiled.bytecode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void SetupForModuleInit(Module module, int start_ip = 0)
+    public unsafe void InitForModuleInit(Module module, int start_ip = 0)
     {
       Init(module, module.compiled.initcode_ptr, start_ip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void SetupForOrigin(Frame origin, int start_ip)
+    public unsafe void InitWithOrigin(Frame origin, int start_ip)
     {
       Init(origin.module, origin.bytecode, start_ip);
     }

@@ -379,7 +379,7 @@ public partial class VM
     if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
 
-    init_frame.SetupForModuleInit(module);
+    init_frame.InitForModuleInit(module);
 
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
@@ -1155,7 +1155,7 @@ public partial class VM
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
-    new_frame.SetupForOrigin(frame, func_ip);
+    new_frame.InitWithOrigin(frame, func_ip);
     CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
@@ -1204,7 +1204,7 @@ public partial class VM
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
-    new_frame.SetupForModule(func_mod, func_ip);
+    new_frame.InitWithModule(func_mod, func_ip);
     CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
   }
 
@@ -1348,7 +1348,7 @@ public partial class VM
     {
       int new_frame_idx = exec.frames_count;
       ref var new_frame = ref exec.PushFrame();
-      ptr.InitFrame(exec, ref frame, ref new_frame);
+      ptr.InitFrame(exec, ref frame, ref new_frame, args_bits);
       CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
     }
     ptr.Release();
