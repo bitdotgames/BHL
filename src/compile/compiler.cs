@@ -561,7 +561,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CaptureUpval,
+        Opcodes.SetUpval,
         1 /*upval src idx*/, 1 /*local dst idx*/, 1 /*flags*/
       )
     );
@@ -983,7 +983,7 @@ public class ModuleCompiler : AST_Visitor
     AddOffsetFromTo(lmbd_op, Peek());
 
     foreach(var p in ast.upvals)
-      Emit(Opcodes.CaptureUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
+      Emit(Opcodes.SetUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)

@@ -1048,12 +1048,4 @@ public class ValOld
   }
 }
 
-public class ValOldStack : FixedStack<ValOld>
-{
-  public ValOldStack(int max_capacity)
-    : base(max_capacity)
-  {
-  }
-}
-
 }

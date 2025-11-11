@@ -200,7 +200,7 @@ public class TestParal : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.SetRef, new int[] { 0 })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.CaptureUpval, new int[] { 0, 0, 0 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 0, 0, 0 })
           .EmitChain(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })

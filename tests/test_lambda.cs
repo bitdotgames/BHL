@@ -438,7 +438,7 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.GetRef, new int[] { 0 })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.CaptureUpval, new int[] { 0, 0, 0 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 0, 0, 0 })
           .EmitChain(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -497,8 +497,8 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.GetRef, new int[] { 2 })
           .EmitChain(Opcodes.Add)
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.CaptureUpval, new int[] { 0, 1, 0 })
-          .EmitChain(Opcodes.CaptureUpval, new int[] { 1, 2, 0 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 0, 1, 0 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 1, 2, 0 })
           .EmitChain(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -556,7 +556,7 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetRef, new int[] { 1 })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.CaptureUpval, new int[] { 0, 1, 0 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 0, 1, 0 })
           .EmitChain(Opcodes.LastArgToTop, new int[] { 0 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -760,7 +760,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_bytes: true);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(3, num);
     CommonChecks(vm);

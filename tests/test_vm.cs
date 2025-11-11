@@ -9533,12 +9533,12 @@ public class TestVM : BHL_TestBase
       st.Push(10);
 
       Assert.Equal(2, st.Count);
-      Assert.Equal(1, st[0]);
-      Assert.Equal(10, st[1]);
+      Assert.Equal(1, st.Values[0]);
+      Assert.Equal(10, st.Values[1]);
 
       Assert.Equal(10, st.Pop());
       Assert.Equal(1, st.Count);
-      Assert.Equal(1, st[0]);
+      Assert.Equal(1, st.Values[0]);
 
       Assert.Equal(1, st.Pop());
       Assert.Equal(0, st.Count);
@@ -9551,12 +9551,12 @@ public class TestVM : BHL_TestBase
       st.Push(10);
 
       Assert.Equal(2, st.Count);
-      Assert.Equal(1, st[0]);
-      Assert.Equal(10, st[1]);
+      Assert.Equal(1, st.Values[0]);
+      Assert.Equal(10, st.Values[1]);
 
       --st.Count;
       Assert.Equal(1, st.Count);
-      Assert.Equal(1, st[0]);
+      Assert.Equal(1, st.Values[0]);
     }
 
     //RemoveAt
@@ -9568,8 +9568,8 @@ public class TestVM : BHL_TestBase
 
       st.RemoveAt(1);
       Assert.Equal(2, st.Count);
-      Assert.Equal(1, st[0]);
-      Assert.Equal(3, st[1]);
+      Assert.Equal(1, st.Values[0]);
+      Assert.Equal(3, st.Values[1]);
     }
 
     //RemoveAt
@@ -9581,8 +9581,8 @@ public class TestVM : BHL_TestBase
 
       st.RemoveAt(0);
       Assert.Equal(2, st.Count);
-      Assert.Equal(2, st[0]);
-      Assert.Equal(3, st[1]);
+      Assert.Equal(2, st.Values[0]);
+      Assert.Equal(3, st.Values[1]);
     }
 
     //RemoveAt
@@ -9594,8 +9594,8 @@ public class TestVM : BHL_TestBase
 
       st.RemoveAt(2);
       Assert.Equal(2, st.Count);
-      Assert.Equal(1, st[0]);
-      Assert.Equal(2, st[1]);
+      Assert.Equal(1, st.Values[0]);
+      Assert.Equal(2, st.Values[1]);
     }
   }
 

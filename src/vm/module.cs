@@ -20,8 +20,6 @@ public class ModulePath
 //      the one registered in C#
 public class Module : INamedResolver
 {
-  public const int MAX_GLOBALS = 128;
-
   public string name
   {
     get { return path.name; }
@@ -57,7 +55,7 @@ public class Module : INamedResolver
   //used for assigning incremental module indexes to native funcs
   public FuncNativeModuleIndexer nfunc_index = new FuncNativeModuleIndexer();
 
-  public ValOldStack gvar_vals = new ValOldStack(MAX_GLOBALS);
+  public ValStack gvars = new ValStack(128);
 
   //if set this mark is the index starting from which
   //*imported* module variables are stored in gvars
@@ -116,18 +114,19 @@ public class Module : INamedResolver
   public void InitWithCompiled(CompiledModule compiled)
   {
     this.compiled = compiled;
-    gvar_vals.Count = compiled.total_gvars_num;
+    gvars.Reserve(compiled.total_gvars_num);
   }
 
   internal void ClearGlobalVars()
   {
-    for(int i = 0; i < gvar_vals.Count; ++i)
+    for(int i = 0; i < gvars.sp; ++i)
     {
-      var val = gvar_vals[i];
-      val?.Release();
+      var val = gvars.vals[i];
+      //what about bool?
+      val._refc?.Release();
     }
 
-    gvar_vals.Clear();
+    gvars.sp = 0;
   }
 
   [System.Flags]
@@ -189,9 +188,9 @@ public class Module : INamedResolver
       //NOTE: taking only local imported module's gvars
       for(int g = 0; g < imported.local_gvars_num; ++g)
       {
-        var imp_gvar = imported.gvar_vals[g];
-        imp_gvar.Retain();
-        gvar_vals[gvars_offset] = imp_gvar;
+        var imp_gvar = imported.gvars.vals[g];
+        imp_gvar._refc?.Retain();
+        gvars.vals[gvars_offset] = imp_gvar;
         ++gvars_offset;
       }
     }

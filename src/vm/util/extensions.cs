@@ -50,43 +50,6 @@ public static class Extensions
     return total;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ValOld PopRelease(this ValOldStack stack)
-  {
-    var val = stack.Pop();
-    val.Release();
-    return val;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static void PushRetain(this ValOldStack stack, ValOld val)
-  {
-    val.Retain();
-    stack.Push(val);
-  }
-
-  public static void Assign(this ValOldStack stack, VM vm, int idx, ValOld val)
-  {
-    var curr = stack[idx];
-    if(curr != null)
-    {
-      for(int i = 0; i < curr._refs; ++i)
-      {
-        val._refc?.Retain();
-        curr._refc?.Release();
-      }
-
-      curr.ValueCopyFrom(val);
-    }
-    else
-    {
-      curr = ValOld.New(vm);
-      curr.ValueCopyFrom(val);
-      curr._refc?.Retain();
-      stack[idx] = curr;
-    }
-  }
-
   public static FuncSignatureAttrib ToFuncSignatureAttrib(this FuncAttrib attrib)
   {
     return (FuncSignatureAttrib)((byte)FuncSignatureAttrib.FuncAttribMask & (byte)attrib);

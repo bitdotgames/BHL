@@ -4,56 +4,65 @@ using System;
 namespace bhl
 {
 
-public class FixedStack<T>
+public class StackArray<T>
 {
-  internal T[] storage;
-  public int Count = 0;
+  public T[] Values;
+  public int Count;
 
-  public FixedStack(int max_capacity)
+  public StackArray(int init_size = 32)
   {
-    storage = new T[max_capacity];
-  }
-
-  public ref T this[int index]
-  {
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    get
-    {
-      ValidateIndex(index);
-      return ref storage[index];
-    }
-  }
-
-  //let's validate index during parsing phase only
-  [System.Diagnostics.Conditional("BHL_FRONT")]
-  void ValidateIndex(int index)
-  {
-    if(index < 0 || index >= Count)
-      throw new Exception("Out of bounds: " + index + " vs " + Count);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void Push(T item)
-  {
-    storage[Count++] = item;
+    Values = new T[init_size];
+    Count = 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T Push()
   {
-    return ref storage[Count++];
+    if(Count == Values.Length)
+      Array.Resize(ref Values, Count << 1);
+
+    return ref Values[Count++];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T Pop()
   {
-    return ref storage[--Count];
+    return ref Values[--Count];
+  }
+}
+
+public class FixedStack<T>
+{
+  public T[] Values;
+  public int Count = 0;
+
+  public FixedStack(int max_capacity)
+  {
+    Values = new T[max_capacity];
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Push(T item)
+  {
+    Values[Count++] = item;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref T Push()
+  {
+    return ref Values[Count++];
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ref T Pop()
+  {
+    return ref Values[--Count];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T Peek()
   {
-    return ref storage[Count - 1];
+    return ref Values[Count - 1];
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,13 +70,13 @@ public class FixedStack<T>
   {
     if(idx == --Count)
       return;
-    Array.Copy(storage, idx + 1, storage, idx, storage.Length - idx - 1);
+    Array.Copy(Values, idx + 1, Values, idx, Values.Length - idx - 1);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void Clear()
   {
-    Array.Clear(storage, 0, storage.Length);
+    Array.Clear(Values, 0, Values.Length);
     Count = 0;
   }
 }

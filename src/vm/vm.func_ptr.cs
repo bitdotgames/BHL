@@ -21,7 +21,14 @@ public partial class VM : INamedResolver
     public Module module;
     public int func_ip;
     public FuncSymbolNative native;
-    public ValStack upvals = new ValStack(8);
+
+    public struct UpVal
+    {
+      public Val val;
+      public int frame_local_idx;
+    }
+
+    public StackArray<UpVal> upvals = new StackArray<UpVal>(8);
 
     public FuncAddr func_addr
     {
@@ -99,9 +106,9 @@ public partial class VM : INamedResolver
       this.module = null;
       this.func_ip = -1;
       this.native = null;
-      for(int i = upvals.sp; i-- > 0;)
-        upvals.vals[i]._refc?.Release();
-      upvals.sp = 0;
+      for(int i = upvals.Count; i-- > 0;)
+        upvals.Values[i].val._refc?.Release();
+      upvals.Count = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -136,13 +143,12 @@ public partial class VM : INamedResolver
       {
         frame.SetupForModule(module, func_ip);
 
-        for(int i = 0; i < upvals.sp; ++i)
+        for(int i = 0; i < upvals.Count; ++i)
         {
-          //TODO: the logic below must be refactored
-          ref var upval = ref upvals.vals[i];
-          exec.stack.Reserve(exec.stack.sp + i + 1);
-          ref var local_var = ref exec.stack.vals[exec.stack.sp + i];
-          local_var = upval;
+          ref var upval = ref upvals.Values[i];
+          exec.stack.Reserve(exec.stack.sp + upval.frame_local_idx + 1);
+          ref var local_var = ref exec.stack.vals[exec.stack.sp + upval.frame_local_idx];
+          local_var = upval.val;
           local_var._refc?.Retain();
         }
       }
@@ -150,7 +156,7 @@ public partial class VM : INamedResolver
 
     public override string ToString()
     {
-      return "(FPTR refs:" + _refs + ",upvals:" + upvals.sp + " " + this.GetHashCode() + ")";
+      return "(FPTR refs:" + _refs + ",upvals:" + upvals.Count + " " + this.GetHashCode() + ")";
     }
   }
 }

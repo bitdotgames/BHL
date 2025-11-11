@@ -50,8 +50,6 @@ public partial class VM
     public Frame[] frames;
     public int frames_count = 0;
 
-    public ValOldStack stack_old;
-
     public ExecState(
       int regions_capacity = 32,
       int frames_capacity = 256,
@@ -1068,16 +1066,18 @@ public partial class VM
   unsafe static void OpcodeGetGVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    exec.stack_old.PushRetain(frame.module.gvar_vals[var_idx]);
+    throw new NotImplementedException();
+    //exec.stack.PushRetain(frame.module.gvar_vals[var_idx]);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetGVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var new_val = exec.stack_old.Pop();
-    frame.module.gvar_vals.Assign(vm, var_idx, new_val);
-    new_val.Release();
+    var new_val = exec.stack.Pop();
+    throw new NotImplementedException();
+    //frame.module.gvar_vals.Assign(vm, var_idx, new_val);
+    //new_val.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1394,7 +1394,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeCaptureUpval(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeSetUpval(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int frame_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     int func_ptr_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
@@ -1402,21 +1402,18 @@ public partial class VM
 
     var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1]._obj;
 
-    addr.upvals.Reserve(func_ptr_local_idx + 1);
-    //TODO: push upvals instead (can there be gaps?)
-    addr.upvals.sp = func_ptr_local_idx + 1;
+    ref var upval = ref addr.upvals.Push();
+    upval.frame_local_idx = func_ptr_local_idx;
 
-    ref var upval = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
+    ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
     {
-      var copy = new Val();
-      copy.CopyDataFrom(upval);
-      addr.upvals.vals[func_ptr_local_idx] = copy;
+      upval.val.CopyDataFrom(val);
     }
     else
     {
-      upval._refc?.Retain();
-      addr.upvals.vals[func_ptr_local_idx] = upval;
+      val._refc?.Retain();
+      upval.val = val;
     }
   }
 
@@ -1438,14 +1435,6 @@ public partial class VM
   {
     short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
     exec.ip += offset;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void _OpcodeJumpZ(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-  {
-    int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    if(exec.stack_old.PopRelease().bval == false)
-      exec.ip += offset;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1710,7 +1699,7 @@ public partial class VM
     op_handlers[(int)Opcodes.InitFrame] = OpcodeInitFrame;
 
     op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
-    op_handlers[(int)Opcodes.CaptureUpval] = OpcodeCaptureUpval;
+    op_handlers[(int)Opcodes.SetUpval] = OpcodeSetUpval;
 
     op_handlers[(int)Opcodes.Pop] = OpcodePop;
     op_handlers[(int)Opcodes.Jump] = OpcodeJump;

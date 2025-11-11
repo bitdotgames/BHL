@@ -207,11 +207,12 @@ public partial class VM : INamedResolver
 
     var cm = registered_modules[((Namespace)vs.scope).module.name];
 
+    throw new NotImplementedException();
     addr = new VarAddr()
     {
       module = cm,
       vs = vs,
-      val = cm.gvar_vals[vs.scope_idx]
+      //val = cm.gvar_vals.vals[vs.scope_idx]
     };
 
     return true;
