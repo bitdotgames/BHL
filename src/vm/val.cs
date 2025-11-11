@@ -211,6 +211,7 @@ public struct Val
     _refc?.Release();
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewStr(string s)
   {
     return new Val
@@ -283,6 +284,7 @@ public struct Val
     _num = n;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewBool(bool b)
   {
     return new Val
@@ -300,6 +302,7 @@ public struct Val
     _num = b ? 1 : 0;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewObj(object o, IType type)
   {
     return new Val
@@ -310,6 +313,7 @@ public struct Val
     };
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static public Val NewObj(IRefcounted o, IType type)
   {
     return new Val
@@ -320,6 +324,7 @@ public struct Val
     };
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(object o, IType type)
   {
     Reset();
@@ -371,6 +376,7 @@ public struct Val
     return res;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int GetDataHashCode()
   {
     return

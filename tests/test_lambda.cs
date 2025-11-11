@@ -75,6 +75,53 @@ public class TestLambda : BHL_TestBase
   }
 
   [Fact]
+  public void TestLambdaCallInplaceWithArg()
+  {
+    string bhl = @"
+    func dummy() {
+    }
+
+    func int test()
+    {
+      int dummy = 0
+      return func int(int a) {
+        return a
+      }(123)
+    }
+    ";
+
+    var c = Compile(bhl);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          //dummy
+          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.Return)
+          //test
+          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
+          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          //lambda
+          .EmitChain(Opcodes.Lambda, new int[] { 6 })
+          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.Return)
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitChain(Opcodes.LastArgToTop, new int[] { 1 })
+          .EmitChain(Opcodes.CallFuncPtr, new int[] { 1 })
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c);
+    var fb = vm.Start("test");
+    Assert.False(vm.Tick());
+    Assert.Equal(123, fb.Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestCallLambdaInPlaceArray()
   {
     string bhl = @"

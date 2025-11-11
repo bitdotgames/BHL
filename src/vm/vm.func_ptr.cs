@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace bhl
@@ -27,6 +28,7 @@ public partial class VM : INamedResolver
       get { return new FuncAddr() { module = module, ip = func_ip, fsn = native }; }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static public FuncPtr New(VM vm)
     {
       FuncPtr ptr;
@@ -49,6 +51,7 @@ public partial class VM : INamedResolver
       return ptr;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static void Del(FuncPtr ptr)
     {
       if(ptr._refs != 0)
@@ -66,6 +69,7 @@ public partial class VM : INamedResolver
       this.vm = vm;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(Module module, int func_ip)
     {
       this.module = module;
@@ -73,6 +77,7 @@ public partial class VM : INamedResolver
       this.native = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(FuncSymbolNative native)
     {
       this.module = null;
@@ -80,6 +85,7 @@ public partial class VM : INamedResolver
       this.native = native;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Init(FuncAddr addr)
     {
       this.module = addr.module;
@@ -87,6 +93,7 @@ public partial class VM : INamedResolver
       this.native = null;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void Clear()
     {
       this.module = null;
@@ -97,6 +104,7 @@ public partial class VM : INamedResolver
       upvals.sp = 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Retain()
     {
       if(_refs == -1)
@@ -104,6 +112,7 @@ public partial class VM : INamedResolver
       ++_refs;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Release()
     {
       if(_refs == -1)
@@ -116,6 +125,7 @@ public partial class VM : INamedResolver
         Del(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame)
     {
       if(native != null)
