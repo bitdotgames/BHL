@@ -148,7 +148,8 @@ public partial class VM : INamedResolver
           ref var upval = ref upvals.Values[i];
           int local_idx = exec.stack.sp - frame.args_info.CountArgs() + upval.frame_local_idx;
           exec.stack.Reserve(local_idx + 1);
-          exec.stack.sp = local_idx + 1;
+          //NOTE: we reserve space but don't increase stack, changing values directly,
+          //      this way we don't interfere with passed arguments
           ref var local_var = ref exec.stack.vals[local_idx];
           local_var = upval.val;
           local_var._refc?.Retain();

@@ -759,7 +759,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes: true);
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(3, num);
     CommonChecks(vm);
@@ -1250,6 +1250,35 @@ public class TestLambda : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     Assert.Equal("1020HEY!12HEY!", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestStartLambdaWithDefaultArgumentsWhichAreRefs()
+  {
+    string bhl = @"
+
+    func foo(float a = 1, float b = 2)
+    {
+      func()
+      {
+        float k = a
+        trace((string)k + "";"" + (string)b)
+      }()
+    }
+
+    func test()
+    {
+      foo()
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    Assert.Equal("1;2", log.ToString());
     CommonChecks(vm);
   }
 

@@ -1701,42 +1701,36 @@ public class ModuleCompiler : AST_Visitor
     bool is_func_arg = ast.symb is FuncArgSymbol;
 
     //checking if there are default args
-    if(is_func_arg && ast.children.Count > 0)
+    if(is_func_arg)
     {
-      var curr_func = func_decls.Peek();
-      int symb_idx = ast.symb_idx;
-      //let's take into account 'this' special case, which is
-      //stored at 0 idx and is not part of func args
-      //(which are stored in the very beginning)
-      if(curr_func.scope is ClassSymbol)
-        --symb_idx;
-      var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
-      //might need to visit default arguments init code
-      VisitChildren(ast);
       if(ast.symb._ref_origin)
-        Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
-      else
-        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
-      AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
-    }
+        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
 
-    if(!is_func_arg)
+      if(ast.children.Count > 0)
+      {
+        var curr_func = func_decls.Peek();
+        int symb_idx = ast.symb_idx;
+        //let's take into account 'this' special case, which is
+        //stored at 0 idx and is not part of func args
+        //(which are stored in the very beginning)
+        if(curr_func.scope is ClassSymbol)
+          --symb_idx;
+        var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
+        //might need to visit default arguments init code
+        VisitChildren(ast);
+        if(ast.symb._ref_origin)
+          Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
+        else
+          Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
+        AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
+      }
+    }
+    else
     {
       if(ast.symb._ref_origin)
         Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
-    }
-    //check if we are inside any function scope
-    else if(func_decls.Count > 0)
-    {
-      if(ast.symb._ref_origin)
-        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
-    }
-    //global var then
-    else
-    {
-      Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type)});
     }
   }
 

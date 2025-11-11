@@ -955,14 +955,17 @@ public partial class VM
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
-    ref var orig_val = ref frame.locals.vals[frame.locals_offset + local_idx];
+    ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
 
-    //replacing existing val with ValRef
-    var new_val = new Val();
-    var vr = ValRef.New(vm);
-    vr.val = orig_val;
-    new_val._refc = vr;
-    orig_val = new_val;
+    //replacing existing val with ValRef if it's not already a ValRef
+    if(curr._refc == null)
+    {
+      var new_val = new Val();
+      var vr = ValRef.New(vm);
+      vr.val = curr;
+      new_val._refc = vr;
+      curr = new_val;
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1134,9 +1137,12 @@ public partial class VM
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
+    var args_info = new FuncArgsInfo(args_bits);
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
-    new_frame.args_info = new FuncArgsInfo(args_bits);
+    new_frame.args_info = args_info;
+    //new_frame.locals = exec.stack;
+    //new_frame.locals_offset = exec.stack.sp - args_info.CountArgs();
     new_frame.InitWithOrigin(frame, func_ip);
     CallLocal(exec, ref new_frame, new_frame_idx);
   }
