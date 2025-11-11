@@ -1336,8 +1336,7 @@ public partial class VM
     //checking if it's a native call
     if(ptr.native != null)
     {
-      bool return_status =
-        CallNative(exec, ptr.native, args_bits);
+      bool return_status = CallNative(exec, ptr.native, args_bits);
       if(return_status)
       {
         //let's cancel ip incrementing

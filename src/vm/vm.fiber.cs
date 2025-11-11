@@ -284,9 +284,8 @@ public partial class VM : INamedResolver
 
     int new_frame_idx = new_fiber.exec.frames_count;
     ref var new_frame = ref new_fiber.exec.PushFrame();
-    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame, 0/*used for upvals, not needed here*/);
-
     var args_info = new FuncArgsInfo(args.Count);
+    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame, args_info.bits);
 
     if(ptr.native != null)
       new_fiber.exec.PushFrameRegion(ptr.native, ref new_frame, new_frame_idx, args_info, args);

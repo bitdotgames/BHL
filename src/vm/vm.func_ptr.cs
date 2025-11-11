@@ -149,6 +149,7 @@ public partial class VM : INamedResolver
           ref var upval = ref upvals.Values[i];
           int local_idx = exec.stack.sp - args_num + upval.frame_local_idx;
           exec.stack.Reserve(local_idx + 1);
+          exec.stack.sp = local_idx + 1;
           ref var local_var = ref exec.stack.vals[local_idx];
           local_var = upval.val;
           local_var._refc?.Retain();
