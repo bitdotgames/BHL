@@ -13,7 +13,7 @@ public enum Opcodes
   DeclVar               = 8,
   SetGVar               = 10,
   GetGVar               = 11,
-  EnterFrame            = 12, //TODO: do we really need it?
+  Frame            = 12, //TODO: do we really need it?
   Return                = 14,
   Jump                  = 16,
   JumpZ                 = 17,

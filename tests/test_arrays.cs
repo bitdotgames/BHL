@@ -26,7 +26,7 @@ public class TestArrays : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })

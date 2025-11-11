@@ -1676,7 +1676,7 @@ public partial class VM
     op_handlers[(int)Opcodes.CallMethodIfaceNative] = OpcodeCallMethodIfaceNative;
     op_handlers[(int)Opcodes.CallFuncPtr] = OpcodeCallFuncPtr;
 
-    op_handlers[(int)Opcodes.EnterFrame] = OpcodeEnterFrame;
+    op_handlers[(int)Opcodes.Frame] = OpcodeEnterFrame;
 
     op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
     op_handlers[(int)Opcodes.SetUpval] = OpcodeSetUpval;

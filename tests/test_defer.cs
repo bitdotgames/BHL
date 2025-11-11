@@ -30,7 +30,7 @@ public class TestDefer : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0})
+          .EmitChain(Opcodes.Frame, new int[] { 0, 0})
           .EmitChain(Opcodes.Defer, new int[] { 12 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
           .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
