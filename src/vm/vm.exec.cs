@@ -194,12 +194,7 @@ public partial class VM
       PushRegion(frame_idx);
     }
 
-    internal void PushFrameRegion(
-      ref Frame frame,
-      int frame_idx,
-      FuncArgsInfo args_info,
-      StackList <Val> args
-    )
+    internal void PushFrameRegion(ref Frame frame, int frame_idx, StackList <Val> args)
     {
       //NOTE: since variables will be set as local variables
       //      we traverse them in natural order
@@ -209,12 +204,6 @@ public partial class VM
         v = args[i];
       }
 
-      {
-        //passing args info as a stack variable
-        ref Val v = ref stack.Push();
-        v = Val.NewInt(args_info.bits);
-      }
-
       PushFrameRegion(ref frame, frame_idx);
     }
 
@@ -222,7 +211,6 @@ public partial class VM
       FuncSymbolNative fsn,
       ref Frame frame,
       int frame_idx,
-      FuncArgsInfo args_info,
       StackList <Val> args
     )
     {
@@ -232,14 +220,13 @@ public partial class VM
         v = args[i];
       }
 
-      frame.args_info = args_info;
       frame.return_vars_num = fsn.GetReturnedArgsNum();
       frame.locals_vars_num = 0;
 
       PushFrameRegion(ref frame, frame_idx);
 
       //passing args info as argument
-      coroutine = fsn.cb(this, args_info);
+      coroutine = fsn.cb(this, frame.args_info);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -414,14 +401,8 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static internal void CallLocal(ExecState exec, ref Frame frame, int frame_idx, uint args_bits)
+  static internal void CallLocal(ExecState exec, ref Frame frame, int frame_idx)
   {
-    //it's assumed passed values are already on the stack
-    //and we need to put on the top of the stack args_bits
-    ref Val v = ref exec.stack.Push();
-    v.type = Types.Int;
-    v._num = args_bits;
-
     //let's remember ip to return to
     frame.return_ip = exec.ip;
     frame.regions_mark = exec.regions_count;
@@ -1155,8 +1136,9 @@ public partial class VM
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
+    new_frame.args_info = new FuncArgsInfo(args_bits);
     new_frame.InitWithOrigin(frame, func_ip);
-    CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
+    CallLocal(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1204,8 +1186,9 @@ public partial class VM
 
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
+    new_frame.args_info = new FuncArgsInfo(args_bits);
     new_frame.InitWithModule(func_mod, func_ip);
-    CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
+    CallLocal(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1347,31 +1330,29 @@ public partial class VM
     {
       int new_frame_idx = exec.frames_count;
       ref var new_frame = ref exec.PushFrame();
-      ptr.InitFrame(exec, ref frame, ref new_frame, args_bits);
-      CallLocal(exec, ref new_frame, new_frame_idx, args_bits);
+      new_frame.args_info = new FuncArgsInfo(args_bits);
+      ptr.InitFrame(exec, ref frame, ref new_frame);
+      CallLocal(exec, ref new_frame, new_frame_idx);
     }
     ptr.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeInitFrame(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeEnterFrame(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int locals_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
     int return_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
 
+    frame.locals_vars_num = locals_vars_num;
+    frame.return_vars_num = return_vars_num;
+
+    //NOTE: it's assumed that refcounted args are pushed with refcounted values
     var stack = exec.stack;
 
-    //NOTE: it's assumed that refcounted args are pushed with refcounted values,
+    int args_num = frame.args_info.CountArgs();
 
-    //let's pop args bits but store it in a Frame
-    var args_info = new FuncArgsInfo((uint)stack.vals[--stack.sp]._num);
-    frame.args_info = args_info;
-    //locals starts at the index of the first pushed argument
-    int args_num = args_info.CountArgs();
-    frame.locals_vars_num = locals_vars_num;
     frame.locals_offset = stack.sp - args_num;
     frame.locals = stack;
-    frame.return_vars_num = return_vars_num;
 
     //let's reserve space for local variables, however passed variables are
     //already on the stack, let's take that into account
@@ -1695,7 +1676,7 @@ public partial class VM
     op_handlers[(int)Opcodes.CallMethodIfaceNative] = OpcodeCallMethodIfaceNative;
     op_handlers[(int)Opcodes.CallFuncPtr] = OpcodeCallFuncPtr;
 
-    op_handlers[(int)Opcodes.InitFrame] = OpcodeInitFrame;
+    op_handlers[(int)Opcodes.EnterFrame] = OpcodeEnterFrame;
 
     op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
     op_handlers[(int)Opcodes.SetUpval] = OpcodeSetUpval;

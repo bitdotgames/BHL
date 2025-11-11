@@ -133,7 +133,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame, uint args_bits)
+    public void InitFrame(VM.ExecState exec, ref Frame origin_frame, ref Frame frame)
     {
       if(native != null)
       {
@@ -143,11 +143,10 @@ public partial class VM : INamedResolver
       {
         frame.InitWithModule(module, func_ip);
 
-        int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
         for(int i = 0; i < upvals.Count; ++i)
         {
           ref var upval = ref upvals.Values[i];
-          int local_idx = exec.stack.sp - args_num + upval.frame_local_idx;
+          int local_idx = exec.stack.sp - frame.args_info.CountArgs() + upval.frame_local_idx;
           exec.stack.Reserve(local_idx + 1);
           exec.stack.sp = local_idx + 1;
           ref var local_var = ref exec.stack.vals[local_idx];

@@ -357,7 +357,7 @@ public class TestYield : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1 /*args info*/})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1 /*args info*/})
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0 })
           .EmitChain(Opcodes.Return)
       ;

@@ -33,7 +33,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitChain(Opcodes.Paral, new int[] { 28 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
@@ -81,7 +81,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitChain(Opcodes.Paral, new int[] { 39 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
@@ -131,7 +131,7 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitChain(Opcodes.Paral, new int[] { 48 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
@@ -185,14 +185,14 @@ public class TestParal : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclRef, new int[] { 0 })
           .EmitChain(Opcodes.Paral, new int[] { 69 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
           .EmitChain(Opcodes.Scope, new int[] { 44 })
           .EmitChain(Opcodes.Lambda, new int[] { 27 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 0 })
           .EmitChain(Opcodes.Paral, new int[] { 20 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })

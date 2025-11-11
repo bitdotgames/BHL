@@ -21,7 +21,7 @@ public class TestAny : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1})
           .EmitChain(Opcodes.Constant, new int[] { 0 })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })

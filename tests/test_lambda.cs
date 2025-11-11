@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using System.Collections.Generic;
 using bhl;
 using Xunit;
 
@@ -50,15 +49,15 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitChain(Opcodes.Lambda, new int[] { 8 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.Return)
           .EmitChain(Opcodes.LastArgToTop, new int[] { 0 })
@@ -96,15 +95,15 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitChain(Opcodes.Lambda, new int[] { 6 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
@@ -426,16 +425,16 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.DeclRef, new int[] { 0 })
           .EmitChain(Opcodes.SetRef, new int[] { 0 })
           //lambda
           .EmitChain(Opcodes.Lambda, new int[] { 6 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.GetRef, new int[] { 0 })
           .EmitChain(Opcodes.Return)
           .EmitChain(Opcodes.SetUpval, new int[] { 0, 0, 0 })
@@ -476,10 +475,10 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 2, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitChain(Opcodes.DeclRef, new int[] { 0 })
           .EmitChain(Opcodes.SetRef, new int[] { 0 })
@@ -488,7 +487,7 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.SetRef, new int[] { 1 })
           //lambda
           .EmitChain(Opcodes.Lambda, new int[] { 18 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 3, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 3, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 5) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -538,20 +537,20 @@ public class TestLambda : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //dummy
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //lambda
           .EmitChain(Opcodes.Lambda, new int[] { 41 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1})
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
           .EmitChain(Opcodes.DeclRef, new int[] { 0 })
           .EmitChain(Opcodes.SetRef, new int[] { 0 })
           .EmitChain(Opcodes.Lambda, new int[] { 12 })
-          .EmitChain(Opcodes.InitFrame, new int[] { 2, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetRef, new int[] { 1 })

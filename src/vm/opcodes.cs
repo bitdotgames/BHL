@@ -10,10 +10,10 @@ public enum Opcodes
   Mul                   = 5,
   SetVar                = 6,
   GetVar                = 7,
-  DeclVar               = 8, //TODO: obsolete?
+  DeclVar               = 8,
   SetGVar               = 10,
   GetGVar               = 11,
-  InitFrame             = 12,
+  EnterFrame            = 12, //TODO: do we really need it?
   Return                = 14,
   Jump                  = 16,
   JumpZ                 = 17,

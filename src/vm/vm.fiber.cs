@@ -252,17 +252,18 @@ public partial class VM : INamedResolver
 
     int frame_idx = fb.exec.frames_count;
     ref var frame = ref fb.exec.PushFrame();
+    frame.args_info = args_info;
 
     //checking native call
     if(addr.fsn != null)
     {
       frame.InitWithModule(addr.module, VM.EXIT_FRAME_IP);
-      fb.exec.PushFrameRegion(addr.fsn, ref frame, frame_idx, args_info, args);
+      fb.exec.PushFrameRegion(addr.fsn, ref frame, frame_idx, args);
     }
     else
     {
       frame.InitWithModule(addr.module, addr.ip);
-      fb.exec.PushFrameRegion(ref frame, frame_idx, args_info, args);
+      fb.exec.PushFrameRegion(ref frame, frame_idx, args);
     }
 
     if(opts.HasFlag(FiberOptions.Retain))
@@ -284,13 +285,13 @@ public partial class VM : INamedResolver
 
     int new_frame_idx = new_fiber.exec.frames_count;
     ref var new_frame = ref new_fiber.exec.PushFrame();
-    var args_info = new FuncArgsInfo(args.Count);
-    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame, args_info.bits);
+    new_frame.args_info = new FuncArgsInfo(args.Count);
+    ptr.InitFrame(new_fiber.exec, ref origin_frame, ref new_frame);
 
     if(ptr.native != null)
-      new_fiber.exec.PushFrameRegion(ptr.native, ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.PushFrameRegion(ptr.native, ref new_frame, new_frame_idx, args);
     else
-      new_fiber.exec.PushFrameRegion(ref new_frame, new_frame_idx, args_info, args);
+      new_fiber.exec.PushFrameRegion(ref new_frame, new_frame_idx, args);
 
     return new_fiber;
   }
@@ -384,6 +385,7 @@ public partial class VM : INamedResolver
 
       int frame_idx = fb.exec.frames_count;
       ref var frame = ref fb.exec.PushFrame();
+      frame.args_info = args_info;
       frame.InitWithModule(addr.module, addr.ip);
 
       var stack = fb.exec.stack;
@@ -394,12 +396,6 @@ public partial class VM : INamedResolver
       {
         ref Val v = ref stack.Push();
         v = args[i];
-      }
-
-      {
-        //passing args info as stack variable
-        ref Val v = ref stack.Push();
-        v._num = args_info.bits;
       }
 
       fb.exec.PushFrameRegion(ref frame, frame_idx);

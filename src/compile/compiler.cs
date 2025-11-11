@@ -567,7 +567,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.InitFrame,
+        Opcodes.EnterFrame,
         1 /*total local vars*/, 1 /*returned args num*/
       )
     );
@@ -953,7 +953,7 @@ public class ModuleCompiler : AST_Visitor
 
     fsymb._ip_addr = GetCodeSize();
 
-    Emit(Opcodes.InitFrame,
+    Emit(Opcodes.EnterFrame,
       new int[] { fsymb._local_vars_num, fsymb.GetReturnedArgsNum() },
       ast.symbol.origin.source_line
     );
@@ -972,7 +972,7 @@ public class ModuleCompiler : AST_Visitor
   {
     var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
     //skipping lambda opcode
-    Emit(Opcodes.InitFrame,
+    Emit(Opcodes.EnterFrame,
       new int[] { ast.local_vars_num, ast.symbol.GetReturnedArgsNum()},
       ast.symbol.origin.source_line
     );

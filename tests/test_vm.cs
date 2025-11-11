@@ -20,7 +20,7 @@ public class TestVM : BHL_TestBase
       var expected =
           new ModuleCompiler()
             .UseCode()
-            .EmitChain(Opcodes.InitFrame, new int[] { 0, 0 })
+            .EmitChain(Opcodes.EnterFrame, new int[] { 0, 0 })
             .EmitChain(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -41,7 +41,7 @@ public class TestVM : BHL_TestBase
       var expected =
           new ModuleCompiler()
             .UseCode()
-            .EmitChain(Opcodes.InitFrame, new int[] { 0  })
+            .EmitChain(Opcodes.EnterFrame, new int[] { 0  })
             .EmitChain(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -63,7 +63,7 @@ public class TestVM : BHL_TestBase
       var expected =
           new ModuleCompiler()
             .UseCode()
-            .EmitChain(Opcodes.InitFrame, new int[] { 0  })
+            .EmitChain(Opcodes.EnterFrame, new int[] { 0  })
             .EmitChain(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -85,7 +85,7 @@ public class TestVM : BHL_TestBase
       var expected =
           new ModuleCompiler()
             .UseCode()
-            .EmitChain(Opcodes.InitFrame, new int[] { 0  })
+            .EmitChain(Opcodes.EnterFrame, new int[] { 0  })
             .EmitChain(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -112,7 +112,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.Return)
       ;
@@ -172,7 +172,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, true) })
           .EmitChain(Opcodes.Return)
       ;
@@ -202,7 +202,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, false) })
           .EmitChain(Opcodes.Return)
       ;
@@ -232,7 +232,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, true) })
           .EmitChain(Opcodes.UnaryNot)
           .EmitChain(Opcodes.Return)
@@ -263,7 +263,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, false) })
           .EmitChain(Opcodes.UnaryNot)
           .EmitChain(Opcodes.Return)
@@ -294,7 +294,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.UnaryBitNot)
           .EmitChain(Opcodes.Return)
@@ -325,7 +325,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "Hello") })
           .EmitChain(Opcodes.Return)
       ;
@@ -455,7 +455,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -485,7 +485,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 42) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -538,7 +538,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 2 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 2 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "bar") })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 300) })
           .EmitChain(Opcodes.Return)
@@ -725,11 +725,11 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 2 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 2 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 2 + 0  })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2 + 0  })
           .EmitChain(Opcodes.CallLocal, new int[] { 0, 0 })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.SetVar, new int[] { 1 })
@@ -1397,7 +1397,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, false) })
           .EmitChain(Opcodes.JumpPeekZ, new int[] { 5 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, true) })
@@ -1430,7 +1430,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, false) })
           .EmitChain(Opcodes.JumpPeekNZ, new int[] { 5 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, true) })
@@ -1481,7 +1481,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.BitAnd)
@@ -1513,7 +1513,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 4) })
           .EmitChain(Opcodes.BitOr)
@@ -1545,7 +1545,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.BitShr)
@@ -1577,7 +1577,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.BitShl)
@@ -1609,7 +1609,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.Mod)
@@ -1641,7 +1641,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2.7) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.Mod)
@@ -1774,7 +1774,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -1915,7 +1915,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("int")) })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -1947,7 +1947,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -1979,7 +1979,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("string"))})
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -2011,7 +2011,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("bool")) })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
@@ -2064,7 +2064,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -2097,7 +2097,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitChain(Opcodes.Add)
@@ -2129,7 +2129,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.Sub)
@@ -2453,7 +2453,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.Add)
@@ -2687,7 +2687,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 30) })
@@ -2926,10 +2926,10 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.CallLocal, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
       ;
@@ -3079,7 +3079,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "foo") })
           .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
@@ -3192,7 +3192,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 2 /*args info*/})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2 /*args info*/})
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, Types.Int) })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.CallNative, new int[] { 1, 0, 1 })
@@ -3290,7 +3290,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
@@ -3361,7 +3361,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
@@ -3421,7 +3421,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -3970,7 +3970,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__while__//
@@ -4064,7 +4064,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__while__//
@@ -4181,7 +4181,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__while__//
@@ -4297,7 +4297,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__while__//
@@ -4490,7 +4490,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 2, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__for__//
@@ -4903,7 +4903,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 3 + 2 /*hidden vars*/, 1})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 3 + 2 /*hidden vars*/, 1})
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, ts.TArr("int")) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -5421,7 +5421,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 2, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__for__//
@@ -5500,7 +5500,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 2, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           //__for__//
@@ -5709,13 +5709,13 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, true) })
           .EmitChain(Opcodes.JumpZ, new int[] { 13 })
           .EmitChain(Opcodes.CallLocal, new int[] { 0, 0 })
@@ -5763,13 +5763,13 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1})
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1})
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.Return)
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.GT)
@@ -5924,7 +5924,7 @@ public class TestVM : BHL_TestBase
         new ModuleCompiler()
           .UseCode()
           //foo
-          .EmitChain(Opcodes.InitFrame, new int[] { 3, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 3, 1 })
           .EmitChain(Opcodes.DefArg, new int[] { 0, 11 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -5940,7 +5940,7 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.Add)
           .EmitChain(Opcodes.Return)
           //test
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Add)
@@ -6570,7 +6570,7 @@ public class TestVM : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 2) })
           .EmitChain(Opcodes.CallGlobNative, new int[] { c.ts.module.nfunc_index.IndexOf(fn), 1 })
           .EmitChain(Opcodes.Return)
@@ -9034,7 +9034,7 @@ public class TestVM : BHL_TestBase
           .UseInit()
           .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.GetGVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
@@ -9066,7 +9066,7 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 20) })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
           .EmitChain(Opcodes.GetGVar, new int[] { 0 })
@@ -9100,7 +9100,7 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .UseCode()
-          .EmitChain(Opcodes.InitFrame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.EnterFrame, new int[] { 0, 1 })
           .EmitChain(Opcodes.GetGVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
