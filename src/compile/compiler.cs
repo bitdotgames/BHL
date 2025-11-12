@@ -489,12 +489,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.LastArgToTop,
-        4 /*args bits*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.CallLocal,
         3 /*func ip*/, 4 /*args bits*/
       )
@@ -551,12 +545,6 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.CallFuncPtr,
         4 /*args bits*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
-        Opcodes.Lambda,
-        2 /*rel.offset skip lambda pos*/
       )
     );
     DeclareOpcode(
@@ -970,18 +958,30 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    var lmbd_op = Emit(Opcodes.Lambda, new int[] { 0 /*patched later*/});
-    //skipping lambda opcode
-    Emit(Opcodes.Frame,
-      new int[] { ast.local_vars_num, ast.symbol.GetReturnedArgsNum()},
-      ast.symbol.origin.source_line
-    );
-    VisitChildren(ast);
-    //let's insert return only if the previous instruction is not return as well
-    if(Peek().op != Opcodes.Return)
-      Emit(Opcodes.Return, null, ast.last_line_num);
-    AddOffsetFromTo(lmbd_op, Peek());
+    //var current_fsymb = func_decls.Pop();
 
+    int start_offset = code.Count;
+
+    DoVisit((AST_FuncDecl)ast);
+
+    int dst_line = 0;
+    for(int i = start_offset; i < code.Count; ++i)
+    {
+      var line = code[i];
+      code.RemoveAt(i);
+      code.Insert(dst_line++, line);
+    }
+
+    //func_decls.Push(current_fsymb);
+
+    UseCode();
+
+    var fmod = ast.symbol.GetModule();
+    int func_idx = fmod.func_index.IndexOf(ast.symbol);
+    if(func_idx == -1)
+      throw new Exception("Not found function '" + ast.symbol.name + "' index in module '" +  fmod.name + "'");
+
+    Emit(Opcodes.GetFuncLocalPtr, new int[] { func_idx }, ast.last_line_num);
     foreach(var p in ast.upvals)
       Emit(Opcodes.SetUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
   }
@@ -1437,8 +1437,9 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.LMBD:
       {
+        //TODO:
+        //Emit(Opcodes.GetFuncLocalPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
         VisitChildren(ast);
-        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
@@ -1451,8 +1452,9 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.FUNC_MVAR:
       {
+        //TODO:
+        //Emit(Opcodes.GetFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
         VisitChildren(ast);
-        Emit(Opcodes.LastArgToTop, new int[] {(int)ast.cargs_bits}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;

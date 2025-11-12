@@ -33,8 +33,6 @@ public enum Opcodes
   GetFuncLocalPtr       = 39,
   GetFuncPtr            = 40,
   GetFuncNativePtr      = 41,
-  //TODO: not really needed?
-  LastArgToTop          = 44,
   GetAttr               = 45,
   SetAttr               = 47,
   //TODO: used for json alike array initialization,
@@ -66,8 +64,7 @@ public enum Opcodes
   ParalAll              = 73,
 
   New                   = 77,
-  Lambda                = 78,
-  SetUpval          = 79, //TODO: split it into capture 'ref' and 'val'
+  SetUpval              = 79, //TODO: split it into capture 'ref' and 'val'
   Inc                   = 81,
   Dec                   = 82,
   ArrIdx                = 83,

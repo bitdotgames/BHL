@@ -1116,20 +1116,6 @@ public partial class VM
     exec.stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
   }
 
-  //TODO: this is a very suspicious opcode which should be rethought
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeLastArgToTop(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-  {
-    //NOTE: we need to move arg (e.g. func ptr) to the top of the stack
-    //      so that it fulfills Opcode.Call requirements
-    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int arg_idx = exec.stack.sp - args_num - 1;
-    var arg = exec.stack.vals[arg_idx];
-    exec.stack.RemoveAt(arg_idx);
-    exec.stack.Push(arg);
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeCallLocal(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
@@ -1360,17 +1346,6 @@ public partial class VM
     stack.Reserve(rest_local_vars_num);
     //temporary stack lives after local variables
     stack.sp += rest_local_vars_num;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeLambda(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-  {
-    short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
-    var ptr = FuncPtr.New(vm);
-    ptr.Init(frame.module, exec.ip + 1);
-    exec.stack.Push(Val.NewObj(ptr, Types.Any /*TODO: should be a FuncPtr type*/));
-
-    exec.ip += offset;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1648,8 +1623,6 @@ public partial class VM
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
 
-    op_handlers[(int)Opcodes.LastArgToTop] = OpcodeLastArgToTop;
-
     op_handlers[(int)Opcodes.GetAttr] = OpcodeGetAttr;
     op_handlers[(int)Opcodes.SetAttr] = OpcodeSetAttr;
     op_handlers[(int)Opcodes.SetAttrInplace] = OpcodeSetAttrInplace;
@@ -1678,7 +1651,6 @@ public partial class VM
 
     op_handlers[(int)Opcodes.Frame] = OpcodeEnterFrame;
 
-    op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
     op_handlers[(int)Opcodes.SetUpval] = OpcodeSetUpval;
 
     op_handlers[(int)Opcodes.Pop] = OpcodePop;

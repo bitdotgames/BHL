@@ -2233,6 +2233,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       this.func_decl_stack
     );
 
+    if(!curr_scope.GetRootScope().TryDefine(lmb_symb, out SymbolError err))
+    {
+      AddError(lmb_ctx.CORO(), err.Message);
+      return null;
+    }
+
     var ast = new AST_LambdaDecl(lmb_symb, upvals, lmb_ctx.Stop.Line);
 
     var scope_backup = curr_scope;
