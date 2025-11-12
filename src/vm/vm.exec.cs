@@ -533,8 +533,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
 
     //TODO: specialized opcode for simple numbers equality?
     //l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
@@ -548,8 +547,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -560,8 +558,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num < r_operand._num ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = l_operand._num < r_operand._num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -572,8 +569,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num <= r_operand._num ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = l_operand._num <= r_operand._num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -584,8 +580,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num > r_operand._num ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = l_operand._num > r_operand._num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -596,8 +591,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num >= r_operand._num ? 1 : 0;
+    l_operand = new Val { type = Types.Bool, _num = l_operand._num >= r_operand._num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -608,7 +602,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    //l_operand.type = Types.Bool;
+    //resulting operand is Bool as well, so we don't replace it
     l_operand._num = l_operand._num == 1 && r_operand._num == 1 ? 1 : 0;
   }
 
@@ -620,7 +614,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    //l_operand.type = Types.Bool;
+    //resulting operand is Bool as well, so we don't replace it
     l_operand._num = l_operand._num == 1 || r_operand._num == 1 ? 1 : 0;
   }
 
@@ -632,7 +626,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    //l_operand.type = Types.Int;
+    //resulting operand is Int as well, so we don't replace it
     l_operand._num = (int)l_operand._num & (int)r_operand._num;
   }
 
@@ -644,7 +638,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    //l_operand.type = Types.Int;
+    //resulting operand is Int as well, so we don't replace it
     l_operand._num = (int)l_operand._num | (int)r_operand._num;
   }
 
@@ -656,6 +650,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
+    //resulting operand is Int as well, so we don't replace it
     l_operand._num = (int)l_operand._num >> (int)r_operand._num;
   }
 
@@ -667,6 +662,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
+    //resulting operand is Int as well, so we don't replace it
     l_operand._num = (int)l_operand._num << (int)r_operand._num;
   }
 
@@ -678,6 +674,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
+    //resulting operand is Int as well, so we don't replace it
     l_operand._num %= r_operand._num;
   }
 
@@ -687,6 +684,7 @@ public partial class VM
     var stack = exec.stack;
 
     ref Val val = ref stack.vals[stack.sp - 1];
+    //resulting operand is Bool as well, so we don't replace it
     val._num = val._num != 1 ? 1 : 0;
   }
 
@@ -696,6 +694,7 @@ public partial class VM
     var stack = exec.stack;
 
     ref Val val = ref stack.vals[stack.sp - 1];
+    //resulting operand is Int as well, so we don't replace it
     val._num *= -1;
   }
 
@@ -705,6 +704,7 @@ public partial class VM
     var stack = exec.stack;
 
     ref Val val = ref stack.vals[stack.sp - 1];
+    //resulting operand is Int as well, so we don't replace it
     val._num = ~((int)val._num);
   }
 
@@ -743,17 +743,6 @@ public partial class VM
     }
     else
     {
-      //NOTE: previous overly complicated implementation
-      //var new_val = new Val();
-      ////NOTE: extra type check in case cast type is instantiable object (e.g class)
-      //if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
-      //  throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-      //new_val.ValueCopyFrom(val);
-      //if(force_type)
-      //  new_val.type = cast_type;
-      //new_val._refc?.Retain();
-      //exec.stack.Push(new_val);
-
       //NOTE: extra type check in case cast type is instantiable object (e.g class)
       if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");

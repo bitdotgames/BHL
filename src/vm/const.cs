@@ -61,29 +61,23 @@ public class Const : IEquatable<Const>
   {
     if(type == ConstType.INT || type == ConstType.FLT)
     {
-      v.type = Types.Int;
-      v._num = num;
+      v = new Val { type = Types.Int, _num = num };
     }
     else if(type == ConstType.FLT)
     {
-      v.type = Types.Float;
-      v._num = num;
+      v = new Val { type = Types.Float, _num = num };
     }
     else if(type == ConstType.STR)
     {
-      v.type = Types.String;
-      v._obj = str;
+      v = new Val { type = Types.String, _obj = str };
     }
     else if(type == ConstType.BOOL)
     {
-      v.type = Types.Bool;
-      v._num = num;
+      v = new Val { type = Types.Bool, _num = num };
     }
     else if(type == ConstType.NIL)
     {
-      v.type = Types.Null;
-      v._obj = null;
-      v._refc = null;
+      v = new Val { type = Types.Null };
     }
     else
       throw new Exception("Bad type");
