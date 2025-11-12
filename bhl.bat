@@ -8,9 +8,12 @@ set VERS=%DIR%\src\vm\version.cs
 IF DEFINED BHL_REBUILD GOTO :BUILD
 IF NOT EXIST %BHL_DLL% GOTO :BUILD
 
-FOR %%f in (%VERS%) do set VERS_T=%%~tf
-FOR %%f in (%BHL_DLL%) do set BHL_DLL_T=%%~tf
-IF %BHL_DLL_T:~0, 10% LSS %VERS_T:~0, 10% GOTO :BUILD
+powershell -Command ^
+    "$f1 = Get-Item '%BHL_DLL%'; $f2 = Get-Item '%VERS%';" ^
+    "if ($f1.LastWriteTime -lt $f2.LastWriteTime) { exit 1 } else { exit 0 }"
+
+IF errorlevel 1 GOTO :BUILD
+GOTO :RUN
 
 :BUILD
 dotnet clean %DIR%\bhl.csproj
