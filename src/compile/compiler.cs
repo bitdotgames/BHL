@@ -990,15 +990,6 @@ public class ModuleCompiler : AST_Visitor
     VisitFuncDecl(ast);
 
     UseCode();
-
-    var fmod = ast.symbol.GetModule();
-    int func_idx = fmod.func_index.IndexOf(ast.symbol);
-    if(func_idx == -1)
-      throw new Exception("Not found function '" + ast.symbol.name + "' index in module '" +  fmod.name + "'");
-
-    Emit(Opcodes.GetFuncLocalPtr, new int[] { func_idx }, ast.last_line_num);
-    foreach(var p in ast.upvals)
-      Emit(Opcodes.SetUpval, new int[] {(int)p.upsymb_idx, (int)p.symb_idx, (int)p.mode}, p.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -1452,9 +1443,12 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.LMBD:
       {
-        //TODO:
-        //Emit(Opcodes.GetFuncLocalPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        var func_symb = (FuncSymbolScript)ast.symb;
         VisitChildren(ast);
+        Emit(Opcodes.GetFuncLocalPtr, new int[] { func_symb.module_idx }, ast.line_num);
+        //TODO:
+        //foreach(var up in ast.upvals)
+        //  Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;

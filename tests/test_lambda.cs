@@ -101,7 +101,7 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-          .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 1 })
+          .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 2 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 1 })
           .EmitChain(Opcodes.Return)
           //lambda

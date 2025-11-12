@@ -281,7 +281,6 @@ public class AST_UpVal : IAST
 
 public class AST_LambdaDecl : AST_FuncDecl
 {
-  public int local_vars_num;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
   public AST_LambdaDecl(LambdaSymbol symbol, List<AST_UpVal> upvals, int last_line_num)

@@ -61,6 +61,7 @@ public class AnnotatedParseTree
   public ITokenStream tokens;
   public IType eval_type;
   public Symbol lsp_symbol;
+  public Symbol lambda_symbol;
 
   public SourceRange range
   {
@@ -1604,7 +1605,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return name_symb;
       }
 
-      ast = new AST_Call(EnumCall.LMBD, line, null);
+      var lambda_symbol = Annotate(cargs.Parent.Parent.Parent).lambda_symbol;
+
+      ast = new AST_Call(EnumCall.LMBD, line, lambda_symbol);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.return_type.Get();
       if(type == null)
@@ -2232,6 +2235,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       captures,
       this.func_decl_stack
     );
+    Annotate(ctx).lambda_symbol = lmb_symb;
 
     if(!curr_scope.GetRootScope().TryDefine(lmb_symb, out SymbolError err))
     {
@@ -2244,8 +2248,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
 
-    //NOTE: lambdas are not defined (persisted) in any scope, however as a symbol resolve
-    //      fallback we set the scope to the one it's actually defined in during body parsing
+    //NOTE: for proper a symbol resolve fallback we set the scope to the one it's
+    //      actually defined in during body parsing
     lmb_symb.scope = scope_backup;
 
     var fparams = lmb_ctx.funcParams();
@@ -2262,15 +2266,10 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ParseFuncBlock(lmb_ctx, lmb_ctx.funcBlock(), lmb_ctx.retType(), ast);
 
     //NOTE: once we are out of lambda the eval type is the lambda itself
-    curr_type = (IType)lmb_symb.signature;
+    curr_type = lmb_symb.signature;
     Annotate(ctx).eval_type = curr_type;
 
     PopScope();
-
-    //NOTE: since lambda func symbol is currently compile-time only,
-    //      we need to reflect local variables number in AST
-    //      (for regular funcs this number is taken from a symbol)
-    ast.local_vars_num = lmb_symb._local_vars_num;
 
     return ast;
   }
