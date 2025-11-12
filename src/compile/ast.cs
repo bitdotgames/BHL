@@ -176,11 +176,12 @@ public enum EnumBinaryOp
   GTE = 10,
   LTE = 11,
   EQ = 12,
-  NQ = 13,
+  NEQ = 13,
   BIT_OR = 14,
   BIT_AND = 15,
   BIT_SHR = 16,
   BIT_SHL = 17,
+  EQEX = 18,
 }
 
 public class AST_BinaryOpExp  : AST_Tree

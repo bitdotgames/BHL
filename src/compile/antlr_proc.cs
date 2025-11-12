@@ -1104,7 +1104,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     bool write
   )
   {
-    if(chain.IsVarAccess && curr_symb is FuncSymbol m && scope is ClassSymbol)
+    if(chain.IsMemorySlotAccess && curr_symb is FuncSymbol m && scope is ClassSymbol)
     {
       if(!write)
       {
@@ -2879,7 +2879,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       ProcBinOp(ctx, post_op.Substring(0, 1), chain_ctx, op_ctx.exp(), lhs_self_op: true);
 
       var chain = new ExpChain(ctx, chain_ctx);
-      if(!chain.IsVarAccess)
+      if(!chain.IsMemorySlotAccess)
       {
         AddError(chain_ctx, "unexpected expression");
         return false;
@@ -3035,7 +3035,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     else if(op == "==")
       op_type = EnumBinaryOp.EQ;
     else if(op == "!=")
-      op_type = EnumBinaryOp.NQ;
+      op_type = EnumBinaryOp.NEQ;
     else if(op == "*")
       op_type = EnumBinaryOp.MUL;
     else if(op == "/")
@@ -3059,7 +3059,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
   void ProcBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs, bool lhs_self_op = false)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
-    AST_Tree ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
+    AST_BinaryOpExp bin_op_ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
+    AST_Tree ast = bin_op_ast;
     PushAST(ast);
     bool ok1 = TryVisit(lhs);
     int ops_edge_idx = ast.children.Count;
@@ -3072,8 +3073,26 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var ann_lhs = Annotate(lhs);
     var ann_rhs = Annotate(rhs);
 
+    if(op_type == EnumBinaryOp.NEQ)
+    {
+      var not_ast = new AST_UnaryOpExp(EnumUnaryOp.NOT);
+      not_ast.AddChild(bin_op_ast);
+      ast = not_ast;
+      op_type = EnumBinaryOp.EQ;
+    }
+
+    //NOTE: let's use a more comprehensive comparison for non trivial types
+    if(op_type == EnumBinaryOp.EQ &&
+       (!Types.IsTrivialType(ann_lhs.eval_type) || !Types.IsTrivialType(ann_rhs.eval_type))
+       )
+    {
+      op_type = EnumBinaryOp.EQEX;
+      bin_op_ast.type = op_type;
+    }
+
     //NOTE: checking if there's binary operator overload
-    if(ann_lhs.eval_type is ClassSymbol class_symb  && class_symb.Resolve(op) is FuncSymbol)
+    if(ann_lhs.eval_type is ClassSymbol class_symb  &&
+       class_symb.Resolve(op) is FuncSymbol)
     {
       var op_func = class_symb.Resolve(op) as FuncSymbol;
 
@@ -3089,7 +3108,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
     else if(
       op_type == EnumBinaryOp.EQ ||
-      op_type == EnumBinaryOp.NQ
+      op_type == EnumBinaryOp.EQEX
     )
       Annotate(ctx).eval_type = types.CheckEqBinOp(ann_lhs, ann_rhs, errors);
     else if(
@@ -4540,13 +4559,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(vdeclsorexps != null && vdeclsorexps[i].chainExp() != null)
       {
         var chain = new ExpChain(null, vdeclsorexps[i].chainExp());
-        if(chain.IsVarAccess)
+        if(chain.IsMemorySlotAccess)
           return vdeclsorexps[i].chainExp();
       }
       else if(exps != null)
       {
         var chain = new ExpChain(null, exps[i]);
-        if(chain.IsVarAccess)
+        if(chain.IsMemorySlotAccess)
           return exps[i];
       }
 
@@ -5870,7 +5889,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
     }
 
-    public bool IsVarAccess
+    public bool IsMemorySlotAccess
     {
       get
       {

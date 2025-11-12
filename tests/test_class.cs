@@ -31,7 +31,8 @@ public class TestClass : BHL_TestBase
             .EmitChain(Opcodes.SetVar, new int[] { 0 })
             .EmitChain(Opcodes.GetVar, new int[] { 0 })
             .EmitChain(Opcodes.Constant, new int[] { 0 })
-            .EmitChain(Opcodes.NotEqual)
+            .EmitChain(Opcodes.EqualEx)
+            .EmitChain(Opcodes.UnaryNot)
             .EmitChain(Opcodes.Return)
         ;
       AssertEqual(c, expected);
@@ -2570,7 +2571,8 @@ public class TestClass : BHL_TestBase
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstNullIdx(c) })
-          .EmitChain(Opcodes.NotEqual)
+          .EmitChain(Opcodes.EqualEx)
+          .EmitChain(Opcodes.UnaryNot)
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -2610,7 +2612,7 @@ public class TestClass : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.Frame, new int[] { 1 + 1 /*args info*/})
+          .EmitChain(Opcodes.Frame, new int[] { 1, 0})
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Bar")) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })

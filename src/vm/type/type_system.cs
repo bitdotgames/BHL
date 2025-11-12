@@ -377,12 +377,17 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool IsBinOpCompatible(IType type)
+  static public bool IsTrivialType(IType type)
   {
     return type == Bool ||
            type == String ||
            type == Int ||
            type == Float;
+  }
+
+  static public bool IsBinOpCompatible(IType type)
+  {
+    return IsTrivialType(type);
   }
 
   static public bool IsNumeric(IType type)

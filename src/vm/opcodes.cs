@@ -48,7 +48,7 @@ public enum Opcodes
   BitOr                 = 55,
   BitAnd                = 56,
   Equal                 = 57,
-  NotEqual              = 58,
+  EqualEx               = 58,
   UnaryBitNot           = 59,
   LT                    = 60,
   LTE                   = 61,

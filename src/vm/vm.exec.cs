@@ -533,23 +533,20 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    var res = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-    //TODO: specialized opcode for simple numbers equality
-    r_operand._refc?.Release();
-    l_operand._refc?.Release();
-    l_operand = res;
+    l_operand.type = Types.Bool;
+    l_operand._num = r_operand._num == l_operand._num &&
+                     (string)r_operand._obj  == (string)l_operand._obj? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeNotEqual(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeEqualEx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    var res = new Val { type = Types.Bool, _num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-    //TODO: specialized opcode for simple numbers equality
+    var res = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
     r_operand._refc?.Release();
     l_operand._refc?.Release();
     l_operand = res;
@@ -1602,7 +1599,7 @@ public partial class VM
     op_handlers[(int)Opcodes.Div] = OpcodeDiv;
     op_handlers[(int)Opcodes.Mul] = OpcodeMul;
     op_handlers[(int)Opcodes.Equal] = OpcodeEqual;
-    op_handlers[(int)Opcodes.NotEqual] = OpcodeNotEqual;
+    op_handlers[(int)Opcodes.EqualEx] = OpcodeEqualEx;
     op_handlers[(int)Opcodes.LT] = OpcodeLT;
     op_handlers[(int)Opcodes.LTE] = OpcodeLTE;
     op_handlers[(int)Opcodes.GT] = OpcodeGT;

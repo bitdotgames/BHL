@@ -383,7 +383,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.NotEqual
+        Opcodes.EqualEx
       )
     );
     DeclareOpcode(
@@ -1651,9 +1651,9 @@ public class ModuleCompiler : AST_Visitor
         VisitChildren(ast);
         Emit(Opcodes.Equal, null, ast.line_num);
         break;
-      case EnumBinaryOp.NQ:
+      case EnumBinaryOp.EQEX:
         VisitChildren(ast);
-        Emit(Opcodes.NotEqual, null, ast.line_num);
+        Emit(Opcodes.EqualEx, null, ast.line_num);
         break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
