@@ -141,9 +141,8 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
           GetNativeStaticFieldGetFuncName(fld), fld.type,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
             var res = new Val();
-            //fld.getter(null, null, ref res, fld);
+            fld.getter(null, null, ref res, fld);
             exec.stack.Push(res);
             return null;
           });
@@ -154,10 +153,9 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
           GetNativeStaticFieldSetFuncName(fld), fld.type,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
             Val ctx = null;
             exec.stack.Pop(out var val);
-            //fld.setter(null, ref ctx, val, fld);
+            fld.setter(null, ref ctx, val, fld);
             val._refc?.Release();
             return null;
           });
