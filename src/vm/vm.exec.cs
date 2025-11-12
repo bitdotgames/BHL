@@ -343,8 +343,6 @@ public partial class VM
     public int max_ip;
   }
 
-  //fake frame used for module's init code
-  Frame init_frame;
   ExecState init_exec = new ExecState();
 
   //special case 'null' value
@@ -366,14 +364,15 @@ public partial class VM
     if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
 
-    init_frame.InitForModuleInit(module);
-
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
-    init_exec.PushRegion(-1, 0, module.compiled.initcode.Length - 1);
+    ref var init_frame = ref init_exec.PushFrame();
+    init_frame.InitForModuleInit(module);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
-    //TODO:
-    //init_exec.stack.vals = init_frame.module.gvar_vals;
+    init_exec.stack = init_frame.module.gvars;
+    init_frame.locals = init_exec.stack;
+    init_frame.locals_offset = 0;
+    init_exec.PushRegion(0, 0, module.compiled.initcode.Length - 1);
 
     while(init_exec.regions_count > 0)
     {
@@ -1041,18 +1040,22 @@ public partial class VM
   unsafe static void OpcodeGetGVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    throw new NotImplementedException();
-    //exec.stack.PushRetain(frame.module.gvar_vals[var_idx]);
+
+    ref Val new_val = ref exec.stack.Push();
+    new_val = frame.module.gvars.vals[var_idx];
+    new_val._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetGVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-    var new_val = exec.stack.Pop();
-    throw new NotImplementedException();
-    //frame.module.gvar_vals.Assign(vm, var_idx, new_val);
-    //new_val.Release();
+
+    exec.stack.Pop(out var new_val);
+    ref var current = ref frame.module.gvars.vals[var_idx];
+    //TODO: what about blob?
+    current._refc?.Release();
+    current = new_val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

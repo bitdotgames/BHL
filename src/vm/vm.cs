@@ -155,8 +155,6 @@ public partial class VM : INamedResolver
     this.types = types;
     this.loader = loader;
 
-    init_frame = new Frame();
-
     null_val = new ValOld(this);
     null_val.SetObj(null, Types.Null);
     //NOTE: we don't want to store it in the values pool,
