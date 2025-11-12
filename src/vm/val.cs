@@ -508,6 +508,17 @@ public class ValStack
       vals.Length - idx - 1
       );
   }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void ClearAndRelease()
+  {
+    while(sp > 0)
+    {
+      Pop(out var val);
+      //TODO: what about blobs
+      val._refc?.Release();
+    }
+  }
 }
 
 public class ValRef : IRefcounted

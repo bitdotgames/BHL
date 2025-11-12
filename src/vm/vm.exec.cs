@@ -370,6 +370,8 @@ public partial class VM
     init_frame.InitForModuleInit(module);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
     init_exec.stack = module.gvars;
+    //NOTE: need to setup the temporary stack offset
+    init_exec.stack.sp = module.local_gvars_num;
     init_frame.locals = init_exec.stack;
     init_frame.locals_offset = 0;
     init_exec.PushRegion(0, 0, module.compiled.initcode.Length - 1);

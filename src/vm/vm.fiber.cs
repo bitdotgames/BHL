@@ -144,11 +144,7 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void CleanStack()
     {
-      while(exec.stack.sp > 0)
-      {
-        exec.stack.Pop(out var val);
-        val._refc?.Release();
-      }
+      exec.stack.ClearAndRelease();
     }
 
     internal void AddChild(Fiber fb)

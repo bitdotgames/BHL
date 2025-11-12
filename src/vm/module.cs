@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace bhl
 {
@@ -117,16 +118,10 @@ public class Module : INamedResolver
     gvars.Reserve(compiled.total_gvars_num);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal void ClearGlobalVars()
   {
-    for(int i = 0; i < gvars.sp; ++i)
-    {
-      var val = gvars.vals[i];
-      //what about bool?
-      val._refc?.Release();
-    }
-
-    gvars.sp = 0;
+    gvars.ClearAndRelease();
   }
 
   [System.Flags]
@@ -188,12 +183,14 @@ public class Module : INamedResolver
       //NOTE: taking only local imported module's gvars
       for(int g = 0; g < imported.local_gvars_num; ++g)
       {
-        var imp_gvar = imported.gvars.vals[g];
+        ref var imp_gvar = ref imported.gvars.vals[g];
         imp_gvar._refc?.Retain();
+        gvars.Reserve(gvars_offset);
         gvars.vals[gvars_offset] = imp_gvar;
         ++gvars_offset;
       }
     }
+    gvars.sp = gvars_offset;
   }
 
   void SetupFuncSymbol(FuncSymbolScript fss)

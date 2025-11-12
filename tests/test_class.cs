@@ -4683,9 +4683,9 @@ public class TestClass : BHL_TestBase
     string bhl1 = @"
     import ""bhl0""
 
-    int A = 10
+    int A = 100
     namespace a {
-      int A = 20
+      int A = 2
       class Bar {
         int b
         static int foo
@@ -4714,7 +4714,7 @@ public class TestClass : BHL_TestBase
     );
 
     vm.LoadModule("bhl2");
-    Assert.Equal(20 + 10 + 30 + 42, Execute(vm, "test").Stack.Pop().num);
+    Assert.Equal(2 + 100 + 30 + 42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 

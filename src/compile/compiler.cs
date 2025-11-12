@@ -1256,8 +1256,9 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_Call ast)
   {
     bool is_global = ast.symb?.scope is Namespace;
-    var fs = ast.symb as FieldSymbol;
-    if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static))
+    var field_symb = ast.symb as FieldSymbol;
+    bool is_static = field_symb != null && field_symb.attribs.HasFlag(FieldAttrib.Static);
+    if(is_static)
       is_global = true;
     var vs = ast.symb as VariableSymbol;
     bool is_ref_origin = vs?._ref_origin ?? false;
@@ -1270,18 +1271,18 @@ public class ModuleCompiler : AST_Visitor
         if(is_global)
         {
           //NOTE: native static fields are implemented as native functions
-          if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          if(is_static && field_symb.scope is ClassSymbolNative cs)
           {
             var cs_mod = cs.GetModule();
             var get_var_op = Emit(Opcodes.CallNative,
-              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(fs)), 0 }, ast.line_num);
+              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldGetFuncName(field_symb)), 0 }, ast.line_num);
             TrySetFuncInstructionImportModule(get_var_op, cs_mod);
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
             Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
         }
-        else if(fs != null)
+        else if(field_symb != null)
         {
           if(ast.symb_idx == -1)
             throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
@@ -1303,18 +1304,18 @@ public class ModuleCompiler : AST_Visitor
         if(is_global)
         {
           //NOTE: native static fields are implemented as native functions
-          if(fs != null && fs.attribs.HasFlag(FieldAttrib.Static) && fs.scope is ClassSymbolNative cs)
+          if(is_static && field_symb.scope is ClassSymbolNative cs)
           {
             var cs_mod = cs.GetModule();
             var set_var_op = Emit(Opcodes.CallNative,
-              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(fs)), 0 }, ast.line_num);
+              new int[] { 0, cs_mod.nfunc_index.IndexOf(cs.GetNativeStaticFieldSetFuncName(field_symb)), 0 }, ast.line_num);
             TrySetFuncInstructionImportModule(set_var_op, cs_mod);
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
             Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
         }
-        else if(fs != null)
+        else if(field_symb != null)
         {
           if(ast.symb_idx == -1)
             throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
