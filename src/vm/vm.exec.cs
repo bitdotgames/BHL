@@ -533,10 +533,11 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-
-    //TODO: specialized opcode for simple numbers equality?
-    //l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
+    var res = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+    //TODO: specialized opcode for simple numbers equality
+    r_operand._refc?.Release();
+    l_operand._refc?.Release();
+    l_operand = res;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -547,7 +548,11 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+    var res = new Val { type = Types.Bool, _num = !l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+    //TODO: specialized opcode for simple numbers equality
+    r_operand._refc?.Release();
+    l_operand._refc?.Release();
+    l_operand = res;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -236,8 +236,7 @@ public class BHL_TestBase
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_null", ts.T("Color"),
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          throw new NotImplementedException();
-          //stack.Push(Val.Null);
+          exec.stack.Push(VM.Null);
           return null;
         }
       );
