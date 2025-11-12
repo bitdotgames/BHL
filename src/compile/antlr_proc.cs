@@ -2221,7 +2221,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var tp = ParseType(lmb_ctx.retType());
 
-    var func_name = Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line;
+    var func_name = "$_" + Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line;
 
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(

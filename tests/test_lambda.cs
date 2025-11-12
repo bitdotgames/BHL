@@ -48,10 +48,6 @@ public class TestLambda : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          //lambda
-          .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
-          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-          .EmitChain(Opcodes.Return)
           //dummy
           .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
@@ -61,6 +57,10 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 2 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitChain(Opcodes.Return)
+          //lambda
+          .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -96,10 +96,6 @@ public class TestLambda : BHL_TestBase
           //dummy
           .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
-          //lambda
-          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
-          .EmitChain(Opcodes.GetVar, new int[] { 0 })
-          .EmitChain(Opcodes.Return)
           //test
           .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
@@ -107,6 +103,10 @@ public class TestLambda : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 1 })
           .EmitChain(Opcodes.CallFuncPtr, new int[] { 1 })
+          .EmitChain(Opcodes.Return)
+          //lambda
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);

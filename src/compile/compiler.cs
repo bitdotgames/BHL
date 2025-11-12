@@ -24,6 +24,13 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
 
+  internal struct LambdaCode
+  {
+    internal LambdaSymbol symbol;
+    internal List<Instruction> code;
+  }
+  Stack<LambdaCode> lambdas = new Stack<LambdaCode>();
+
   IScope curr_scope;
 
   Stack<FuncSymbol> func_decls = new Stack<FuncSymbol>();
@@ -209,6 +216,14 @@ public class ModuleCompiler : AST_Visitor
   {
     head = init;
     return this;
+  }
+
+  void PushLambdaCode(LambdaSymbol symbol)
+  {
+    var instructions = new List<Instruction>();
+    head = instructions;
+    var lambda = new LambdaCode { code = instructions, symbol = symbol };
+    lambdas.Push(lambda);
   }
 
   public void Compile_VisitAST()
@@ -740,7 +755,7 @@ public class ModuleCompiler : AST_Visitor
 
   void Pop()
   {
-    RemovePatchLater(head[head.Count - 1]);
+    RemovePatches(head[head.Count - 1]);
     head.RemoveAt(head.Count - 1);
   }
 
@@ -812,7 +827,7 @@ public class ModuleCompiler : AST_Visitor
     });
   }
 
-  void RemovePatchLater(Instruction inst)
+  void RemovePatches(Instruction inst)
   {
     for(int i = patches.Count; i-- > 0;)
     {
@@ -935,6 +950,21 @@ public class ModuleCompiler : AST_Visitor
   {
     UseCode();
 
+    VisitFuncDecl(ast);
+
+    while(lambdas.Count > 0)
+    {
+      var lambda = lambdas.Pop();
+      lambda.symbol._ip_addr = GetCodeSize();
+      foreach(var i in lambda.code)
+        head.Add(i);
+    }
+
+    UseInit();
+  }
+
+  void VisitFuncDecl(AST_FuncDecl ast)
+  {
     var fsymb = ast.symbol;
 
     func_decls.Push(fsymb);
@@ -952,27 +982,12 @@ public class ModuleCompiler : AST_Visitor
       Emit(Opcodes.Return, null, ast.last_line_num);
 
     func_decls.Pop();
-
-    UseInit();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
-    //var current_fsymb = func_decls.Pop();
-
-    int start_offset = code.Count;
-
-    DoVisit((AST_FuncDecl)ast);
-
-    int dst_line = 0;
-    for(int i = start_offset; i < code.Count; ++i)
-    {
-      var line = code[i];
-      code.RemoveAt(i);
-      code.Insert(dst_line++, line);
-    }
-
-    //func_decls.Push(current_fsymb);
+    PushLambdaCode((LambdaSymbol)ast.symbol);
+    VisitFuncDecl(ast);
 
     UseCode();
 
