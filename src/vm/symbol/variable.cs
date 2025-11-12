@@ -21,9 +21,11 @@ public class VariableSymbol : Symbol, ITyped, IScopeIndexed
   //outer lambda wrapping the current one
   internal VariableSymbol _upvalue;
   internal bool _is_ref =>
-    _ref_origin ||
-    (this is FuncArgSymbol fs && fs.is_ref) ||
-    (_upvalue?._is_ref ?? false)
+    //let's make sure 'this' symbol is not a ref
+    !(_scope_idx == 0 && name == "this") &&
+      (_ref_origin ||
+      (this is FuncArgSymbol fs && fs.is_ref) ||
+      (_upvalue?._is_ref ?? false))
     ;
 #endif
 

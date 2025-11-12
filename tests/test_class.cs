@@ -237,7 +237,7 @@ public class TestClass : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseCode()
-          .EmitChain(Opcodes.Frame, new int[] { 1 + 1 /*args info*/})
+          .EmitChain(Opcodes.Frame, new int[] { 1, 0})
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
@@ -1366,7 +1366,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_bytes: true);
     Assert.Equal(10, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
