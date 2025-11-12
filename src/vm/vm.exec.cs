@@ -369,7 +369,7 @@ public partial class VM
     ref var init_frame = ref init_exec.PushFrame();
     init_frame.InitForModuleInit(module);
     //NOTE: here's the trick, init frame operates on global vars instead of locals
-    init_exec.stack = init_frame.module.gvars;
+    init_exec.stack = module.gvars;
     init_frame.locals = init_exec.stack;
     init_frame.locals_offset = 0;
     init_exec.PushRegion(0, 0, module.compiled.initcode.Length - 1);
@@ -380,6 +380,9 @@ public partial class VM
       if(init_exec.status == BHS.RUNNING)
         throw new Exception("Invalid state in init mode: " + init_exec.status);
     }
+    --init_exec.frames_count;
+    if(init_exec.frames_count > 0)
+      throw new Exception("Invalid amount of frames in init mode: " + init_exec.frames_count);
   }
 
   void ExecModuleInitFunc(Module module)

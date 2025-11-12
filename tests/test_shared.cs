@@ -624,21 +624,23 @@ public class BHL_TestBase
     return vm;
   }
 
-  public static async Task<VM> MakeVM(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
-    CompilationExecutor executor = null)
+  public static async Task<VM> MakeVM(List<string> files, Action<Types> ts_fn = null,
+    bool use_cache = false, bool show_bytes = false, CompilationExecutor executor = null)
   {
     Types ts = new Types();
     ts_fn?.Invoke(ts);
 
-    var loader = new ModuleLoader(ts, await CompileFiles(files, ts_fn, use_cache: use_cache, executor: executor));
+    var loader = new ModuleLoader(ts,
+      await CompileFiles(files, ts_fn, use_cache: use_cache, show_bytes: show_bytes, executor: executor)
+      );
     var vm = new VM(ts, loader);
     return vm;
   }
 
   public static Task<VM> MakeVM(Dictionary<string, string> file2src, Action<Types> ts_fn = null, bool clean_dir = true,
-    bool use_cache = false)
+    bool use_cache = false, bool show_bytes = false)
   {
-    return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache);
+    return MakeVM(MakeFiles(file2src, clean_dir), ts_fn, use_cache: use_cache, show_bytes: show_bytes);
   }
 
   public VM.Fiber Execute(VM vm, string fn_name, params Val[] args)
@@ -959,7 +961,9 @@ public class BHL_TestBase
   }
 
   //NOTE: returns stream of bhl compiled data
-  public static async Task<Stream> CompileFiles(CompilationExecutor exec, CompileConf conf)
+  public static async Task<Stream> CompileFiles(
+    CompilationExecutor exec, CompileConf conf, bool show_bytes = false
+    )
   {
     var errors = await exec.Exec(conf);
     if(errors.Count > 0)
@@ -979,28 +983,46 @@ public class BHL_TestBase
     }
 
     var ms = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
+    if(show_bytes)
+    {
+      var ml = new ModuleLoader(conf.ts, ms);
+      foreach(var file in conf.files)
+      {
+        var module = conf.proj.inc_path.FilePath2ModuleName(file);
+        var loaded = ml.Load(module, conf.ts);
+        Console.WriteLine("=====================");
+        Console.WriteLine(loaded.file_path);
+        Dump(loaded);
+      }
+    }
+
     return ms;
   }
 
-  public static Task<Stream> CompileFiles(List<string> files, Action<Types> ts_fn = null, bool use_cache = false,
+  public static Task<Stream> CompileFiles(List<string> files, Action<Types> ts_fn = null,
+    bool use_cache = false, bool show_bytes = false,
     int max_threads = 1, CompilationExecutor executor = null)
   {
-    return CompileFiles(MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads),
-      executor: executor);
+    return CompileFiles(
+      MakeCompileConf(files, ts_fn, use_cache: use_cache, max_threads: max_threads),
+      executor: executor, show_bytes: show_bytes
+      );
   }
 
   public static Task<Stream> CompileFiles(
     Dictionary<string, string> file2src, Action<Types> ts_fn = null,
     bool use_cache = false, int max_threads = 1,
-    bool clean_dir = true, CompilationExecutor executor = null)
+    bool clean_dir = true, CompilationExecutor executor = null, bool show_bytes = false)
   {
-    return CompileFiles(MakeFiles(file2src, clean_dir), ts_fn, use_cache: use_cache, max_threads: max_threads,
-      executor: executor);
+    return CompileFiles(
+      MakeFiles(file2src, clean_dir),
+      ts_fn, use_cache: use_cache, max_threads: max_threads,
+      executor: executor, show_bytes: show_bytes);
   }
 
-  public static Task<Stream> CompileFiles(CompileConf conf, CompilationExecutor executor = null)
+  public static Task<Stream> CompileFiles(CompileConf conf, CompilationExecutor executor = null, bool show_bytes = false)
   {
-    return CompileFiles(executor ?? new CompilationExecutor(), conf);
+    return CompileFiles(executor ?? new CompilationExecutor(), conf, show_bytes: show_bytes);
   }
 
   public bhl.Module Compile(
