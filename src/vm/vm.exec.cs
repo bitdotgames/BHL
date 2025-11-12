@@ -1191,8 +1191,8 @@ public partial class VM
   {
     int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-    var args_info = new FuncArgsInfo(args_bits);
 
+    var args_info = new FuncArgsInfo(args_bits);
     int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
     ref var self = ref exec.stack.vals[self_idx];
     //NOTE: taking into account that 'this' is on the stack,
@@ -1237,24 +1237,23 @@ public partial class VM
     int virt_func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    throw new NotImplementedException();
+    var args_info = new FuncArgsInfo(args_bits);
+    int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+    ref var self = ref exec.stack.vals[self_idx];
+    //NOTE: taking into account that 'this' is on the stack,
+    //      args_bits doesn't include it we have to take it into
+    //      account so that during EnterFrame local offsets are
+    //      properly calculated
+    --exec.stack.sp;
 
-    ////TODO: use a simpler schema where 'self' is passed on the top
-    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    //int self_idx = exec.stack_old.Count - args_num - 1;
-    //var self = exec.stack_old[self_idx];
-    //exec.stack_old.RemoveAt(self_idx);
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
 
-    //var class_type = (ClassSymbol)self.type;
-    //var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
-
-    //var frm = FrameOld.New(vm);
-    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
-
-    //frm.locals.Count = 1;
-    //frm.locals[0] = self;
-
-    //vm.Call(exec, frm, args_bits);
+    int new_frame_idx = exec.frames_count;
+    ref var new_frame = ref exec.PushFrame();
+    new_frame.args_info = args_info;
+    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+    CallFrame(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1264,25 +1263,24 @@ public partial class VM
     int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
-    throw new NotImplementedException();
+    var args_info = new FuncArgsInfo(args_bits);
+    int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+    ref var self = ref exec.stack.vals[self_idx];
+    //NOTE: taking into account that 'this' is on the stack,
+    //      args_bits doesn't include it we have to take it into
+    //      account so that during EnterFrame local offsets are
+    //      properly calculated
+    --exec.stack.sp;
 
-    ////TODO: use a simpler schema where 'self' is passed on the top
-    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    //int self_idx = exec.stack_old.Count - args_num - 1;
-    //var self = exec.stack_old[self_idx];
-    //exec.stack_old.RemoveAt(self_idx);
+    var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
 
-    //var iface_symb = (InterfaceSymbol)curr_frame.type_refs[iface_type_idx];
-    //var class_type = (ClassSymbol)self.type;
-    //var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
-
-    //var frm = FrameOld.New(vm);
-    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
-
-    //frm.locals.Count = 1;
-    //frm.locals[0] = self;
-
-    //vm.Call(exec, frm, args_bits);
+    int new_frame_idx = exec.frames_count;
+    ref var new_frame = ref exec.PushFrame();
+    new_frame.args_info = args_info;
+    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+    CallFrame(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
