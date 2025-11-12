@@ -401,7 +401,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static internal void CallLocal(ExecState exec, ref Frame frame, int frame_idx)
+  static internal void CallFrame(ExecState exec, ref Frame frame, int frame_idx)
   {
     //let's remember ip to return to
     frame.return_ip = exec.ip;
@@ -1132,10 +1132,8 @@ public partial class VM
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.args_info = args_info;
-    //new_frame.locals = exec.stack;
-    //new_frame.locals_offset = exec.stack.sp - args_info.CountArgs();
     new_frame.InitWithOrigin(frame, func_ip);
-    CallLocal(exec, ref new_frame, new_frame_idx);
+    CallFrame(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1185,7 +1183,7 @@ public partial class VM
     ref var new_frame = ref exec.PushFrame();
     new_frame.args_info = new FuncArgsInfo(args_bits);
     new_frame.InitWithModule(func_mod, func_ip);
-    CallLocal(exec, ref new_frame, new_frame_idx);
+    CallFrame(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1193,25 +1191,24 @@ public partial class VM
   {
     int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+    var args_info = new FuncArgsInfo(args_bits);
 
-    throw new NotImplementedException();
+    int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+    ref var self = ref exec.stack.vals[self_idx];
+    //NOTE: taking into account that 'this' is on the stack,
+    //      args_bits doesn't include it we have to take it into
+    //      account so that during EnterFrame local offsets are
+    //      properly calculated
+    --exec.stack.sp;
 
-    ////TODO: use a simpler schema where 'self' is passed on the top
-    //int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    //int self_idx = exec.stack_old.Count - args_num - 1;
-    //var self = exec.stack_old[self_idx];
-    //exec.stack_old.RemoveAt(self_idx);
+    var class_type = (ClassSymbolScript)self.type;
+    var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
 
-    //var class_type = (ClassSymbolScript)self.type;
-    //var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
-
-    //var frm = FrameOld.New(vm);
-    //frm.Init(curr_frame.fb, exec.stack_old, func_symb._module, func_symb._ip_addr);
-
-    //frm.locals.Count = 1;
-    //frm.locals[0] = self;
-
-    //vm.Call(exec, frm, args_bits);
+    int new_frame_idx = exec.frames_count;
+    ref var new_frame = ref exec.PushFrame();
+    new_frame.args_info = args_info;
+    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+    CallFrame(exec, ref new_frame, new_frame_idx);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1329,7 +1326,7 @@ public partial class VM
       ref var new_frame = ref exec.PushFrame();
       new_frame.args_info = new FuncArgsInfo(args_bits);
       ptr.InitFrame(exec, ref frame, ref new_frame);
-      CallLocal(exec, ref new_frame, new_frame_idx);
+      CallFrame(exec, ref new_frame, new_frame_idx);
     }
     ptr.Release();
   }

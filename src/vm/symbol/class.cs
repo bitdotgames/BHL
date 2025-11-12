@@ -413,7 +413,7 @@ public class ClassSymbolScript : ClassSymbol
         vl.Add(v);
       }
       else
-        vl.Add(exec.vm.NullOld.CloneValue());
+        vl.Add(VM.Null);
     }
   }
 
