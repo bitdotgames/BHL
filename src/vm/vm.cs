@@ -113,7 +113,7 @@ public partial class VM : INamedResolver
   {
     public Module module;
     public VariableSymbol vs;
-    public ValOld val;
+    public ValRef val_ref;
   }
 
   public struct SymbolSpec : IEquatable<SymbolSpec>
@@ -205,12 +205,11 @@ public partial class VM : INamedResolver
 
     var cm = registered_modules[((Namespace)vs.scope).module.name];
 
-    throw new NotImplementedException();
     addr = new VarAddr()
     {
       module = cm,
       vs = vs,
-      //val = cm.gvar_vals.vals[vs.scope_idx]
+      val_ref = (ValRef)cm.gvars.vals[vs.scope_idx]._obj
     };
 
     return true;
