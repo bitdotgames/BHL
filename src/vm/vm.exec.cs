@@ -1048,9 +1048,12 @@ public partial class VM
   {
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
-    ref Val new_val = ref exec.stack.Push();
-    new_val = frame.module.gvars.vals[var_idx];
-    new_val._refc?.Retain();
+    ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
+
+    ref Val v = ref exec.stack.Push();
+    v = val_ref.val;
+    v._refc?.Retain();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1059,10 +1062,12 @@ public partial class VM
     int var_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
     exec.stack.Pop(out var new_val);
-    ref var current = ref frame.module.gvars.vals[var_idx];
+
+    ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
     //TODO: what about blob?
-    current._refc?.Release();
-    current = new_val;
+    val_ref.val._refc?.Release();
+    val_ref.val = new_val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

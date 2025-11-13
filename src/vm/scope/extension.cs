@@ -184,7 +184,7 @@ public static class ScopeExtensions
     {
       //NOTE: in case the symbol is local to module we should
       //      return it only if we actually own it
-      bool check_local = level == 0 && s.IsLocal();
+      bool check_local = level == 0 && s.IsModuleLocal();
       if(!check_local || (check_local && s.scope.GetModule() == scope.GetModule()))
         return s;
     }
@@ -192,11 +192,11 @@ public static class ScopeExtensions
     return null;
   }
 
-  public static bool IsLocal(this Symbol symb)
+  public static bool IsModuleLocal(this Symbol symb)
   {
     if(symb is FuncSymbol fs && fs.attribs.HasFlag(FuncAttrib.Static) && fs.scope is Namespace)
       return true;
-    else if(symb is GlobalVariableSymbol gs && gs.is_local)
+    else if(symb is GlobalVariableSymbol gs && gs.is_module_local)
       return true;
 
     return false;

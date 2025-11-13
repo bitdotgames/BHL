@@ -1532,8 +1532,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
           bool pass_as_ref = PeekCallByRef();
           //we need to mark the variable as reference once it's passed as ref
-          if(!var_symb._is_ref && pass_as_ref)
-            var_symb._ref_origin = true;
+          if(!var_symb._is_ref && (pass_as_ref || var_symb.scope is Namespace))
+            var_symb._ref_decl = true;
 
           ast = new AST_Call(
             is_write ? EnumCall.VARW : EnumCall.VAR,
@@ -3791,7 +3791,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     var vd = pass.gvar_decl_ctx.varDeclare();
 
     pass.gvar_symb = new GlobalVariableSymbol(Annotate(vd.NAME()), vd.NAME().GetText(), new ProxyType());
-    pass.gvar_symb.is_local = pass.gvar_decl_ctx.STATIC() != null;
+    pass.gvar_symb.is_module_local = pass.gvar_decl_ctx.STATIC() != null;
 
     LSP_AddSemanticToken(pass.gvar_decl_ctx.STATIC(), SemanticToken.Keyword);
     LSP_SetSymbol(vd.NAME(), pass.gvar_symb);

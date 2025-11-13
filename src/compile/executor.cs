@@ -521,7 +521,7 @@ public class CompilationExecutor
       var file_ns = kv.Value.ns.UnlinkAll();
 
       var conflict = ns.TryLink(file_ns);
-      if(!conflict.Ok && !conflict.other.IsLocal() && !conflict.local.IsLocal())
+      if(!conflict.Ok && !conflict.other.IsModuleLocal() && !conflict.local.IsModuleLocal())
         return new SymbolError(conflict.local,
           "symbol '" + conflict.other.GetFullTypePath() + "' is already declared in module '" +
           (conflict.other.scope as Namespace)?.module.name + "'");

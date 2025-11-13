@@ -1319,7 +1319,7 @@ public class ModuleCompiler : AST_Visitor
     if(is_static)
       is_global = true;
     var vs = ast.symbol as VariableSymbol;
-    bool is_ref_origin = vs?._ref_origin ?? false;
+    bool is_ref_origin = vs?._ref_decl ?? false;
     bool is_ref = vs?._is_ref ?? false;
 
     switch(ast.type)
@@ -1761,7 +1761,7 @@ public class ModuleCompiler : AST_Visitor
     //checking if there are default args
     if(is_func_arg)
     {
-      if(ast.symb._ref_origin)
+      if(ast.symb._ref_decl)
         Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
 
       if(ast.children.Count > 0)
@@ -1776,7 +1776,7 @@ public class ModuleCompiler : AST_Visitor
         var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
         //might need to visit default arguments init code
         VisitChildren(ast);
-        if(ast.symb._ref_origin)
+        if(ast.symb._ref_decl)
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
         else
           Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
@@ -1785,7 +1785,7 @@ public class ModuleCompiler : AST_Visitor
     }
     else
     {
-      if(ast.symb._ref_origin)
+      if(ast.symb._ref_decl)
         Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });

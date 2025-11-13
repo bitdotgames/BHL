@@ -156,7 +156,7 @@ public class Namespace : Symbol, IScope,
       else if(this_symb != null)
       {
         //NOTE: let's ignore other local module symbols
-        if(!other_symb.IsLocal())
+        if(!other_symb.IsModuleLocal())
           return new LinkConflict(this_symb, other_symb);
       }
     }
