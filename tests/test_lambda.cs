@@ -535,27 +535,27 @@ public class TestLambda : BHL_TestBase
           //dummy
           .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
+          //test
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
+          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetFuncIpPtr, new int[] { 23 })
+          .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitChain(Opcodes.Return)
+          //lambda 2
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
+          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.SetRef, new int[] { 0 })
+          .EmitChain(Opcodes.GetFuncIpPtr, new int[] { 48 })
+          .EmitChain(Opcodes.SetUpval, new int[] { 0, 1, 0 })
+          .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
+          .EmitChain(Opcodes.Return)
           //lambda 1
           .EmitChain(Opcodes.Frame, new int[] { 2, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetRef, new int[] { 1 })
-          .EmitChain(Opcodes.Return)
-          //lambda 2
-          .EmitChain(Opcodes.Frame, new int[] { 1, 1})
-          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 321) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
-          .EmitChain(Opcodes.SetRef, new int[] { 0 })
-          .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 1 })
-          .EmitChain(Opcodes.SetUpval, new int[] { 0, 1, 0 })
-          .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
-          .EmitChain(Opcodes.Return)
-          //test
-          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
-          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 123) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
-          .EmitChain(Opcodes.GetFuncLocalPtr, new int[] { 2 })
-          .EmitChain(Opcodes.CallFuncPtr, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
