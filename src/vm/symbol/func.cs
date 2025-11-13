@@ -621,11 +621,11 @@ public class FuncSymbolNative : FuncSymbol
 }
 
 #if BHL_FRONT
-//NOTE: there's no special lambda symbol during runtime,
+//NOTE: lambda symbol is ephemeral and it exists only during compilation,
 //      maybe there should actually be one for consistency?
 public class LambdaSymbol : FuncSymbolScript
 {
-  List<AST_UpVal> upvals;
+  internal List<AST_UpVal> upvals;
 
   List<FuncSymbolScript> fdecl_stack;
 

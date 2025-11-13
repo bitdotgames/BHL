@@ -61,7 +61,6 @@ public class AnnotatedParseTree
   public ITokenStream tokens;
   public IType eval_type;
   public Symbol lsp_symbol;
-  public Symbol lambda_symbol;
 
   public SourceRange range
   {
@@ -229,6 +228,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   List<FuncSymbolScript> func_decl_stack = new List<FuncSymbolScript>();
+  Stack<LambdaSymbol> lambdas_stack = new Stack<LambdaSymbol>();
 
   Stack<IType> json_type_stack = new Stack<IType>();
 
@@ -1598,14 +1598,14 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
     else if(cargs != null)
     {
+      var lambda_symbol = lambdas_stack.Pop();
+
       var ftype = type as FuncSignature;
       if(ftype == null)
       {
         AddError(cargs, "no func to call");
         return name_symb;
       }
-
-      var lambda_symbol = Annotate(cargs.Parent.Parent.Parent).lambda_symbol;
 
       ast = new AST_Call(EnumCall.LMBD, line, lambda_symbol);
       AddCallArgs(ftype, cargs, ref ast);
@@ -2224,7 +2224,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     var tp = ParseType(lmb_ctx.retType());
 
-    var func_name = "$_" + Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line;
+    var func_name = "$_" + Hash.CRC32(module.name) + "_lmb_" + lmb_ctx.Stop.Line + "_" + lmb_ctx.Stop.Column;
 
     var upvals = new List<AST_UpVal>();
     var lmb_symb = new LambdaSymbol(
@@ -2235,8 +2235,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       captures,
       this.func_decl_stack
     );
-    Annotate(ctx).lambda_symbol = lmb_symb;
+    lambdas_stack.Push(lmb_symb);
 
+    //NOTE: we need to define it because we need a func index
     if(!curr_scope.GetRootScope().TryDefine(lmb_symb, out SymbolError err))
     {
       AddError(lmb_ctx.CORO(), err.Message);

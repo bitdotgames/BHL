@@ -29,7 +29,8 @@ public class ModuleCompiler : AST_Visitor
     internal LambdaSymbol symbol;
     internal List<Instruction> code;
   }
-  Stack<LambdaCode> lambdas = new Stack<LambdaCode>();
+  List<LambdaCode> lambdas_stack = new List<LambdaCode>();
+  int lambdas_stack_idx = -1;
 
   IScope curr_scope;
 
@@ -221,9 +222,20 @@ public class ModuleCompiler : AST_Visitor
   void PushLambdaCode(LambdaSymbol symbol)
   {
     var instructions = new List<Instruction>();
-    head = instructions;
     var lambda = new LambdaCode { code = instructions, symbol = symbol };
-    lambdas.Push(lambda);
+    lambdas_stack_idx++;
+    lambdas_stack.Add(lambda);
+
+    head = instructions;
+  }
+
+  void PopLambdaCode()
+  {
+    --lambdas_stack_idx;
+    if(lambdas_stack_idx == -1)
+      head = code;
+    else
+      head = lambdas_stack[lambdas_stack_idx].code;
   }
 
   public void Compile_VisitAST()
@@ -500,6 +512,12 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.GetFuncNativePtr,
         2 /*imported module idx*/, 3 /*func idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.Lambda,
+        3 /*func ip*/
       )
     );
     DeclareOpcode(
@@ -950,24 +968,25 @@ public class ModuleCompiler : AST_Visitor
   {
     UseCode();
 
-    VisitFuncDecl(ast);
+    func_decls.Push(ast.symbol);
+    EmitFuncDecl(ast);
+    func_decls.Pop();
 
-    while(lambdas.Count > 0)
+    while(lambdas_stack.Count > 0)
     {
-      var lambda = lambdas.Pop();
+      var lambda = lambdas_stack[0];
       lambda.symbol._ip_addr = GetCodeSize();
       foreach(var i in lambda.code)
         head.Add(i);
+      lambdas_stack.RemoveAt(0);
     }
 
     UseInit();
   }
 
-  void VisitFuncDecl(AST_FuncDecl ast)
+  void EmitFuncDecl(AST_FuncDecl ast)
   {
     var fsymb = ast.symbol;
-
-    func_decls.Push(fsymb);
 
     fsymb._ip_addr = GetCodeSize();
 
@@ -980,16 +999,15 @@ public class ModuleCompiler : AST_Visitor
     //let's insert return only if the previous instruction is not return as well
     if(Peek().op != Opcodes.Return)
       Emit(Opcodes.Return, null, ast.last_line_num);
-
-    func_decls.Pop();
   }
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
+    //NOTE: pushing here, processing all lambda pieces
+    //      of code in AST_FuncDecl processing
     PushLambdaCode((LambdaSymbol)ast.symbol);
-    VisitFuncDecl(ast);
-
-    UseCode();
+    EmitFuncDecl(ast);
+    PopLambdaCode();
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -1443,12 +1461,11 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.LMBD:
       {
-        var func_symb = (FuncSymbolScript)ast.symb;
+        var func_symb = (LambdaSymbol)ast.symb;
         VisitChildren(ast);
-        Emit(Opcodes.GetFuncLocalPtr, new int[] { func_symb.module_idx }, ast.line_num);
-        //TODO:
-        //foreach(var up in ast.upvals)
-        //  Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
+        Emit(Opcodes.Lambda, new int[] { func_symb._ip_addr }, ast.line_num);
+        foreach(var up in func_symb.upvals)
+          Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
