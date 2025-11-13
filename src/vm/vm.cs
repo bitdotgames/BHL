@@ -209,7 +209,7 @@ public partial class VM : INamedResolver
     {
       module = cm,
       vs = vs,
-      val_ref = (ValRef)cm.gvars.vals[vs.scope_idx]._obj
+      val_ref = (ValRef)cm.gvars.vals[vs.scope_idx]._refc
     };
 
     return true;

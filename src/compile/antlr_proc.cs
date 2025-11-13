@@ -1531,9 +1531,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           }
 
           bool pass_as_ref = PeekCallByRef();
-          //we need to mark the variable as reference once it's passed as ref
-          if(!var_symb._is_ref && (pass_as_ref || var_symb.scope is Namespace))
-            var_symb._ref_decl = true;
+          //we need to mark the variable as a source of reference once it's passed as ref
+          if(!var_symb._is_ref && pass_as_ref)
+            var_symb._is_ref_decl = true;
 
           ast = new AST_Call(
             is_write ? EnumCall.VARW : EnumCall.VAR,
