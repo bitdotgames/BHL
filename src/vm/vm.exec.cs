@@ -34,7 +34,7 @@ public partial class VM
   //      contains its own ExecState)
   public class ExecState
   {
-    public BHS status = BHS.SUCCESS;
+    public BHS status = BHS.NONE;
 
     public VM vm;
     public Fiber fiber;

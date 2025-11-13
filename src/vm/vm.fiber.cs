@@ -307,6 +307,7 @@ public partial class VM : INamedResolver
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
+    fb.exec.status = BHS.NONE;
     if(!opts.HasFlag(FiberOptions.Detach))
       fibers.Add(fb);
     parent?.AddChild(fb);

@@ -3079,6 +3079,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(op_type == EnumBinaryOp.NEQ)
     {
       var not_ast = new AST_UnaryOpExp(EnumUnaryOp.NOT);
+      bin_op_ast.type = EnumBinaryOp.EQ;
       not_ast.AddChild(bin_op_ast);
       ast = not_ast;
       op_type = EnumBinaryOp.EQ;
