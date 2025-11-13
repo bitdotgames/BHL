@@ -24,7 +24,7 @@ public class ModuleCompiler : AST_Visitor
   List<Instruction> code = new List<Instruction>();
   List<Instruction> head = null;
 
-  internal struct LambdaCode
+  internal class LambdaCode
   {
     internal LambdaSymbol symbol;
     internal List<Instruction> code;
@@ -222,10 +222,9 @@ public class ModuleCompiler : AST_Visitor
   void PushLambdaCode(LambdaSymbol symbol)
   {
     var instructions = new List<Instruction>();
-    var lambda = new LambdaCode { code = instructions, symbol = symbol };
+    var code = new LambdaCode { code = instructions, symbol = symbol };
     lambdas_stack_idx++;
-    lambdas_stack.Add(lambda);
-
+    lambdas_stack.Add(code);
     head = instructions;
   }
 
@@ -1003,11 +1002,19 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_LambdaDecl ast)
   {
+    var lambda = (LambdaSymbol)ast.symbol;
     //NOTE: pushing here, processing all lambda pieces
     //      of code in AST_FuncDecl processing
-    PushLambdaCode((LambdaSymbol)ast.symbol);
+    PushLambdaCode(lambda);
     EmitFuncDecl(ast);
     PopLambdaCode();
+
+    lambda._instruction_start = head.Count;
+    //NOTE: in case lambda is called 'in place' we need to move it
+    Emit(Opcodes.Lambda, new int[] { lambda._ip_addr }, ast.last_line_num);
+    foreach(var up in lambda.upvals)
+      Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
+    lambda._instruction_end = head.Count;
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -1279,12 +1286,12 @@ public class ModuleCompiler : AST_Visitor
 
   public override void DoVisit(AST_Call ast)
   {
-    bool is_global = ast.symb?.scope is Namespace;
-    var field_symb = ast.symb as FieldSymbol;
+    bool is_global = ast.symbol?.scope is Namespace;
+    var field_symb = ast.symbol as FieldSymbol;
     bool is_static = field_symb != null && field_symb.attribs.HasFlag(FieldAttrib.Static);
     if(is_static)
       is_global = true;
-    var vs = ast.symb as VariableSymbol;
+    var vs = ast.symbol as VariableSymbol;
     bool is_ref_origin = vs?._ref_origin ?? false;
     bool is_ref = vs?._is_ref ?? false;
 
@@ -1304,12 +1311,12 @@ public class ModuleCompiler : AST_Visitor
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
+            Emit(Opcodes.GetGVar, new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
         }
         else if(field_symb != null)
         {
           if(ast.symb_idx == -1)
-            throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+            throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
           VisitChildren(ast);
           Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
@@ -1337,12 +1344,12 @@ public class ModuleCompiler : AST_Visitor
           }
           else
             //NOTE: we use local module gvars index instead of symbol's scope index, since it can be an imported symbol
-            Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symb)}, ast.line_num);
+            Emit(Opcodes.SetGVar, new int[] {interim.gvar_index.IndexOf(ast.symbol)}, ast.line_num);
         }
         else if(field_symb != null)
         {
           if(ast.symb_idx == -1)
-            throw new Exception("Member '" + ast.symb?.name + "' idx is not valid");
+            throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
           VisitChildren(ast);
           Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
@@ -1360,13 +1367,13 @@ public class ModuleCompiler : AST_Visitor
         if(instr.op == Opcodes.GetFuncLocalPtr)
         {
           Pop();
-          var fsymb = (FuncSymbolScript)ast.symb;
+          var fsymb = (FuncSymbolScript)ast.symbol;
           var call_op = Emit(Opcodes.CallLocal, new int[] {-1 /*patched later*/, (int)ast.cargs_bits}, ast.line_num);
           PatchLater(call_op, (inst) => inst.operands[0] = fsymb._ip_addr);
         }
         else if(instr.op == Opcodes.GetFuncPtr)
         {
-          var fsymb = (FuncSymbolScript)ast.symb;
+          var fsymb = (FuncSymbolScript)ast.symbol;
           var fmod = fsymb.GetModule();
           Pop();
           var call_op = Emit(Opcodes.Call, new int[] {instr.operands[0], -1 /*patched later*/, (int)ast.cargs_bits},
@@ -1383,12 +1390,12 @@ public class ModuleCompiler : AST_Visitor
         {
           Pop();
 
-          if(ast.symb == Prelude.DumpOpcodesOn)
+          if(ast.symbol == Prelude.DumpOpcodesOn)
           {
             Console.WriteLine("=== Opcodes dump start");
             dump_opcodes = true;
           }
-          else if(ast.symb == Prelude.DumpOpcodesOff)
+          else if(ast.symbol == Prelude.DumpOpcodesOff)
           {
             Console.WriteLine("=== Opcodes dump end");
             dump_opcodes = false;
@@ -1406,13 +1413,13 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.MFUNC:
       {
-        var instance_type = ast.symb.scope as IInstantiable;
+        var instance_type = ast.symbol.scope as IInstantiable;
         if(instance_type == null)
-          throw new Exception("Not instance type: " + ast.symb.name);
+          throw new Exception("Not instance type: " + ast.symbol.name);
 
-        var mfunc = ast.symb as FuncSymbol;
+        var mfunc = ast.symbol as FuncSymbol;
         if(mfunc == null)
-          throw new Exception("Class method '" + ast.symb?.name + "' not found in type '" + instance_type.GetName() +
+          throw new Exception("Class method '" + ast.symbol?.name + "' not found in type '" + instance_type.GetName() +
                               "' by index " + ast.symb_idx);
 
         VisitChildren(ast);
@@ -1461,18 +1468,21 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.LMBD:
       {
-        var func_symb = (LambdaSymbol)ast.symb;
         VisitChildren(ast);
-        Emit(Opcodes.Lambda, new int[] { func_symb._ip_addr }, ast.line_num);
-        foreach(var up in func_symb.upvals)
-          Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
+        var lambda = (LambdaSymbol)ast.symbol;
+        for(int i = lambda._instruction_start; i < lambda._instruction_end; i++)
+        {
+          var instruction = head[i];
+          head.RemoveAt(i);
+          head.Add(instruction);
+        }
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
       case EnumCall.FUNC_VAR:
       {
         VisitChildren(ast);
-        Emit(ast.symb is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+        Emit(ast.symbol is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
@@ -1496,9 +1506,9 @@ public class ModuleCompiler : AST_Visitor
 
   Instruction EmitGetFuncAddr(AST_Call ast)
   {
-    var func_symb = ast.symb as FuncSymbol;
+    var func_symb = ast.symbol as FuncSymbol;
     if(func_symb == null)
-      throw new Exception("Symbol '" + ast.symb?.name + "' is not a func");
+      throw new Exception("Symbol '" + ast.symbol?.name + "' is not a func");
 
     if(func_symb is FuncSymbolNative func_symb_native)
     {

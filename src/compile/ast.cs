@@ -354,22 +354,22 @@ public class AST_Call  : AST_Tree
 {
   public EnumCall type = new EnumCall();
   public int line_num;
-  public Symbol symb;
+  public Symbol symbol;
   public bool pass_as_ref;
   public ITerminalNode node;
 
   public int symb_idx
   {
-    get { return symb is IScopeIndexed ? ((IScopeIndexed)symb).scope_idx : -1; }
+    get { return symbol is IScopeIndexed ? ((IScopeIndexed)symbol).scope_idx : -1; }
   }
 
   public Module module
   {
     get
     {
-      if(symb == null)
+      if(symbol == null)
         return null;
-      var ns = symb.scope.GetNamespace();
+      var ns = symbol.scope.GetNamespace();
       return ns == null ? null : ns.module;
     }
   }
@@ -379,7 +379,7 @@ public class AST_Call  : AST_Tree
   public AST_Call(
     EnumCall type,
     int line_num,
-    Symbol symb,
+    Symbol symbol,
     uint cargs_bits = 0,
     ITerminalNode node = null,
     bool pass_as_ref = false
@@ -387,7 +387,7 @@ public class AST_Call  : AST_Tree
   {
     this.type = type;
     this.line_num = line_num;
-    this.symb = symb;
+    this.symbol = symbol;
     this.cargs_bits = cargs_bits;
     this.pass_as_ref = pass_as_ref;
     this.node = node;
@@ -634,7 +634,7 @@ public class AST_Dumper : AST_Visitor
   public override void DoVisit(AST_Call node)
   {
     Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.symb?.name);
+    Console.Write(node.type + " " + node.symbol?.name);
     VisitChildren(node);
     Console.Write(")");
   }

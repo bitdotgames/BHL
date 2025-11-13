@@ -1304,12 +1304,12 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       {
         if(call.type == EnumCall.FUNC || call.type == EnumCall.MFUNC)
         {
-          if(call.symb is FuncSymbol fs)
+          if(call.symbol is FuncSymbol fs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, fs.signature, yielded);
         }
         else if(call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR)
         {
-          if(call.symb is VariableSymbol vs)
+          if(call.symbol is VariableSymbol vs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, vs.type.Get() as FuncSignature, yielded);
         }
       }
