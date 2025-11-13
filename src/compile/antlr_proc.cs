@@ -1307,7 +1307,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           if(call.symbol is FuncSymbol fs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, fs.signature, yielded);
         }
-        else if(call.type == EnumCall.FUNC_VAR || call.type == EnumCall.FUNC_MVAR)
+        else if(call.type == EnumCall.FUNC_PTR_VAR || call.type == EnumCall.FUNC_PTR_MVAR)
         {
           if(call.symbol is VariableSymbol vs)
             ValidateFuncCall(call, chain_ast.Count - 1 == i, vs.type.Get() as FuncSignature, yielded);
@@ -1481,13 +1481,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
           if(!(scope is IInstantiable))
           {
-            ast = new AST_Call(EnumCall.FUNC_VAR, line, var_symb, 0, name);
+            ast = new AST_Call(EnumCall.FUNC_PTR_VAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
           }
           else //func ptr member of class
           {
             PeekAST().AddChild(new AST_Call(EnumCall.VAR, line, var_symb, 0, name));
-            ast = new AST_Call(EnumCall.FUNC_MVAR, line, var_symb, 0, name);
+            ast = new AST_Call(EnumCall.FUNC_PTR_MVAR, line, var_symb, 0, name);
             AddCallArgs(ftype, cargs, ref ast);
           }
 
@@ -1605,7 +1605,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return name_symb;
       }
 
-      ast = new AST_Call(EnumCall.FUNC_PTR_INV, line, null);
+      ast = new AST_Call(EnumCall.FUNC_PTR_RES, line, null);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.return_type.Get();
       if(type == null)
@@ -2001,9 +2001,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     if(ast is AST_Call call &&
        (call.type == EnumCall.FUNC ||
         call.type == EnumCall.MFUNC ||
-        call.type == EnumCall.FUNC_VAR ||
-        call.type == EnumCall.FUNC_MVAR ||
-        call.type == EnumCall.FUNC_PTR_INV
+        call.type == EnumCall.FUNC_PTR_VAR ||
+        call.type == EnumCall.FUNC_PTR_MVAR ||
+        call.type == EnumCall.FUNC_PTR_RES
        ))
       return true;
 

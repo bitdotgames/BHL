@@ -347,9 +347,9 @@ public enum EnumCall
   MAP_IDX         = 9,
   MAP_IDXW        = 90,
   GET_ADDR        = 5,
-  FUNC_VAR        = 6,
-  FUNC_MVAR       = 7,
-  FUNC_PTR_INV        = 8
+  FUNC_PTR_VAR        = 6,
+  FUNC_PTR_MVAR       = 7,
+  FUNC_PTR_RES        = 8
 }
 
 public class AST_Call  : AST_Tree

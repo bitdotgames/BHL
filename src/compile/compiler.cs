@@ -29,7 +29,7 @@ public class ModuleCompiler : AST_Visitor
     internal LambdaSymbol symbol;
     internal List<Instruction> code;
   }
-  List<LambdaCode> lambdas_stack = new List<LambdaCode>();
+  List<List<LambdaCode>> lambda_stacks = new List<List<LambdaCode>>();
   int lambdas_stack_idx = -1;
 
   IScope curr_scope;
@@ -221,10 +221,19 @@ public class ModuleCompiler : AST_Visitor
 
   void PushLambdaCode(LambdaSymbol symbol)
   {
+    List<LambdaCode> stack = null;
+    if(lambda_stacks.Count == 0)
+    {
+      stack = new List<LambdaCode>();
+      lambda_stacks.Add(stack);
+    }
+    else
+      stack = lambda_stacks[^1];
+
     var instructions = new List<Instruction>();
     var code = new LambdaCode { code = instructions, symbol = symbol };
     lambdas_stack_idx++;
-    lambdas_stack.Add(code);
+    stack.Add(code);
     head = instructions;
   }
 
@@ -232,9 +241,26 @@ public class ModuleCompiler : AST_Visitor
   {
     --lambdas_stack_idx;
     if(lambdas_stack_idx == -1)
+    {
+      lambda_stacks.Add(new List<LambdaCode>());
       head = code;
+    }
     else
-      head = lambdas_stack[lambdas_stack_idx].code;
+      head = lambda_stacks[^1][lambdas_stack_idx].code;
+  }
+
+  void WriteLambdaCode()
+  {
+    foreach(var stack in lambda_stacks)
+    {
+      foreach(var lmb_code in stack)
+      {
+        lmb_code.symbol._ip_addr = GetCodeSize();
+        foreach(var instr in lmb_code.code)
+          head.Add(instr);
+      }
+    }
+    lambda_stacks.Clear();
   }
 
   public void Compile_VisitAST()
@@ -977,14 +1003,7 @@ public class ModuleCompiler : AST_Visitor
     EmitFuncDecl(ast);
     func_decls.Pop();
 
-    while(lambdas_stack.Count > 0)
-    {
-      var lambda = lambdas_stack[0];
-      lambda.symbol._ip_addr = GetCodeSize();
-      foreach(var i in lambda.code)
-        head.Add(i);
-      lambdas_stack.RemoveAt(0);
-    }
+    WriteLambdaCode();
 
     UseInit();
   }
@@ -1474,21 +1493,21 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
         break;
-      case EnumCall.FUNC_PTR_INV:
+      case EnumCall.FUNC_PTR_RES:
       {
         VisitChildren(ast);
         //if there are no args let's just call the regular opcode
         Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
-      case EnumCall.FUNC_VAR:
+      case EnumCall.FUNC_PTR_VAR:
       {
         VisitChildren(ast);
         Emit(ast.symbol is VariableSymbol var_symb && var_symb._is_ref ? Opcodes.GetRef : Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
-      case EnumCall.FUNC_MVAR:
+      case EnumCall.FUNC_PTR_MVAR:
       {
         VisitChildren(ast);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
