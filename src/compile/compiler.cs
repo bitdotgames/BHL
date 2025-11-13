@@ -1015,15 +1015,14 @@ public class ModuleCompiler : AST_Visitor
     EmitFuncDecl(ast);
     PopLambdaCode();
 
-    EmitLamdbdaPtrInit(lambda, ast.last_line_num);
+    var lambda_op = Emit(Opcodes.GetFuncIpPtr, new int[] { -1 /*patched later*/ }, ast.last_line_num);
+    PatchLater(lambda_op, (inst) => inst.operands[0] = lambda._ip_addr);
+    foreach(var up in lambda.upvals)
+      Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
   }
 
   void EmitLamdbdaPtrInit(LambdaSymbol lambda, int line)
   {
-    var lambda_op = Emit(Opcodes.GetFuncIpPtr, new int[] { -1 /*patched later*/ }, line);
-    PatchLater(lambda_op, (inst) => inst.operands[0] = lambda._ip_addr);
-    foreach(var up in lambda.upvals)
-      Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
   }
 
   public override void DoVisit(AST_ClassDecl ast)
