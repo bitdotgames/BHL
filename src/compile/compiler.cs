@@ -232,18 +232,7 @@ public class ModuleCompiler : AST_Visitor
   {
     --lambdas_stack_idx;
     if(lambdas_stack_idx == -1)
-    {
-      while(lambdas_stack.Count > 0)
-      {
-        var lambda = lambdas_stack[0];
-        lambda.symbol._ip_addr = GetCodeSize();
-        for(int i = 0; i < lambda.code.Count; ++i)
-          code.Insert(last_func_decl_code_idx + i + 1, lambda.code[i]);
-        lambdas_stack.RemoveAt(0);
-      }
-
       head = code;
-    }
     else
       head = lambdas_stack[lambdas_stack_idx].code;
   }
@@ -980,17 +969,22 @@ public class ModuleCompiler : AST_Visitor
     }
   }
 
-  int last_func_decl_code_idx;
-
   public override void DoVisit(AST_FuncDecl ast)
   {
     UseCode();
 
-    last_func_decl_code_idx = head.Count - 1;
-
     func_decls.Push(ast.symbol);
     EmitFuncDecl(ast);
     func_decls.Pop();
+
+    while(lambdas_stack.Count > 0)
+    {
+      var lambda = lambdas_stack[0];
+      lambda.symbol._ip_addr = GetCodeSize();
+      foreach(var i in lambda.code)
+        head.Add(i);
+      lambdas_stack.RemoveAt(0);
+    }
 
     UseInit();
   }
@@ -1015,6 +1009,8 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(AST_LambdaDecl ast)
   {
     var lambda = (LambdaSymbol)ast.symbol;
+    //NOTE: pushing here, processing all lambda pieces
+    //      of code in AST_FuncDecl processing
     PushLambdaCode(lambda);
     EmitFuncDecl(ast);
     PopLambdaCode();
