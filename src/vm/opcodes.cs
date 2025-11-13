@@ -33,7 +33,7 @@ public enum Opcodes
   GetFuncLocalPtr       = 39,
   GetFuncPtr            = 40,
   GetFuncNativePtr      = 41,
-  Lambda                = 42,
+  GetFuncIpPtr          = 42,
   GetAttr               = 45,
   SetAttr               = 47,
   //TODO: used for json alike array initialization,

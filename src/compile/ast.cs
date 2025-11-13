@@ -281,11 +281,13 @@ public class AST_UpVal : IAST
 
 public class AST_LambdaDecl : AST_FuncDecl
 {
+  public bool called_in_place;
   public List<AST_UpVal> upvals = new List<AST_UpVal>();
 
-  public AST_LambdaDecl(LambdaSymbol symbol, List<AST_UpVal> upvals, int last_line_num)
+  public AST_LambdaDecl(LambdaSymbol symbol, bool called_in_place, List<AST_UpVal> upvals, int last_line_num)
     : base(symbol, last_line_num)
   {
+    this.called_in_place = called_in_place;
     this.upvals = upvals;
   }
 }
@@ -347,7 +349,7 @@ public enum EnumCall
   GET_ADDR        = 5,
   FUNC_VAR        = 6,
   FUNC_MVAR       = 7,
-  LMBD            = 8
+  FUNC_PTR        = 8
 }
 
 public class AST_Call  : AST_Tree

@@ -228,7 +228,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   List<FuncSymbolScript> func_decl_stack = new List<FuncSymbolScript>();
-  Stack<LambdaSymbol> lambdas_stack = new Stack<LambdaSymbol>();
+  Stack<LambdaSymbol> called_lambdas_stack = new Stack<LambdaSymbol>();
 
   Stack<IType> json_type_stack = new Stack<IType>();
 
@@ -995,8 +995,9 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
            chain.lmb_ctx,
            chain.items,
            ref curr_type,
-           write,
-           yielded
+           write: write,
+           yielded: yielded,
+           called_in_place: chain.IsFuncCall
          ))
         return false;
     }
@@ -1598,8 +1599,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     }
     else if(cargs != null)
     {
-      var lambda_symbol = lambdas_stack.Pop();
-
       var ftype = type as FuncSignature;
       if(ftype == null)
       {
@@ -1607,7 +1606,11 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return name_symb;
       }
 
-      ast = new AST_Call(EnumCall.LMBD, line, lambda_symbol);
+      ast = new AST_Call(
+        EnumCall.FUNC_PTR,
+        line,
+        called_lambdas_stack.Count > 0
+          ? called_lambdas_stack.Pop() : null);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.return_type.Get();
       if(type == null)
@@ -2005,7 +2008,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         call.type == EnumCall.MFUNC ||
         call.type == EnumCall.FUNC_VAR ||
         call.type == EnumCall.FUNC_MVAR ||
-        call.type == EnumCall.LMBD
+        call.type == EnumCall.FUNC_PTR
        ))
       return true;
 
@@ -2211,7 +2214,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ParserRuleContext ctx,
     bhlParser.FuncLambdaContext lmb_ctx,
     ref IType curr_type,
-    bool yielded = false
+    bool yielded = false,
+    bool called_in_place = false
   )
   {
     LSP_AddSemanticToken(lmb_ctx.FUNC(), SemanticToken.Keyword);
@@ -2235,16 +2239,16 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       captures,
       this.func_decl_stack
     );
-    lambdas_stack.Push(lmb_symb);
 
-    //NOTE: we need to define it because we need a func index
-    if(!curr_scope.GetRootScope().TryDefine(lmb_symb, out SymbolError err))
-    {
-      AddError(lmb_ctx.CORO(), err.Message);
-      return null;
-    }
+    if(called_in_place)
+      called_lambdas_stack.Push(lmb_symb);
 
-    var ast = new AST_LambdaDecl(lmb_symb, upvals, lmb_ctx.Stop.Line);
+    var ast = new AST_LambdaDecl(
+      lmb_symb,
+      called_in_place,
+      upvals,
+      lmb_ctx.Stop.Line
+      );
 
     var scope_backup = curr_scope;
     PushScope(lmb_symb);
@@ -2300,20 +2304,20 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     return sym2mode;
   }
 
-  bool ProcLambdaCall(
-    ParserRuleContext ctx,
+  bool ProcLambdaCall(ParserRuleContext ctx,
     bhlParser.FuncLambdaContext lmb_ctx,
     ExpChainItems chain_items,
     ref IType curr_type,
     bool write,
-    bool yielded
-  )
+    bool yielded,
+    bool called_in_place)
   {
     var ast = ProcLambda(
       ctx,
       lmb_ctx,
       ref curr_type,
-      yielded
+      yielded: yielded,
+      called_in_place: called_in_place
     );
 
     var interim = new AST_Interim();

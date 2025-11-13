@@ -754,7 +754,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes: true);
+    var vm = MakeVM(bhl);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(3, num);
     CommonChecks(vm);
@@ -1404,7 +1404,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl);
+    var vm = MakeVM(bhl, show_bytes: true);
     var num = Execute(vm, "test").Stack.Pop().num;
     Assert.Equal(5, num);
     CommonChecks(vm);

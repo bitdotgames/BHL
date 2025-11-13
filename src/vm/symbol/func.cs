@@ -627,9 +627,6 @@ public class LambdaSymbol : FuncSymbolScript
 {
   internal List<AST_UpVal> upvals;
 
-  internal int _instruction_start;
-  internal int _instruction_end;
-
   List<FuncSymbolScript> fdecl_stack;
 
   Dictionary<VariableSymbol, UpvalMode> captures;

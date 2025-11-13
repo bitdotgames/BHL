@@ -1087,7 +1087,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeLambda(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeGetFuncIpPtr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int func_ip = (int)Bytecode.Decode24(bytes, ref exec.ip);
 
@@ -1391,7 +1391,7 @@ public partial class VM
       val._refc.Release();
       val._refc = null;
     }
-    //TODO: what about blob
+    //TODO: what about blob?
     val._obj = null;
   }
 
@@ -1647,7 +1647,7 @@ public partial class VM
     op_handlers[(int)Opcodes.GetFuncLocalPtr] = OpcodeGetFuncLocalPtr;
     op_handlers[(int)Opcodes.GetFuncPtr] = OpcodeGetFuncPtr;
     op_handlers[(int)Opcodes.GetFuncNativePtr] = OpcodeGetFuncNativePtr;
-    op_handlers[(int)Opcodes.Lambda] = OpcodeLambda;
+    op_handlers[(int)Opcodes.GetFuncIpPtr] = OpcodeGetFuncIpPtr;
 
     op_handlers[(int)Opcodes.CallLocal] = OpcodeCallLocal;
     op_handlers[(int)Opcodes.CallGlobNative] = OpcodeCallGlobNative;

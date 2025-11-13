@@ -515,7 +515,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Lambda,
+        Opcodes.GetFuncIpPtr,
         3 /*func ip*/
       )
     );
@@ -1009,12 +1009,16 @@ public class ModuleCompiler : AST_Visitor
     EmitFuncDecl(ast);
     PopLambdaCode();
 
-    lambda._instruction_start = head.Count;
-    //NOTE: in case lambda is called 'in place' we need to move it
-    Emit(Opcodes.Lambda, new int[] { lambda._ip_addr }, ast.last_line_num);
+    if(!ast.called_in_place)
+      EmitLamdbdaPtrInit(lambda, ast.last_line_num);
+  }
+
+  void EmitLamdbdaPtrInit(LambdaSymbol lambda, int line)
+  {
+    var lambda_op = Emit(Opcodes.GetFuncIpPtr, new int[] { -1 /*patched later*/ }, line);
+    PatchLater(lambda_op, (inst) => inst.operands[0] = lambda._ip_addr);
     foreach(var up in lambda.upvals)
       Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
-    lambda._instruction_end = head.Count;
   }
 
   public override void DoVisit(AST_ClassDecl ast)
@@ -1466,16 +1470,12 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
         break;
-      case EnumCall.LMBD:
+      case EnumCall.FUNC_PTR:
       {
         VisitChildren(ast);
-        var lambda = (LambdaSymbol)ast.symbol;
-        for(int i = lambda._instruction_start; i < lambda._instruction_end; i++)
-        {
-          var instruction = head[i];
-          head.RemoveAt(i);
-          head.Add(instruction);
-        }
+
+        if(ast.symbol != null)
+          EmitLamdbdaPtrInit((LambdaSymbol)ast.symbol, ast.line_num);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
@@ -1488,8 +1488,6 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumCall.FUNC_MVAR:
       {
-        //TODO:
-        //Emit(Opcodes.GetFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
         VisitChildren(ast);
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
