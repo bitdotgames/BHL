@@ -1418,7 +1418,7 @@ public partial class VM
     ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
     if(mode == UpvalMode.COPY)
     {
-      upval.val.CopyDataFrom(val);
+      upval.val.CopyDataFrom(ref val);
     }
     else
     {

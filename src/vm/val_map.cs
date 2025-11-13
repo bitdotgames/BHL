@@ -136,7 +136,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     if(map.TryGetValue(k, out var curr))
     {
       curr.Value._refc?.Release();
-      curr.Value.CopyDataFrom(value);
+      curr.Value.CopyDataFrom(ref value);
       curr.Value._refc?.Retain();
     }
     else

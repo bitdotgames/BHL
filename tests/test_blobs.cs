@@ -18,9 +18,7 @@ public class TestBlobs : BHL_TestBase
     orig.y = 10;
     orig.z = 100;
 
-    var vm = new VM();
-
-    var val = ValOld.New(vm);
+    var val = new Val();
     val.SetBlob(ref orig, null);
 
     ref var b = ref val.GetBlob<StructBlob>();
@@ -39,20 +37,18 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = ValOld.New(vm);
-    val2.ValueCopyFrom(val1);
+    var val2 = new Val();
+    val2.CopyDataFrom(ref val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
 
     val2.GetBlob<StructBlob>().x = 30;
-    //original value is intact 
+    //original value is intact
     Assert.Equal(20, val1.GetBlob<StructBlob>().x);
   }
 
@@ -62,17 +58,15 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = ValOld.New(vm);
+    var val2 = new Val();
     val2.SetBlob(ref orig, null);
 
-    val2.ValueCopyFrom(val1);
+    val2.CopyDataFrom(ref val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
   }
@@ -83,17 +77,15 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    var val2 = ValOld.NewInt(vm, 10);
+    var val2 = Val.NewInt(10);
     val2.SetBlob(ref orig, null);
 
-    val2.ValueCopyFrom(val1);
+    val2.CopyDataFrom(ref val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
   }
@@ -106,13 +98,13 @@ public class TestBlobs : BHL_TestBase
 
     var vm = new VM();
 
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
-    var val2 = ValOld.New(vm);
+    var val2 = new Val();
     val2.SetBlob(ref orig, null);
 
-    Assert.True(val1.IsValueEqual(val2));
+    Assert.True(val1.IsDataEqual(ref val2));
   }
 
   [Fact]
@@ -121,18 +113,16 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
-    var val2 = ValOld.New(vm);
+    var val2 = new Val();
     val2.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
     val2.GetBlob<StructBlob>().x = 20;
 
-    Assert.True(val1.IsValueEqual(val2));
+    Assert.True(val1.IsDataEqual(ref val2));
   }
 
   [Fact]
@@ -141,17 +131,15 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
-    var val2 = ValOld.New(vm);
+    var val2 = new Val();
     val2.SetBlob(ref orig, null);
 
     val1.GetBlob<StructBlob>().x = 20;
 
-    Assert.False(val1.IsValueEqual(val2));
+    Assert.False(val1.IsDataEqual(ref val2));
   }
 
   [Fact]
@@ -160,14 +148,12 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
-    var val2 = ValOld.NewInt(vm, 10);
+    var val2 = Val.NewInt(10);
 
-    Assert.False(val1.IsValueEqual(val2));
+    Assert.False(val1.IsDataEqual(ref val2));
   }
 
   [Fact]
@@ -176,13 +162,11 @@ public class TestBlobs : BHL_TestBase
     var orig = new StructBlob();
     orig.x = 1;
 
-    var vm = new VM();
-
-    var val1 = ValOld.New(vm);
+    var val1 = new Val();
     val1.SetBlob(ref orig, null);
 
-    var val2 = ValOld.NewObj(vm, /*using orig!*/ orig, null);
+    var val2 = Val.NewObj(/*using orig!*/ orig, null);
 
-    Assert.False(val1.IsValueEqual(val2));
+    Assert.False(val1.IsDataEqual(ref val2));
   }
 }

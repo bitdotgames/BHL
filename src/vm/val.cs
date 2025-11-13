@@ -126,7 +126,7 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void CopyDataFrom(Val o)
+  public void CopyDataFrom(ref Val o)
   {
     type = o.type;
     _num = o._num;
@@ -179,13 +179,13 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  bool IsBlobEqual(Val dv)
+  bool IsBlobEqual(ref Val v)
   {
-    if(_blob_size != dv._blob_size)
+    if(_blob_size != v._blob_size)
       return false;
 
     ReadOnlySpan<byte> a = (byte[])_obj;
-    ReadOnlySpan<byte> b = (byte[])dv._obj;
+    ReadOnlySpan<byte> b = (byte[])v._obj;
 
     return a.SequenceEqual(b);
   }
@@ -194,7 +194,7 @@ public struct Val
   public Val Clone()
   {
     var copy = new Val();
-    copy.CopyDataFrom(this);
+    copy.CopyDataFrom(ref this);
     copy._refc?.Retain();
     return copy;
   }
@@ -370,7 +370,7 @@ public struct Val
         _num2 == o._num2 &&
         _num3 == o._num3 &&
         _num4 == o._num4 &&
-        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(o) : (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
+        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(ref o) : (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
       ;
 
     return res;

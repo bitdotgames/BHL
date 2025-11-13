@@ -75,7 +75,8 @@ public class FieldSymbolScript : FieldSymbol
   void Getter(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
     var m = (IList<Val>)ctx._obj;
-    v.CopyDataFrom(m[scope_idx]);
+    var tmp = m[scope_idx];
+    v.CopyDataFrom(ref tmp);
   }
 
   void Setter(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
