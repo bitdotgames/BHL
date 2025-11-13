@@ -359,11 +359,13 @@ public partial class VM
   public static readonly Val Null = Val.NewObj(null, Types.Null);
   public static readonly Val True = Val.NewBool(true);
   public static readonly Val False = Val.NewBool(false);
+
   void ExecInitByteCode(Module module)
   {
     if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
 
+    init_exec.vm = this;
     init_exec.status = BHS.SUCCESS;
     init_exec.ip = 0;
     ref var init_frame = ref init_exec.PushFrame();
