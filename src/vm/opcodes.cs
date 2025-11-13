@@ -8,18 +8,21 @@ public enum Opcodes
   Sub                   = 3,
   Div                   = 4,
   Mul                   = 5,
+
   SetVar                = 6,
   GetVar                = 7,
   DeclVar               = 8,
   SetGVar               = 10,
   GetGVar               = 11,
-  Frame                 = 12, //TODO: do we really need it?
+
+  Frame                 = 12,
   Return                = 14,
   Jump                  = 16,
   JumpZ                 = 17,
   JumpPeekZ             = 18,
   JumpPeekNZ            = 19,
   Pop                   = 22,
+
   CallLocal             = 23,
   CallGlobNative        = 24,
   Call                  = 25,
@@ -30,15 +33,21 @@ public enum Opcodes
   CallMethodIfaceNative = 30,
   CallMethodVirt        = 31,
   CallFuncPtr           = 32,
+  //for a case when func pointer comes before args
+  //TODO: if CallFuncPtr operated on stack offsets this one would not be necessary
+  CallFuncPtrInv        = 33,
+
   GetFuncLocalPtr       = 39,
   GetFuncPtr            = 40,
   GetFuncNativePtr      = 41,
   GetFuncIpPtr          = 42,
+
   GetAttr               = 45,
   SetAttr               = 47,
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
   SetAttrInplace        = 48,
+
   UnaryNot              = 50,
   UnaryNeg              = 51,
   And                   = 52,
@@ -53,7 +62,9 @@ public enum Opcodes
   LTE                   = 61,
   GT                    = 62,
   GTE                   = 63,
+
   DefArg                = 64,
+
   TypeCast              = 65,
   TypeAs                = 66,
   TypeIs                = 67,
@@ -65,7 +76,7 @@ public enum Opcodes
   ParalAll              = 73,
 
   New                   = 77,
-  SetUpval              = 79, //TODO: split it into capture 'ref' and 'val'
+  SetUpval              = 79,
   Inc                   = 81,
   Dec                   = 82,
   ArrIdx                = 83,

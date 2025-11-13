@@ -228,7 +228,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
   //NOTE: a list is used instead of stack, so that it's easier to traverse by index
   List<FuncSymbolScript> func_decl_stack = new List<FuncSymbolScript>();
-  Stack<LambdaSymbol> called_lambdas_stack = new Stack<LambdaSymbol>();
 
   Stack<IType> json_type_stack = new Stack<IType>();
 
@@ -1606,11 +1605,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         return name_symb;
       }
 
-      ast = new AST_Call(
-        EnumCall.FUNC_PTR,
-        line,
-        called_lambdas_stack.Count > 0
-          ? called_lambdas_stack.Pop() : null);
+      ast = new AST_Call(EnumCall.FUNC_PTR_INV, line, null);
       AddCallArgs(ftype, cargs, ref ast);
       type = ftype.return_type.Get();
       if(type == null)
@@ -2008,7 +2003,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
         call.type == EnumCall.MFUNC ||
         call.type == EnumCall.FUNC_VAR ||
         call.type == EnumCall.FUNC_MVAR ||
-        call.type == EnumCall.FUNC_PTR
+        call.type == EnumCall.FUNC_PTR_INV
        ))
       return true;
 
@@ -2240,9 +2235,6 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       this.func_decl_stack
     );
 
-    if(called_in_place)
-      called_lambdas_stack.Push(lmb_symb);
-
     var ast = new AST_LambdaDecl(
       lmb_symb,
       called_in_place,
@@ -2310,7 +2302,8 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
     ref IType curr_type,
     bool write,
     bool yielded,
-    bool called_in_place)
+    bool called_in_place
+    )
   {
     var ast = ProcLambda(
       ctx,

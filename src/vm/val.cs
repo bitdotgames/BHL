@@ -496,20 +496,6 @@ public class ValStack
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void RemoveAt(int idx)
-  {
-    if(idx == --sp)
-      return;
-    Array.Copy(
-      vals,
-      idx + 1,
-      vals,
-      idx,
-      vals.Length - idx - 1
-      );
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void ClearAndRelease()
   {
     while(sp > 0)

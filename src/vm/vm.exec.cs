@@ -1334,6 +1334,51 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeCallFuncPtrInv(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int ptr_idx = exec.stack.sp - args_num - 1;
+    var ptr = (FuncPtr)exec.stack.vals[ptr_idx]._obj;
+
+    if(args_num > 0)
+    {
+      //moving args up the stack, replacing ptr
+      Array.Copy(
+        exec.stack.vals,
+        ptr_idx + 1,
+        exec.stack.vals,
+        ptr_idx,
+        exec.stack.sp - ptr_idx - 1
+      );
+      ref var tail = ref exec.stack.vals[--exec.stack.sp];
+      tail._obj = null;
+      tail._refc = null;
+    }
+
+    //checking if it's a native call
+    if(ptr.native != null)
+    {
+      bool return_status = CallNative(exec, ptr.native, args_bits);
+      if(return_status)
+      {
+        //let's cancel ip incrementing
+        --exec.ip;
+      }
+    }
+    else
+    {
+      int new_frame_idx = exec.frames_count;
+      ref var new_frame = ref exec.PushFrame();
+      new_frame.args_info = new FuncArgsInfo(args_bits);
+      ptr.InitFrame(exec, ref frame, ref new_frame);
+      CallFrame(exec, ref new_frame, new_frame_idx);
+    }
+    ptr.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeEnterFrame(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int locals_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
@@ -1659,6 +1704,7 @@ public partial class VM
     op_handlers[(int)Opcodes.CallMethodIface] = OpcodeCallMethodIface;
     op_handlers[(int)Opcodes.CallMethodIfaceNative] = OpcodeCallMethodIfaceNative;
     op_handlers[(int)Opcodes.CallFuncPtr] = OpcodeCallFuncPtr;
+    op_handlers[(int)Opcodes.CallFuncPtrInv] = OpcodeCallFuncPtrInv;
 
     op_handlers[(int)Opcodes.Frame] = OpcodeEnterFrame;
 

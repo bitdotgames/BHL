@@ -581,6 +581,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallFuncPtrInv,
+        4 /*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.SetUpval,
         1 /*upval src idx*/, 1 /*local dst idx*/, 1 /*flags*/
       )
@@ -1009,8 +1015,7 @@ public class ModuleCompiler : AST_Visitor
     EmitFuncDecl(ast);
     PopLambdaCode();
 
-    if(!ast.called_in_place)
-      EmitLamdbdaPtrInit(lambda, ast.last_line_num);
+    EmitLamdbdaPtrInit(lambda, ast.last_line_num);
   }
 
   void EmitLamdbdaPtrInit(LambdaSymbol lambda, int line)
@@ -1470,13 +1475,11 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
         break;
-      case EnumCall.FUNC_PTR:
+      case EnumCall.FUNC_PTR_INV:
       {
         VisitChildren(ast);
-
-        if(ast.symbol != null)
-          EmitLamdbdaPtrInit((LambdaSymbol)ast.symbol, ast.line_num);
-        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        //if there are no args let's just call the regular opcode
+        Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
       case EnumCall.FUNC_VAR:

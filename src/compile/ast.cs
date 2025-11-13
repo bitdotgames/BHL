@@ -349,7 +349,7 @@ public enum EnumCall
   GET_ADDR        = 5,
   FUNC_VAR        = 6,
   FUNC_MVAR       = 7,
-  FUNC_PTR        = 8
+  FUNC_PTR_INV        = 8
 }
 
 public class AST_Call  : AST_Tree
