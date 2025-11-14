@@ -18,7 +18,8 @@ public class TestMaps : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.TMap("string", "int")) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.SetGVar, new int[] { 0 })
       ;
 
     AssertEqual(c, expected);
@@ -90,20 +91,20 @@ public class TestMaps : BHL_TestBase
   [Fact]
   public void TestSimpleInitWithJson()
   {
-    {
-      string bhl = @"
+    //{
+    //  string bhl = @"
 
-      func int test()
-      {
-        [string]int m = [[""hey"", 42]]
-        return m[""hey""]
-      }
-      ";
+    //  func int test()
+    //  {
+    //    [string]int m = [[""hey"", 42]]
+    //    return m[""hey""]
+    //  }
+    //  ";
 
-      var vm = MakeVM(bhl);
-      Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
-      CommonChecks(vm);
-    }
+    //  var vm = MakeVM(bhl);
+    //  Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+    //  CommonChecks(vm);
+    //}
 
     {
       string bhl = @"

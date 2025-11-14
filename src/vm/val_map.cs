@@ -127,8 +127,9 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     set { map[k] = new KeyValuePair<Val, Val>(k, value); }
   }
 
+  //NOTE: we don't Retain the added value, it's the caller's responsibility
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetValueCopyAt(Val k, Val value)
+  public void ReplaceAt(Val k, Val value)
   {
     //NOTE: we are going to re-use the existing k/v,
     //      thus we need to decrease/increase user payload
@@ -137,13 +138,12 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     {
       curr.Value._refc?.Release();
       curr.Value.CopyDataFrom(ref value);
-      curr.Value._refc?.Retain();
     }
     else
     {
-      throw new NotImplementedException();
-      //k = k.CloneValue();
-      //map[k] = new KeyValuePair<Val, Val>(k, value.CloneValue());
+      var clone = new Val();
+      clone.CopyDataFrom(ref value);
+      map[k] = new KeyValuePair<Val, Val>(k, clone);
     }
   }
 
@@ -265,11 +265,6 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
   {
     public bool Equals(Val a, Val b)
     {
-      //if(a == null && b == null)
-      //  return true;
-      //else if(a == null || b == null)
-      //  return false;
-
       return a.IsDataEqual(ref b);
     }
 

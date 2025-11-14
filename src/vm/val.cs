@@ -209,6 +209,12 @@ public struct Val
   public void ReleaseData()
   {
     _refc?.Release();
+
+    if(_blob_size > 0)
+    {
+      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _blob_size = 0;
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

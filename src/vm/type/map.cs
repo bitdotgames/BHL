@@ -293,7 +293,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override void MapSet(Val map, Val key, Val val)
   {
     var dict = AsMap(map);
-    dict.SetValueCopyAt(key, val);
+    dict.ReplaceAt(key, val);
   }
 
   public override void MapRemove(Val map, Val key)
