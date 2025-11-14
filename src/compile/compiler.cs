@@ -1762,13 +1762,14 @@ public class ModuleCompiler : AST_Visitor
       if(ast.children.Count > 0)
       {
         var curr_func = func_decls.Peek();
-        int symb_idx = ast.symb_idx;
-        //let's take into account 'this' special case, which is
-        //stored at 0 idx and is not part of func args
-        //(which are stored in the very beginning)
-        if(curr_func.scope is ClassSymbol)
-          --symb_idx;
-        var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx, symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
+        var arg_op = Emit(Opcodes.DefArg, new int[]
+          { ast.symb_idx,
+            //let's take into account 'this' special case, which is
+            //stored at 0 idx and is not part of func args
+            //(which are stored in the very beginning)
+            ast.symb_idx - curr_func.GetRequiredArgsNum() - (curr_func.scope is ClassSymbol ? 1 : 0),
+            0 /*patched later*/
+          });
         //might need to visit default arguments init code
         VisitChildren(ast);
         if(ast.symb._is_ref_decl)
