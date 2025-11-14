@@ -8,11 +8,7 @@ namespace bhl
 
 public class ValMap : IDictionary<Val, Val>, IRefcounted
 {
-  //NOTE: Since we track the lifetime of the key as well as of a value
-  //      we need to efficiently access the added key, for this reason
-  //      we store the key alongside with the value in a KeyValuePair
-  Dictionary<Val, KeyValuePair<Val, Val>> map =
-    new Dictionary<Val, KeyValuePair<Val, Val>>(new Comparer());
+  Dictionary<Val, Val> map = new Dictionary<Val, Val>(new Comparer());
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
@@ -25,7 +21,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
   //TODO: make it 'poolable' in the future
   public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<Val, Val>>
   {
-    Dictionary<Val, KeyValuePair<Val, Val>>.Enumerator en;
+    Dictionary<Val, Val>.Enumerator en;
 
     public Enumerator(ValMap m)
     {
@@ -44,7 +40,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
     public object Value
     {
-      get { return en.Current.Value.Value; }
+      get { return en.Current.Value; }
     }
 
     public object Key
@@ -66,8 +62,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     {
       get
       {
-        var tmp = en.Current;
-        return tmp.Value;
+        return en.Current;
       }
     }
 
@@ -115,7 +110,7 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     while(en.MoveNext())
     {
       en.Current.Key.ReleaseData();
-      en.Current.Value.Value.ReleaseData();
+      en.Current.Value.ReleaseData();
     }
 
     map.Clear();
@@ -123,9 +118,9 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
   public Val this[Val k]
   {
-    get { return map[k].Value; }
+    get { return map[k]; }
     //NOTE: no refcounting happens here
-    set { map[k] = new KeyValuePair<Val, Val>(k, value); }
+    set { map[k] = value; }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -136,20 +131,18 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     //      refcounts properly
     if(map.TryGetValue(k, out var curr))
     {
-      curr.Value._refc?.Release();
-      map[k] = new KeyValuePair<Val, Val>(k, v.Clone());
+      curr._refc?.Release();
+      map[k] = v.Clone();
     }
     else
     {
-      map[k.Clone()] = new KeyValuePair<Val, Val>(k, v.Clone());
+      map[k.Clone()] = v.Clone();
     }
   }
 
   public bool TryGetValue(Val k, out Val v)
   {
-    bool yes = map.TryGetValue(k, out var p);
-    v = p.Value;
-    return yes;
+    return map.TryGetValue(k, out v);
   }
 
   public bool Contains(KeyValuePair<Val, Val> p)
@@ -168,8 +161,8 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     bool removed = map.Remove(k);
     if(existed)
     {
-      prev.Key.ReleaseData();
-      prev.Value.ReleaseData();
+      k.ReleaseData();
+      prev.ReleaseData();
     }
 
     return removed;
