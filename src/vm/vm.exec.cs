@@ -287,7 +287,7 @@ public partial class VM
         var bc = frame.bytecode;
         var opcode = bc[ip];
         //NOTE: temporary casting for better debug info
-        var _opcode = (Opcodes)opcode;
+        //var _opcode = (Opcodes)opcode;
 
         op_handlers[opcode](vm, this, ref region,  ref frame, bc);
 
