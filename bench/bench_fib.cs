@@ -252,12 +252,12 @@ public class BenchFibonacciAssorted : BHL_TestBase
     fib(15);
   }
 
-  [Benchmark]
-  public void FibonacciDotNetRefl()
-  {
-    MethodInfo mi = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
-    mi.Invoke(null, new object[] { 15 });
-  }
+  //[Benchmark]
+  //public void FibonacciDotNetRefl()
+  //{
+  //  MethodInfo mi = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
+  //  mi.Invoke(null, new object[] { 15 });
+  //}
 
   [Benchmark]
   public void FibonacciBHLSimple()
