@@ -77,8 +77,8 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     //      refcounts properly
     if(map.TryGetValue(k, out var curr))
     {
-      curr._refc?.Release();
       map[k] = v.Clone();
+      curr._refc?.Release();
     }
     else
     {
