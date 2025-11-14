@@ -892,7 +892,7 @@ public class TestYield : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(bhl, ts_fn);
+    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
     vm.Start("test");
 
     for(int i = 0; i < 10; ++i)

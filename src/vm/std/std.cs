@@ -22,7 +22,7 @@ public static class std
         exec.stack.Push(VM.True);
     }
 
-    public void Cleanup(VM.ExecState exec)
+    public override void Cleanup(VM.ExecState exec)
     {
       first_time = true;
     }
