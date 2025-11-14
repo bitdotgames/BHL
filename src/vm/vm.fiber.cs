@@ -353,48 +353,11 @@ public partial class VM : INamedResolver
     }
   }
 
-  public class ScriptExecutor
-  {
-    ExecState exec;
-
-    public ScriptExecutor(VM vm)
-    {
-      this.exec = new ExecState();
-      exec.vm = vm;
-    }
-
-    public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
-    {
-      var stack = exec.stack;
-      //let's clean the stack from previous non popped results
-
-      stack.ClearAndRelease();
-
-      //NOTE: we push arguments using their 'natural' order since
-      //      they are located exactly in this order in Frame's
-      //      local arguments (stack is a part of contiguous memory)
-      for(int i = 0; i < args.Count; ++i)
-      {
-        ref Val v = ref stack.Push();
-        v = args[i];
-      }
-
-      int frame_idx = exec.frames_count;
-      ref var frame = ref exec.PushFrame();
-      frame.args_info = args_info;
-      frame.InitWithModule(fs._module, fs._ip_addr);
-      exec.PushFrameRegion(ref frame, frame_idx);
-
-      exec.Execute();
-      if(exec.status == BHS.RUNNING)
-        throw new Exception($"Not expected to be running: {fs}");
-
-      return stack;
-    }
-  }
-
-  //TODO: use pre-allocated array
-  Stack<ScriptExecutor> script_executors = new Stack<ScriptExecutor>();
+  StackArray<ExecState> script_executors = new (
+    new ExecState[] { new (), new () }
+    );
+  int script_executor_idx = -1;
+  int script_executors_count = 0;
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs)
@@ -410,14 +373,47 @@ public partial class VM : INamedResolver
 
   public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
   {
-    ScriptExecutor executor;
-    if(script_executors.Count == 0)
-      executor = new ScriptExecutor(this);
-    else
-      executor = script_executors.Pop();
-    var res = executor.Execute(fs, args_info, args);
-    script_executors.Push(executor);
+    if(++script_executor_idx == script_executors_count)
+    {
+      ref var tmp = ref script_executors.Push();
+      tmp = new ExecState();
+      ++script_executors_count;
+    }
+    var exec = script_executors.Values[script_executor_idx];
+    var res = Execute(exec, fs, args_info, args);
+    --script_executor_idx;
     return res;
+  }
+
+  ValStack Execute(ExecState exec, FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
+  {
+    exec.vm = this;
+
+    var stack = exec.stack;
+    //let's clean the stack from previous non popped results
+
+    stack.ClearAndRelease();
+
+    //NOTE: we push arguments using their 'natural' order since
+    //      they are located exactly in this order in Frame's
+    //      local arguments (stack is a part of contiguous memory)
+    for(int i = 0; i < args.Count; ++i)
+    {
+      ref Val v = ref stack.Push();
+      v = args[i];
+    }
+
+    int frame_idx = exec.frames_count;
+    ref var frame = ref exec.PushFrame();
+    frame.args_info = args_info;
+    frame.InitWithModule(fs._module, fs._ip_addr);
+    exec.PushFrameRegion(ref frame, frame_idx);
+
+    exec.Execute();
+    if(exec.status == BHS.RUNNING)
+      throw new Exception($"Not expected to be running: {fs}");
+
+    return stack;
   }
 }
 

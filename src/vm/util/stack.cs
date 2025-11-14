@@ -9,9 +9,15 @@ public class StackArray<T>
   public T[] Values;
   public int Count;
 
-  public StackArray(int init_size = 32)
+  public StackArray(int init_size)
   {
     Values = new T[init_size];
+    Count = 0;
+  }
+
+  public StackArray(T[] init_values)
+  {
+    Values = init_values;
     Count = 0;
   }
 
