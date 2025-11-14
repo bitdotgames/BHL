@@ -39,10 +39,22 @@ public static class VMExtensions
     return vm.Start(addr, args_info, args, opts);
   }
 
-  static public VM.Fiber Star(this VM vm, FuncSymbolScript fs, StackList<Val> args, VM.FiberOptions opts = 0)
+  static public VM.Fiber Start(this VM vm, FuncSymbolScript fs, StackList<Val> args, VM.FiberOptions opts = 0)
   {
     var addr = new VM.FuncAddr() { module = fs._module, fs = fs, ip = fs._ip_addr };
     return vm.Start(addr, new FuncArgsInfo(args.Count), args, opts);
+  }
+
+  static public ValStack Execute(this VM vm, string func, Val arg1)
+  {
+    return vm.Execute(func, new FuncArgsInfo(1u), new StackList<Val>(arg1));
+  }
+  static public ValStack Execute(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args)
+  {
+    if(!vm.TryFindFuncAddr(func, out var addr))
+      return null;
+
+    return vm.Execute(addr.fs, args_info, args);
   }
 
   static public VM.ModuleSymbol LoadModuleSymbol(this VM.SymbolSpec spec, VM vm)

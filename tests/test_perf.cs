@@ -26,18 +26,16 @@ public class TestPerf : BHL_TestBase
     var vm = MakeVM(bhl);
     {
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-      var fb = vm.Start("fib", 15);
-      Assert.False(vm.Tick());
+      double res = vm.Execute("fib", 15).Pop();
       Console.WriteLine("fib ticks: {0}", stopwatch.ElapsedTicks);
-      Assert.Equal(610, fb.Stack.Pop().num);
+      Assert.Equal(610, res);
     }
 
     {
       var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-      var fb = vm.Start("fib", 15);
-      Assert.False(vm.Tick());
+      double res = vm.Execute("fib", 15).Pop();
       Console.WriteLine("fib ticks2: {0}", stopwatch.ElapsedTicks);
-      Assert.Equal(610, fb.Stack.Pop().num);
+      Assert.Equal(610, res);
     }
   }
 
