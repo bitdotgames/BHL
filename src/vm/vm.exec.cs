@@ -545,6 +545,18 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeEqualNum(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    var stack = exec.stack;
+
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+    l_operand.type = Types.Bool;
+    l_operand._num = r_operand._num == l_operand._num ? 1 : 0;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeEqualEx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
