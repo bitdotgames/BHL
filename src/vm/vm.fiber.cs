@@ -355,37 +355,21 @@ public partial class VM : INamedResolver
 
   public class ScriptExecutor
   {
-    VM vm;
-
-    //NOTE: we manually create and own these
-    VM.Fiber fb;
+    ExecState exec;
 
     public ScriptExecutor(VM vm)
     {
-      this.vm = vm;
-
-      //NOTE: manually creating Fiber
-      fb = new VM.Fiber(vm);
-      //just for consistency with refcounting
-      fb.Retain();
+      this.exec = new ExecState();
+      exec.vm = vm;
     }
 
     public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
     {
-      var addr = new FuncAddr(fs);
-
-      fb.func_addr = addr;
-      fb.stop_guard = false;
+      var stack = exec.stack;
       //let's clean the stack from previous non popped results
-      fb.CleanStack();
-      fb.Retain();
 
-      int frame_idx = fb.exec.frames_count;
-      ref var frame = ref fb.exec.PushFrame();
-      frame.args_info = args_info;
-      frame.InitWithModule(addr.module, addr.ip);
+      stack.ClearAndRelease();
 
-      var stack = fb.exec.stack;
       //NOTE: we push arguments using their 'natural' order since
       //      they are located exactly in this order in Frame's
       //      local arguments (stack is a part of contiguous memory)
@@ -395,12 +379,17 @@ public partial class VM : INamedResolver
         v = args[i];
       }
 
-      fb.exec.PushFrameRegion(ref frame, frame_idx);
+      int frame_idx = exec.frames_count;
+      ref var frame = ref exec.PushFrame();
+      frame.args_info = args_info;
+      frame.InitWithModule(fs._module, fs._ip_addr);
+      exec.PushFrameRegion(ref frame, frame_idx);
 
-      if(vm.Tick(fb))
+      exec.Execute();
+      if(exec.status == BHS.RUNNING)
         throw new Exception($"Not expected to be running: {fs}");
 
-      return fb.exec.stack;
+      return stack;
     }
   }
 
