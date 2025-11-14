@@ -689,7 +689,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.DefArg,
-        1 /*local scope idx*/, 2 /*jump out of def.arg calc pos*/
+        1 /*arg idx*/, 1 /*default arg idx*/, 2 /*jump out of def.arg calc pos*/
       )
     );
     DeclareOpcode(
@@ -1773,14 +1773,14 @@ public class ModuleCompiler : AST_Visitor
         //(which are stored in the very beginning)
         if(curr_func.scope is ClassSymbol)
           --symb_idx;
-        var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
+        var arg_op = Emit(Opcodes.DefArg, new int[] { symb_idx, symb_idx - curr_func.GetRequiredArgsNum(), 0 /*patched later*/ });
         //might need to visit default arguments init code
         VisitChildren(ast);
         if(ast.symb._is_ref_decl)
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
         else
           Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
-        AddOffsetFromTo(arg_op, Peek(), operand_idx: 1);
+        AddOffsetFromTo(arg_op, Peek(), operand_idx: 2);
       }
     }
     else

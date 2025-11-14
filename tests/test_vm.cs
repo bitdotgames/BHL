@@ -5921,12 +5921,12 @@ public class TestVM : BHL_TestBase
           .UseCode()
           //foo
           .EmitChain(Opcodes.Frame, new int[] { 3, 1 })
-          .EmitChain(Opcodes.DefArg, new int[] { 0, 11 })
+          .EmitChain(Opcodes.DefArg, new int[] { 1, 0, 11 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.Sub)
           .EmitChain(Opcodes.SetVar, new int[] { 1 })
-          .EmitChain(Opcodes.DefArg, new int[] { 1, 6 })
+          .EmitChain(Opcodes.DefArg, new int[] { 2, 1, 6 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
           .EmitChain(Opcodes.SetVar, new int[] { 2 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -6531,7 +6531,7 @@ public class TestVM : BHL_TestBase
 
     func int foo(int k0, int k1 = 1 - 0, int k2 = 10)
     {
-      return k0+k1+k2
+      return k0/*2*/ + k1/*1*/ + k2/*2*/
     }
 
     func int test()
