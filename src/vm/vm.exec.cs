@@ -907,6 +907,7 @@ public partial class VM
     exec.stack.Push(self);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGetVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);

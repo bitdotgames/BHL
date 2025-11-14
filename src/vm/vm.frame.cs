@@ -79,13 +79,19 @@ public partial class VM : INamedResolver
       //moving returned values up
       //NOTE: returned vals are already retained by GetVar opcode,
       //      no need to do that
-      Array.Copy(
-        stack.vals,
-        ret_start_offset,
-        stack.vals,
-        locals_offset,
-        return_vars_num
-      );
+
+      //array copy version
+      //Array.Copy(
+      //  stack.vals,
+      //  ret_start_offset,
+      //  stack.vals,
+      //  locals_offset,
+      //  return_vars_num
+      //);
+
+      //loop version
+      for(int i = 0; i < return_vars_num; ++i)
+        stack.vals[locals_offset + i] = stack.vals[ret_start_offset + i];
 
       //need to clean stack leftover
       int leftover = locals_vars_num - return_vars_num;
