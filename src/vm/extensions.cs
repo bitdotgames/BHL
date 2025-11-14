@@ -49,12 +49,18 @@ public static class VMExtensions
   {
     return vm.Execute(func, new FuncArgsInfo(1u), new StackList<Val>(arg1));
   }
+
   static public ValStack Execute(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args)
   {
     if(!vm.TryFindFuncAddr(func, out var addr))
       return null;
 
     return vm.Execute(addr.fs, args_info, args);
+  }
+
+  static public ValStack Execute(this VM vm, FuncSymbolScript fs, Val arg1)
+  {
+    return vm.Execute(fs, new FuncArgsInfo(1u), new StackList<Val>(arg1));
   }
 
   static public VM.ModuleSymbol LoadModuleSymbol(this VM.SymbolSpec spec, VM vm)
