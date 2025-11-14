@@ -135,16 +135,10 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     //      thus we need to decrease/increase user payload
     //      refcounts properly
     if(map.TryGetValue(k, out var curr))
-    {
       curr.Value._refc?.Release();
-      curr.Value.CopyDataFrom(ref value);
-    }
-    else
-    {
-      var clone = new Val();
-      clone.CopyDataFrom(ref value);
-      map[k] = new KeyValuePair<Val, Val>(k, clone);
-    }
+    var clone = new Val();
+    clone.CopyDataFrom(ref value);
+    map[k] = new KeyValuePair<Val, Val>(k, clone);
   }
 
   public bool TryGetValue(Val k, out Val v)

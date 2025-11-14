@@ -91,20 +91,20 @@ public class TestMaps : BHL_TestBase
   [Fact]
   public void TestSimpleInitWithJson()
   {
-    //{
-    //  string bhl = @"
+    {
+      string bhl = @"
 
-    //  func int test()
-    //  {
-    //    [string]int m = [[""hey"", 42]]
-    //    return m[""hey""]
-    //  }
-    //  ";
+      func int test()
+      {
+        [string]int m = [[""hey"", 42]]
+        return m[""hey""]
+      }
+      ";
 
-    //  var vm = MakeVM(bhl);
-    //  Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
-    //  CommonChecks(vm);
-    //}
+      var vm = MakeVM(bhl);
+      Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
+      CommonChecks(vm);
+    }
 
     {
       string bhl = @"
