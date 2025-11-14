@@ -413,9 +413,9 @@ public class ValStack
   //NOTE: sp always point to the position of the next value, sp - 1 points to the stack top
   public int sp;
 
-  public ValStack(int size = 1024)
+  public ValStack(int init_capacity)
   {
-    vals = new Val[size];
+    vals = new Val[init_capacity];
     sp = 0;
   }
 

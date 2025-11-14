@@ -51,7 +51,7 @@ public partial class VM
     public int frames_count = 0;
 
     public ExecState(
-      int regions_capacity = 32,
+      int regions_capacity = 64,
       int frames_capacity = 256,
       int stack_capacity = 512
       )
