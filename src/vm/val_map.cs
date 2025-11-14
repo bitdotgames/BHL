@@ -18,60 +18,6 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
   public VM vm;
 
-  //TODO: make it 'poolable' in the future
-  public class Enumerator : IDictionaryEnumerator, IEnumerator<KeyValuePair<Val, Val>>
-  {
-    Dictionary<Val, Val>.Enumerator en;
-
-    public Enumerator(ValMap m)
-    {
-      en = m.map.GetEnumerator();
-    }
-
-    public DictionaryEntry Entry
-    {
-      get { throw new NotImplementedException(); }
-    }
-
-    public object Current
-    {
-      get { throw new NotImplementedException(); }
-    }
-
-    public object Value
-    {
-      get { return en.Current.Value; }
-    }
-
-    public object Key
-    {
-      get { return en.Current.Key; }
-    }
-
-    public bool MoveNext()
-    {
-      return en.MoveNext();
-    }
-
-    public void Reset()
-    {
-      throw new NotImplementedException();
-    }
-
-    KeyValuePair<Val, Val> IEnumerator<KeyValuePair<Val, Val>>.Current
-    {
-      get
-      {
-        return en.Current;
-      }
-    }
-
-    public void Dispose()
-    {
-      en.Dispose();
-    }
-  }
-
   //////////////////IDictionary//////////////////
 
   public int Count
@@ -180,12 +126,12 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
 
   public IEnumerator<KeyValuePair<Val, Val>> GetEnumerator()
   {
-    return new Enumerator(this);
+    return map.GetEnumerator();
   }
 
   IEnumerator IEnumerable.GetEnumerator()
   {
-    return new Enumerator(this);
+    return map.GetEnumerator();
   }
 
   ///////////////////////////////////////

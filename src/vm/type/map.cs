@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 
 namespace bhl
 {
@@ -279,7 +278,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override void MapEnumeratorCurrent(Val en, out Val key, out Val val)
   {
-    var _en = (ValMap.Enumerator)en._obj;
+    var _en = (IDictionaryEnumerator)en._obj;
     key = (Val)_en.Key;
     val = (Val)_en.Value;
   }
