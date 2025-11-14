@@ -99,6 +99,7 @@ public enum Opcodes
   SetRef                = 96,
 
   Nop                   = 99,
+
   MAX                   = 100
 }
 

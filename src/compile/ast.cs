@@ -347,9 +347,10 @@ public enum EnumCall
   MAP_IDX         = 9,
   MAP_IDXW        = 90,
   GET_ADDR        = 5,
-  FUNC_PTR_VAR        = 6,
-  FUNC_PTR_MVAR       = 7,
-  FUNC_PTR_RES        = 8
+  FUNC_PTR_VAR    = 6, //func pointer from existing named variable
+  //TODO: do we really need to designate these 2 below?
+  FUNC_PTR_MVAR   = 7, //func pointer from class member
+  FUNC_PTR_RES    = 8  //func pointer from any operation return result
 }
 
 public class AST_Call  : AST_Tree

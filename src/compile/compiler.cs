@@ -1493,13 +1493,6 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.MapIdxW, null, ast.line_num);
       }
         break;
-      case EnumCall.FUNC_PTR_RES:
-      {
-        VisitChildren(ast);
-        //if there are no args let's just call the regular opcode
-        Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
-      }
-        break;
       case EnumCall.FUNC_PTR_VAR:
       {
         VisitChildren(ast);
@@ -1507,10 +1500,12 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
+      case EnumCall.FUNC_PTR_RES:
       case EnumCall.FUNC_PTR_MVAR:
       {
         VisitChildren(ast);
-        Emit(Opcodes.CallFuncPtr, new int[] {(int)ast.cargs_bits}, ast.line_num);
+        //if there are no args let's just call the regular opcode
+        Emit(ast.cargs_bits == 0 ? Opcodes.CallFuncPtr : Opcodes.CallFuncPtrInv, new int[] {(int)ast.cargs_bits}, ast.line_num);
       }
         break;
       case EnumCall.GET_ADDR:

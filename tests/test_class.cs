@@ -1344,6 +1344,32 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
+  public void TestMemberFuncPtr()
+  {
+    string bhl = @"
+
+    class Bar {
+      func int(int,int) ptr
+    }
+
+    func int ret_int(int a, int b) {
+      return a - b
+    }
+
+    func int test() {
+      Bar b = {}
+      b.ptr = ret_int
+
+      return b.ptr(1, 2)
+    }
+    ";
+
+    var vm = MakeVM(bhl, show_bytes: true);
+    Assert.Equal(-1, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestThisInLambda()
   {
     string bhl = @"
