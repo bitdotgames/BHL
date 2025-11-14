@@ -7049,10 +7049,10 @@ public class TestVM : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("Foo"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
             var fn_ptr = exec.stack.Pop();
-            //exec.vm.Start((VM.FuncPtr)fn_ptr.obj, frm);
-            fn_ptr.ReleaseData();
+            ref var frame = ref exec.frames[exec.frames_count - 1];
+            exec.vm.Start(exec, (VM.FuncPtr)fn_ptr._refc, ref frame, new StackList<Val>());
+            fn_ptr._refc?.Release();
             return null;
           },
           new FuncArgSymbol("fn", ts.TFunc(ts.TArr(Types.Int)))
