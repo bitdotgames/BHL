@@ -124,21 +124,25 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
   public Val this[Val k]
   {
     get { return map[k].Value; }
+    //NOTE: no refcounting happens here
     set { map[k] = new KeyValuePair<Val, Val>(k, value); }
   }
 
-  //NOTE: we don't Retain the added value, it's the caller's responsibility
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void ReplaceAt(Val k, Val value)
+  public void ReplaceAt(Val k, Val v)
   {
     //NOTE: we are going to re-use the existing k/v,
     //      thus we need to decrease/increase user payload
     //      refcounts properly
     if(map.TryGetValue(k, out var curr))
+    {
       curr.Value._refc?.Release();
-    var clone = new Val();
-    clone.CopyDataFrom(ref value);
-    map[k] = new KeyValuePair<Val, Val>(k, clone);
+      map[k] = new KeyValuePair<Val, Val>(k, v.Clone());
+    }
+    else
+    {
+      map[k.Clone()] = new KeyValuePair<Val, Val>(k, v.Clone());
+    }
   }
 
   public bool TryGetValue(Val k, out Val v)

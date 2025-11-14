@@ -116,10 +116,10 @@ public class ValList : IList<Val>, IList, IRefcounted
     set { lst[i] = value; }
   }
 
-  //NOTE: we don't Retain the added value, it's the caller's responsibility
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void ReplaceAt(int i, Val v)
   {
+    v._refc?.Retain();
     var span = CollectionsMarshal.AsSpan(lst);
     ref var curr = ref span[i];
     var refc = curr._refc;

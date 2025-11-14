@@ -250,7 +250,6 @@ public class GenericArrayTypeSymbol :
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
     var lst = AsValList(arr);
-    val._refc?.Retain();
     lst.ReplaceAt(idx, val);
   }
 

@@ -82,7 +82,6 @@ public class FieldSymbolScript : FieldSymbol
   void Setter(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
   {
     var lst = (ValList)ctx._obj;
-    v._refc?.Retain();
     lst.ReplaceAt(scope_idx, v);
   }
 
