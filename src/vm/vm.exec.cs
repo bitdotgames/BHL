@@ -913,9 +913,17 @@ public partial class VM
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val new_val = ref exec.stack.Push();
-    //NOTE: we copy the whole value (we can have specialized opcodes for numbers)
     new_val = frame.locals.vals[frame.locals_offset + local_idx];
     new_val._refc?.Retain();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetVarNum(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+    ref Val new_val = ref exec.stack.Push();
+    new_val._num = frame.locals.vals[frame.locals_offset + local_idx]._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -930,6 +938,15 @@ public partial class VM
     //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetVarNum(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+    ref var new_val = ref exec.stack.vals[--exec.stack.sp];
+    frame.locals.vals[frame.locals_offset + local_idx]._num = new_val._num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
