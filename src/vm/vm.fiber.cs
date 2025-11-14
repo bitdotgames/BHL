@@ -125,7 +125,7 @@ public partial class VM : INamedResolver
 
     //TODO: Probably not the best name. This routine is called both in case
     //      of normal completion and in case of interruption.
-    internal void Finalize()
+    internal void AfterTickOrStop()
     {
       if(IsStopped())
         return;
@@ -320,7 +320,7 @@ public partial class VM : INamedResolver
       //TODO: uncomment once all tests pass
       //try
       {
-        fb.Finalize();
+        fb.AfterTickOrStop();
         fb.CleanStack();
         fb.Release();
       }
