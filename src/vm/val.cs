@@ -46,49 +46,59 @@ public struct Val
 
   public string str
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get { return (string)obj; }
   }
 
   public bool bval
   {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     get { return num == 1; }
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator double(Val v)
   {
     return v.num;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator Val(double v)
   {
     return NewFlt(v);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator int(Val v)
   {
     return (int)v.num;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator Val(int v)
   {
     return NewInt(v);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator string(Val v)
   {
     return v.str;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator Val(string v)
   {
     return NewStr(v);
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator bool(Val v)
   {
     return v.num == 1;
   }
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator Val(bool v)
   {
     return NewBool(v);
