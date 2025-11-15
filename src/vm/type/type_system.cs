@@ -186,7 +186,7 @@ public class Types : INamedResolver
       var fld = new FieldSymbol(new Origin(), "Name", String,
         delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol _)
         {
-          var t = (IType)ctx._obj;
+          var t = (IType)ctx.obj;
           v.SetStr(t.GetName());
         },
         null //no setter
@@ -342,7 +342,7 @@ public class Types : INamedResolver
         var dest_ntype = dest_intype.GetNativeType();
         if(val.type == Types.Null && dest_ntype != null)
           return true;
-        var nobj = val._obj;
+        var nobj = val.obj;
         return dest_ntype?.IsAssignableFrom(nobj?.GetType()) ?? false;
       }
       else

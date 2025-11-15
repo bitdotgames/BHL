@@ -485,9 +485,9 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
     //TODO: add separate opcode Concat for strings
     if(l_operand.type == Types.String)
-      l_operand._obj = (string)l_operand._obj + (string)r_operand._obj;
+      l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
     else
-      l_operand._num += r_operand._num;
+      l_operand.num += r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -497,7 +497,7 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num -= r_operand._num;
+    l_operand.num -= r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -507,7 +507,7 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num /= r_operand._num;
+    l_operand.num /= r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -517,7 +517,7 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num *= r_operand._num;
+    l_operand.num *= r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -529,8 +529,8 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand._num = r_operand._num == l_operand._num &&
-                     (string)r_operand._obj  == (string)l_operand._obj? 1 : 0;
+    l_operand.num = r_operand.num == l_operand.num &&
+                     (string)r_operand.obj  == (string)l_operand.obj? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -542,7 +542,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand._num = r_operand._num == l_operand._num ? 1 : 0;
+    l_operand.num = r_operand.num == l_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -553,7 +553,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    var res = new Val { type = Types.Bool, _num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+    var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
     r_operand._refc?.Release();
     l_operand._refc?.Release();
     l_operand = res;
@@ -567,7 +567,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = l_operand._num < r_operand._num ? 1 : 0 };
+    l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -578,7 +578,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = l_operand._num <= r_operand._num ? 1 : 0 };
+    l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -589,7 +589,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = l_operand._num > r_operand._num ? 1 : 0 };
+    l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -600,7 +600,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, _num = l_operand._num >= r_operand._num ? 1 : 0 };
+    l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -612,7 +612,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Bool as well, so we don't replace it
-    l_operand._num = l_operand._num == 1 && r_operand._num == 1 ? 1 : 0;
+    l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -624,7 +624,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Bool as well, so we don't replace it
-    l_operand._num = l_operand._num == 1 || r_operand._num == 1 ? 1 : 0;
+    l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -636,7 +636,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand._num = (int)l_operand._num & (int)r_operand._num;
+    l_operand.num = (int)l_operand.num & (int)r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -648,7 +648,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand._num = (int)l_operand._num | (int)r_operand._num;
+    l_operand.num = (int)l_operand.num | (int)r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -660,7 +660,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand._num = (int)l_operand._num >> (int)r_operand._num;
+    l_operand.num = (int)l_operand.num >> (int)r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -672,7 +672,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand._num = (int)l_operand._num << (int)r_operand._num;
+    l_operand.num = (int)l_operand.num << (int)r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -684,7 +684,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand._num %= r_operand._num;
+    l_operand.num %= r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -694,7 +694,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Bool as well, so we don't replace it
-    val._num = val._num != 1 ? 1 : 0;
+    val.num = val.num != 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -704,7 +704,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Int as well, so we don't replace it
-    val._num *= -1;
+    val.num *= -1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -714,7 +714,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Int as well, so we don't replace it
-    val._num = ~((int)val._num);
+    val.num = ~((int)val.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -741,19 +741,19 @@ public partial class VM
     if(cast_type == Types.Int)
     {
       val._refc?.Release();
-      val = Val.NewNum((long)val._num);
+      val = Val.NewNum((long)val.num);
     }
     else if(cast_type == Types.String && val.type != Types.String)
     {
       val._refc?.Release();
       val = Val.NewStr(
-        val._num.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
         );
     }
     else
     {
       //NOTE: extra type check in case cast type is instantiable object (e.g class)
-      if(val._obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+      if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
       if(force_type)
         val.type = cast_type;
@@ -815,14 +815,14 @@ public partial class VM
   unsafe static void OpcodeInc(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    ++frame.locals.vals[frame.locals_offset + var_idx]._num;
+    ++frame.locals.vals[frame.locals_offset + var_idx].num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeDec(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    --frame.locals.vals[frame.locals_offset + var_idx]._num;
+    --frame.locals.vals[frame.locals_offset + var_idx].num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -924,7 +924,7 @@ public partial class VM
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val new_val = ref exec.stack.Push();
-    new_val._num = frame.locals.vals[frame.locals_offset + local_idx]._num;
+    new_val.num = frame.locals.vals[frame.locals_offset + local_idx].num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -947,7 +947,7 @@ public partial class VM
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref var new_val = ref exec.stack.vals[--exec.stack.sp];
-    frame.locals.vals[frame.locals_offset + local_idx]._num = new_val._num;
+    frame.locals.vals[frame.locals_offset + local_idx].num = new_val.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1336,7 +1336,7 @@ public partial class VM
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
     exec.stack.Pop(out var val_ptr);
-    var ptr = (FuncPtr)val_ptr._obj;
+    var ptr = (FuncPtr)val_ptr.obj;
 
     //checking if it's a native call
     if(ptr.native != null)
@@ -1366,7 +1366,7 @@ public partial class VM
 
     int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
     int ptr_idx = exec.stack.sp - args_num - 1;
-    var ptr = (FuncPtr)exec.stack.vals[ptr_idx]._obj;
+    var ptr = (FuncPtr)exec.stack.vals[ptr_idx].obj;
 
     if(args_num > 0)
     {
@@ -1379,7 +1379,7 @@ public partial class VM
         exec.stack.sp - ptr_idx - 1
       );
       ref var tail = ref exec.stack.vals[--exec.stack.sp];
-      tail._obj = null;
+      tail.obj = null;
       tail._refc = null;
     }
 
@@ -1436,7 +1436,7 @@ public partial class VM
     int func_ptr_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
     var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
 
-    var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1]._obj;
+    var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1].obj;
 
     ref var upval = ref addr.upvals.Push();
     upval.frame_local_idx = func_ptr_local_idx;
@@ -1463,7 +1463,7 @@ public partial class VM
       val._refc = null;
     }
     //TODO: what about blob?
-    val._obj = null;
+    val.obj = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1480,7 +1480,7 @@ public partial class VM
 
     ref Val v = ref exec.stack.vals[--exec.stack.sp];
 
-    if(v._num == 0)
+    if(v.num == 0)
       exec.ip += offset;
   }
 
@@ -1488,7 +1488,7 @@ public partial class VM
   unsafe static void OpcodeJumpPeekZ(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    if(exec.stack.vals[exec.stack.sp - 1]._num != 1)
+    if(exec.stack.vals[exec.stack.sp - 1].num != 1)
       exec.ip += offset;
   }
 
@@ -1496,7 +1496,7 @@ public partial class VM
   unsafe static void OpcodeJumpPeekNZ(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    if(exec.stack.vals[exec.stack.sp - 1]._num == 1)
+    if(exec.stack.vals[exec.stack.sp - 1].num == 1)
       exec.ip += offset;
   }
 

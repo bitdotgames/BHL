@@ -164,7 +164,7 @@ public class InterfaceSymbolNative : InterfaceSymbol, INativeType
 
   public object GetNativeObject(Val v)
   {
-    return v._obj;
+    return v.obj;
   }
 
   public void Setup()

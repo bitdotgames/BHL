@@ -144,7 +144,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
         ref var val = ref exec.stack.vals[i];
         ext_exec.stack.Push(val);
         val._refc = null;
-        val._obj = null;
+        val.obj = null;
       }
     }
 

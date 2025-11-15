@@ -32,13 +32,13 @@ public class BHL_TestBase
 
     public static void Decode(Val v, ref IntStruct dst)
     {
-      dst.n = (int)v._num;
+      dst.n = (int)v.num;
     }
 
     public static void Encode(ref Val v, IntStruct src, IType type)
     {
       v.type = type;
-      v._num = src.n;
+      v.num = src.n;
     }
   }
 
@@ -60,13 +60,13 @@ public class BHL_TestBase
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
-          v._num = s.n;
+          v.num = s.n;
         },
         delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var s = new IntStruct();
           IntStruct.Decode(ctx, ref s);
-          s.n = (int)v._num;
+          s.n = (int)v.num;
           IntStruct.Encode(ref ctx, s, ctx.type);
         }
       ));
@@ -275,7 +275,7 @@ public class BHL_TestBase
         delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
           var c = (ColorAlpha)ctx.obj;
-          v._num = c.a;
+          v.num = c.a;
         },
         delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
@@ -338,7 +338,7 @@ public class BHL_TestBase
         delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
           var c = (MasterStruct)ctx.obj;
-          c.child = (StringClass)v._obj;
+          c.child = (StringClass)v.obj;
           ctx.SetObj(c, ctx.type);
         }
       ));
@@ -781,8 +781,8 @@ public class BHL_TestBase
     {
       var val = fb.exec.stack.vals[i];
       Assert.Equal(0, val._blob_size);
-      if(!(val._obj is string))
-        Assert.Null(val._obj);
+      if(!(val.obj is string))
+        Assert.Null(val.obj);
       Assert.Null(val._refc);
     }
   }

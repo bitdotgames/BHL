@@ -19,11 +19,11 @@ public struct Val
   //NOTE: below members are semi-public, one can use them for
   //      fast access in case you know what you are doing
 
-  public double _num;
+  public double num;
 
-  public object _obj;
+  public object obj;
 
-  //NOTE: it's a cached version of _obj cast to IValRefcounted for
+  //NOTE: it's a cached version of obj cast to IValRefcounted for
   //      less casting in refcounting routines
   public IRefcounted _refc;
 
@@ -37,29 +37,26 @@ public struct Val
   //      and properly released
   public int _blob_size;
 
-  public double num
+  internal static ArrayPool<byte> _blob_pool;
+
+  static Val()
   {
-    get { return _num; }
+    _blob_pool = ArrayPool<byte>.Shared;
   }
 
   public string str
   {
-    get { return (string)_obj; }
-  }
-
-  public object obj
-  {
-    get { return _obj; }
+    get { return (string)obj; }
   }
 
   public bool bval
   {
-    get { return _num == 1; }
+    get { return num == 1; }
   }
 
   public static implicit operator double(Val v)
   {
-    return v._num;
+    return v.num;
   }
 
   public static implicit operator Val(double v)
@@ -69,7 +66,7 @@ public struct Val
 
   public static implicit operator int(Val v)
   {
-    return (int)v._num;
+    return (int)v.num;
   }
 
   public static implicit operator Val(int v)
@@ -89,7 +86,7 @@ public struct Val
 
   public static implicit operator bool(Val v)
   {
-    return v._num == 1;
+    return v.num == 1;
   }
 
   public static implicit operator Val(bool v)
@@ -109,7 +106,7 @@ public struct Val
   void Reset()
   {
     type = null;
-    _num = 0;
+    num = 0;
     _num2 = 0;
     _num3 = 0;
     _num4 = 0;
@@ -118,18 +115,18 @@ public struct Val
     //NOTE: it's assumed that blobs act like values
     if(_blob_size > 0)
     {
-      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _blob_pool.Return((byte[])obj);
       _blob_size = 0;
     }
 
-    _obj = null;
+    obj = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void CopyDataFrom(ref Val o)
   {
     type = o.type;
-    _num = o._num;
+    num = o.num;
     _num2 = o._num2;
     _num3 = o._num3;
     _num4 = o._num4;
@@ -141,38 +138,38 @@ public struct Val
     }
     else if(_blob_size > 0)
     {
-      ArrayPool<byte>.Shared.Return((byte[])_obj);
-      _obj = o._obj;
+      _blob_pool.Return((byte[])obj);
+      obj = o.obj;
       _blob_size = 0;
     }
     else
-      _obj = o._obj;
+      obj = o.obj;
   }
 
   void CopyBlobDataFrom(Val src)
   {
-    var src_data = (byte[])src._obj;
+    var src_data = (byte[])src.obj;
 
     if(_blob_size > 0)
     {
-      var data = (byte[])_obj;
+      var data = (byte[])obj;
 
       //let's check if our current buffer has enough capacity
       if(data.Length >= src._blob_size)
         Array.Copy(src_data, data, src._blob_size);
       else
       {
-        ArrayPool<byte>.Shared.Return(data);
-        var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
+        _blob_pool.Return(data);
+        var new_data = _blob_pool.Rent(src._blob_size);
         Array.Copy(src_data, new_data, src._blob_size);
-        _obj = new_data;
+        obj = new_data;
       }
     }
     else
     {
-      var new_data = ArrayPool<byte>.Shared.Rent(src._blob_size);
+      var new_data = _blob_pool.Rent(src._blob_size);
       Array.Copy(src_data, new_data, src._blob_size);
-      _obj = new_data;
+      obj = new_data;
     }
 
     _blob_size = src._blob_size;
@@ -184,8 +181,8 @@ public struct Val
     if(_blob_size != v._blob_size)
       return false;
 
-    ReadOnlySpan<byte> a = (byte[])_obj;
-    ReadOnlySpan<byte> b = (byte[])v._obj;
+    ReadOnlySpan<byte> a = (byte[])obj;
+    ReadOnlySpan<byte> b = (byte[])v.obj;
 
     return a.SequenceEqual(b);
   }
@@ -212,7 +209,7 @@ public struct Val
 
     if(_blob_size > 0)
     {
-      ArrayPool<byte>.Shared.Return((byte[])_obj);
+      _blob_pool.Return((byte[])obj);
       _blob_size = 0;
     }
   }
@@ -223,7 +220,7 @@ public struct Val
     return new Val
     {
       type = Types.String,
-      _obj = s,
+      obj = s,
     };
   }
 
@@ -232,7 +229,7 @@ public struct Val
   {
     Reset();
     type = Types.String;
-    _obj = s;
+    obj = s;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -241,7 +238,7 @@ public struct Val
     return new Val
     {
       type = Types.Int,
-      _num = n,
+      num = n,
     };
   }
 
@@ -250,7 +247,7 @@ public struct Val
   {
     Reset();
     type = Types.Int;
-    _num = n;
+    num = n;
   }
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
@@ -260,7 +257,7 @@ public struct Val
     return new Val
     {
       type = Types.Int,
-      _num = n,
+      num = n,
     };
   }
 
@@ -269,7 +266,7 @@ public struct Val
   {
     Reset();
     type = Types.Int;
-    _num = n;
+    num = n;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -278,7 +275,7 @@ public struct Val
     return new Val
     {
       type = Types.Float,
-      _num = n,
+      num = n,
     };
   }
 
@@ -287,7 +284,7 @@ public struct Val
   {
     Reset();
     type = Types.Float;
-    _num = n;
+    num = n;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -296,7 +293,7 @@ public struct Val
     return new Val
     {
       type = Types.Bool,
-      _num = b ? 1 : 0,
+      num = b ? 1 : 0,
     };
   }
 
@@ -305,7 +302,7 @@ public struct Val
   {
     Reset();
     type = Types.Bool;
-    _num = b ? 1 : 0;
+    num = b ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,7 +311,7 @@ public struct Val
     return new Val
     {
       type = type,
-      _obj = o,
+      obj = o,
       _refc = o as IRefcounted,
     };
   }
@@ -325,7 +322,7 @@ public struct Val
     return new Val
     {
       type = type,
-      _obj = o,
+      obj = o,
       _refc = o
     };
   }
@@ -335,7 +332,7 @@ public struct Val
   {
     Reset();
     this.type = type;
-    _obj = o;
+    obj = o;
     _refc = o as IRefcounted;
   }
 
@@ -352,7 +349,7 @@ public struct Val
 
     this.type = type;
     _blob_size = size;
-    _obj = data;
+    obj = data;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -364,7 +361,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T GetBlob<T>() where T : unmanaged
   {
-    byte[] data = (byte[])_obj;
+    byte[] data = (byte[])obj;
     return ref Extensions.UnsafeAs<byte, T>(ref data[0]);
   }
 
@@ -372,11 +369,11 @@ public struct Val
   public bool IsDataEqual(ref Val o)
   {
     bool res =
-        _num == o._num &&
+        num == o.num &&
         _num2 == o._num2 &&
         _num3 == o._num3 &&
         _num4 == o._num4 &&
-        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(ref o) : (_obj != null ? _obj.Equals(o._obj) : _obj == o._obj))
+        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(ref o) : (obj != null ? obj.Equals(o.obj) : obj == o.obj))
       ;
 
     return res;
@@ -386,11 +383,11 @@ public struct Val
   public int GetDataHashCode()
   {
     return
-      _num.GetHashCode()
+      num.GetHashCode()
       ^ _num2.GetHashCode()
       ^ _num3.GetHashCode()
       ^ _num4.GetHashCode()
-      ^ (int)(_obj == null ? 0 : _obj.GetHashCode())
+      ^ (int)(obj == null ? 0 : obj.GetHashCode())
       ;
   }
 
@@ -401,12 +398,12 @@ public struct Val
       str += "(" + type.GetName() + ")";
     else
       str += "(?)";
-    str += " num:" + _num;
+    str += " num:" + num;
     str += " num2:" + _num2;
     str += " num3:" + _num3;
     str += " num4:" + _num4;
-    str += " obj:" + _obj;
-    str += " obj.type:" + _obj?.GetType().Name;
+    str += " obj:" + obj;
+    str += " obj.type:" + obj?.GetType().Name;
     str += " (refcs:" + _refc?.refs + ")";
 
     return str; // + " " + GetHashCode();//for extra debug
@@ -450,7 +447,7 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
-    tmp._obj = null; //cleaning up stack value
+    tmp.obj = null; //cleaning up stack value
   }
 
   [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -460,7 +457,7 @@ public class ValStack
     var res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
     res._refc?.Release();
-    tmp._obj = null; //cleaning up stack value
+    tmp.obj = null; //cleaning up stack value
     return res;
   }
 
@@ -470,7 +467,7 @@ public class ValStack
     ref var tmp = ref vals[--sp];
     var res = tmp; //making a copy
     tmp._refc = null; //cleaning up stack value
-    tmp._obj = null; //cleaning up stack value
+    tmp.obj = null; //cleaning up stack value
     return res;
   }
 

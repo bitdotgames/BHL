@@ -22,15 +22,15 @@ public partial class VM : INamedResolver
 
     public FiberRef(Val val)
     {
-      this.id = (int)val._num;
-      this.fiber = (VM.Fiber)val._obj;
+      this.id = (int)val.num;
+      this.fiber = (VM.Fiber)val.obj;
     }
 
     public static Val Encode(VM.Fiber fb)
     {
       var val = Val.NewObj(fb, Types.FiberRef);
       //let's encode FiberRef into Val
-      val._num = fb.id;
+      val.num = fb.id;
       return val;
     }
 

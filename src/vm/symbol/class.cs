@@ -520,7 +520,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
 
   public object GetNativeObject(Val v)
   {
-    return native_object_getter?.Invoke(v) ?? v._obj;
+    return native_object_getter?.Invoke(v) ?? v.obj;
   }
 
   public override void Setup()

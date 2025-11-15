@@ -369,7 +369,7 @@ public class TestVariadic : BHL_TestBase
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var ns = exec.stack.Pop();
-          var vs = (ValList)ns._obj;
+          var vs = (ValList)ns.obj;
           int sum = 0;
           for(int i = 0; i < vs.Count; ++i)
             sum += (int)vs[i].num;

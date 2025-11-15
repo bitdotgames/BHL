@@ -56,7 +56,7 @@ public static class std
           type._refc?.Release();
           ref var o = ref exec.stack.Peek();
           var refc = o._refc;
-          o = Types.Is(o, (IType)type._obj);
+          o = Types.Is(o, (IType)type.obj);
           refc?.Release();
           return null;
         },

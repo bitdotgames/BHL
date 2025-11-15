@@ -372,7 +372,7 @@ public class TestGlobals : BHL_TestBase
 
       var vm = MakeVM(bhl);
       Assert.True(vm.TryFindVarAddr("foo", out var addr));
-      addr.val_ref.val._num = 100;
+      addr.val_ref.val.num = 100;
       Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
       CommonChecks(vm);
     }
@@ -394,8 +394,8 @@ public class TestGlobals : BHL_TestBase
 
       var vm = MakeVM(bhl);
       Assert.True(vm.TryFindVarAddr("what.foo", out var addr));
-      Assert.Equal(10, addr.val_ref.val._num);
-      addr.val_ref.val._num = 100;
+      Assert.Equal(10, addr.val_ref.val.num);
+      addr.val_ref.val.num = 100;
       Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
       CommonChecks(vm);
     }
@@ -425,8 +425,8 @@ public class TestGlobals : BHL_TestBase
 
       vm.LoadModule("bar");
       Assert.True(vm.TryFindVarAddr("bar", out var addr));
-      Assert.Equal(1, addr.val_ref.val._num);
-      addr.val_ref.val._num = 100;
+      Assert.Equal(1, addr.val_ref.val.num);
+      addr.val_ref.val.num = 100;
 
       vm.LoadModule("test");
       Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
@@ -464,8 +464,8 @@ public class TestGlobals : BHL_TestBase
 
       vm.LoadModule("test");
       Assert.True(vm.TryFindVarAddr("N.bar", out var addr));
-      Assert.Equal(1, addr.val_ref.val._num);
-      addr.val_ref.val._num = 100;
+      Assert.Equal(1, addr.val_ref.val.num);
+      addr.val_ref.val.num = 100;
 
       vm.LoadModule("test");
       Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);

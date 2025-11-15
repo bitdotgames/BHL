@@ -52,7 +52,7 @@ public static class Prelude
         {
           var val_ptr = exec.stack.Pop();
           var fb = exec.vm.Start(
-            exec, (VM.FuncPtr)val_ptr._obj,
+            exec, (VM.FuncPtr)val_ptr.obj,
             ref exec.frames[exec.frames_count - 1],
             default
             );

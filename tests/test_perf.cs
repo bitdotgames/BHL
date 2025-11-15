@@ -162,7 +162,7 @@ public class TestPerf : BHL_TestBase
   )
   {
     ref Val v = ref exec.stack.Push();
-    v._num = exec.stack.vals[frame.locals_offset + local_idx]._num;
+    v.num = exec.stack.vals[frame.locals_offset + local_idx].num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,7 +197,7 @@ public class TestPerf : BHL_TestBase
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
     l_operand.type = Types.Bool;
-    l_operand._num = l_operand._num == r_operand._num ? 1 : 0;
+    l_operand.num = l_operand.num == r_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,7 +210,7 @@ public class TestPerf : BHL_TestBase
   )
   {
     ref Val v = ref exec.stack.vals[--exec.stack.sp];
-    return v._num == 0;
+    return v.num == 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -252,7 +252,7 @@ public class TestPerf : BHL_TestBase
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num -= r_operand._num;
+    l_operand.num -= r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,7 +268,7 @@ public class TestPerf : BHL_TestBase
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand._num += r_operand._num;
+    l_operand.num += r_operand.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

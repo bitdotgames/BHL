@@ -74,14 +74,14 @@ public class FieldSymbolScript : FieldSymbol
 
   void Getter(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
   {
-    var m = (IList<Val>)ctx._obj;
+    var m = (IList<Val>)ctx.obj;
     var tmp = m[scope_idx];
     v.CopyDataFrom(ref tmp);
   }
 
   void Setter(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
   {
-    var lst = (ValList)ctx._obj;
+    var lst = (ValList)ctx.obj;
     lst.ReplaceAt(scope_idx, v);
   }
 

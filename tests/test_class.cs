@@ -4871,7 +4871,7 @@ public class TestClass : BHL_TestBase
             delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
             {
               var a = (A)ctx.obj;
-              a.a = (int)v._num;
+              a.a = (int)v.num;
             }
           ));
 

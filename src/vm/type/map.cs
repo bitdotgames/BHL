@@ -250,9 +250,9 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   static ValMap AsMap(Val map)
   {
-    var dict = map._obj as ValMap;
-    if(map._obj != null && dict == null)
-      throw new Exception("Not a ValMap: " + map._obj.GetType().Name);
+    var dict = map.obj as ValMap;
+    if(map.obj != null && dict == null)
+      throw new Exception("Not a ValMap: " + map.obj.GetType().Name);
     return dict;
   }
 
@@ -273,12 +273,12 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override bool MapEnumeratorNext(Val en)
   {
-    return ((IEnumerator)en._obj).MoveNext();
+    return ((IEnumerator)en.obj).MoveNext();
   }
 
   public override void MapEnumeratorCurrent(Val en, out Val key, out Val val)
   {
-    var _en = (IDictionaryEnumerator)en._obj;
+    var _en = (IDictionaryEnumerator)en.obj;
     key = (Val)_en.Key;
     val = (Val)_en.Value;
   }

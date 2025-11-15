@@ -67,7 +67,7 @@ public partial class VM : INamedResolver
           val._refc?.Release();
           val._refc = null;
         }
-        val._obj = null;
+        val.obj = null;
       }
     }
 
@@ -100,7 +100,7 @@ public partial class VM : INamedResolver
         ref var val = ref stack.vals[ret_start_offset + i];
         //TODO: what about blob?
         val._refc = null;
-        val._obj = null;
+        val.obj = null;
       }
     }
   }

@@ -413,7 +413,7 @@ public class TestARC : BHL_TestBase
       );
       {
         var vs = new FieldSymbol(new Origin(), "refs", Types.Int,
-          delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) { v._num = ((RefC)ctx.obj)._refs; },
+          delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) { v.num = ((RefC)ctx.obj)._refs; },
           //read only property
           null
         );

@@ -222,7 +222,7 @@ public class TestRefs : BHL_TestBase
             ref var b = ref exec.stack.Pop().Unref();
             double a = exec.stack.Pop();
 
-            b._num = a * 2;
+            b.num = a * 2;
             return null;
           },
           new FuncArgSymbol("a", ts.T("float")),

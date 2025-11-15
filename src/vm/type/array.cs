@@ -200,8 +200,8 @@ public class GenericArrayTypeSymbol :
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static ValList AsValList(Val arr)
   {
-    var lst = arr._obj as ValList;
-    if(arr._obj != null && lst == null)
+    var lst = arr.obj as ValList;
+    if(arr.obj != null && lst == null)
       throw new Exception("Not a ValList: " + arr.obj.GetType().Name);
     return lst;
   }
@@ -337,9 +337,9 @@ public abstract class NativeListTypeSymbol :
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static IList AsIList(Val arr)
   {
-    var lst = arr._obj as IList;
-    if(arr._obj != null && lst == null)
-      throw new Exception("Not an IList: " + arr._obj.GetType().Name);
+    var lst = arr.obj as IList;
+    if(arr.obj != null && lst == null)
+      throw new Exception("Not an IList: " + arr.obj.GetType().Name);
     return lst;
   }
 
@@ -453,31 +453,31 @@ public class NativeListTypeSymbol<T> : NativeListTypeSymbol
 
   public override void ArrAdd(Val arr, Val val)
   {
-    var lst = (IList<T>)arr._obj;
+    var lst = (IList<T>)arr.obj;
     lst.Add(val2native(val));
   }
 
   public override void ArrInsert(Val arr, int idx, Val val)
   {
-    var lst = (IList<T>)arr._obj;
+    var lst = (IList<T>)arr.obj;
     lst.Insert(idx, val2native(val));
   }
 
   public override Val ArrGetAt(Val arr, int idx)
   {
-    var lst = (IList<T>)arr._obj;
+    var lst = (IList<T>)arr.obj;
     return native2val(item_type, lst[idx]);
   }
 
   public override void ArrSetAt(Val arr, int idx, Val val)
   {
-    var lst = (IList<T>)arr._obj;
+    var lst = (IList<T>)arr.obj;
     lst[idx] = val2native(val);
   }
 
   public override int ArrIndexOf(Val arr, Val val)
   {
-    var lst = (IList<T>)arr._obj;
+    var lst = (IList<T>)arr.obj;
     return lst.IndexOf(val2native(val));
   }
 
