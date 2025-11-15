@@ -37,7 +37,7 @@ public struct Val
   //      and properly released
   public int _blob_size;
 
-  internal static ArrayPool<byte> _blob_pool;
+  public static ArrayPool<byte> _blob_pool;
 
   static Val()
   {
@@ -353,7 +353,7 @@ public struct Val
 
     int size = Extensions.SizeOf<T>();
 
-    var data = ArrayPool<byte>.Shared.Rent(size);
+    var data = _blob_pool.Rent(size);
 
     Extensions.UnsafeAs<byte, T>(ref data[0]) = val;
 

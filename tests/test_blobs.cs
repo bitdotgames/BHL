@@ -29,6 +29,10 @@ public class TestBlobs : BHL_TestBase
     b.x = 20;
     Assert.Equal(20, b.x);
     Assert.Equal(1, orig.x);
+
+    val.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -50,6 +54,11 @@ public class TestBlobs : BHL_TestBase
     val2.GetBlob<StructBlob>().x = 30;
     //original value is intact
     Assert.Equal(20, val1.GetBlob<StructBlob>().x);
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -69,6 +78,11 @@ public class TestBlobs : BHL_TestBase
     val2.CopyDataFrom(ref val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -88,6 +102,11 @@ public class TestBlobs : BHL_TestBase
     val2.CopyDataFrom(ref val1);
     //let's check if it was copied
     Assert.Equal(20, val2.GetBlob<StructBlob>().x);
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -105,6 +124,11 @@ public class TestBlobs : BHL_TestBase
     val2.SetBlob(ref orig, null);
 
     Assert.True(val1.IsDataEqual(ref val2));
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -123,6 +147,11 @@ public class TestBlobs : BHL_TestBase
     val2.GetBlob<StructBlob>().x = 20;
 
     Assert.True(val1.IsDataEqual(ref val2));
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -140,6 +169,11 @@ public class TestBlobs : BHL_TestBase
     val1.GetBlob<StructBlob>().x = 20;
 
     Assert.False(val1.IsDataEqual(ref val2));
+
+    val1.ReleaseData();
+    val2.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -154,6 +188,10 @@ public class TestBlobs : BHL_TestBase
     var val2 = Val.NewInt(10);
 
     Assert.False(val1.IsDataEqual(ref val2));
+
+    val1.ReleaseData();
+
+    CommonChecks();
   }
 
   [Fact]
@@ -168,5 +206,9 @@ public class TestBlobs : BHL_TestBase
     var val2 = Val.NewObj(/*using orig!*/ orig, null);
 
     Assert.False(val1.IsDataEqual(ref val2));
+
+    val1.ReleaseData();
+
+    CommonChecks();
   }
 }

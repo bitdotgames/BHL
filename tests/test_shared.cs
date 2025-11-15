@@ -1,7 +1,9 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using bhl;
 using Xunit;
@@ -9,6 +11,13 @@ using Xunit;
 public class BHL_TestBase
 {
   public const string TestModuleName = "";
+
+  protected TrackedArrayPool blob_pool = new TrackedArrayPool();
+
+  public BHL_TestBase()
+  {
+    Val._blob_pool = blob_pool;
+  }
 
   protected static void BindMin(Types ts)
   {
@@ -754,13 +763,20 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public static void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
+  public void CommonChecks()
+  {
+    Assert.Equal(blob_pool.TotalRents, blob_pool.TotalReturns);
+  }
+
+  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
   {
     //forced cleanup of module globals
     vm.UnloadModules();
 
     if(vm.last_fiber != null)
       CommonChecks(vm.last_fiber, check_frames);
+
+    CommonChecks();
 
     Assert.Equal(0, vm.vrefs_pool.BusyCount);
     Assert.Equal(0, vm.vlsts_pool.BusyCount);
@@ -1295,6 +1311,34 @@ public class BHL_TestBase
       Assert.Equal((int)cas[i].type, (int)cbs[i].type);
       Assert.Equal(cas[i].num, cbs[i].num);
       AssertEqual(cas[i].str, cbs[i].str);
+    }
+  }
+
+  public sealed class TrackedArrayPool : ArrayPool<byte>
+  {
+    private readonly ArrayPool<byte> _inner;
+
+    private long _rents;
+    private long _returns;
+
+    public long TotalRents   => Interlocked.Read(ref _rents);
+    public long TotalReturns => Interlocked.Read(ref _returns);
+
+    public TrackedArrayPool(ArrayPool<byte> inner = null!)
+    {
+      _inner = inner ?? ArrayPool<byte>.Shared;
+    }
+
+    public override byte[] Rent(int minimumLength)
+    {
+      Interlocked.Increment(ref _rents);
+      return _inner.Rent(minimumLength);
+    }
+
+    public override void Return(byte[] array, bool clearArray = false)
+    {
+      Interlocked.Increment(ref _returns);
+      _inner.Return(array, clearArray);
     }
   }
 }
