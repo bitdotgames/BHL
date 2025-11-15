@@ -345,17 +345,6 @@ public partial class VM
 
   ExecState init_exec = new ExecState();
 
-  //special case 'null' value
-  ValOld null_val = null;
-  public ValOld NullOld
-  {
-    get
-    {
-      null_val.Retain();
-      return null_val;
-    }
-  }
-
   public static readonly Val Null = Val.NewObj(null, Types.Null);
   public static readonly Val True = Val.NewBool(true);
   public static readonly Val False = Val.NewBool(false);

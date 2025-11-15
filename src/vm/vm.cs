@@ -154,13 +154,6 @@ public partial class VM : INamedResolver
       types = new Types();
     this.types = types;
     this.loader = loader;
-
-    null_val = new ValOld(this);
-    null_val.SetObj(null, Types.Null);
-    //NOTE: we don't want to store it in the values pool,
-    //      still we need to retain it so that it's never
-    //      accidentally released when pushed/popped
-    null_val.Retain();
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)
