@@ -766,7 +766,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.MakeRef,
+        Opcodes.DeclRef,
         1 /*local idx*/
       )
     );
@@ -1357,7 +1357,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VARWDCL:
       {
         if(ast.type == EnumCall.VARWDCL && is_ref_origin)
-          Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
 
         if(is_global)
         {
@@ -1765,29 +1765,25 @@ public class ModuleCompiler : AST_Visitor
             //stored at 0 idx and is not part of func args
             //(which are stored in the very beginning)
             ast.symb_idx - curr_func.GetRequiredArgsNum() - (curr_func.scope is ClassSymbol ? 1 : 0),
-            0 /*patched later*/
+            0 /*offset patched later*/
           });
         //might need to visit default arguments init code
         VisitChildren(ast);
-        if(ast.symb._is_ref_decl)
-        {
-          Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
-          Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
-        }
-        else
-        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
         AddOffsetFromTo(arg_op, Peek(), operand_idx: 2);
+        if(ast.symb._is_ref_decl)
+          Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
       }
       else
       {
         if(ast.symb._is_ref_decl)
-          Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
+          Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
       }
     }
     else
     {
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
     }

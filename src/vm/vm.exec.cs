@@ -966,7 +966,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
+  unsafe static void OpcodeDeclRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
     byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
@@ -974,10 +974,13 @@ public partial class VM
     ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
 
     //replacing existing val with ValRef if it's not already a ValRef
+    //(this a special case required e.g for loop variables)
+    //TODO: loop variables must be declared before loops to avoid this check?
     if(curr._refc == null)
     {
       var new_val = new Val();
       var vr = ValRef.New(vm);
+      //NOTE: we wrap an existing value
       vr.val = curr;
       new_val._refc = vr;
       curr = new_val;
@@ -1505,7 +1508,7 @@ public partial class VM
   {
     byte arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
     byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    int jump_pos = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    int jump_add = (int)Bytecode.Decode16(bytes, ref exec.ip);
     //if default argument is set we need to insert a slot into the stack
     //where it will be set below
     if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
@@ -1523,7 +1526,7 @@ public partial class VM
     }
     //...otherwise we need to jump out of default argument calculation code
     else
-      exec.ip += jump_pos;
+      exec.ip += jump_add;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1716,7 +1719,7 @@ public partial class VM
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
-    op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
+    op_handlers[(int)Opcodes.DeclRef] = OpcodeDeclRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
 
