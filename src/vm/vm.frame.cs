@@ -61,7 +61,6 @@ public partial class VM : INamedResolver
       for(int i = locals_offset; i < locals_offset + locals_vars_num; ++i)
       {
         ref var val = ref locals.vals[i];
-        //TODO: what about blob?
         if(val._refc != null)
         {
           val._refc?.Release();
@@ -98,7 +97,6 @@ public partial class VM : INamedResolver
       for(int i = 0; i <= leftover; ++i)
       {
         ref var val = ref stack.vals[ret_start_offset + i];
-        //TODO: what about blob?
         val._refc = null;
         val.obj = null;
       }

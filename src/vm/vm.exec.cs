@@ -936,7 +936,6 @@ public partial class VM
 
     exec.stack.Pop(out var new_val);
     ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
-    //TODO: what about blob?
     current._refc?.Release();
     current = new_val;
   }
@@ -997,7 +996,6 @@ public partial class VM
 
     ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
-    //TODO: what about blob?
     val_ref.val._refc?.Release();
     val_ref.val = new_val;
   }
@@ -1087,7 +1085,6 @@ public partial class VM
 
     ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
     var val_ref = (ValRef)val_ref_holder._refc;
-    //TODO: what about blob?
     val_ref.val._refc?.Release();
     val_ref.val = new_val;
   }
@@ -1459,7 +1456,6 @@ public partial class VM
       val._refc.Release();
       val._refc = null;
     }
-    //TODO: what about blob?
     val.obj = null;
   }
 

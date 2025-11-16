@@ -386,7 +386,6 @@ public class ValStack
     while(sp > 0)
     {
       Pop(out var val);
-      //TODO: what about blobs
       val._refc?.Release();
     }
   }
