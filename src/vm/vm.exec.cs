@@ -1445,15 +1445,9 @@ public partial class VM
     upval.frame_local_idx = func_ptr_local_idx;
 
     ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
-    if(mode == UpvalMode.COPY)
-    {
-      upval.val.CopyDataFrom(ref val);
-    }
-    else
-    {
+    if(mode == UpvalMode.STRONG)
       val._refc?.Retain();
-      upval.val = val;
-    }
+    upval.val = val;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -123,7 +123,7 @@ public class ValList : IList<Val>, IList, IRefcounted
     var span = CollectionsMarshal.AsSpan(lst);
     ref var curr = ref span[i];
     var refc = curr._refc;
-    curr.CopyDataFrom(ref v);
+    curr = v;
     refc?.Release();
   }
 

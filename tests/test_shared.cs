@@ -12,13 +12,6 @@ public class BHL_TestBase
 {
   public const string TestModuleName = "";
 
-  protected TrackedArrayPool blob_pool = new TrackedArrayPool();
-
-  public BHL_TestBase()
-  {
-    Val._blob_pool = blob_pool;
-  }
-
   protected static void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
@@ -763,11 +756,6 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public void CommonChecks()
-  {
-    Assert.Equal(blob_pool.TotalRents, blob_pool.TotalReturns);
-  }
-
   public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
   {
     //forced cleanup of module globals
@@ -775,8 +763,6 @@ public class BHL_TestBase
 
     if(vm.last_fiber != null)
       CommonChecks(vm.last_fiber, check_frames);
-
-    CommonChecks();
 
     Assert.Equal(0, vm.vrefs_pool.BusyCount);
     Assert.Equal(0, vm.vlsts_pool.BusyCount);
@@ -796,7 +782,6 @@ public class BHL_TestBase
     for(int i = 0; i < fb.exec.stack.vals.Length; ++i)
     {
       var val = fb.exec.stack.vals[i];
-      Assert.Equal(0, val._blob_size);
       if(!(val.obj is string))
         Assert.Null(val.obj);
       Assert.Null(val._refc);
@@ -1301,44 +1286,5 @@ public class BHL_TestBase
     }
 
     return equal;
-  }
-
-  public static void AssertEqual(List<Const> cas, List<Const> cbs)
-  {
-    Assert.Equal(cas.Count, cbs.Count);
-    for(int i = 0; i < cas.Count; ++i)
-    {
-      Assert.Equal((int)cas[i].type, (int)cbs[i].type);
-      Assert.Equal(cas[i].num, cbs[i].num);
-      AssertEqual(cas[i].str, cbs[i].str);
-    }
-  }
-
-  public sealed class TrackedArrayPool : ArrayPool<byte>
-  {
-    private readonly ArrayPool<byte> _inner;
-
-    private long _rents;
-    private long _returns;
-
-    public long TotalRents   => Interlocked.Read(ref _rents);
-    public long TotalReturns => Interlocked.Read(ref _returns);
-
-    public TrackedArrayPool(ArrayPool<byte> inner = null!)
-    {
-      _inner = inner ?? ArrayPool<byte>.Shared;
-    }
-
-    public override byte[] Rent(int minimumLength)
-    {
-      Interlocked.Increment(ref _rents);
-      return _inner.Rent(minimumLength);
-    }
-
-    public override void Return(byte[] array, bool clearArray = false)
-    {
-      Interlocked.Increment(ref _returns);
-      _inner.Return(array, clearArray);
-    }
   }
 }

@@ -4,14 +4,6 @@ using System.Runtime.CompilerServices;
 
 namespace bhl
 {
-
-public interface IRefcounted
-{
-  int refs { get ; }
-  void Retain();
-  void Release();
-}
-
 public struct Val
 {
   public IType type;
@@ -32,17 +24,6 @@ public struct Val
   public double _num2;
   public double _num3;
   public double _num4;
-
-  //NOTE: indicates that _obj is byte[] rented from pool and must be copied
-  //      and properly released
-  public int _blob_size;
-
-  public static ArrayPool<byte> _blob_pool;
-
-  static Val()
-  {
-    _blob_pool = ArrayPool<byte>.Shared;
-  }
 
   public string str
   {
@@ -120,88 +101,14 @@ public struct Val
     _num2 = 0;
     _num3 = 0;
     _num4 = 0;
-    _refc = null;
-
-    //NOTE: it's assumed that blobs act like values
-    if(_blob_size > 0)
-    {
-      _blob_pool.Return((byte[])obj);
-      _blob_size = 0;
-    }
-
     obj = null;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void CopyDataFrom(ref Val o)
-  {
-    type = o.type;
-    num = o.num;
-    _num2 = o._num2;
-    _num3 = o._num3;
-    _num4 = o._num4;
-    _refc = o._refc;
-
-    if(o._blob_size > 0)
-    {
-      CopyBlobDataFrom(o);
-    }
-    else if(_blob_size > 0)
-    {
-      _blob_pool.Return((byte[])obj);
-      obj = o.obj;
-      _blob_size = 0;
-    }
-    else
-      obj = o.obj;
-  }
-
-  void CopyBlobDataFrom(Val src)
-  {
-    var src_data = (byte[])src.obj;
-
-    if(_blob_size > 0)
-    {
-      var data = (byte[])obj;
-
-      //let's check if our current buffer has enough capacity
-      if(data.Length >= src._blob_size)
-        Array.Copy(src_data, data, src._blob_size);
-      else
-      {
-        _blob_pool.Return(data);
-        var new_data = _blob_pool.Rent(src._blob_size);
-        Array.Copy(src_data, new_data, src._blob_size);
-        obj = new_data;
-      }
-    }
-    else
-    {
-      var new_data = _blob_pool.Rent(src._blob_size);
-      Array.Copy(src_data, new_data, src._blob_size);
-      obj = new_data;
-    }
-
-    _blob_size = src._blob_size;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  bool IsBlobEqual(ref Val v)
-  {
-    if(_blob_size != v._blob_size)
-      return false;
-
-    ReadOnlySpan<byte> a = (byte[])obj;
-    ReadOnlySpan<byte> b = (byte[])v.obj;
-
-    return a.SequenceEqual(b);
+    _refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public Val Clone()
   {
-    var copy = new Val();
-    copy.CopyDataFrom(ref this);
+    var copy = this;
     copy._refc?.Retain();
     return copy;
   }
@@ -216,12 +123,6 @@ public struct Val
   public void ReleaseData()
   {
     _refc?.Release();
-
-    if(_blob_size > 0)
-    {
-      _blob_pool.Return((byte[])obj);
-      _blob_size = 0;
-    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -347,35 +248,6 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetBlob<T>(ref T val, IType type) where T : unmanaged
-  {
-    Reset();
-
-    int size = Extensions.SizeOf<T>();
-
-    var data = _blob_pool.Rent(size);
-
-    Extensions.UnsafeAs<byte, T>(ref data[0]) = val;
-
-    this.type = type;
-    _blob_size = size;
-    obj = data;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void SetBlob<T>(T val, IType type) where T : unmanaged
-  {
-    SetBlob(ref val, type);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public ref T GetBlob<T>() where T : unmanaged
-  {
-    byte[] data = (byte[])obj;
-    return ref Extensions.UnsafeAs<byte, T>(ref data[0]);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsDataEqual(ref Val o)
   {
     bool res =
@@ -383,7 +255,7 @@ public struct Val
         _num2 == o._num2 &&
         _num3 == o._num3 &&
         _num4 == o._num4 &&
-        ((_blob_size > 0 || o._blob_size > 0) ? IsBlobEqual(ref o) : (obj != null ? obj.Equals(o.obj) : obj == o.obj))
+        (obj?.Equals(o.obj) ?? obj == o.obj)
       ;
 
     return res;
@@ -397,7 +269,7 @@ public struct Val
       ^ _num2.GetHashCode()
       ^ _num3.GetHashCode()
       ^ _num4.GetHashCode()
-      ^ (int)(obj == null ? 0 : obj.GetHashCode())
+      ^ (obj?.GetHashCode() ?? 0)
       ;
   }
 
@@ -518,6 +390,13 @@ public class ValStack
       val._refc?.Release();
     }
   }
+}
+
+public interface IRefcounted
+{
+  int refs { get ; }
+  void Retain();
+  void Release();
 }
 
 public class ValRef : IRefcounted
