@@ -57,7 +57,7 @@ public class TestImport : BHL_TestBase
         .EmitChain(Opcodes.Return)
         .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
         .EmitChain(Opcodes.Constant, new int[] { 0 })
-        .EmitChain(Opcodes.Call, new int[] { 0, 3, 1 })
+        .EmitChain(Opcodes.Call, new int[] { 0, 4, 1 })
         .EmitChain(Opcodes.Return)
     );
     AssertEqual(loader.Load("bhl2", ts),
@@ -65,7 +65,7 @@ public class TestImport : BHL_TestBase
         .UseCode()
         .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
         .EmitChain(Opcodes.Return)
-        .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
+        .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
         .EmitChain(Opcodes.GetVar, new int[] { 0 })
         .EmitChain(Opcodes.Call, new int[] { 0, 0, 1 })
         .EmitChain(Opcodes.Return)

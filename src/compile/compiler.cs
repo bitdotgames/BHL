@@ -566,7 +566,7 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.Call,
-        2 /*imported module idx*/, 3 /*module's func idx*/, 4 /*args bits*/
+        2 /*imported module idx*/, 3 /*module's func ip*/, 4 /*args bits*/
       )
     );
     DeclareOpcode(
