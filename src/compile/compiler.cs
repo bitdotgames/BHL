@@ -1772,8 +1772,8 @@ public class ModuleCompiler : AST_Visitor
         if(ast.symb._is_ref_decl)
         {
           //in case it's a reference we must make sure it's properly wrapped before it's set
-          //(we can't put the code in the top because default arguments opcode inserts gaps into local variables)
-          //(TODO: there's a duplicated DeclRef opcode below, we could omit its execution by jumping?)
+          //(we can't put the code in the top because default arguments opcode inserts gaps
+          //into local variables thus affecting them)
           Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
           Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
           Emit(Opcodes.Jump, new int[] { 2 /*DeclRef opcode below*/ });
