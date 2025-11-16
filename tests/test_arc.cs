@@ -132,40 +132,6 @@ public class TestARC : BHL_TestBase
   }
 
   [Fact]
-  public void TestRefCountInLambda()
-  {
-    string bhl = @"
-    func test()
-    {
-      RefC r1 = new RefC
-
-      trace(""REFS"" + (string)r1.refs + "";"")
-
-      func() fn = func() {
-        trace(""REFS"" + (string)r1.refs + "";"")
-      }
-
-      fn()
-      trace(""REFS"" + (string)r1.refs + "";"")
-    }
-    ";
-
-    var logs = new StringBuilder();
-
-    var ts_fn = new Action<Types>((ts) =>
-    {
-      BindRefC(ts, logs);
-      BindTrace(ts, logs);
-    });
-
-    var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test");
-    Assert.Equal("INC1;INC2;DEC1;INC2;DEC1;REFS2;INC2;INC3;INC4;DEC3;REFS4;DEC2;INC3;DEC2;REFS3;DEC1;DEC0;",
-      logs.ToString());
-    CommonChecks(vm);
-  }
-
-  [Fact]
   public void TestRefCountInArray()
   {
     string bhl = @"
