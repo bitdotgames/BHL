@@ -1776,6 +1776,7 @@ public class ModuleCompiler : AST_Visitor
           //(TODO: there's a duplicated DeclRef opcode below, we could omit its execution by jumping?)
           Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
           Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
+          Emit(Opcodes.Jump, new int[] { 2 /*DeclRef opcode below*/ });
         }
         else
         {
