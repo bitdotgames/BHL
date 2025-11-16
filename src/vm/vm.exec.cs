@@ -1515,14 +1515,17 @@ public partial class VM
     {
       int pos_idx = frame.locals_offset + arg_idx;
 
-      //TODO: rewrite it using a simple loop?
-      Array.Copy(
-        exec.stack.vals,
-        pos_idx,
-        exec.stack.vals,
-        pos_idx + 1,
-        exec.stack.sp - pos_idx - 1
-      );
+      for(int i = 0; i < exec.stack.sp - pos_idx - 1; ++i)
+        exec.stack.vals[pos_idx + i + 1] = exec.stack.vals[pos_idx + i];
+
+      //alternative version
+      //Array.Copy(
+      //  exec.stack.vals,
+      //  pos_idx,
+      //  exec.stack.vals,
+      //  pos_idx + 1,
+      //  exec.stack.sp - pos_idx - 1
+      //);
     }
     //...otherwise we need to jump out of default argument calculation code
     else
