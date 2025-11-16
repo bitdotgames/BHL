@@ -650,11 +650,9 @@ public class TestFiber : BHL_TestBase
       var fn = new FuncSymbolNative(new Origin(), "STOP", Types.Void,
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
-          throw new NotImplementedException();
-          //var val = stack.Pop();
-          //var fb_ref = new VM.FiberRef(val);
-          //fb_ref.Get().Stop();
-          //val.Release();
+          var val = exec.stack.Pop();
+          var fb_ref = new VM.FiberRef(val);
+          fb_ref.Get()?.Stop();
           return null;
         },
         new FuncArgSymbol("fb", ts.T(Types.FiberRef))
@@ -682,9 +680,8 @@ public class TestFiber : BHL_TestBase
       if(!done)
       {
         var val = exec.stack.Pop();
-        throw new NotImplementedException();
-        //fb = new VM.FiberRef(val);
-        val.ReleaseData();
+        fb = new VM.FiberRef(val);
+        val._refc?.Release();
         exec.status = BHS.RUNNING;
         done = true;
       }
@@ -1475,13 +1472,13 @@ public class TestFiber : BHL_TestBase
           int spawns = exec.stack.Pop();
           var ptr = exec.stack.Pop();
 
+          ref var frame = ref exec.frames[exec.frames_count - 1];
           for(int i = 0; i < spawns; ++i)
           {
-            throw new NotImplementedException();
-            //ScriptMgr.instance.Start(frm, (VM.FuncPtr)ptr.obj, stack);
+            ScriptMgr.instance.Start(exec, ref frame, (VM.FuncPtr)ptr.obj);
           }
 
-          ptr.ReleaseData();
+          ptr._refc?.Release();
 
           return null;
         },

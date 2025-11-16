@@ -204,9 +204,8 @@ public class Types : INamedResolver
       var fld = new FieldSymbol(new Origin(), "IsRunning", Bool,
         delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol _)
         {
-          throw new NotImplementedException();
-          //var fb_ref = new VM.FiberRef(ctx);
-          //v.SetBool(fb_ref.IsRunning);
+          var fb_ref = new VM.FiberRef(ctx);
+          v.SetBool(fb_ref.IsRunning);
         },
         null //no setter
       );
