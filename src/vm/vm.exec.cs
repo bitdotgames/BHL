@@ -177,13 +177,12 @@ public partial class VM
             if(tmp_region.defers != null && tmp_region.defers.count > 0)
               tmp_region.defers.ExitScope(this);
           }
-
           regions_count = frame.regions_mark;
-          frame.CleanLocals(stack);
+          --frames_count;
+          frame.CleanLocals();
         }
         frames_count = 0;
       }
-
       regions_count = 0;
     }
 
@@ -273,8 +272,8 @@ public partial class VM
             tmp_region.defers.ExitScope(this);
         }
         regions_count = frame.regions_mark;
+        frame.CleanLocals();
 
-        frame.CleanLocals(stack);
         if(frame.return_vars_num > 0)
           frame.ReturnVars(stack);
         //stack pointer now at the last returned value

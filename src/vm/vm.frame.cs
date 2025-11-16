@@ -55,7 +55,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CleanLocals(ValStack stack)
+    public void CleanLocals()
     {
       //releasing all locals
       for(int i = locals_offset; i < locals_offset + locals_vars_num; ++i)

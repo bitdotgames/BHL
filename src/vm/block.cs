@@ -122,11 +122,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
       for(int r = exec.regions_count; r-- > frame.regions_mark;)
       {
-        ref var tmp_region = ref exec.regions[i];
+        ref var tmp_region = ref exec.regions[r];
         if(tmp_region.defers != null && tmp_region.defers.count > 0)
           tmp_region.defers.ExitScope(exec);
       }
-      frame.CleanLocals(exec.stack);
+      exec.regions_count = frame.regions_mark;
+      --exec.frames_count;
+      frame.CleanLocals();
     }
 
     if(defers.count > 0)
