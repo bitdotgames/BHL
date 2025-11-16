@@ -975,7 +975,7 @@ public partial class VM
 
     //replacing existing val with ValRef if it's not already a ValRef
     //(this a special case required e.g for loop variables)
-    //TODO: loop variables must be declared before loops to avoid this check?
+    //TODO: we'd better check the type for robustness?
     if(curr._refc == null)
     {
       var new_val = new Val();

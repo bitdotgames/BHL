@@ -1233,9 +1233,9 @@ public class TestLambda : BHL_TestBase
     func test()
     {
       foo(10, 20)
-      //bar()
-      //foo()
-      //bar()
+      bar()
+      foo()
+      bar()
     }
     ";
 

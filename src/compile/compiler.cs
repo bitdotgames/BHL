@@ -1769,23 +1769,31 @@ public class ModuleCompiler : AST_Visitor
           });
         //might need to visit default arguments init code
         VisitChildren(ast);
+        if(ast.symb._is_ref_decl)
+        {
+          //in case it's a reference we must make sure it's properly wrapped before it's set
+          //(we can't put the code in the top because default arguments opcode inserts gaps into local variables)
+          //(TODO: there's a duplicated DeclRef opcode below, we could omit its execution by jumping?)
+          Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
+          Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
+        }
+        else
+        {
+          Emit(Opcodes.SetVar, new int[] { ast.symb_idx });
+        }
+        //we want to jump out of default arguments related code
         AddOffsetFromTo(arg_op, Peek(), operand_idx: 2);
-        if(ast.symb._is_ref_decl)
-          Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
-        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
       }
-      else
-      {
-        if(ast.symb._is_ref_decl)
-          Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
-      }
+
+      if(ast.symb._is_ref_decl)
+        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
     }
     else
     {
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
       else
-        Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
+        Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
     }
   }
 
