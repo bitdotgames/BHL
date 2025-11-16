@@ -57,7 +57,7 @@ public static class Prelude
             default
             );
           val_ptr._refc.Release();
-          exec.stack.Push(VM.FiberRef.Encode(fb));
+          exec.stack.Push(VM.FiberRef.AsVal(fb));
           return null;
         },
         new FuncArgSymbol("p", m.TFunc(true /*is coro*/, "void"))
@@ -72,8 +72,8 @@ public static class Prelude
           var val = exec.stack.Pop();
           var fb_ref = new VM.FiberRef(val);
           var fb = fb_ref.Get();
+          //NOTE: we don't release it since we don't own it (it's a weak ref FiberRef)
           fb?.Stop();
-          //NOTE: we don't release it since we don't own it
           return null;
         },
         new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))

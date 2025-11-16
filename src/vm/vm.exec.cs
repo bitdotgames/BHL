@@ -173,11 +173,12 @@ public partial class VM
 
           for(int r = regions_count; r-- > frame.regions_mark;)
           {
-            ref var tmp_region = ref regions[i];
+            ref var tmp_region = ref regions[r];
             if(tmp_region.defers != null && tmp_region.defers.count > 0)
               tmp_region.defers.ExitScope(this);
           }
 
+          regions_count = frame.regions_mark;
           frame.CleanLocals(stack);
         }
         frames_count = 0;

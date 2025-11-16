@@ -26,7 +26,7 @@ public partial class VM : INamedResolver
       this.fiber = (VM.Fiber)val.obj;
     }
 
-    public static Val Encode(VM.Fiber fb)
+    public static Val AsVal(VM.Fiber fb)
     {
       var val = Val.NewObj(fb, Types.FiberRef);
       //let's encode FiberRef into Val
