@@ -194,7 +194,7 @@ public class TestParal : BHL_TestBase
           .EmitChain(Opcodes.SetRef, new int[] { 0 })
           .EmitChain(Opcodes.Return)
           .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.Paral, new int[] { 69 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})

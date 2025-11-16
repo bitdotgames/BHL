@@ -966,7 +966,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeDeclRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
+  unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
     byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
@@ -1506,16 +1506,19 @@ public partial class VM
     byte arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
     byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
     int jump_pos = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    //if default argument is set we need to fill gaps in the stack
+    //if default argument is set we need to insert a slot into the stack
+    //where it will be set below
     if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
     {
-      exec.stack.Push();
+      int pos_idx = frame.locals_offset + arg_idx;
+
+      //TODO: rewrite it using a simple loop?
       Array.Copy(
         exec.stack.vals,
-        arg_idx,
+        pos_idx,
         exec.stack.vals,
-        arg_idx + 1,
-        exec.stack.sp - arg_idx
+        pos_idx + 1,
+        exec.stack.sp - pos_idx - 1
       );
     }
     //...otherwise we need to jump out of default argument calculation code
@@ -1713,7 +1716,7 @@ public partial class VM
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
-    op_handlers[(int)Opcodes.DeclRef] = OpcodeDeclRef;
+    op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
 

@@ -766,7 +766,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.DeclRef,
+        Opcodes.MakeRef,
         1 /*local idx*/
       )
     );
@@ -1357,7 +1357,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VARWDCL:
       {
         if(ast.type == EnumCall.VARWDCL && is_ref_origin)
-          Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
 
         if(is_global)
         {
@@ -1756,9 +1756,6 @@ public class ModuleCompiler : AST_Visitor
     //checking if there are default args
     if(is_func_arg)
     {
-      if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
-
       if(ast.children.Count > 0)
       {
         var curr_func = func_decls.Peek();
@@ -1773,16 +1770,24 @@ public class ModuleCompiler : AST_Visitor
         //might need to visit default arguments init code
         VisitChildren(ast);
         if(ast.symb._is_ref_decl)
+        {
+          Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx});
+        }
         else
-          Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
+        Emit(Opcodes.SetVar, new int[] {ast.symb_idx});
         AddOffsetFromTo(arg_op, Peek(), operand_idx: 2);
+      }
+      else
+      {
+        if(ast.symb._is_ref_decl)
+          Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
       }
     }
     else
     {
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { (int)ast.symb_idx });
+        Emit(Opcodes.MakeRef, new int[] { (int)ast.symb_idx });
       else
         Emit(Opcodes.DeclVar, new int[] { (int)ast.symb_idx, AddTypeRef(ast.type) });
     }

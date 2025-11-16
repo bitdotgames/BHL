@@ -18,7 +18,7 @@ public class TestMaps : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.TMap("string", "int")) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
       ;
 
