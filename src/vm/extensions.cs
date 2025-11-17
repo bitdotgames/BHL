@@ -5,29 +5,29 @@ namespace bhl
 
 public static class VMExtensions
 {
-  static public VM.Fiber Start(this VM vm, string func)
+  static public VM.Fiber Start(this VM vm, string func, VM.FiberOptions opts = 0)
   {
-    return vm.Start(func, new FuncArgsInfo(0u), new StackList<Val>());
+    return vm.Start(func, new FuncArgsInfo(0u), new StackList<Val>(), opts);
   }
 
-  static public VM.Fiber Start(this VM vm, string func, Val arg1)
+  static public VM.Fiber Start(this VM vm, string func, Val arg1, VM.FiberOptions opts = 0)
   {
-    return vm.Start(func, new FuncArgsInfo(1u), new StackList<Val>(arg1));
+    return vm.Start(func, new FuncArgsInfo(1u), new StackList<Val>(arg1), opts);
   }
 
-  static public VM.Fiber Start(this VM vm, string func, Val arg1, Val arg2)
+  static public VM.Fiber Start(this VM vm, string func, Val arg1, Val arg2, VM.FiberOptions opts = 0)
   {
-    return vm.Start(func, new FuncArgsInfo(2u), new StackList<Val>(arg1, arg2));
+    return vm.Start(func, new FuncArgsInfo(2u), new StackList<Val>(arg1, arg2), opts);
   }
 
-  static public VM.Fiber Start(this VM vm, string func, Val arg1, Val arg2, Val arg3)
+  static public VM.Fiber Start(this VM vm, string func, Val arg1, Val arg2, Val arg3, VM.FiberOptions opts = 0)
   {
-    return vm.Start(func, new FuncArgsInfo(3u), new StackList<Val>(arg1, arg2, arg3));
+    return vm.Start(func, new FuncArgsInfo(3u), new StackList<Val>(arg1, arg2, arg3), opts);
   }
 
-  static public VM.Fiber Start(this VM vm, string func, StackList<Val> args)
+  static public VM.Fiber Start(this VM vm, string func, StackList<Val> args, VM.FiberOptions opts = 0)
   {
-    return vm.Start(func, new FuncArgsInfo(args.Count), args);
+    return vm.Start(func, new FuncArgsInfo(args.Count), args, opts);
   }
 
   static public VM.Fiber Start(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args,

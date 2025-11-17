@@ -190,6 +190,7 @@ public partial class VM : INamedResolver
       return Tick();
     }
 
+    //Returns true if we are still running
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Tick()
     {
@@ -199,21 +200,11 @@ public partial class VM : INamedResolver
       //NOTE: try/catch commented for better debugging during heavy code changes
       //try
       {
-        //NOTE: stale pointer guard against the fact fiber becomes stopped
-        //      during execution for some reason (when it's stopped and it's released)
-        Retain();
         exec.Execute();
-        Release();
 
         //Checking if there's no running coroutine
         if(status != BHS.RUNNING)
-        {
           _AfterStop();
-          //TODO: Do we really need this semantics?
-          //      maybe it's a caller's responsibility?
-          //      What about children?
-          Release();
-        }
       }
       //catch(Exception e)
       //{
@@ -239,7 +230,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Stop(bool with_children = false, bool release = true)
+    public void Stop(bool with_children = false)
     {
       if(!IsStopped())
       {
@@ -248,8 +239,6 @@ public partial class VM : INamedResolver
         {
           _AfterStop();
           exec.stack.ClearAndRelease();
-          if(release)
-            Release();
         }
         //catch(Exception e)
         //{
@@ -267,16 +256,19 @@ public partial class VM : INamedResolver
       }
 
       if(with_children)
-        StopChildren(release: release);
+        StopChildren();
     }
 
+    //NOTE: we don't release children, since we don't own them
+    //      (either VM owns them and will Release them since they are stopped,
+    //       or it will be user's responsibility)
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void StopChildren(bool release = true)
+    public void StopChildren()
     {
       foreach(var child_ref in children)
       {
         var child = child_ref.Get();
-        child?.Stop(with_children: true, release: release);
+        child?.Stop(with_children: true);
       }
     }
   }
@@ -290,7 +282,6 @@ public partial class VM : INamedResolver
   public enum FiberOptions
   {
     Detach = 1,
-    Retain = 2,
   }
 
   public Fiber Start(FuncAddr addr)
@@ -320,8 +311,6 @@ public partial class VM : INamedResolver
       fb.exec.PushFrameRegion(ref frame, frame_idx, args);
     }
 
-    if(opts.HasFlag(FiberOptions.Retain))
-      fb.Retain();
     return fb;
   }
 
@@ -350,25 +339,16 @@ public partial class VM : INamedResolver
     return new_fiber;
   }
 
-  public void Detach(Fiber fb)
-  {
-    fibers.Remove(fb);
-  }
-
-  public void Attach(Fiber fb)
-  {
-    if(fibers.IndexOf(fb) == -1)
-      fibers.Add(fb);
-  }
-
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {
     fb.id = ++fibers_ids;
     fb.exec.status = BHS.NONE;
     if(!opts.HasFlag(FiberOptions.Detach))
+    {
       fibers.Add(fb);
-    parent?.AddChild(fb);
+      parent?.AddChild(fb);
+    }
   }
 
   StackArray<ExecState> script_executors = new (

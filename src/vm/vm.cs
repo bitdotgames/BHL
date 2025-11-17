@@ -224,7 +224,9 @@ public partial class VM : INamedResolver
   {
     for(int i = fibers.Count; i-- > 0;)
     {
-      fibers[i].Stop();
+      var fiber = fibers[i];
+      fiber.Stop();
+      fiber.Release();
       fibers.RemoveAt(i);
     }
   }
@@ -242,10 +244,11 @@ public partial class VM : INamedResolver
 
   public bool Tick()
   {
-    return Tick(fibers);
+    return Tick(fibers, ref last_fiber);
   }
 
-  public bool Tick(List<Fiber> fibers)
+  //NOTE: this version assumes that stopped fibers are released and removed
+  static public bool Tick(List<Fiber> fibers, ref Fiber last_fiber)
   {
     for(int i = 0; i < fibers.Count; ++i)
     {
@@ -256,8 +259,12 @@ public partial class VM : INamedResolver
 
     for(int i = fibers.Count; i-- > 0;)
     {
-      if(fibers[i].IsStopped())
+      var fiber = fibers[i];
+      if(fiber.IsStopped())
+      {
+        fiber.Release();
         fibers.RemoveAt(i);
+      }
     }
 
     return fibers.Count != 0;

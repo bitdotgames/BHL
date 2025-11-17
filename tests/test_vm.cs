@@ -4391,6 +4391,7 @@ public class TestVM : BHL_TestBase
     Assert.Equal("1;1;1;1;1;" + "1;1;1;1;1;", str);
 
     fb.Stop();
+    vm.Tick();
 
     CommonChecks(vm);
   }
@@ -4461,6 +4462,7 @@ public class TestVM : BHL_TestBase
     Assert.Equal(0, fb.exec.stack.sp);
 
     fb.Stop();
+    vm.Tick();
     CommonChecks(vm);
   }
 
@@ -6412,15 +6414,14 @@ public class TestVM : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
-    var fb = vm.Start("test");
-    Assert.Equal(BHS.NONE, fb.status);
-    vm.Detach(fb);
-    Assert.Equal(BHS.NONE, fb.status);
-    Assert.False(fb.Tick());
+    var fb = vm.Start("test", VM.FiberOptions.Detach);
     Assert.Equal(BHS.NONE, fb.status);
     Assert.True(fb.Tick());
+    Assert.Equal(BHS.RUNNING, fb.status);
     Assert.False(fb.Tick());
+    Assert.Equal(BHS.SUCCESS, fb.status);
     Assert.Equal(123, fb.Stack.Pop().num);
+    fb.Release();
     CommonChecks(fb);
     CommonChecks(vm);
   }
@@ -6443,20 +6444,19 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var fbs = new List<VM.Fiber>();
-    fbs.Add(vm.Start("test"));
-    fbs.Add(vm.Start("test2"));
-    vm.Detach(fbs[0]);
-    vm.Detach(fbs[1]);
+    fbs.Add(vm.Start("test", VM.FiberOptions.Detach));
+    fbs.Add(vm.Start("test2", VM.FiberOptions.Detach));
 
     Assert.Equal(2, fbs.Count);
 
-    Assert.True(vm.Tick(fbs));
+    VM.Fiber last = null;
+    Assert.True(VM.Tick(fbs, ref last));
     Assert.Equal(2, fbs.Count);
 
-    Assert.True(vm.Tick(fbs));
+    Assert.True(VM.Tick(fbs, ref last));
     Assert.Single(fbs);
 
-    Assert.False(vm.Tick(fbs));
+    Assert.False(VM.Tick(fbs, ref last));
     Assert.Empty(fbs);
 
     CommonChecks(vm);
@@ -6881,6 +6881,7 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     fb.Stop();
+    vm.Tick();
     Assert.Equal(0, fb.exec.stack.sp);
     CommonChecks(vm);
   }
@@ -7013,6 +7014,7 @@ public class TestVM : BHL_TestBase
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
     fb.Stop();
+    Assert.False(vm.Tick());
     CommonChecks(vm);
   }
 
@@ -9050,6 +9052,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     fb.Stop();
+    Assert.False(vm.Tick());
 
     Assert.Equal("A1A1", log.ToString());
     CommonChecks(vm);

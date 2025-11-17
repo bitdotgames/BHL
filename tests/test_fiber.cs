@@ -87,13 +87,13 @@ public class TestFiber : BHL_TestBase
 
     Assert.Empty(fb.Children);
 
-    fb.Tick();
+    vm.Tick();
 
     Assert.Equal(2, fb.Children.Count);
     Assert.Equal(fb, fb.Children[0].Get().Parent.Get());
     Assert.Equal(fb, fb.Children[1].Get().Parent.Get());
 
-    fb.Tick();
+    vm.Tick();
 
     Assert.True(fb.IsStopped());
     Assert.False(fb.Children[0].Get().IsStopped());
@@ -104,7 +104,7 @@ public class TestFiber : BHL_TestBase
     Assert.True(fb.Children[0].Get().IsStopped());
     Assert.True(fb.Children[1].Get().IsStopped());
 
-    fb.Tick();
+    vm.Tick();
 
     CommonChecks(fb);
     CommonChecks(vm);
@@ -131,9 +131,11 @@ public class TestFiber : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
 
-    Assert.True(fb.Tick());
+    Assert.True(vm.Tick());
 
     fb.Stop(true);
+
+    vm.Tick();
 
     CommonChecks(vm);
   }
@@ -653,7 +655,7 @@ public class TestFiber : BHL_TestBase
         {
           var val = exec.stack.Pop();
           var fb_ref = new VM.FiberRef(val);
-          fb_ref.Get()?.Stop(release: false/*we don't own it*/);
+          fb_ref.Get()?.Stop();
           return null;
         },
         new FuncArgSymbol("fb", ts.T(Types.FiberRef))
@@ -1505,15 +1507,15 @@ public class TestFiber : BHL_TestBase
 
     public void Start(VM.ExecState exec, ref VM.Frame origin, VM.FuncPtr ptr)
     {
-      var fb = exec.vm.Start(exec, ptr, ref origin, new StackList<Val>());
-      exec.vm.Detach(fb);
+      var fb = exec.vm.Start(exec, ptr, ref origin, new StackList<Val>(), VM.FiberOptions.Detach);
       active.Add(fb);
     }
 
     public void Tick()
     {
+      VM.Fiber last_fiber = null;
       if(active.Count > 0)
-        active[0].vm.Tick(active);
+        VM.Tick(active, ref last_fiber);
     }
 
     public void Stop()
@@ -1521,6 +1523,7 @@ public class TestFiber : BHL_TestBase
       for(int i = active.Count; i-- > 0;)
       {
         active[i].Stop();
+        active[i].Release();
         active.RemoveAt(i);
       }
     }
