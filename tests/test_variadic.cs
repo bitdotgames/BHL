@@ -6,6 +6,24 @@ using Xunit;
 public class TestVariadic : BHL_TestBase
 {
   [Fact]
+  public void TestSimpleCount()
+  {
+    string bhl = @"
+    func int count(...[]int ns) {
+      return ns.Count
+    }
+
+    func int test() {
+      return count(1, 2, 3)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(3, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestSimpleUsage()
   {
     string bhl = @"
@@ -17,18 +35,35 @@ public class TestVariadic : BHL_TestBase
       return s
     }
 
-    func int test1() {
+    func int test() {
       return sum(1, 2, 3)
     }
+    ";
 
-    func int test2() {
+    var vm = MakeVM(bhl);
+    Assert.Equal(6, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestNoArgs()
+  {
+    string bhl = @"
+    func int sum(...[]int ns) {
+      int s = 0
+      foreach(int n in ns) {
+        s += n
+      }
+      return s
+    }
+
+    func int test() {
       return sum()
     }
     ";
 
     var vm = MakeVM(bhl);
-    Assert.Equal(6, Execute(vm, "test1").Stack.Pop().num);
-    Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
+    Assert.Equal(0, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -45,7 +80,7 @@ public class TestVariadic : BHL_TestBase
     }
 
     func int test1() {
-      return sum(3, 1, 2, 3)
+      return sum(3, /*variadics*/1, 2, 3)
     }
 
     func int test2() {
@@ -56,6 +91,42 @@ public class TestVariadic : BHL_TestBase
     var vm = MakeVM(bhl);
     Assert.Equal(3 * 1 + 3 * 2 + 3 * 3, Execute(vm, "test1").Stack.Pop().num);
     Assert.Equal(0, Execute(vm, "test2").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCombineWithDefaultArgSimpleCount()
+  {
+    string bhl = @"
+    func int foo(int k = 10, ...[]int ns) {
+      return ns.Count
+    }
+
+    func int test() {
+      return foo(1, /*variadics*/20, 30)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(2, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCombineWithDefaultArgSimpleCountNoArgs()
+  {
+    string bhl = @"
+    func int foo(int k = 10, ...[]int ns) {
+      return ns.Count
+    }
+
+    func int test() {
+      return foo()
+    }
+    ";
+
+    var vm = MakeVM(bhl, show_bytes: true);
+    Assert.Equal(0, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
@@ -72,7 +143,7 @@ public class TestVariadic : BHL_TestBase
     }
 
     func int test1() {
-      return sum(30, 1, 2, 3)
+      return sum(30, /*variadics*/1, 2, 3)
     }
 
     func int test2() {

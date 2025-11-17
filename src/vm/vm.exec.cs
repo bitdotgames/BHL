@@ -1497,7 +1497,12 @@ public partial class VM
       int pos_idx = frame.locals_offset + arg_idx;
 
       for(int i = 0; i < exec.stack.sp - pos_idx - 1; ++i)
-        exec.stack.vals[pos_idx + i + 1] = exec.stack.vals[pos_idx + i];
+      {
+        ref var tmp = ref exec.stack.vals[pos_idx + i];
+        exec.stack.vals[pos_idx + i + 1] = tmp;
+        //need to nullify the refcounted so it's not invoked by mistake
+        tmp._refc = null;
+      }
 
       //alternative version
       //Array.Copy(
