@@ -1661,8 +1661,8 @@ public partial class VM
     op_handlers[(int)Opcodes.Sub] = OpcodeSub;
     op_handlers[(int)Opcodes.Div] = OpcodeDiv;
     op_handlers[(int)Opcodes.Mul] = OpcodeMul;
-    op_handlers[(int)Opcodes.Equal] = OpcodeEqual;
-    op_handlers[(int)Opcodes.EqualEx] = OpcodeEqualEx;
+    op_handlers[(int)Opcodes.EqualLite] = OpcodeEqual;
+    op_handlers[(int)Opcodes.Equal] = OpcodeEqualEx;
     op_handlers[(int)Opcodes.LT] = OpcodeLT;
     op_handlers[(int)Opcodes.LTE] = OpcodeLTE;
     op_handlers[(int)Opcodes.GT] = OpcodeGT;

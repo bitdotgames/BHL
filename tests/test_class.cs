@@ -31,7 +31,7 @@ public class TestClass : BHL_TestBase
             .EmitChain(Opcodes.SetVar, new int[] { 0 })
             .EmitChain(Opcodes.GetVar, new int[] { 0 })
             .EmitChain(Opcodes.Constant, new int[] { 0 })
-            .EmitChain(Opcodes.EqualEx)
+            .EmitChain(Opcodes.Equal)
             .EmitChain(Opcodes.UnaryNot)
             .EmitChain(Opcodes.Return)
         ;
@@ -2597,7 +2597,7 @@ public class TestClass : BHL_TestBase
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstNullIdx(c) })
-          .EmitChain(Opcodes.EqualEx)
+          .EmitChain(Opcodes.Equal)
           .EmitChain(Opcodes.UnaryNot)
           .EmitChain(Opcodes.Return)
       ;

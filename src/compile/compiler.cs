@@ -430,12 +430,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.Equal
+        Opcodes.EqualLite
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.EqualEx
+        Opcodes.Equal
       )
     );
     DeclareOpcode(
@@ -1702,11 +1702,11 @@ public class ModuleCompiler : AST_Visitor
         break;
       case EnumBinaryOp.EQ:
         VisitChildren(ast);
-        Emit(Opcodes.Equal, null, ast.line_num);
+        Emit(Opcodes.EqualLite, null, ast.line_num);
         break;
       case EnumBinaryOp.EQEX:
         VisitChildren(ast);
-        Emit(Opcodes.EqualEx, null, ast.line_num);
+        Emit(Opcodes.Equal, null, ast.line_num);
         break;
       case EnumBinaryOp.LT:
         VisitChildren(ast);
