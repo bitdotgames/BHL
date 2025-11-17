@@ -180,14 +180,6 @@ public partial class VM : INamedResolver
     return true;
   }
 
-  [Obsolete("Use TryFindFuncAddr(TypePath path, out FuncAddr addr) instead.")]
-  public bool TryFindFuncAddr(NamePath path, out FuncAddr addr, out FuncSymbolScript fs)
-  {
-    bool yes = TryFindFuncAddr(path, out addr);
-    fs = addr.fs;
-    return yes;
-  }
-
   public bool TryFindVarAddr(NamePath path, out VarAddr addr)
   {
     addr = default(VarAddr);

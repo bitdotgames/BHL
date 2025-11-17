@@ -34,7 +34,7 @@ public static class VMExtensions
     VM.FiberOptions opts = 0)
   {
     if(!vm.TryFindFuncAddr(func, out var addr))
-      return null;
+      throw new Exception("Could not find function: " + func);
 
     return vm.Start(addr, args_info, args, opts);
   }
@@ -53,7 +53,7 @@ public static class VMExtensions
   static public ValStack Execute(this VM vm, string func, FuncArgsInfo args_info, StackList<Val> args)
   {
     if(!vm.TryFindFuncAddr(func, out var addr))
-      return null;
+      throw new Exception("Could not find function: " + func);
 
     return vm.Execute(addr.fs, args_info, args);
   }

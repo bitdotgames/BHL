@@ -302,7 +302,8 @@ public partial class VM : INamedResolver
     //checking native call
     if(addr.fsn != null)
     {
-      frame.InitWithModule(addr.module, VM.EXIT_FRAME_IP);
+      //let's exit immediately
+      frame.start_ip = VM.EXIT_FRAME_IP;
       fb.exec.PushFrameRegion(addr.fsn, ref frame, frame_idx, args);
     }
     else
