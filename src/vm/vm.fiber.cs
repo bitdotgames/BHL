@@ -197,8 +197,7 @@ public partial class VM : INamedResolver
       if(IsStopped())
         return false;
 
-      //NOTE: try/catch commented for better debugging during heavy code changes
-      //try
+      try
       {
         exec.Execute();
 
@@ -206,19 +205,18 @@ public partial class VM : INamedResolver
         if(status != BHS.RUNNING)
           _AfterStop();
       }
-      //catch(Exception e)
-      //{
-      //  var trace = new List<VM.TraceItem>();
-      //  try
-      //  {
-      //    GetStackTrace(trace);
-      //  }
-      //  catch(Exception)
-      //  {
-      //  }
-
-      //  throw new Error(trace, e);
-      //}
+      catch(Exception e)
+      {
+        var trace = new List<VM.TraceItem>();
+        try
+        {
+          GetStackTrace(trace);
+        }
+        catch(Exception)
+        {
+        }
+        throw new Error(trace, e);
+      }
 
       return !IsStopped();
     }
@@ -234,25 +232,24 @@ public partial class VM : INamedResolver
     {
       if(!IsStopped())
       {
-        //TODO: uncomment once all tests pass
-        //try
+        try
         {
           _AfterStop();
           exec.stack.ClearAndRelease();
         }
-        //catch(Exception e)
-        //{
-        //  var trace = new List<VM.TraceItem>();
-        //  try
-        //  {
-        //    GetStackTrace(trace);
-        //  }
-        //  catch(Exception)
-        //  {
-        //  }
+        catch(Exception e)
+        {
+          var trace = new List<VM.TraceItem>();
+          try
+          {
+            GetStackTrace(trace);
+          }
+          catch(Exception)
+          {
+          }
 
-        //  throw new Error(trace, e);
-        //}
+          throw new Error(trace, e);
+        }
       }
 
       if(with_children)
