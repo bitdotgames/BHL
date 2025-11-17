@@ -1823,6 +1823,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
           {
             PopAST();
             PopAST();
+            PopCallByRef();
             return;
           }
 
@@ -1835,6 +1836,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
               AddError(na.ca, "expression is not passable by 'ref'");
               PopAST();
               PopAST();
+              PopCallByRef();
               return;
             }
           }
@@ -1940,6 +1942,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       var ca = cargs.callArgsList().callArg()[i];
       var ca_name = ca.NAME();
+      bool is_ref = ca.REF() != null;
 
       if(ca_name != null)
       {
@@ -1949,11 +1952,13 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
 
       var arg_type = arg_type_ref.Get();
+      PushCallByRef(is_ref);
       PushJsonType(arg_type);
       PushAST(new AST_Interim());
       bool ok = TryVisit(ca);
       PopAddOptimizeAST();
       PopJsonType();
+      PopCallByRef();
 
       if(!ok ||
          !types.CheckAssign(arg_type is RefType rt ? rt.subj.Get() : arg_type, Annotate(ca), errors))

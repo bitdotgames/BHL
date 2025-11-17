@@ -319,7 +319,7 @@ public class TestFuncPtrs : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(bhl, ts_fn);
+    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
     Assert.True(Execute(vm, "test", 3).Stack.Pop().bval);
     Assert.Equal("HEY", log.ToString());
     CommonChecks(vm);
