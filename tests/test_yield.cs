@@ -367,7 +367,7 @@ public class TestYield : BHL_TestBase
     var fb = vm.Start("test");
     for(int i = 0; i < 99; i++)
       Assert.True(vm.Tick());
-    vm.Stop(fb);
+    fb.Stop();
     CommonChecks(vm);
   }
 
@@ -639,7 +639,7 @@ public class TestYield : BHL_TestBase
     for(int i = 0; i < 5; ++i)
       Assert.True(vm.Tick());
     //...will be running forever, well, we assume that :)
-    vm.Stop(fb);
+    fb.Stop();
     CommonChecks(vm);
   }
 

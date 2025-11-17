@@ -157,7 +157,7 @@ public partial class VM
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Reset()
+    internal void ExitFrames()
     {
       if(frames_count > 0)
       {
@@ -391,7 +391,7 @@ public partial class VM
       ip = fs._ip_addr
     };
     var fb = Start(addr, new FuncArgsInfo(0), default, FiberOptions.Detach);
-    if(Tick(fb))
+    if(fb.Tick())
       throw new Exception("Module '" + module.name + "' init function is still running");
   }
 

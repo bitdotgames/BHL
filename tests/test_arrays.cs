@@ -520,7 +520,7 @@ public class TestArrays : BHL_TestBase
     for(int i = 0; i < 3; ++i)
       vm.Tick();
 
-    vm.Stop(fb);
+    fb.Stop();
 
     Assert.Equal(2, vm.vlsts_pool.MissCount);
     CommonChecks(vm);

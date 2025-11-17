@@ -224,7 +224,7 @@ public partial class VM : INamedResolver
   {
     for(int i = fibers.Count; i-- > 0;)
     {
-      Stop(fibers[i]);
+      fibers[i].Stop();
       fibers.RemoveAt(i);
     }
   }
@@ -248,7 +248,11 @@ public partial class VM : INamedResolver
   public bool Tick(List<Fiber> fibers)
   {
     for(int i = 0; i < fibers.Count; ++i)
-      Tick(fibers[i]);
+    {
+      var fiber = fibers[i];
+      last_fiber = fiber;
+      fiber.Tick();
+    }
 
     for(int i = fibers.Count; i-- > 0;)
     {
@@ -257,55 +261,6 @@ public partial class VM : INamedResolver
     }
 
     return fibers.Count != 0;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void _Tick(Fiber fb)
-  {
-    //TODO: store reference to fiber as FiberRef?
-    last_fiber = fb;
-
-    //NOTE: stale pointer guard against the fact fiber becomes stopped
-    //      during execution for some reason (when stopped it's released)
-    fb.Retain();
-
-    fb.exec.Execute();
-
-    fb.Release();
-  }
-
-  public bool Tick(Fiber fb)
-  {
-    if(fb.IsStopped())
-      return false;
-
-    //NOTE: try/catch commented for better debugging during heavy code changes
-    //try
-    {
-      _Tick(fb);
-
-      //Checking if there's no running couroutine
-      if(fb.status != BHS.RUNNING)
-      {
-        fb.AfterTickOrStop();
-        fb.Release();
-      }
-    }
-    //catch(Exception e)
-    //{
-    //  var trace = new List<VM.TraceItem>();
-    //  try
-    //  {
-    //    fb.GetStackTrace(trace);
-    //  }
-    //  catch(Exception)
-    //  {
-    //  }
-
-    //  throw new Error(trace, e);
-    //}
-
-    return !fb.IsStopped();
   }
 }
 

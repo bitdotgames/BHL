@@ -953,7 +953,7 @@ public class TestDefer : BHL_TestBase
     //NOTE: on the first tick we yield() is executed and
     //      defer block is not run
     Assert.Equal("HEY;HEY;HEY;HEY;", log.ToString());
-    vm.Stop(fb);
+    fb.Stop();
     CommonChecks(vm);
   }
 
@@ -1449,7 +1449,7 @@ public class TestDefer : BHL_TestBase
     Assert.Equal("1", log.ToString());
     Assert.True(vm.Tick());
     Assert.Equal("1342", log.ToString());
-    vm.Stop(fb);
+    fb.Stop();
     Assert.Equal("134250", log.ToString());
     Assert.False(vm.Tick());
     CommonChecks(vm);
@@ -1504,7 +1504,7 @@ public class TestDefer : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.Equal("", log.ToString());
-    vm.Stop(fb);
+    fb.Stop();
     Assert.Equal("12", log.ToString());
     Assert.False(vm.Tick());
     CommonChecks(vm);

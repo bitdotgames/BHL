@@ -4390,7 +4390,7 @@ public class TestVM : BHL_TestBase
 
     Assert.Equal("1;1;1;1;1;" + "1;1;1;1;1;", str);
 
-    vm.Stop(fb);
+    fb.Stop();
 
     CommonChecks(vm);
   }
@@ -4460,7 +4460,7 @@ public class TestVM : BHL_TestBase
       vm.Tick();
     Assert.Equal(0, fb.exec.stack.sp);
 
-    vm.Stop(fb);
+    fb.Stop();
     CommonChecks(vm);
   }
 
@@ -6416,11 +6416,12 @@ public class TestVM : BHL_TestBase
     Assert.Equal(BHS.NONE, fb.status);
     vm.Detach(fb);
     Assert.Equal(BHS.NONE, fb.status);
-    Assert.False(vm.Tick());
+    Assert.False(fb.Tick());
     Assert.Equal(BHS.NONE, fb.status);
-    Assert.True(vm.Tick(fb));
-    Assert.False(vm.Tick(fb));
+    Assert.True(fb.Tick());
+    Assert.False(fb.Tick());
     Assert.Equal(123, fb.Stack.Pop().num);
+    CommonChecks(fb);
     CommonChecks(vm);
   }
 
@@ -6879,7 +6880,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
-    vm.Stop(fb);
+    fb.Stop();
     Assert.Equal(0, fb.exec.stack.sp);
     CommonChecks(vm);
   }
@@ -7011,7 +7012,7 @@ public class TestVM : BHL_TestBase
     var vm = MakeVM(bhl);
     var fb = vm.Start("test");
     Assert.True(vm.Tick());
-    vm.Stop(fb);
+    fb.Stop();
     CommonChecks(vm);
   }
 
@@ -9048,7 +9049,7 @@ public class TestVM : BHL_TestBase
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
     Assert.True(vm.Tick());
-    vm.Stop(fb);
+    fb.Stop();
 
     Assert.Equal("A1A1", log.ToString());
     CommonChecks(vm);

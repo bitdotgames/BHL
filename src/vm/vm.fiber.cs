@@ -111,40 +111,32 @@ public partial class VM : INamedResolver
 
       fb.refs = -1;
 
-      fb.exec.Reset();
+      fb.exec.ExitFrames();
       fb.vm.fibers_pool.stack.Push(fb);
     }
 
     //NOTE: use New() instead
-    internal Fiber(VM vm)
+    Fiber(VM vm)
     {
       this.vm = vm;
       exec.vm = vm;
       exec.fiber = this;
     }
 
-    //TODO: Probably not the best name. This routine is called both in case
-    //      of normal completion and in case of interruption.
-    internal void AfterTickOrStop()
+    void _Stop()
     {
       if(IsStopped())
         return;
       stop_guard = true;
 
-      exec.Reset();
+      exec.ExitFrames();
 
       //NOTE: we assign Fiber ip to a special value which is just one value after STOP_IP
       //      this way Fiber breaks its current Frame execution loop.
       exec.ip = STOP_IP + 1;
 
       if(status == BHS.FAILURE)
-        CleanStack();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void CleanStack()
-    {
-      exec.stack.ClearAndRelease();
+        exec.stack.ClearAndRelease();
     }
 
     internal void AddChild(Fiber fb)
@@ -201,7 +193,43 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Tick()
     {
-      return vm.Tick(this);
+      if(IsStopped())
+        return false;
+
+      //NOTE: try/catch commented for better debugging during heavy code changes
+      //try
+      {
+        //NOTE: stale pointer guard against the fact fiber becomes stopped
+        //      during execution for some reason (when it's stopped and it's released)
+        Retain();
+        exec.Execute();
+        Release();
+
+        //Checking if there's no running coroutine
+        if(status != BHS.RUNNING)
+        {
+          _Stop();
+          //TODO: Do we really need this semantics?
+          //      maybe it's a caller's responsibility?
+          //      What about children?
+          Release();
+        }
+      }
+      //catch(Exception e)
+      //{
+      //  var trace = new List<VM.TraceItem>();
+      //  try
+      //  {
+      //    GetStackTrace(trace);
+      //  }
+      //  catch(Exception)
+      //  {
+      //  }
+
+      //  throw new Error(trace, e);
+      //}
+
+      return !IsStopped();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -211,15 +239,45 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Stop(bool with_children = false)
+    public void Stop(bool with_children = false, bool release = true)
     {
-      vm.Stop(this, with_children);
+      if(!IsStopped())
+      {
+        //TODO: uncomment once all tests pass
+        //try
+        {
+          _Stop();
+          exec.stack.ClearAndRelease();
+          if(release)
+            Release();
+        }
+        //catch(Exception e)
+        //{
+        //  var trace = new List<VM.TraceItem>();
+        //  try
+        //  {
+        //    GetStackTrace(trace);
+        //  }
+        //  catch(Exception)
+        //  {
+        //  }
+
+        //  throw new Error(trace, e);
+        //}
+      }
+
+      if(with_children)
+        StopChildren(release: release);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void StopChildren()
+    public void StopChildren(bool release = true)
     {
-      vm.StopChildren(this);
+      foreach(var child_ref in children)
+      {
+        var child = child_ref.Get();
+        child?.Stop(with_children: true, release: release);
+      }
     }
   }
 
@@ -313,46 +371,6 @@ public partial class VM : INamedResolver
     parent?.AddChild(fb);
   }
 
-  public void Stop(Fiber fb, bool with_children = false)
-  {
-    if(!fb.IsStopped())
-    {
-      //TODO: uncomment once all tests pass
-      //try
-      {
-        fb.AfterTickOrStop();
-        fb.CleanStack();
-        fb.Release();
-      }
-      //catch(Exception e)
-      //{
-      //  var trace = new List<VM.TraceItem>();
-      //  try
-      //  {
-      //    fb.GetStackTrace(trace);
-      //  }
-      //  catch(Exception)
-      //  {
-      //  }
-
-      //  throw new Error(trace, e);
-      //}
-    }
-
-    if(with_children)
-      StopChildren(fb);
-  }
-
-  public void StopChildren(Fiber fb)
-  {
-    foreach(var child_ref in fb.children)
-    {
-      var child = child_ref.Get();
-      if(child != null)
-        Stop(child, true);
-    }
-  }
-
   StackArray<ExecState> script_executors = new (
     new ExecState[] { new (), new () }
     );
@@ -390,8 +408,8 @@ public partial class VM : INamedResolver
     exec.vm = this;
 
     var stack = exec.stack;
-    //let's clean the stack from previous non popped results
 
+    //let's clean the stack from previous non popped results
     stack.ClearAndRelease();
 
     //NOTE: we push arguments using their 'natural' order since
