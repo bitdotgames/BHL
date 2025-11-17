@@ -781,6 +781,7 @@ public class BHL_TestBase
     for(int i = 0; i < fb.exec.stack.vals.Length; ++i)
     {
       var val = fb.exec.stack.vals[i];
+      //TODO: do we really need this check?
       if(!(val.obj is string))
         Assert.Null(val.obj);
       Assert.Null(val._refc);

@@ -53,10 +53,11 @@ public static class std
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           ref var type = ref exec.stack.PopFast();
-          type._refc?.Release();
           ref var o = ref exec.stack.Peek();
           var refc = o._refc;
           o = Types.Is(o, (IType)type.obj);
+          //let's be nice and clean the stack value
+          type.obj = null;
           refc?.Release();
           return null;
         },
