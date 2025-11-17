@@ -292,7 +292,7 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public override void MapSet(Val map, Val key, Val val)
   {
     var dict = AsMap(map);
-    val._refc?.Retain();
+    //NOTE: ReplaceAt manages ownership
     dict.ReplaceAt(key, val);
   }
 

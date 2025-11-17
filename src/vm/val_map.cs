@@ -55,8 +55,9 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     var en = map.GetEnumerator();
     while(en.MoveNext())
     {
-      en.Current.Key.ReleaseData();
-      en.Current.Value.ReleaseData();
+      var current = en.Current;
+      current.Key.ReleaseData();
+      current.Value.ReleaseData();
     }
 
     map.Clear();
