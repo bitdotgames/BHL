@@ -522,6 +522,8 @@ public class TestArrays : BHL_TestBase
 
     fb.Stop();
 
+    vm.Tick();
+
     Assert.Equal(2, vm.vlsts_pool.MissCount);
     CommonChecks(vm);
   }

@@ -954,6 +954,7 @@ public class TestDefer : BHL_TestBase
     //      defer block is not run
     Assert.Equal("HEY;HEY;HEY;HEY;", log.ToString());
     fb.Stop();
+    vm.Tick();
     CommonChecks(vm);
   }
 
