@@ -214,8 +214,7 @@ public class TestStackTrace : BHL_TestBase
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -390,8 +389,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -471,8 +469,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -949,8 +946,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1255,8 +1251,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1351,8 +1346,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //frame.fb.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);

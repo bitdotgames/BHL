@@ -379,9 +379,8 @@ public class BHL_TestBase
       cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
         delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
         {
-          throw new NotImplementedException();
           var c = (MasterStruct)ctx.obj;
-          //IntStruct.Encode(v, c.child_struct2, fld.type.Get());
+          IntStruct.Encode(ref v, c.child_struct2, fld.type.Get());
         },
         delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
