@@ -151,7 +151,7 @@ public class TestVariadic : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes:true);
+    var vm = MakeVM(bhl);
     Assert.Equal(30 + 1 + 2 + 3, Execute(vm, "test1").Stack.Pop().num);
     Assert.Equal(10, Execute(vm, "test2").Stack.Pop().num);
     CommonChecks(vm);
