@@ -1362,13 +1362,16 @@ public partial class VM
     if(args_num > 0)
     {
       //moving args up the stack, replacing ptr
-      Array.Copy(
-        exec.stack.vals,
-        ptr_idx + 1,
-        exec.stack.vals,
-        ptr_idx,
-        exec.stack.sp - ptr_idx - 1
-      );
+      for(int i = 0; i < exec.stack.sp - ptr_idx - 1; ++i)
+        exec.stack.vals[ptr_idx + i] = exec.stack.vals[ptr_idx + 1 + i];
+      //alternative version
+      //Array.Copy(
+      //  exec.stack.vals,
+      //  ptr_idx + 1,
+      //  exec.stack.vals,
+      //  ptr_idx,
+      //  exec.stack.sp - ptr_idx - 1
+      //);
       ref var tail = ref exec.stack.vals[--exec.stack.sp];
       tail.obj = null;
       tail._refc = null;
@@ -1494,13 +1497,17 @@ public partial class VM
     //where it will be set below
     if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
     {
+      int args_num = frame.args_info.CountArgs();
       int pos_idx = frame.locals_offset + arg_idx;
 
-      for(int i = 0; i < exec.stack.sp - pos_idx - 1; ++i)
+      //we need to move only passed arguments and move them in reverse order
+      //so that they don't overlap during 'movement'
+      for(int i = args_num - pos_idx; i-- > 0;)
       {
         ref var tmp = ref exec.stack.vals[pos_idx + i];
         exec.stack.vals[pos_idx + i + 1] = tmp;
-        //need to nullify the refcounted so it's not invoked by mistake
+        //need to nullify the refcounted so it's not invoked somehow
+        tmp.obj = null;
         tmp._refc = null;
       }
 
@@ -1510,7 +1517,7 @@ public partial class VM
       //  pos_idx,
       //  exec.stack.vals,
       //  pos_idx + 1,
-      //  exec.stack.sp - pos_idx - 1
+      //  args_num - pos_idx
       //);
     }
     //...otherwise we need to jump out of default argument calculation code
