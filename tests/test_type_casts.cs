@@ -1432,7 +1432,7 @@ public class TestTypeCasts : BHL_TestBase
       ";
 
       var vm = MakeVM(bhl);
-      Assert.Equal(1, Execute(vm, "test").Stack.Pop().num);
+      Assert.True(Execute(vm, "test").Stack.Pop().bval);
       CommonChecks(vm);
     }
   }

@@ -763,14 +763,6 @@ public partial class VM
 
     if(Types.Is(val, as_type))
     {
-      //NOTE: previous implementation
-      //var new_val = new Val();
-      //new_val.ValueCopyFrom(val);
-      //if(force_type)
-      //  new_val.type = as_type;
-      //new_val._refc?.Retain();
-      //exec.stack.vals[exec.stack.sp - 1] = new_val;
-
       if(force_type)
         val.type = as_type;
     }

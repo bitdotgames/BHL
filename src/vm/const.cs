@@ -59,7 +59,7 @@ public class Const : IEquatable<Const>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void FillVal(ref Val v)
   {
-    if(type == ConstType.INT || type == ConstType.FLT)
+    if(type == ConstType.INT)
     {
       v = new Val { type = Types.Int, num = num };
     }
