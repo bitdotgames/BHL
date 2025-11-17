@@ -513,7 +513,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeEqualLite(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
 
@@ -538,7 +538,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeEqualEx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     var stack = exec.stack;
 
@@ -546,8 +546,15 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-    r_operand._refc?.Release();
+    if(r_operand._refc != null)
+    {
+      r_operand._refc.Release();
+      r_operand._refc = null;
+    }
+    r_operand.obj = null;
+
     l_operand._refc?.Release();
+    //TODO: do we really need to replace the whole struct? we can set only the required field
     l_operand = res;
   }
 
@@ -1653,8 +1660,8 @@ public partial class VM
     op_handlers[(int)Opcodes.Sub] = OpcodeSub;
     op_handlers[(int)Opcodes.Div] = OpcodeDiv;
     op_handlers[(int)Opcodes.Mul] = OpcodeMul;
-    op_handlers[(int)Opcodes.EqualLite] = OpcodeEqual;
-    op_handlers[(int)Opcodes.Equal] = OpcodeEqualEx;
+    op_handlers[(int)Opcodes.EqualLite] = OpcodeEqualLite;
+    op_handlers[(int)Opcodes.Equal] = OpcodeEqual;
     op_handlers[(int)Opcodes.LT] = OpcodeLT;
     op_handlers[(int)Opcodes.LTE] = OpcodeLTE;
     op_handlers[(int)Opcodes.GT] = OpcodeGT;

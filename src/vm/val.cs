@@ -50,6 +50,19 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator Val(float v)
+  {
+    return NewFlt(v);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator float(Val v)
+  {
+    //TODO: are we sure it's allowed?
+    return (float)v.num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator int(Val v)
   {
     return (int)v.num;
