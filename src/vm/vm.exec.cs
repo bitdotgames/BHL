@@ -384,15 +384,7 @@ public partial class VM
       return;
 
     var fs = (FuncSymbolScript)module.ns.members[module.compiled.init_func_idx];
-    var addr = new FuncAddr()
-    {
-      module = module,
-      fs = fs,
-      ip = fs._ip_addr
-    };
-    var fb = Start(addr, new FuncArgsInfo(0), default, FiberOptions.Detach);
-    if(fb.Tick())
-      throw new Exception("Module '" + module.name + "' init function is still running");
+    Execute(fs);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -123,7 +123,7 @@ public partial class VM : INamedResolver
       exec.fiber = this;
     }
 
-    void _Stop()
+    void _AfterStop()
     {
       if(IsStopped())
         return;
@@ -208,7 +208,7 @@ public partial class VM : INamedResolver
         //Checking if there's no running coroutine
         if(status != BHS.RUNNING)
         {
-          _Stop();
+          _AfterStop();
           //TODO: Do we really need this semantics?
           //      maybe it's a caller's responsibility?
           //      What about children?
@@ -246,7 +246,7 @@ public partial class VM : INamedResolver
         //TODO: uncomment once all tests pass
         //try
         {
-          _Stop();
+          _AfterStop();
           exec.stack.ClearAndRelease();
           if(release)
             Release();
@@ -409,7 +409,8 @@ public partial class VM : INamedResolver
 
     var stack = exec.stack;
 
-    //let's clean the stack from previous non popped results
+    //NOTE: let's clean the stack from previous any non popped results
+    //      (we keep it around just in case someone forgot to pop it after successful execution)
     stack.ClearAndRelease();
 
     //NOTE: we push arguments using their 'natural' order since
