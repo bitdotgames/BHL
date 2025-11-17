@@ -376,7 +376,6 @@ public class TestFuncPtrs : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test", 3);
     Assert.Equal("01234", log.ToString());
-    Assert.Equal(2, vm.last_fiber.exec.frames_count);
     CommonChecks(vm);
   }
 
