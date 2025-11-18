@@ -90,6 +90,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
   public override void Tick(VM.ExecState ext_exec)
   {
+    exec.parent = ext_exec;
     exec.Execute();
 
     ext_exec.status = exec.status;

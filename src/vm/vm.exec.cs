@@ -50,6 +50,8 @@ public partial class VM
     public Frame[] frames;
     public int frames_count = 0;
 
+    internal ExecState parent;
+
     public ExecState(
       int regions_capacity = 64,
       int frames_capacity = 256,
@@ -83,18 +85,19 @@ public partial class VM
       return ref region;
     }
 
-    void GetCalls(List<VM.Frame> calls)
+    void GetCalls(List<VM.Frame> calls, int offset = 0)
     {
-      for(int i = 0; i < frames_count; ++i)
+      if(parent != null)
+        parent.GetCalls(calls, 1);
+
+      for(int i = 0; i < frames_count - offset; ++i)
         calls.Add(frames[i]);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
       var calls = new List<VM.Frame>();
-      int coroutine_ip = -1;
       GetCalls(calls);
-      TryGetTraceInfo(coroutine, ref coroutine_ip, calls);
 
       for(int i = 0; i < calls.Count; ++i)
       {
@@ -104,11 +107,10 @@ public partial class VM
 
         //NOTE: information about frame ip is taken from the 'next' frame, however
         //      for the last frame we have a special case. In this case there's no
-        //      'next' frame and we should consider taking ip from Fiber or an active
-        //      coroutine
+        //      'next' frame and we should consider using current ip
         if(i == calls.Count - 1)
         {
-          item.ip = coroutine_ip == -1 ? this.ip : coroutine_ip;
+          item.ip = ip;
         }
         else
         {
@@ -137,23 +139,6 @@ public partial class VM
 
         info.Insert(0, item);
       }
-    }
-
-    static bool TryGetTraceInfo(ICoroutine i, ref int ip, List<VM.Frame> calls)
-    {
-      if(i is ParalBranchBlock bi)
-      {
-        bi.exec.GetCalls(calls);
-        if(!TryGetTraceInfo(bi.exec.coroutine, ref ip, calls))
-          ip = bi.exec.ip;
-        return true;
-      }
-      else if(i is ParalBlock pi && pi.i < pi.branches.Count)
-        return TryGetTraceInfo(pi.branches[pi.i], ref ip, calls);
-      else if(i is ParalAllBlock pai && pai.i < pai.branches.Count)
-        return TryGetTraceInfo(pai.branches[pai.i], ref ip, calls);
-      else
-        return false;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
