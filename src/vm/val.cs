@@ -109,13 +109,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Reset()
   {
-    type = null;
-    num = 0;
-    _num2 = 0;
-    _num3 = 0;
-    _num4 = 0;
-    obj = null;
-    _refc = null;
+    this = default;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
