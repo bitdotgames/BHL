@@ -45,7 +45,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
   {
     _logger.LogInformation("Handle Change Document");
 
-    await _workspace.SetupProjectIfEmptyAsync(notification.TextDocument.Uri.Path, token);
+    await _workspace.SetupProjectIfEmptyAsync(notification.TextDocument.Uri.PathFixed(), token);
 
     foreach(var change in notification.ContentChanges)
     {
@@ -67,7 +67,7 @@ internal class TextDocumentHandler : TextDocumentSyncHandlerBase
   {
     _logger.LogInformation("Handle Open Document");
 
-    await _workspace.SetupProjectIfEmptyAsync(notification.TextDocument.Uri.Path, token);
+    await _workspace.SetupProjectIfEmptyAsync(notification.TextDocument.Uri.PathFixed(), token);
 
     _workspace.OpenDocument(
       notification.TextDocument.Uri,

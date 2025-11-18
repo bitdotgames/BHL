@@ -33,7 +33,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
 
   public override async Task<LocationContainer> Handle(ReferenceParams request, CancellationToken cancellationToken)
   {
-    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.Path, cancellationToken);
+    await _workspace.SetupProjectIfEmptyAsync(request.TextDocument.Uri.PathFixed(), cancellationToken);
 
     var document = _workspace.GetOrLoadDocument(request.TextDocument.Uri);
 
@@ -53,7 +53,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
             {
               var loc = new Location
               {
-                Uri = DocumentUri.Parse(kv.Key),
+                Uri = DocumentUri.File(kv.Key),
                 Range = anKv.Value.range.FromAntlr2Lsp().ToRange()
               };
               refs.Add(loc);
@@ -76,7 +76,7 @@ public class TextDocumentReferencesHandler : ReferencesHandlerBase
         {
           refs.Add(new Location
           {
-            Uri = DocumentUri.Parse(symb.origin.source_file),
+            Uri = DocumentUri.File(symb.origin.source_file),
             Range = symb.origin.source_range.FromAntlr2Lsp().ToRange()
           });
         }

@@ -61,6 +61,7 @@ public class CompiledModule
   //normalized imported module names
   public List<string> imports;
   public int total_gvars_num;
+
   public byte[] initcode;
   public byte[] bytecode;
   public unsafe byte* bytecode_ptr;

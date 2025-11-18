@@ -1,6 +1,6 @@
 # **B**ehaviour **H**ighlevel **L**anguage
 
-![CI](https://github.com/bitdotgames/bhl/workflows/CI/badge.svg?branch=master&event=push)
+![CI](https://github.com/bitdotgames/bhl/actions/workflows/main.yml/badge.svg)
 
 > **BHL** is a strictly typed programming language specifically tailored for gameplay logic scripting. It combines pseudo parallel execution primitives with familiar imperative coding style.
 
@@ -299,13 +299,17 @@ You can run unit tests by executing the following command:
 
 # Roadmap
 
-## Version 3.0
-1. Generics support
-1. More compact byte code
-1. More optimal runtime memory storage layout
-1. Weak references semantics
-1. Improved debugger support
+## Version 4.0
 
+1. Generics support
+1. JIT support 
+1. Weak references semantics
+
+## Version 3.0
+
+1. More optimal runtime memory storage layout
+1. DAP support
+1. LSP support
 
 ## Version 2.0
 
@@ -324,7 +328,6 @@ You can run unit tests by executing the following command:
 1. ~~Maps support~~
 1. ~~Built-in strings basic routines~~
 1. ~~Implicit variable types using 'var'~~ 
-1. LSP integration
 1. ~~Basic debugger support~~
 
 ## Version 1.0

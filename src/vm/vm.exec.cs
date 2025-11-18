@@ -352,6 +352,7 @@ public partial class VM
   {
     if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
+    var bytecode = module.compiled.initcode_ptr;
 
     init_exec.vm = this;
     init_exec.status = BHS.SUCCESS;
@@ -1651,7 +1652,7 @@ public partial class VM
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeNew(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-  {
+ {
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var type = frame.type_refs[type_idx];
 
@@ -1664,7 +1665,7 @@ public partial class VM
     cls.creator(exec, ref val, cls);
   }
 
-  unsafe static void InitOpcodeHandlers()
+  static unsafe void InitOpcodeHandlers()
   {
     //binary ops
     op_handlers[(int)Opcodes.Add] = OpcodeAdd;
