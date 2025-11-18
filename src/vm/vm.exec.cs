@@ -909,20 +909,22 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeGetVarNum(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeGetVarScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref Val new_val = ref exec.stack.Push();
-    new_val.num = frame.locals.vals[frame.locals_offset + local_idx].num;
+    ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
+    new_val.type = source.type;
+    new_val.num = source.num;
+    //TODO: do we need this?
+    //new_val._refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-
-    //TODO: we copy the whole value (we can have specialized opcodes for numbers)
 
     exec.stack.Pop(out var new_val);
     ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -931,12 +933,17 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeSetVarNum(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeSetVarScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
 
     ref var new_val = ref exec.stack.vals[--exec.stack.sp];
-    frame.locals.vals[frame.locals_offset + local_idx].num = new_val.num;
+    ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
+    dest.type = new_val.type;
+    dest.num = new_val.num;
+    //TODO: do we need this?
+    //dest._refc?.Release();
+    //dest._refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1712,6 +1719,8 @@ public partial class VM
 
     op_handlers[(int)Opcodes.GetVar] = OpcodeGetVar;
     op_handlers[(int)Opcodes.SetVar] = OpcodeSetVar;
+    op_handlers[(int)Opcodes.GetVarScalar] = OpcodeGetVarScalar;
+    op_handlers[(int)Opcodes.SetVarScalar] = OpcodeSetVarScalar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
     op_handlers[(int)Opcodes.DeclRef] = OpcodeDeclRef;

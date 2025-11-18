@@ -358,7 +358,7 @@ public class AST_Call  : AST_Tree
   public EnumCall type = new EnumCall();
   public int line_num;
   public Symbol symbol;
-  public bool pass_as_ref;
+  public bool pass_as_ref; //e.g. foo(ref a)
   public ITerminalNode node;
 
   public int symb_idx

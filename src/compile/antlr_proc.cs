@@ -3092,7 +3092,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     //NOTE: let's use a more comprehensive comparison for non trivial types
     if(op_type == EnumBinaryOp.EQ &&
-       (!Types.IsTrivialType(ann_lhs.eval_type) || !Types.IsTrivialType(ann_rhs.eval_type))
+       (!Types.IsScalarOrString(ann_lhs.eval_type) || !Types.IsScalarOrString(ann_rhs.eval_type))
        )
     {
       op_type = EnumBinaryOp.EQEX;

@@ -11,11 +11,13 @@ public enum Opcodes
 
   SetVar                = 6,
   GetVar                = 7,
-  DeclVar               = 8,
-  SetGVar               = 10,
-  GetGVar               = 11,
+  GetVarScalar          = 8,
+  SetVarScalar          = 9,
+  DeclVar               = 10,
+  SetGVar               = 11,
+  GetGVar               = 12,
 
-  Frame                 = 12,
+  Frame                 = 13,
   Return                = 14,
   Jump                  = 16,
   JumpZ                 = 17,
