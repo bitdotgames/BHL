@@ -352,7 +352,6 @@ public partial class VM
   {
     if((module.compiled.initcode?.Length ?? 0) == 0)
       return;
-    var bytecode = module.compiled.initcode_ptr;
 
     init_exec.vm = this;
     init_exec.status = BHS.SUCCESS;

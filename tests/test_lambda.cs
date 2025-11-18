@@ -43,7 +43,7 @@ public class TestLambda : BHL_TestBase
     }
     ";
 
-    var c = Compile(bhl, show_ast:true);
+    var c = Compile(bhl);
 
     var expected =
         new ModuleCompiler()
@@ -1242,7 +1242,7 @@ public class TestLambda : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     Assert.Equal("1020HEY!12HEY!", log.ToString());
     CommonChecks(vm);
@@ -1271,7 +1271,7 @@ public class TestLambda : BHL_TestBase
     var log = new StringBuilder();
     var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
 
-    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     Assert.Equal("1;2", log.ToString());
     CommonChecks(vm);

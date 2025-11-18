@@ -1364,7 +1364,7 @@ public class TestClass : BHL_TestBase
     }
     ";
 
-    var vm = MakeVM(bhl, show_bytes: true);
+    var vm = MakeVM(bhl);
     Assert.Equal(-1, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
@@ -4735,8 +4735,7 @@ public class TestClass : BHL_TestBase
         {"bhl0.bhl", bhl0},
         {"bhl1.bhl", bhl1},
         {"bhl2.bhl", bhl2},
-      },
-      show_bytes: true
+      }
     );
 
     vm.LoadModule("bhl2");
