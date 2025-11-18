@@ -457,8 +457,7 @@ public class TestRefs : BHL_TestBase
     );
   }
 
-  //TODO:?
-  //[Fact]
+  [Fact(Skip = "TODO: controversial and quite difficult to implement")]
   public void TestPassByRefTmpClassField()
   {
     string bhl = @"
@@ -487,8 +486,7 @@ public class TestRefs : BHL_TestBase
   }
 
 
-  //controversial and quite difficult to implement
-  //[Fact]
+  [Fact(Skip = "TODO: controversial and quite difficult to implement")]
   public void TestPassByRefClassFieldNested()
   {
     string bhl = @"
@@ -585,8 +583,7 @@ public class TestRefs : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO:?
-  //[Fact]
+  [Fact(Skip = "TODO: controversial and quite difficult to implement")]
   public void TestPassByRefClassFieldFuncPtr()
   {
     string bhl = @"
