@@ -85,16 +85,35 @@ public partial class VM
       return ref region;
     }
 
-    void GetCalls(List<VM.Frame> calls, int offset = 0)
+    void GetCalls(List<VM.Frame> calls)
     {
       if(parent != null)
-        parent.GetCalls(calls, 1);
+        parent.GetCalls(calls);
 
-      for(int i = 0; i < frames_count - offset; ++i)
+      for(int i = (parent == null ? 0 : 1); i < frames_count; ++i)
         calls.Add(frames[i]);
     }
 
+    ExecState GetDeepestExecState(ICoroutine coro)
+    {
+      if(coro is ParalBranchBlock bi)
+        return bi.exec.GetDeepestExecState(bi.exec.coroutine);
+      else if(coro is ParalBlock pi && pi.i < pi.branches.Count)
+        return GetDeepestExecState(pi.branches[pi.i]);
+      else if(coro is ParalAllBlock pai && pai.i < pai.branches.Count)
+        return GetDeepestExecState(pai.branches[pai.i]);
+      else
+        return this;
+    }
+
     public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      var exec = GetDeepestExecState(coroutine);
+      exec.GetStackTraceUp(info);
+    }
+
+    //NOTE: getting stack trace from this state up to all parents
+    public void GetStackTraceUp(List<VM.TraceItem> info)
     {
       var calls = new List<VM.Frame>();
       GetCalls(calls);

@@ -599,9 +599,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            //emulating null reference
-            exec.fiber = null;
-            int id = exec.fiber.Id;
+            throw new NullReferenceException();
             return null;
           });
         ts.ns.Define(fn);
@@ -1043,10 +1041,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //emulating null reference
-            //frame.fb = null;
-            //frame.fb.Id =
+            throw new NullReferenceException();
             return null;
           });
         ts.ns.Define(fn);
@@ -1150,11 +1145,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "throw", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            throw new NotImplementedException();
-            //emulating null reference
-            //frame.fb.GetStackTrace();
-            //frame.fb = null;
-            //frame.fb.Id
+            throw new NullReferenceException();
             return null;
           });
         ts.ns.Define(fn);
