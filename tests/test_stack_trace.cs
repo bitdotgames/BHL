@@ -693,7 +693,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.GetStackTrace(trace);
+            exec.fiber.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -778,7 +778,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.GetStackTrace(trace);
+            exec.fiber.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -944,7 +944,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.GetStackTrace(trace);
+            exec.fiber.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1242,7 +1242,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.GetStackTrace(trace);
+            exec.fiber.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1337,7 +1337,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.GetStackTrace(trace);
+            exec.fiber.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);

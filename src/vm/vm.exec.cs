@@ -50,8 +50,6 @@ public partial class VM
     public Frame[] frames;
     public int frames_count = 0;
 
-    internal ExecState parent;
-
     public ExecState(
       int regions_capacity = 64,
       int frames_capacity = 256,
@@ -85,38 +83,35 @@ public partial class VM
       return ref region;
     }
 
-    void GetCalls(List<VM.Frame> calls)
+    static void TraverseCallStack(
+      List<VM.Frame> calls,
+      ExecState exec,
+      ref ExecState deepest,
+      ICoroutine coro,
+      int frame_offset = 0
+      )
     {
-      if(parent != null)
-        parent.GetCalls(calls);
+      if(exec != null)
+      {
+        for(int i = frame_offset; i < exec.frames_count; ++i)
+          calls.Add(exec.frames[i]);
 
-      for(int i = (parent == null ? 0 : 1); i < frames_count; ++i)
-        calls.Add(frames[i]);
-    }
+        deepest = exec;
+      }
 
-    ExecState GetDeepestExecState(ICoroutine coro)
-    {
       if(coro is ParalBranchBlock bi)
-        return bi.exec.GetDeepestExecState(bi.exec.coroutine);
+        TraverseCallStack(calls, bi.exec, ref deepest, bi.exec.coroutine, 1);
       else if(coro is ParalBlock pi && pi.i < pi.branches.Count)
-        return GetDeepestExecState(pi.branches[pi.i]);
+        TraverseCallStack(calls, null, ref deepest, pi.branches[pi.i], frame_offset);
       else if(coro is ParalAllBlock pai && pai.i < pai.branches.Count)
-        return GetDeepestExecState(pai.branches[pai.i]);
-      else
-        return this;
+        TraverseCallStack(calls, null, ref deepest, pai.branches[pai.i], frame_offset);
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
     {
-      var exec = GetDeepestExecState(coroutine);
-      exec.GetStackTraceUp(info);
-    }
-
-    //NOTE: getting stack trace from this state up to all parents
-    public void GetStackTraceUp(List<VM.TraceItem> info)
-    {
       var calls = new List<VM.Frame>();
-      GetCalls(calls);
+      ExecState deepest = null;
+      TraverseCallStack(calls, this, ref deepest, coroutine);
 
       for(int i = 0; i < calls.Count; ++i)
       {
@@ -129,7 +124,7 @@ public partial class VM
         //      'next' frame and we should consider using current ip
         if(i == calls.Count - 1)
         {
-          item.ip = ip;
+          item.ip = deepest.ip;
         }
         else
         {
