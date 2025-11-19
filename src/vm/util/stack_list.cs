@@ -256,22 +256,6 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     throw new NotImplementedException();
   }
-
-  public Span<T> AsSpan()
-  {
-    if(fallback == null)
-    {
-      unsafe
-      {
-        fixed (T* p = &storage.v0)
-        {
-          return new Span<T>(p, Count);
-        }
-      }
-    }
-    else
-      return CollectionsMarshal.AsSpan(fallback).Slice(Count);
-  }
 }
 
 public struct Array16<T>

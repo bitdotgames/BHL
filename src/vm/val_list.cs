@@ -120,11 +120,17 @@ public class ValList : IList<Val>, IList, IRefcounted
   public void ReplaceAt(int i, Val v)
   {
     v._refc?.Retain();
-    var span = CollectionsMarshal.AsSpan(lst);
-    ref var curr = ref span[i];
-    var refc = curr._refc;
-    curr = v;
-    refc?.Release();
+
+    //TODO: for newer .Net
+    //var span = CollectionsMarshal.AsSpan(lst);
+    //ref var curr = ref span[i];
+    //var refc = curr._refc;
+    //curr = v;
+    //refc?.Release();
+
+    var curr = lst[i];
+    lst[i] = v;
+    curr._refc?.Release();
   }
 
   public int IndexOf(Val v)
