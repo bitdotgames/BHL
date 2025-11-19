@@ -525,13 +525,6 @@ public partial class VM
     if(exec.status == BHS.RUNNING)
       throw new Exception($"Not expected to be running: {fs}");
 
-    //TODO: enable if for extra validation?
-    //if(exec.frames_count > 0)
-    //  throw new Exception($"Not finished frames: {fs}");
-
-    //if(exec.regions_count > 0)
-    //  throw new Exception($"Not finished regions: {fs}");
-
     return stack;
   }
 }
