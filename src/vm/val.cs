@@ -75,6 +75,30 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator uint(Val v)
+  {
+    return (uint)v.num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator Val(uint v)
+  {
+    return NewInt(v);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator long(Val v)
+  {
+    return (long)v.num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator Val(long v)
+  {
+    return NewInt(v);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator string(Val v)
   {
     return v.str;
