@@ -5488,7 +5488,7 @@ public class ANTLR_Processor : bhlParserBaseVisitor<object>
       var arr_tmp_symb = curr_scope.ResolveWithFallback(arr_tmp_name) as VariableSymbol;
       if(arr_tmp_symb == null)
       {
-        arr_tmp_symb = new VariableSymbol(Annotate(exp), arr_tmp_name, curr_scope.R().T(iter_type));
+        arr_tmp_symb = new VariableSymbol(Annotate(exp), arr_tmp_name, curr_scope.R().TArr(iter_type));
         curr_scope.Define(arr_tmp_symb);
       }
 
