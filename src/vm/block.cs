@@ -107,7 +107,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   }
 
   //TODO: this Cleanup is executed by Paral/ParalAll
-  public override void Cleanup(VM.ExecState ext_exec)
+  public override void Destruct(VM.ExecState ext_exec)
   {
     if(exec.coroutine != null)
     {
@@ -205,7 +205,7 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
     }
   }
 
-  public override void Cleanup(VM.ExecState exec)
+  public override void Destruct(VM.ExecState exec)
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval
@@ -285,7 +285,7 @@ public class ParalAllBlock : Coroutine, IInspectableCoroutine
       exec.ip = max_ip + 1;
   }
 
-  public override void Cleanup(VM.ExecState exec)
+  public override void Destruct(VM.ExecState exec)
   {
     //NOTE: let's preserve the current branch index during cleanup routine,
     //      this is useful for stack trace retrieval

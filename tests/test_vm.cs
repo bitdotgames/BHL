@@ -7613,7 +7613,7 @@ public class TestVM : BHL_TestBase
       }
     }
 
-    public override void Cleanup(VM.ExecState exec)
+    public override void Destruct(VM.ExecState exec)
     {
       first_time = true;
     }
@@ -9189,7 +9189,7 @@ public class TestVM : BHL_TestBase
         exec.status = BHS.RUNNING;
     }
 
-    public override void Cleanup(VM.ExecState exec)
+    public override void Destruct(VM.ExecState exec)
     {
       c = 0;
       ticks_ttl = 0;

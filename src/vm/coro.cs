@@ -7,7 +7,7 @@ namespace bhl
 public interface ICoroutine
 {
   void Tick(VM.ExecState exec);
-  void Cleanup(VM.ExecState exec);
+  void Destruct(VM.ExecState exec);
 }
 
 public interface IInspectableCoroutine
@@ -23,7 +23,7 @@ public abstract class Coroutine : ICoroutine
 
   public abstract void Tick(VM.ExecState exec);
 
-  public virtual void Cleanup(VM.ExecState exec)
+  public virtual void Destruct(VM.ExecState exec)
   {}
 }
 
@@ -111,7 +111,7 @@ public class CoroutinePool
 
     var pool = coro.pool;
 
-    coro.Cleanup(exec);
+    coro.Destruct(exec);
 
     ++coro.vm.coro_pool.dels;
     pool.stack.Push(coro);
