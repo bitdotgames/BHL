@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -448,18 +449,12 @@ public partial class VM
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   internal static void InitDefaultVal(IType type, ref Val v)
   {
-    //TODO: make type responsible for default initialization
+    v = default;
+    v.type = type;
+    //TODO: make type responsible for default extra initialization
     //      of the value
-    if(type == Types.Int)
-      v.SetNum(0);
-    else if(type == Types.Float)
-      v.SetFlt(0);
-    else if(type == Types.String)
-      v.SetStr("");
-    else if(type == Types.Bool)
-      v.SetBool(false);
-    else
-      v.type = type;
+    if(type == Types.String)
+      v.obj = "";
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
