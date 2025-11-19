@@ -135,8 +135,35 @@ public class TestGlobals : BHL_TestBase
     ";
 
     var vm = MakeVM(bhl);
+    Assert.False(vm.TryFindVarAddr("bar", out var _));
     Assert.True(vm.TryFindVarAddr("foo", out var addr));
     Assert.Equal("Foo", addr.val_ref.val.type.GetName());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestFindAncChangeGlobalVariable()
+  {
+    string bhl = @"
+    class Foo {
+      float b
+    }
+
+    Foo foo = { b : 1 }
+
+    func float test()
+    {
+      return foo.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    Assert.True(vm.TryFindVarAddr("foo", out var addr));
+    Assert.Equal("Foo", addr.val_ref.val.type.GetName());
+    ((ValList)addr.val_ref.val.obj)[0] = 42;
+
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 
