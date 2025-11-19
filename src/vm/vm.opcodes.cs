@@ -70,7 +70,7 @@ public partial class VM
     op_handlers[(int)Opcodes.SetVarScalar] = OpcodeSetVarScalar;
     op_handlers[(int)Opcodes.DeclVar] = OpcodeDeclVar;
 
-    op_handlers[(int)Opcodes.DeclRef] = OpcodeDeclRef;
+    op_handlers[(int)Opcodes.MakeRef] = OpcodeMakeRef;
     op_handlers[(int)Opcodes.SetRef] = OpcodeSetRef;
     op_handlers[(int)Opcodes.GetRef] = OpcodeGetRef;
 
@@ -620,7 +620,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeDeclRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
+  unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
     byte* bytes)
   {
     int local_idx = Bytecode.Decode8(bytes, ref exec.ip);

@@ -25,7 +25,8 @@ public class TestGlobals : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseInit()
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
           .EmitChain(Opcodes.GetGVar, new int[] { 0 })
@@ -57,7 +58,7 @@ public class TestGlobals : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
@@ -91,7 +92,7 @@ public class TestGlobals : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
@@ -133,10 +134,10 @@ public class TestGlobals : BHL_TestBase
     Foo foo
     ";
 
-    //var vm = MakeVM(bhl, show_bytes: true);
-    //Assert.True(vm.TryFindVarAddr("foo", out var addr));
-    //Assert.Equal("Foo", addr.val_ref.val.type.GetName());
-    //CommonChecks(vm);
+    var vm = MakeVM(bhl);
+    Assert.True(vm.TryFindVarAddr("foo", out var addr));
+    Assert.Equal("Foo", addr.val_ref.val.type.GetName());
+    CommonChecks(vm);
   }
 
   [Fact]

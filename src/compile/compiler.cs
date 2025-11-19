@@ -778,7 +778,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.DeclRef,
+        Opcodes.MakeRef,
         1 /*local idx*/
       )
     );
@@ -1371,7 +1371,7 @@ public class ModuleCompiler : AST_Visitor
       case EnumCall.VARWDCL:
       {
         if(ast.type == EnumCall.VARWDCL && is_ref_origin)
-          Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
 
         if(is_global)
         {
@@ -1790,7 +1790,7 @@ public class ModuleCompiler : AST_Visitor
           //in case it's a reference we must make sure it's properly wrapped before it's set
           //(we can't put the code in the top because default arguments opcode inserts gaps
           //into local variables thus affecting them)
-          Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
+          Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
           Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
           Emit(Opcodes.Jump, new int[] { 2 /*DeclRef opcode below*/ });
         }
@@ -1803,14 +1803,15 @@ public class ModuleCompiler : AST_Visitor
       }
 
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
     }
     else
     {
+      //TODO: do we always need to declare a variable, especially if it's a scalar one?
+      //      (maybe we need a simpler opcode for that)
+      Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
-      else
-        Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
     }
   }
 
