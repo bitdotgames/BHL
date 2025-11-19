@@ -242,6 +242,16 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObjNoRefc(object o, IType type)
+  {
+    this = new Val
+    {
+      type = type,
+      obj = o
+    };
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool IsDataEqual(ref Val o)
   {
     bool res =
