@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace bhl;
+namespace bhl
+{
 
 public partial class VM
 {
@@ -175,7 +176,9 @@ public partial class VM
 
     l_operand.type = Types.Bool;
     l_operand.num = r_operand.num == l_operand.num &&
-                     (string)r_operand.obj  == (string)l_operand.obj? 1 : 0;
+                    (string)r_operand.obj  == (string)l_operand.obj
+      ? 1
+      : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,6 +207,7 @@ public partial class VM
       r_operand._refc.Release();
       r_operand._refc = null;
     }
+
     r_operand.obj = null;
 
     l_operand._refc?.Release();
@@ -400,7 +404,7 @@ public partial class VM
       val._refc?.Release();
       val = Val.NewStr(
         val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
-        );
+      );
     }
     else
     {
@@ -1007,6 +1011,7 @@ public partial class VM
       ptr.InitFrame(exec, ref frame, ref new_frame);
       CallFrame(exec, ref new_frame, new_frame_idx);
     }
+
     ptr.Release();
   }
 
@@ -1055,6 +1060,7 @@ public partial class VM
       ptr.InitFrame(exec, ref frame, ref new_frame);
       CallFrame(exec, ref new_frame, new_frame_idx);
     }
+
     ptr.Release();
   }
 
@@ -1110,6 +1116,7 @@ public partial class VM
       val._refc.Release();
       val._refc = null;
     }
+
     val.obj = null;
   }
 
@@ -1312,7 +1319,7 @@ public partial class VM
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeNew(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
- {
+  {
     int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     var type = frame.type_refs[type_idx];
 
@@ -1324,4 +1331,6 @@ public partial class VM
     ref var val = ref exec.stack.Push();
     cls.creator(exec, ref val, cls);
   }
+}
+
 }
