@@ -55,7 +55,7 @@ public static class VMExtensions
     if(!vm.TryFindFuncAddr(func, out var addr))
       throw new Exception("Could not find function: " + func);
 
-    return vm.Execute(addr.fs, args_info, args);
+    return vm.Execute(addr.fs, args_info, ref args);
   }
 
   static public ValStack Execute(this VM vm, FuncSymbolScript fs, Val arg1)

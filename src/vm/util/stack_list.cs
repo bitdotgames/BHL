@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace bhl
 {
@@ -255,26 +256,42 @@ public struct StackList<T> : IList<T>, IReadOnlyList<T>, IList
   {
     throw new NotImplementedException();
   }
+
+  public Span<T> AsSpan()
+  {
+    if(fallback == null)
+    {
+      unsafe
+      {
+        fixed (T* p = &storage.v0)
+        {
+          return new Span<T>(p, Count);
+        }
+      }
+    }
+    else
+      return CollectionsMarshal.AsSpan(fallback).Slice(Count);
+  }
 }
 
 public struct Array16<T>
 {
-  T v0;
-  T v1;
-  T v2;
-  T v3;
-  T v4;
-  T v5;
-  T v6;
-  T v7;
-  T v8;
-  T v9;
-  T v10;
-  T v11;
-  T v12;
-  T v13;
-  T v14;
-  T v15;
+  internal T v0;
+  internal T v1;
+  internal T v2;
+  internal T v3;
+  internal T v4;
+  internal T v5;
+  internal T v6;
+  internal T v7;
+  internal T v8;
+  internal T v9;
+  internal T v10;
+  internal T v11;
+  internal T v12;
+  internal T v13;
+  internal T v14;
+  internal T v15;
 
   public T this[int i]
   {
