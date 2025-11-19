@@ -378,10 +378,7 @@ public class ValStack
   public void ClearAndRelease()
   {
     while(sp > 0)
-    {
-      Pop(out var val);
-      val._refc?.Release();
-    }
+      PopRelease();
   }
 }
 
