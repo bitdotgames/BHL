@@ -170,10 +170,8 @@ public partial class VM : INamedResolver
     addr = new FuncAddr()
     {
       module = module,
-
       fs = fss,
       ip = fss?._ip_addr ?? -1,
-
       fsn = fss != null ? null : fs as FuncSymbolNative,
     };
 

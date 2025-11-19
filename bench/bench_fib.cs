@@ -216,9 +216,8 @@ public class BenchFibonacciAssorted : BHL_TestBase
     ).GetAwaiter().GetResult();
 
     bhl_vm.LoadModule("test");
-    bhl_fib =
-      //(FuncSymbolScript)new VM.SymbolSpec("test", "test_simple").LoadFuncSymbol(vm);
-      (FuncSymbolScript)new VM.SymbolSpec("test", "fib").LoadFuncSymbol(bhl_vm);
+    bhl_vm.TryFindFuncAddr("fib", out var addr);
+    bhl_fib = addr.fs;
 
     lua_vm = new Script();
     lua_vm.DoString(lua);
