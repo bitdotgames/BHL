@@ -107,12 +107,6 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Reset()
-  {
-    this = default;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public Val Clone()
   {
     var copy = this;
@@ -145,9 +139,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetStr(string s)
   {
-    Reset();
-    type = Types.String;
-    obj = s;
+    this = NewStr(s);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -163,9 +155,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetNum(long n)
   {
-    Reset();
-    type = Types.Int;
-    num = n;
+    this = NewInt(n);
   }
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
@@ -182,9 +172,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetInt(double n)
   {
-    Reset();
-    type = Types.Int;
-    num = n;
+    this = NewInt(n);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -200,9 +188,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetFlt(double n)
   {
-    Reset();
-    type = Types.Float;
-    num = n;
+    this = NewFlt(n);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -218,9 +204,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBool(bool b)
   {
-    Reset();
-    type = Types.Bool;
-    num = b ? 1 : 0;
+    this = NewBool(b);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -248,10 +232,13 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(object o, IType type)
   {
-    Reset();
-    this.type = type;
-    obj = o;
-    _refc = o as IRefcounted;
+    this = NewObj(o, type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObj(IRefcounted o, IType type)
+  {
+    this = NewObj(o, type);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
