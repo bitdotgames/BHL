@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using bhl;
 using Xunit;
 
-public class TestLocal : BHL_TestBase
+public class TestModuleLocals : BHL_TestBase
 {
   [Fact]
   public void TestLocalModuleFunc()
