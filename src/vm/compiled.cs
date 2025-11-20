@@ -53,7 +53,7 @@ public class Ip2SrcLine
   }
 }
 
-public class CompiledModule : IDisposable
+public class CompiledModule
 {
   const uint HEADER_VERSION = 2;
 
@@ -113,6 +113,14 @@ public class CompiledModule : IDisposable
       new Ip2SrcLine()
     )
   {
+  }
+
+  ~CompiledModule()
+  {
+    if(bytecode_handle.IsAllocated)
+      bytecode_handle.Free();
+    if(initcode_handle.IsAllocated)
+      initcode_handle.Free();
   }
 
   public void ResolveTypeRefs()
@@ -387,14 +395,6 @@ public class CompiledModule : IDisposable
     {
       return FromStream(types, rfs);
     }
-  }
-
-  public void Dispose()
-  {
-    if(bytecode_handle.IsAllocated)
-      bytecode_handle.Free();
-    if(initcode_handle.IsAllocated)
-      initcode_handle.Free();
   }
 }
 
