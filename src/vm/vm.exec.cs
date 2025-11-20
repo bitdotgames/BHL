@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -481,6 +480,12 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ValStack Execute(FuncSymbolScript fs, Val arg1)
+  {
+    return Execute(fs, new FuncArgsInfo(1), arg1);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, StackList<Val> args)
   {
     return Execute(fs, args_info, ref args);
@@ -497,6 +502,21 @@ public partial class VM
     }
     var exec = script_executors.Values[script_executor_idx];
     var res = Execute(exec, fs, args_info, ref args);
+    --script_executor_idx;
+    return res;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, Val arg1)
+  {
+    if(++script_executor_idx == script_executors_count)
+    {
+      ref var tmp = ref script_executors.Push();
+      tmp = new ExecState();
+      ++script_executors_count;
+    }
+    var exec = script_executors.Values[script_executor_idx];
+    var res = Execute(exec, fs, args_info, arg1);
     --script_executor_idx;
     return res;
   }
@@ -519,6 +539,31 @@ public partial class VM
       ref Val v = ref stack.Push();
       v = args[i];
     }
+
+    int frame_idx = exec.frames_count;
+    ref var frame = ref exec.PushFrame();
+    frame.args_info = args_info;
+    frame.InitWithModule(fs._module, fs._ip_addr);
+    exec.PushFrameRegion(ref frame, frame_idx);
+
+    exec.Execute();
+    if(exec.status == BHS.RUNNING)
+      throw new Exception($"Not expected to be running: {fs}");
+
+    return stack;
+  }
+
+  ValStack Execute(ExecState exec, FuncSymbolScript fs, FuncArgsInfo args_info, Val arg1)
+  {
+    exec.vm = this;
+
+    var stack = exec.stack;
+
+    //NOTE: let's clean the stack from previous any non popped results
+    //      (we keep it around just in case someone forgot to pop it after successful execution)
+    stack.ClearAndRelease();
+
+    stack.Push(arg1);
 
     int frame_idx = exec.frames_count;
     ref var frame = ref exec.PushFrame();

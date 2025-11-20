@@ -129,10 +129,10 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    //TODO: add separate opcode Concat for strings
-    if(l_operand.type == Types.String)
-      l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
-    else
+    ////TODO: add separate opcode Concat for strings
+    //if(l_operand.type == Types.String)
+    //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+    //else
       l_operand.num += r_operand.num;
   }
 
@@ -175,10 +175,8 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand.num = r_operand.num == l_operand.num &&
-                    (string)r_operand.obj  == (string)l_operand.obj
-      ? 1
-      : 0;
+    l_operand.num = r_operand.num == l_operand.num /*&&
+                    (string)r_operand.obj  == (string)l_operand.obj*/ ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -381,7 +379,8 @@ public partial class VM
 
     ref Val v = ref exec.stack.Push();
     //TODO: we might have specialized opcodes for different variable types?
-    cn.FillVal(ref v);
+    //cn.FillVal(ref v);
+    v.num = cn.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -569,7 +568,8 @@ public partial class VM
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeGetVarScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    //int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = bytes[++exec.ip];
 
     ref Val new_val = ref exec.stack.Push();
     ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -582,7 +582,8 @@ public partial class VM
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetVar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    //int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int local_idx = bytes[++exec.ip];
 
     exec.stack.Pop(out var new_val);
     ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -1067,8 +1068,10 @@ public partial class VM
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeEnterFrame(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
-    int locals_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
-    int return_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    //int locals_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    //int return_vars_num = Bytecode.Decode8(bytes, ref exec.ip);
+    int locals_vars_num = bytes[++exec.ip];
+    int return_vars_num = bytes[++exec.ip];
 
     frame.locals_vars_num = locals_vars_num;
     frame.return_vars_num = return_vars_num;
@@ -1131,10 +1134,7 @@ public partial class VM
   unsafe static void OpcodeJumpZ(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
-
-    ref Val v = ref exec.stack.vals[--exec.stack.sp];
-
-    if(v.num == 0)
+    if(exec.stack.vals[--exec.stack.sp].num == 0)
       exec.ip += offset;
   }
 

@@ -87,9 +87,9 @@ public partial class VM : INamedResolver
         if(local_idx < ret_idx)
         {
           ref var ret = ref stack.vals[ret_idx];
-          stack.vals[local_idx] = ret;
-          ret._refc = null;
-          ret.obj = null;
+          stack.vals[local_idx].num = ret.num;
+          //ret._refc = null;
+          //ret.obj = null;
         }
       }
     }

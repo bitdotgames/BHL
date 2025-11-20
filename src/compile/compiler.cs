@@ -1362,8 +1362,8 @@ public class ModuleCompiler : AST_Visitor
         else if(is_ref && !ast.pass_as_ref)
           Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          Emit(Opcodes.GetVar, //safe general version
-          //Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarScalar : Opcodes.GetVar,
+          //Emit(Opcodes.GetVar, //safe general version
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarScalar : Opcodes.GetVar,
             new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
@@ -1397,8 +1397,8 @@ public class ModuleCompiler : AST_Visitor
         else if(is_ref)
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          Emit(Opcodes.SetVar, //safe general version
-          //Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
+          //Emit(Opcodes.SetVar, //safe general version
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
             new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
