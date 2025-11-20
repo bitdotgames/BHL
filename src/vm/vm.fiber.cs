@@ -133,13 +133,6 @@ public partial class VM : INamedResolver
       exec.GetStackTrace(info);
     }
 
-    public string GetStackTrace(Error.TraceFormat format = Error.TraceFormat.Compact)
-    {
-      var trace = new List<TraceItem>();
-      GetStackTrace(trace);
-      return Error.ToString(trace, format);
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     bool ITask.Tick()
     {

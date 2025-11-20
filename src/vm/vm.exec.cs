@@ -28,6 +28,7 @@ public partial class VM
 
     public VM vm;
     public Fiber fiber;
+    public ExecState parent;
 
     internal int ip;
     internal Coroutine coroutine;
@@ -98,6 +99,15 @@ public partial class VM
     }
 
     public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      ExecState top = this;
+      while(top.parent != null)
+        top = top.parent;
+
+      top.GetStackTraceFromTop(info);
+    }
+
+    void GetStackTraceFromTop(List<VM.TraceItem> info)
     {
       var calls = new List<VM.Frame>();
       ExecState deepest = null;
@@ -224,7 +234,7 @@ public partial class VM
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Execute(int region_stop_idx = 0)
+    public void Execute(int region_stop_idx = 0)
     {
       status = BHS.SUCCESS;
 

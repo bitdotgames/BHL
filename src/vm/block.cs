@@ -74,6 +74,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     this.min_ip = min_ip;
     this.max_ip = max_ip;
 
+    exec.parent = ext_exec;
     exec.vm = ext_exec.vm;
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
