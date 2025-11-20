@@ -109,7 +109,7 @@ public class TestOperatorOverload : BHL_TestBase
       cl.Setup();
     });
 
-    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     AssertEqual(log.ToString(), "YES");
     CommonChecks(vm);
