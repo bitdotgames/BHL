@@ -2540,37 +2540,43 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     var ann_lhs = Annotate(lhs);
     var ann_rhs = Annotate(rhs);
 
-    if(op_type == EnumBinaryOp.NEQ)
-    {
-      var not_ast = new AST_UnaryOpExp(EnumUnaryOp.NOT);
-      bin_op_ast.type = EnumBinaryOp.EQ;
-      not_ast.AddChild(bin_op_ast);
-      ast = not_ast;
-      op_type = EnumBinaryOp.EQ;
-    }
+    FuncSymbol op_overload = null;
+    if(ann_lhs.eval_type is ClassSymbol class_symb)
+      op_overload = class_symb.Resolve(op) as FuncSymbol;
 
-    //NOTE: let's use a more comprehensive comparison for non trivial types
-    if(op_type == EnumBinaryOp.EQ &&
-       (!Types.IsScalarOrString(ann_lhs.eval_type) || !Types.IsScalarOrString(ann_rhs.eval_type))
-       )
+    //NOTE: only if there's no operator overload we might replace some opcodes
+    //      (e.g NEQ => (NOT(EQ)) )
+    if(op_overload == null)
     {
-      op_type = EnumBinaryOp.EQEX;
-      bin_op_ast.type = op_type;
+      if(op_type == EnumBinaryOp.NEQ)
+      {
+        var not_ast = new AST_UnaryOpExp(EnumUnaryOp.NOT);
+        bin_op_ast.type = EnumBinaryOp.EQ;
+        not_ast.AddChild(bin_op_ast);
+        ast = not_ast;
+        op_type = EnumBinaryOp.EQ;
+      }
+
+      //NOTE: let's use a more comprehensive comparison for non trivial types
+      if(op_type == EnumBinaryOp.EQ &&
+         (!Types.IsScalarOrString(ann_lhs.eval_type) || !Types.IsScalarOrString(ann_rhs.eval_type))
+        )
+      {
+        op_type = EnumBinaryOp.EQEX;
+        bin_op_ast.type = op_type;
+      }
     }
 
     //NOTE: checking if there's binary operator overload
-    if(ann_lhs.eval_type is ClassSymbol class_symb  &&
-       class_symb.Resolve(op) is FuncSymbol)
+    if(op_overload != null)
     {
-      var op_func = class_symb.Resolve(op) as FuncSymbol;
-
-      Annotate(ctx).eval_type = types.CheckBinOpOverload(ns, ann_lhs, ann_rhs, op_func, errors);
+      Annotate(ctx).eval_type = types.CheckBinOpOverload(ns, ann_lhs, ann_rhs, op_overload, errors);
 
       //NOTE: replacing original AST, a bit 'dirty' but kinda OK
       var over_ast = new AST_Interim();
       for(int i = 0; i < ast.children.Count; ++i)
         over_ast.AddChild(ast.children[i]);
-      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_func, 2 /*cargs bits*/);
+      var op_call = new AST_Call(EnumCall.FUNC, ctx.Start.Line, op_overload, 2 /*cargs bits*/);
       over_ast.AddChild(op_call);
       ast = over_ast;
     }

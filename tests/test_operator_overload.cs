@@ -61,6 +61,61 @@ public class TestOperatorOverload : BHL_TestBase
   }
 
   [Fact]
+  public void TestNotEqualityOverloadedForNativeClass()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      Color c1 = {}
+      if(c1 != null) {
+        trace(""YES"")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+
+      var cl = BindColor(ts, call_setup: false);
+      var op = new FuncSymbolNative(new Origin(), "!=", FuncAttrib.Static, ts.T("bool"), 0,
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        {
+          var ov = exec.stack.PopRelease().obj;
+          var cv = exec.stack.PopRelease().obj;
+
+          //null comparison guard
+          if(cv == null || ov == null)
+          {
+            exec.stack.Push(cv != ov);
+            return null;
+          }
+
+          var o = (Color)ov;
+          var c = (Color)cv;
+
+          var v = !(c.r == o.r && c.g == o.g);
+          exec.stack.Push(v);
+
+          return null;
+        },
+        new FuncArgSymbol("c", ts.T("Color")),
+        new FuncArgSymbol("o", ts.T("Color"))
+      );
+      cl.Define(op);
+      cl.Setup();
+    });
+
+    var vm = MakeVM(bhl, ts_fn, show_bytes: true);
+    Execute(vm, "test");
+    AssertEqual(log.ToString(), "YES");
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestCustomOperatorOverloadInvalidForNativeClass()
   {
     {
