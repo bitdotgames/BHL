@@ -20,6 +20,9 @@
     <Compile Update="..\vm\util\val_list_adapter.cs">
       <Link>util\val_list_adapter.cs</Link>
     </Compile>
+    <Compile Update="..\vm\val_mini.cs">
+      <Link>val_mini.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

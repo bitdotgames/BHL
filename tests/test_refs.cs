@@ -220,7 +220,7 @@ public class TestRefs : BHL_TestBase
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ref var b = ref exec.stack.Pop().Unref();
-            double a = exec.stack.Pop();
+            float a = exec.stack.Pop();
 
             b.num = a * 2;
             return null;

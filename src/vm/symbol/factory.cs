@@ -12,6 +12,27 @@ public class SymbolFactory : marshall.IFactory
     this.resolver = resolver;
   }
 
+  public static IType TypeById(uint id)
+  {
+    switch(id)
+    {
+      case IntSymbol.CLASS_ID:
+        return Types.Int;
+      case FloatSymbol.CLASS_ID:
+        return Types.Float;
+      case StringSymbol.CLASS_ID:
+        return Types.String;
+      case BoolSymbol.CLASS_ID:
+        return Types.Bool;
+      case AnySymbol.CLASS_ID:
+        return Types.Any;
+      case VoidSymbol.CLASS_ID:
+        return Types.Void;
+      default:
+        return null;
+    }
+  }
+
   public marshall.IMarshallableGeneric CreateById(uint id)
   {
     switch(id)

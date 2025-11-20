@@ -59,28 +59,23 @@ public class Const : IEquatable<Const>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void FillVal(ref Val v)
   {
-    if(type == ConstType.INT)
+    v = type switch
     {
-      v = new Val { type = Types.Int, num = num };
-    }
-    else if(type == ConstType.FLT)
-    {
-      v = new Val { type = Types.Float, num = num };
-    }
-    else if(type == ConstType.STR)
-    {
-      v = new Val { type = Types.String, obj = str };
-    }
-    else if(type == ConstType.BOOL)
-    {
-      v = new Val { type = Types.Bool, num = num };
-    }
-    else if(type == ConstType.NIL)
-    {
-      v = new Val { type = Types.Null };
-    }
-    else
-      throw new Exception("Bad type");
+#if USE_VAL_MINI
+      ConstType.INT => new Val { type = Types.Int, num = num },
+      ConstType.FLT => new Val { type = Types.Float, num = num },
+      ConstType.STR => new Val { type = Types.String, obj = str },
+      ConstType.BOOL => new Val { type = Types.Bool, num = num },
+      ConstType.NIL => new Val { type = Types.Null },
+#else
+      ConstType.INT => new Val { type_id = Types.Int.ClassId(), _int0 = (int)num },
+      ConstType.FLT => new Val { type_id = Types.Float.ClassId(), _double0 = num },
+      // ConstType.STR => new Val { type_id = Types.String.ClassId(), obj = str },
+      ConstType.BOOL => new Val { type_id = Types.Bool.ClassId(), _int0 = (num == 1) ? 1 : 0 },
+      ConstType.NIL => new Val { type_id = Types.Null.ClassId() },
+#endif
+      _ => throw new Exception("Bad type")
+    };
   }
 
   public bool Equals(Const o)

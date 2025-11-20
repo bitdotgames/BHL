@@ -1,9 +1,10 @@
 using System;
 using System.Buffers;
 using System.Runtime.CompilerServices;
-
+using System.Runtime.InteropServices;
 namespace bhl
 {
+#if USE_VAL_MINI
 public struct Val
 {
   public IType type;
@@ -304,6 +305,7 @@ public struct Val
     return str; // + " " + GetHashCode();//for extra debug
   }
 }
+#endif
 
 public class ValStack
 {

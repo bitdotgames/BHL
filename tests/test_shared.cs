@@ -39,7 +39,7 @@ public class BHL_TestBase
 
     public static void Encode(ref Val v, IntStruct src, IType type)
     {
-      v.type = type;
+      // v.type = type;
       v.num = src.n;
     }
   }
@@ -331,65 +331,65 @@ public class BHL_TestBase
 
       ts.ns.Define(cl);
 
-      cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
-        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child, fld.type.Get());
-        },
-        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          c.child = (StringClass)v.obj;
-          ctx.SetObj(c, ctx.type);
-        }
-      ));
-
-      cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
-        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          v.SetObj(c.child2, fld.type.Get());
-        },
-        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          c.child2 = (StringClass)v.obj;
-          ctx.SetObj(c, ctx.type);
-        }
-      ));
-
-      cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
-        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(ref v, c.child_struct, fld.type.Get());
-        },
-        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          IntStruct s = new IntStruct();
-          IntStruct.Decode(v, ref s);
-          c.child_struct = s;
-          ctx.SetObj(c, ctx.type);
-        }
-      ));
-
-      cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
-        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          IntStruct.Encode(ref v, c.child_struct2, fld.type.Get());
-        },
-        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
-        {
-          var c = (MasterStruct)ctx.obj;
-          IntStruct s = new IntStruct();
-          IntStruct.Decode(v, ref s);
-          c.child_struct2 = s;
-          ctx.SetObj(c, ctx.type);
-        }
-      ));
+      // cl.Define(new FieldSymbol(new Origin(), "child", ts.T("StringClass"),
+      //   delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     v.SetObj(c.child, fld.type.Get());
+      //   },
+      //   delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     c.child = (StringClass)v.obj;
+      //     ctx.SetObj(c, ctx.type);
+      //   }
+      // ));
+      //
+      // cl.Define(new FieldSymbol(new Origin(), "child2", ts.T("StringClass"),
+      //   delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     v.SetObj(c.child2, fld.type.Get());
+      //   },
+      //   delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     c.child2 = (StringClass)v.obj;
+      //     ctx.SetObj(c, ctx.type);
+      //   }
+      // ));
+      //
+      // cl.Define(new FieldSymbol(new Origin(), "child_struct", ts.T("IntStruct"),
+      //   delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     IntStruct.Encode(ref v, c.child_struct, fld.type.Get());
+      //   },
+      //   delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     IntStruct s = new IntStruct();
+      //     IntStruct.Decode(v, ref s);
+      //     c.child_struct = s;
+      //     ctx.SetObj(c, ctx.type);
+      //   }
+      // ));
+      //
+      // cl.Define(new FieldSymbol(new Origin(), "child_struct2", ts.T("IntStruct"),
+      //   delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     IntStruct.Encode(ref v, c.child_struct2, fld.type.Get());
+      //   },
+      //   delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+      //   {
+      //     var c = (MasterStruct)ctx.obj;
+      //     IntStruct s = new IntStruct();
+      //     IntStruct.Decode(v, ref s);
+      //     c.child_struct2 = s;
+      //     ctx.SetObj(c, ctx.type);
+      //   }
+      // ));
       cl.Setup();
     }
   }
@@ -519,9 +519,9 @@ public class BHL_TestBase
       },
       delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
       {
-        var c = (Bar)ctx.obj;
-        c.Str = (string)v.obj;
-        ctx.SetObj(c, ctx.type);
+        // var c = (Bar)ctx.obj;
+        // c.Str = (string)v.obj;
+        // ctx.SetObj(c, ctx.type);
       }
     ));
 

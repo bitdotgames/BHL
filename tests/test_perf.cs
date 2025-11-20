@@ -196,8 +196,7 @@ public class TestPerf : BHL_TestBase
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand.type = Types.Bool;
-    l_operand.num = l_operand.num == r_operand.num ? 1 : 0;
+    l_operand.SetBool(l_operand.num == r_operand.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
