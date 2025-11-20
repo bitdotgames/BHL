@@ -87,18 +87,6 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static implicit operator long(Val v)
-  {
-    return (long)v.num;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static implicit operator Val(long v)
-  {
-    return NewInt(v);
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator string(Val v)
   {
     return v.str;
@@ -325,6 +313,42 @@ public class ValStack
   public Val[] vals;
   //NOTE: sp always point to the position of the next value, sp - 1 points to the stack top
   public int sp;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator double(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator float(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator int(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator uint(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator string(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator bool(ValStack vs)
+  {
+    return vs.Pop();
+  }
 
   public ValStack(int init_capacity)
   {

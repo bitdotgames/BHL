@@ -71,4 +71,43 @@ public class TestVal : BHL_TestBase
     Assert.Equal(8, stack.vals.Length);
   }
 
+  [Fact]
+  public void TestValStackImplicitCast()
+  {
+    {
+      var stack = new ValStack(2);
+      stack.Push(10);
+      int res = stack;
+      Assert.Equal(10, res);
+    }
+
+    {
+      var stack = new ValStack(2);
+      stack.Push(10.1);
+      double res = stack;
+      Assert.Equal(10.1, res);
+    }
+
+    {
+      var stack = new ValStack(2);
+      stack.Push(10.1f);
+      float res = stack;
+      Assert.Equal(10.1f, res);
+    }
+
+    {
+      var stack = new ValStack(2);
+      stack.Push(25379563u);
+      uint res = stack;
+      Assert.Equal(25379563u, res);
+    }
+
+    {
+      var stack = new ValStack(2);
+      stack.Push(true);
+      bool res = stack;
+      Assert.True(res);
+    }
+  }
+
 }
