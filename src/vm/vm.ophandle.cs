@@ -399,7 +399,7 @@ public partial class VM
         var opcode = (Opcodes)bytes[ip];
 
         //op_handlers[opcode](vm, this, ref region,  ref frame, bytecode);
-        //
+
         switch(opcode)
         {
           case Opcodes.Frame:
@@ -470,6 +470,7 @@ public partial class VM
             ref Val v = ref stack.Push();
             //TODO: we might have specialized opcodes for different variable types?
             //cn.FillVal(ref v);
+            //optimized version
             v.num = cn.num;
           }
           break;
@@ -480,8 +481,9 @@ public partial class VM
             ref Val l_operand = ref stack.vals[stack.sp - 1];
 
             l_operand.type = Types.Bool;
-            l_operand.num = r_operand.num == l_operand.num /*&&
-                            (string)r_operand.obj  == (string)l_operand.obj*/
+            l_operand.num = r_operand.num == l_operand.num
+              //optimized version
+              /*&& (string)r_operand.obj  == (string)l_operand.obj*/
               ? 1
               : 0;
           }
@@ -513,10 +515,11 @@ public partial class VM
           {
             ref Val r_operand = ref stack.vals[--stack.sp];
             ref Val l_operand = ref stack.vals[stack.sp - 1];
+            //optimized version
             //TODO: add separate opcode Concat for strings
-            if(l_operand.type == Types.String)
-              l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
-            else
+            //if(l_operand.type == Types.String)
+            //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+            //else
               l_operand.num += r_operand.num;
           }
           break;
