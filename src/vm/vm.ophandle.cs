@@ -126,6 +126,434 @@ public partial class VM
     op_handlers[(int)Opcodes.New] = &OpcodeNew;
   }
 
+  //NOTE: This class represents an active execution unit in VM.
+  //      VM needs an active ExecState during Tick-ing.
+  //
+  //      ExecState contains stack of Frames and code regions,
+  //      continuous Val stack
+  //
+  //      (Fiber contains an ExecState, each paral branch
+  //      contains its own ExecState)
+  public class ExecState
+  {
+    public BHS status = BHS.NONE;
+
+    public VM vm;
+    public Fiber fiber;
+    public ExecState parent;
+
+    internal int ip;
+    internal Coroutine coroutine;
+
+    internal Region[] regions;
+    internal int regions_count = 0;
+
+    public ValStack stack;
+
+    public Frame[] frames;
+    public int frames_count = 0;
+
+    public ExecState(
+      int regions_capacity = 64,
+      int frames_capacity = 256,
+      int stack_capacity = 512
+    )
+    {
+      regions = new Region[regions_capacity];
+      frames = new Frame[frames_capacity];
+      stack = new ValStack(stack_capacity);
+    }
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public ref Frame PushFrame()
+    {
+      if(frames_count == frames.Length)
+        Array.Resize(ref frames, frames_count << 1);
+
+      return ref frames[frames_count++];
+    }
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public ref Region PushRegion(int frame_idx, int min_ip = -1, int max_ip = STOP_IP)
+    {
+      if(regions_count == regions.Length)
+        Array.Resize(ref regions, regions_count << 1);
+
+      ref var region = ref regions[regions_count++];
+      region.frame_idx = frame_idx;
+      region.min_ip = min_ip;
+      region.max_ip = max_ip;
+      return ref region;
+    }
+
+    static void TraverseCallStack(
+      List<VM.Frame> calls,
+      ExecState exec,
+      ref ExecState deepest,
+      ICoroutine coro,
+      int frame_offset = 0
+    )
+    {
+      if(exec != null)
+      {
+        for(int i = frame_offset; i < exec.frames_count; ++i)
+          calls.Add(exec.frames[i]);
+
+        deepest = exec;
+      }
+
+      if(coro is ParalBranchBlock bi)
+        TraverseCallStack(calls, bi.exec, ref deepest, bi.exec.coroutine, 1);
+      else if(coro is ParalBlock pi && pi.i < pi.branches.Count)
+        TraverseCallStack(calls, null, ref deepest, pi.branches[pi.i], frame_offset);
+      else if(coro is ParalAllBlock pai && pai.i < pai.branches.Count)
+        TraverseCallStack(calls, null, ref deepest, pai.branches[pai.i], frame_offset);
+    }
+
+    public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      ExecState top = this;
+      while(top.parent != null)
+        top = top.parent;
+
+      top.GetStackTraceFromTop(info);
+    }
+
+    void GetStackTraceFromTop(List<VM.TraceItem> info)
+    {
+      var calls = new List<VM.Frame>();
+      ExecState deepest = null;
+      TraverseCallStack(calls, this, ref deepest, coroutine);
+
+      for(int i = 0; i < calls.Count; ++i)
+      {
+        var frm = calls[i];
+
+        var item = new TraceItem();
+
+        //NOTE: information about frame ip is taken from the 'next' frame, however
+        //      for the last frame we have a special case. In this case there's no
+        //      'next' frame and we should consider using current ip
+        if(i == calls.Count - 1)
+        {
+          item.ip = deepest.ip;
+        }
+        else
+        {
+          //NOTE: retrieving last ip for the current Frame which
+          //      turns out to be return_ip assigned to the next Frame
+          var next = calls[i + 1];
+          item.ip = next.return_ip;
+        }
+
+        if(frm.module != null)
+        {
+          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
+          //NOTE: if symbol is missing it's a lambda
+          if(fsymb == null)
+            item.file = frm.module.name + ".bhl";
+          else
+            item.file = fsymb._module.name + ".bhl";
+          item.func = fsymb == null ? "?" : fsymb.name;
+          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
+        }
+        else
+        {
+          item.file = "?";
+          item.func = "?";
+        }
+
+        info.Insert(0, item);
+      }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ExitFrames()
+    {
+      if(frames_count > 0)
+      {
+        if(coroutine != null)
+        {
+          CoroutinePool.Del(this, coroutine);
+          coroutine = null;
+        }
+
+        for(int i = frames_count; i-- > 0;)
+        {
+          ref var frame = ref frames[i];
+
+          for(int r = regions_count; r-- > frame.regions_mark;)
+          {
+            ref var tmp_region = ref regions[r];
+            if(tmp_region.defers != null && tmp_region.defers.count > 0)
+              tmp_region.defers.ExitScope(this);
+          }
+          regions_count = frame.regions_mark;
+          --frames_count;
+          frame.CleanLocals();
+        }
+        frames_count = 0;
+      }
+      regions_count = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void PushFrameRegion(ref Frame frame, int frame_idx)
+    {
+      ip = frame.start_ip;
+      frame.regions_mark = regions_count;
+      PushRegion(frame_idx);
+    }
+
+    internal void PushFrameRegion(ref Frame frame, int frame_idx, StackList <Val> args)
+    {
+      //NOTE: since variables will be set as local variables
+      //      we traverse them in natural order
+      for(int i = 0; i < args.Count; ++i)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      PushFrameRegion(ref frame, frame_idx);
+    }
+
+    internal void PushFrameRegion(
+      FuncSymbolNative fsn,
+      ref Frame frame,
+      int frame_idx,
+      StackList <Val> args
+    )
+    {
+      for(int i = args.Count; i-- > 0;)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      frame.return_vars_num = fsn.GetReturnedArgsNum();
+      frame.locals_vars_num = 0;
+
+      PushFrameRegion(ref frame, frame_idx);
+
+      //passing args info as argument
+      coroutine = fsn.cb(this, frame.args_info);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(coroutine != null)
+        --ip;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Execute(int region_stop_idx = 0)
+    {
+      status = BHS.SUCCESS;
+
+      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
+        ExecuteOnce();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal unsafe void ExecuteOnce()
+    {
+      ref var region = ref regions[regions_count - 1];
+      ref var frame = ref frames[region.frame_idx];
+
+      //1. if there's an active coroutine it has priority over simple 'code following' via ip
+      if(coroutine != null)
+      {
+        ExecuteCoroutine(ref region, this);
+      }
+      //2. are we out of the current region?
+      else if(ip < region.min_ip || ip > region.max_ip)
+      {
+        if(region.defers != null && region.defers.count > 0)
+          region.defers.ExitScope(this);
+        --regions_count;
+      }
+      //3. exit frame requested
+      else if(ip == EXIT_FRAME_IP)
+      {
+        //exiting all regions which belong to the frame
+        for(int i = regions_count; i-- > frame.regions_mark;)
+        {
+          ref var tmp_region = ref regions[i];
+          if(tmp_region.defers != null && tmp_region.defers.count > 0)
+            tmp_region.defers.ExitScope(this);
+        }
+        regions_count = frame.regions_mark;
+        frame.CleanLocals();
+
+        if(frame.return_vars_num > 0)
+          frame.ReturnVars(stack);
+        //stack pointer now at the last returned value
+        stack.sp = frame.locals_offset + frame.return_vars_num;
+        --frames_count;
+
+        ip = frame.return_ip + 1;
+      }
+      else
+      {
+        var bytes = frame.bytecode;
+        var opcode = (Opcodes)bytes[ip];
+
+        //op_handlers[opcode](vm, this, ref region,  ref frame, bytecode);
+        //
+        switch(opcode)
+        {
+          case Opcodes.Frame:
+          {
+            int locals_vars_num = Bytecode.Decode8(bytes, ref ip);
+            int return_vars_num = Bytecode.Decode8(bytes, ref ip);
+
+            frame.locals_vars_num = locals_vars_num;
+            frame.return_vars_num = return_vars_num;
+
+            //NOTE: it's assumed that refcounted args are pushed with refcounted values
+            int args_num = frame.args_info.CountArgs();
+
+            frame.locals_offset = stack.sp - args_num;
+            frame.locals = stack;
+
+            //let's reserve space for local variables, however passed variables are
+            //already on the stack, let's take that into account
+            int rest_local_vars_num = locals_vars_num - args_num;
+            stack.Reserve(rest_local_vars_num);
+            //temporary stack lives after local variables
+            stack.sp += rest_local_vars_num;
+          }
+          break;
+
+          case Opcodes.GetVar:
+          {
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
+
+            ref Val new_val = ref stack.Push();
+            new_val = frame.locals.vals[frame.locals_offset + local_idx];
+            new_val._refc?.Retain();
+          }
+          break;
+
+          case Opcodes.GetVarScalar:
+          {
+            int local_idx = bytes[++ip];
+
+            ref Val new_val = ref stack.Push();
+            ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
+            new_val.type = source.type;
+            new_val.num = source.num;
+            //TODO: do we need this?
+            //new_val._refc = null;
+          }
+          break;
+
+          case Opcodes.SetVarScalar:
+          {
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
+
+            ref var new_val = ref stack.vals[--stack.sp];
+            ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
+            dest.type = new_val.type;
+            dest.num = new_val.num;
+            //TODO: do we need this?
+            //dest._refc?.Release();
+            //dest._refc = null;
+          }
+          break;
+
+          case Opcodes.Constant:
+          {
+            int const_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            var cn = frame.constants[const_idx];
+
+            ref Val v = ref stack.Push();
+            //TODO: we might have specialized opcodes for different variable types?
+            //cn.FillVal(ref v);
+            v.num = cn.num;
+          }
+          break;
+
+          case Opcodes.EqualLite:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand.type = Types.Bool;
+            l_operand.num = r_operand.num == l_operand.num /*&&
+                            (string)r_operand.obj  == (string)l_operand.obj*/
+              ? 1
+              : 0;
+          }
+          break;
+
+          case Opcodes.JumpZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+            ref Val v = ref stack.vals[--stack.sp];
+            if(v.num == 0)
+              ip += offset;
+          }
+          break;
+
+          case Opcodes.Return:
+          {
+            ip = EXIT_FRAME_IP - 1;
+          }
+          break;
+
+          case Opcodes.Jump:
+          {
+            short offset = (short)Bytecode.Decode16(bytes, ref ip);
+            ip += offset;
+          }
+          break;
+
+          case Opcodes.Add:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+            //TODO: add separate opcode Concat for strings
+            if(l_operand.type == Types.String)
+              l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+            else
+              l_operand.num += r_operand.num;
+          }
+          break;
+
+          case Opcodes.Sub:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+            l_operand.num -= r_operand.num;
+          }
+          break;
+
+          case Opcodes.CallLocal:
+          {
+            int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+            var args_info = new FuncArgsInfo(args_bits);
+            int new_frame_idx = frames_count;
+            ref var new_frame = ref PushFrame();
+            new_frame.args_info = args_info;
+            new_frame.InitWithOrigin(frame, func_ip);
+            CallFrame(this, ref new_frame, new_frame_idx);
+          }
+          break;
+
+          default:
+            throw new Exception("Unhandled opcode: " + opcode);
+
+        }
+
+        ++ip;
+      }
+    }
+  }
+
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeAdd(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
