@@ -398,6 +398,7 @@ public partial class VM
         var bytes = frame.bytecode;
         var opcode = (Opcodes)bytes[ip];
 
+        //previous version
         //op_handlers[opcode](vm, this, ref region,  ref frame, bytecode);
 
         switch(opcode)
