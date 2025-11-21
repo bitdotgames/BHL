@@ -21,6 +21,11 @@ public struct Val
   [FieldOffset(8)] public int _int2;
   [FieldOffset(12)] public int _int3;
 
+  [FieldOffset(0)] public uint _uint0;
+  [FieldOffset(4)] public uint _uint1;
+  [FieldOffset(8)] public uint _uint2;
+  [FieldOffset(12)] public uint _uint3;
+
   [FieldOffset(0)] public float _float0;
   [FieldOffset(4)] public float _float1;
   [FieldOffset(8)] public float _float2;
@@ -99,6 +104,18 @@ public struct Val
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator Val(int v)
+  {
+    return NewInt(v);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator uint(Val v)
+  {
+    return (uint)v._int0;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator Val(uint v)
   {
     return NewInt(v);
   }
@@ -212,6 +229,16 @@ public struct Val
     {
       type_id = Types.Int.ClassId(),
       _int0 = n,
+    };
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public Val NewInt(uint n)
+  {
+    return new Val
+    {
+      type_id = Types.Int.ClassId(),
+      _uint0 = n,
     };
   }
 

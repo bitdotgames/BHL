@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using bhl.marshall;
 
 namespace bhl
 {
@@ -459,11 +460,11 @@ public partial class VM
   internal static void InitDefaultVal(IType type, ref Val v)
   {
     v = default;
-    v.type = type;
-    //TODO: make type responsible for default extra initialization
-    //      of the value
-    if(type == Types.String)
-      v.obj = "";
+    if(type is IMarshallableGeneric img)
+      v.type_id = img.ClassId();
+    // TODO
+    // if(type == Types.String)
+    //   v.obj = "";
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

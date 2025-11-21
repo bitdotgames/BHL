@@ -137,7 +137,7 @@ public partial class VM
     //if(l_operand.type == Types.String)
     //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
     //else
-      l_operand.num += r_operand.num;
+      l_operand._long0 += r_operand._long0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -147,7 +147,7 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    l_operand.num -= r_operand.num;
+    l_operand._long0 -= r_operand._long0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -178,9 +178,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand.num = r_operand.num == l_operand.num /*&&
-                    (string)r_operand.obj  == (string)l_operand.obj*/ ? 1 : 0;
+    l_operand.SetBool(r_operand._long0 == l_operand._long0);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -191,8 +189,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand.type = Types.Bool;
-    l_operand.num = r_operand.num == l_operand.num ? 1 : 0;
+    l_operand.SetBool(r_operand._long0 == l_operand._long0);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -203,7 +200,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+    var res = Val.NewBool(l_operand.IsDataEqual(ref r_operand));
     if(r_operand._refc != null)
     {
       r_operand._refc.Release();
@@ -225,7 +222,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
+    l_operand = Val.NewBool( l_operand.num < r_operand.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,7 +233,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
+    l_operand = Val.NewBool( l_operand.num <= r_operand.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -247,7 +244,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
+    l_operand = Val.NewBool( l_operand.num > r_operand.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -258,7 +255,7 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
+    l_operand = Val.NewBool( l_operand.num >= r_operand.num);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,7 +267,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Bool as well, so we don't replace it
-    l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
+    l_operand = Val.NewBool( l_operand.bval && r_operand.bval);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -282,7 +279,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Bool as well, so we don't replace it
-    l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
+    l_operand = Val.NewBool( l_operand.bval || r_operand.bval);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -294,7 +291,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand.num = (int)l_operand.num & (int)r_operand.num;
+    l_operand._int0 &= r_operand._int0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -306,7 +303,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand.num = (int)l_operand.num | (int)r_operand.num;
+    l_operand._int0 |= r_operand._int0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -318,7 +315,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand.num = (int)l_operand.num >> (int)r_operand.num;
+    l_operand._int0 >>= r_operand._int0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -330,7 +327,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
-    l_operand.num = (int)l_operand.num << (int)r_operand.num;
+    l_operand._int0 <<= r_operand._int0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -342,6 +339,7 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     //resulting operand is Int as well, so we don't replace it
+    l_operand._int0 %= r_operand._int0;
     l_operand.num %= r_operand.num;
   }
 
@@ -352,7 +350,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Bool as well, so we don't replace it
-    val.num = val.num != 1 ? 1 : 0;
+    val._int0 = val._int0 != 1 ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -362,7 +360,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Int as well, so we don't replace it
-    val.num *= -1;
+    val._int0 *= -1;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -372,7 +370,7 @@ public partial class VM
 
     ref Val val = ref stack.vals[stack.sp - 1];
     //resulting operand is Int as well, so we don't replace it
-    val.num = ~((int)val.num);
+    val._int0 = ~val._int0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -384,7 +382,7 @@ public partial class VM
     ref Val v = ref exec.stack.Push();
     //TODO: we might have specialized opcodes for different variable types?
     //cn.FillVal(ref v);
-    v.num = cn.num;
+    v._long0 = (long)cn.num;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -414,8 +412,9 @@ public partial class VM
       //NOTE: extra type check in case cast type is instantiable object (e.g class)
       if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
         throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-      if(force_type)
-        val.type = cast_type;
+      // TODO:
+      // if(force_type)
+      //   val.type = cast_type;
     }
   }
 
@@ -428,16 +427,17 @@ public partial class VM
 
     ref var val = ref exec.stack.Peek();
 
-    if(Types.Is(val, as_type))
-    {
-      if(force_type)
-        val.type = as_type;
-    }
-    else
-    {
-      val._refc?.Release();
-      val = Null;
-    }
+    // TODO:
+    // if(Types.Is(val, as_type))
+    // {
+    //   if(force_type)
+    //     val.type = as_type;
+    // }
+    // else
+    // {
+    //   val._refc?.Release();
+    //   val = Null;
+    // }
 
   }
 
@@ -577,7 +577,7 @@ public partial class VM
 
     ref Val new_val = ref exec.stack.Push();
     ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
-    new_val.type = source.type;
+    new_val.type_id = source.type_id;
     new_val.num = source.num;
     //TODO: do we need this?
     //new_val._refc = null;
@@ -602,7 +602,7 @@ public partial class VM
 
     ref var new_val = ref exec.stack.vals[--exec.stack.sp];
     ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
-    dest.type = new_val.type;
+    dest.type_id = new_val.type_id;
     dest.num = new_val.num;
     //TODO: do we need this?
     //dest._refc?.Release();
