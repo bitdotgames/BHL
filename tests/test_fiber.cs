@@ -284,7 +284,7 @@ public class TestFiber : BHL_TestBase
         log.Append("HERE");
     }
 
-    public override void Cleanup(VM.ExecState exec)
+    public override void Destruct(VM.ExecState exec)
     {
       first_time = true;
     }
@@ -694,7 +694,7 @@ public class TestFiber : BHL_TestBase
       }
     }
 
-    public override void Cleanup(VM.ExecState exec)
+    public override void Destruct(VM.ExecState exec)
     {
       done = false;
     }

@@ -1,5 +1,3 @@
-using System;
-using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -73,32 +71,26 @@ public partial class VM : INamedResolver
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ReturnVars(ValStack stack)
     {
+      //moving returned values up
+
       int ret_start_offset = stack.sp - return_vars_num;
 
-      //moving returned values up
       //NOTE: returned vals are already retained by GetVar opcode,
       //      no need to do that
 
-      //array copy version
-      //Array.Copy(
-      //  stack.vals,
-      //  ret_start_offset,
-      //  stack.vals,
-      //  locals_offset,
-      //  return_vars_num
-      //);
-
-      //loop version
+      //it's assumed that this code is called once all locals were
+      //cleaned, we need to clean stack 'copy leftover'
       for(int i = 0; i < return_vars_num; ++i)
-        stack.vals[locals_offset + i] = stack.vals[ret_start_offset + i];
-
-      //need to clean stack leftover
-      int leftover = locals_vars_num - return_vars_num;
-      for(int i = 0; i <= leftover; ++i)
       {
-        ref var val = ref stack.vals[ret_start_offset + i];
-        val._refc = null;
-        val.obj = null;
+        int local_idx = locals_offset + i;
+        int ret_idx = ret_start_offset + i;
+        if(local_idx < ret_idx)
+        {
+          ref var ret = ref stack.vals[ret_idx];
+          stack.vals[local_idx].num = ret.num;
+          //ret._refc = null;
+          //ret.obj = null;
+        }
       }
     }
   }

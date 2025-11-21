@@ -136,7 +136,7 @@ class CoroutineYield : Coroutine
     }
   }
 
-  public override void Cleanup(VM.ExecState exec)
+  public override void Destruct(VM.ExecState exec)
   {
     first_time = true;
   }
@@ -158,7 +158,7 @@ class CoroutineWait : Coroutine
       exec.status = BHS.RUNNING;
   }
 
-  public override void Cleanup(VM.ExecState exec)
+  public override void Destruct(VM.ExecState exec)
   {
     end_stamp = -1;
   }

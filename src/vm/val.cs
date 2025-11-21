@@ -76,6 +76,18 @@ public struct Val
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator uint(Val v)
+  {
+    return (uint)v.num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator Val(uint v)
+  {
+    return NewInt(v);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static implicit operator string(Val v)
   {
     return v.str;
@@ -105,18 +117,6 @@ public struct Val
     var val_ref = (ValRef)_refc;
     val_ref.Release();
     return ref val_ref.val;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  void Reset()
-  {
-    type = null;
-    num = 0;
-    _num2 = 0;
-    _num3 = 0;
-    _num4 = 0;
-    obj = null;
-    _refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,9 +152,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetStr(string s)
   {
-    Reset();
-    type = Types.String;
-    obj = s;
+    this = NewStr(s);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,9 +168,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetNum(long n)
   {
-    Reset();
-    type = Types.Int;
-    num = n;
+    this = NewInt(n);
   }
 
   //NOTE: it's caller's responsibility to ensure 'int precision'
@@ -189,9 +185,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetInt(double n)
   {
-    Reset();
-    type = Types.Int;
-    num = n;
+    this = NewInt(n);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -207,9 +201,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetFlt(double n)
   {
-    Reset();
-    type = Types.Float;
-    num = n;
+    this = NewFlt(n);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,9 +217,7 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetBool(bool b)
   {
-    Reset();
-    type = Types.Bool;
-    num = b ? 1 : 0;
+    this = NewBool(b);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -255,10 +245,23 @@ public struct Val
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public void SetObj(object o, IType type)
   {
-    Reset();
-    this.type = type;
-    obj = o;
-    _refc = o as IRefcounted;
+    this = NewObj(o, type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObj(IRefcounted o, IType type)
+  {
+    this = NewObj(o, type);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void SetObjNoRefc(object o, IType type)
+  {
+    this = new Val
+    {
+      type = type,
+      obj = o
+    };
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -312,6 +315,42 @@ public class ValStack
   public Val[] vals;
   //NOTE: sp always point to the position of the next value, sp - 1 points to the stack top
   public int sp;
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator double(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator float(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator int(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator uint(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator string(ValStack vs)
+  {
+    return vs.Pop();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static implicit operator bool(ValStack vs)
+  {
+    return vs.Pop();
+  }
 
   public ValStack(int init_capacity)
   {
@@ -399,10 +438,7 @@ public class ValStack
   public void ClearAndRelease()
   {
     while(sp > 0)
-    {
-      Pop(out var val);
-      val._refc?.Release();
-    }
+      PopRelease();
   }
 }
 

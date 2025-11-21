@@ -487,7 +487,19 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.SetVarScalar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.GetVar,
+        1 /*local idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetVarScalar,
         1 /*local idx*/
       )
     );
@@ -766,7 +778,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.DeclRef,
+        Opcodes.MakeRef,
         1 /*local idx*/
       )
     );
@@ -1350,14 +1362,16 @@ public class ModuleCompiler : AST_Visitor
         else if(is_ref && !ast.pass_as_ref)
           Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          Emit(Opcodes.GetVar, new int[] {ast.symb_idx}, ast.line_num);
+          //Emit(Opcodes.GetVar, //safe general version
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarScalar : Opcodes.GetVar,
+            new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.VARW:
       case EnumCall.VARWDCL:
       {
         if(ast.type == EnumCall.VARWDCL && is_ref_origin)
-          Emit(Opcodes.DeclRef, new int[] {ast.symb_idx}, ast.line_num);
+          Emit(Opcodes.MakeRef, new int[] {ast.symb_idx}, ast.line_num);
 
         if(is_global)
         {
@@ -1383,7 +1397,9 @@ public class ModuleCompiler : AST_Visitor
         else if(is_ref)
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
-          Emit(Opcodes.SetVar, new int[] {ast.symb_idx}, ast.line_num);
+          //Emit(Opcodes.SetVar, //safe general version
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
+            new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
       case EnumCall.FUNC:
@@ -1774,7 +1790,7 @@ public class ModuleCompiler : AST_Visitor
           //in case it's a reference we must make sure it's properly wrapped before it's set
           //(we can't put the code in the top because default arguments opcode inserts gaps
           //into local variables thus affecting them)
-          Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
+          Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
           Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
           Emit(Opcodes.Jump, new int[] { 2 /*DeclRef opcode below*/ });
         }
@@ -1787,14 +1803,15 @@ public class ModuleCompiler : AST_Visitor
       }
 
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
     }
     else
     {
+      //TODO: do we always need to declare a variable, especially if it's a scalar one?
+      //      (maybe we need a simpler opcode for that)
+      Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.DeclRef, new int[] { ast.symb_idx });
-      else
-        Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
     }
   }
 

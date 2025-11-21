@@ -535,7 +535,7 @@ at test(..) in bhl1.bhl:10"
     vm.LoadModule("bhl1");
     var fb = vm.Start("test");
 
-    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+    var info = new Dictionary<VM.ExecState, List<VM.TraceItem>>();
 
     try
     {
@@ -548,7 +548,7 @@ at test(..) in bhl1.bhl:10"
 
     Assert.Single(info);
 
-    var trace = info[fb];
+    var trace = info[fb.exec];
     Assert.Equal(2, trace.Count);
 
     AssertEqual("bar", trace[0].func);
@@ -592,7 +592,7 @@ at test(..) in bhl1.bhl:10"
     }
     ";
 
-    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+    var info = new Dictionary<VM.ExecState, List<VM.TraceItem>>();
     var ts_fn = new Action<Types>((ts) =>
     {
       {
@@ -627,7 +627,7 @@ at test(..) in bhl1.bhl:10"
 
     Assert.Single(info);
 
-    var trace = info[fb];
+    var trace = info[fb.exec];
     Assert.Equal(4, trace.Count);
 
     AssertEqual("wow", trace[0].func);
@@ -693,7 +693,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.fiber.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -778,7 +778,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.fiber.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -944,7 +944,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.fiber.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1059,7 +1059,7 @@ at test(..) in bhl1.bhl:10"
 
     vm.LoadModule("bhl1");
 
-    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+    var info = new Dictionary<VM.ExecState, List<VM.TraceItem>>();
 
     var fb = vm.Start("test");
     try
@@ -1074,7 +1074,7 @@ at test(..) in bhl1.bhl:10"
 
     Assert.Single(info);
 
-    var trace = info[fb];
+    var trace = info[fb.exec];
     Assert.Equal(4, trace.Count);
 
     AssertEqual("problem", trace[0].func);
@@ -1163,7 +1163,7 @@ at test(..) in bhl1.bhl:10"
 
     vm.LoadModule("bhl1");
 
-    var info = new Dictionary<VM.Fiber, List<VM.TraceItem>>();
+    var info = new Dictionary<VM.ExecState, List<VM.TraceItem>>();
 
     var fb = vm.Start("test");
     try
@@ -1178,7 +1178,7 @@ at test(..) in bhl1.bhl:10"
 
     Assert.Single(info);
 
-    var trace = info[fb];
+    var trace = info[fb.exec];
     Assert.Equal(3, trace.Count);
 
     AssertEqual("problem", trace[0].func);
@@ -1242,7 +1242,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.fiber.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);
@@ -1337,7 +1337,7 @@ at test(..) in bhl1.bhl:10"
         var fn = new FuncSymbolNative(new Origin(), "record_callstack", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            exec.fiber.GetStackTrace(trace);
+            exec.GetStackTrace(trace);
             return null;
           });
         ts.ns.Define(fn);

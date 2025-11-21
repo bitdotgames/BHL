@@ -192,6 +192,44 @@ public class TestClass : BHL_TestBase
   }
 
   [Fact]
+  public void TestReturnOneOfLocalVariables()
+  {
+    string bhl = @"
+    class Foo {
+      int a
+      int b
+      Bar bar
+      Hey hey
+    }
+
+    class Bar {}
+    class Hey {}
+
+    func Foo make(int a, int b) {
+       Bar bar_tmp = {}
+       Foo f = {a: b}
+       var bar = bar_tmp as Bar
+       f.bar = bar
+       f.a = 5
+       var hey = new Hey
+       if(hey != null) {
+         f.hey = (Hey)hey
+       }
+       return f;
+    }
+
+    func int test() {
+      Foo foo = make(10, 20)
+      return foo.a
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.Equal(5, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestSelfInheritanceIsNotAllowed()
   {
     string bhl = @"

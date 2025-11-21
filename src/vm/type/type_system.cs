@@ -376,7 +376,7 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool IsTrivialType(IType type)
+  static public bool IsScalarOrString(IType type)
   {
     return type == Bool ||
            type == String ||
@@ -386,9 +386,15 @@ public class Types : INamedResolver
 
   static public bool IsBinOpCompatible(IType type)
   {
-    return IsTrivialType(type);
+    return IsScalarOrString(type);
   }
 
+  static public bool IsScalar(IType type)
+  {
+    return type == Int ||
+           type == Float ||
+           type == Bool;
+  }
   static public bool IsNumeric(IType type)
   {
     return type == Int ||

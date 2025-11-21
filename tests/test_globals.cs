@@ -25,7 +25,8 @@ public class TestGlobals : BHL_TestBase
     var expected =
         new ModuleCompiler()
           .UseInit()
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.DeclVar, new int[] { 0, TypeIdx(c, ts.T("float")) })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
           .EmitChain(Opcodes.GetGVar, new int[] { 0 })
@@ -57,7 +58,7 @@ public class TestGlobals : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
@@ -77,7 +78,6 @@ public class TestGlobals : BHL_TestBase
   public void TestGlobalVariableAssignConst()
   {
     string bhl = @"
-
     float foo = 10
 
     func float test()
@@ -92,7 +92,7 @@ public class TestGlobals : BHL_TestBase
         new ModuleCompiler()
           .UseInit()
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-          .EmitChain(Opcodes.DeclRef, new int[] { 0 })
+          .EmitChain(Opcodes.MakeRef, new int[] { 0 })
           .EmitChain(Opcodes.SetGVar, new int[] { 0 })
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 0, 1 })
@@ -110,7 +110,6 @@ public class TestGlobals : BHL_TestBase
   public void TestGlobalVariableAssignNegativeNumber()
   {
     string bhl = @"
-
     float foo = -10
 
     func float test()
@@ -121,6 +120,50 @@ public class TestGlobals : BHL_TestBase
 
     var vm = MakeVM(bhl);
     Assert.Equal(-10, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestFindDeclaredClassGlobalVariable()
+  {
+    string bhl = @"
+    class Foo {
+      float b
+    }
+
+    Foo foo
+    ";
+
+    var vm = MakeVM(bhl);
+    Assert.False(vm.TryFindVarAddr("bar", out var _));
+    Assert.True(vm.TryFindVarAddr("foo", out var addr));
+    Assert.Equal("Foo", addr.val_ref.val.type.GetName());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestFindAncChangeGlobalVariable()
+  {
+    string bhl = @"
+    class Foo {
+      float b
+    }
+
+    Foo foo = { b : 1 }
+
+    func float test()
+    {
+      return foo.b
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+
+    Assert.True(vm.TryFindVarAddr("foo", out var addr));
+    Assert.Equal("Foo", addr.val_ref.val.type.GetName());
+    ((ValList)addr.val_ref.val.obj)[0] = 42;
+
+    Assert.Equal(42, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 

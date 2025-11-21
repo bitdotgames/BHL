@@ -8,12 +8,16 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Diagnosers;
 using bhl;
+using MoonSharp.Interpreter;
 
 [EventPipeProfiler(EventPipeProfile.CpuSampling)]
 public class BenchFibonacciAssorted : BHL_TestBase
 {
-  VM vm;
-  FuncSymbolScript fs_simple;
+  VM bhl_vm;
+  FuncSymbolScript bhl_fib;
+
+  Script lua_vm;
+  DynValue lua_fib;
 
   //VM vm_aot;
   //VM.ExecState.LocalFunc[] funcs_aot = new VM.ExecState.LocalFunc[8];
@@ -178,7 +182,6 @@ public class BenchFibonacciAssorted : BHL_TestBase
   public BenchFibonacciAssorted()
   {
     string test = @"
-
     func int fib(int x)
     {
       if(x == 0) {
@@ -191,21 +194,45 @@ public class BenchFibonacciAssorted : BHL_TestBase
         }
       }
     }
+    ";
 
-    func test_simple()
+    string test_cheat = @"
+    func int fib(int x)
     {
-      fib(15)
+      if(x <= 1) {
+        return x
+      } else {
+        return fib(x - 1) + fib(x - 2)
+      }
     }
     ";
 
-    vm = MakeVM(new Dictionary<string, string>() {
+    string lua = @"
+    function fib(n)
+        if n == 0 then
+            return 0
+        else
+            if n == 1 then
+              return 1
+            else
+              return fib(n - 1) + fib(n - 2)
+            end
+        end
+    end
+    ";
+
+    bhl_vm = MakeVM(new Dictionary<string, string>() {
         {"test.bhl", test},
       }
     ).GetAwaiter().GetResult();
 
-    vm.LoadModule("test");
-    fs_simple =
-      (FuncSymbolScript)new VM.SymbolSpec("test", "test_simple").LoadFuncSymbol(vm);
+    bhl_vm.LoadModule("test");
+    bhl_vm.TryFindFuncAddr("fib", out var addr);
+    bhl_fib = addr.fs;
+
+    lua_vm = new Script();
+    lua_vm.DoString(lua);
+    lua_fib = lua_vm.Globals.Get("fib");
 
     //vm_aot = new VM();
     //funcs_aot[0] = __fib;
@@ -252,18 +279,24 @@ public class BenchFibonacciAssorted : BHL_TestBase
     fib(15);
   }
 
+  [Benchmark]
+  public void FibonacciBHL()
+  {
+    bhl_vm.Execute(bhl_fib, 15);
+  }
+
+  [Benchmark]
+  public void FibonacciLua()
+  {
+    lua_vm.Call(lua_fib, DynValue.NewNumber(15));
+  }
+
   //[Benchmark]
   //public void FibonacciDotNetRefl()
   //{
   //  MethodInfo mi = typeof(BenchFibonacciAssorted).GetMethod(nameof(fib_refl), BindingFlags.Static | BindingFlags.NonPublic);
   //  mi.Invoke(null, new object[] { 15 });
   //}
-
-  [Benchmark]
-  public void FibonacciBHLSimple()
-  {
-    vm.Execute(fs_simple);
-  }
 
   //[Benchmark]
   //public void FibonacciAOT()
