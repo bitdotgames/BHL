@@ -442,7 +442,7 @@ public partial class VM
 
             ref Val new_val = ref stack.Push();
             ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
-            new_val.type = source.type;
+            new_val.type_id = source.type_id;
             new_val.num = source.num;
             //TODO: do we need this?
             //new_val._refc = null;
@@ -455,7 +455,7 @@ public partial class VM
 
             ref var new_val = ref stack.vals[--stack.sp];
             ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
-            dest.type = new_val.type;
+            dest.type_id = new_val.type_id;
             dest.num = new_val.num;
             //TODO: do we need this?
             //dest._refc?.Release();
@@ -472,7 +472,7 @@ public partial class VM
             //TODO: we might have specialized opcodes for different variable types?
             //cn.FillVal(ref v);
             //optimized version
-            v.num = cn.num;
+            v._long0 = (long)cn.num;
           }
           break;
 
@@ -481,12 +481,7 @@ public partial class VM
             ref Val r_operand = ref stack.vals[--stack.sp];
             ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-            l_operand.type = Types.Bool;
-            l_operand.num = r_operand.num == l_operand.num
-              //optimized version
-              /*&& (string)r_operand.obj  == (string)l_operand.obj*/
-              ? 1
-              : 0;
+            l_operand.SetBool(r_operand._long0 == l_operand._long0);
           }
           break;
 
@@ -521,7 +516,7 @@ public partial class VM
             //if(l_operand.type == Types.String)
             //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
             //else
-              l_operand.num += r_operand.num;
+              l_operand._int0 += r_operand._int0;
           }
           break;
 
@@ -529,7 +524,7 @@ public partial class VM
           {
             ref Val r_operand = ref stack.vals[--stack.sp];
             ref Val l_operand = ref stack.vals[stack.sp - 1];
-            l_operand.num -= r_operand.num;
+            l_operand._int0 -= r_operand._int0;
           }
           break;
 
