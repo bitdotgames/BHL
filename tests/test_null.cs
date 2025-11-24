@@ -300,4 +300,38 @@ public class TestNull : BHL_TestBase
     AssertEqual("NULL;NOT NULL;", log.ToString());
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestNullFuncPtrAsDefaultFuncArgUsedInClosure()
+  {
+    string bhl = @"
+
+    func foo(int a, int b = 10, func int(int) fn = null)
+    {
+      var temp = func() {
+        if(fn != null) {
+          fn(b)
+          trace(""NOT NULL;"")
+        } else {
+          trace(""NULL;"")
+        }
+      }
+      temp()
+    }
+
+    func test()
+    {
+      foo(1)
+      foo(2, fn: func int(int a) { return a})
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("NULL;NOT NULL;", log.ToString());
+    CommonChecks(vm);
+  }
 }
