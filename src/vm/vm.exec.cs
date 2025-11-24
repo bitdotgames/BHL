@@ -526,7 +526,23 @@ public partial class VM
     frame.InitWithModule(fs._module, fs._ip_addr);
     exec.PushFrameRegion(ref frame, frame_idx);
 
-    exec.Execute();
+    try
+    {
+      exec.Execute();
+    }
+    catch(Exception e)
+    {
+      var trace = new List<VM.TraceItem>();
+      try
+      {
+        exec.GetStackTrace(trace);
+      }
+      catch(Exception)
+      {
+      }
+      throw new Error(trace, e);
+    }
+
     if(exec.status == BHS.RUNNING)
       throw new Exception($"Not expected to be running: {fs}");
 

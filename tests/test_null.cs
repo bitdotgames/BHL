@@ -302,7 +302,7 @@ public class TestNull : BHL_TestBase
   }
 
   [Fact]
-  public void TestNullFuncPtrAsDefaultFuncArgUsedInClosure()
+  public void TestNullFuncPtrAsDefaultFuncArgClosure()
   {
     string bhl = @"
 

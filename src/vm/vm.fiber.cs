@@ -128,9 +128,9 @@ public partial class VM : INamedResolver
       return stop_guard || exec.ip >= STOP_IP;
     }
 
-    public void GetStackTrace(List<VM.TraceItem> info)
+    public void GetStackTrace(List<VM.TraceItem> trace)
     {
-      exec.GetStackTrace(info);
+      exec.GetStackTrace(trace);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,7 +159,7 @@ public partial class VM : INamedResolver
         var trace = new List<VM.TraceItem>();
         try
         {
-          GetStackTrace(trace);
+          exec.GetStackTrace(trace);
         }
         catch(Exception)
         {
@@ -191,7 +191,7 @@ public partial class VM : INamedResolver
           var trace = new List<VM.TraceItem>();
           try
           {
-            GetStackTrace(trace);
+            exec.GetStackTrace(trace);
           }
           catch(Exception)
           {
