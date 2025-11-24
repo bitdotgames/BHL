@@ -13,6 +13,10 @@ public class Types : INamedResolver
   static public FloatSymbol Float = new FloatSymbol();
   static public VoidSymbol Void = new VoidSymbol();
   static public AnySymbol Any = new AnySymbol();
+  //it's an emphemeral type, exists only to designate FuncPtr values in runtime
+  static public FuncPtrType FuncPtr = new FuncPtrType();
+  //it's an emphemeral type, exists only to designate ValRef values in runtime
+  static public ValRefType ValRef = new ValRefType();
 
   static public ClassSymbolNative Type =
     new ClassSymbolNative(new Origin(), "Type",

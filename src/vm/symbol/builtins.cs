@@ -183,7 +183,7 @@ public class AnySymbol : Symbol, IType
   }
 }
 
-//NOTE: for better 'null ref. error' reports we extend the ClassSymbolScript  
+//NOTE: for better 'null ref. error' reports we extend the ClassSymbolScript
 public class NullSymbol : ClassSymbolScript
 {
   public new const uint CLASS_ID = 7;
@@ -227,6 +227,22 @@ public class VarSymbol : Symbol
   //contains no data
   public override void Sync(marshall.SyncContext ctx)
   {
+  }
+}
+
+public class FuncPtrType : IType
+{
+  public string GetName()
+  {
+    return "FuncPtrType";
+  }
+}
+
+public class ValRefType : IType
+{
+  public string GetName()
+  {
+    return "ValRefType";
   }
 }
 

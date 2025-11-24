@@ -791,4 +791,28 @@ public class TestRefs : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestPtrByRefBug()
+  {
+    string bhl = @"
+    func call(func() action)
+    {
+      var wrapper = func() {
+        action()
+      }
+      wrapper()
+    }
+
+    func test()
+    {
+      call(func() {})
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    Execute(vm, "test");
+    CommonChecks(vm);
+
+  }
+
 }

@@ -629,15 +629,15 @@ public partial class VM
 
     //replacing existing val with ValRef if it's not already a ValRef
     //(this a special case required e.g for loop variables)
-    //TODO: we'd better check the type for robustness?
-    if(curr._refc == null)
+    if(curr.type != Types.ValRef)
     {
-      var new_val = new Val();
+      var vr_val = new Val();
+      vr_val.type = Types.ValRef;
       var vr = ValRef.New(vm);
       //NOTE: we wrap an existing value
       vr.val = curr;
-      new_val._refc = vr;
-      curr = new_val;
+      vr_val._refc = vr;
+      curr = vr_val;
     }
   }
 
@@ -774,7 +774,7 @@ public partial class VM
 
     var ptr = FuncPtr.New(vm);
     ptr.Init(frame.module, func_ip);
-    exec.stack.Push(Val.NewObj(ptr, Types.Any /*TODO: should be a FuncPtr type*/));
+    exec.stack.Push(Val.NewObj(ptr, Types.FuncPtr));
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
