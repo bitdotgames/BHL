@@ -812,7 +812,6 @@ public class TestRefs : BHL_TestBase
     var vm = MakeVM(bhl);
     Execute(vm, "test");
     CommonChecks(vm);
-
   }
 
 }

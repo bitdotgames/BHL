@@ -629,7 +629,7 @@ public partial class VM
 
     //replacing existing val with ValRef if it's not already a ValRef
     //(this a special case required e.g for loop variables)
-    if(curr.type != Types.ValRef)
+    if(curr.type != Types.ValRef || curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
     {
       var vr_val = new Val();
       vr_val.type = Types.ValRef;
