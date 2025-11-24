@@ -3587,7 +3587,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
     if(write)
       return new AST_Call(EnumCall.VARWDCL, name.Symbol.Line, symb, 0, name);
-    return new AST_VarDecl(symb);
+    return new AST_VarDecl(symb, name.Symbol.Line);
   }
 
   bool ProcAssignToVar(
@@ -4203,7 +4203,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
 
       PeekAST().AddChild(new AST_Call(EnumCall.VARW, ctx.Start.Line, arr_tmp_symb));
       //declaring counter var
-      PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb));
+      PeekAST().AddChild(new AST_VarDecl(arr_cnt_symb, ctx.Start.Line));
 
       //declaring iterating var
       if(iter_ast_decl != null)

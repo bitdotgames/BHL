@@ -1782,7 +1782,8 @@ public class ModuleCompiler : AST_Visitor
             //(which are stored in the very beginning)
             ast.symb_idx - curr_func.GetRequiredArgsNum() - (curr_func.scope is ClassSymbol ? 1 : 0),
             0 /*offset patched later*/
-          });
+          },
+          ast.line_num);
         //might need to visit default arguments init code
         VisitChildren(ast);
         if(ast.symb._is_ref_decl)
@@ -1790,28 +1791,28 @@ public class ModuleCompiler : AST_Visitor
           //in case it's a reference we must make sure it's properly wrapped before it's set
           //(we can't put the code in the top because default arguments opcode inserts gaps
           //into local variables thus affecting them)
-          Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
-          Emit(Opcodes.SetRef, new int[] { ast.symb_idx });
+          Emit(Opcodes.MakeRef, new int[] { ast.symb_idx }, ast.line_num);
+          Emit(Opcodes.SetRef, new int[] { ast.symb_idx }, ast.line_num);
           Emit(Opcodes.Jump, new int[] { 2 /*DeclRef opcode below*/ });
         }
         else
         {
-          Emit(Opcodes.SetVar, new int[] { ast.symb_idx });
+          Emit(Opcodes.SetVar, new int[] { ast.symb_idx }, ast.line_num);
         }
         //we want to jump out of default arguments related code
         AddOffsetFromTo(arg_op, Peek(), operand_idx: 2);
       }
 
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx }, ast.line_num);
     }
     else
     {
       //TODO: do we always need to declare a variable, especially if it's a scalar one?
       //      (maybe we need a simpler opcode for that)
-      Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) });
+      Emit(Opcodes.DeclVar, new int[] { ast.symb_idx, AddTypeRef(ast.type) }, ast.line_num);
       if(ast.symb._is_ref_decl)
-        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx });
+        Emit(Opcodes.MakeRef, new int[] { ast.symb_idx }, ast.line_num);
     }
   }
 

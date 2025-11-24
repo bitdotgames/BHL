@@ -459,20 +459,22 @@ public class AST_VarDecl : AST_Tree
   public VariableSymbol symb;
   public IType type => symb?.type.Get();
   public int symb_idx;
+  public int line_num;
 
-  public AST_VarDecl(VariableSymbol symb)
-    : this(symb, symb.scope_idx)
+  public AST_VarDecl(VariableSymbol symb, int line_num)
+    : this(symb, symb.scope_idx, line_num)
   {}
 
   //class static field version
-  public AST_VarDecl(FieldSymbol symb, int global_idx)
-    : this((VariableSymbol)symb, global_idx)
+  public AST_VarDecl(FieldSymbol symb, int global_idx, int line_num)
+    : this((VariableSymbol)symb, global_idx, line_num)
   {}
 
-  private AST_VarDecl(VariableSymbol symb, int symb_idx)
+  private AST_VarDecl(VariableSymbol symb, int symb_idx, int line_num)
   {
     this.symb = symb;
     this.symb_idx = symb_idx;
+    this.line_num = line_num;
   }
 }
 
