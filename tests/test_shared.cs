@@ -982,7 +982,7 @@ public class BHL_TestBase
     }
 
     var ms = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
-    if(show_bytes)
+    if(show_bytes || Environment.GetEnvironmentVariable("BHL_SHOW_BYTES") == "1")
     {
       var ml = new ModuleLoader(conf.ts, ms);
       foreach(var file in conf.files)
@@ -1047,7 +1047,7 @@ public class BHL_TestBase
 
     var c = new ModuleCompiler(proc.result);
     var result = c.Compile();
-    if(show_bytes)
+    if(show_bytes || Environment.GetEnvironmentVariable("BHL_SHOW_BYTES") == "1")
       Dump(c);
     return result;
   }

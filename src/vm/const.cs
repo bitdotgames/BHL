@@ -77,7 +77,7 @@ public class Const : IEquatable<Const>
     }
     else if(type == ConstType.NIL)
     {
-      v = new Val { type = Types.Null };
+      v = VM.Null;
     }
     else
       throw new Exception("Bad type");

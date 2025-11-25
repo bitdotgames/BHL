@@ -323,6 +323,7 @@ public class TestNull : BHL_TestBase
     {
       foo(1)
       foo(2, fn: func int(int a) { return a})
+      foo(3, fn: null)
     }
     ";
 
@@ -331,7 +332,7 @@ public class TestNull : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
-    AssertEqual("NULL;NOT NULL;", log.ToString());
+    AssertEqual("NULL;NOT NULL;NULL;", log.ToString());
     CommonChecks(vm);
   }
 }
