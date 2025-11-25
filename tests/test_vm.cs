@@ -6283,6 +6283,28 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestFuncSeveralDefaultArgsMixed2()
+  {
+    string bhl = @"
+
+    func float foo(int a, string c, float b = 100, float k = 1000, float m = 10000, int level = -1)
+    {
+      return k - m
+    }
+
+    func float test()
+    {
+      return foo(1, ""hey"", k : 2, m: 10)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").Stack.Pop().num;
+    Assert.Equal(-8, num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestFuncArgPassedByValue()
   {
     string bhl = @"
