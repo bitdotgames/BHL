@@ -6287,7 +6287,14 @@ public class TestVM : BHL_TestBase
   {
     string bhl = @"
 
-    func float foo(int a, string c, float b = 100, float k = 1000, float m = 10000, int level = -1)
+    func float foo(
+      int a,
+      string c,
+      float b = 100,
+      float k = 1000,
+      float m = 10000,
+      int level = -1
+      )
     {
       return k - m
     }
