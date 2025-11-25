@@ -1165,7 +1165,6 @@ public partial class VM
     if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
     {
       int args_num = frame.args_info.CountArgs();
-      //int pos_idx = frame.locals_offset + arg_idx;
 
       //we need to move only passed arguments and move them in reverse order
       //so that they don't overlap during 'movement'
