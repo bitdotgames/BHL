@@ -13,6 +13,1171 @@ public partial class VM
 
   static readonly BytecodeHandler[] op_handlers = new BytecodeHandler[(int)Opcodes.MAX];
 
+  public partial class ExecState
+  {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal unsafe void ExecuteOnce()
+    {
+      ref var region = ref regions[regions_count - 1];
+      ref var frame = ref frames[region.frame_idx];
+
+      //1. if there's an active coroutine it has priority over simple 'code following' via ip
+      if(coroutine != null)
+      {
+        ExecuteCoroutine(ref region, this);
+      }
+      //2. are we out of the current region?
+      else if(ip < region.min_ip || ip > region.max_ip)
+      {
+        if(region.defers != null && region.defers.count > 0)
+          region.defers.ExitScope(this);
+        --regions_count;
+      }
+      //3. exit frame requested
+      else if(ip == EXIT_FRAME_IP)
+      {
+        //exiting all regions which belong to the frame
+        for(int i = regions_count; i-- > frame.regions_mark;)
+        {
+          ref var tmp_region = ref regions[i];
+          if(tmp_region.defers != null && tmp_region.defers.count > 0)
+            tmp_region.defers.ExitScope(this);
+        }
+        regions_count = frame.regions_mark;
+        frame.CleanLocals();
+
+        if(frame.return_vars_num > 0)
+          frame.ReturnVars(stack);
+        //stack pointer now at the last returned value
+        stack.sp = frame.locals_offset + frame.return_vars_num;
+        --frames_count;
+
+        ip = frame.return_ip + 1;
+      }
+      else
+      {
+        var bytes = frame.bytecode;
+        var opcode = (Opcodes)bytes[ip];
+        //op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
+
+        switch(opcode)
+        {
+          case Opcodes.Frame:
+          {
+            int locals_vars_num = bytes[++ip];
+            int return_vars_num = bytes[++ip];
+
+            frame.locals_vars_num = locals_vars_num;
+            frame.return_vars_num = return_vars_num;
+
+            //NOTE: it's assumed that refcounted args are pushed with refcounted values
+            int args_num = frame.args_info.CountArgs();
+
+            frame.locals_offset = stack.sp - args_num;
+            frame.locals = stack;
+
+            //let's reserve space for local variables, however passed variables are
+            //already on the stack, let's take that into account
+            int rest_local_vars_num = locals_vars_num - args_num;
+            stack.Reserve(rest_local_vars_num);
+            //temporary stack lives after local variables
+            stack.sp += rest_local_vars_num;
+          }
+            break;
+
+          case Opcodes.GetVar:
+          {
+            int local_idx = bytes[++ip];
+
+            ref Val new_val = ref stack.Push();
+            new_val = frame.locals.vals[frame.locals_offset + local_idx];
+            new_val._refc?.Retain();
+          }
+            break;
+
+          case Opcodes.SetVar:
+          {
+            int local_idx = bytes[++ip];
+
+            stack.Pop(out var new_val);
+            ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
+            current._refc?.Release();
+            current = new_val;
+          }
+            break;
+
+          case Opcodes.Constant:
+          {
+            int const_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            var cn = frame.constants[const_idx];
+
+            ref Val v = ref stack.Push();
+            //TODO: we might have specialized opcodes for different variable types?
+            cn.FillVal(ref v);
+          }
+            break;
+
+          case Opcodes.EqualLite:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand.type = Types.Bool;
+            l_operand.num = r_operand.num == l_operand.num &&
+                            (string)r_operand.obj  == (string)l_operand.obj
+              ? 1
+              : 0;
+          }
+            break;
+
+          case Opcodes.JumpZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+
+            ref Val v = ref stack.vals[--stack.sp];
+
+            if(v.num == 0)
+              ip += offset;
+          }
+            break;
+
+          case Opcodes.Return:
+          {
+            ip = EXIT_FRAME_IP - 1;
+          }
+            break;
+
+          case Opcodes.Jump:
+          {
+            short offset = (short)Bytecode.Decode16(bytes, ref ip);
+            ip += offset;
+          }
+            break;
+
+          case Opcodes.Add:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+            //TODO: add separate opcode Concat for strings
+            if(l_operand.type == Types.String)
+              l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+            else
+              l_operand.num += r_operand.num;
+          }
+            break;
+
+          case Opcodes.Sub:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+            l_operand.num -= r_operand.num;
+          }
+            break;
+
+        //  case Opcodes.Div:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+        //    l_operand.num /= r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.Mul:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+        //    l_operand.num *= r_operand.num;
+        //  }
+        //    break;
+
+          case Opcodes.Equal:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+            if(r_operand._refc != null)
+            {
+              r_operand._refc.Release();
+              r_operand._refc = null;
+            }
+
+            r_operand.obj = null;
+
+            l_operand._refc?.Release();
+            l_operand = res;
+          }
+            break;
+
+          case Opcodes.CallLocal:
+          {
+            int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+            var args_info = new FuncArgsInfo(args_bits);
+            int new_frame_idx = frames_count;
+            ref var new_frame = ref PushFrame();
+            new_frame.args_info = args_info;
+            new_frame.InitWithOrigin(frame, func_ip);
+            CallFrame(this, ref new_frame, new_frame_idx);
+          }
+            break;
+
+        //  case Opcodes.LT:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
+        //  }
+        //    break;
+
+        //  case Opcodes.LTE:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
+        //  }
+        //    break;
+
+        //  case Opcodes.GT:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
+        //  }
+        //    break;
+
+        //  case Opcodes.GTE:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
+        //  }
+        //    break;
+
+        //  case Opcodes.And:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Bool as well, so we don't replace it
+        //    l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
+        //  }
+        //    break;
+
+        //  case Opcodes.Or:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Bool as well, so we don't replace it
+        //    l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
+        //  }
+        //    break;
+
+        //  case Opcodes.BitAnd:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Int as well, so we don't replace it
+        //    l_operand.num = (int)l_operand.num & (int)r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.BitOr:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Int as well, so we don't replace it
+        //    l_operand.num = (int)l_operand.num | (int)r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.BitShr:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Int as well, so we don't replace it
+        //    l_operand.num = (int)l_operand.num >> (int)r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.BitShl:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Int as well, so we don't replace it
+        //    l_operand.num = (int)l_operand.num << (int)r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.Mod:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+        //    //resulting operand is Int as well, so we don't replace it
+        //    l_operand.num %= r_operand.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.UnaryNot:
+        //  {
+        //    ref Val val = ref stack.vals[stack.sp - 1];
+        //    //resulting operand is Bool as well, so we don't replace it
+        //    val.num = val.num != 1 ? 1 : 0;
+        //  }
+        //    break;
+
+        //  case Opcodes.UnaryNeg:
+        //  {
+        //    ref Val val = ref stack.vals[stack.sp - 1];
+        //    //resulting operand is Int as well, so we don't replace it
+        //    val.num *= -1;
+        //  }
+        //    break;
+
+        //  case Opcodes.UnaryBitNot:
+        //  {
+        //    ref Val val = ref stack.vals[stack.sp - 1];
+        //    //resulting operand is Int as well, so we don't replace it
+        //    val.num = ~((int)val.num);
+        //  }
+        //    break;
+
+        //  case Opcodes.TypeCast:
+        //  {
+        //    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    bool force_type = bytes[++ip] == 1;
+
+        //    var cast_type = frame.type_refs[cast_type_idx];
+
+        //    ref var val = ref stack.Peek();
+
+        //    if(cast_type == Types.Int)
+        //    {
+        //      val._refc?.Release();
+        //      val = Val.NewNum((long)val.num);
+        //    }
+        //    else if(cast_type == Types.String && val.type != Types.String)
+        //    {
+        //      val._refc?.Release();
+        //      val = Val.NewStr(
+        //        val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
+        //      );
+        //    }
+        //    else
+        //    {
+        //      //NOTE: extra type check in case cast type is instantiable object (e.g class)
+        //      if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+        //        throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
+        //      if(force_type)
+        //        val.type = cast_type;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.TypeAs:
+        //  {
+        //    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    bool force_type = bytes[++ip] == 1;
+        //    var as_type = frame.type_refs[cast_type_idx];
+
+        //    ref var val = ref stack.Peek();
+
+        //    if(Types.Is(val, as_type))
+        //    {
+        //      if(force_type)
+        //        val.type = as_type;
+        //    }
+        //    else
+        //    {
+        //      val._refc?.Release();
+        //      val = Null;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.TypeIs:
+        //  {
+        //    int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    var as_type = frame.type_refs[cast_type_idx];
+
+        //    ref var val = ref stack.Peek();
+        //    var refc = val._refc;
+        //    val = Types.Is(val, as_type);
+        //    refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.Typeof:
+        //  {
+        //    int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    var type = frame.type_refs[type_idx];
+
+        //    stack.Push(Val.NewObj(type, Types.Type));
+        //  }
+        //    break;
+
+        //  case Opcodes.Inc:
+        //  {
+        //    int var_idx = bytes[++ip];
+        //    ++frame.locals.vals[frame.locals_offset + var_idx].num;
+        //  }
+        //    break;
+
+        //  case Opcodes.Dec:
+        //  {
+        //    int var_idx = bytes[++ip];
+        //    --frame.locals.vals[frame.locals_offset + var_idx].num;
+        //  }
+        //    break;
+
+        //  case Opcodes.ArrIdx:
+        //  {
+        //    int idx = stack.PopFast();
+        //    ref var arr = ref stack.Peek();
+
+        //    var class_type = (ArrayTypeSymbol)arr.type;
+        //    var res = class_type.ArrGetAt(arr, idx);
+
+        //    arr._refc?.Release();
+        //    //let's replace with the result
+        //    arr = res;
+        //  }
+        //    break;
+
+        //  case Opcodes.ArrIdxW:
+        //  {
+        //    int idx = stack.PopFast();
+        //    stack.Pop(out var arr);
+        //    stack.Pop(out var val);
+
+        //    var class_type = (ArrayTypeSymbol)arr.type;
+        //    class_type.ArrSetAt(arr, idx, val);
+
+        //    val._refc?.Release();
+        //    arr._refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.ArrAddInplace:
+        //  {
+        //    //taking copy not ref since during Pop in binding operator stack will be cleared
+        //    var self = stack.vals[stack.sp - 2];
+        //    self._refc?.Retain();
+        //    var class_type = (ArrayTypeSymbol)self.type;
+        //    //NOTE: Add must be at 0 index
+        //    ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
+        //    stack.Push(self);
+        //  }
+        //    break;
+
+        //  case Opcodes.MapIdx:
+        //  {
+        //    stack.Pop(out var key);
+        //    stack.Pop(out var map);
+
+        //    var class_type = (MapTypeSymbol)map.type;
+        //    class_type.MapTryGet(map, key, out var res);
+
+        //    res._refc?.Retain();
+        //    stack.Push(res);
+
+        //    key._refc?.Release();
+        //    map._refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.MapIdxW:
+        //  {
+        //    stack.Pop(out var key);
+        //    stack.Pop(out var map);
+        //    stack.Pop(out var val);
+
+        //    var class_type = (MapTypeSymbol)map.type;
+        //    class_type.MapSet(map, key, val);
+
+        //    key._refc?.Release();
+        //    val._refc?.Release();
+        //    map._refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.MapAddInplace:
+        //  {
+        //    //taking copy not ref since during Pop in binding operator stack will be cleared
+        //    var self = stack.vals[stack.sp - 3];
+        //    self._refc?.Retain();
+        //    var class_type = (MapTypeSymbol)self.type;
+        //    //NOTE: Add must be at 0 index
+        //    ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
+        //    stack.Push(self);
+        //  }
+        //    break;
+
+        //  case Opcodes.GetVarScalar:
+        //  {
+        //    int local_idx = bytes[++ip];
+
+        //    ref Val new_val = ref stack.Push();
+        //    ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    //TODO: do we care about type for scalars?
+        //    new_val.type = source.type;
+        //    new_val.num = source.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.SetVarScalar:
+        //  {
+        //    int local_idx = bytes[++ip];
+
+        //    ref var new_val = ref stack.vals[--stack.sp];
+        //    ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    //TODO: do we care about type for scalars?
+        //    dest.type = new_val.type;
+        //    dest.num = new_val.num;
+        //  }
+        //    break;
+
+        //  case Opcodes.DeclVar:
+        //  {
+        //    int local_idx = bytes[++ip];
+        //    int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    var type = frame.type_refs[type_idx];
+
+        //    ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    //NOTE: handling case when variables are 're-declared' within the nested loop
+        //    curr._refc?.Release();
+
+        //    InitDefaultVal(type, ref curr);
+        //  }
+        //    break;
+
+        //  case Opcodes.MakeRef:
+        //  {
+        //    int local_idx = bytes[++ip];
+
+        //    ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
+
+        //    //replacing existing val with ValRef if it's not already a ValRef
+        //    //(this a special case required e.g for loop variables)
+        //    if(curr.type != Types.ValRef ||
+        //       curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
+        //    {
+        //      var vr_val = new Val();
+        //      vr_val.type = Types.ValRef;
+        //      var vr = ValRef.New(vm);
+        //      //NOTE: we wrap an existing value
+        //      vr.val = curr;
+        //      vr_val._refc = vr;
+        //      curr = vr_val;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.SetRef:
+        //  {
+        //    int local_idx = bytes[++ip];
+
+        //    stack.Pop(out var new_val);
+
+        //    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    var val_ref = (ValRef)val_ref_holder._refc;
+        //    val_ref.val._refc?.Release();
+        //    val_ref.val = new_val;
+        //  }
+        //    break;
+
+        //  case Opcodes.GetRef:
+        //  {
+        //    int local_idx = bytes[++ip];
+
+        //    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    var val_ref = (ValRef)val_ref_holder._refc;
+
+        //    ref Val v = ref stack.Push();
+        //    v = val_ref.val;
+        //    v._refc?.Retain();
+        //  }
+        //    break;
+
+        //  case Opcodes.GetAttr:
+        //  {
+        //    int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    ref var obj = ref stack.Peek();
+        //    var class_symb = (ClassSymbol)obj.type;
+
+        //    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+        //    var res = new Val();
+        //    field_symb.getter(this, obj, ref res, field_symb);
+
+        //    res._refc?.Retain();
+        //    obj._refc?.Release();
+        //    //let's replace the value on the stack
+        //    obj = res;
+        //  }
+        //    break;
+
+        //  case Opcodes.SetAttr:
+        //  {
+        //    int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    stack.Pop(out var obj);
+        //    stack.Pop(out var val);
+
+        //    var class_symb = (ClassSymbol)obj.type;
+        //    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+        //    field_symb.setter(this, ref obj, val, field_symb);
+
+        //    val._refc?.Release();
+        //    obj._refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.SetAttrInplace:
+        //  {
+        //    int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    stack.Pop(out var val);
+        //    ref var obj = ref stack.Peek();
+
+        //    var class_symb = (ClassSymbol)obj.type;
+        //    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+        //    field_symb.setter(this, ref obj, val, field_symb);
+
+        //    val._refc?.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.GetGVar:
+        //  {
+        //    int var_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+        //    var val_ref = (ValRef)val_ref_holder._refc;
+
+        //    ref Val v = ref stack.Push();
+        //    v = val_ref.val;
+        //    v._refc?.Retain();
+        //  }
+        //    break;
+
+        //  case Opcodes.SetGVar:
+        //  {
+        //    int var_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    stack.Pop(out var new_val);
+
+        //    ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
+        //    var val_ref = (ValRef)val_ref_holder._refc;
+        //    val_ref.val._refc?.Release();
+        //    val_ref.val = new_val;
+        //  }
+        //    break;
+
+          case Opcodes.Nop:
+          {
+          }
+            break;
+
+        //  case Opcodes.GetFuncLocalPtr:
+        //  {
+        //    int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    var func_symb = frame.module.func_index.index[func_idx];
+
+        //    var ptr = FuncPtr.New(vm);
+        //    ptr.Init(frame.module, func_symb._ip_addr);
+        //    stack.Push(Val.NewObj(ptr, func_symb.signature));
+        //  }
+        //    break;
+
+        //  case Opcodes.GetFuncIpPtr:
+        //  {
+        //    int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    var ptr = FuncPtr.New(vm);
+        //    ptr.Init(frame.module, func_ip);
+        //    stack.Push(Val.NewObj(ptr, Types.FuncPtr));
+        //  }
+        //    break;
+
+        //  case Opcodes.GetFuncPtr:
+        //  {
+        //    int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    var func_mod = frame.module._imported[import_idx];
+        //    var func_symb = func_mod.func_index.index[func_idx];
+
+        //    var ptr = FuncPtr.New(vm);
+        //    ptr.Init(func_mod, func_symb._ip_addr);
+        //    stack.Push(Val.NewObj(ptr, func_symb.signature));
+        //  }
+        //    break;
+
+        //  case Opcodes.GetFuncNativePtr:
+        //  {
+        //    int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+        //    //NOTE: using convention where built-in global module is always at index 0
+        //    //      and imported modules are at (import_idx + 1)
+        //    var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+        //    var nfunc_symb = func_mod.nfunc_index.index[func_idx];
+
+        //    var ptr = FuncPtr.New(vm);
+        //    ptr.Init(nfunc_symb);
+        //    stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
+        //  }
+        //    break;
+
+        //  case Opcodes.CallGlobNative:
+        //  {
+        //    int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var nfunc_symb = vm.types.module.nfunc_index[func_idx];
+
+        //    if(CallNative(this, nfunc_symb, args_bits))
+        //    {
+        //      //let's cancel ip incrementing
+        //      --ip;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.CallNative:
+        //  {
+        //    int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    //NOTE: using convention where built-in global module is always at index 0
+        //    //      and imported modules are at (import_idx + 1)
+        //    var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+        //    var nfunc_symb = func_mod.nfunc_index[func_idx];
+
+        //    if(CallNative(this, nfunc_symb, args_bits))
+        //    {
+        //      //let's cancel ip incrementing
+        //      --ip;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.Call:
+        //  {
+        //    int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var func_mod = frame.module._imported[import_idx];
+
+        //    int new_frame_idx = frames_count;
+        //    ref var new_frame = ref PushFrame();
+        //    new_frame.args_info = new FuncArgsInfo(args_bits);
+        //    new_frame.InitWithModule(func_mod, func_ip);
+        //    CallFrame(this, ref new_frame, new_frame_idx);
+        //  }
+        //    break;
+
+        //  case Opcodes.CallMethod:
+        //  {
+        //    int func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var args_info = new FuncArgsInfo(args_bits);
+        //    int self_idx = stack.sp - args_info.CountArgs() - 1;
+        //    ref var self = ref stack.vals[self_idx];
+        //    //NOTE: taking into account that 'this' is on the stack,
+        //    //      args_bits doesn't include it we have to take it into
+        //    //      account so that during EnterFrame local offsets are
+        //    //      properly calculated
+        //    --stack.sp;
+
+        //    var class_type = (ClassSymbolScript)self.type;
+        //    var func_symb = (FuncSymbolScript)class_type._all_members[func_idx];
+
+        //    int new_frame_idx = frames_count;
+        //    ref var new_frame = ref PushFrame();
+        //    new_frame.args_info = args_info;
+        //    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+        //    CallFrame(this, ref new_frame, new_frame_idx);
+        //  }
+        //    break;
+
+        //  case Opcodes.CallMethodNative:
+        //  {
+        //    int func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+        //    int self_idx = stack.sp - args_num - 1;
+        //    ref var self = ref stack.vals[self_idx];
+
+        //    var class_type = (ClassSymbol)self.type;
+        //    var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
+
+        //    if(CallNative(this, func_symb, args_bits))
+        //    {
+        //      //let's cancel ip incrementing
+        //      --ip;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.CallMethodVirt:
+        //  {
+        //    int virt_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var args_info = new FuncArgsInfo(args_bits);
+        //    int self_idx = stack.sp - args_info.CountArgs() - 1;
+        //    ref var self = ref stack.vals[self_idx];
+        //    //NOTE: taking into account that 'this' is on the stack,
+        //    //      args_bits doesn't include it we have to take it into
+        //    //      account so that during EnterFrame local offsets are
+        //    //      properly calculated
+        //    --stack.sp;
+
+        //    var class_type = (ClassSymbol)self.type;
+        //    var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
+
+        //    int new_frame_idx = frames_count;
+        //    ref var new_frame = ref PushFrame();
+        //    new_frame.args_info = args_info;
+        //    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+        //    CallFrame(this, ref new_frame, new_frame_idx);
+        //  }
+        //    break;
+
+        //  case Opcodes.CallMethodIface:
+        //  {
+        //    int iface_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int iface_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var args_info = new FuncArgsInfo(args_bits);
+        //    int self_idx = stack.sp - args_info.CountArgs() - 1;
+        //    ref var self = ref stack.vals[self_idx];
+        //    //NOTE: taking into account that 'this' is on the stack,
+        //    //      args_bits doesn't include it we have to take it into
+        //    //      account so that during EnterFrame local offsets are
+        //    //      properly calculated
+        //    --stack.sp;
+
+        //    var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
+        //    var class_type = (ClassSymbol)self.type;
+        //    var func_symb = (FuncSymbolScript)class_type._itable[iface_symb][iface_func_idx];
+
+        //    int new_frame_idx = frames_count;
+        //    ref var new_frame = ref PushFrame();
+        //    new_frame.args_info = args_info;
+        //    new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+        //    CallFrame(this, ref new_frame, new_frame_idx);
+        //  }
+        //    break;
+
+        //  case Opcodes.CallMethodIfaceNative:
+        //  {
+        //    int iface_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+        //    int iface_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
+        //    var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
+
+        //    if(CallNative(this, func_symb, args_bits))
+        //    {
+        //      //let's cancel ip incrementing
+        //      --ip;
+        //    }
+        //  }
+        //    break;
+
+        //  case Opcodes.CallFuncPtr:
+        //  {
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    stack.Pop(out var val_ptr);
+        //    var ptr = (FuncPtr)val_ptr.obj;
+
+        //    //checking if it's a native call
+        //    if(ptr.native != null)
+        //    {
+        //      bool return_status = CallNative(this, ptr.native, args_bits);
+        //      if(return_status)
+        //      {
+        //        //let's cancel ip incrementing
+        //        --ip;
+        //      }
+        //    }
+        //    else
+        //    {
+        //      int new_frame_idx = frames_count;
+        //      ref var new_frame = ref PushFrame();
+        //      new_frame.args_info = new FuncArgsInfo(args_bits);
+        //      ptr.InitFrame(this, ref frame, ref new_frame);
+        //      CallFrame(this, ref new_frame, new_frame_idx);
+        //    }
+
+        //    ptr.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.CallFuncPtrInv:
+        //  {
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+        //    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+        //    int ptr_idx = stack.sp - args_num - 1;
+        //    var ptr = (FuncPtr)stack.vals[ptr_idx].obj;
+
+        //    if(args_num > 0)
+        //    {
+        //      //moving args up the stack, replacing ptr
+        //      for(int i = 0; i < stack.sp - ptr_idx - 1; ++i)
+        //        stack.vals[ptr_idx + i] = stack.vals[ptr_idx + 1 + i];
+        //      //alternative version
+        //      //Array.Copy(
+        //      //  exec.stack.vals,
+        //      //  ptr_idx + 1,
+        //      //  exec.stack.vals,
+        //      //  ptr_idx,
+        //      //  exec.stack.sp - ptr_idx - 1
+        //      //);
+        //      ref var tail = ref stack.vals[--stack.sp];
+        //      tail.obj = null;
+        //      tail._refc = null;
+        //    }
+
+        //    //checking if it's a native call
+        //    if(ptr.native != null)
+        //    {
+        //      bool return_status = CallNative(this, ptr.native, args_bits);
+        //      if(return_status)
+        //      {
+        //        //let's cancel ip incrementing
+        //        --ip;
+        //      }
+        //    }
+        //    else
+        //    {
+        //      int new_frame_idx = frames_count;
+        //      ref var new_frame = ref PushFrame();
+        //      new_frame.args_info = new FuncArgsInfo(args_bits);
+        //      ptr.InitFrame(this, ref frame, ref new_frame);
+        //      CallFrame(this, ref new_frame, new_frame_idx);
+        //    }
+
+        //    ptr.Release();
+        //  }
+        //    break;
+
+        //  case Opcodes.SetUpval:
+        //  {
+        //    int frame_local_idx = bytes[++ip];
+        //    int func_ptr_local_idx = bytes[++ip];
+        //    var mode = (UpvalMode)bytes[++ip];
+
+        //    var addr = (FuncPtr)stack.vals[stack.sp - 1].obj;
+
+        //    ref var upval = ref addr.upvals.Push();
+        //    upval.frame_local_idx = func_ptr_local_idx;
+
+        //    ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
+        //    if(mode == UpvalMode.STRONG)
+        //      val._refc?.Retain();
+        //    upval.val = val;
+        //  }
+        //    break;
+
+        //  case Opcodes.Pop:
+        //  {
+        //    ref var val = ref stack.vals[--stack.sp];
+        //    if(val._refc != null)
+        //    {
+        //      val._refc.Release();
+        //      val._refc = null;
+        //    }
+
+        //    val.obj = null;
+        //  }
+        //    break;
+
+          case Opcodes.JumpPeekZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+            if(stack.vals[stack.sp - 1].num != 1)
+              ip += offset;
+          }
+            break;
+
+          case Opcodes.JumpPeekNZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+            if(stack.vals[stack.sp - 1].num == 1)
+              ip += offset;
+          }
+            break;
+
+        //  case Opcodes.DefArg:
+        //  {
+        //    byte arg_idx = bytes[++ip];
+        //    byte def_arg_idx = bytes[++ip];
+        //    int jump_add = (int)Bytecode.Decode16(bytes, ref ip);
+        //    //if default argument is set we need to insert a slot into the stack
+        //    //where it will be set below
+        //    if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
+        //    {
+        //      int args_num = frame.args_info.CountArgs();
+
+        //      //we need to move only passed arguments and move them in reverse order
+        //      //so that they don't overlap during 'movement'
+        //      for(int i = args_num - arg_idx; i-- > 0;)
+        //      {
+        //        ref var tmp = ref stack.vals[frame.locals_offset + arg_idx + i];
+        //        stack.vals[frame.locals_offset + arg_idx + i + 1] = tmp;
+        //        //need to nullify the refcounted so it's not invoked somehow
+        //        tmp.obj = null;
+        //        tmp._refc = null;
+        //      }
+
+        //      //alternative version
+        //      //Array.Copy(
+        //      //  exec.stack.vals,
+        //      //  pos_idx,
+        //      //  exec.stack.vals,
+        //      //  pos_idx + 1,
+        //      //  args_num - pos_idx
+        //      //);
+        //    }
+        //    //...otherwise we need to jump out of default argument calculation code
+        //    else
+        //      ip += jump_add;
+        //  }
+        //    break;
+
+        //  case Opcodes.Scope:
+        //  {
+        //    int size = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    PushRegion(region.frame_idx, ip + 1, ip + size);
+        //  }
+        //    break;
+
+        //  case Opcodes.Paral:
+        //  {
+        //    int size = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    var paral = CoroutinePool.New<ParalBlock>(vm);
+        //    paral.Init(ip + 1, ip + size);
+
+        //    int tmp_ip = ip;
+        //    while(tmp_ip < (ip + size))
+        //    {
+        //      ++tmp_ip;
+        //      FetchBlock(
+        //        ref tmp_ip,
+        //        this, bytes,
+        //        paral.branches,
+        //        paral.defers,
+        //        out var tmp_size
+        //      );
+        //      tmp_ip += tmp_size;
+        //    }
+
+        //    //NOTE: since there's a new coroutine we want to skip ip incrementing
+        //    //      which happens below and proceed right to the execution of
+        //    //      the new coroutine
+        //    coroutine = paral;
+        //    //let's cancel ip incrementing
+        //    --ip;
+        //  }
+        //    break;
+
+        //  case Opcodes.ParalAll:
+        //  {
+        //    int size = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    var paral = CoroutinePool.New<ParalAllBlock>(vm);
+        //    paral.Init(ip + 1, ip + size);
+
+        //    int tmp_ip = ip;
+        //    while(tmp_ip < (ip + size))
+        //    {
+        //      ++tmp_ip;
+        //      FetchBlock(
+        //        ref tmp_ip,
+        //        this, bytes,
+        //        paral.branches,
+        //        paral.defers,
+        //        out var tmp_size
+        //      );
+
+        //      tmp_ip += tmp_size;
+        //    }
+
+        //    //NOTE: since there's a new coroutine we want to skip ip incrementing
+        //    //      which happens below and proceed right to the execution of
+        //    //      the new coroutine
+        //    coroutine = paral;
+        //    //let's cancel ip incrementing
+        //    --ip;
+        //  }
+        //    break;
+
+        //  case Opcodes.Defer:
+        //  {
+        //    int size = (int)Bytecode.Decode16(bytes, ref ip);
+
+        //    region.defers ??= new DeferSupport();
+
+        //    ref var d = ref region.defers.Add();
+        //    d.ip = ip + 1;
+        //    d.max_ip = ip + size;
+
+        //    //NOTE: we need to skip the defer block
+        //    ip += size;
+        //  }
+        //    break;
+
+        //  case Opcodes.New:
+        //  {
+        //    int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    var type = frame.type_refs[type_idx];
+
+        //    if(type is not ClassSymbol cls)
+        //      throw new Exception("Not a class symbol: " + type);
+
+        //    //NOTE: we don't increment refcounted here since the new instance
+        //    //      is not attached to any variable and is expected to have refs == 1
+        //    ref var val = ref stack.Push();
+        //    cls.creator(this, ref val, cls);
+        //  }
+        //    break;
+        //
+          default:
+            throw new Exception("Unhandled opcode: " + opcode);
+        }
+
+        ++ip;
+      }
+    }
+  }
+
   static VM()
   {
     InitOpcodeHandlers();

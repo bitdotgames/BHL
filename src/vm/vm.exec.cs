@@ -22,7 +22,7 @@ public partial class VM
   //
   //      (Fiber contains an ExecState, each paral branch
   //      contains its own ExecState)
-  public class ExecState
+  public partial class ExecState
   {
     public BHS status = BHS.NONE;
 
@@ -240,58 +240,6 @@ public partial class VM
 
       while(regions_count > region_stop_idx && status == BHS.SUCCESS)
         ExecuteOnce();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal unsafe void ExecuteOnce()
-    {
-      ref var region = ref regions[regions_count - 1];
-      ref var frame = ref frames[region.frame_idx];
-
-      //1. if there's an active coroutine it has priority over simple 'code following' via ip
-      if(coroutine != null)
-      {
-        ExecuteCoroutine(ref region, this);
-      }
-      //2. are we out of the current region?
-      else if(ip < region.min_ip || ip > region.max_ip)
-      {
-        if(region.defers != null && region.defers.count > 0)
-          region.defers.ExitScope(this);
-        --regions_count;
-      }
-      //3. exit frame requested
-      else if(ip == EXIT_FRAME_IP)
-      {
-        //exiting all regions which belong to the frame
-        for(int i = regions_count; i-- > frame.regions_mark;)
-        {
-          ref var tmp_region = ref regions[i];
-          if(tmp_region.defers != null && tmp_region.defers.count > 0)
-            tmp_region.defers.ExitScope(this);
-        }
-        regions_count = frame.regions_mark;
-        frame.CleanLocals();
-
-        if(frame.return_vars_num > 0)
-          frame.ReturnVars(stack);
-        //stack pointer now at the last returned value
-        stack.sp = frame.locals_offset + frame.return_vars_num;
-        --frames_count;
-
-        ip = frame.return_ip + 1;
-      }
-      else
-      {
-        var bc = frame.bytecode;
-        var opcode = bc[ip];
-        //NOTE: temporary casting for better debug info
-        //var _opcode = (Opcodes)opcode;
-
-        op_handlers[opcode](vm, this, ref region,  ref frame, bc);
-
-        ++ip;
-      }
     }
   }
 
