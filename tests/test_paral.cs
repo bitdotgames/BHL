@@ -41,8 +41,8 @@ public class TestParal : BHL_TestBase
           .EmitChain(Opcodes.Scope, new int[] { 14 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
-          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetVarS, new int[] { 0 })
+          .EmitChain(Opcodes.GetVarS, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -89,10 +89,10 @@ public class TestParal : BHL_TestBase
           .EmitChain(Opcodes.Scope, new int[] { 14 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetVarS, new int[] { 0 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetVarS, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -142,10 +142,10 @@ public class TestParal : BHL_TestBase
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf(Prelude.YieldFunc), 0 })
           .EmitChain(Opcodes.Scope, new int[] { 6 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetVarS, new int[] { 0 })
           .EmitChain(Opcodes.Scope, new int[] { 8 })
           .EmitChain(Opcodes.CallGlobNative, new int[] { ts.module.nfunc_index.IndexOf("suspend"), 0})
-          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.GetVarS, new int[] { 0 })
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);

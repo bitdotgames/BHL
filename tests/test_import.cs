@@ -66,7 +66,7 @@ public class TestImport : BHL_TestBase
         .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
         .EmitChain(Opcodes.Return)
         .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
-        .EmitChain(Opcodes.GetVar, new int[] { 0 })
+        .EmitChain(Opcodes.GetVarS, new int[] { 0 })
         .EmitChain(Opcodes.Call, new int[] { 0, 0, 1 })
         .EmitChain(Opcodes.Return)
     );
@@ -74,7 +74,7 @@ public class TestImport : BHL_TestBase
       new ModuleCompiler()
         .UseCode()
         .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
-        .EmitChain(Opcodes.GetVar, new int[] { 0 })
+        .EmitChain(Opcodes.GetVarS, new int[] { 0 })
         .EmitChain(Opcodes.Return)
         .EmitChain(Opcodes.Frame, new int[] { 0, 0 })
         .EmitChain(Opcodes.Return)

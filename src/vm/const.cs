@@ -56,33 +56,6 @@ public class Const : IEquatable<Const>
     this.str = "";
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public void FillVal(ref Val v)
-  {
-    if(type == ConstType.INT)
-    {
-      v = new Val { type = Types.Int, num = num };
-    }
-    else if(type == ConstType.FLT)
-    {
-      v = new Val { type = Types.Float, num = num };
-    }
-    else if(type == ConstType.STR)
-    {
-      v = new Val { type = Types.String, obj = str };
-    }
-    else if(type == ConstType.BOOL)
-    {
-      v = new Val { type = Types.Bool, num = num };
-    }
-    else if(type == ConstType.NIL)
-    {
-      v = VM.Null;
-    }
-    else
-      throw new Exception("Bad type");
-  }
-
   public bool Equals(Const o)
   {
     if(o == null)

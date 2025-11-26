@@ -496,8 +496,8 @@ public class TestTypeCasts : BHL_TestBase
           .UseCode()
           .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitChain(Opcodes.SetVar, new int[] { 0 })
-          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.SetVarS, new int[] { 0 })
+          .EmitChain(Opcodes.GetVarS, new int[] { 0 })
           .EmitChain(Opcodes.TypeIs, new int[] { TypeIdx(c, ts.T("int")) })
           .EmitChain(Opcodes.Return)
       ;

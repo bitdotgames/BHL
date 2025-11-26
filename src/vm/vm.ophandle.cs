@@ -63,8 +63,8 @@ public partial class VM
 
     op_handlers[(int)Opcodes.GetVar] = &OpcodeGetVar;
     op_handlers[(int)Opcodes.SetVar] = &OpcodeSetVar;
-    op_handlers[(int)Opcodes.GetVarScalar] = &OpcodeGetVarScalar;
-    op_handlers[(int)Opcodes.SetVarScalar] = &OpcodeSetVarScalar;
+    op_handlers[(int)Opcodes.GetVarS] = &OpcodeGetVarScalar;
+    op_handlers[(int)Opcodes.SetVarS] = &OpcodeSetVarScalar;
     op_handlers[(int)Opcodes.DeclVar] = &OpcodeDeclVar;
 
     op_handlers[(int)Opcodes.MakeRef] = &OpcodeMakeRef;
@@ -220,7 +220,9 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
+    //TODO: do we really need to set type for scalar values?
+    l_operand.type = Types.Bool;
+    l_operand.num = l_operand.num < r_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,7 +233,9 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
+    //TODO: do we really need to set type for scalar values?
+    l_operand.type = Types.Bool;
+    l_operand.num = l_operand.num <= r_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -242,7 +246,9 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
+    //TODO: do we really need to set type for scalar values?
+    l_operand.type = Types.Bool;
+    l_operand.num = l_operand.num > r_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -253,7 +259,9 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-    l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
+    //TODO: do we really need to set type for scalar values?
+    l_operand.type = Types.Bool;
+    l_operand.num = l_operand.num >= r_operand.num ? 1 : 0;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -377,8 +385,19 @@ public partial class VM
     var cn = frame.constants[const_idx];
 
     ref Val v = ref exec.stack.Push();
-    //TODO: we might have specialized opcodes for different variable types?
-    cn.FillVal(ref v);
+
+    if(cn.type == ConstType.INT)
+      v = new Val { type = Types.Int, num = cn.num };
+    else if(cn.type == ConstType.FLT)
+      v = new Val { type = Types.Float, num = cn.num };
+    else if(cn.type == ConstType.STR)
+      v = new Val { type = Types.String, obj = cn.str };
+    else if(cn.type == ConstType.BOOL)
+      v = new Val { type = Types.Bool, num = cn.num };
+    else if(cn.type == ConstType.NIL)
+      v = VM.Null;
+    else
+      throw new Exception("Bad type");
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -570,10 +589,9 @@ public partial class VM
 
     ref Val new_val = ref exec.stack.Push();
     ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
+    //TODO: can we get rid of type setting?
     new_val.type = source.type;
     new_val.num = source.num;
-    //TODO: do we need this?
-    //new_val._refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -594,11 +612,9 @@ public partial class VM
 
     ref var new_val = ref exec.stack.vals[--exec.stack.sp];
     ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
+    //TODO: can we get rid of type setting?
     dest.type = new_val.type;
     dest.num = new_val.num;
-    //TODO: do we need this?
-    //dest._refc?.Release();
-    //dest._refc = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
