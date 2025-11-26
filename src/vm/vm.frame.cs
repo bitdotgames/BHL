@@ -87,6 +87,7 @@ public partial class VM : INamedResolver
         if(local_idx < ret_idx)
         {
           ref var ret = ref stack.vals[ret_idx];
+          //TODO: for scalar only values this can be optimized
           stack.vals[local_idx] = ret;
           ret._refc = null;
           ret.obj = null;

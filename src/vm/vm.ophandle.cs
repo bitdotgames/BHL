@@ -386,18 +386,40 @@ public partial class VM
 
     ref Val v = ref exec.stack.Push();
 
-    if(cn.type == ConstType.INT)
-      v = new Val { type = Types.Int, num = cn.num };
-    else if(cn.type == ConstType.FLT)
-      v = new Val { type = Types.Float, num = cn.num };
-    else if(cn.type == ConstType.STR)
-      v = new Val { type = Types.String, obj = cn.str };
-    else if(cn.type == ConstType.BOOL)
-      v = new Val { type = Types.Bool, num = cn.num };
-    else if(cn.type == ConstType.NIL)
-      v = VM.Null;
-    else
-      throw new Exception("Bad type");
+    switch(cn.type)
+    {
+      case ConstType.INT:
+      {
+        v.type = Types.Int;
+        v.num = cn.num;
+      }
+        break;
+      case ConstType.BOOL:
+      {
+        v.type = Types.Bool;
+        v.num = cn.num;
+      }
+        break;
+      case ConstType.STR:
+      {
+        //string is not a scalar type, we do the full replacement
+        v = new Val { type = Types.String, obj = cn.str };
+      }
+        break;
+      case ConstType.FLT:
+      {
+        v.type = Types.Float;
+        v.num = cn.num;
+      }
+        break;
+      case ConstType.NIL:
+      {
+        v = Null;
+      }
+        break;
+      default:
+        throw new Exception("Bad type");
+    }
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
