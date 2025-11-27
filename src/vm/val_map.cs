@@ -8,7 +8,15 @@ namespace bhl
 
 public class ValMap : IDictionary<Val, Val>, IRefcounted
 {
-  Dictionary<Val, Val> map = new Dictionary<Val, Val>(new Comparer());
+  Dictionary<Val, Val> map;
+
+  Comparer comparer = new Comparer();
+
+  public IEqualityComparer<Val> KeyComparer
+  {
+    get { return comparer.impl; }
+    set { comparer.impl = value; }
+  }
 
   //NOTE: -1 means it's in released state,
   //      public only for quick inspection
@@ -161,6 +169,8 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
   //NOTE: use New() instead
   internal ValMap(VM vm)
   {
+    map = new Dictionary<Val, Val>(comparer);
+
     this.vm = vm;
   }
 
@@ -176,6 +186,9 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
     {
       ++vm.vmaps_pool.hits;
       map = vm.vmaps_pool.stack.Pop();
+
+      //let's restore default comparator
+      map.KeyComparer = DefaultComparer.Instance;
 
       if(map._refs != -1)
         throw new Exception("Expected to be released, refs " + map._refs);
@@ -199,16 +212,37 @@ public class ValMap : IDictionary<Val, Val>, IRefcounted
       throw new Exception("Unbalanced New/Del");
   }
 
-  class Comparer : IEqualityComparer<Val>
+  public class DefaultComparer : IEqualityComparer<Val>
   {
+    public readonly static DefaultComparer Instance = new DefaultComparer();
     public bool Equals(Val a, Val b)
     {
-      return a.IsDataEqual(ref b);
+      if(Types.IsScalar(a.type))
+        return a.num == b.num;
+      else
+        return a.obj?.Equals(b.obj) ?? null == b.obj;
+    }
+    public int GetHashCode(Val v)
+    {
+      if(Types.IsScalar(v.type))
+        return v.num.GetHashCode();
+      else
+        return v.obj?.GetHashCode() ?? 0;
+    }
+  }
+
+  class Comparer : IEqualityComparer<Val>
+  {
+    public IEqualityComparer<Val> impl = DefaultComparer.Instance;
+
+    public bool Equals(Val a, Val b)
+    {
+      return impl.Equals(a, b);
     }
 
     public int GetHashCode(Val v)
     {
-      return v.GetDataHashCode();
+      return impl.GetHashCode(v);
     }
   }
 }

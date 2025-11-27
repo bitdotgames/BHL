@@ -449,19 +449,23 @@ public class ClassSymbolNative : ClassSymbol, INativeType
 
   System.Type native_type;
   Func<Val, object> native_object_getter;
+  IEqualityComparer<Val> native_comparer;
 
   public ClassSymbolNative(
     Origin origin,
     string name,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
   )
     : this(
       origin, name,
       new ProxyType(), null,
       creator,
-      native_type, native_object_getter)
+      native_type, native_object_getter,
+      native_comparer
+      )
   {
   }
 
@@ -471,13 +475,16 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
   )
     : this(
       origin, name,
       new ProxyType(), proxy_implements,
       creator,
-      native_type, native_object_getter)
+      native_type, native_object_getter,
+      native_comparer
+      )
   {
   }
 
@@ -487,12 +494,14 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     ProxyType proxy_super_class,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
   )
     : this(origin, name,
       proxy_super_class, null,
       creator,
-      native_type, native_object_getter)
+      native_type, native_object_getter
+      )
   {
   }
 
@@ -503,7 +512,8 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     IList<ProxyType> proxy_implements,
     VM.ClassCreator creator = null,
     System.Type native_type = null,
-    Func<Val, object> native_object_getter = null
+    Func<Val, object> native_object_getter = null,
+    IEqualityComparer<Val> native_comparer = null
   )
     : base(origin, name, creator)
   {
@@ -511,6 +521,7 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     this.tmp_implements = proxy_implements;
     this.native_type = native_type;
     this.native_object_getter = native_object_getter;
+    this.native_comparer = native_comparer;
   }
 
   public System.Type GetNativeType()
@@ -521,6 +532,11 @@ public class ClassSymbolNative : ClassSymbol, INativeType
   public object GetNativeObject(Val v)
   {
     return native_object_getter?.Invoke(v) ?? v.obj;
+  }
+
+  public IEqualityComparer<Val> GetNativeComparer()
+  {
+    return native_comparer;
   }
 
   public override void Setup()

@@ -277,18 +277,6 @@ public struct Val
     return res;
   }
 
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public int GetDataHashCode()
-  {
-    return
-      num.GetHashCode()
-      ^ _num2.GetHashCode()
-      ^ _num3.GetHashCode()
-      ^ _num4.GetHashCode()
-      ^ (obj?.GetHashCode() ?? 0)
-      ;
-  }
-
   public override string ToString()
   {
     string str = "";

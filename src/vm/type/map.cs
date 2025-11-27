@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace bhl
 {
@@ -36,6 +37,7 @@ public abstract class MapTypeSymbol : ClassSymbol
     DefineMembers();
 
     base.Setup();
+
     enumerator_type.Setup();
   }
 
@@ -237,6 +239,8 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 {
   public const uint CLASS_ID = 21;
 
+  IEqualityComparer<Val> key_comparer;
+
   public GenericMapTypeSymbol(Origin origin, ProxyType key_type, ProxyType val_type)
     : base(origin, key_type, val_type)
   {
@@ -246,6 +250,14 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
   public GenericMapTypeSymbol()
     : base()
   {
+  }
+
+  public override void Setup()
+  {
+    base.Setup();
+
+    if(key_type.Get() is ClassSymbolNative cs)
+      key_comparer = cs.GetNativeComparer() ?? key_comparer;
   }
 
   static ValMap AsMap(Val map)
@@ -258,7 +270,15 @@ public class GenericMapTypeSymbol : MapTypeSymbol, IEquatable<GenericMapTypeSymb
 
   public override void MapCreate(VM.ExecState exec, ref Val map)
   {
-    map.SetObj(ValMap.New(exec.vm), this);
+    var vlmap = ValMap.New(exec.vm);
+    if(key_comparer != null)
+    {
+      //NOTE: we don't need to bother with restoring the original key comparer,
+      //      it will be restored upon map reusage
+      vlmap.KeyComparer = key_comparer;
+    }
+
+    map.SetObj(vlmap, this);
   }
 
   public override int MapCount(Val map)

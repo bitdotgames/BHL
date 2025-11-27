@@ -386,6 +386,7 @@ public partial class VM
 
     ref Val v = ref exec.stack.Push();
 
+    //TODO: what about specialized opcodes for each constant type?
     switch(cn.type)
     {
       case ConstType.INT:
@@ -402,8 +403,8 @@ public partial class VM
         break;
       case ConstType.STR:
       {
-        //string is not a scalar type, we do the full replacement
-        v = new Val { type = Types.String, obj = cn.str };
+        v.type = Types.String;
+        v.obj = cn.str;
       }
         break;
       case ConstType.FLT:
