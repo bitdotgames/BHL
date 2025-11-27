@@ -173,7 +173,8 @@ public partial class VM
     ref Val l_operand = ref stack.vals[stack.sp - 1];
 
     l_operand.type = Types.Bool;
-    l_operand.num = (string)r_operand.obj  == (string)l_operand.obj ? 1 : 0;
+    l_operand.num = (string)r_operand.obj == (string)l_operand.obj ? 1 : 0;
+    l_operand.obj = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
