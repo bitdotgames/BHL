@@ -2551,20 +2551,12 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       if(op_type == EnumBinaryOp.NEQ)
       {
         var not_ast = new AST_UnaryOpExp(EnumUnaryOp.NOT);
-        bin_op_ast.type = EnumBinaryOp.EQ;
+        bin_op_ast.type = GetSpecificEqOp(ann_lhs.eval_type, ann_rhs.eval_type);
         not_ast.AddChild(bin_op_ast);
         ast = not_ast;
-        op_type = EnumBinaryOp.EQ;
       }
-
-      //NOTE: let's use a more comprehensive comparison for non trivial types
-      if(op_type == EnumBinaryOp.EQ &&
-         (!Types.IsScalarOrString(ann_lhs.eval_type) || !Types.IsScalarOrString(ann_rhs.eval_type))
-        )
-      {
-        op_type = EnumBinaryOp.EQEX;
-        bin_op_ast.type = op_type;
-      }
+      else if(op_type == EnumBinaryOp.EQ)
+        bin_op_ast.type = GetSpecificEqOp(ann_lhs.eval_type, ann_rhs.eval_type);
     }
 
     //NOTE: checking if there's binary operator overload
@@ -2580,10 +2572,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       over_ast.AddChild(op_call);
       ast = over_ast;
     }
-    else if(
-      op_type == EnumBinaryOp.EQ ||
-      op_type == EnumBinaryOp.EQEX
-    )
+    else if(op_type == EnumBinaryOp.EQ || op_type == EnumBinaryOp.NEQ)
       Annotate(ctx).eval_type = types.CheckEqBinOp(ann_lhs, ann_rhs, errors);
     else if(
       op_type == EnumBinaryOp.GT ||
@@ -2608,6 +2597,16 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
        ann_rhs.eval_type == Types.Int
       )
       PeekAST().AddChild(new AST_TypeCast(Types.Int, force_type: true, line_num: ctx.Start.Line));
+  }
+
+  static EnumBinaryOp GetSpecificEqOp(IType lhs, IType rhs)
+  {
+    if(Types.IsScalar(lhs) && Types.IsScalar(rhs))
+      return EnumBinaryOp.EQ_SCLR;
+    else if(Types.IsString(lhs) && Types.IsString(rhs))
+      return EnumBinaryOp.EQ_STR;
+    else
+      return EnumBinaryOp.EQ;
   }
 
   static bool SupportsImplictCastToString(IType type)

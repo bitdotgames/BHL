@@ -380,17 +380,9 @@ public class Types : INamedResolver
     return false;
   }
 
-  static public bool IsScalarOrString(IType type)
-  {
-    return type == Bool ||
-           type == String ||
-           type == Int ||
-           type == Float;
-  }
-
   static public bool IsBinOpCompatible(IType type)
   {
-    return IsScalarOrString(type);
+    return IsScalar(type) || IsString(type);
   }
 
   static public bool IsScalar(IType type)
@@ -403,6 +395,11 @@ public class Types : INamedResolver
   {
     return type == Int ||
            type == Float;
+  }
+
+  static public bool IsString(IType type)
+  {
+    return type == String;
   }
 
 #if BHL_FRONT

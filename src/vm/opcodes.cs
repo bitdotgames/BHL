@@ -50,6 +50,7 @@ public enum Opcodes
   //      can be replaced with more low-level opcodes?
   SetAttrInplace        = 48,
 
+  Equal                 = 49,
   UnaryNot              = 50,
   UnaryNeg              = 51,
   And                   = 52,
@@ -57,8 +58,8 @@ public enum Opcodes
   Mod                   = 54,
   BitOr                 = 55,
   BitAnd                = 56,
-  EqualLite             = 57,
-  Equal                 = 58,
+  EqualScalar           = 57,
+  EqualString           = 58,
   UnaryBitNot           = 59,
   LT                    = 60,
   LTE                   = 61,
@@ -72,7 +73,7 @@ public enum Opcodes
   TypeIs                = 67,
   Typeof                = 68,
 
-  Scope                   = 70,
+  Scope                 = 70,
   Defer                 = 71,
   Paral                 = 72,
   ParalAll              = 73,
