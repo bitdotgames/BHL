@@ -19,6 +19,7 @@ public partial class VM
   {
     //binary ops
     op_handlers[(int)Opcodes.Add] = &OpcodeAdd;
+    op_handlers[(int)Opcodes.Concat] = &OpcodeConcat;
     op_handlers[(int)Opcodes.Sub] = &OpcodeSub;
     op_handlers[(int)Opcodes.Div] = &OpcodeDiv;
     op_handlers[(int)Opcodes.Mul] = &OpcodeMul;
@@ -127,11 +128,20 @@ public partial class VM
 
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
-    //TODO: add separate opcode Concat for strings
-    if(l_operand.type == Types.String)
-      l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
-    else
-      l_operand.num += r_operand.num;
+    l_operand.num += r_operand.num;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeConcat(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    var stack = exec.stack;
+
+    ref Val r_operand = ref stack.vals[--stack.sp];
+    ref Val l_operand = ref stack.vals[stack.sp - 1];
+    l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+    ////TODO: add separate opcode Concat for strings
+    //if(l_operand.type == Types.String)
+    //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2526,6 +2526,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
   void ProcBinOp(ParserRuleContext ctx, string op, IParseTree lhs, IParseTree rhs, bool lhs_self_op = false)
   {
     EnumBinaryOp op_type = GetBinaryOpType(op);
+    //NOTE: op_type stays the same, but we might tune the bin_op_ast.type according to some specific types
     AST_BinaryOpExp bin_op_ast = new AST_BinaryOpExp(op_type, ctx.Start.Line);
     AST_Tree ast = bin_op_ast;
     PushAST(ast);
@@ -2557,6 +2558,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       }
       else if(op_type == EnumBinaryOp.EQ)
         bin_op_ast.type = GetSpecificEqOp(ann_lhs.eval_type, ann_rhs.eval_type);
+      else if(op_type == EnumBinaryOp.ADD && (Types.IsString(ann_lhs.eval_type) || Types.IsString(ann_rhs.eval_type)))
+        bin_op_ast.type = EnumBinaryOp.CONCAT;
     }
 
     //NOTE: checking if there's binary operator overload
@@ -2583,7 +2586,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
       Annotate(ctx).eval_type = types.CheckRelationalBinOp(ann_lhs, ann_rhs, errors);
     else
     {
-      if(op == "+" && CheckImplicitCastToString(ctx, ast, ops_edge_idx, ann_lhs, ann_rhs, lhs_self_op))
+      if(op_type == EnumBinaryOp.ADD &&
+         CheckImplicitCastToString(ctx, ast, ops_edge_idx, ann_lhs, ann_rhs, lhs_self_op))
         Annotate(ctx).eval_type = Types.String;
       else
         Annotate(ctx).eval_type = types.CheckBinOp(ann_lhs, ann_rhs, errors);

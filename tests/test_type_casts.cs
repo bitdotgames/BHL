@@ -93,7 +93,7 @@ public class TestTypeCasts : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
           .EmitChain(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "") })
-          .EmitChain(Opcodes.Add)
+          .EmitChain(Opcodes.Concat)
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);
@@ -128,7 +128,7 @@ public class TestTypeCasts : BHL_TestBase
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, "") })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 7) })
           .EmitChain(Opcodes.TypeCast, new int[] { TypeIdx(c, ts.T("string")), 0 })
-          .EmitChain(Opcodes.Add)
+          .EmitChain(Opcodes.Concat)
           .EmitChain(Opcodes.Return)
       ;
     AssertEqual(c, expected);

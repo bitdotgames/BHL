@@ -23,6 +23,9 @@ public enum Opcodes
   JumpZ                 = 17,
   JumpPeekZ             = 18,
   JumpPeekNZ            = 19,
+
+  Concat                = 20,
+
   Pop                   = 22,
 
   CallLocal             = 23,

@@ -415,6 +415,11 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.Concat
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.Sub
       )
     );
@@ -1704,10 +1709,12 @@ public class ModuleCompiler : AST_Visitor
         Emit(Opcodes.Mod, null, ast.line_num);
         break;
       case EnumBinaryOp.ADD:
-      {
         VisitChildren(ast);
         Emit(Opcodes.Add, null, ast.line_num);
-      }
+        break;
+      case EnumBinaryOp.CONCAT:
+        VisitChildren(ast);
+        Emit(Opcodes.Concat, null, ast.line_num);
         break;
       case EnumBinaryOp.SUB:
         VisitChildren(ast);

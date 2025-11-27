@@ -183,6 +183,7 @@ public enum EnumBinaryOp
   BIT_SHL = 17,
   EQ_SCLR = 18,
   EQ_STR  = 19,
+  CONCAT  = 20
 }
 
 public class AST_BinaryOpExp  : AST_Tree
