@@ -453,7 +453,7 @@ public class TestInterface : BHL_TestBase
           new ModuleCompiler()
             .UseCode()
             .EmitChain(Opcodes.Frame, new int[] { 1 + 1 /*this*/, 1 })
-            .EmitChain(Opcodes.GetVarS, new int[] { 1 })
+            .EmitChain(Opcodes.GetVarScalar, new int[] { 1 })
             .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
             .EmitChain(Opcodes.Add)
             .EmitChain(Opcodes.Return)

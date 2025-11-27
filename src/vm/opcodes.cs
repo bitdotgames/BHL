@@ -11,8 +11,8 @@ public enum Opcodes
 
   SetVar                = 6,
   GetVar                = 7,
-  GetVarS          = 8,
-  SetVarS          = 9,
+  GetVarScalar          = 8,
+  SetVarScalar          = 9,
   DeclVar               = 10,
   SetGVar               = 11,
   GetGVar               = 12,

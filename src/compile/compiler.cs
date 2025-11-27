@@ -487,7 +487,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.SetVarS,
+        Opcodes.SetVarScalar,
         1 /*local idx*/
       )
     );
@@ -499,7 +499,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetVarS,
+        Opcodes.GetVarScalar,
         1 /*local idx*/
       )
     );
@@ -1363,7 +1363,7 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
           //Emit(Opcodes.GetVar, //safe general version
-          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarS : Opcodes.GetVar,
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarScalar : Opcodes.GetVar,
             new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
@@ -1398,7 +1398,7 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
           //Emit(Opcodes.SetVar, //safe general version
-          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarS : Opcodes.SetVar,
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.SetVarScalar : Opcodes.SetVar,
             new int[] {ast.symb_idx}, ast.line_num);
       }
         break;

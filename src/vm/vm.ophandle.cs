@@ -63,8 +63,8 @@ public partial class VM
 
     op_handlers[(int)Opcodes.GetVar] = &OpcodeGetVar;
     op_handlers[(int)Opcodes.SetVar] = &OpcodeSetVar;
-    op_handlers[(int)Opcodes.GetVarS] = &OpcodeGetVarScalar;
-    op_handlers[(int)Opcodes.SetVarS] = &OpcodeSetVarScalar;
+    op_handlers[(int)Opcodes.GetVarScalar] = &OpcodeGetVarScalar;
+    op_handlers[(int)Opcodes.SetVarScalar] = &OpcodeSetVarScalar;
     op_handlers[(int)Opcodes.DeclVar] = &OpcodeDeclVar;
 
     op_handlers[(int)Opcodes.MakeRef] = &OpcodeMakeRef;
