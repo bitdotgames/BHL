@@ -1072,7 +1072,7 @@ public class BHL_TestBase
       out var preproc_parsed
     );
 
-    if(show_parse_tree)
+    if(show_parse_tree || Environment.GetEnvironmentVariable("BHL_SHOW_PARSE_TREE") == "1")
     {
       if(preproc_parsed != null)
       {
@@ -1089,7 +1089,7 @@ public class BHL_TestBase
     proc_bundle.file2cached = null;
     ANTLR_Processor.ProcessAll(proc_bundle);
 
-    if(show_ast)
+    if(show_ast || Environment.GetEnvironmentVariable("BHL_SHOW_AST") == "1")
       AST_Dumper.Dump(proc.result.ast);
 
     if(throw_errors && proc.result.errors.Count > 0)
