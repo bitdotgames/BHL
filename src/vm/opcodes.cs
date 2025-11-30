@@ -42,18 +42,20 @@ public enum Opcodes
   //TODO: if CallFuncPtr operated on stack offsets this one would not be necessary
   CallFuncPtrInv        = 33,
 
-  GetFuncLocalPtr       = 39,
-  GetFuncPtr            = 40,
-  GetFuncNativePtr      = 41,
-  GetFuncIpPtr          = 42,
+  GetFuncLocalPtr       = 37,
+  GetFuncPtr            = 38,
+  GetFuncNativePtr      = 39,
+  GetFuncIpPtr          = 40,
 
-  GetAttr               = 43,
-  SetAttr               = 44,
-  GetVarAttr            = 45,
-  SetVarAttr            = 46,
+  GetAttr               = 41,
+  SetAttr               = 42,
+  GetVarAttr            = 43,
+  SetVarAttr            = 44,
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
-  SetAttrPeek        = 48,
+  SetAttrPeek           = 45,
+  GetRefAttr            = 46,
+  SetRefAttr            = 47,
 
   Equal                 = 49,
   UnaryNot              = 50,

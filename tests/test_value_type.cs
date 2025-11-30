@@ -63,4 +63,28 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestChangeAttributeOnCapturedValue()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 1
+      func () {
+        s1.n = 100
+      }()
+      return s1.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(100, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
 }

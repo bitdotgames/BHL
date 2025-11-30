@@ -78,6 +78,8 @@ public partial class VM
     op_handlers[(int)Opcodes.GetVarAttr] = &OpcodeGetVarAttr;
     op_handlers[(int)Opcodes.SetVarAttr] = &OpcodeSetVarAttr;
     op_handlers[(int)Opcodes.SetAttrPeek] = &OpcodeSetAttrPeek;
+    op_handlers[(int)Opcodes.GetRefAttr] = &OpcodeGetRefAttr;
+    op_handlers[(int)Opcodes.SetRefAttr] = &OpcodeSetRefAttr;
 
     op_handlers[(int)Opcodes.GetGVar] = &OpcodeGetGVar;
     op_handlers[(int)Opcodes.SetGVar] = &OpcodeSetGVar;
@@ -792,6 +794,46 @@ public partial class VM
     ref var obj = ref exec.stack.Peek();
 
     var class_symb = (ClassSymbol)obj.type;
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.setter(exec, ref obj, val, field_symb);
+
+    val._refc?.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetRefAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
+
+    ref var obj = ref val_ref.val;
+    var class_symb = (ClassSymbol)obj.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    var res = new Val();
+    field_symb.getter(exec, obj, ref res, field_symb);
+
+    res._refc?.Retain();
+    exec.stack.Push(res);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetRefAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    exec.stack.Pop(out var val);
+
+    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
+
+    ref var obj = ref val_ref.val;
+    var class_symb = (ClassSymbol)obj.type;
+
     var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
     field_symb.setter(exec, ref obj, val, field_symb);
 

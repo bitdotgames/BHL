@@ -557,6 +557,18 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.GetRefAttr,
+        1 /*local idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetRefAttr,
+        1 /*local idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.GetFuncLocalPtr,
         3 /*func idx*/
       )
@@ -1385,6 +1397,11 @@ public class ModuleCompiler : AST_Visitor
             Pop();
             Emit(Opcodes.GetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
           }
+          else if(prev.op == Opcodes.GetRef)
+          {
+            Pop();
+            Emit(Opcodes.GetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
           else
             Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
@@ -1426,6 +1443,11 @@ public class ModuleCompiler : AST_Visitor
           {
             Pop();
             Emit(Opcodes.SetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
+          else if(prev.op == Opcodes.GetRef)
+          {
+            Pop();
+            Emit(Opcodes.SetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
           }
           else
             Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
