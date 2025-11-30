@@ -551,7 +551,7 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.SetAttrInplace,
+        Opcodes.SetAttrPeek,
         2 /*member idx*/
       )
     );
@@ -1925,7 +1925,7 @@ public class ModuleCompiler : AST_Visitor
   public override void DoVisit(bhl.AST_JsonPair ast)
   {
     VisitChildren(ast);
-    Emit(Opcodes.SetAttrInplace, new int[] { (int)ast.symb_idx }, ast.line_num);
+    Emit(Opcodes.SetAttrPeek, new int[] { (int)ast.symb_idx }, ast.line_num);
   }
 
   public static void Dump(byte[] bs)

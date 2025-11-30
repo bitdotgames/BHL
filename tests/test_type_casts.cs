@@ -611,7 +611,7 @@ public class TestTypeCasts : BHL_TestBase
           .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
           .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("Foo")) })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 14) })
-          .EmitChain(Opcodes.SetAttrInplace, new int[] { 0 })
+          .EmitChain(Opcodes.SetAttrPeek, new int[] { 0 })
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.TypeAs, new int[] { TypeIdx(c, c.ns.T("Foo")), 0 })

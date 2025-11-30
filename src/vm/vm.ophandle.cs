@@ -77,7 +77,7 @@ public partial class VM
     op_handlers[(int)Opcodes.SetAttr] = &OpcodeSetAttr;
     op_handlers[(int)Opcodes.GetVarAttr] = &OpcodeGetVarAttr;
     op_handlers[(int)Opcodes.SetVarAttr] = &OpcodeSetVarAttr;
-    op_handlers[(int)Opcodes.SetAttrInplace] = &OpcodeSetAttrInplace;
+    op_handlers[(int)Opcodes.SetAttrPeek] = &OpcodeSetAttrPeek;
 
     op_handlers[(int)Opcodes.GetGVar] = &OpcodeGetGVar;
     op_handlers[(int)Opcodes.SetGVar] = &OpcodeSetGVar;
@@ -784,7 +784,7 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeSetAttrInplace(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  unsafe static void OpcodeSetAttrPeek(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
 

@@ -53,7 +53,7 @@ public enum Opcodes
   SetVarAttr            = 46,
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
-  SetAttrInplace        = 48,
+  SetAttrPeek        = 48,
 
   Equal                 = 49,
   UnaryNot              = 50,
