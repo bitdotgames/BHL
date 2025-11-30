@@ -42,6 +42,11 @@ public class BHL_TestBase
       v.type = type;
       v.num = src.n;
     }
+
+    public void Add(int a)
+    {
+      n += a;
+    }
   }
 
   public static void BindIntStruct(Types ts)
@@ -72,6 +77,25 @@ public class BHL_TestBase
           IntStruct.Encode(ref ctx, s, ctx.type);
         }
       ));
+
+      {
+        var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            int a = exec.stack.Pop();
+            var ctx = exec.stack.Pop();
+            var s = new IntStruct();
+            IntStruct.Decode(ctx, ref s);
+            s.Add(a);
+            IntStruct.Encode(ref ctx, s, ctx.type);
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("int"))
+        );
+
+        cl.Define(m);
+      }
+
       cl.Setup();
     }
   }

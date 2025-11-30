@@ -87,4 +87,44 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
+  //TODO: adding failing test
+  //[Fact]
+  public void TestCallAddMethod()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      IntStruct s = {}
+      s.n = 100
+      s.Add(10)
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+
+    var c = Compile(bhl, ts_fn);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.New, new int[] { TypeIdx(c, c.ns.T("IntStruct")) })
+          .EmitChain(Opcodes.SetVar, new int[] { 0 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 100) })
+          .EmitChain(Opcodes.SetVarAttr, new int[] { 0, 0 })
+          .EmitChain(Opcodes.GetVar, new int[] { 0 })
+          .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
+          .EmitChain(Opcodes.CallMethodNative, new int[] { 1, 1 })
+          .EmitChain(Opcodes.GetVarAttr, new int[] { 0, 0 })
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c, ts_fn);
+    Assert.Equal(110, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
 }
