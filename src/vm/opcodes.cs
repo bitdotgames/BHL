@@ -47,8 +47,10 @@ public enum Opcodes
   GetFuncNativePtr      = 41,
   GetFuncIpPtr          = 42,
 
-  GetAttr               = 45,
-  SetAttr               = 47,
+  GetAttr               = 43,
+  SetAttr               = 44,
+  GetVarAttr            = 45,
+  SetVarAttr            = 46,
   //TODO: used for json alike array initialization,
   //      can be replaced with more low-level opcodes?
   SetAttrInplace        = 48,

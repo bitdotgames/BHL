@@ -53,7 +53,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void CleanLocals()
+    public void ReleaseLocals()
     {
       //releasing all locals
       for(int i = locals_offset; i < locals_offset + locals_vars_num; ++i)
@@ -79,7 +79,7 @@ public partial class VM : INamedResolver
       //      no need to do that
 
       //it's assumed that this code is called once all locals were
-      //cleaned, we need to clean stack 'copy leftover'
+      //released, we need to clean stack 'copy leftover'
       for(int i = 0; i < return_vars_num; ++i)
       {
         int local_idx = locals_offset + i;

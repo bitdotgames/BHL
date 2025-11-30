@@ -4917,8 +4917,7 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.DeclVar, new int[] { 4, TypeIdx(c, ts.T("int")) }) //declare counter
           .EmitChain(Opcodes.DeclVar, new int[] { 2, TypeIdx(c, ts.T("int"))  }) //declare iterator
           .EmitChain(Opcodes.GetVarScalar, new int[] { 4 })
-          .EmitChain(Opcodes.GetVar, new int[] { 3 })
-          .EmitChain(Opcodes.GetAttr, new int[] { ArrCountIdx })
+          .EmitChain(Opcodes.GetVarAttr, new int[] { 3, ArrCountIdx })
           .EmitChain(Opcodes.LT) //compare counter and tmp arr size
           .EmitChain(Opcodes.JumpZ, new int[] { 19 })
           //call arr idx method
@@ -4931,7 +4930,7 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.Add)
           .EmitChain(Opcodes.SetVarScalar, new int[] { 1 })
           .EmitChain(Opcodes.Inc, new int[] { 4 }) //fast increment hidden counter
-          .EmitChain(Opcodes.Jump, new int[] { -30 })
+          .EmitChain(Opcodes.Jump, new int[] { -29 })
           .EmitChain(Opcodes.GetVarScalar, new int[] { 1 })
           .EmitChain(Opcodes.Return)
       ;

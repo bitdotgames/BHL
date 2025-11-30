@@ -75,6 +75,8 @@ public partial class VM
 
     op_handlers[(int)Opcodes.GetAttr] = &OpcodeGetAttr;
     op_handlers[(int)Opcodes.SetAttr] = &OpcodeSetAttr;
+    op_handlers[(int)Opcodes.GetVarAttr] = &OpcodeGetVarAttr;
+    op_handlers[(int)Opcodes.SetVarAttr] = &OpcodeSetVarAttr;
     op_handlers[(int)Opcodes.SetAttrInplace] = &OpcodeSetAttrInplace;
 
     op_handlers[(int)Opcodes.GetGVar] = &OpcodeGetGVar;
@@ -745,6 +747,40 @@ public partial class VM
 
     val._refc?.Release();
     obj._refc?.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetVarAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    ref var obj = ref frame.locals.vals[frame.locals_offset + local_idx];
+    var class_symb = (ClassSymbol)obj.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    var res = new Val();
+    field_symb.getter(exec, obj, ref res, field_symb);
+
+    res._refc?.Retain();
+    exec.stack.Push(res);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetVarAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    exec.stack.Pop(out var val);
+
+    ref var obj = ref frame.locals.vals[frame.locals_offset + local_idx];
+    var class_symb = (ClassSymbol)obj.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.setter(exec, ref obj, val, field_symb);
+
+    val._refc?.Release();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

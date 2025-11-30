@@ -533,13 +533,25 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.SetAttrInplace,
+        Opcodes.GetAttr,
         2 /*member idx*/
       )
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.GetAttr,
+        Opcodes.GetVarAttr,
+        1 /*local idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetVarAttr,
+        1 /*local idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetAttrInplace,
         2 /*member idx*/
       )
     );
@@ -1367,7 +1379,14 @@ public class ModuleCompiler : AST_Visitor
           if(ast.symb_idx == -1)
             throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
           VisitChildren(ast);
-          Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
+          var prev = Peek();
+          if(prev.op == Opcodes.GetVar)
+          {
+            Pop();
+            Emit(Opcodes.GetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
+          else
+            Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
         else if(is_ref && !ast.pass_as_ref)
           Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
@@ -1402,7 +1421,14 @@ public class ModuleCompiler : AST_Visitor
           if(ast.symb_idx == -1)
             throw new Exception("Member '" + ast.symbol?.name + "' idx is not valid");
           VisitChildren(ast);
-          Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
+          var prev = Peek();
+          if(prev.op == Opcodes.GetVar)
+          {
+            Pop();
+            Emit(Opcodes.SetVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
+          else
+            Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
         else if(is_ref)
           Emit(Opcodes.SetRef, new int[] {ast.symb_idx}, ast.line_num);

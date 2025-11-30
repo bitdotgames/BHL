@@ -129,7 +129,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       }
       exec.regions_count = frame.regions_mark;
       --exec.frames_count;
-      frame.CleanLocals();
+      frame.ReleaseLocals();
     }
 
     if(defers.count > 0)
