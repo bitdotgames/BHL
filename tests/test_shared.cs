@@ -178,6 +178,7 @@ public class BHL_TestBase
         {
           var s = (IntStruct)ctx.obj;
           s.n = (int)v.num;
+          //NOTE: this is basically copy-on-write
           ctx.obj = s;
         }
       ));
@@ -193,6 +194,7 @@ public class BHL_TestBase
 
             var s = (IntStruct)self.obj;
             s.Add(a);
+            //NOTE: this is basically copy-on-write
             self.obj = s;
 
             return null;
