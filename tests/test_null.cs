@@ -17,7 +17,7 @@ public class TestNull : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.True(Execute(vm, "test").Stack.Pop().bval);
@@ -56,7 +56,7 @@ public class TestNull : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       BindTrace(ts, log);
-      BindIntStruct(ts);
+      BindIntStructEncoded(ts);
     });
 
     var vm = MakeVM(bhl, ts_fn);

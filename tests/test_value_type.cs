@@ -17,7 +17,7 @@ public class TestValueType : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
 
     var c = Compile(bhl, ts_fn);
 
@@ -40,6 +40,25 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
+  public void TestSetGetAttributeForObjectValueType()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      IntStruct s = {}
+      s.n = 100
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestChangeAttributeOnACopy()
   {
     string bhl = @"
@@ -54,7 +73,7 @@ public class TestValueType : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var stack = Execute(vm, "test").Stack;
@@ -79,7 +98,7 @@ public class TestValueType : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
     var stack = Execute(vm, "test").Stack;
@@ -101,7 +120,7 @@ public class TestValueType : BHL_TestBase
     }
     ";
 
-    var ts_fn = new Action<Types>((ts) => { BindIntStruct(ts); });
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
 
     var c = Compile(bhl, ts_fn);
 

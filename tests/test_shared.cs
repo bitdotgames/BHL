@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using bhl;
@@ -47,7 +48,7 @@ public class BHL_TestBase
     }
   }
 
-  public static void BindIntStruct(Types ts)
+  public static void BindIntStructEncoded(Types ts)
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
@@ -87,6 +88,57 @@ public class BHL_TestBase
             IntStruct.Decode(self, ref s);
             s.Add(a);
             IntStruct.Encode(ref self, s, self.type);
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("int"))
+        );
+
+        cl.Define(m);
+      }
+
+      cl.Setup();
+    }
+  }
+
+  public static void BindIntStructAsObj(Types ts)
+  {
+    {
+      var cl = new ClassSymbolNative(new Origin(), "IntStruct",
+        delegate(VM.ExecState exec, ref Val v, IType type)
+        {
+          var s = new IntStruct();
+          v.type = type;
+          v.obj = s;
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol(new Origin(), "n", Types.Int,
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          ref var s = ref Unsafe.Unbox<IntStruct>(ctx.obj);
+          v.num = s.n;
+        },
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          ref var s = ref Unsafe.Unbox<IntStruct>(ctx.obj);
+          s.n = (int)v.num;
+        }
+      ));
+
+      {
+        var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+          {
+            ref var self = ref exec.stack.vals[ctx_idx];
+
+            int a = exec.stack.Pop();
+            exec.stack.Pop();
+
+            ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
+            s.Add(a);
+
             return null;
           },
           new FuncArgSymbol("a", ts.T("int"))
@@ -339,7 +391,7 @@ public class BHL_TestBase
   public void BindMasterStruct(Types ts)
   {
     BindStringClass(ts);
-    BindIntStruct(ts);
+    BindIntStructEncoded(ts);
 
     {
       var cl = new ClassSymbolNative(new Origin(), "MasterStruct",

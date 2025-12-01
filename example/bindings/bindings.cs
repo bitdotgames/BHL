@@ -14,7 +14,7 @@ public class MyBindings : IUserBindings
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "Trace", Types.Void,
-        delegate(VM.ExecState exec, FuncArgsInfo args_info)
+        delegate(VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx)
         {
 #if !BHL_FRONT
           var str = exec.stack.Pop().str;
@@ -30,7 +30,7 @@ public class MyBindings : IUserBindings
 
     {
       var fn = new FuncSymbolNative(new Origin(), "Rand", Types.Float,
-        delegate(VM.ExecState exec, FuncArgsInfo args_info)
+        delegate(VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx)
         {
 #if !BHL_FRONT
           var rnd = new Random();
