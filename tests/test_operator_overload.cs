@@ -27,7 +27,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var ov = exec.stack.PopRelease().obj;
           var cv = exec.stack.PopRelease().obj;
@@ -82,7 +82,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "!=", FuncAttrib.Static, ts.T("bool"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var ov = exec.stack.PopRelease().obj;
           var cv = exec.stack.PopRelease().obj;
@@ -557,7 +557,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var o = (Color)exec.stack.PopRelease().obj;
           var c = (Color)exec.stack.PopRelease().obj;
@@ -602,7 +602,7 @@ public class TestOperatorOverload : BHL_TestBase
     {
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var k = (float)exec.stack.PopRelease().num;
           var c = (Color)exec.stack.PopRelease().obj;
@@ -649,7 +649,7 @@ public class TestOperatorOverload : BHL_TestBase
       var cl = BindColor(ts, call_setup: false);
       {
         var op = new FuncSymbolNative(new Origin(), "*", FuncAttrib.Static, ts.T("Color"), 0,
-          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             var k = (float)exec.stack.PopRelease().num;
             var c = (Color)exec.stack.PopRelease().obj;
@@ -671,7 +671,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       {
         var op = new FuncSymbolNative(new Origin(), "+", FuncAttrib.Static, ts.T("Color"), 0,
-          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             var o = (Color)exec.stack.PopRelease().obj;
             var c = (Color)exec.stack.PopRelease().obj;
@@ -726,7 +726,7 @@ public class TestOperatorOverload : BHL_TestBase
 
       var cl = BindColor(ts, call_setup: false);
       var op = new FuncSymbolNative(new Origin(), "==", FuncAttrib.Static, ts.T("bool"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var o = (Color)exec.stack.Pop().obj;
           var c = (Color)exec.stack.Pop().obj;

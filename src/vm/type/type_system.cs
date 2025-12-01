@@ -153,7 +153,7 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "At", String,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           int idx = exec.stack.PopFast();
           ref var self = ref exec.stack.Peek();
@@ -167,7 +167,7 @@ public class Types : INamedResolver
 
     {
       var m = new FuncSymbolNative(new Origin(), "IndexOf", Int,
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           string s = exec.stack.PopFast();
           ref var self = ref exec.stack.Peek();

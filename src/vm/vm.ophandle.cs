@@ -561,7 +561,7 @@ public partial class VM
     self._refc?.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default, exec.stack.sp - 2);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
     exec.stack.Push(self);
   }
 
@@ -604,7 +604,7 @@ public partial class VM
     self._refc?.Retain();
     var class_type = (MapTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default, exec.stack.sp - 3);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
     exec.stack.Push(self);
   }
 
@@ -952,7 +952,7 @@ public partial class VM
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits, -1))
+    if(CallNative(exec, nfunc_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -971,7 +971,7 @@ public partial class VM
     var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits, -1))
+    if(CallNative(exec, nfunc_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1032,7 +1032,8 @@ public partial class VM
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    if(CallNative(exec, func_symb, args_bits, self_idx))
+    exec.self_val_idx = self_idx; //passing self idx
+    if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1053,7 +1054,8 @@ public partial class VM
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    if(CallNative(exec, func_symb, args_bits, local_idx/*passing ctx idx*/))
+    exec.self_val_idx = local_idx; //passing ctx idx
+    if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1125,7 +1127,8 @@ public partial class VM
     var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
     var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
-    if(CallNative(exec, func_symb, args_bits, self_idx))
+    exec.self_val_idx = self_idx;
+    if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1143,7 +1146,7 @@ public partial class VM
     //checking if it's a native call
     if(ptr.native != null)
     {
-      bool return_status = CallNative(exec, ptr.native, args_bits, -1);
+      bool return_status = CallNative(exec, ptr.native, args_bits);
       if(return_status)
       {
         //let's cancel ip incrementing
@@ -1192,7 +1195,7 @@ public partial class VM
     //checking if it's a native call
     if(ptr.native != null)
     {
-      bool return_status = CallNative(exec, ptr.native, args_bits, -1);
+      bool return_status = CallNative(exec, ptr.native, args_bits);
       if(return_status)
       {
         //let's cancel ip incrementing

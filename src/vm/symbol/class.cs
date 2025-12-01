@@ -147,7 +147,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_get = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldGetFuncName(fld), fld.type,
-          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             var res = new Val();
             fld.getter(null, null, ref res, fld);
@@ -159,7 +159,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_set = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldSetFuncName(fld), fld.type,
-          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             Val ctx = null;
             exec.stack.Pop(out var val);

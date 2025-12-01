@@ -717,7 +717,7 @@ public class TestTypeCasts : BHL_TestBase
       cl2.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "NewFooHiddenBar", ts.T("Foo"),
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           exec.stack.Push(Val.NewObj(new NativeBar(), ts.T("Foo").Get()));
           return null;
@@ -825,7 +825,7 @@ public class TestTypeCasts : BHL_TestBase
       cl.Setup();
 
       var fn = new FuncSymbolNative(new Origin(), "MakeIWow", ts.T("IWow"),
-        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
+        (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           exec.stack.Push(Val.NewObj(new NativeWow(), ts.T("IWow").Get()));
           return null;
