@@ -83,6 +83,31 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
+  public void TestChangeAttributeOnObjectValueType()
+  {
+    string bhl = @"
+
+    func int,int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 1
+      IntStruct s2 = s1
+      s2.n = 100
+      return s1.n, s2.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    //NOTE: !!!!!!!!!!
+    Assert.Equal(100, stack.Pop().num);
+    Assert.Equal(100, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestChangeAttributeOnCapturedValue()
   {
     string bhl = @"
@@ -141,6 +166,27 @@ public class TestValueType : BHL_TestBase
     AssertEqual(c, expected);
 
     var vm = MakeVM(c, ts_fn);
+    Assert.Equal(110, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodForObjectValueType()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      IntStruct s = {}
+      s.n = 100
+      s.Add(10)
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(110, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
