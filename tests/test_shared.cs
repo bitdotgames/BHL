@@ -82,7 +82,7 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            ref var self = ref exec.stack.vals[exec.self_val_idx];
+            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
             var s = new IntStruct();
             IntStruct.Decode(self, ref s);
 
@@ -135,15 +135,13 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            var self = exec.stack.vals[exec.self_val_idx];
+            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
             ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
 
             int a = exec.stack.Pop();
             exec.stack.Pop(); //self is also passed on the stack
 
             s.Add(a);
-
-            exec.stack.vals[exec.self_val_idx] = self;
 
             return null;
           },
@@ -190,11 +188,11 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            ref var self = ref exec.stack.vals[exec.self_val_idx];
+            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
             var s = (IntStruct)self.obj;
 
             int a = exec.stack.Pop();
-            exec.stack.Pop();
+            exec.stack.Pop(); //self is also passed on the stack
 
             s.Add(a);
             //NOTE: this is basically copy-on-write

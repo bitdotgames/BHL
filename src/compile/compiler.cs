@@ -653,12 +653,6 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
-        Opcodes.CallRefMethodNative,
-        1 /*var idx*/, 2 /*class member idx*/, 4 /*args bits*/
-      )
-    );
-    DeclareOpcode(
-      new Definition(
         Opcodes.CallFuncPtr,
         4 /*args bits*/
       )
@@ -1557,8 +1551,7 @@ public class ModuleCompiler : AST_Visitor
           {
             if(ast.ctx_var != null)
             {
-              Emit(//ast.ctx_var._is_ref ?
-                //Opcodes.CallRefMethodNative : Opcodes.CallVarMethodNative,
+              Emit(
                 Opcodes.CallVarMethodNative,
                 new int[] {ast.ctx_var.scope_idx, ast.symb_idx, (int)ast.cargs_bits},
                 ast.line_num);

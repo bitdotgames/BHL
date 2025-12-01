@@ -105,7 +105,6 @@ public partial class VM
     op_handlers[(int)Opcodes.CallFuncPtr] = &OpcodeCallFuncPtr;
     op_handlers[(int)Opcodes.CallFuncPtrInv] = &OpcodeCallFuncPtrInv;
     op_handlers[(int)Opcodes.CallVarMethodNative] = &OpcodeCallVarMethodNative;
-    op_handlers[(int)Opcodes.CallRefMethodNative] = &OpcodeCallRefMethodNative;
 
     op_handlers[(int)Opcodes.Frame] = &OpcodeEnterFrame;
 
@@ -1061,35 +1060,6 @@ public partial class VM
       //let's cancel ip incrementing
       --exec.ip;
     }
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  unsafe static void OpcodeCallRefMethodNative(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-  {
-    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-    int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
-    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
-
-    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
-    int self_idx = exec.stack.sp - args_num - 1;
-    ref var self = ref exec.stack.vals[self_idx];
-
-    var class_type = (ClassSymbol)self.type;
-    var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
-
-    //NOTE: not passing local_idx because it's an index to ref, not a Val
-    exec.self_val_idx = self_idx; //passing ctx idx
-    if(CallNative(exec, func_symb, args_bits))
-    {
-      //let's cancel ip incrementing
-      --exec.ip;
-    }
-    //TODO: this is only required for value types but we potentially apply this for each call :(
-    //syncing back possibly changed 'self'
-    ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
-    var val_ref = (ValRef)val_ref_holder._refc;
-    val_ref.val = self;
-    self.obj = null;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

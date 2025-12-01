@@ -286,7 +286,7 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact(Skip = "Not implemented yet")]
+  [Fact]
   public void TestCallAddMethodOnRefEncoded()
   {
     string bhl = @"
@@ -312,7 +312,7 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact(Skip = "Not implemented yet")]
+  [Fact]
   public void TestCallAddMethodOnRefObj()
   {
     string bhl = @"
@@ -338,7 +338,7 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
-  [Fact(Skip = "Not implemented yet")]
+  [Fact]
   public void TestCallAddMethodOnRefObjUnsafe()
   {
     string bhl = @"
