@@ -5,7 +5,7 @@ using Xunit;
 public class TestValueType : BHL_TestBase
 {
   [Fact]
-  public void TestSetGetAttribute()
+  public void TestSetGetAttributeOnEncoded()
   {
     string bhl = @"
 
@@ -40,7 +40,26 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
-  public void TestSetGetAttributeForObjectValueType()
+  public void TestSetGetAttributeForObjUnsafe()
+  {
+    string bhl = @"
+
+    func int test()
+    {
+      IntStruct s = {}
+      s.n = 100
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestSetGetAttributeForObj()
   {
     string bhl = @"
 
@@ -59,7 +78,7 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
-  public void TestChangeAttributeOnACopy()
+  public void TestChangeAttributeOnACopyEncoded()
   {
     string bhl = @"
 
@@ -83,7 +102,7 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
-  public void TestChangeAttributeOnObjectValueType()
+  public void TestChangeAttributeOnACopyObj()
   {
     string bhl = @"
 
@@ -101,14 +120,38 @@ public class TestValueType : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var stack = Execute(vm, "test").Stack;
-    //NOTE: !!!!!!!!!!
+    Assert.Equal(1, stack.Pop().num);
+    Assert.Equal(100, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestChangeAttributeOnACopyUnsafe()
+  {
+    string bhl = @"
+
+    func int,int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 1
+      IntStruct s2 = s1
+      s2.n = 100
+      return s1.n, s2.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    //NOTE:!!!!!!!!
     Assert.Equal(100, stack.Pop().num);
     Assert.Equal(100, stack.Pop().num);
     CommonChecks(vm);
   }
 
   [Fact]
-  public void TestChangeAttributeOnCapturedValue()
+  public void TestChangeAttributeOnCapturedValueEncoded()
   {
     string bhl = @"
 
@@ -132,7 +175,7 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallAddMethod()
+  public void TestCallAddMethodOnEncoded()
   {
     string bhl = @"
 
@@ -171,23 +214,75 @@ public class TestValueType : BHL_TestBase
   }
 
   [Fact]
-  public void TestCallAddMethodForObjectValueType()
+  public void TestCallAddMethodOnEncoded2()
   {
     string bhl = @"
 
-    func int test()
+    func int,int test()
     {
-      IntStruct s = {}
-      s.n = 100
-      s.Add(10)
-      return s.n
+      IntStruct s1 = {}
+      s1.n = 100
+      var s2 = s1
+      s2.Add(10)
+      return s1.n, s2.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(100, stack.Pop().num);
+    Assert.Equal(110, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnUnsafe()
+  {
+    string bhl = @"
+
+    func int,int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 100
+      var s2 = s1
+      s2.Add(10)
+      return s1.n, s2.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    //NOTE:!!!!!!!!
+    Assert.Equal(110, stack.Pop().num);
+    Assert.Equal(110, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnObj()
+  {
+    string bhl = @"
+
+    func int,int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 100
+      var s2 = s1
+      s2.Add(10)
+      return s1.n, s2.n
     }
     ";
 
     var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Assert.Equal(110, Execute(vm, "test").Stack.Pop().num);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(100, stack.Pop().num);
+    Assert.Equal(110, stack.Pop().num);
     CommonChecks(vm);
   }
 

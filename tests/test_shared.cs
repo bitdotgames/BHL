@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using bhl;
 using Xunit;
@@ -102,7 +103,7 @@ public class BHL_TestBase
     }
   }
 
-  public static void BindIntStructAsObj(Types ts)
+  public static void BindIntStructAsObjUnsafe(Types ts)
   {
     {
       var cl = new ClassSymbolNative(new Origin(), "IntStruct",
@@ -140,6 +141,59 @@ public class BHL_TestBase
 
             ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
             s.Add(a);
+
+            return null;
+          },
+          new FuncArgSymbol("a", ts.T("int"))
+        );
+
+        cl.Define(m);
+      }
+
+      cl.Setup();
+    }
+  }
+
+  public static void BindIntStructAsObj(Types ts)
+  {
+    {
+      var cl = new ClassSymbolNative(new Origin(), "IntStruct",
+        delegate(VM.ExecState exec, ref Val v, IType type)
+        {
+          var s = new IntStruct();
+          v.type = type;
+          v.obj = s;
+        }
+      );
+
+      ts.ns.Define(cl);
+
+      cl.Define(new FieldSymbol(new Origin(), "n", Types.Int,
+        delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld)
+        {
+          var s = (IntStruct)ctx.obj;
+          v.num = s.n;
+        },
+        delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
+        {
+          var s = (IntStruct)ctx.obj;
+          s.n = (int)v.num;
+          ctx.obj = s;
+        }
+      ));
+
+      {
+        var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.stack.vals[exec.self_val_idx];
+
+            int a = exec.stack.Pop();
+            exec.stack.Pop(); //self is also passed on the stack
+
+            var s = (IntStruct)self.obj;
+            s.Add(a);
+            self.obj = s;
 
             return null;
           },
