@@ -967,7 +967,7 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           ast = new AST_Call(call_type, line, func_symb, 0, name);
           //let's attach local variable index if it exists
           if(call_type == EnumCall.MFUNC && prev_symbol is VariableSymbol var_symbol)
-            ast.ctx_idx = var_symbol.scope_idx;
+            ast.ctx_var = var_symbol;
           //NOTE: let's mark func calls native and useland with different colors
           LSP_AddSemanticToken(name,
             func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);

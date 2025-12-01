@@ -286,4 +286,82 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact(Skip = "Not implemented yet")]
+  public void TestCallAddMethodOnRefEncoded()
+  {
+    string bhl = @"
+    func add(ref IntStruct s)
+    {
+      s.Add(10)
+    }
+
+    func int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 100
+      add(ref s1)
+      return s1.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(110, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact(Skip = "Not implemented yet")]
+  public void TestCallAddMethodOnRefObj()
+  {
+    string bhl = @"
+    func add(ref IntStruct s)
+    {
+      s.Add(10)
+    }
+
+    func int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 100
+      add(ref s1)
+      return s1.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(110, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact(Skip = "Not implemented yet")]
+  public void TestCallAddMethodOnRefObjUnsafe()
+  {
+    string bhl = @"
+    func add(ref IntStruct s)
+    {
+      s.Add(10)
+    }
+
+    func int test()
+    {
+      IntStruct s1 = {}
+      s1.n = 100
+      add(ref s1)
+      return s1.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(110, stack.Pop().num);
+    CommonChecks(vm);
+  }
+
 }

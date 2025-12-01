@@ -405,7 +405,9 @@ public partial class VM
     exec.ip = frame.start_ip - 1;
   }
 
-  //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
+  //NOTE: returns whether further execution should be stopped and
+  //      status returned immediately (e.g in case of RUNNING or FAILURE)
+  //      returns false if execution completed immediately
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits)
   {
