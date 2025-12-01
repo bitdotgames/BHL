@@ -383,7 +383,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("float"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.status = BHS.FAILURE;
             return null;
@@ -973,7 +973,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string"),
-          (VM.ExecState exec, FuncArgsInfo arg_info) =>
+          (VM.ExecState exec, FuncArgsInfo arg_info, int ctx_idx) =>
           {
             exec.stack.Push("foo");
             exec.stack.Push(42);
@@ -1026,7 +1026,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_mult", ts.T("float", "string", "int", "float"),
-          (VM.ExecState exec, FuncArgsInfo arg_info) =>
+          (VM.ExecState exec, FuncArgsInfo arg_info, int ctx_idx) =>
           {
             exec.stack.Push(42.5);
             exec.stack.Push(12);
@@ -1086,7 +1086,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             double b = args_info.IsDefaultArgUsed(0) ? 2 : exec.stack.Pop();
             double a = exec.stack.Pop();
@@ -1129,7 +1129,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             double b = args_info.IsDefaultArgUsed(0) ? 2 : exec.stack.Pop();
             double a = exec.stack.Pop();
@@ -1167,7 +1167,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 1,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             double a = args_info.IsDefaultArgUsed(0) ? 14 : exec.stack.Pop();
 
@@ -1203,7 +1203,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "func_with_def", ts.T("float"), 2,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             double b = args_info.IsDefaultArgUsed(1) ? 2 : exec.stack.Pop();
             double a = args_info.IsDefaultArgUsed(0) ? 10 : exec.stack.Pop();
@@ -3106,7 +3106,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer42", Types.Int,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           exec.stack.Push(42);
           return null;
@@ -3134,7 +3134,7 @@ public class TestVM : BHL_TestBase
     var ts_fn = new Action<Types>((ts) =>
     {
       var fn = new FuncSymbolNative(new Origin(), "answer", Types.Int,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           double b = exec.stack.Pop();
           double a = exec.stack.Pop();
@@ -4906,10 +4906,10 @@ public class TestVM : BHL_TestBase
           .EmitChain(Opcodes.SetVar, new int[] { 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 1) })
-          .EmitChain(Opcodes.CallMethodNative, new int[] { ArrAddIdx, 1 })
+          .EmitChain(Opcodes.CallVarMethodNative, new int[] { 0, ArrAddIdx, 1 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 3) })
-          .EmitChain(Opcodes.CallMethodNative, new int[] { ArrAddIdx, 1 })
+          .EmitChain(Opcodes.CallVarMethodNative, new int[] { 0, ArrAddIdx, 1 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 0) })
           .EmitChain(Opcodes.SetVarScalar, new int[] { 1 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
@@ -6751,7 +6751,7 @@ public class TestVM : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", Types.Int,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.stack.Pop();
             exec.stack.Push(42);
@@ -6764,7 +6764,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "bar_fail", Types.Int,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.stack.Pop();
             exec.status = BHS.FAILURE;
@@ -6869,7 +6869,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "hey", Types.Void,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>  { return null; },
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>  { return null; },
           new FuncArgSymbol("s", ts.T("string")),
           new FuncArgSymbol("i", Types.Int)
         );
@@ -7078,7 +7078,7 @@ public class TestVM : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "foo", ts.T("Foo"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             var fn_ptr = exec.stack.Pop();
             ref var frame = ref exec.frames[exec.frames_count - 1];
@@ -7685,7 +7685,7 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "self", ts.T("Bar"),
-            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
             {
               var obj = exec.stack.Pop().obj;
               exec.stack.Push(Val.NewObj(obj, ts.T("Bar").Get()));
@@ -7697,7 +7697,7 @@ public class TestVM : BHL_TestBase
 
         {
           var m = new FuncSymbolNative(new Origin(), "ret_int", FuncAttrib.Coro, Types.Int, 0,
-            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
             {
               return CoroutinePool.New<Bar_ret_int>(exec.vm);
             },
@@ -9227,7 +9227,7 @@ public class TestVM : BHL_TestBase
   FuncSymbolNative BindWaitTicks(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "WaitTicks", FuncAttrib.Coro, Types.Void, 0,
-      (VM.ExecState exec, FuncArgsInfo args_info) =>
+      (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
       {
         return CoroutinePool.New<CoroutineWaitTicks>(exec.vm);
       },

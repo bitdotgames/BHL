@@ -647,6 +647,12 @@ public class ModuleCompiler : AST_Visitor
     );
     DeclareOpcode(
       new Definition(
+        Opcodes.CallVarMethodNative,
+        1 /*var idx*/, 2 /*class member idx*/, 4 /*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
         Opcodes.CallFuncPtr,
         4 /*args bits*/
       )
@@ -1409,7 +1415,8 @@ public class ModuleCompiler : AST_Visitor
           Emit(Opcodes.GetRef, new int[] {ast.symb_idx}, ast.line_num);
         else
           //Emit(Opcodes.GetVar, //safe general version
-          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ? Opcodes.GetVarScalar : Opcodes.GetVar,
+          Emit(!is_ref && ast.symbol is ITyped typed && Types.IsScalar(typed.GetIType()) ?
+              Opcodes.GetVarScalar : Opcodes.GetVar,
             new int[] {ast.symb_idx}, ast.line_num);
       }
         break;
@@ -1541,7 +1548,12 @@ public class ModuleCompiler : AST_Visitor
               Emit(Opcodes.CallMethod, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
           }
           else if(mfunc is FuncSymbolNative)
-            Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          {
+            if(ast.ctx_idx != -1)
+              Emit(Opcodes.CallVarMethodNative, new int[] {ast.ctx_idx, ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+            else
+              Emit(Opcodes.CallMethodNative, new int[] {ast.symb_idx, (int)ast.cargs_bits}, ast.line_num);
+          }
           else
             throw new Exception("Unsupported type: " + mfunc.GetType().Name);
         }

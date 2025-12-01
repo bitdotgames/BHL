@@ -104,6 +104,7 @@ public partial class VM
     op_handlers[(int)Opcodes.CallMethodIfaceNative] = &OpcodeCallMethodIfaceNative;
     op_handlers[(int)Opcodes.CallFuncPtr] = &OpcodeCallFuncPtr;
     op_handlers[(int)Opcodes.CallFuncPtrInv] = &OpcodeCallFuncPtrInv;
+    op_handlers[(int)Opcodes.CallVarMethodNative] = &OpcodeCallVarMethodNative;
 
     op_handlers[(int)Opcodes.Frame] = &OpcodeEnterFrame;
 
@@ -560,7 +561,7 @@ public partial class VM
     self._refc?.Retain();
     var class_type = (ArrayTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default, exec.stack.sp - 2);
     exec.stack.Push(self);
   }
 
@@ -603,7 +604,7 @@ public partial class VM
     self._refc?.Retain();
     var class_type = (MapTypeSymbol)self.type;
     //NOTE: Add must be at 0 index
-    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
+    ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default, exec.stack.sp - 3);
     exec.stack.Push(self);
   }
 
@@ -951,7 +952,7 @@ public partial class VM
 
     var nfunc_symb = vm.types.module.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits))
+    if(CallNative(exec, nfunc_symb, args_bits, -1))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -970,7 +971,7 @@ public partial class VM
     var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
     var nfunc_symb = func_mod.nfunc_index[func_idx];
 
-    if(CallNative(exec, nfunc_symb, args_bits))
+    if(CallNative(exec, nfunc_symb, args_bits, -1))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1031,7 +1032,28 @@ public partial class VM
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    if(CallNative(exec, func_symb, args_bits))
+    if(CallNative(exec, func_symb, args_bits, self_idx))
+    {
+      //let's cancel ip incrementing
+      --exec.ip;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeCallVarMethodNative(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.sp - args_num - 1;
+    ref var self = ref exec.stack.vals[self_idx];
+
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
+
+    if(CallNative(exec, func_symb, args_bits, local_idx/*passing ctx idx*/))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1097,10 +1119,13 @@ public partial class VM
     int iface_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
     uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
 
+    var args_info = new FuncArgsInfo(args_bits);
+    int self_idx = exec.stack.sp - args_info.CountArgs() - 1;
+
     var iface_symb = (InterfaceSymbol)frame.type_refs[iface_type_idx];
     var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
-    if(CallNative(exec, func_symb, args_bits))
+    if(CallNative(exec, func_symb, args_bits, self_idx))
     {
       //let's cancel ip incrementing
       --exec.ip;
@@ -1118,7 +1143,7 @@ public partial class VM
     //checking if it's a native call
     if(ptr.native != null)
     {
-      bool return_status = CallNative(exec, ptr.native, args_bits);
+      bool return_status = CallNative(exec, ptr.native, args_bits, -1);
       if(return_status)
       {
         //let's cancel ip incrementing
@@ -1167,7 +1192,7 @@ public partial class VM
     //checking if it's a native call
     if(ptr.native != null)
     {
-      bool return_status = CallNative(exec, ptr.native, args_bits);
+      bool return_status = CallNative(exec, ptr.native, args_bits, -1);
       if(return_status)
       {
         //let's cancel ip incrementing

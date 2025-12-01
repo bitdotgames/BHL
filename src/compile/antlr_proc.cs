@@ -522,7 +522,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           curr_name.Symbol.Line,
           write,
           is_leftover: true,
-          is_root: chain.items.Count == 0
+          is_root: chain.items.Count == 0,
+          prev_symbol: curr_symb
         );
       }
 
@@ -663,7 +664,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           ref curr_type,
           cargs.Start.Line,
           write: false,
-          is_root: chain_offset == 0
+          is_root: chain_offset == 0,
+          prev_symbol: curr_symb
         );
         curr_name = null;
       }
@@ -677,7 +679,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
           ref curr_type,
           arracc.Start.Line,
           write: write && is_last,
-          is_root: c == chain_offset
+          is_root: c == chain_offset,
+          prev_symbol: curr_symb
         );
         curr_name = null;
       }
@@ -693,7 +696,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
             ref curr_type,
             macc.Start.Line,
             write: false,
-            is_root: c == chain_offset
+            is_root: c == chain_offset,
+            prev_symbol: curr_symb
           );
 
         scope = curr_type as IScope;
@@ -899,7 +903,8 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
     int line,
     bool write,
     bool is_leftover = false,
-    bool is_root = false
+    bool is_root = false,
+    Symbol prev_symbol = null
   )
   {
     AST_Call ast = null;
@@ -956,13 +961,13 @@ public partial class ANTLR_Processor : bhlParserBaseVisitor<object>
         }
         else if(func_symb != null)
         {
-          ast = new AST_Call(
-            scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static) ? EnumCall.MFUNC : EnumCall.FUNC,
-            line,
-            func_symb,
-            0,
-            name
-          );
+          var call_type = scope is IInstantiable && !func_symb.attribs.HasFlag(FuncAttrib.Static)
+            ? EnumCall.MFUNC
+            : EnumCall.FUNC;
+          ast = new AST_Call(call_type, line, func_symb, 0, name);
+          //let's attach local variable index if it exists
+          if(call_type == EnumCall.MFUNC && prev_symbol is VariableSymbol var_symbol)
+            ast.ctx_idx = var_symbol.scope_idx;
           //NOTE: let's mark func calls native and useland with different colors
           LSP_AddSemanticToken(name,
             func_symb is FuncSymbolNative ? SemanticToken.Parameter : SemanticToken.Function);

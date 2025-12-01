@@ -362,6 +362,7 @@ public class AST_Call  : AST_Tree
   public Symbol symbol;
   public bool pass_as_ref; //e.g. foo(ref a)
   public ITerminalNode node;
+  public int ctx_idx = -1; //currently used to mark local 'self' variable index for invoked methods
 
   public int symb_idx
   {

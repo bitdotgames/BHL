@@ -41,6 +41,7 @@ public enum Opcodes
   //for a case when func pointer comes before args
   //TODO: if CallFuncPtr operated on stack offsets this one would not be necessary
   CallFuncPtrInv        = 33,
+  CallVarMethodNative   = 34,
 
   GetFuncLocalPtr       = 37,
   GetFuncPtr            = 38,

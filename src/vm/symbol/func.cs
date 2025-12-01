@@ -543,7 +543,7 @@ public class FuncSymbolVirtual : FuncSymbol
 
 public class FuncSymbolNative : FuncSymbol
 {
-  public delegate Coroutine Cb(VM.ExecState exec, FuncArgsInfo args_info);
+  public delegate Coroutine Cb(VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx);
 
   public Cb cb;
 
@@ -620,6 +620,7 @@ public class FuncSymbolNative : FuncSymbol
     return "[native] " + base.ToString();
   }
 }
+
 
 #if BHL_FRONT
 //NOTE: lambda symbol is ephemeral and it exists only during compilation,

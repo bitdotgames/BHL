@@ -225,7 +225,7 @@ public partial class VM
       PushFrameRegion(ref frame, frame_idx);
 
       //passing args info as argument
-      coroutine = fsn.cb(this, frame.args_info);
+      coroutine = fsn.cb(this, frame.args_info, -1);
       //NOTE: before executing a coroutine VM will increment ip optimistically
       //      but we need it to remain at the same position so that it points at
       //      the fake return opcode
@@ -405,9 +405,9 @@ public partial class VM
 
   //NOTE: returns whether further execution should be stopped and status returned immediately (e.g in case of RUNNING or FAILURE)
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits)
+  static bool CallNative(ExecState exec, FuncSymbolNative native, uint args_bits, int ctx_idx)
   {
-    var new_coroutine = native.cb(exec, new FuncArgsInfo(args_bits));
+    var new_coroutine = native.cb(exec, new FuncArgsInfo(args_bits), ctx_idx);
 
     if(new_coroutine != null)
     {

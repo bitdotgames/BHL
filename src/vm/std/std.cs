@@ -36,7 +36,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           ref var o = ref exec.stack.Peek();
           o._refc?.Release();
@@ -50,7 +50,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "Is", Types.Bool,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           ref var type = ref exec.stack.PopFast();
           ref var o = ref exec.stack.Peek();
@@ -69,7 +69,7 @@ public static class std
 
     {
       var fn = new FuncSymbolNative(new Origin(), "NextTrue", FuncAttrib.Coro, Types.Bool, 0,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           return CoroutinePool.New<CoroutineNextTrue>(exec.vm);
         }
@@ -90,7 +90,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "Write", Types.Void,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             string s = exec.stack.PopFast();
             Console.Write(s);
@@ -103,7 +103,7 @@ public static class std
 
       {
         var fn = new FuncSymbolNative(new Origin(), "WriteLine", Types.Void,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             string s = exec.stack.PopFast();
             Console.WriteLine(s);

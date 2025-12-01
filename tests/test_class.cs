@@ -4042,7 +4042,7 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getA", ts.T("int"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             var f = (VirtFoo)exec.stack.Pop().obj;
             exec.stack.Push(f.getA());
@@ -4054,7 +4054,7 @@ public class TestClass : BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "getB", ts.T("int"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             var f = (VirtFoo)exec.stack.Pop().obj;
             exec.stack.Push(f.getB());
@@ -4604,7 +4604,7 @@ public class TestClass : BHL_TestBase
       ts.ns.Define(cl);
 
       var m = new FuncSymbolNative(new Origin(), "static_foo", FuncAttrib.Static, ts.T("int"), 0,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           int n = exec.stack.Pop();
           exec.stack.Push(NativeFoo.static_foo(n));

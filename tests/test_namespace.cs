@@ -1275,7 +1275,7 @@ public class TestNamespace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.stack.Push(1);
             return null;
@@ -1313,7 +1313,7 @@ public class TestNamespace : BHL_TestBase
     {
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.stack.Push(1);
             return null;
@@ -1323,7 +1323,7 @@ public class TestNamespace : BHL_TestBase
       }
       {
         var fn = new FuncSymbolNative(new Origin(), "wow", ts.T("int"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             exec.stack.Push(10);
             return null;

@@ -128,8 +128,11 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
       //NOTE: for now indexing at the module level only static native methods
       //      due to possible unavailability of module for 'generic classes'
       //      created on the fly (array, map)
-      else if (fs is FuncSymbolNative fsn && fs.attribs.HasFlag(FuncAttrib.Static))
-        this.GetModule().nfunc_index.Index(fsn);
+      else if (fs is FuncSymbolNative fsn)
+      {
+        if(fs.attribs.HasFlag(FuncAttrib.Static))
+          this.GetModule().nfunc_index.Index(fsn);
+      }
     }
     else if (sym is FieldSymbol fld && fld.attribs.HasFlag(FieldAttrib.Static))
     {
@@ -144,7 +147,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_get = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldGetFuncName(fld), fld.type,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             var res = new Val();
             fld.getter(null, null, ref res, fld);
@@ -156,7 +159,7 @@ public abstract class ClassSymbol : Symbol, IInstantiable, IEnumerable<Symbol>
         var static_set = new FuncSymbolNative(
           new Origin(),
           GetNativeStaticFieldSetFuncName(fld), fld.type,
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             Val ctx = null;
             exec.stack.Pop(out var val);

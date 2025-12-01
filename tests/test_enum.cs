@@ -146,7 +146,7 @@ public class TestEnum : BHL_TestBase
 
       {
         var fn = new FuncSymbolNative(new Origin(), "StateIs", ts.T("bool"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             double n = exec.stack.Pop();
             exec.stack.Push(n == 20);

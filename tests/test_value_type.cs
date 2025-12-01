@@ -87,8 +87,7 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
-  //TODO: adding failing test
-  //[Fact]
+  [Fact]
   public void TestCallAddMethod()
   {
     string bhl = @"
@@ -116,7 +115,7 @@ public class TestValueType : BHL_TestBase
           .EmitChain(Opcodes.SetVarAttr, new int[] { 0, 0 })
           .EmitChain(Opcodes.GetVar, new int[] { 0 })
           .EmitChain(Opcodes.Constant, new int[] { ConstIdx(c, 10) })
-          .EmitChain(Opcodes.CallMethodNative, new int[] { 1, 1 })
+          .EmitChain(Opcodes.CallVarMethodNative, new int[] { 0, 1, 1 })
           .EmitChain(Opcodes.GetVarAttr, new int[] { 0, 0 })
           .EmitChain(Opcodes.Return)
       ;

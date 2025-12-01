@@ -15,7 +15,7 @@ public static class Prelude
     {
       //NOTE: it's a builtin non-directly available function
       var fn = new FuncSymbolNative(new Origin(), "$yield", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           return CoroutinePool.New<CoroutineYield>(exec.vm);
         }
@@ -26,7 +26,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "suspend", FuncAttrib.Coro, Types.Void, 0,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           //TODO: use static instance for this case?
           return CoroutinePool.New<CoroutineSuspend>(exec.vm);
@@ -37,7 +37,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "wait", FuncAttrib.Coro, Types.Void, 0,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           return CoroutinePool.New<CoroutineWait>(exec.vm);
         },
@@ -48,7 +48,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           var val_ptr = exec.stack.Pop();
           var fb = exec.vm.Start(
@@ -67,7 +67,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "stop", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           var val = exec.stack.Pop();
           var fb_ref = new VM.FiberRef(val);
@@ -82,7 +82,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "debugger", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           System.Diagnostics.Debugger.Break();
           return null;
@@ -93,7 +93,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_on", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           return null;
         }
@@ -104,7 +104,7 @@ public static class Prelude
 
     {
       var fn = new FuncSymbolNative(new Origin(), "__dump_opcodes_off", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           return null;
         }

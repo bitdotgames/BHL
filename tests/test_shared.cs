@@ -1,9 +1,7 @@
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using bhl;
 using Xunit;
@@ -15,7 +13,7 @@ public class BHL_TestBase
   protected static void BindMin(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "min", ts.T("float"),
-      (VM.ExecState exec, FuncArgsInfo args_info) =>
+      (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
       {
         float b = exec.stack.Pop();
         float a = exec.stack.Pop();
@@ -80,14 +78,15 @@ public class BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
+            ref var self = ref exec.stack.vals[ctx_idx];
             int a = exec.stack.Pop();
-            var ctx = exec.stack.Pop();
+            exec.stack.Pop();
             var s = new IntStruct();
-            IntStruct.Decode(ctx, ref s);
+            IntStruct.Decode(self, ref s);
             s.Add(a);
-            IntStruct.Encode(ref ctx, s, ctx.type);
+            IntStruct.Encode(ref self, s, self.type);
             return null;
           },
           new FuncArgSymbol("a", ts.T("int"))
@@ -134,7 +133,7 @@ public class BHL_TestBase
   public void BindFail(Types ts)
   {
     var fn = new FuncSymbolNative(new Origin(), "fail", ts.T("void"),
-      (VM.ExecState exec, FuncArgsInfo func_args) =>
+      (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
       {
         exec.status = BHS.FAILURE;
         return null;
@@ -206,7 +205,7 @@ public class BHL_TestBase
 
     {
       var m = new FuncSymbolNative(new Origin(), "Add", ts.T("Color"),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           float k = exec.stack.Pop();
           var c = (Color)exec.stack.Pop().obj;
@@ -228,7 +227,7 @@ public class BHL_TestBase
 
     {
       var m = new FuncSymbolNative(new Origin(), "mult_summ", ts.T("float"),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           double k = exec.stack.Pop();
           var c = (Color)exec.stack.Pop().obj;
@@ -243,7 +242,7 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor", ts.T("Color"),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           double r = exec.stack.Pop();
           var c = new Color();
@@ -260,7 +259,7 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "mkcolor_null", ts.T("Color"),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           exec.stack.Push(VM.Null);
           return null;
@@ -313,7 +312,7 @@ public class BHL_TestBase
 
       {
         var m = new FuncSymbolNative(new Origin(), "mult_summ_alpha", ts.T("float"),
-          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
           {
             var c = (ColorAlpha)exec.stack.Pop().obj;
 
@@ -483,7 +482,7 @@ public class BHL_TestBase
 
     {
       var fn = new FuncSymbolNative(new Origin(), "PassthruFoo", ts.T("Foo"),
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           exec.stack.Push(exec.stack.Pop());
           return null;
@@ -556,7 +555,7 @@ public class BHL_TestBase
   public FuncSymbolNative BindTrace(Types ts, StringBuilder log)
   {
     var fn = new FuncSymbolNative(new Origin(), "trace", Types.Void,
-      (VM.ExecState exec, FuncArgsInfo args_info) =>
+      (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
       {
         string str = exec.stack.Pop();
         //for extra debug
@@ -575,7 +574,7 @@ public class BHL_TestBase
   {
     {
       var fn = new FuncSymbolNative(new Origin(), "log", Types.Void,
-        (VM.ExecState exec, FuncArgsInfo args_info) =>
+        (VM.ExecState exec, FuncArgsInfo args_info, int ctx_idx) =>
         {
           string str = exec.stack.Pop().str;
           Console.WriteLine(str);
