@@ -83,11 +83,13 @@ public class BHL_TestBase
           {
             ref var self = ref exec.stack.vals[ctx_idx];
             int a = exec.stack.Pop();
-            exec.stack.Pop();
+            exec.stack.Pop(); //self is also passed on the stack
+
             var s = new IntStruct();
             IntStruct.Decode(self, ref s);
             s.Add(a);
             IntStruct.Encode(ref self, s, self.type);
+
             return null;
           },
           new FuncArgSymbol("a", ts.T("int"))
@@ -134,7 +136,7 @@ public class BHL_TestBase
             ref var self = ref exec.stack.vals[ctx_idx];
 
             int a = exec.stack.Pop();
-            exec.stack.Pop();
+            exec.stack.Pop(); //self is also passed on the stack
 
             ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
             s.Add(a);
