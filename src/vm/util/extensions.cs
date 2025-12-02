@@ -69,7 +69,7 @@ public static class Extensions
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static unsafe ref T UsafeAsRef<T>(void* source) where T : unmanaged
+  public static unsafe ref T UnsafeAsRef<T>(void* source) where T : unmanaged
   {
     return ref *(T*)source;
   }
@@ -79,7 +79,7 @@ public static class Extensions
   {
     fixed(void* p = &source)
     {
-      return ref UsafeAsRef<TTo>(p);
+      return ref UnsafeAsRef<TTo>(p);
     }
   }
 }

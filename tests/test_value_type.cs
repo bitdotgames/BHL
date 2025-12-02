@@ -408,8 +408,12 @@ public class TestValueType : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test");
-    CommonChecks(vm, check_obj_nulls: false);
+    var stack = Execute(vm, "test").Stack;
+    //for this special case 'obj' is not cleared because the
+    //method binding sets 'obj' directly in memory slot
+    Assert.NotNull(stack.vals[0].obj);
+    stack.vals[0].obj = null;
+    CommonChecks(vm);
   }
 
   [Fact]
