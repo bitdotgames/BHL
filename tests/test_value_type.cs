@@ -364,4 +364,76 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestCallAddMethodOnTempEncoded()
+  {
+    string bhl = @"
+
+    func IntStruct make()
+    {
+      IntStruct s1 = {n: 100}
+      return s1
+    }
+
+    func test()
+    {
+      make().Add(10)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnTempObj()
+  {
+    string bhl = @"
+
+    func IntStruct make()
+    {
+      IntStruct s1 = {n: 100}
+      return s1
+    }
+
+    func test()
+    {
+      make().Add(10)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    CommonChecks(vm, check_obj_nulls: false);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnTempUnsafeObj()
+  {
+    string bhl = @"
+
+    func IntStruct make()
+    {
+      IntStruct s1 = {n: 100}
+      return s1
+    }
+
+    func test()
+    {
+      make().Add(10)
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    CommonChecks(vm);
+  }
+
 }

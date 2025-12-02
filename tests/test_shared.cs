@@ -888,13 +888,14 @@ public class BHL_TestBase
     throw new Exception("Constant null not found");
   }
 
-  public void CommonChecks(VM vm, bool check_frames = true, bool check_fibers = true, bool check_coros = true)
+  public void CommonChecks(VM vm, bool check_frames = true,
+    bool check_fibers = true, bool check_coros = true, bool check_obj_nulls = true)
   {
     //forced cleanup of module globals
     vm.UnloadModules();
 
     if(vm.last_fiber != null)
-      CommonChecks(vm.last_fiber, check_frames);
+      CommonChecks(vm.last_fiber, check_frames, check_obj_nulls);
 
     Assert.Equal(0, vm.vrefs_pool.BusyCount);
     Assert.Equal(0, vm.vlsts_pool.BusyCount);
@@ -905,7 +906,7 @@ public class BHL_TestBase
       Assert.Equal(vm.coro_pool.NewCount, vm.coro_pool.DelCount);
   }
 
-  public static void CommonChecks(VM.Fiber fb, bool check_frames = true)
+  public static void CommonChecks(VM.Fiber fb, bool check_frames = true, bool check_obj_nulls = true)
   {
     if(check_frames)
       Assert.Equal(0, fb.exec.frames_count);
@@ -915,7 +916,7 @@ public class BHL_TestBase
     {
       var val = fb.exec.stack.vals[i];
       //TODO: do we really need this check?
-      if(!(val.obj is string))
+      if(check_obj_nulls && !(val.obj is string))
         Assert.Null(val.obj);
       Assert.Null(val._refc);
     }
