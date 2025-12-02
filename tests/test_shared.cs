@@ -126,8 +126,9 @@ public class BHL_TestBase
         },
         delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld)
         {
-          ref var s = ref Unsafe.Unbox<IntStruct>(ctx.obj);
+          var s = (IntStruct)ctx.obj;
           s.n = (int)v.num;
+          ctx.obj = s; //copy on write
         }
       ));
 
@@ -136,12 +137,13 @@ public class BHL_TestBase
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ref var self = ref exec.GetSelfRef();
-            ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
+            var s = (IntStruct)self.obj;
 
             int a = exec.stack.Pop();
             exec.stack.Pop(); //self is also passed on the stack
 
             s.Add(a);
+            self.obj = s; //copy on write
 
             return null;
           },

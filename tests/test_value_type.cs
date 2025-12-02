@@ -144,8 +144,7 @@ public class TestValueType : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var stack = Execute(vm, "test").Stack;
-    //NOTE:!!!!!!!!
-    Assert.Equal(100, stack.Pop().num);
+    Assert.Equal(1, stack.Pop().num);
     Assert.Equal(100, stack.Pop().num);
     CommonChecks(vm);
   }
@@ -256,8 +255,7 @@ public class TestValueType : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     var stack = Execute(vm, "test").Stack;
-    //NOTE:!!!!!!!!
-    Assert.Equal(110, stack.Pop().num);
+    Assert.Equal(100, stack.Pop().num);
     Assert.Equal(110, stack.Pop().num);
     CommonChecks(vm);
   }
@@ -436,7 +434,11 @@ public class TestValueType : BHL_TestBase
     var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
 
     var vm = MakeVM(bhl, ts_fn);
-    Execute(vm, "test");
+    var stack = Execute(vm, "test").Stack;
+    //for this special case 'obj' is not cleared because the
+    //method binding sets 'obj' directly in memory slot
+    Assert.NotNull(stack.vals[0].obj);
+    stack.vals[0].obj = null;
     CommonChecks(vm);
   }
 
