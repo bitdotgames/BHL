@@ -82,7 +82,7 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
+            ref var self = ref exec.GetSelfRef();
             var s = new IntStruct();
             IntStruct.Decode(self, ref s);
 
@@ -135,7 +135,7 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
+            ref var self = ref exec.GetSelfRef();
             ref var s = ref Unsafe.Unbox<IntStruct>(self.obj);
 
             int a = exec.stack.Pop();
@@ -188,7 +188,7 @@ public class BHL_TestBase
         var m = new FuncSymbolNative(new Origin(), "Add", ts.T("void"),
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            ref var self = ref exec.stack.GetRef(exec.self_val_idx);
+            ref var self = ref exec.GetSelfRef();
             var s = (IntStruct)self.obj;
 
             int a = exec.stack.Pop();

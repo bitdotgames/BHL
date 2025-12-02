@@ -426,19 +426,6 @@ public class ValStack
     while(sp > 0)
       PopRelease();
   }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public ref Val GetRef(int idx)
-  {
-    ref var tmp = ref vals[idx];
-    if(tmp.type != Types.ValRef)
-      return ref tmp;
-    else
-    {
-      ValRef vr = (ValRef)tmp._refc;
-      return ref vr.val;
-    }
-  }
 }
 
 public interface IRefcounted

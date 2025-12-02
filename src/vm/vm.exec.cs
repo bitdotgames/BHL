@@ -295,6 +295,19 @@ public partial class VM
         ++ip;
       }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref Val GetSelfRef()
+    {
+      ref var tmp = ref stack.vals[self_val_idx];
+      if(tmp.type != Types.ValRef)
+        return ref tmp;
+      else
+      {
+        ValRef vr = (ValRef)tmp._refc;
+        return ref vr.val;
+      }
+    }
   }
 
   StackArray<ExecState> script_executors = new (
