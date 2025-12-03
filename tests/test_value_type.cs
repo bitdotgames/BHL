@@ -449,8 +449,13 @@ public class TestValueType : BHL_TestBase
 
     IntStruct s = {}
 
+    class Garbage
+    {}
+
     func int test()
     {
+      Garbage dummy1
+      Garbage dummy2
       s.n = 100
       return s.n
     }
@@ -470,8 +475,13 @@ public class TestValueType : BHL_TestBase
 
     IntStruct s = {}
 
+    class Garbage
+    {}
+
     func int test()
     {
+      Garbage dummy1
+      Garbage dummy2
       s.Add(10)
       return s.n
     }
@@ -481,6 +491,64 @@ public class TestValueType : BHL_TestBase
 
     var vm = MakeVM(bhl, ts_fn);
     Assert.Equal(10, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnNestedObj()
+  {
+    string bhl = @"
+
+    class Master
+    {
+      IntStruct s
+    }
+
+    Master m = {s : {n: 100}}
+
+    func int test()
+    {
+      Master dummy1
+      Master dummy2
+      m.s.Add(10)
+      return m.s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    //It's an expected behavior of a value type
+    Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestSetAttrOnNestedObj()
+  {
+    string bhl = @"
+
+    class Master
+    {
+      IntStruct s
+    }
+
+    Master m = {s : {n: 100}}
+
+    func int test()
+    {
+      Master dummy1
+      Master dummy2
+      m.s.n = 10
+      return m.s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObj(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    //It's an expected behavior of a value type
+    Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
 }

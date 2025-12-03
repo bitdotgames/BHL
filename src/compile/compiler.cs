@@ -1577,7 +1577,7 @@ public class ModuleCompiler : AST_Visitor
           }
           else if(mfunc is FuncSymbolNative)
           {
-            if(ast.ctx_var != null)
+            if(ast.ctx_var != null && !(ast.ctx_var is FieldSymbol)/*supporting only non nested local calls*/)
             {
               Emit(
                 ast.ctx_var.scope is Namespace ? Opcodes.CallGVarMethodNative : Opcodes.CallVarMethodNative,
