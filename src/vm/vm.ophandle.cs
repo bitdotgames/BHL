@@ -1054,7 +1054,7 @@ public partial class VM
     var class_type = (ClassSymbol)self.type;
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
-    exec.self_val_idx = local_idx; //passing ctx idx
+    exec.self_val_idx = frame.locals_offset + local_idx; //passing ctx idx
     if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
