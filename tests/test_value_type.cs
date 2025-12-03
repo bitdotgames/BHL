@@ -442,4 +442,45 @@ public class TestValueType : BHL_TestBase
     CommonChecks(vm);
   }
 
+  [Fact]
+  public void TestCallAttrOnGlobalEncoded()
+  {
+    string bhl = @"
+
+    IntStruct s = {}
+
+    func int test()
+    {
+      s.n = 100
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCallAddMethodOnGlobalEncoded()
+  {
+    string bhl = @"
+
+    IntStruct s = {}
+
+    func int test()
+    {
+      s.Add(10)
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructEncoded(ts); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(10, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
 }

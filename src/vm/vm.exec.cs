@@ -42,6 +42,7 @@ public partial class VM
     public int frames_count = 0;
 
     public int self_val_idx;
+    public ValStack self_val_vals;
 
     public ExecState(
       int regions_capacity = 64,
@@ -299,7 +300,7 @@ public partial class VM
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref Val GetSelfRef()
     {
-      ref var tmp = ref stack.vals[self_val_idx];
+      ref var tmp = ref self_val_vals.vals[self_val_idx];
       if(tmp.type != Types.ValRef)
         return ref tmp;
       else

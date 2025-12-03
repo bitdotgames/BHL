@@ -80,6 +80,8 @@ public partial class VM
     op_handlers[(int)Opcodes.SetAttrPeek] = &OpcodeSetAttrPeek;
     op_handlers[(int)Opcodes.GetRefAttr] = &OpcodeGetRefAttr;
     op_handlers[(int)Opcodes.SetRefAttr] = &OpcodeSetRefAttr;
+    op_handlers[(int)Opcodes.GetGVarAttr] = &OpcodeGetGVarAttr;
+    op_handlers[(int)Opcodes.SetGVarAttr] = &OpcodeSetGVarAttr;
 
     op_handlers[(int)Opcodes.GetGVar] = &OpcodeGetGVar;
     op_handlers[(int)Opcodes.SetGVar] = &OpcodeSetGVar;
@@ -105,6 +107,7 @@ public partial class VM
     op_handlers[(int)Opcodes.CallFuncPtr] = &OpcodeCallFuncPtr;
     op_handlers[(int)Opcodes.CallFuncPtrInv] = &OpcodeCallFuncPtrInv;
     op_handlers[(int)Opcodes.CallVarMethodNative] = &OpcodeCallVarMethodNative;
+    op_handlers[(int)Opcodes.CallGVarMethodNative] = &OpcodeCallGVarMethodNative;
 
     op_handlers[(int)Opcodes.Frame] = &OpcodeEnterFrame;
 
@@ -787,6 +790,43 @@ public partial class VM
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeGetGVarAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int gvar_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    ref var val_ref_holder = ref frame.module.gvars.vals[gvar_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
+
+    var class_symb = (ClassSymbol)val_ref.val.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    var res = new Val();
+    field_symb.getter(exec, val_ref.val, ref res, field_symb);
+
+    res._refc?.Retain();
+    exec.stack.Push(res);
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeSetGVarAttr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int gvar_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+    int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+    exec.stack.Pop(out var val);
+
+    ref var val_ref_holder = ref frame.module.gvars.vals[gvar_idx];
+    var val_ref = (ValRef)val_ref_holder._refc;
+    var class_symb = (ClassSymbol)val_ref.val.type;
+
+    var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+    field_symb.setter(exec, ref val_ref.val, val, field_symb);
+
+    val._refc?.Release();
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   unsafe static void OpcodeSetAttrPeek(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     int fld_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
@@ -1033,6 +1073,7 @@ public partial class VM
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
     exec.self_val_idx = self_idx; //passing self idx
+    exec.self_val_vals = exec.stack;
     if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
@@ -1055,6 +1096,30 @@ public partial class VM
     var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
 
     exec.self_val_idx = frame.locals_offset + local_idx; //passing ctx idx
+    exec.self_val_vals = exec.stack;
+    if(CallNative(exec, func_symb, args_bits))
+    {
+      //let's cancel ip incrementing
+      --exec.ip;
+    }
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeCallGVarMethodNative(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    int gvar_idx = Bytecode.Decode8(bytes, ref exec.ip);
+    int func_idx = (int)Bytecode.Decode16(bytes, ref exec.ip);
+    uint args_bits = Bytecode.Decode32(bytes, ref exec.ip);
+
+    int args_num = (int)(args_bits & FuncArgsInfo.ARGS_NUM_MASK);
+    int self_idx = exec.stack.sp - args_num - 1;
+    ref var self = ref exec.stack.vals[self_idx];
+
+    var class_type = (ClassSymbol)self.type;
+    var func_symb = (FuncSymbolNative)class_type._all_members[func_idx];
+
+    exec.self_val_idx = gvar_idx;
+    exec.self_val_vals = frame.module.gvars;
     if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing
@@ -1128,6 +1193,7 @@ public partial class VM
     var func_symb = (FuncSymbolNative)iface_symb.members[iface_func_idx];
 
     exec.self_val_idx = self_idx;
+    exec.self_val_vals = exec.stack;
     if(CallNative(exec, func_symb, args_bits))
     {
       //let's cancel ip incrementing

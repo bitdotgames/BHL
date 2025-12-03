@@ -42,11 +42,12 @@ public enum Opcodes
   //TODO: if CallFuncPtr operated on stack offsets this one would not be necessary
   CallFuncPtrInv        = 33,
   CallVarMethodNative   = 34,
+  CallGVarMethodNative  = 35,
 
-  GetFuncLocalPtr       = 37,
-  GetFuncPtr            = 38,
-  GetFuncNativePtr      = 39,
-  GetFuncIpPtr          = 40,
+  GetFuncLocalPtr       = 36,
+  GetFuncPtr            = 37,
+  GetFuncNativePtr      = 38,
+  GetFuncIpPtr          = 39,
 
   GetAttr               = 41,
   SetAttr               = 42,
@@ -57,8 +58,9 @@ public enum Opcodes
   SetAttrPeek           = 45,
   GetRefAttr            = 46,
   SetRefAttr            = 47,
+  GetGVarAttr           = 48,
+  SetGVarAttr           = 49,
 
-  Equal                 = 49,
   UnaryNot              = 50,
   UnaryNeg              = 51,
   And                   = 52,
@@ -73,13 +75,14 @@ public enum Opcodes
   LTE                   = 61,
   GT                    = 62,
   GTE                   = 63,
-
-  DefArg                = 64,
+  Equal                 = 64,
 
   TypeCast              = 65,
   TypeAs                = 66,
   TypeIs                = 67,
   Typeof                = 68,
+
+  DefArg                = 69,
 
   Scope                 = 70,
   Defer                 = 71,

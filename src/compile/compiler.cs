@@ -516,13 +516,13 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.SetGVar,
-        3 /*idx*/
+        3 /*gvar idx*/
       )
     );
     DeclareOpcode(
       new Definition(
         Opcodes.GetGVar,
-        3 /*idx*/
+        3 /*gvar idx*/
       )
     );
     DeclareOpcode(
@@ -547,6 +547,18 @@ public class ModuleCompiler : AST_Visitor
       new Definition(
         Opcodes.SetVarAttr,
         1 /*local idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.GetGVarAttr,
+        3 /*gvar idx*/, 2 /*member idx*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.SetGVarAttr,
+        3 /*gvar idx*/, 2 /*member idx*/
       )
     );
     DeclareOpcode(
@@ -648,6 +660,12 @@ public class ModuleCompiler : AST_Visitor
     DeclareOpcode(
       new Definition(
         Opcodes.CallVarMethodNative,
+        1 /*var idx*/, 2 /*class member idx*/, 4 /*args bits*/
+      )
+    );
+    DeclareOpcode(
+      new Definition(
+        Opcodes.CallGVarMethodNative,
         1 /*var idx*/, 2 /*class member idx*/, 4 /*args bits*/
       )
     );
@@ -1408,6 +1426,11 @@ public class ModuleCompiler : AST_Visitor
             Pop();
             Emit(Opcodes.GetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
           }
+          else if(prev.op == Opcodes.GetGVar)
+          {
+            Pop();
+            Emit(Opcodes.GetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
           else
             Emit(Opcodes.GetAttr, new int[] {ast.symb_idx}, ast.line_num);
         }
@@ -1455,6 +1478,11 @@ public class ModuleCompiler : AST_Visitor
           {
             Pop();
             Emit(Opcodes.SetRefAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
+          }
+          else if(prev.op == Opcodes.GetGVar)
+          {
+            Pop();
+            Emit(Opcodes.SetGVarAttr, new int[] {prev.operands[0], ast.symb_idx}, ast.line_num);
           }
           else
             Emit(Opcodes.SetAttr, new int[] {ast.symb_idx}, ast.line_num);
@@ -1552,7 +1580,7 @@ public class ModuleCompiler : AST_Visitor
             if(ast.ctx_var != null)
             {
               Emit(
-                Opcodes.CallVarMethodNative,
+                ast.ctx_var.scope is Namespace ? Opcodes.CallGVarMethodNative : Opcodes.CallVarMethodNative,
                 new int[] {ast.ctx_var.scope_idx, ast.symb_idx, (int)ast.cargs_bits},
                 ast.line_num);
             }
