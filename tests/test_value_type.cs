@@ -551,4 +551,27 @@ public class TestValueType : BHL_TestBase
     Assert.Equal(100, Execute(vm, "test").Stack.Pop().num);
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestCallMethodInParalBranch()
+  {
+    string bhl = @"
+
+    coro func int test()
+    {
+      IntStruct s = {}
+      s.n = 100
+      paral {
+         { yield() }
+         { s.Add(10) }
+      }
+      return s.n
+    }
+    ";
+
+    var ts_fn = new Action<Types>((ts) => { BindIntStructAsObjUnsafe(ts); });
+    var vm = MakeVM(bhl, ts_fn);
+    Assert.Equal(110, Execute(vm, "test").Stack.Pop().num);
+    CommonChecks(vm);
+  }
 }
