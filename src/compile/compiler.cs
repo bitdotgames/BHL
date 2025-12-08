@@ -1537,7 +1537,7 @@ public class ModuleCompiler : AST_Visitor
             dump_opcodes = false;
           }
           //let's check if it's a builtin native function
-          else if(instr.operands[0] == 0)
+          else if(instr.operands[0] == 0/*checking if it's a global module*/)
             Emit(Opcodes.CallGlobNative, new int[] {instr.operands[1], (int)ast.cargs_bits}, ast.line_num);
           else
             Emit(Opcodes.CallNative, new int[] {instr.operands[0], instr.operands[1], (int)ast.cargs_bits},

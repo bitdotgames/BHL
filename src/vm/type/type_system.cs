@@ -382,14 +382,16 @@ public class Types : INamedResolver
 
   static public bool IsBinOpCompatible(IType type)
   {
-    return IsScalar(type) || IsString(type);
+    return (IsScalar(type) || IsString(type)) && type is not EnumSymbol;
   }
 
   static public bool IsScalar(IType type)
   {
     return type == Int ||
            type == Float ||
-           type == Bool;
+           type == Bool ||
+           type is EnumSymbol;
+           ;
   }
   static public bool IsNumeric(IType type)
   {

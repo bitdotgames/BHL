@@ -78,7 +78,20 @@ public class TestEnum : BHL_TestBase
 
     var ts_fn = new Action<Types>((ts) => { BindEnumState(ts); });
 
-    var vm = MakeVM(bhl, ts_fn);
+    var c = Compile(bhl, ts_fn);
+
+    var expected =
+        new ModuleCompiler()
+          .UseCode()
+          .EmitChain(Opcodes.Frame, new int[] { 1, 1 })
+          .EmitChain(Opcodes.GetVarScalar, new int[] { 0 })
+          .EmitChain(Opcodes.Constant, new int[] { 0 })
+          .EmitChain(Opcodes.EqualScalar)
+          .EmitChain(Opcodes.Return)
+      ;
+    AssertEqual(c, expected);
+
+    var vm = MakeVM(c, ts_fn);
     var res = Execute(vm, "test", 20).Stack.Pop().num;
     Assert.Equal(1, res);
     CommonChecks(vm);
