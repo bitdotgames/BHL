@@ -53,11 +53,11 @@ public struct DeferBlock
 
 public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 {
-  public int min_ip;
-  public int max_ip;
-  public VM.ExecState exec =
+  int min_ip;
+  int max_ip;
+  internal VM.ExecState exec =
     new VM.ExecState(regions_capacity: 32, frames_capacity: 32, stack_capacity: 128);
-  public VM.DeferSupport defers = new VM.DeferSupport();
+  VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -161,11 +161,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
 
 public class ParalBlock : Coroutine, IInspectableCoroutine
 {
-  public int min_ip;
-  public int max_ip;
-  public int i;
-  public List<Coroutine> branches = new List<Coroutine>();
-  public VM.DeferSupport defers = new VM.DeferSupport();
+  int min_ip;
+  int max_ip;
+  internal int i;
+  internal List<Coroutine> branches = new List<Coroutine>();
+  internal VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -223,11 +223,11 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
 
 public class ParalAllBlock : Coroutine, IInspectableCoroutine
 {
-  public int min_ip;
-  public int max_ip;
-  public int i;
-  public List<Coroutine> branches = new List<Coroutine>();
-  public VM.DeferSupport defers = new VM.DeferSupport();
+  int min_ip;
+  int max_ip;
+  internal int i;
+  internal List<Coroutine> branches = new List<Coroutine>();
+  internal VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
