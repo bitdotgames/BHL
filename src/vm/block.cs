@@ -79,6 +79,8 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
 
+    defers.count = 0;
+
     //TODO: this is ugly, can we reference current frame from ext_exec instead?
     //creating a frame copy just because a region must reference a frame
     ref var frame_copy = ref exec.PushFrame();
