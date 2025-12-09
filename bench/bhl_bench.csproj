@@ -16,6 +16,7 @@
       <PackageReference Include="Mono.Options" Version="6.12.0.148" />
       <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
       <PackageReference Include="Moonsharp" Version="2.0.0" />
+      <PackageReference Include="NLua" Version="1.7.6" />
     </ItemGroup>
 
     <ItemGroup>
