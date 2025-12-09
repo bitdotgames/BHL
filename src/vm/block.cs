@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace bhl
 {
@@ -123,13 +122,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     {
       ref var frame = ref exec.frames[i];
 
-      for(int r = exec.regions_count; r-- > frame.regions_mark;)
+      for(int r = exec.regions_count; r-- > frame.region_offset_idx;)
       {
         ref var tmp_region = ref exec.regions[r];
         if(tmp_region.defers != null && tmp_region.defers.count > 0)
           tmp_region.defers.ExitScope(exec);
       }
-      exec.regions_count = frame.regions_mark;
+      exec.regions_count = frame.region_offset_idx;
       --exec.frames_count;
       frame.ReleaseLocals();
     }
@@ -156,6 +155,33 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.stack.sp = 0;
     exec.regions_count = 0;
     exec.frames_count = 0;
+
+    //NOTE: let's leave it here for a while for a quick debug
+    //for(int i = 0; i < exec.regions.Length; ++i)
+    //{
+    //  if(exec.regions[i].defers?.count > 0)
+    //  {
+    //    var defers = exec.regions[i].defers;
+    //    string debug_info = "";
+    //    for(int j = 0; j < defers.count; ++j)
+    //    {
+    //      debug_info += j + ") " + defers.blocks[j].ip + " ";
+
+    //      try
+    //      {
+    //        var frame = exec.frames[exec.regions[i].frame_idx];
+    //        debug_info += frame.module.name + " " + frame.module.compiled.ip2src_line.TryMap(defers.blocks[j].ip);
+    //      }
+    //      catch(Exception e)
+    //      {
+    //      }
+
+    //      debug_info += ";";
+    //    }
+    //    throw new Exception("Unclean 1!!! " + i + " VS " + exec.regions.Length + " defers: " +
+    //                        debug_info);
+    //  }
+    //}
   }
 }
 

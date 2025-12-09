@@ -140,7 +140,7 @@ public partial class VM
         if(frm.module != null)
         {
           var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
-          //NOTE: if symbol is missing it's a lambda
+          //NOTE: if symbol is missing let's write at least the module
           if(fsymb == null)
             item.file = frm.module.name + ".bhl";
           else
@@ -173,13 +173,13 @@ public partial class VM
         {
           ref var frame = ref frames[i];
 
-          for(int r = regions_count; r-- > frame.regions_mark;)
+          for(int r = regions_count; r-- > frame.region_offset_idx;)
           {
             ref var tmp_region = ref regions[r];
             if(tmp_region.defers != null && tmp_region.defers.count > 0)
               tmp_region.defers.ExitScope(this);
           }
-          regions_count = frame.regions_mark;
+          regions_count = frame.region_offset_idx;
           --frames_count;
           frame.ReleaseLocals();
         }
@@ -192,7 +192,7 @@ public partial class VM
     internal void PushFrameRegion(ref Frame frame, int frame_idx)
     {
       ip = frame.start_ip;
-      frame.regions_mark = regions_count;
+      frame.region_offset_idx = regions_count;
       PushRegion(frame_idx);
     }
 
@@ -267,13 +267,13 @@ public partial class VM
       else if(ip == EXIT_FRAME_IP)
       {
         //exiting all regions which belong to the frame
-        for(int i = regions_count; i-- > frame.regions_mark;)
+        for(int i = regions_count; i-- > frame.region_offset_idx;)
         {
           ref var tmp_region = ref regions[i];
           if(tmp_region.defers != null && tmp_region.defers.count > 0)
             tmp_region.defers.ExitScope(this);
         }
-        regions_count = frame.regions_mark;
+        regions_count = frame.region_offset_idx;
         frame.ReleaseLocals();
 
         if(frame.return_vars_num > 0)
@@ -413,7 +413,7 @@ public partial class VM
   {
     //let's remember ip to return to
     frame.return_ip = exec.ip;
-    frame.regions_mark = exec.regions_count;
+    frame.region_offset_idx = exec.regions_count;
     exec.PushRegion(frame_idx);
     //since ip will be incremented below we decrement it intentionally here
     exec.ip = frame.start_ip - 1;

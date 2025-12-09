@@ -12,7 +12,7 @@ public partial class VM : INamedResolver
     public IType[] type_refs;
     public int start_ip;
     public int return_ip;
-    public int regions_mark;
+    public int region_offset_idx;
 
     public FuncArgsInfo args_info;
     public int locals_vars_num;
@@ -45,7 +45,7 @@ public partial class VM : INamedResolver
       this.bytecode = bytecode;
       this.start_ip = start_ip;
       return_ip = -1;
-      regions_mark = -1;
+      region_offset_idx = -1;
 
       //caching for faster access
       constants = module.compiled.constants;
