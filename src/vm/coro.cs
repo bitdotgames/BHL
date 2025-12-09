@@ -10,12 +10,6 @@ public interface ICoroutine
   void Destruct(VM.ExecState exec);
 }
 
-public interface IInspectableCoroutine
-{
-  int Count { get; }
-  ICoroutine At(int i);
-}
-
 public abstract class Coroutine : ICoroutine
 {
   internal VM vm;
@@ -118,24 +112,6 @@ public class CoroutinePool
 
     if(pool.stack.Count > pool.miss)
       throw new Exception("Unbalanced New/Del " + pool.stack.Count + " " + pool.miss);
-  }
-
-  static public void Dump(ICoroutine coro, int level = 0)
-  {
-    if(level == 0)
-      Console.WriteLine("<<<<<<<<<<<<<<<");
-
-    string str = new String(' ', level);
-    Console.WriteLine(str + coro.GetType().Name + " " + coro.GetHashCode());
-
-    if(coro is IInspectableCoroutine ti)
-    {
-      for(int i = 0; i < ti.Count; ++i)
-        Dump(ti.At(i), level + 1);
-    }
-
-    if(level == 0)
-      Console.WriteLine(">>>>>>>>>>>>>>>");
   }
 }
 

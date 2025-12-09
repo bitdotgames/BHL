@@ -4,6 +4,19 @@ using Antlr4.Runtime.Tree;
 
 namespace bhl;
 
+public enum BlockType
+{
+  FUNC      = 0,
+  SEQ       = 1,
+  DEFER     = 2,
+  PARAL     = 3,
+  PARAL_ALL = 4,
+  IF        = 7,
+  WHILE     = 8,
+  FOR       = 9,
+  DOWHILE   = 10,
+}
+
 public abstract class AST_Visitor
 {
   public abstract void DoVisit(AST_Interim ast);

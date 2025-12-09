@@ -1,71 +1,14 @@
-using System;
 using System.Collections.Generic;
 
 namespace bhl
 {
 
-public enum BlockType
-{
-  FUNC      = 0,
-  SEQ       = 1,
-  DEFER     = 2,
-  PARAL     = 3,
-  PARAL_ALL = 4,
-  IF        = 7,
-  WHILE     = 8,
-  FOR       = 9,
-  DOWHILE   = 10,
-}
-
-public struct DeferBlock
-{
-  public int ip;
-  public int max_ip;
-
-  internal void Execute(VM.ExecState exec)
-  {
-    //1. let's remeber the original ip in order to restore it once
-    //   the execution of this block is done (defer block can be
-    //   located anywhere in the code)
-    int ip_orig = exec.ip;
-    exec.ip = this.ip;
-
-    //2. let's create the execution region
-    exec.PushRegion(exec.frames_count - 1, min_ip: ip, max_ip: max_ip);
-    //3. and execute it
-    exec.Execute(
-      //NOTE: we re-use the existing exec.stack but limit the execution
-      //      only up to the defer code block
-      exec.regions_count - 1
-    );
-    if(exec.status != BHS.SUCCESS)
-      throw new Exception("Defer execution invalid status: " + exec.status);
-
-    exec.ip = ip_orig;
-  }
-
-  public override string ToString()
-  {
-    return "Defer block: " + ip + " " + max_ip;
-  }
-}
-
-public class ParalBranchBlock : Coroutine, IInspectableCoroutine
+public class ParalBranchBlock : Coroutine
 {
   int min_ip;
   int max_ip;
   internal VM.ExecState exec =
     new VM.ExecState(regions_capacity: 32, frames_capacity: 32, stack_capacity: 128);
-
-  public int Count
-  {
-    get { return 0; }
-  }
-
-  public ICoroutine At(int i)
-  {
-    return exec.coroutine;
-  }
 
   public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {
@@ -177,23 +120,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   }
 }
 
-public class ParalBlock : Coroutine, IInspectableCoroutine
+public class ParalBlock : Coroutine
 {
   int min_ip;
   int max_ip;
   internal int i;
   internal List<Coroutine> branches = new List<Coroutine>();
   internal VM.DeferSupport defers = new VM.DeferSupport();
-
-  public int Count
-  {
-    get { return branches.Count; }
-  }
-
-  public ICoroutine At(int i)
-  {
-    return branches[i];
-  }
 
   public void Init(int min_ip, int max_ip)
   {
@@ -239,23 +172,13 @@ public class ParalBlock : Coroutine, IInspectableCoroutine
   }
 }
 
-public class ParalAllBlock : Coroutine, IInspectableCoroutine
+public class ParalAllBlock : Coroutine
 {
   int min_ip;
   int max_ip;
   internal int i;
   internal List<Coroutine> branches = new List<Coroutine>();
   internal VM.DeferSupport defers = new VM.DeferSupport();
-
-  public int Count
-  {
-    get { return branches.Count; }
-  }
-
-  public ICoroutine At(int i)
-  {
-    return branches[i];
-  }
 
   public void Init(int min_ip, int max_ip)
   {
