@@ -2,6 +2,7 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using bhl.marshall;
 
 namespace bhl
@@ -63,7 +64,9 @@ public class CompiledModule
   public int total_gvars_num;
 
   public byte[] initcode;
+  public GCHandle initcode_handle;
   public byte[] bytecode;
+  public GCHandle bytecode_handle;
   public unsafe byte* bytecode_ptr;
   public unsafe byte* initcode_ptr;
 
@@ -90,17 +93,11 @@ public class CompiledModule
     this.constants = constants;
     this.type_refs = type_refs;
     this.initcode = initcode;
+    this.initcode_handle = GCHandle.Alloc(this.initcode, GCHandleType.Pinned);
+    this.initcode_ptr = (byte*)initcode_handle.AddrOfPinnedObject();
     this.bytecode = bytecode;
-
-    fixed(byte * ptr = bytecode)
-    {
-      this.bytecode_ptr = ptr;
-    }
-    fixed(byte * ptr = initcode)
-    {
-      this.initcode_ptr = ptr;
-    }
-
+    this.bytecode_handle = GCHandle.Alloc(this.bytecode, GCHandleType.Pinned);
+    this.bytecode_ptr = (byte*)bytecode_handle.AddrOfPinnedObject();
     this.ip2src_line = ip2src_line;
   }
 
@@ -116,6 +113,14 @@ public class CompiledModule
       new Ip2SrcLine()
     )
   {
+  }
+
+  ~CompiledModule()
+  {
+    if(bytecode_handle.IsAllocated)
+      bytecode_handle.Free();
+    if(initcode_handle.IsAllocated)
+      initcode_handle.Free();
   }
 
   public void ResolveTypeRefs()
