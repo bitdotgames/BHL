@@ -1510,4 +1510,84 @@ public class TestDefer : BHL_TestBase
     Assert.False(vm.Tick());
     CommonChecks(vm);
   }
+
+  [Fact]
+  public void TestForWithDefer()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      for(int i = 0; i < 3; i++) {
+        defer {
+          trace((string)i+""~;"")
+        }
+        trace((string)i+"";"")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("0;1~;1;2~;2;3~;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestForWithDeferValueCopy()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      for(int i = 0; i < 3; i++) {
+        var _i = i
+        defer {
+          trace((string)_i+""~;"")
+        }
+        trace((string)i+"";"")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("0;0~;1;1~;2;2~;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestForWithDeferValueCopyInClosure()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      for(int i = 0; i < 3; i++) {
+        var fp =
+          func() [i] {
+            trace((string)i+""~;"")
+          }
+        defer {
+          fp()
+        }
+        trace((string)i+"";"")
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    AssertEqual("0;0~;1;1~;2;2~;", log.ToString());
+    CommonChecks(vm);
+  }
 }
