@@ -708,6 +708,34 @@ public class TestParal : BHL_TestBase
   }
 
   [Fact]
+  public void TestParalMultiReturnFromSubFunc()
+  {
+    string bhl = @"
+
+    func int,string foo() {
+      paral {
+        return 1,""foo""
+      }
+      return 0,""""
+    }
+
+    func int,string test()
+    {
+      paral {
+        return foo()
+      }
+      return 100,""hey""
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var stack = Execute(vm, "test").Stack;
+    Assert.Equal(1, stack.Pop().num);
+    Assert.Equal("foo", stack.Pop().str);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestParalNestedReturnFromSubFuncWithSeq()
   {
     string bhl = @"
@@ -933,5 +961,42 @@ public class TestParal : BHL_TestBase
 ------^"
       )
     );
+  }
+
+  [Fact]
+  public void TestParalWithForInABranchAndDefer()
+  {
+    string bhl = @"
+
+    coro func test()
+    {
+      paral {
+        {
+          yield()
+          yield()
+          yield()
+        }
+        {
+          for(int i = 0; i < 3; i++) {
+            defer {
+              trace((string)i+""~;"")
+            }
+            trace((string)i+"";"")
+            yield()
+          }
+        }
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    //NOTE: starting from 1 since once we exit the scope the
+    //      variable is already incremented
+    AssertEqual("0;1~;1;2~;2;2~;", log.ToString());
+    CommonChecks(vm);
   }
 }

@@ -56,7 +56,6 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
   int max_ip;
   internal VM.ExecState exec =
     new VM.ExecState(regions_capacity: 32, frames_capacity: 32, stack_capacity: 128);
-  VM.DeferSupport defers = new VM.DeferSupport();
 
   public int Count
   {
@@ -78,16 +77,13 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     exec.fiber = ext_exec.fiber;
     exec.ip = min_ip;
 
-    defers.count = 0;
-
     //TODO: this is ugly, can we reference current frame from ext_exec instead?
-    //creating a frame copy just because a region must reference a frame
+    //Creating a frame copy just because a region must reference a frame
     ref var frame_copy = ref exec.PushFrame();
     //let's copy ext_exec's frame data
     frame_copy = ext_exec.frames[ext_exec.frames_count - 1];
-
-    ref var region = ref exec.PushRegion(0, min_ip: min_ip, max_ip: max_ip);
-    region.defers = defers;
+    frame_copy.region_offset_idx = 0;
+    exec.PushRegion(0, min_ip: min_ip, max_ip: max_ip);
   }
 
   public override void Tick(VM.ExecState ext_exec)
@@ -118,7 +114,7 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     }
 
     //we exit the scope for all dangling frames which were not exited normally
-    for(int i = exec.frames_count; i-- > 1/*let's ignore the copied frame*/;)
+    for(int i = exec.frames_count; i-- > 0;)
     {
       ref var frame = ref exec.frames[i];
 
@@ -130,19 +126,16 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
       }
       exec.regions_count = frame.region_offset_idx;
       --exec.frames_count;
-      frame.ReleaseLocals();
+      //we don't own the copied frame locals
+      if(i > 0)
+        frame.ReleaseLocals();
     }
 
-    if(defers.count > 0)
-      defers.ExitScope(exec);
-
-    //Let's detect if there was a return and there was no other frames
-    //except the 'copied one'. In this case we need to copy dangling
-    //expected amount of returned vars designated by copied frame.
-    //Otherwise, normal procedure of return happens within ExecState.Execute(..)
-    if(exec.frames_count == 1 && exec.ip == VM.EXIT_FRAME_IP)
+    //NOTE: We need to push on to the external exec all the returned vars
+    //      from the copied frame if it has any
+    ref var frame_copy = ref exec.frames[0];
+    if(exec.ip == VM.EXIT_FRAME_IP && frame_copy.return_vars_num > 0)
     {
-      ref var frame_copy = ref exec.frames[exec.frames_count - 1];
       for(int i = 0; i < frame_copy.return_vars_num; ++i)
       {
         ref var val = ref exec.stack.vals[i];
@@ -173,12 +166,11 @@ public class ParalBranchBlock : Coroutine, IInspectableCoroutine
     //        debug_info += frame.module.name + " " + frame.module.compiled.ip2src_line.TryMap(defers.blocks[j].ip);
     //      }
     //      catch(Exception e)
-    //      {
-    //      }
+    //      {}
 
     //      debug_info += ";";
     //    }
-    //    throw new Exception("Unclean 1!!! " + i + " VS " + exec.regions.Length + " defers: " +
+    //    throw new Exception("Unclean!!! " + i + " VS " + exec.regions.Length + " defers: " +
     //                        debug_info);
     //  }
     //}
