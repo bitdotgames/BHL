@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace bhl;
@@ -137,19 +138,25 @@ public class ProjectConf
     var postproc_assembly = LoadAssemblyFromDirOrFile(postproc_dll);
     var types = postproc_assembly.GetTypes();
 
-    Type postproc_class = null;
+    var postproc_classes = new List<Type>();
     foreach(var type in types)
     {
       if(typeof(IFrontPostProcessor).IsAssignableFrom(type))
-      {
-        postproc_class = type;
-        break;
-      }
+        postproc_classes.Add(type);
     }
 
-    if(postproc_class == null)
+    if(postproc_classes.Count == 0)
       throw new Exception("IFrontPostProcessor instance not found");
 
-    return Activator.CreateInstance(postproc_class) as IFrontPostProcessor;
+    if(postproc_classes.Count == 1)
+      return InstantiatePostProc(postproc_classes[0]);
+
+    var postproc_instances = postproc_classes.Select(InstantiatePostProc).ToList();
+    return new CombinedPostProcessor(postproc_instances);
+  }
+
+  static IFrontPostProcessor InstantiatePostProc(System.Type type)
+  {
+    return Activator.CreateInstance(type) as IFrontPostProcessor;
   }
 }
