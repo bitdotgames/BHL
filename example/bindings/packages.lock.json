@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0": {
+      "bhl_runtime": {
+        "type": "Project"
+      }
+    }
+  }
+}
