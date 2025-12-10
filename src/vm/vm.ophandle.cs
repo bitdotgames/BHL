@@ -396,161 +396,161 @@ public partial class VM
       else
       {
         var bytes = frame.bytecode;
-        var opcode = (Opcodes)bytes[ip];
+        var opcode = bytes[ip];
 
         //previous version
-        //op_handlers[opcode](vm, this, ref region,  ref frame, bytecode);
+        op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
 
-        switch(opcode)
-        {
-          case Opcodes.Frame:
-          {
-            int locals_vars_num = Bytecode.Decode8(bytes, ref ip);
-            int return_vars_num = Bytecode.Decode8(bytes, ref ip);
+        //switch(opcode)
+        //{
+        //  case Opcodes.Frame:
+        //  {
+        //    int locals_vars_num = Bytecode.Decode8(bytes, ref ip);
+        //    int return_vars_num = Bytecode.Decode8(bytes, ref ip);
 
-            frame.locals_vars_num = locals_vars_num;
-            frame.return_vars_num = return_vars_num;
+        //    frame.locals_vars_num = locals_vars_num;
+        //    frame.return_vars_num = return_vars_num;
 
-            //NOTE: it's assumed that refcounted args are pushed with refcounted values
-            int args_num = frame.args_info.CountArgs();
+        //    //NOTE: it's assumed that refcounted args are pushed with refcounted values
+        //    int args_num = frame.args_info.CountArgs();
 
-            frame.locals_offset = stack.sp - args_num;
-            frame.locals = stack;
+        //    frame.locals_offset = stack.sp - args_num;
+        //    frame.locals = stack;
 
-            //let's reserve space for local variables, however passed variables are
-            //already on the stack, let's take that into account
-            int rest_local_vars_num = locals_vars_num - args_num;
-            stack.Reserve(rest_local_vars_num);
-            //temporary stack lives after local variables
-            stack.sp += rest_local_vars_num;
-          }
-          break;
+        //    //let's reserve space for local variables, however passed variables are
+        //    //already on the stack, let's take that into account
+        //    int rest_local_vars_num = locals_vars_num - args_num;
+        //    stack.Reserve(rest_local_vars_num);
+        //    //temporary stack lives after local variables
+        //    stack.sp += rest_local_vars_num;
+        //  }
+        //  break;
 
-          case Opcodes.GetVar:
-          {
-            int local_idx = Bytecode.Decode8(bytes, ref ip);
+        //  case Opcodes.GetVar:
+        //  {
+        //    int local_idx = Bytecode.Decode8(bytes, ref ip);
 
-            ref Val new_val = ref stack.Push();
-            new_val = frame.locals.vals[frame.locals_offset + local_idx];
-            new_val._refc?.Retain();
-          }
-          break;
+        //    ref Val new_val = ref stack.Push();
+        //    new_val = frame.locals.vals[frame.locals_offset + local_idx];
+        //    new_val._refc?.Retain();
+        //  }
+        //  break;
 
-          case Opcodes.GetVarScalar:
-          {
-            int local_idx = bytes[++ip];
+        //  case Opcodes.GetVarScalar:
+        //  {
+        //    int local_idx = bytes[++ip];
 
-            ref Val new_val = ref stack.Push();
-            ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
-            new_val.type = source.type;
-            new_val.num = source.num;
-            //TODO: do we need this?
-            //new_val._refc = null;
-          }
-          break;
+        //    ref Val new_val = ref stack.Push();
+        //    ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    new_val.type = source.type;
+        //    new_val.num = source.num;
+        //    //TODO: do we need this?
+        //    //new_val._refc = null;
+        //  }
+        //  break;
 
-          case Opcodes.SetVarScalar:
-          {
-            int local_idx = Bytecode.Decode8(bytes, ref ip);
+        //  case Opcodes.SetVarScalar:
+        //  {
+        //    int local_idx = Bytecode.Decode8(bytes, ref ip);
 
-            ref var new_val = ref stack.vals[--stack.sp];
-            ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
-            dest.type = new_val.type;
-            dest.num = new_val.num;
-            //TODO: do we need this?
-            //dest._refc?.Release();
-            //dest._refc = null;
-          }
-          break;
+        //    ref var new_val = ref stack.vals[--stack.sp];
+        //    ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
+        //    dest.type = new_val.type;
+        //    dest.num = new_val.num;
+        //    //TODO: do we need this?
+        //    //dest._refc?.Release();
+        //    //dest._refc = null;
+        //  }
+        //  break;
 
-          case Opcodes.Constant:
-          {
-            int const_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            var cn = frame.constants[const_idx];
+        //  case Opcodes.Constant:
+        //  {
+        //    int const_idx = (int)Bytecode.Decode24(bytes, ref ip);
+        //    var cn = frame.constants[const_idx];
 
-            ref Val v = ref stack.Push();
-            //TODO: we might have specialized opcodes for different variable types?
-            //cn.FillVal(ref v);
-            //optimized version
-            v.num = cn.num;
-          }
-          break;
+        //    ref Val v = ref stack.Push();
+        //    //TODO: we might have specialized opcodes for different variable types?
+        //    //cn.FillVal(ref v);
+        //    //optimized version
+        //    v.num = cn.num;
+        //  }
+        //  break;
 
-          case Opcodes.EqualLite:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
+        //  case Opcodes.EqualLite:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
 
-            l_operand.type = Types.Bool;
-            l_operand.num = r_operand.num == l_operand.num
-              //optimized version
-              /*&& (string)r_operand.obj  == (string)l_operand.obj*/
-              ? 1
-              : 0;
-          }
-          break;
+        //    l_operand.type = Types.Bool;
+        //    l_operand.num = r_operand.num == l_operand.num
+        //      //optimized version
+        //      /*&& (string)r_operand.obj  == (string)l_operand.obj*/
+        //      ? 1
+        //      : 0;
+        //  }
+        //  break;
 
-          case Opcodes.JumpZ:
-          {
-            int offset = (int)Bytecode.Decode16(bytes, ref ip);
-            ref Val v = ref stack.vals[--stack.sp];
-            if(v.num == 0)
-              ip += offset;
-          }
-          break;
+        //  case Opcodes.JumpZ:
+        //  {
+        //    int offset = (int)Bytecode.Decode16(bytes, ref ip);
+        //    ref Val v = ref stack.vals[--stack.sp];
+        //    if(v.num == 0)
+        //      ip += offset;
+        //  }
+        //  break;
 
-          case Opcodes.Return:
-          {
-            ip = EXIT_FRAME_IP - 1;
-          }
-          break;
+        //  case Opcodes.Return:
+        //  {
+        //    ip = EXIT_FRAME_IP - 1;
+        //  }
+        //  break;
 
-          case Opcodes.Jump:
-          {
-            short offset = (short)Bytecode.Decode16(bytes, ref ip);
-            ip += offset;
-          }
-          break;
+        //  case Opcodes.Jump:
+        //  {
+        //    short offset = (short)Bytecode.Decode16(bytes, ref ip);
+        //    ip += offset;
+        //  }
+        //  break;
 
-          case Opcodes.Add:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-            //optimized version
-            //TODO: add separate opcode Concat for strings
-            //if(l_operand.type == Types.String)
-            //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
-            //else
-              l_operand.num += r_operand.num;
-          }
-          break;
+        //  case Opcodes.Add:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+        //    //optimized version
+        //    //TODO: add separate opcode Concat for strings
+        //    //if(l_operand.type == Types.String)
+        //    //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
+        //    //else
+        //      l_operand.num += r_operand.num;
+        //  }
+        //  break;
 
-          case Opcodes.Sub:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-            l_operand.num -= r_operand.num;
-          }
-          break;
+        //  case Opcodes.Sub:
+        //  {
+        //    ref Val r_operand = ref stack.vals[--stack.sp];
+        //    ref Val l_operand = ref stack.vals[stack.sp - 1];
+        //    l_operand.num -= r_operand.num;
+        //  }
+        //  break;
 
-          case Opcodes.CallLocal:
-          {
-            int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
-            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+        //  case Opcodes.CallLocal:
+        //  {
+        //    int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+        //    uint args_bits = Bytecode.Decode32(bytes, ref ip);
 
-            var args_info = new FuncArgsInfo(args_bits);
-            int new_frame_idx = frames_count;
-            ref var new_frame = ref PushFrame();
-            new_frame.args_info = args_info;
-            new_frame.InitWithOrigin(frame, func_ip);
-            CallFrame(this, ref new_frame, new_frame_idx);
-          }
-          break;
+        //    var args_info = new FuncArgsInfo(args_bits);
+        //    int new_frame_idx = frames_count;
+        //    ref var new_frame = ref PushFrame();
+        //    new_frame.args_info = args_info;
+        //    new_frame.InitWithOrigin(frame, func_ip);
+        //    CallFrame(this, ref new_frame, new_frame_idx);
+        //  }
+        //  break;
 
-          default:
-            throw new Exception("Unhandled opcode: " + opcode);
+        //  default:
+        //    throw new Exception("Unhandled opcode: " + opcode);
 
-        }
+        //}
 
         ++ip;
       }
