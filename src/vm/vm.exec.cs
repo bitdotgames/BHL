@@ -312,8 +312,8 @@ public partial class VM
     }
   }
 
-  StackArray<ExecState> script_executors = new (
-    new ExecState[] { new (), new () }
+  StackArray<ExecState> script_executors = new StackArray<ExecState> (
+    new ExecState[] { new ExecState(), new ExecState() }
   );
   int script_executor_idx = -1;
   int script_executors_count = 0;
