@@ -63,47 +63,8 @@ public partial class VM
 
         switch(opcode)
         {
-          case Opcodes.Frame:
+          case Opcodes.Nop:
           {
-            int locals_vars_num = bytes[++ip];
-            int return_vars_num = bytes[++ip];
-
-            frame.locals_vars_num = locals_vars_num;
-            frame.return_vars_num = return_vars_num;
-
-            //NOTE: it's assumed that refcounted args are pushed with refcounted values
-            int args_num = frame.args_info.CountArgs();
-
-            frame.locals_offset = stack.sp - args_num;
-            frame.locals = stack;
-
-            //let's reserve space for local variables, however passed variables are
-            //already on the stack, let's take that into account
-            int rest_local_vars_num = locals_vars_num - args_num;
-            stack.Reserve(rest_local_vars_num);
-            //temporary stack lives after local variables
-            stack.sp += rest_local_vars_num;
-          }
-            break;
-
-          case Opcodes.GetVar:
-          {
-            int local_idx = bytes[++ip];
-
-            ref Val new_val = ref stack.Push();
-            new_val = frame.locals.vals[frame.locals_offset + local_idx];
-            new_val._refc?.Retain();
-          }
-            break;
-
-          case Opcodes.SetVar:
-          {
-            int local_idx = bytes[++ip];
-
-            stack.Pop(out var new_val);
-            ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
-            current._refc?.Release();
-            current = new_val;
           }
             break;
 
@@ -115,43 +76,6 @@ public partial class VM
             ref Val v = ref stack.Push();
             //TODO: we might have specialized opcodes for different variable types?
             cn.FillVal(ref v);
-          }
-            break;
-
-          case Opcodes.EqualLite:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            l_operand.type = Types.Bool;
-            l_operand.num = r_operand.num == l_operand.num &&
-                            (string)r_operand.obj  == (string)l_operand.obj
-              ? 1
-              : 0;
-          }
-            break;
-
-          case Opcodes.JumpZ:
-          {
-            int offset = (int)Bytecode.Decode16(bytes, ref ip);
-
-            ref Val v = ref stack.vals[--stack.sp];
-
-            if(v.num == 0)
-              ip += offset;
-          }
-            break;
-
-          case Opcodes.Return:
-          {
-            ip = EXIT_FRAME_IP - 1;
-          }
-            break;
-
-          case Opcodes.Jump:
-          {
-            short offset = (short)Bytecode.Decode16(bytes, ref ip);
-            ip += offset;
           }
             break;
 
@@ -191,337 +115,24 @@ public partial class VM
           }
             break;
 
-          case Opcodes.Equal:
+          case Opcodes.SetVar:
           {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
+            int local_idx = bytes[++ip];
 
-            var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-            if(r_operand._refc != null)
-            {
-              r_operand._refc.Release();
-              r_operand._refc = null;
-            }
-
-            r_operand.obj = null;
-
-            l_operand._refc?.Release();
-            l_operand = res;
+            stack.Pop(out var new_val);
+            ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
+            current._refc?.Release();
+            current = new_val;
           }
             break;
 
-          case Opcodes.CallLocal:
+          case Opcodes.GetVar:
           {
-            int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
-            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+            int local_idx = bytes[++ip];
 
-            var args_info = new FuncArgsInfo(args_bits);
-            int new_frame_idx = frames_count;
-            ref var new_frame = ref PushFrame();
-            new_frame.args_info = args_info;
-            new_frame.InitWithOrigin(frame, func_ip);
-            CallFrame(this, ref new_frame, new_frame_idx);
-          }
-            break;
-
-          case Opcodes.LT:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
-          }
-            break;
-
-          case Opcodes.LTE:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
-          }
-            break;
-
-          case Opcodes.GT:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
-          }
-            break;
-
-          case Opcodes.GTE:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
-          }
-            break;
-
-          case Opcodes.And:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Bool as well, so we don't replace it
-            l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
-          }
-            break;
-
-          case Opcodes.Or:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Bool as well, so we don't replace it
-            l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
-          }
-            break;
-
-          case Opcodes.BitAnd:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Int as well, so we don't replace it
-            l_operand.num = (int)l_operand.num & (int)r_operand.num;
-          }
-            break;
-
-          case Opcodes.BitOr:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Int as well, so we don't replace it
-            l_operand.num = (int)l_operand.num | (int)r_operand.num;
-          }
-            break;
-
-          case Opcodes.BitShr:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Int as well, so we don't replace it
-            l_operand.num = (int)l_operand.num >> (int)r_operand.num;
-          }
-            break;
-
-          case Opcodes.BitShl:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Int as well, so we don't replace it
-            l_operand.num = (int)l_operand.num << (int)r_operand.num;
-          }
-            break;
-
-          case Opcodes.Mod:
-          {
-            ref Val r_operand = ref stack.vals[--stack.sp];
-            ref Val l_operand = ref stack.vals[stack.sp - 1];
-
-            //resulting operand is Int as well, so we don't replace it
-            l_operand.num %= r_operand.num;
-          }
-            break;
-
-          case Opcodes.UnaryNot:
-          {
-            ref Val val = ref stack.vals[stack.sp - 1];
-            //resulting operand is Bool as well, so we don't replace it
-            val.num = val.num != 1 ? 1 : 0;
-          }
-            break;
-
-          case Opcodes.UnaryNeg:
-          {
-            ref Val val = ref stack.vals[stack.sp - 1];
-            //resulting operand is Int as well, so we don't replace it
-            val.num *= -1;
-          }
-            break;
-
-          case Opcodes.UnaryBitNot:
-          {
-            ref Val val = ref stack.vals[stack.sp - 1];
-            //resulting operand is Int as well, so we don't replace it
-            val.num = ~((int)val.num);
-          }
-            break;
-
-          case Opcodes.TypeCast:
-          {
-            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            bool force_type = bytes[++ip] == 1;
-
-            var cast_type = frame.type_refs[cast_type_idx];
-
-            ref var val = ref stack.Peek();
-
-            if(cast_type == Types.Int)
-            {
-              val._refc?.Release();
-              val = Val.NewNum((long)val.num);
-            }
-            else if(cast_type == Types.String && val.type != Types.String)
-            {
-              val._refc?.Release();
-              val = Val.NewStr(
-                val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
-              );
-            }
-            else
-            {
-              //NOTE: extra type check in case cast type is instantiable object (e.g class)
-              if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
-                throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-              if(force_type)
-                val.type = cast_type;
-            }
-          }
-            break;
-
-          case Opcodes.TypeAs:
-          {
-            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            bool force_type = bytes[++ip] == 1;
-            var as_type = frame.type_refs[cast_type_idx];
-
-            ref var val = ref stack.Peek();
-
-            if(Types.Is(val, as_type))
-            {
-              if(force_type)
-                val.type = as_type;
-            }
-            else
-            {
-              val._refc?.Release();
-              val = Null;
-            }
-          }
-            break;
-
-          case Opcodes.TypeIs:
-          {
-            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            var as_type = frame.type_refs[cast_type_idx];
-
-            ref var val = ref stack.Peek();
-            var refc = val._refc;
-            val = Types.Is(val, as_type);
-            refc?.Release();
-          }
-            break;
-
-          case Opcodes.Typeof:
-          {
-            int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            var type = frame.type_refs[type_idx];
-
-            stack.Push(Val.NewObj(type, Types.Type));
-          }
-            break;
-
-          case Opcodes.Inc:
-          {
-            int var_idx = bytes[++ip];
-            ++frame.locals.vals[frame.locals_offset + var_idx].num;
-          }
-            break;
-
-          case Opcodes.Dec:
-          {
-            int var_idx = bytes[++ip];
-            --frame.locals.vals[frame.locals_offset + var_idx].num;
-          }
-            break;
-
-          case Opcodes.ArrIdx:
-          {
-            int idx = stack.PopFast();
-            ref var arr = ref stack.Peek();
-
-            var class_type = (ArrayTypeSymbol)arr.type;
-            var res = class_type.ArrGetAt(arr, idx);
-
-            arr._refc?.Release();
-            //let's replace with the result
-            arr = res;
-          }
-            break;
-
-          case Opcodes.ArrIdxW:
-          {
-            int idx = stack.PopFast();
-            stack.Pop(out var arr);
-            stack.Pop(out var val);
-
-            var class_type = (ArrayTypeSymbol)arr.type;
-            class_type.ArrSetAt(arr, idx, val);
-
-            val._refc?.Release();
-            arr._refc?.Release();
-          }
-            break;
-
-          case Opcodes.ArrAddInplace:
-          {
-            //taking copy not ref since during Pop in binding operator stack will be cleared
-            var self = stack.vals[stack.sp - 2];
-            self._refc?.Retain();
-            var class_type = (ArrayTypeSymbol)self.type;
-            //NOTE: Add must be at 0 index
-            ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
-            stack.Push(self);
-          }
-            break;
-
-          case Opcodes.MapIdx:
-          {
-            stack.Pop(out var key);
-            stack.Pop(out var map);
-
-            var class_type = (MapTypeSymbol)map.type;
-            class_type.MapTryGet(map, key, out var res);
-
-            res._refc?.Retain();
-            stack.Push(res);
-
-            key._refc?.Release();
-            map._refc?.Release();
-          }
-            break;
-
-          case Opcodes.MapIdxW:
-          {
-            stack.Pop(out var key);
-            stack.Pop(out var map);
-            stack.Pop(out var val);
-
-            var class_type = (MapTypeSymbol)map.type;
-            class_type.MapSet(map, key, val);
-
-            key._refc?.Release();
-            val._refc?.Release();
-            map._refc?.Release();
-          }
-            break;
-
-          case Opcodes.MapAddInplace:
-          {
-            //taking copy not ref since during Pop in binding operator stack will be cleared
-            var self = stack.vals[stack.sp - 3];
-            self._refc?.Retain();
-            var class_type = (MapTypeSymbol)self.type;
-            //NOTE: Add must be at 0 index
-            ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
-            stack.Push(self);
+            ref Val new_val = ref stack.Push();
+            new_val = frame.locals.vals[frame.locals_offset + local_idx];
+            new_val._refc?.Retain();
           }
             break;
 
@@ -564,100 +175,17 @@ public partial class VM
           }
             break;
 
-          case Opcodes.MakeRef:
+
+          case Opcodes.SetGVar:
           {
-            int local_idx = bytes[++ip];
-
-            ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
-
-            //replacing existing val with ValRef if it's not already a ValRef
-            //(this a special case required e.g for loop variables)
-            if(curr.type != Types.ValRef ||
-               curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
-            {
-              var vr_val = new Val();
-              vr_val.type = Types.ValRef;
-              var vr = ValRef.New(vm);
-              //NOTE: we wrap an existing value
-              vr.val = curr;
-              vr_val._refc = vr;
-              curr = vr_val;
-            }
-          }
-            break;
-
-          case Opcodes.SetRef:
-          {
-            int local_idx = bytes[++ip];
+            int var_idx = (int)Bytecode.Decode24(bytes, ref ip);
 
             stack.Pop(out var new_val);
 
-            ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+            ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
             var val_ref = (ValRef)val_ref_holder._refc;
             val_ref.val._refc?.Release();
             val_ref.val = new_val;
-          }
-            break;
-
-          case Opcodes.GetRef:
-          {
-            int local_idx = bytes[++ip];
-
-            ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
-            var val_ref = (ValRef)val_ref_holder._refc;
-
-            ref Val v = ref stack.Push();
-            v = val_ref.val;
-            v._refc?.Retain();
-          }
-            break;
-
-          case Opcodes.GetAttr:
-          {
-            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
-
-            ref var obj = ref stack.Peek();
-            var class_symb = (ClassSymbol)obj.type;
-
-            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-            var res = new Val();
-            field_symb.getter(this, obj, ref res, field_symb);
-
-            res._refc?.Retain();
-            obj._refc?.Release();
-            //let's replace the value on the stack
-            obj = res;
-          }
-            break;
-
-          case Opcodes.SetAttr:
-          {
-            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
-
-            stack.Pop(out var obj);
-            stack.Pop(out var val);
-
-            var class_symb = (ClassSymbol)obj.type;
-            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-            field_symb.setter(this, ref obj, val, field_symb);
-
-            val._refc?.Release();
-            obj._refc?.Release();
-          }
-            break;
-
-          case Opcodes.SetAttrInplace:
-          {
-            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
-
-            stack.Pop(out var val);
-            ref var obj = ref stack.Peek();
-
-            var class_symb = (ClassSymbol)obj.type;
-            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
-            field_symb.setter(this, ref obj, val, field_symb);
-
-            val._refc?.Release();
           }
             break;
 
@@ -674,73 +202,93 @@ public partial class VM
           }
             break;
 
-          case Opcodes.SetGVar:
+          case Opcodes.Frame:
           {
-            int var_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            int locals_vars_num = bytes[++ip];
+            int return_vars_num = bytes[++ip];
 
-            stack.Pop(out var new_val);
+            frame.locals_vars_num = locals_vars_num;
+            frame.return_vars_num = return_vars_num;
 
-            ref var val_ref_holder = ref frame.module.gvars.vals[var_idx];
-            var val_ref = (ValRef)val_ref_holder._refc;
-            val_ref.val._refc?.Release();
-            val_ref.val = new_val;
+            //NOTE: it's assumed that refcounted args are pushed with refcounted values
+            int args_num = frame.args_info.CountArgs();
+
+            frame.locals_offset = stack.sp - args_num;
+            frame.locals = stack;
+
+            //let's reserve space for local variables, however passed variables are
+            //already on the stack, let's take that into account
+            int rest_local_vars_num = locals_vars_num - args_num;
+            stack.Reserve(rest_local_vars_num);
+            //temporary stack lives after local variables
+            stack.sp += rest_local_vars_num;
           }
             break;
 
-          case Opcodes.Nop:
+          case Opcodes.Return:
           {
+            ip = EXIT_FRAME_IP - 1;
           }
             break;
 
-          case Opcodes.GetFuncLocalPtr:
+          case Opcodes.Jump:
           {
-            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
-
-            var func_symb = frame.module.func_index.index[func_idx];
-
-            var ptr = FuncPtr.New(vm);
-            ptr.Init(frame.module, func_symb._ip_addr);
-            stack.Push(Val.NewObj(ptr, func_symb.signature));
+            short offset = (short)Bytecode.Decode16(bytes, ref ip);
+            ip += offset;
           }
             break;
 
-          case Opcodes.GetFuncIpPtr:
+          case Opcodes.JumpZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+
+            ref Val v = ref stack.vals[--stack.sp];
+
+            if(v.num == 0)
+              ip += offset;
+          }
+            break;
+
+          case Opcodes.JumpPeekZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+            if(stack.vals[stack.sp - 1].num != 1)
+              ip += offset;
+          }
+            break;
+
+          case Opcodes.JumpPeekNZ:
+          {
+            int offset = (int)Bytecode.Decode16(bytes, ref ip);
+            if(stack.vals[stack.sp - 1].num == 1)
+              ip += offset;
+          }
+            break;
+
+          case Opcodes.Pop:
+          {
+            ref var val = ref stack.vals[--stack.sp];
+            if(val._refc != null)
+            {
+              val._refc.Release();
+              val._refc = null;
+            }
+
+            val.obj = null;
+          }
+            break;
+
+          case Opcodes.CallLocal:
           {
             int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+            uint args_bits = Bytecode.Decode32(bytes, ref ip);
 
-            var ptr = FuncPtr.New(vm);
-            ptr.Init(frame.module, func_ip);
-            stack.Push(Val.NewObj(ptr, Types.FuncPtr));
-          }
-            break;
-
-          case Opcodes.GetFuncPtr:
-          {
-            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
-            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
-
-            var func_mod = frame.module._imported[import_idx];
-            var func_symb = func_mod.func_index.index[func_idx];
-
-            var ptr = FuncPtr.New(vm);
-            ptr.Init(func_mod, func_symb._ip_addr);
-            stack.Push(Val.NewObj(ptr, func_symb.signature));
-          }
-            break;
-
-          case Opcodes.GetFuncNativePtr:
-          {
-            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
-            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
-
-            //NOTE: using convention where built-in global module is always at index 0
-            //      and imported modules are at (import_idx + 1)
-            var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
-            var nfunc_symb = func_mod.nfunc_index.index[func_idx];
-
-            var ptr = FuncPtr.New(vm);
-            ptr.Init(nfunc_symb);
-            stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
+            var args_info = new FuncArgsInfo(args_bits);
+            int new_frame_idx = frames_count;
+            ref var new_frame = ref PushFrame();
+            new_frame.args_info = args_info;
+            new_frame.InitWithOrigin(frame, func_ip);
+            CallFrame(this, ref new_frame, new_frame_idx);
           }
             break;
 
@@ -750,25 +298,6 @@ public partial class VM
             uint args_bits = Bytecode.Decode32(bytes, ref ip);
 
             var nfunc_symb = vm.types.module.nfunc_index[func_idx];
-
-            if(CallNative(this, nfunc_symb, args_bits))
-            {
-              //let's cancel ip incrementing
-              --ip;
-            }
-          }
-            break;
-
-          case Opcodes.CallNative:
-          {
-            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
-            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
-            uint args_bits = Bytecode.Decode32(bytes, ref ip);
-
-            //NOTE: using convention where built-in global module is always at index 0
-            //      and imported modules are at (import_idx + 1)
-            var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
-            var nfunc_symb = func_mod.nfunc_index[func_idx];
 
             if(CallNative(this, nfunc_symb, args_bits))
             {
@@ -791,6 +320,25 @@ public partial class VM
             new_frame.args_info = new FuncArgsInfo(args_bits);
             new_frame.InitWithModule(func_mod, func_ip);
             CallFrame(this, ref new_frame, new_frame_idx);
+          }
+            break;
+
+          case Opcodes.CallNative:
+          {
+            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+            //NOTE: using convention where built-in global module is always at index 0
+            //      and imported modules are at (import_idx + 1)
+            var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+            var nfunc_symb = func_mod.nfunc_index[func_idx];
+
+            if(CallNative(this, nfunc_symb, args_bits))
+            {
+              //let's cancel ip incrementing
+              --ip;
+            }
           }
             break;
 
@@ -839,31 +387,6 @@ public partial class VM
           }
             break;
 
-          case Opcodes.CallMethodVirt:
-          {
-            int virt_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
-            uint args_bits = Bytecode.Decode32(bytes, ref ip);
-
-            var args_info = new FuncArgsInfo(args_bits);
-            int self_idx = stack.sp - args_info.CountArgs() - 1;
-            ref var self = ref stack.vals[self_idx];
-            //NOTE: taking into account that 'this' is on the stack,
-            //      args_bits doesn't include it we have to take it into
-            //      account so that during EnterFrame local offsets are
-            //      properly calculated
-            --stack.sp;
-
-            var class_type = (ClassSymbol)self.type;
-            var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
-
-            int new_frame_idx = frames_count;
-            ref var new_frame = ref PushFrame();
-            new_frame.args_info = args_info;
-            new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
-            CallFrame(this, ref new_frame, new_frame_idx);
-          }
-            break;
-
           case Opcodes.CallMethodIface:
           {
             int iface_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
@@ -905,6 +428,31 @@ public partial class VM
               //let's cancel ip incrementing
               --ip;
             }
+          }
+            break;
+
+          case Opcodes.CallMethodVirt:
+          {
+            int virt_func_idx = (int)Bytecode.Decode16(bytes, ref ip);
+            uint args_bits = Bytecode.Decode32(bytes, ref ip);
+
+            var args_info = new FuncArgsInfo(args_bits);
+            int self_idx = stack.sp - args_info.CountArgs() - 1;
+            ref var self = ref stack.vals[self_idx];
+            //NOTE: taking into account that 'this' is on the stack,
+            //      args_bits doesn't include it we have to take it into
+            //      account so that during EnterFrame local offsets are
+            //      properly calculated
+            --stack.sp;
+
+            var class_type = (ClassSymbol)self.type;
+            var func_symb = (FuncSymbolScript)class_type._vtable[virt_func_idx];
+
+            int new_frame_idx = frames_count;
+            ref var new_frame = ref PushFrame();
+            new_frame.args_info = args_info;
+            new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
+            CallFrame(this, ref new_frame, new_frame_idx);
           }
             break;
 
@@ -987,50 +535,247 @@ public partial class VM
           }
             break;
 
-          case Opcodes.SetUpval:
+          case Opcodes.GetFuncLocalPtr:
           {
-            int frame_local_idx = bytes[++ip];
-            int func_ptr_local_idx = bytes[++ip];
-            var mode = (UpvalMode)bytes[++ip];
+            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
 
-            var addr = (FuncPtr)stack.vals[stack.sp - 1].obj;
+            var func_symb = frame.module.func_index.index[func_idx];
 
-            ref var upval = ref addr.upvals.Push();
-            upval.frame_local_idx = func_ptr_local_idx;
-
-            ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
-            if(mode == UpvalMode.STRONG)
-              val._refc?.Retain();
-            upval.val = val;
+            var ptr = FuncPtr.New(vm);
+            ptr.Init(frame.module, func_symb._ip_addr);
+            stack.Push(Val.NewObj(ptr, func_symb.signature));
           }
             break;
 
-          case Opcodes.Pop:
+          case Opcodes.GetFuncPtr:
           {
-            ref var val = ref stack.vals[--stack.sp];
-            if(val._refc != null)
+            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+            var func_mod = frame.module._imported[import_idx];
+            var func_symb = func_mod.func_index.index[func_idx];
+
+            var ptr = FuncPtr.New(vm);
+            ptr.Init(func_mod, func_symb._ip_addr);
+            stack.Push(Val.NewObj(ptr, func_symb.signature));
+          }
+            break;
+
+          case Opcodes.GetFuncNativePtr:
+          {
+            int import_idx = (int)Bytecode.Decode16(bytes, ref ip);
+            int func_idx = (int)Bytecode.Decode24(bytes, ref ip);
+
+            //NOTE: using convention where built-in global module is always at index 0
+            //      and imported modules are at (import_idx + 1)
+            var func_mod = import_idx == 0 ? vm.types.module : frame.module._imported[import_idx - 1];
+            var nfunc_symb = func_mod.nfunc_index.index[func_idx];
+
+            var ptr = FuncPtr.New(vm);
+            ptr.Init(nfunc_symb);
+            stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
+          }
+            break;
+
+          case Opcodes.GetFuncIpPtr:
+          {
+            int func_ip = (int)Bytecode.Decode24(bytes, ref ip);
+
+            var ptr = FuncPtr.New(vm);
+            ptr.Init(frame.module, func_ip);
+            stack.Push(Val.NewObj(ptr, Types.FuncPtr));
+          }
+            break;
+
+          case Opcodes.GetAttr:
+          {
+            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+            ref var obj = ref stack.Peek();
+            var class_symb = (ClassSymbol)obj.type;
+
+            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+            var res = new Val();
+            field_symb.getter(this, obj, ref res, field_symb);
+
+            res._refc?.Retain();
+            obj._refc?.Release();
+            //let's replace the value on the stack
+            obj = res;
+          }
+            break;
+
+          case Opcodes.SetAttr:
+          {
+            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+            stack.Pop(out var obj);
+            stack.Pop(out var val);
+
+            var class_symb = (ClassSymbol)obj.type;
+            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+            field_symb.setter(this, ref obj, val, field_symb);
+
+            val._refc?.Release();
+            obj._refc?.Release();
+          }
+            break;
+
+          case Opcodes.SetAttrInplace:
+          {
+            int fld_idx = (int)Bytecode.Decode16(bytes, ref ip);
+
+            stack.Pop(out var val);
+            ref var obj = ref stack.Peek();
+
+            var class_symb = (ClassSymbol)obj.type;
+            var field_symb = (FieldSymbol)class_symb._all_members[fld_idx];
+            field_symb.setter(this, ref obj, val, field_symb);
+
+            val._refc?.Release();
+          }
+            break;
+
+          case Opcodes.UnaryNot:
+          {
+            ref Val val = ref stack.vals[stack.sp - 1];
+            //resulting operand is Bool as well, so we don't replace it
+            val.num = val.num != 1 ? 1 : 0;
+          }
+            break;
+
+          case Opcodes.UnaryNeg:
+          {
+            ref Val val = ref stack.vals[stack.sp - 1];
+            //resulting operand is Int as well, so we don't replace it
+            val.num *= -1;
+          }
+            break;
+
+          case Opcodes.And:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Bool as well, so we don't replace it
+            l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
+          }
+            break;
+
+          case Opcodes.Or:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Bool as well, so we don't replace it
+            l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
+          }
+            break;
+
+          case Opcodes.Mod:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Int as well, so we don't replace it
+            l_operand.num %= r_operand.num;
+          }
+            break;
+
+
+          case Opcodes.BitOr:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Int as well, so we don't replace it
+            l_operand.num = (int)l_operand.num | (int)r_operand.num;
+          }
+            break;
+
+          case Opcodes.BitAnd:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Int as well, so we don't replace it
+            l_operand.num = (int)l_operand.num & (int)r_operand.num;
+          }
+            break;
+
+          case Opcodes.EqualLite:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand.type = Types.Bool;
+            l_operand.num = r_operand.num == l_operand.num &&
+                            (string)r_operand.obj  == (string)l_operand.obj
+              ? 1
+              : 0;
+          }
+            break;
+
+          case Opcodes.Equal:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+            if(r_operand._refc != null)
             {
-              val._refc.Release();
-              val._refc = null;
+              r_operand._refc.Release();
+              r_operand._refc = null;
             }
 
-            val.obj = null;
+            r_operand.obj = null;
+
+            l_operand._refc?.Release();
+            l_operand = res;
           }
             break;
 
-          case Opcodes.JumpPeekZ:
+          case Opcodes.UnaryBitNot:
           {
-            int offset = (int)Bytecode.Decode16(bytes, ref ip);
-            if(stack.vals[stack.sp - 1].num != 1)
-              ip += offset;
+            ref Val val = ref stack.vals[stack.sp - 1];
+            //resulting operand is Int as well, so we don't replace it
+            val.num = ~((int)val.num);
           }
             break;
 
-          case Opcodes.JumpPeekNZ:
+          case Opcodes.LT:
           {
-            int offset = (int)Bytecode.Decode16(bytes, ref ip);
-            if(stack.vals[stack.sp - 1].num == 1)
-              ip += offset;
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand = new Val { type = Types.Bool, num = l_operand.num < r_operand.num ? 1 : 0 };
+          }
+            break;
+
+          case Opcodes.LTE:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand = new Val { type = Types.Bool, num = l_operand.num <= r_operand.num ? 1 : 0 };
+          }
+            break;
+
+          case Opcodes.GT:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand = new Val { type = Types.Bool, num = l_operand.num > r_operand.num ? 1 : 0 };
+          }
+            break;
+
+          case Opcodes.GTE:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            l_operand = new Val { type = Types.Bool, num = l_operand.num >= r_operand.num ? 1 : 0 };
           }
             break;
 
@@ -1071,11 +816,100 @@ public partial class VM
           }
             break;
 
+          case Opcodes.TypeCast:
+          {
+            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            bool force_type = bytes[++ip] == 1;
+
+            var cast_type = frame.type_refs[cast_type_idx];
+
+            ref var val = ref stack.Peek();
+
+            if(cast_type == Types.Int)
+            {
+              val._refc?.Release();
+              val = Val.NewNum((long)val.num);
+            }
+            else if(cast_type == Types.String && val.type != Types.String)
+            {
+              val._refc?.Release();
+              val = Val.NewStr(
+                val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
+              );
+            }
+            else
+            {
+              //NOTE: extra type check in case cast type is instantiable object (e.g class)
+              if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+                throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
+              if(force_type)
+                val.type = cast_type;
+            }
+          }
+            break;
+
+          case Opcodes.TypeAs:
+          {
+            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            bool force_type = bytes[++ip] == 1;
+            var as_type = frame.type_refs[cast_type_idx];
+
+            ref var val = ref stack.Peek();
+
+            if(Types.Is(val, as_type))
+            {
+              if(force_type)
+                val.type = as_type;
+            }
+            else
+            {
+              val._refc?.Release();
+              val = Null;
+            }
+          }
+            break;
+
+          case Opcodes.TypeIs:
+          {
+            int cast_type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            var as_type = frame.type_refs[cast_type_idx];
+
+            ref var val = ref stack.Peek();
+            var refc = val._refc;
+            val = Types.Is(val, as_type);
+            refc?.Release();
+          }
+            break;
+
+          case Opcodes.Typeof:
+          {
+            int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
+            var type = frame.type_refs[type_idx];
+
+            stack.Push(Val.NewObj(type, Types.Type));
+          }
+            break;
+
           case Opcodes.Scope:
           {
             int size = (int)Bytecode.Decode16(bytes, ref ip);
 
             PushRegion(region.frame_idx, ip + 1, ip + size);
+          }
+            break;
+
+          case Opcodes.Defer:
+          {
+            int size = (int)Bytecode.Decode16(bytes, ref ip);
+
+            region.defers ??= new DeferSupport();
+
+            ref var d = ref region.defers.Add();
+            d.ip = ip + 1;
+            d.max_ip = ip + size;
+
+            //NOTE: we need to skip the defer block
+            ip += size;
           }
             break;
 
@@ -1140,21 +974,6 @@ public partial class VM
           }
             break;
 
-          case Opcodes.Defer:
-          {
-            int size = (int)Bytecode.Decode16(bytes, ref ip);
-
-            region.defers ??= new DeferSupport();
-
-            ref var d = ref region.defers.Add();
-            d.ip = ip + 1;
-            d.max_ip = ip + size;
-
-            //NOTE: we need to skip the defer block
-            ip += size;
-          }
-            break;
-
           case Opcodes.New:
           {
             int type_idx = (int)Bytecode.Decode24(bytes, ref ip);
@@ -1167,6 +986,190 @@ public partial class VM
             //      is not attached to any variable and is expected to have refs == 1
             ref var val = ref stack.Push();
             cls.creator(this, ref val, cls);
+          }
+            break;
+
+          case Opcodes.SetUpval:
+          {
+            int frame_local_idx = bytes[++ip];
+            int func_ptr_local_idx = bytes[++ip];
+            var mode = (UpvalMode)bytes[++ip];
+
+            var addr = (FuncPtr)stack.vals[stack.sp - 1].obj;
+
+            ref var upval = ref addr.upvals.Push();
+            upval.frame_local_idx = func_ptr_local_idx;
+
+            ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
+            if(mode == UpvalMode.STRONG)
+              val._refc?.Retain();
+            upval.val = val;
+          }
+            break;
+
+          case Opcodes.Inc:
+          {
+            int var_idx = bytes[++ip];
+            ++frame.locals.vals[frame.locals_offset + var_idx].num;
+          }
+            break;
+
+          case Opcodes.Dec:
+          {
+            int var_idx = bytes[++ip];
+            --frame.locals.vals[frame.locals_offset + var_idx].num;
+          }
+            break;
+
+          case Opcodes.ArrIdx:
+          {
+            int idx = stack.PopFast();
+            ref var arr = ref stack.Peek();
+
+            var class_type = (ArrayTypeSymbol)arr.type;
+            var res = class_type.ArrGetAt(arr, idx);
+
+            arr._refc?.Release();
+            //let's replace with the result
+            arr = res;
+          }
+            break;
+
+          case Opcodes.ArrIdxW:
+          {
+            int idx = stack.PopFast();
+            stack.Pop(out var arr);
+            stack.Pop(out var val);
+
+            var class_type = (ArrayTypeSymbol)arr.type;
+            class_type.ArrSetAt(arr, idx, val);
+
+            val._refc?.Release();
+            arr._refc?.Release();
+          }
+            break;
+
+          case Opcodes.ArrAddInplace:
+          {
+            //taking copy not ref since during Pop in binding operator stack will be cleared
+            var self = stack.vals[stack.sp - 2];
+            self._refc?.Retain();
+            var class_type = (ArrayTypeSymbol)self.type;
+            //NOTE: Add must be at 0 index
+            ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
+            stack.Push(self);
+          }
+            break;
+
+          case Opcodes.BitShr:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Int as well, so we don't replace it
+            l_operand.num = (int)l_operand.num >> (int)r_operand.num;
+          }
+            break;
+
+
+          case Opcodes.BitShl:
+          {
+            ref Val r_operand = ref stack.vals[--stack.sp];
+            ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+            //resulting operand is Int as well, so we don't replace it
+            l_operand.num = (int)l_operand.num << (int)r_operand.num;
+          }
+            break;
+
+          case Opcodes.MapIdx:
+          {
+            stack.Pop(out var key);
+            stack.Pop(out var map);
+
+            var class_type = (MapTypeSymbol)map.type;
+            class_type.MapTryGet(map, key, out var res);
+
+            res._refc?.Retain();
+            stack.Push(res);
+
+            key._refc?.Release();
+            map._refc?.Release();
+          }
+            break;
+
+          case Opcodes.MapIdxW:
+          {
+            stack.Pop(out var key);
+            stack.Pop(out var map);
+            stack.Pop(out var val);
+
+            var class_type = (MapTypeSymbol)map.type;
+            class_type.MapSet(map, key, val);
+
+            key._refc?.Release();
+            val._refc?.Release();
+            map._refc?.Release();
+          }
+            break;
+
+          case Opcodes.MapAddInplace:
+          {
+            //taking copy not ref since during Pop in binding operator stack will be cleared
+            var self = stack.vals[stack.sp - 3];
+            self._refc?.Retain();
+            var class_type = (MapTypeSymbol)self.type;
+            //NOTE: Add must be at 0 index
+            ((FuncSymbolNative)class_type._all_members[0]).cb(this, default);
+            stack.Push(self);
+          }
+            break;
+
+          case Opcodes.MakeRef:
+          {
+            int local_idx = bytes[++ip];
+
+            ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
+
+            //replacing existing val with ValRef if it's not already a ValRef
+            //(this a special case required e.g for loop variables)
+            if(curr.type != Types.ValRef ||
+               curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
+            {
+              var vr_val = new Val();
+              vr_val.type = Types.ValRef;
+              var vr = ValRef.New(vm);
+              //NOTE: we wrap an existing value
+              vr.val = curr;
+              vr_val._refc = vr;
+              curr = vr_val;
+            }
+          }
+            break;
+
+          case Opcodes.GetRef:
+          {
+            int local_idx = bytes[++ip];
+
+            ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+            var val_ref = (ValRef)val_ref_holder._refc;
+
+            ref Val v = ref stack.Push();
+            v = val_ref.val;
+            v._refc?.Retain();
+          }
+            break;
+
+          case Opcodes.SetRef:
+          {
+            int local_idx = bytes[++ip];
+
+            stack.Pop(out var new_val);
+
+            ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+            var val_ref = (ValRef)val_ref_holder._refc;
+            val_ref.val._refc?.Release();
+            val_ref.val = new_val;
           }
             break;
 
