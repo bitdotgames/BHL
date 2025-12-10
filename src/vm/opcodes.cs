@@ -20,6 +20,7 @@ public enum Opcodes
 
   Frame                 = 13,
   Return                = 14,
+  Nop2                  = 15,
   Jump                  = 16,
   JumpZ                 = 17,
   JumpPeekZ             = 18,

@@ -15,7 +15,7 @@ public partial class VM
 
   public partial class ExecState
   {
-    //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void ExecuteOnce()
     {
       ref var region = ref regions[regions_count - 1];
@@ -228,6 +228,11 @@ public partial class VM
           case Opcodes.Return:
           {
             ip = EXIT_FRAME_IP - 1;
+          }
+            break;
+
+          case Opcodes.Nop2:
+          {
           }
             break;
 
