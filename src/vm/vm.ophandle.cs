@@ -11,7 +11,7 @@ public partial class VM
     VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes
   );
 
-  static readonly BytecodeHandler[] op_handlers = new BytecodeHandler[(int)Opcodes.MAX];
+  //static readonly BytecodeHandler[] op_handlers = new BytecodeHandler[(int)Opcodes.MAX];
 
   public partial class ExecState
   {
