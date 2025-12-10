@@ -1,6 +1,7 @@
 using System;
 
-namespace bhl;
+namespace bhl
+{
 
 public struct DeferBlock
 {
@@ -33,4 +34,6 @@ public struct DeferBlock
   {
     return "Defer block: " + ip + " " + max_ip;
   }
+}
+
 }
