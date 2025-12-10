@@ -312,7 +312,7 @@ public partial class VM
     }
   }
 
-  ExecState[] script_executors = new ExecState[] { new (), new () };
+  //ExecState[] script_executors = new ExecState[] { new (), new () };
   int script_executor_idx = -1;
   int script_executors_count = 0;
 
@@ -506,16 +506,17 @@ public partial class VM
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ValStack Execute(FuncSymbolScript fs, FuncArgsInfo args_info, ref StackList<Val> args)
   {
-    if(++script_executor_idx == script_executors_count)
-    {
-      if(script_executors_count == script_executors.Length)
-        Array.Resize(ref script_executors, script_executors_count << 1);
-      script_executors[script_executors_count++] = new ExecState();
-    }
-    var exec = script_executors[script_executor_idx];
-    var res = Execute(exec, fs, args_info, ref args);
-    --script_executor_idx;
-    return res;
+    throw new NotImplementedException();
+    //if(++script_executor_idx == script_executors_count)
+    //{
+    //  if(script_executors_count == script_executors.Length)
+    //    Array.Resize(ref script_executors, script_executors_count << 1);
+    //  script_executors[script_executors_count++] = new ExecState();
+    //}
+    //var exec = script_executors[script_executor_idx];
+    //var res = Execute(exec, fs, args_info, ref args);
+    //--script_executor_idx;
+    //return res;
   }
 
   ValStack Execute(ExecState exec, FuncSymbolScript fs, FuncArgsInfo args_info,  /*less copying*/ref StackList<Val> args)
