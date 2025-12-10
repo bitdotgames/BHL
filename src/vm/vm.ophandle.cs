@@ -117,7 +117,8 @@ public partial class VM
 
           case Opcodes.SetVar:
           {
-            int local_idx = bytes[++ip];
+            //int local_idx = bytes[++ip];
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
 
             stack.Pop(out var new_val);
             ref var current = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -128,7 +129,8 @@ public partial class VM
 
           case Opcodes.GetVar:
           {
-            int local_idx = bytes[++ip];
+            //int local_idx = bytes[++ip];
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
 
             ref Val new_val = ref stack.Push();
             new_val = frame.locals.vals[frame.locals_offset + local_idx];
@@ -138,7 +140,8 @@ public partial class VM
 
           case Opcodes.GetVarScalar:
           {
-            int local_idx = bytes[++ip];
+            //int local_idx = bytes[++ip];
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
 
             ref Val new_val = ref stack.Push();
             ref var source = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -150,7 +153,8 @@ public partial class VM
 
           case Opcodes.SetVarScalar:
           {
-            int local_idx = bytes[++ip];
+            //int local_idx = bytes[++ip];
+            int local_idx = Bytecode.Decode8(bytes, ref ip);
 
             ref var new_val = ref stack.vals[--stack.sp];
             ref var dest = ref frame.locals.vals[frame.locals_offset + local_idx];
@@ -204,8 +208,10 @@ public partial class VM
 
           case Opcodes.Frame:
           {
-            int locals_vars_num = bytes[++ip];
-            int return_vars_num = bytes[++ip];
+            //int locals_vars_num = bytes[++ip];
+            //int return_vars_num = bytes[++ip];
+            int locals_vars_num = Bytecode.Decode8(bytes, ref ip);
+            int return_vars_num = Bytecode.Decode8(bytes, ref ip);
 
             frame.locals_vars_num = locals_vars_num;
             frame.return_vars_num = return_vars_num;
