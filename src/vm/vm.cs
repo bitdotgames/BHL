@@ -188,10 +188,10 @@ public partial class VM : INamedResolver
 
     for(int i = 0; i <= script_executor_idx; ++i)
     {
-    //  var exec = script_executors[i];
-    //  var trace = new List<TraceItem>();
-    //  exec.GetStackTrace(trace);
-    //  info[exec] = trace;
+      var exec = script_executors[i];
+      var trace = new List<TraceItem>();
+      exec.GetStackTrace(trace);
+      info[exec] = trace;
     }
   }
 
