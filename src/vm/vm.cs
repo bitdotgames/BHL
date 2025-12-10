@@ -109,6 +109,12 @@ public partial class VM : INamedResolver
       types = new Types();
     this.types = types;
     this.loader = loader;
+
+    //NOTE: trying to fix some weird IL2CPP bug which doesn't allow to
+    //      achieve the same using initialization parameters
+    script_executors = new StackArray<ExecState>(2);
+    script_executors.Values[0] = new ExecState();
+    script_executors.Values[1] = new ExecState();
   }
 
   public bool TryFindFuncAddr(NamePath path, out FuncAddr addr)
