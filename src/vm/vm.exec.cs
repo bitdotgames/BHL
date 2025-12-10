@@ -312,9 +312,8 @@ public partial class VM
     }
   }
 
-  StackArray<ExecState> script_executors = new StackArray<ExecState> (
-    new ExecState[] { new ExecState(), new ExecState() }
-  );
+  //NOTE: initialized below due to some weird IL2CPP bug
+  StackArray<ExecState> script_executors = new (2);
   int script_executor_idx = -1;
   int script_executors_count = 0;
 
@@ -325,6 +324,14 @@ public partial class VM
   public const int EXIT_FRAME_IP = STOP_IP - 1;
 
   public delegate void ClassCreator(VM.ExecState exec, ref Val res, IType type);
+
+  public VM()
+  {
+    //NOTE: trying to fix some weird IL2CPP bug which doesn't allow to
+    //      achieve the same using initialization parameters
+    script_executors.Values[0] = new ExecState();
+    script_executors.Values[1] = new ExecState();
+  }
 
   public class DeferSupport
   {
