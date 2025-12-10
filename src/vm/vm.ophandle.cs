@@ -147,9 +147,6 @@ public partial class VM
     ref Val r_operand = ref stack.vals[--stack.sp];
     ref Val l_operand = ref stack.vals[stack.sp - 1];
     l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
-    ////TODO: add separate opcode Concat for strings
-    //if(l_operand.type == Types.String)
-    //  l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -401,8 +398,10 @@ public partial class VM
     var cn = frame.constants[const_idx];
 
     ref Val v = ref exec.stack.Push();
-
     //TODO: what about specialized opcodes for each constant type?
+    //v.type = Types.Int;
+    //v.num = cn.num;
+
     switch(cn.type)
     {
       case ConstType.INT:
@@ -916,6 +915,29 @@ public partial class VM
   unsafe static void OpcodeReturn(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
   {
     exec.ip = EXIT_FRAME_IP - 1;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  unsafe static void OpcodeReturn_TODO(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+  {
+    //exiting all regions which belong to the frame
+    for(int i = exec.regions_count; i-- > frame.region_offset_idx;)
+    {
+      ref var tmp_region = ref exec.regions[i];
+      if(tmp_region.defers != null && tmp_region.defers.count > 0)
+        tmp_region.defers.ExitScope(exec);
+    }
+    exec.regions_count = frame.region_offset_idx;
+    frame.ReleaseLocals();
+
+    if(frame.return_vars_num > 0)
+      frame.ReturnVars(exec.stack);
+
+    //stack pointer now at the last returned value
+    exec.stack.sp = frame.locals_offset + frame.return_vars_num;
+    --exec.frames_count;
+
+    exec.ip = frame.return_ip;
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

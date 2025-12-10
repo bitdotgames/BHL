@@ -88,6 +88,9 @@ public partial class VM : INamedResolver
         {
           ref var ret = ref stack.vals[ret_idx];
           //TODO: for scalar only values this can be optimized
+          //ref var dst = ref stack.vals[local_idx];
+          //dst.type = ret.type;
+          //dst.num = ret.num;
           stack.vals[local_idx] = ret;
           ret._refc = null;
           ret.obj = null;

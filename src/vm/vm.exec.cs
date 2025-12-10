@@ -263,6 +263,7 @@ public partial class VM
           region.defers.ExitScope(this);
         --regions_count;
       }
+      //TODO: move this to some opcode handler
       //3. exit frame requested
       else if(ip == EXIT_FRAME_IP)
       {
