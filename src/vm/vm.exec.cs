@@ -312,8 +312,7 @@ public partial class VM
     }
   }
 
-  //NOTE: initialized in VM ctor due to some weird IL2CPP bug
-  StackArray<ExecState> script_executors = null;
+  ExecState[] script_executors = new ExecState[] { new (), new () };
   int script_executor_idx = -1;
   int script_executors_count = 0;
 
@@ -509,11 +508,11 @@ public partial class VM
   {
     if(++script_executor_idx == script_executors_count)
     {
-      ref var tmp = ref script_executors.Push();
-      tmp = new ExecState();
-      ++script_executors_count;
+      if(script_executors_count == script_executors.Length)
+        Array.Resize(ref script_executors, script_executors_count << 1);
+      script_executors[script_executors_count++] = new ExecState();
     }
-    var exec = script_executors.Values[script_executor_idx];
+    var exec = script_executors[script_executor_idx];
     var res = Execute(exec, fs, args_info, ref args);
     --script_executor_idx;
     return res;
