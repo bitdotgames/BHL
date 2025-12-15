@@ -331,6 +331,17 @@ public partial class VM : INamedResolver
     return new_fiber;
   }
 
+  public Fiber Start(
+    VM.ExecState origin_exec,
+    FuncPtr ptr,
+    StackList<Val> args,
+    FiberOptions opts = 0
+  )
+  {
+    ref var origin_frame = ref origin_exec.frames[origin_exec.frames_count - 1];
+    return Start(origin_exec, ptr, ref origin_frame, args, opts);
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   void Register(Fiber fb, Fiber parent, FiberOptions opts)
   {

@@ -880,7 +880,7 @@ public partial class VM
     int new_frame_idx = exec.frames_count;
     ref var new_frame = ref exec.PushFrame();
     new_frame.args_info = args_info;
-    new_frame.InitWithOrigin(frame, func_ip);
+    new_frame.InitWithOrigin(ref frame, func_ip);
     CallFrame(exec, ref new_frame, new_frame_idx);
   }
 

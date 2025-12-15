@@ -33,7 +33,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void InitWithOrigin(Frame origin, int start_ip)
+    public unsafe void InitWithOrigin(ref Frame origin, int start_ip)
     {
       Init(origin.module, origin.bytecode, start_ip);
     }

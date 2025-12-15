@@ -1215,6 +1215,57 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
+  public void TestStartNestedLambdasInScriptMgrWithUpVals()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      float a = 0
+      StartScriptInMgr(
+        script: coro func() {
+          a = a + 1
+          trace((string) a + "";"")
+          yield()
+          StartScriptInMgr(
+           script: coro func() {
+             a = a + 10
+             trace((string) a + "";"")
+             yield()
+           },
+           spawns : 1
+          )
+        },
+        spawns : 1
+      )
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+
+    Assert.False(vm.Tick());
+    ScriptMgr.instance.Tick();
+    ScriptMgr.instance.Tick();
+
+    Assert.Equal("1;11;", log.ToString());
+
+    ScriptMgr.instance.Stop();
+    Assert.True(!ScriptMgr.instance.Busy);
+
+    vm.Stop();
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestStartLambdaManyTimesInScriptMgrWithValCopies()
   {
     string bhl = @"
@@ -1477,10 +1528,9 @@ public class TestFiber : BHL_TestBase
           int spawns = exec.stack.Pop();
           var ptr = exec.stack.Pop();
 
-          ref var frame = ref exec.frames[exec.frames_count - 1];
           for(int i = 0; i < spawns; ++i)
           {
-            ScriptMgr.instance.Start(exec, ref frame, (VM.FuncPtr)ptr.obj);
+            ScriptMgr.instance.Start(exec, (VM.FuncPtr)ptr.obj);
           }
 
           ptr._refc?.Release();
@@ -1505,9 +1555,9 @@ public class TestFiber : BHL_TestBase
       get { return active.Count > 0; }
     }
 
-    public void Start(VM.ExecState exec, ref VM.Frame origin, VM.FuncPtr ptr)
+    public void Start(VM.ExecState exec, VM.FuncPtr ptr)
     {
-      var fb = exec.vm.Start(exec, ptr, ref origin, new StackList<Val>(), VM.FiberOptions.Detach);
+      var fb = exec.vm.Start(exec, ptr, new StackList<Val>(), VM.FiberOptions.Detach);
       active.Add(fb);
     }
 

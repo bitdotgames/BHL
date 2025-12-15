@@ -137,7 +137,7 @@ public partial class VM : INamedResolver
     {
       if(native != null)
       {
-        frame.InitWithOrigin(origin_frame, VM.EXIT_FRAME_IP);
+        frame.InitWithOrigin(ref origin_frame, VM.EXIT_FRAME_IP);
       }
       else
       {
