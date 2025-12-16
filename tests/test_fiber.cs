@@ -1242,6 +1242,14 @@ public class TestFiber : BHL_TestBase
            },
            spawns : 1
           )
+          StartScriptInMgr(
+           script: coro func() {
+            a = a + 1000
+            trace((string) a + "";"")
+            yield()
+           },
+           spawns : 1
+          )
         },
         spawns : 1
       )
@@ -1262,7 +1270,7 @@ public class TestFiber : BHL_TestBase
     ScriptMgr.instance.Tick();
     ScriptMgr.instance.Tick();
 
-    Assert.Equal("1;11;111;", log.ToString());
+    Assert.Equal("1;11;1011;1111;", log.ToString());
 
     ScriptMgr.instance.Stop();
     Assert.True(!ScriptMgr.instance.Busy);
