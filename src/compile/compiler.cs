@@ -26,11 +26,14 @@ public class ModuleCompiler : AST_Visitor
 
   internal class LambdaCode
   {
+    internal LambdaCode parent;
     internal LambdaSymbol symbol;
     internal List<Instruction> code;
   }
-  List<List<LambdaCode>> lambda_stacks = new List<List<LambdaCode>>();
-  int lambdas_stack_idx = -1;
+  //we need to collect them all while preserving a 'tree alike' structure
+  //becase we can have an arbitrary nesting of lambdas one into each other
+  List<LambdaCode> lambdas = new List<LambdaCode>();
+  LambdaCode current_lambda = null;
 
   IScope curr_scope;
 
@@ -219,48 +222,38 @@ public class ModuleCompiler : AST_Visitor
     return this;
   }
 
-  void PushLambdaCode(LambdaSymbol symbol)
+  void PushLambda(LambdaSymbol symbol)
   {
-    List<LambdaCode> stack = null;
-    if(lambda_stacks.Count == 0)
+    var lambda = new LambdaCode
     {
-      stack = new List<LambdaCode>();
-      lambda_stacks.Add(stack);
-    }
-    else
-      stack = lambda_stacks[^1];
+      parent = current_lambda,
+      code = new List<Instruction>(),
+      symbol = symbol
+    };
+    lambdas.Add(lambda);
 
-    var instructions = new List<Instruction>();
-    var code = new LambdaCode { code = instructions, symbol = symbol };
-    lambdas_stack_idx++;
-    stack.Add(code);
-    head = instructions;
+    current_lambda = lambda;
+    head = lambda.code;
   }
 
-  void PopLambdaCode()
+  void PopLambda()
   {
-    --lambdas_stack_idx;
-    if(lambdas_stack_idx == -1)
-    {
-      lambda_stacks.Add(new List<LambdaCode>());
-      head = code;
-    }
-    else
-      head = lambda_stacks[^1][lambdas_stack_idx].code;
+    current_lambda = current_lambda.parent;
+    head = current_lambda == null ? code : current_lambda.code;
   }
 
-  void WriteLambdaCode()
+  void FlushLambdas()
   {
-    foreach(var stack in lambda_stacks)
+    if(head != code)
+      throw new Exception("Invalid code state");
+
+    foreach(var lambda in lambdas)
     {
-      foreach(var lmb_code in stack)
-      {
-        lmb_code.symbol._ip_addr = GetCodeSize();
-        foreach(var instr in lmb_code.code)
-          head.Add(instr);
-      }
+      lambda.symbol._ip_addr = GetCodeSize();
+      foreach(var instr in lambda.code)
+        head.Add(instr);
     }
-    lambda_stacks.Clear();
+    lambdas.Clear();
   }
 
   public void Compile_VisitAST()
@@ -1073,7 +1066,7 @@ public class ModuleCompiler : AST_Visitor
     EmitFuncDecl(ast);
     func_decls.Pop();
 
-    WriteLambdaCode();
+    FlushLambdas();
 
     UseInit();
   }
@@ -1100,18 +1093,14 @@ public class ModuleCompiler : AST_Visitor
     var lambda = (LambdaSymbol)ast.symbol;
     //NOTE: pushing here, processing all lambda pieces
     //      of code in AST_FuncDecl processing
-    PushLambdaCode(lambda);
+    PushLambda(lambda);
     EmitFuncDecl(ast);
-    PopLambdaCode();
+    PopLambda();
 
     var lambda_op = Emit(Opcodes.GetFuncIpPtr, new int[] { -1 /*patched later*/ }, ast.last_line_num);
     PatchLater(lambda_op, (inst) => inst.operands[0] = lambda._ip_addr);
     foreach(var up in lambda.upvals)
       Emit(Opcodes.SetUpval, new int[] {(int)up.upsymb_idx, (int)up.symb_idx, (int)up.mode}, up.line_num);
-  }
-
-  void EmitLamdbdaPtrInit(LambdaSymbol lambda, int line)
-  {
   }
 
   public override void DoVisit(AST_ClassDecl ast)
