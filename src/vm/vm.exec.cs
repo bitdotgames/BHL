@@ -2079,7 +2079,7 @@ public partial class VM
       //where it will be set below
       if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
       {
-        int args_num = frame.args_info.CountArgs();
+        int args_num = exec.stack.sp - frame.locals_offset;
 
         //we need to move only passed arguments and move them in reverse order
         //so that they don't overlap during 'movement'
@@ -2091,15 +2091,6 @@ public partial class VM
           tmp.obj = null;
           tmp._refc = null;
         }
-
-        //alternative version
-        //Array.Copy(
-        //  exec.stack.vals,
-        //  pos_idx,
-        //  exec.stack.vals,
-        //  pos_idx + 1,
-        //  args_num - pos_idx
-        //);
       }
       //...otherwise we need to jump out of default argument calculation code
       else

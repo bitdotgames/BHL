@@ -6383,6 +6383,36 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestFuncDefaultArgsChangeOrder()
+  {
+    string bhl = @"
+
+    func float foo(
+      float a,
+      float b,
+      float c,
+      float garbage = 1000,
+      float garbage2 = 10000,
+      float garbage3 = 100000,
+      float d = -2
+    )
+    {
+      return a - b - c - d
+    }
+
+    func float test()
+    {
+      return foo(a: 1, b: 100, d: 10, c: -1)
+    }
+    ";
+
+    var vm = MakeVM(bhl);
+    var num = Execute(vm, "test").Stack.Pop().num;
+    Assert.Equal(1-100+1-10, num);
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestStartFiberByFuncAddr()
   {
     string bhl = @"
