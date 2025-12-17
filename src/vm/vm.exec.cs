@@ -2079,7 +2079,7 @@ public partial class VM
       //where it will be set below
       if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
       {
-        int args_num = exec.stack.sp - frame.locals_offset;
+        int args_num = frame.args_info.CountArgs() + frame.args_info.CountUsedDefaultArgs();
 
         //we need to move only passed arguments and move them in reverse order
         //so that they don't overlap during 'movement'

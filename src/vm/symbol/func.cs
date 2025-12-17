@@ -102,6 +102,7 @@ public struct FuncArgsInfo
   public int CountUsedDefaultArgs()
   {
     int c = 0;
+    //TODO: make it faster, we just need to count set bits
     for(int i = 0; i < MAX_DEFAULT_ARGS; ++i)
       if(IsDefaultArgUsed(i))
         ++c;

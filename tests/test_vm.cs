@@ -6397,7 +6397,8 @@ public class TestVM : BHL_TestBase
       float d = -2
     )
     {
-      return a - b - c - d
+      float tmp = 42
+      return a - b - c - d + tmp
     }
 
     func float test()
@@ -6408,7 +6409,7 @@ public class TestVM : BHL_TestBase
 
     var vm = MakeVM(bhl);
     var num = Execute(vm, "test").Stack.Pop().num;
-    Assert.Equal(1-100+1-10, num);
+    Assert.Equal(1-100+1-10+42, num);
     CommonChecks(vm);
   }
 
