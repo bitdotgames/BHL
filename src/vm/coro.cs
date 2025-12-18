@@ -33,7 +33,7 @@ public class CoroutinePool
       get
       {
         if(_pool == null)
-          _pool = new Pool<Coroutine>();
+          _pool = new Pool<Coroutine>(32);
         return _pool;
       }
     }

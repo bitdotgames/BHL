@@ -1,33 +1,23 @@
-using System.Collections.Generic;
 
 namespace bhl
 {
 
 public class Pool<T> where T : class
 {
-  //TODO: use simple array?
-  internal Stack<T> stack = new Stack<T>();
+  internal StackArray<T> stack;
   internal int hits;
   internal int miss;
 
-  public int HitCount
-  {
-    get { return hits; }
-  }
+  //for inspection
+  public StackArray<T> Stack => stack;
+  public int HitCount => hits;
+  public int MissCount => miss;
+  public int IdleCount => stack.Count;
+  public int BusyCount => miss - IdleCount;
 
-  public int MissCount
+  public Pool(int capacity)
   {
-    get { return miss; }
-  }
-
-  public int IdleCount
-  {
-    get { return stack.Count; }
-  }
-
-  public int BusyCount
-  {
-    get { return miss - IdleCount; }
+    stack = new StackArray<T>(capacity);
   }
 }
 

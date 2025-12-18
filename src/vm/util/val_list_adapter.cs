@@ -31,7 +31,7 @@ public class ValList<T> : IList<T>, IRefcounted, IDisposable
   static Pool<ValList<T>> GetPool()
   {
     if(_pool == null)
-      _pool = new Pool<ValList<T>>();
+      _pool = new Pool<ValList<T>>(32);
     return _pool;
   }
 

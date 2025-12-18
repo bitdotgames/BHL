@@ -22,7 +22,7 @@ public class RefcList<T> : List<T>, IRefcounted, IDisposable
   static Pool<RefcList<T>> GetPool()
   {
     if(_pool == null)
-      _pool = new Pool<RefcList<T>>();
+      _pool = new Pool<RefcList<T>>(32);
     return _pool;
   }
 

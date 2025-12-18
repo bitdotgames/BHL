@@ -18,6 +18,9 @@ public partial class VM
   int script_executor_idx = -1;
   int script_executors_count = 0;
 
+  //for inspection
+  public ExecState[] ScriptExecutors => script_executors;
+
   //NOTE: why -2? we reserve some space before int.MaxValue so that
   //      increasing some ip couple of times after it was assigned
   //      a 'STOP_IP' value won't overflow int.MaxValue

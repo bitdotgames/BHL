@@ -31,6 +31,15 @@ public class StackArray<T>
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void Push(T value)
+  {
+    if(Count == Values.Length)
+      Array.Resize(ref Values, Count << 1);
+
+    Values[Count++] = value;
+  }
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public ref T Pop()
   {
     return ref Values[--Count];
