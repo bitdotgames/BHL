@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace bhl
@@ -101,12 +102,7 @@ public struct FuncArgsInfo
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountUsedDefaultArgs()
   {
-    int c = 0;
-    //TODO: make it faster, we just need to count set bits
-    for(int i = 0; i < MAX_DEFAULT_ARGS; ++i)
-      if(IsDefaultArgUsed(i))
-        ++c;
-    return c;
+    return BitOperations.PopCount(bits | ~ARGS_NUM_MASK);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
