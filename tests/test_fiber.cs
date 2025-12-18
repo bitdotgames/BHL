@@ -40,7 +40,7 @@ public class TestFiber : BHL_TestBase
     fb.Retain();
     Assert.False(vm.Tick());
     Assert.Equal(6, fb.Stack.Pop().num);
-    fb.Remove();
+    fb.Release();
     CommonChecks(vm);
   }
 
@@ -1588,7 +1588,7 @@ public class TestFiber : BHL_TestBase
       for(int i = active.Count; i-- > 0;)
       {
         active[i].Stop();
-        active[i].Remove();
+        active[i].Release();
         active.RemoveAt(i);
       }
     }

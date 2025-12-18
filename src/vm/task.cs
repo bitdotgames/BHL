@@ -11,7 +11,7 @@ public interface ITask
   void Stop();
   //NOTE: called once the task is removed from manager,
   //      can be used to return the task to the pool
-  void Remove();
+  void Release();
 }
 
 public class TaskManager
@@ -67,7 +67,7 @@ public class TaskManager
     {
       var t = _tasks[i];
       _tasks.RemoveAt(i);
-      t.Remove();
+      t.Release();
     }
   }
 
@@ -82,7 +82,7 @@ public class TaskManager
     for(int i = _tasks.Count; i-- > 0;)
     {
       var t = _tasks[i];
-      t.Remove();
+      t.Release();
     }
 
     _tasks.Clear();

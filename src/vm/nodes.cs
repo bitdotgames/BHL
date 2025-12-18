@@ -82,7 +82,7 @@ public abstract class BehaviorTreeNode : IBehaviorTreeNode, ITask
     NodeExtensions.Stop(this);
   }
 
-  void ITask.Remove()
+  void ITask.Release()
   {
   }
 }

@@ -171,7 +171,7 @@ public partial class VM : INamedResolver
     {
       var fiber = fibers[i];
       fiber.Stop();
-      fiber.Remove();
+      fiber.Release();
       fibers.RemoveAt(i);
     }
   }
@@ -215,7 +215,7 @@ public partial class VM : INamedResolver
       var fiber = fibers[i];
       if(fiber.IsStopped())
       {
-        fiber.Remove();
+        fiber.Release();
         fibers.RemoveAt(i);
       }
     }
