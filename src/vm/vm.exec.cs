@@ -298,8 +298,8 @@ public partial class VM
     internal int ip;
     internal Coroutine coroutine;
 
-    internal Region[] regions;
-    internal int regions_count = 0;
+    public Region[] regions;
+    public int regions_count = 0;
 
     public ValStack stack;
 
@@ -543,9 +543,9 @@ public partial class VM
     }
 
     public ExecState(
-      int regions_capacity = 64,
+      int regions_capacity = 32,
       int frames_capacity = 32,
-      int stack_capacity = 128
+      int stack_capacity = 32
     )
     {
       regions = new Region[regions_capacity];
