@@ -541,8 +541,8 @@ public partial class VM
 
     public ExecState(
       int regions_capacity = 64,
-      int frames_capacity = 256,
-      int stack_capacity = 512
+      int frames_capacity = 32,
+      int stack_capacity = 128
     )
     {
       regions = new Region[regions_capacity];
