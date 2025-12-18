@@ -9,6 +9,9 @@ public interface ITask
   //NOTE: returns true if running
   bool Tick();
   void Stop();
+  //NOTE: called once the task is removed from manager,
+  //      can be used to return the task to the pool
+  void Remove();
 }
 
 public class TaskManager
@@ -61,7 +64,11 @@ public class TaskManager
     //protecting against situation when
     //someone has called Stop() already
     if(_tasks.Count > i)
+    {
+      var t = _tasks[i];
       _tasks.RemoveAt(i);
+      t.Remove();
+    }
   }
 
   public void Stop()
@@ -70,6 +77,12 @@ public class TaskManager
     {
       var t = _tasks[i];
       t.Stop();
+    }
+
+    for(int i = _tasks.Count; i-- > 0;)
+    {
+      var t = _tasks[i];
+      t.Remove();
     }
 
     _tasks.Clear();

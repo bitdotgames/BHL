@@ -110,7 +110,7 @@ public partial class VM : INamedResolver
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Release()
+    public void Remove()
     {
       if(refs == -1)
         throw new Exception("Invalid state(-1)");

@@ -81,6 +81,10 @@ public abstract class BehaviorTreeNode : IBehaviorTreeNode, ITask
     //being explicit to avoid possible recursion
     NodeExtensions.Stop(this);
   }
+
+  void ITask.Remove()
+  {
+  }
 }
 
 public abstract class BehaviorTreeTerminalNode : BehaviorTreeNode
@@ -181,7 +185,7 @@ public abstract class BehaviorTreeInternalNode : BehaviorTreeNode
 }
 
 //NOTE: Scope node is a base building block for nodes with scope, e.g seq { .. }.
-//      Once the node is deinited it stops all its children in reverse order. 
+//      Once the node is deinited it stops all its children in reverse order.
 //      Stop invokes deinit and defer.
 public abstract class ScopeNode : BehaviorTreeInternalNode
 {
@@ -517,11 +521,11 @@ public class ForeverNode : SequentialNode
   public override BHS Execute()
   {
     var status = base.Execute();
-    //NOTE: we need to stop child in order to make it 
+    //NOTE: we need to stop child in order to make it
     //      reset its status and re-init on the next run,
     //      also we force last_status to be BHS.RUNNING since
     //      logic in stop *needs* that even though we officially return
-    //      running status *below* that call 
+    //      running status *below* that call
     this.last_status = BHS.RUNNING;
     if(status != BHS.RUNNING)
       this.Stop();
@@ -539,7 +543,7 @@ public class MonitorSuccessNode : SequentialNode
     if(status == BHS.SUCCESS)
       return BHS.SUCCESS;
 
-    //NOTE: we need to stop children in order to make them 
+    //NOTE: we need to stop children in order to make them
     //      reset its status and re-init on the next run
     if(status == BHS.FAILURE)
       this.Stop();
@@ -556,7 +560,7 @@ public class MonitorFailureNode : SequentialNode
     if(status == BHS.FAILURE)
       return BHS.SUCCESS;
 
-    //NOTE: we need to stop children in order to make them 
+    //NOTE: we need to stop children in order to make them
     //      reset its status and re-init on the next run
     if(status == BHS.SUCCESS)
       this.Stop();
@@ -573,7 +577,7 @@ public class DeferNode : BehaviorTreeInternalNode
   {
   }
 
-  //NOTE: does nothing on purpose because 
+  //NOTE: does nothing on purpose because
   //      action happens in its defer
   public override void Deinit()
   {

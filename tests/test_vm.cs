@@ -6480,7 +6480,7 @@ public class TestVM : BHL_TestBase
     Assert.False(fb.Tick());
     Assert.Equal(BHS.SUCCESS, fb.status);
     Assert.Equal(123, fb.Stack.Pop().num);
-    fb.Release();
+    fb.Remove();
     CommonChecks(fb);
     CommonChecks(vm);
   }
