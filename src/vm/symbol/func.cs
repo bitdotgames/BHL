@@ -102,7 +102,16 @@ public struct FuncArgsInfo
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountUsedDefaultArgs()
   {
-    return BitOperations.PopCount(bits | ~ARGS_NUM_MASK);
+    //TODO: not available in Unity
+    //return BitOperations.PopCount(bits | ~ARGS_NUM_MASK);
+
+    //alternative
+    var v = bits | ~ARGS_NUM_MASK;
+    v -= (v >> 1) & 0x55555555;
+    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+    v = (v + (v >> 4)) & 0x0F0F0F0F;
+    v *= 0x01010101;
+    return (int)(v >> 24);
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
