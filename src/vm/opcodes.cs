@@ -72,12 +72,12 @@ public enum Opcodes
   BitAnd                = 54,
   EqualScalar           = 55,
   EqualString           = 56,
-  UnaryBitNot           = 57,
+  Equal                 = 57,
   LT                    = 58,
   LTE                   = 59,
   GT                    = 60,
   GTE                   = 61,
-  Equal                 = 62,
+  UnaryBitNot           = 62,
 
   TypeCast              = 63,
   TypeAs                = 64,
@@ -95,6 +95,7 @@ public enum Opcodes
   SetUpval              = 73,
   Inc                   = 74,
   Dec                   = 75,
+
   ArrIdx                = 76,
   ArrIdxW               = 77,
   //TODO: used for json alike array initialization,
