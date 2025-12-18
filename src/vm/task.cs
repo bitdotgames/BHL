@@ -77,11 +77,6 @@ public class TaskManager
     {
       var t = _tasks[i];
       t.Stop();
-    }
-
-    for(int i = _tasks.Count; i-- > 0;)
-    {
-      var t = _tasks[i];
       t.Release();
     }
 
