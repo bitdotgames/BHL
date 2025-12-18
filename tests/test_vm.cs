@@ -9160,7 +9160,6 @@ public class TestVM : BHL_TestBase
 
     Assert.Equal(5, args.CountArgs());
     Assert.Equal(4, args.CountUsedDefaultArgs());
-    Assert.Equal(1, args.CountRequiredArgs());
   }
 
   [Fact]

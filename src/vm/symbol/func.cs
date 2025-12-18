@@ -81,22 +81,36 @@ public struct FuncArgsInfo
     return info.bits;
   }
 
+  //TODO: it rather should be CountExplicitArgs()?
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int CountArgs()
   {
     return (int)(bits & ARGS_NUM_MASK);
   }
 
+  //NOTE: It returns an amount of explicitly passed args plus
+  //      an amount of used default arguments, e.g. we can be in
+  //      situation as follows, say we have a function:
+  //
+  //      func foo(int a, int b, int c = 10, int d = 20)
+  //
+  //      which is called:
+  //
+  //      foo(a:1, b:2, d:3)
+  //
+  //      In this case 3 arguments are passed explicitly (including 'd' default arg)
+  //      and for 'c' its default value is used, so in total there will be 3+1 args
+  //
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public int CountTotalArgs()
+  {
+    return CountArgs() + CountUsedDefaultArgs();
+  }
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool HasDefaultUsedArgs()
   {
     return (bits & ~ARGS_NUM_MASK) > 0;
-  }
-
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public int CountRequiredArgs()
-  {
-    return CountArgs() - CountUsedDefaultArgs();
   }
 
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
