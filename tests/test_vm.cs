@@ -9118,6 +9118,78 @@ public class TestVM : BHL_TestBase
   }
 
   [Fact]
+  public void TestFuncArgsCount()
+  {
+    var args = new FuncArgsInfo();
+
+    Assert.Equal(0, args.CountArgs());
+
+    args.IncArgsNum();
+    args.IncArgsNum();
+
+    Assert.Equal(2, args.CountArgs());
+  }
+
+  [Fact]
+  public void TestFuncArgsCountOverflow()
+  {
+    var args = new FuncArgsInfo();
+    Assert.True(args.SetArgsNum(62));
+    Assert.True(args.SetArgsNum(63));
+    Assert.False(args.SetArgsNum(64));
+  }
+
+  [Fact]
+  public void TestFuncArgsInfoDefault()
+  {
+    var args = new FuncArgsInfo();
+
+    Assert.Equal(0, args.CountArgs());
+    Assert.Equal(0, args.CountUsedDefaultArgs());
+
+    args.IncArgsNum();
+    args.IncArgsNum();
+    args.IncArgsNum();
+    args.IncArgsNum();
+    args.IncArgsNum();
+
+    args.UseDefaultArg(0, true);
+    args.UseDefaultArg(3, true);
+    args.UseDefaultArg(9, true);
+    args.UseDefaultArg(21, true);
+
+    Assert.Equal(5, args.CountArgs());
+    Assert.Equal(4, args.CountUsedDefaultArgs());
+    Assert.Equal(1, args.CountRequiredArgs());
+  }
+
+  [Fact]
+  public void TestFuncArgsCopyBits()
+  {
+    var args = new FuncArgsInfo();
+
+    Assert.True(args.SetArgsNum(10));
+    args.UseDefaultArg(0, true);
+    args.UseDefaultArg(3, true);
+
+    Assert.Equal(10, args.CountArgs());
+    Assert.Equal(2, args.CountUsedDefaultArgs());
+
+    var args2 = new FuncArgsInfo(args.bits);
+    Assert.Equal(10, args2.CountArgs());
+    Assert.Equal(2, args2.CountUsedDefaultArgs());
+  }
+
+  [Fact]
+  public void TestFuncArgsInfoDefaultOverflow()
+  {
+    var args = new FuncArgsInfo();
+
+    Assert.True(args.UseDefaultArg(25, true));
+    Assert.False(args.UseDefaultArg(26, true));
+  }
+
+  [Fact]
   public void TestFixedStack()
   {
     //Push/PopFast
