@@ -1348,6 +1348,7 @@ public class TestFiber : BHL_TestBase
         },
         spawns : 3
       )
+      a = a + 10
     }
     ";
 
