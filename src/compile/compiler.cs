@@ -1081,6 +1081,21 @@ public class ModuleCompiler : AST_Visitor
       new int[] { fsymb._local_vars_num, fsymb.GetReturnedArgsNum() },
       ast.symbol.origin.source_line
     );
+
+    //NOTE: let's make refs for upvals if it's required, because
+    //      there are no explicit decls for them where it usually happens
+    if(fsymb._current_scope != null)
+    {
+      foreach(var member in fsymb._current_scope)
+      {
+        if(member is VariableSymbol vs &&
+           vs._upvalue != null &&
+           vs._is_ref_decl
+           )
+          Emit(Opcodes.MakeRef, new int[] {vs.scope_idx}, ast.symbol.origin.source_line);
+      }
+    }
+
     VisitChildren(ast);
 
     //let's insert return only if the previous instruction is not return as well

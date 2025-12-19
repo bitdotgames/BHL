@@ -1371,6 +1371,52 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
+  public void TestStartLambdaInStartMgrWhereCopiedValueBecomesARef()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      float a = 1
+      StartScriptInMgr(
+        script: coro func() [a] {
+          StartScriptInMgr(
+            script: coro func() {
+              defer {
+                trace((string) a + "";"")
+              }
+              yield()
+            },
+            spawns : 1
+          )
+          a = a + 1
+          yield()
+        },
+        spawns : 3
+      )
+      a = a + 10
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+
+    Assert.False(vm.Tick());
+    ScriptMgr.instance.TickUntilComplete();
+
+    Assert.Equal("2;2;2;", log.ToString());
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestStaleFrameReferenceFuncPtrBug()
   {
     string bhl = @"
