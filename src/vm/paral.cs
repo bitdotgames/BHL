@@ -7,8 +7,8 @@ public class ParalBranchBlock : Coroutine
 {
   int min_ip;
   int max_ip;
-  internal VM.ExecState exec =
-    new VM.ExecState(regions_capacity: 32, frames_capacity: 32, stack_capacity: 32);
+
+  internal VM.ExecState exec = new VM.ExecState();
 
   public void Init(VM.ExecState ext_exec, int min_ip, int max_ip)
   {

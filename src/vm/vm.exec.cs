@@ -314,6 +314,207 @@ public partial class VM
       InitOpcodeHandlers();
     }
 
+    public ExecState(
+      int regions_capacity = 32,
+      int frames_capacity = 16,
+      int stack_capacity = 32
+    )
+    {
+      regions = new Region[regions_capacity];
+      frames = new Frame[frames_capacity];
+      stack = new ValStack(stack_capacity);
+    }
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public ref Frame PushFrame()
+    {
+      if(frames_count == frames.Length)
+        Array.Resize(ref frames, frames_count << 1);
+
+      return ref frames[frames_count++];
+    }
+
+    [MethodImpl (MethodImplOptions.AggressiveInlining)]
+    public ref Region PushRegion(int frame_idx, int min_ip = -1, int max_ip = STOP_IP)
+    {
+      if(regions_count == regions.Length)
+        Array.Resize(ref regions, regions_count << 1);
+
+      ref var region = ref regions[regions_count++];
+      region.frame_idx = frame_idx;
+      region.min_ip = min_ip;
+      region.max_ip = max_ip;
+      return ref region;
+    }
+
+    static void TraverseCallStack(
+      List<VM.Frame> calls,
+      ExecState exec,
+      ref ExecState deepest,
+      ICoroutine coro,
+      int frame_offset = 0
+    )
+    {
+      if(exec != null)
+      {
+        for(int i = frame_offset; i < exec.frames_count; ++i)
+          calls.Add(exec.frames[i]);
+
+        deepest = exec;
+      }
+
+      if(coro is ParalBranchBlock bi)
+        TraverseCallStack(calls, bi.exec, ref deepest, bi.exec.coroutine, 1);
+      else if(coro is ParalBlock pi && pi.i < pi.branches.Count)
+        TraverseCallStack(calls, null, ref deepest, pi.branches[pi.i], frame_offset);
+      else if(coro is ParalAllBlock pai && pai.i < pai.branches.Count)
+        TraverseCallStack(calls, null, ref deepest, pai.branches[pai.i], frame_offset);
+    }
+
+    public void GetStackTrace(List<VM.TraceItem> info)
+    {
+      ExecState top = this;
+      while(top.parent != null)
+        top = top.parent;
+
+      top.GetStackTraceFromTop(info);
+    }
+
+    void GetStackTraceFromTop(List<VM.TraceItem> info)
+    {
+      var calls = new List<VM.Frame>();
+      ExecState deepest = null;
+      TraverseCallStack(calls, this, ref deepest, coroutine);
+
+      for(int i = 0; i < calls.Count; ++i)
+      {
+        var frm = calls[i];
+
+        var item = new TraceItem();
+
+        //NOTE: information about frame ip is taken from the 'next' frame, however
+        //      for the last frame we have a special case. In this case there's no
+        //      'next' frame and we should consider using current ip
+        if(i == calls.Count - 1)
+        {
+          item.ip = deepest.ip;
+        }
+        else
+        {
+          //NOTE: retrieving last ip for the current Frame which
+          //      turns out to be return_ip assigned to the next Frame
+          var next = calls[i + 1];
+          item.ip = next.return_ip;
+        }
+
+        if(frm.module != null)
+        {
+          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
+          //NOTE: if symbol is missing let's write at least the module
+          if(fsymb == null)
+            item.file = frm.module.name + ".bhl";
+          else
+            item.file = fsymb._module.name + ".bhl";
+          item.func = fsymb == null ? "?" : fsymb.name;
+          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
+        }
+        else
+        {
+          item.file = "?";
+          item.func = "?";
+        }
+
+        info.Insert(0, item);
+      }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ExitFrames()
+    {
+      if(frames_count > 0)
+      {
+        if(coroutine != null)
+        {
+          CoroutinePool.Del(this, coroutine);
+          coroutine = null;
+        }
+
+        for(int i = frames_count; i-- > 0;)
+        {
+          ref var frame = ref frames[i];
+
+          for(int r = regions_count; r-- > frame.region_offset_idx;)
+          {
+            ref var tmp_region = ref regions[r];
+            if(tmp_region.defers != null && tmp_region.defers.count > 0)
+              tmp_region.defers.ExitScope(this);
+          }
+          regions_count = frame.region_offset_idx;
+          --frames_count;
+          frame.ReleaseLocals();
+        }
+        frames_count = 0;
+      }
+      regions_count = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void PushFrameRegion(ref Frame frame, int frame_idx)
+    {
+      ip = frame.start_ip;
+      frame.region_offset_idx = regions_count;
+      PushRegion(frame_idx);
+    }
+
+    internal void PushFrameRegion(ref Frame frame, int frame_idx, StackList <Val> args)
+    {
+      //NOTE: since variables will be set as local variables
+      //      we traverse them in natural order
+      for(int i = 0; i < args.Count; ++i)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      PushFrameRegion(ref frame, frame_idx);
+    }
+
+    internal void PushFrameRegion(
+      FuncSymbolNative fsn,
+      ref Frame frame,
+      int frame_idx,
+      StackList <Val> args
+    )
+    {
+      for(int i = args.Count; i-- > 0;)
+      {
+        ref Val v = ref stack.Push();
+        v = args[i];
+      }
+
+      frame.return_vars_num = fsn.GetReturnedArgsNum();
+      frame.locals_vars_num = 0;
+
+      PushFrameRegion(ref frame, frame_idx);
+
+      //passing args info as argument
+      coroutine = fsn.cb(this, frame.args_info);
+      //NOTE: before executing a coroutine VM will increment ip optimistically
+      //      but we need it to remain at the same position so that it points at
+      //      the fake return opcode
+      if(coroutine != null)
+        --ip;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Execute(int region_stop_idx = 0)
+    {
+      status = BHS.SUCCESS;
+
+      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
+        ExecuteOnce();
+    }
+
     static unsafe void InitOpcodeHandlers()
     {
 #if ENABLE_IL2CPP
@@ -542,206 +743,6 @@ public partial class VM
 #endif
     }
 
-    public ExecState(
-      int regions_capacity = 32,
-      int frames_capacity = 32,
-      int stack_capacity = 32
-    )
-    {
-      regions = new Region[regions_capacity];
-      frames = new Frame[frames_capacity];
-      stack = new ValStack(stack_capacity);
-    }
-
-    [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Frame PushFrame()
-    {
-      if(frames_count == frames.Length)
-        Array.Resize(ref frames, frames_count << 1);
-
-      return ref frames[frames_count++];
-    }
-
-    [MethodImpl (MethodImplOptions.AggressiveInlining)]
-    public ref Region PushRegion(int frame_idx, int min_ip = -1, int max_ip = STOP_IP)
-    {
-      if(regions_count == regions.Length)
-        Array.Resize(ref regions, regions_count << 1);
-
-      ref var region = ref regions[regions_count++];
-      region.frame_idx = frame_idx;
-      region.min_ip = min_ip;
-      region.max_ip = max_ip;
-      return ref region;
-    }
-
-    static void TraverseCallStack(
-      List<VM.Frame> calls,
-      ExecState exec,
-      ref ExecState deepest,
-      ICoroutine coro,
-      int frame_offset = 0
-    )
-    {
-      if(exec != null)
-      {
-        for(int i = frame_offset; i < exec.frames_count; ++i)
-          calls.Add(exec.frames[i]);
-
-        deepest = exec;
-      }
-
-      if(coro is ParalBranchBlock bi)
-        TraverseCallStack(calls, bi.exec, ref deepest, bi.exec.coroutine, 1);
-      else if(coro is ParalBlock pi && pi.i < pi.branches.Count)
-        TraverseCallStack(calls, null, ref deepest, pi.branches[pi.i], frame_offset);
-      else if(coro is ParalAllBlock pai && pai.i < pai.branches.Count)
-        TraverseCallStack(calls, null, ref deepest, pai.branches[pai.i], frame_offset);
-    }
-
-    public void GetStackTrace(List<VM.TraceItem> info)
-    {
-      ExecState top = this;
-      while(top.parent != null)
-        top = top.parent;
-
-      top.GetStackTraceFromTop(info);
-    }
-
-    void GetStackTraceFromTop(List<VM.TraceItem> info)
-    {
-      var calls = new List<VM.Frame>();
-      ExecState deepest = null;
-      TraverseCallStack(calls, this, ref deepest, coroutine);
-
-      for(int i = 0; i < calls.Count; ++i)
-      {
-        var frm = calls[i];
-
-        var item = new TraceItem();
-
-        //NOTE: information about frame ip is taken from the 'next' frame, however
-        //      for the last frame we have a special case. In this case there's no
-        //      'next' frame and we should consider using current ip
-        if(i == calls.Count - 1)
-        {
-          item.ip = deepest.ip;
-        }
-        else
-        {
-          //NOTE: retrieving last ip for the current Frame which
-          //      turns out to be return_ip assigned to the next Frame
-          var next = calls[i + 1];
-          item.ip = next.return_ip;
-        }
-
-        if(frm.module != null)
-        {
-          var fsymb = frm.module.TryMapIp2Func(calls[i].start_ip);
-          //NOTE: if symbol is missing let's write at least the module
-          if(fsymb == null)
-            item.file = frm.module.name + ".bhl";
-          else
-            item.file = fsymb._module.name + ".bhl";
-          item.func = fsymb == null ? "?" : fsymb.name;
-          item.line = frm.module.compiled.ip2src_line.TryMap(item.ip);
-        }
-        else
-        {
-          item.file = "?";
-          item.func = "?";
-        }
-
-        info.Insert(0, item);
-      }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void ExitFrames()
-    {
-      if(frames_count > 0)
-      {
-        if(coroutine != null)
-        {
-          CoroutinePool.Del(this, coroutine);
-          coroutine = null;
-        }
-
-        for(int i = frames_count; i-- > 0;)
-        {
-          ref var frame = ref frames[i];
-
-          for(int r = regions_count; r-- > frame.region_offset_idx;)
-          {
-            ref var tmp_region = ref regions[r];
-            if(tmp_region.defers != null && tmp_region.defers.count > 0)
-              tmp_region.defers.ExitScope(this);
-          }
-          regions_count = frame.region_offset_idx;
-          --frames_count;
-          frame.ReleaseLocals();
-        }
-        frames_count = 0;
-      }
-      regions_count = 0;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void PushFrameRegion(ref Frame frame, int frame_idx)
-    {
-      ip = frame.start_ip;
-      frame.region_offset_idx = regions_count;
-      PushRegion(frame_idx);
-    }
-
-    internal void PushFrameRegion(ref Frame frame, int frame_idx, StackList <Val> args)
-    {
-      //NOTE: since variables will be set as local variables
-      //      we traverse them in natural order
-      for(int i = 0; i < args.Count; ++i)
-      {
-        ref Val v = ref stack.Push();
-        v = args[i];
-      }
-
-      PushFrameRegion(ref frame, frame_idx);
-    }
-
-    internal void PushFrameRegion(
-      FuncSymbolNative fsn,
-      ref Frame frame,
-      int frame_idx,
-      StackList <Val> args
-    )
-    {
-      for(int i = args.Count; i-- > 0;)
-      {
-        ref Val v = ref stack.Push();
-        v = args[i];
-      }
-
-      frame.return_vars_num = fsn.GetReturnedArgsNum();
-      frame.locals_vars_num = 0;
-
-      PushFrameRegion(ref frame, frame_idx);
-
-      //passing args info as argument
-      coroutine = fsn.cb(this, frame.args_info);
-      //NOTE: before executing a coroutine VM will increment ip optimistically
-      //      but we need it to remain at the same position so that it points at
-      //      the fake return opcode
-      if(coroutine != null)
-        --ip;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Execute(int region_stop_idx = 0)
-    {
-      status = BHS.SUCCESS;
-
-      while(regions_count > region_stop_idx && status == BHS.SUCCESS)
-        ExecuteOnce();
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal unsafe void ExecuteOnce()
