@@ -1380,15 +1380,15 @@ public class TestFiber : BHL_TestBase
       float a = 1
       StartScriptInMgr(
         script: coro func() [a] {
-          StartScriptInMgr(
-            script: coro func() {
-              defer {
+          defer {
+            StartScriptInMgr(
+              script: coro func() {
                 trace((string) a + "";"")
-              }
-              yield()
-            },
-            spawns : 1
-          )
+                yield()
+              },
+              spawns : 1
+            )
+          }
           a = a + 1
           yield()
         },

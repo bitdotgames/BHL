@@ -1084,15 +1084,12 @@ public class ModuleCompiler : AST_Visitor
 
     //NOTE: let's make refs for upvals if it's required, because
     //      there are no explicit decls for them where it usually happens
-    if(fsymb._current_scope != null)
+    if(fsymb is LambdaSymbol lmb)
     {
-      foreach(var member in fsymb._current_scope)
+      foreach(var upval in lmb.upvals)
       {
-        if(member is VariableSymbol vs &&
-           vs._upvalue != null &&
-           vs._is_ref_decl
-           )
-          Emit(Opcodes.MakeRef, new int[] {vs.scope_idx}, ast.symbol.origin.source_line);
+        if(upval.local._is_ref_decl)
+          Emit(Opcodes.MakeRef, new int[] {upval.local.scope_idx}, ast.symbol.origin.source_line);
       }
     }
 
