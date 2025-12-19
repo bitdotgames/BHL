@@ -1331,6 +1331,45 @@ public class TestFiber : BHL_TestBase
   }
 
   [Fact]
+  public void TestStartLambdaManyTimesInScriptMgrWithValCapturedAsCopies()
+  {
+    string bhl = @"
+
+    func test()
+    {
+      float a = 1
+      StartScriptInMgr(
+        script: coro func() [a] {
+          defer {
+            trace((string) a + "";"")
+          }
+          yield()
+          a = a + 1
+        },
+        spawns : 3
+      )
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) =>
+    {
+      BindTrace(ts, log);
+      BindStartScriptInMgr(ts);
+    });
+
+    var vm = MakeVM(bhl, ts_fn);
+    vm.Start("test");
+
+    Assert.False(vm.Tick());
+    ScriptMgr.instance.TickUntilComplete();
+
+    Assert.Equal("2;2;2;", log.ToString());
+
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestStaleFrameReferenceFuncPtrBug()
   {
     string bhl = @"
@@ -1576,11 +1615,20 @@ public class TestFiber : BHL_TestBase
       active.Add(fb);
     }
 
-    public void Tick()
+    public bool Tick()
     {
       VM.Fiber last_fiber = null;
-      if(active.Count > 0)
-        VM.Tick(active, ref last_fiber);
+      return VM.Tick(active, ref last_fiber);
+    }
+
+    public void TickUntilComplete(int max_iterations = 100)
+    {
+      for(int i = 0; i < max_iterations; ++i)
+      {
+        if(!Tick())
+          return;
+      }
+      throw new Exception("Iterations limit reached: " + max_iterations);
     }
 
     public void Stop()

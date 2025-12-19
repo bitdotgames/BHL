@@ -201,6 +201,7 @@ public partial class VM : INamedResolver
   }
 
   //NOTE: this version assumes that stopped fibers are released and removed
+  //returns true if still has running fibers
   static public bool Tick(List<Fiber> fibers, ref Fiber last_fiber)
   {
     for(int i = 0; i < fibers.Count; ++i)

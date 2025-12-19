@@ -678,38 +678,44 @@ public class LambdaSymbol : FuncSymbolScript
 
   VariableSymbol AddUpValue(VariableSymbol src)
   {
-    var local = new VariableSymbol(src.origin, src.name, src.type);
+    VariableSymbol local = FindUpValue(src)?.local;
 
-    local._upvalue = src;
+    if(local == null)
+    {
+      local = new VariableSymbol(src.origin, src.name, src.type);
 
-    //NOTE: we want to avoid possible recursion during resolve
-    //      checks that's why we use a non-checking version
-    this._current_scope.DefineWithoutEnclosingChecks(local);
+      local._upvalue = src;
 
-    var upval = new AST_UpVal(
-      local.name,
-      local.scope_idx,
-      src.scope_idx,
-      //TODO: should be the line of its usage
-      //(in case of 'this' there's no associated parse tree,
-      // so we pass a line number)
-      src.origin.source_line
-    );
-    upval.mode = DetectCaptureMode(src);
-    //NOTE: the 'strong' referenced value must be a reference as well
-    if(upval.mode == UpvalMode.STRONG)
-      src._is_ref_decl = true;
+      //NOTE: we want to avoid possible recursion during resolve
+      //      checks that's why we use a non-checking version
+      _current_scope.DefineWithoutEnclosingChecks(local);
 
-    upvals.Add(upval);
+      //NOTE: if there's no capture we consider a default value
+      UpvalMode mode = UpvalMode.STRONG;
+      captures.TryGetValue(src, out mode);
+
+      var upval = new AST_UpVal(local, src, mode,
+        //TODO: should be the line of its usage
+        //(in case of 'this' there's no associated parse tree,
+        // so we pass a line number)
+        src.origin.source_line
+      );
+      //NOTE: the 'strong' referenced value must be a reference as well
+      if(upval.mode == UpvalMode.STRONG)
+        src._is_ref_decl = true;
+
+      upvals.Add(upval);
+    }
 
     return local;
   }
 
-  UpvalMode DetectCaptureMode(VariableSymbol s)
+  AST_UpVal FindUpValue(VariableSymbol src)
   {
-    UpvalMode m;
-    captures.TryGetValue(s, out m);
-    return m;
+    foreach(var upval in upvals)
+      if(upval.upval == src)
+        return upval;
+    return null;
   }
 
   public override Symbol Resolve(string name)

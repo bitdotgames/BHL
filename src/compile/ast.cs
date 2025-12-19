@@ -279,17 +279,23 @@ public class AST_ClassDecl : AST_Tree
 
 public class AST_UpVal : IAST
 {
-  public string name;
-  public int symb_idx;
-  public int upsymb_idx;
+  public VariableSymbol local;
+  public VariableSymbol upval;
+
+  public string name => local.name;
+  public int local_idx => local.scope_idx;
+
+  public int upval_idx => upval.scope_idx;
+
   public UpvalMode mode;
+
   public int line_num;
 
-  public AST_UpVal(string name, int symb_idx, int upsymb_idx, int line_num)
+  public AST_UpVal(VariableSymbol local, VariableSymbol upval, UpvalMode mode, int line_num)
   {
-    this.name = name;
-    this.symb_idx = symb_idx;
-    this.upsymb_idx = upsymb_idx;
+    this.local = local;
+    this.upval = upval;
+    this.mode = mode;
     this.line_num = line_num;
   }
 }
