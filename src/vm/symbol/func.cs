@@ -680,6 +680,7 @@ public class LambdaSymbol : FuncSymbolScript
   {
     VariableSymbol local = FindUpValue(src)?.local;
 
+    //extra protection against double addition
     if(local == null)
     {
       local = new VariableSymbol(src.origin, src.name, src.type);
@@ -690,7 +691,7 @@ public class LambdaSymbol : FuncSymbolScript
       //      checks that's why we use a non-checking version
       _current_scope.DefineWithoutEnclosingChecks(local);
 
-      //NOTE: if there's no capture we consider a default value
+      //NOTE: if there's no capture info we consider a default value
       UpvalMode mode = UpvalMode.STRONG;
       captures.TryGetValue(src, out mode);
 
