@@ -112,12 +112,12 @@ public class ModuleLoader : IModuleLoader
 
     module_stream.SetData(bytes, 0, bytes_len);
 
-    var cm = CompiledModule.FromStream(types, module_stream, resolver);
+    var module = CompiledModule.FromStream(types, module_stream, resolver);
 
     if(return_to_pool)
       ArrayPool<byte>.Shared.Return(bytes);
 
-    return cm;
+    return module;
   }
 
   void DecodeBin(Entry ent, out byte[] bytes, out int bytes_len, out bool return_to_pool)
