@@ -891,10 +891,11 @@ public class BHL_TestBase
   }
 
   public void CommonChecks(VM vm, bool check_frames = true,
-    bool check_fibers = true, bool check_coros = true, bool check_obj_nulls = true)
+    bool check_fibers = true, bool check_coros = true, bool check_obj_nulls = true, bool unload_modules = true)
   {
     //forced cleanup of module globals
-    vm.UnloadModules();
+    if(unload_modules)
+      vm.UnloadModules();
 
     if(vm.last_fiber != null)
       CommonChecks(vm.last_fiber, check_frames, check_obj_nulls);

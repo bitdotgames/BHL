@@ -94,6 +94,9 @@ public partial class VM : INamedResolver
       if(tmp.name == module_name)
         return false;
 
+    if(loader == null)
+      return false;
+
     var lm = new LoadingModule();
     lm.name = module_name;
     loading_modules.Add(lm);
@@ -155,6 +158,10 @@ public partial class VM : INamedResolver
       keys.Add(kv.Key);
     foreach(string key in keys)
       UnloadModule(key);
+
+    loading_modules.Clear();
+    symbol_spec2module_cache.Clear();
+    Array.Clear(trampolines_cache, 0, trampolines_cache.Length);
   }
 
   public LoadModuleSymbolError TryLoadModuleSymbol(SymbolSpec spec, out ModuleSymbol ms, bool use_cache = true)
