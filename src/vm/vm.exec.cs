@@ -816,7 +816,7 @@ public partial class VM
     unsafe static void OpcodeConstant(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
     {
       int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-      var cn = frame.constants[const_idx];
+      ref var cn = ref frame.constants[const_idx];
 
       ref Val v = ref exec.stack.Push();
       //TODO: what about specialized opcodes for each constant type?

@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 
 namespace bhl
 {
@@ -13,10 +12,8 @@ public enum ConstType
   NIL        = 5,
 }
 
-public class Const : IEquatable<Const>
+public struct Const : IEquatable<Const>
 {
-  static public readonly Const Nil = new Const(ConstType.NIL, 0, "");
-
   public ConstType type;
   public double num;
   public string str;
@@ -58,9 +55,6 @@ public class Const : IEquatable<Const>
 
   public bool Equals(Const o)
   {
-    if(o == null)
-      return false;
-
     return type == o.type &&
            num == o.num &&
            str == o.str
