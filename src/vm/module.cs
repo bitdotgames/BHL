@@ -94,6 +94,14 @@ public class Module : INamedResolver
     this.ns = ns;
   }
 
+  public Module Clone()
+  {
+    var module = new Module(ts, path, ns);
+    module.local_gvars_mark = local_gvars_mark;
+    module.compiled = compiled;
+    return module;
+  }
+
   public FuncSymbolScript TryMapIp2Func(int ip)
   {
     FuncSymbolScript fsymb = null;

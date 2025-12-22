@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Buffers;
+using System.Collections.Concurrent;
 
 namespace bhl
 {
@@ -175,6 +176,32 @@ public class ModuleLoader : IModuleLoader
     }
     else
       throw new Exception("Unknown format: " + ent.format);
+  }
+}
+
+public class CachingModuleLoader : IModuleLoader
+{
+  IModuleLoader loader;
+
+  ConcurrentDictionary<string, Module> name2prefab = new ();
+
+  public CachingModuleLoader(IModuleLoader loader)
+  {
+    this.loader = loader;
+  }
+
+  public Module Load(string module_name, INamedResolver resolver)
+  {
+    if(!name2prefab.TryGetValue(module_name, out var entry))
+    {
+      lock(loader)
+      {
+        entry = loader.Load(module_name, resolver);
+        name2prefab[module_name] = entry;
+      }
+    }
+
+    return entry.Clone();
   }
 }
 
