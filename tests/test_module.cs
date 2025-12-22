@@ -1822,11 +1822,18 @@ public class TestModule : BHL_TestBase
     var ts = new Types();
     var loader = new CachingModuleLoader(ts, new ModuleLoader(ts, await CompileFiles(files)));
 
+    FuncSymbolScript fn3_first = null;
     var vm = new VM(ts, loader);
     {
       vm.LoadModule("bhl1");
       Assert.Equal(23, Execute(vm, "bhl1").Stack.Pop().num);
       Assert.Equal(23+23, Execute(vm, "bhl1").Stack.Pop().num);
+
+      fn3_first = (FuncSymbolScript)vm.ResolveNamedByPath("bhl3");
+      Assert.Equal("bhl3", fn3_first.name);
+      Assert.NotNull(fn3_first.module);
+      Assert.Equal(vm.FindModule("bhl3"), fn3_first.module);
+
       vm.UnloadModules();
       CommonChecks(vm);
     }
@@ -1834,6 +1841,14 @@ public class TestModule : BHL_TestBase
     {
       vm.LoadModule("bhl1");
       Assert.Equal(23, Execute(vm, "bhl1").Stack.Pop().num);
+
+      var fn3 = (FuncSymbolScript)vm.ResolveNamedByPath("bhl3");
+      Assert.Equal("bhl3", fn3.name);
+      Assert.NotNull(fn3.module);
+      Assert.Equal(vm.FindModule("bhl3"), fn3.module);
+
+      Assert.NotEqual(fn3_first.module, fn3.module);
+
       CommonChecks(vm);
     }
 
