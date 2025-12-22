@@ -1994,554 +1994,802 @@ public partial class VM
           break;
 #endif
 
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeOr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Bool as well, so we don't replace it
-//          l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeMod(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Int as well, so we don't replace it
-//          l_operand.num %= r_operand.num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeBitOr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Int as well, so we don't replace it
-//          l_operand.num = (int)l_operand.num | (int)r_operand.num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeBitAnd(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Int as well, so we don't replace it
-//          l_operand.num = (int)l_operand.num & (int)r_operand.num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeEqualScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          l_operand.type = Types.Bool;
-//          l_operand.num = r_operand.num == l_operand.num ? 1 : 0;
-//        }
-//
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeEqualString(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          l_operand.type = Types.Bool;
-//          l_operand.num = (string)r_operand.obj == (string)l_operand.obj ? 1 : 0;
-//          l_operand.obj = null;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
-//          if(r_operand._refc != null)
-//          {
-//            r_operand._refc.Release();
-//            r_operand._refc = null;
-//          }
-//
-//          r_operand.obj = null;
-//
-//          l_operand._refc?.Release();
-//          l_operand = res;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeLT(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //TODO: do we really need to set type for scalar values?
-//          l_operand.type = Types.Bool;
-//          l_operand.num = l_operand.num < r_operand.num ? 1 : 0;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeLTE(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //TODO: do we really need to set type for scalar values?
-//          l_operand.type = Types.Bool;
-//          l_operand.num = l_operand.num <= r_operand.num ? 1 : 0;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeGT(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //TODO: do we really need to set type for scalar values?
-//          l_operand.type = Types.Bool;
-//          l_operand.num = l_operand.num > r_operand.num ? 1 : 0;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeGTE(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //TODO: do we really need to set type for scalar values?
-//          l_operand.type = Types.Bool;
-//          l_operand.num = l_operand.num >= r_operand.num ? 1 : 0;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeUnaryBitNot(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val val = ref stack.vals[stack.sp - 1];
-//          //resulting operand is Int as well, so we don't replace it
-//          val.num = ~((int)val.num);
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeTypeCast(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-//          bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
-//
-//          var cast_type = frame.type_refs[cast_type_idx];
-//
-//          ref var val = ref exec.stack.Peek();
-//
-//          if(cast_type == Types.Int)
-//          {
-//            val._refc?.Release();
-//            val = Val.NewNum((long)val.num);
-//          }
-//          else if(cast_type == Types.String && val.type != Types.String)
-//          {
-//            val._refc?.Release();
-//            val = Val.NewStr(
-//              val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
-//            );
-//          }
-//          else
-//          {
-//            //NOTE: extra type check in case cast type is instantiable object (e.g class)
-//            if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
-//              throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
-//            if(force_type)
-//              val.type = cast_type;
-//          }
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeTypeAs(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-//          bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
-//          var as_type = frame.type_refs[cast_type_idx];
-//
-//          ref var val = ref exec.stack.Peek();
-//
-//          if(Types.Is(val, as_type))
-//          {
-//            if(force_type)
-//              val.type = as_type;
-//          }
-//          else
-//          {
-//            val._refc?.Release();
-//            val = Null;
-//          }
-//
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeTypeIs(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-//          var as_type = frame.type_refs[cast_type_idx];
-//
-//          ref var val = ref exec.stack.Peek();
-//          var refc = val._refc;
-//          val = Types.Is(val, as_type);
-//          refc?.Release();
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeTypeof(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-//          var type = frame.type_refs[type_idx];
-//
-//          exec.stack.Push(Val.NewObj(type, Types.Type));
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeDefArg(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          byte arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          int jump_add = (int)Bytecode.Decode16(bytes, ref exec.ip);
-//          //if default argument is set we need to insert a slot into the stack
-//          //where it will be set below
-//          if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
-//          {
-//            int args_num = frame.args_info.CountArgs() + frame.args_info.CountUsedDefaultArgs();
-//
-//            //we need to move only passed arguments and move them in reverse order
-//            //so that they don't overlap during 'movement'
-//            for(int i = args_num - arg_idx; i-- > 0;)
-//            {
-//              ref var tmp = ref exec.stack.vals[frame.locals_offset + arg_idx + i];
-//              exec.stack.vals[frame.locals_offset + arg_idx + i + 1] = tmp;
-//              //need to nullify the refcounted so it's not invoked somehow
-//              tmp.obj = null;
-//              tmp._refc = null;
-//            }
-//          }
-//          //...otherwise we need to jump out of default argument calculation code
-//          else
-//            exec.ip += jump_add;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeScope(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
-//
-//          exec.PushRegion(region.frame_idx, exec.ip + 1, exec.ip + size);
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeDefer(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
-//
-//          region.defers ??= new DeferSupport();
-//
-//          ref var d = ref region.defers.Add();
-//          d.ip = exec.ip + 1;
-//          d.max_ip = exec.ip + size;
-//
-//          //NOTE: we need to skip the defer block
-//          exec.ip += size;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeParal(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
-//
-//          var paral = CoroutinePool.New<ParalBlock>(vm);
-//          paral.Init(exec.ip + 1, exec.ip + size);
-//
-//          int tmp_ip = exec.ip;
-//          while(tmp_ip < (exec.ip + size))
-//          {
-//            ++tmp_ip;
-//            FetchBlock(
-//              ref tmp_ip,
-//              exec, bytes,
-//              paral.branches,
-//              paral.defers,
-//              out var tmp_size
-//            );
-//            tmp_ip += tmp_size;
-//          }
-//
-//          //NOTE: since there's a new coroutine we want to skip ip incrementing
-//          //      which happens below and proceed right to the execution of
-//          //      the new coroutine
-//          exec.coroutine = paral;
-//          //let's cancel ip incrementing
-//          --exec.ip;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeParalAll(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
-//
-//          var paral = CoroutinePool.New<ParalAllBlock>(vm);
-//          paral.Init(exec.ip + 1, exec.ip + size);
-//
-//          int tmp_ip = exec.ip;
-//          while(tmp_ip < (exec.ip + size))
-//          {
-//            ++tmp_ip;
-//            FetchBlock(
-//              ref tmp_ip,
-//              exec, bytes,
-//              paral.branches,
-//              paral.defers,
-//              out var tmp_size
-//            );
-//
-//            tmp_ip += tmp_size;
-//          }
-//
-//          //NOTE: since there's a new coroutine we want to skip ip incrementing
-//          //      which happens below and proceed right to the execution of
-//          //      the new coroutine
-//          exec.coroutine = paral;
-//          //let's cancel ip incrementing
-//          --exec.ip;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeNew(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-//          var type = frame.type_refs[type_idx];
-//
-//          if(type is not ClassSymbol cls)
-//            throw new Exception("Not a class symbol: " + type);
-//
-//          //NOTE: we don't increment refcounted here since the new instance
-//          //      is not attached to any variable and is expected to have refs == 1
-//          ref var val = ref exec.stack.Push();
-//          cls.creator(exec, ref val, cls);
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeSetUpval(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int frame_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          int func_ptr_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
-//
-//          var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1].obj;
-//
-//          ref var upval = ref addr.upvals.Push();
-//          upval.frame_local_idx = func_ptr_local_idx;
-//
-//          ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
-//          if(mode == UpvalMode.STRONG)
-//            val._refc?.Retain();
-//          upval.val = val;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeInc(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          ++frame.locals.vals[frame.locals_offset + var_idx].num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeDec(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//          --frame.locals.vals[frame.locals_offset + var_idx].num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeArrIdx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int idx = exec.stack.PopFast();
-//          ref var arr = ref exec.stack.Peek();
-//
-//          var class_type = (ArrayTypeSymbol)arr.type;
-//          var res = class_type.ArrGetAt(arr, idx);
-//
-//          arr._refc?.Release();
-//          //let's replace with the result
-//          arr = res;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeArrIdxW(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          int idx = exec.stack.PopFast();
-//          exec.stack.Pop(out var arr);
-//          exec.stack.Pop(out var val);
-//
-//          var class_type = (ArrayTypeSymbol)arr.type;
-//          class_type.ArrSetAt(arr, idx, val);
-//
-//          val._refc?.Release();
-//          arr._refc?.Release();
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          //taking copy not ref since during Pop in binding operator stack will be cleared
-//          var self = exec.stack.vals[exec.stack.sp - 2];
-//          self._refc?.Retain();
-//          var class_type = (ArrayTypeSymbol)self.type;
-//          //NOTE: Add must be at 0 index
-//          ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
-//          exec.stack.Push(self);
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeBitShr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Int as well, so we don't replace it
-//          l_operand.num = (int)l_operand.num >> (int)r_operand.num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeBitShl(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          var stack = exec.stack;
-//
-//          ref Val r_operand = ref stack.vals[--stack.sp];
-//          ref Val l_operand = ref stack.vals[stack.sp - 1];
-//
-//          //resulting operand is Int as well, so we don't replace it
-//          l_operand.num = (int)l_operand.num << (int)r_operand.num;
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeMapIdx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          exec.stack.Pop(out var key);
-//          exec.stack.Pop(out var map);
-//
-//          var class_type = (MapTypeSymbol)map.type;
-//          class_type.MapTryGet(map, key, out var res);
-//
-//          res._refc?.Retain();
-//          exec.stack.Push(res);
-//
-//          key._refc?.Release();
-//          map._refc?.Release();
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeMapIdxW(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          exec.stack.Pop(out var key);
-//          exec.stack.Pop(out var map);
-//          exec.stack.Pop(out var val);
-//
-//          var class_type = (MapTypeSymbol)map.type;
-//          class_type.MapSet(map, key, val);
-//
-//          key._refc?.Release();
-//          val._refc?.Release();
-//          map._refc?.Release();
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeMapAddInplace(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
-//        {
-//          //taking copy not ref since during Pop in binding operator stack will be cleared
-//          var self = exec.stack.vals[exec.stack.sp - 3];
-//          self._refc?.Retain();
-//          var class_type = (MapTypeSymbol)self.type;
-//          //NOTE: Add must be at 0 index
-//          ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
-//          exec.stack.Push(self);
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
-//          byte* bytes)
-//        {
-//          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//
-//          ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
-//
-//          //replacing existing val with ValRef if it's not already a ValRef
-//          //(this a special case required e.g for loop variables)
-//          if(curr.type != Types.ValRef ||
-//             curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
-//          {
-//            var vr_val = new Val();
-//            vr_val.type = Types.ValRef;
-//            var vr = ValRef.New(vm);
-//            //NOTE: we wrap an existing value
-//            vr.val = curr;
-//            vr_val._refc = vr;
-//            curr = vr_val;
-//          }
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeGetRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
-//          byte* bytes)
-//        {
-//          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//
-//          ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
-//          var val_ref = (ValRef)val_ref_holder._refc;
-//
-//          ref Val v = ref exec.stack.Push();
-//          v = val_ref.val;
-//          v._refc?.Retain();
-//        }
-//
-//        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-//        unsafe static void OpcodeSetRef(VM vm, ExecState exec, ref Region region, ref Frame frame,
-//          byte* bytes)
-//        {
-//          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
-//
-//          exec.stack.Pop(out var new_val);
-//
-//          ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
-//          var val_ref = (ValRef)val_ref_holder._refc;
-//          val_ref.val._refc?.Release();
-//          val_ref.val = new_val;
-//        }
+#if USE_OPCODE_SWITCH
+          case Opcodes.Or:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeOr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Bool as well, so we don't replace it
+          l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Mod:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeMod(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Int as well, so we don't replace it
+          l_operand.num %= r_operand.num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.BitOr:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeBitOr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Int as well, so we don't replace it
+          l_operand.num = (int)l_operand.num | (int)r_operand.num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.BitAnd:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeBitAnd(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Int as well, so we don't replace it
+          l_operand.num = (int)l_operand.num & (int)r_operand.num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.EqualScalar:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeEqualScalar(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          l_operand.type = Types.Bool;
+          l_operand.num = r_operand.num == l_operand.num ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.EqualString:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeEqualString(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          l_operand.type = Types.Bool;
+          l_operand.num = (string)r_operand.obj == (string)l_operand.obj ? 1 : 0;
+          l_operand.obj = null;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Equal:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeEqual(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          var res = new Val { type = Types.Bool, num = l_operand.IsDataEqual(ref r_operand) ? 1 : 0 };
+          if(r_operand._refc != null)
+          {
+            r_operand._refc.Release();
+            r_operand._refc = null;
+          }
+
+          r_operand.obj = null;
+
+          l_operand._refc?.Release();
+          l_operand = res;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.LT:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeLT(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //TODO: do we really need to set type for scalar values?
+          l_operand.type = Types.Bool;
+          l_operand.num = l_operand.num < r_operand.num ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.LTE:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeLTE(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //TODO: do we really need to set type for scalar values?
+          l_operand.type = Types.Bool;
+          l_operand.num = l_operand.num <= r_operand.num ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.GT:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeGT(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //TODO: do we really need to set type for scalar values?
+          l_operand.type = Types.Bool;
+          l_operand.num = l_operand.num > r_operand.num ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.GTE:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeGTE(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //TODO: do we really need to set type for scalar values?
+          l_operand.type = Types.Bool;
+          l_operand.num = l_operand.num >= r_operand.num ? 1 : 0;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.UnaryBitNot:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeUnaryBitNot(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val val = ref stack.vals[stack.sp - 1];
+          //resulting operand is Int as well, so we don't replace it
+          val.num = ~((int)val.num);
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.TypeCast:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeTypeCast(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
+
+          var cast_type = frame.type_refs[cast_type_idx];
+
+          ref var val = ref exec.stack.Peek();
+
+          if(cast_type == Types.Int)
+          {
+            val._refc?.Release();
+            val = Val.NewNum((long)val.num);
+          }
+          else if(cast_type == Types.String && val.type != Types.String)
+          {
+            val._refc?.Release();
+            val = Val.NewStr(
+              val.num.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            );
+          }
+          else
+          {
+            //NOTE: extra type check in case cast type is instantiable object (e.g class)
+            if(val.obj != null && cast_type is IInstantiable && !Types.Is(val, cast_type))
+              throw new Exception("Invalid type cast: type '" + val.type + "' can't be cast to '" + cast_type + "'");
+            if(force_type)
+              val.type = cast_type;
+          }
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.TypeAs:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeTypeAs(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          bool force_type = Bytecode.Decode8(bytes, ref exec.ip) == 1;
+          var as_type = frame.type_refs[cast_type_idx];
+
+          ref var val = ref exec.stack.Peek();
+
+          if(Types.Is(val, as_type))
+          {
+            if(force_type)
+              val.type = as_type;
+          }
+          else
+          {
+            val._refc?.Release();
+            val = Null;
+          }
+
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.TypeIs:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeTypeIs(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int cast_type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          var as_type = frame.type_refs[cast_type_idx];
+
+          ref var val = ref exec.stack.Peek();
+          var refc = val._refc;
+          val = Types.Is(val, as_type);
+          refc?.Release();
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Typeof:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeTypeof(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          var type = frame.type_refs[type_idx];
+
+          exec.stack.Push(Val.NewObj(type, Types.Type));
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.DefArg:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeDefArg(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          byte arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          byte def_arg_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          int jump_add = (int)Bytecode.Decode16(bytes, ref exec.ip);
+          //if default argument is set we need to insert a slot into the stack
+          //where it will be set below
+          if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
+          {
+            int args_num = frame.args_info.CountArgs() + frame.args_info.CountUsedDefaultArgs();
+
+            //we need to move only passed arguments and move them in reverse order
+            //so that they don't overlap during 'movement'
+            for(int i = args_num - arg_idx; i-- > 0;)
+            {
+              ref var tmp = ref exec.stack.vals[frame.locals_offset + arg_idx + i];
+              exec.stack.vals[frame.locals_offset + arg_idx + i + 1] = tmp;
+              //need to nullify the refcounted so it's not invoked somehow
+              tmp.obj = null;
+              tmp._refc = null;
+            }
+          }
+          //...otherwise we need to jump out of default argument calculation code
+          else
+            exec.ip += jump_add;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Scope:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeScope(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+          exec.PushRegion(region.frame_idx, exec.ip + 1, exec.ip + size);
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Defer:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeDefer(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+          region.defers ??= new DeferSupport();
+
+          ref var d = ref region.defers.Add();
+          d.ip = exec.ip + 1;
+          d.max_ip = exec.ip + size;
+
+          //NOTE: we need to skip the defer block
+          exec.ip += size;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Paral:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeParal(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+          var paral = CoroutinePool.New<ParalBlock>(vm);
+          paral.Init(exec.ip + 1, exec.ip + size);
+
+          int tmp_ip = exec.ip;
+          while(tmp_ip < (exec.ip + size))
+          {
+            ++tmp_ip;
+            FetchBlock(
+              ref tmp_ip,
+              exec, bytes,
+              paral.branches,
+              paral.defers,
+              out var tmp_size
+            );
+            tmp_ip += tmp_size;
+          }
+
+          //NOTE: since there's a new coroutine we want to skip ip incrementing
+          //      which happens below and proceed right to the execution of
+          //      the new coroutine
+          exec.coroutine = paral;
+          //let's cancel ip incrementing
+          --exec.ip;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.ParalAll:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeParalAll(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int size = (int)Bytecode.Decode16(bytes, ref exec.ip);
+
+          var paral = CoroutinePool.New<ParalAllBlock>(vm);
+          paral.Init(exec.ip + 1, exec.ip + size);
+
+          int tmp_ip = exec.ip;
+          while(tmp_ip < (exec.ip + size))
+          {
+            ++tmp_ip;
+            FetchBlock(
+              ref tmp_ip,
+              exec, bytes,
+              paral.branches,
+              paral.defers,
+              out var tmp_size
+            );
+
+            tmp_ip += tmp_size;
+          }
+
+          //NOTE: since there's a new coroutine we want to skip ip incrementing
+          //      which happens below and proceed right to the execution of
+          //      the new coroutine
+          exec.coroutine = paral;
+          //let's cancel ip incrementing
+          --exec.ip;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.New:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeNew(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int type_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
+          var type = frame.type_refs[type_idx];
+
+          if(type is not ClassSymbol cls)
+            throw new Exception("Not a class symbol: " + type);
+
+          //NOTE: we don't increment refcounted here since the new instance
+          //      is not attached to any variable and is expected to have refs == 1
+          ref var val = ref exec.stack.Push();
+          cls.creator(exec, ref val, cls);
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.SetUpval:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeSetUpval(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int frame_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          int func_ptr_local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          var mode = (UpvalMode)Bytecode.Decode8(bytes, ref exec.ip);
+
+          var addr = (FuncPtr)exec.stack.vals[exec.stack.sp - 1].obj;
+
+          ref var upval = ref addr.upvals.Push();
+          upval.frame_local_idx = func_ptr_local_idx;
+
+          ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
+          if(mode == UpvalMode.STRONG)
+            val._refc?.Retain();
+          upval.val = val;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Inc:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeInc(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          ++frame.locals.vals[frame.locals_offset + var_idx].num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.Dec:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeDec(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
+          --frame.locals.vals[frame.locals_offset + var_idx].num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.ArrIdx:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeArrIdx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int idx = exec.stack.PopFast();
+          ref var arr = ref exec.stack.Peek();
+
+          var class_type = (ArrayTypeSymbol)arr.type;
+          var res = class_type.ArrGetAt(arr, idx);
+
+          arr._refc?.Release();
+          //let's replace with the result
+          arr = res;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.ArrIdxW:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeArrIdxW(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int idx = exec.stack.PopFast();
+          exec.stack.Pop(out var arr);
+          exec.stack.Pop(out var val);
+
+          var class_type = (ArrayTypeSymbol)arr.type;
+          class_type.ArrSetAt(arr, idx, val);
+
+          val._refc?.Release();
+          arr._refc?.Release();
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.ArrAddInplace:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeArrAddInplace(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          //taking copy not ref since during Pop in binding operator stack will be cleared
+          var self = exec.stack.vals[exec.stack.sp - 2];
+          self._refc?.Retain();
+          var class_type = (ArrayTypeSymbol)self.type;
+          //NOTE: Add must be at 0 index
+          ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
+          exec.stack.Push(self);
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.BitShr:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeBitShr(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Int as well, so we don't replace it
+          l_operand.num = (int)l_operand.num >> (int)r_operand.num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.BitShl:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeBitShl(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          var stack = exec.stack;
+
+          ref Val r_operand = ref stack.vals[--stack.sp];
+          ref Val l_operand = ref stack.vals[stack.sp - 1];
+
+          //resulting operand is Int as well, so we don't replace it
+          l_operand.num = (int)l_operand.num << (int)r_operand.num;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.MapIdx:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeMapIdx(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          exec.stack.Pop(out var key);
+          exec.stack.Pop(out var map);
+
+          var class_type = (MapTypeSymbol)map.type;
+          class_type.MapTryGet(map, key, out var res);
+
+          res._refc?.Retain();
+          exec.stack.Push(res);
+
+          key._refc?.Release();
+          map._refc?.Release();
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.MapIdxW:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeMapIdxW(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          exec.stack.Pop(out var key);
+          exec.stack.Pop(out var map);
+          exec.stack.Pop(out var val);
+
+          var class_type = (MapTypeSymbol)map.type;
+          class_type.MapSet(map, key, val);
+
+          key._refc?.Release();
+          val._refc?.Release();
+          map._refc?.Release();
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.MapAddInplace:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeMapAddInplace(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          //taking copy not ref since during Pop in binding operator stack will be cleared
+          var self = exec.stack.vals[exec.stack.sp - 3];
+          self._refc?.Retain();
+          var class_type = (MapTypeSymbol)self.type;
+          //NOTE: Add must be at 0 index
+          ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
+          exec.stack.Push(self);
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.MakeRef:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeMakeRef(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+          ref var curr = ref frame.locals.vals[frame.locals_offset + local_idx];
+
+          //replacing existing val with ValRef if it's not already a ValRef
+          //(this a special case required e.g for loop variables)
+          if(curr.type != Types.ValRef ||
+             curr._refc == null /*since we don't clear type, let's check for _refc as well*/)
+          {
+            var vr_val = new Val();
+            vr_val.type = Types.ValRef;
+            var vr = ValRef.New(vm);
+            //NOTE: we wrap an existing value
+            vr.val = curr;
+            vr_val._refc = vr;
+            curr = vr_val;
+          }
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.GetRef:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeGetRef(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+          ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+          var val_ref = (ValRef)val_ref_holder._refc;
+
+          ref Val v = ref exec.stack.Push();
+          v = val_ref.val;
+          v._refc?.Retain();
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
+
+#if USE_OPCODE_SWITCH
+          case Opcodes.SetRef:
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe static void OpcodeSetRef(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
+        {
+          int local_idx = Bytecode.Decode8(bytes, ref exec.ip);
+
+          exec.stack.Pop(out var new_val);
+
+          ref var val_ref_holder = ref frame.locals.vals[frame.locals_offset + local_idx];
+          var val_ref = (ValRef)val_ref_holder._refc;
+          val_ref.val._refc?.Release();
+          val_ref.val = new_val;
+        }
+#if USE_OPCODE_SWITCH
+          break;
+#endif
 
 #if USE_OPCODE_SWITCH
         }
