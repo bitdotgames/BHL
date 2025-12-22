@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using bhl;
 using Xunit;
 
-public class TestImport : BHL_TestBase
+public class TestModule : BHL_TestBase
 {
   [Fact]
   public async Task TestSimpleImport()
@@ -1701,5 +1701,55 @@ public class TestImport : BHL_TestBase
 ---------------^"
       )
     );
+  }
+
+  [Fact]
+  public async Task TestCachingModuleLoader()
+  {
+    string bhl1 = @"
+    import ""bhl2""
+
+    func garbage1() { }
+
+    func float bhl1()
+    {
+      return bhl2(23)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+
+    func garbage2() { }
+
+    func float bhl2(float k)
+    {
+      return bhl3(k)
+    }
+    ";
+
+    string bhl3 = @"
+    func float bhl3(float k)
+    {
+      return k
+    }
+
+    func garbage3() { }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new CachingModuleLoader(new ModuleLoader(ts, await CompileFiles(files)));
+    var vm = new VM(ts, loader);
+
+    var m1 = loader.Load("bhl1", vm);
+    var m2 = loader.Load("bhl1", vm);
+    Assert.Equal("bhl1", m1.name);
+    Assert.NotEqual(m1, m2);
   }
 }
