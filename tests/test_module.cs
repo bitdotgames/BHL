@@ -1744,7 +1744,7 @@ public class TestModule : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var loader = new CachingModuleLoader(new ModuleLoader(ts, await CompileFiles(files)));
+    var loader = new CachingModuleLoader(ts, new ModuleLoader(ts, await CompileFiles(files)));
 
     {
       var m1 = loader.Load("bhl1", ts);
@@ -1820,7 +1820,7 @@ public class TestModule : BHL_TestBase
     NewTestFile("bhl3.bhl", bhl3, ref files);
 
     var ts = new Types();
-    var loader = new CachingModuleLoader(new ModuleLoader(ts, await CompileFiles(files)));
+    var loader = new CachingModuleLoader(ts, new ModuleLoader(ts, await CompileFiles(files)));
 
     var vm = new VM(ts, loader);
     {

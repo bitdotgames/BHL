@@ -182,9 +182,10 @@ public class ModuleLoader : IModuleLoader
 
 public class CachingModuleLoader : IModuleLoader
 {
+  Types types;
   IModuleLoader loader;
 
-  ConcurrentDictionary<string, Module> name2prefab = new ();
+  Dictionary<string, MemoryStream> name2prefab = new ();
 
   public int Count => name2prefab.Count;
   public int Hits => hits;
@@ -192,26 +193,30 @@ public class CachingModuleLoader : IModuleLoader
   int hits;
   int misses;
 
-  public CachingModuleLoader(IModuleLoader loader)
+  public CachingModuleLoader(Types types, IModuleLoader loader)
   {
+    this.types = types;
     this.loader = loader;
   }
 
   public Module Load(string module_name, INamedResolver resolver)
   {
-    if(!name2prefab.TryGetValue(module_name, out var entry))
+    lock(name2prefab)
     {
-      Interlocked.Increment(ref misses);
-      lock(loader)
+      if(!name2prefab.TryGetValue(module_name, out var ms))
       {
-        entry = loader.Load(module_name, resolver);
-        name2prefab[module_name] = entry;
+        ++misses;
+        var module = loader.Load(module_name, resolver);
+        ms = new MemoryStream();
+        CompiledModule.ToStream(module, ms, leave_open: true);
+        name2prefab[module_name] = ms;
       }
-    }
-    else
-      Interlocked.Increment(ref hits);
+      else
+        ++hits;
 
-    return entry.Clone();
+      ms.Position = 0;
+      return CompiledModule.FromStream(types, ms, resolver);
+    }
   }
 }
 
