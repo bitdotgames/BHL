@@ -1,5 +1,5 @@
 //#define ENABLE_IL2CPP
-#define USE_OPCODE_SWITCH
+//#define USE_OPCODE_SWITCH
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -807,7 +807,7 @@ public partial class VM
         var bytes = frame.bytecode;
         var opcode = bytes[ip];
 #if !USE_OPCODE_SWITCH
-        op_handlers[opcode](vm, this, ref region,  ref frame, bc);
+        op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
         ++ip;
       }
     }
