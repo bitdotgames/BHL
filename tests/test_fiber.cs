@@ -1549,7 +1549,7 @@ public class TestFiber : BHL_TestBase
     {
       var result = vm.Execute(test_fs1);
       Assert.Equal(10, result.Pop().num);
-      CommonChecks(vm);
+      CommonChecks(vm, unload_modules: false);
     }
 
     var test_fs2 = vm.GetOrMakeFuncTrampoline(ref trampoline1, TestModuleName, "test");

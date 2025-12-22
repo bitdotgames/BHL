@@ -133,11 +133,7 @@ public class CompiledModule
     }
   }
 
-  static public Module FromStream(
-    Types types,
-    Stream src,
-    INamedResolver resolver = null
-  )
+  static public Module FromStream(Types types, Stream src, INamedResolver resolver = null)
   {
     var module = new Module(types);
 
@@ -166,7 +162,7 @@ public class CompiledModule
 
     using(BinaryReader r = new BinaryReader(src, System.Text.Encoding.UTF8, true /*leave open*/))
     {
-      //TODO: add better support for version
+      //TODO: add better support for a version
       uint version = r.ReadUInt32();
       if(version != HEADER_VERSION)
         throw new Exception("Unsupported version: " + version);
@@ -218,7 +214,7 @@ public class CompiledModule
     }
 
     //NOTE: due to specifics of type refs storage sync context is initialized
-    //      with neccessary data related to type refs 'lazy loading'
+    //      with necessary data related to type refs 'lazy loading'
     var reader = new MsgPackDataReader(new MemoryStream(symb_bytes));
     var ctx = SyncContext.NewReader(reader);
     ctx.factory = symb_factory;
@@ -272,7 +268,7 @@ public class CompiledModule
       constants = new Const[constants_num];
       for(int i = 0; i < constants_num; ++i)
       {
-        Const cn = null;
+        Const cn = default;
 
         var cn_type = (ConstType)r.Read();
 

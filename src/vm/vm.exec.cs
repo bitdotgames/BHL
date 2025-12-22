@@ -827,7 +827,7 @@ public partial class VM
 #endif
         {
           int const_idx = (int)Bytecode.Decode24(bytes, ref exec.ip);
-          var cn = frame.constants[const_idx];
+          ref var cn = ref frame.constants[const_idx];
 
           ref Val v = ref exec.stack.Push();
           //TODO: what about specialized opcodes for each constant type?

@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Buffers;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace bhl
 {
@@ -38,7 +40,7 @@ public class ModuleLoader : IModuleLoader
   Stream source;
   marshall.MsgPackDataReader reader;
   Lz4DecoderStream decoder = new Lz4DecoderStream();
-  MemoryStream mod_stream = new MemoryStream();
+  MemoryStream module_stream = new MemoryStream();
   MemoryStream lz_stream = new MemoryStream();
   MemoryStream lz_dst_stream = new MemoryStream();
 
@@ -103,35 +105,24 @@ public class ModuleLoader : IModuleLoader
     }
   }
 
-  public Module Load(
-    string module_name,
-    INamedResolver resolver
-  )
+  public Module Load(string module_name, INamedResolver resolver)
   {
-    Entry ent;
-    if(!name2entry.TryGetValue(module_name, out ent))
+    if(!name2entry.TryGetValue(module_name, out var entry))
       return null;
 
-    byte[] res = null;
-    int res_len = 0;
-    bool res_release = false;
-    DecodeBin(ent, ref res, ref res_len, ref res_release);
+    DecodeBin(entry, out var bytes, out var bytes_len, out var return_to_pool);
 
-    mod_stream.SetData(res, 0, res_len);
+    module_stream.SetData(bytes, 0, bytes_len);
 
-    var cm = CompiledModule.FromStream(
-      types,
-      mod_stream,
-      resolver
-    );
+    var module = CompiledModule.FromStream(types, module_stream, resolver);
 
-    if(res_release)
-      ArrayPool<byte>.Shared.Return(res);
+    if(return_to_pool)
+      ArrayPool<byte>.Shared.Return(bytes);
 
-    return cm;
+    return module;
   }
 
-  void DecodeBin(Entry ent, ref byte[] res, ref int res_len, ref bool release_res)
+  void DecodeBin(Entry ent, out byte[] bytes, out int bytes_len, out bool return_to_pool)
   {
     if(ent.format == ModuleBinaryFormat.FMT_BIN)
     {
@@ -140,9 +131,9 @@ public class ModuleLoader : IModuleLoader
       reader.ReadRawBegin(ref tmp_buf_len);
       var tmp_buf = ArrayPool<byte>.Shared.Rent(tmp_buf_len);
       reader.ReadRawEnd(tmp_buf);
-      res = tmp_buf;
-      res_len = tmp_buf_len;
-      release_res = true;
+      bytes = tmp_buf;
+      bytes_len = tmp_buf_len;
+      return_to_pool = true;
     }
     else if(ent.format == ModuleBinaryFormat.FMT_LZ4)
     {
@@ -162,9 +153,9 @@ public class ModuleLoader : IModuleLoader
       lz_stream.SetData(lz_buf, 0, lz_buf_len);
       decoder.Reset(lz_stream);
       decoder.CopyTo(lz_dst_stream);
-      res = lz_dst_stream.GetBuffer();
-      res_len = (int)lz_dst_stream.Position;
-      release_res = false;
+      bytes = lz_dst_stream.GetBuffer();
+      bytes_len = (int)lz_dst_stream.Position;
+      return_to_pool = false;
 
       ArrayPool<byte>.Shared.Return(lz_buf);
       ArrayPool<byte>.Shared.Return(dst_buf);
@@ -178,14 +169,54 @@ public class ModuleLoader : IModuleLoader
       reader.ReadRawEnd(tmp_buf);
       string file_path = System.Text.Encoding.UTF8.GetString(tmp_buf, 0, tmp_buf_len);
       var file_bytes = File.ReadAllBytes(file_path);
-      res = file_bytes;
-      res_len = file_bytes.Length;
-      release_res = false;
+      bytes = file_bytes;
+      bytes_len = file_bytes.Length;
+      return_to_pool = false;
 
       ArrayPool<byte>.Shared.Return(tmp_buf);
     }
     else
       throw new Exception("Unknown format: " + ent.format);
+  }
+}
+
+public class CachingModuleLoader : IModuleLoader
+{
+  Types types;
+  IModuleLoader loader;
+
+  Dictionary<string, MemoryStream> name2prefab = new ();
+
+  public int Count => name2prefab.Count;
+  public int Hits => hits;
+  public int Misses => misses;
+  int hits;
+  int misses;
+
+  public CachingModuleLoader(Types types, IModuleLoader loader)
+  {
+    this.types = types;
+    this.loader = loader;
+  }
+
+  public Module Load(string module_name, INamedResolver resolver)
+  {
+    lock(name2prefab)
+    {
+      if(!name2prefab.TryGetValue(module_name, out var ms))
+      {
+        ++misses;
+        var module = loader.Load(module_name, resolver);
+        ms = new MemoryStream();
+        CompiledModule.ToStream(module, ms, leave_open: true);
+        name2prefab[module_name] = ms;
+      }
+      else
+        ++hits;
+
+      ms.Position = 0;
+      return CompiledModule.FromStream(types, ms, resolver);
+    }
   }
 }
 
