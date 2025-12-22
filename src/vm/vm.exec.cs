@@ -1185,8 +1185,8 @@ public partial class VM
           case Opcodes.JumpPeekNZ:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
         unsafe static void OpcodeJumpPeekNZ(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
         {
           int offset = (int)Bytecode.Decode16(bytes, ref exec.ip);
           if(exec.stack.vals[exec.stack.sp - 1].num == 1)
@@ -1200,8 +1200,8 @@ public partial class VM
           case Opcodes.Concat:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
         unsafe static void OpcodeConcat(VM vm, ExecState exec, ref Region region, ref Frame frame, byte* bytes)
+#endif
         {
           var stack = exec.stack;
 
