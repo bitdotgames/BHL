@@ -3,6 +3,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace bhl
 {
@@ -185,6 +186,12 @@ public class CachingModuleLoader : IModuleLoader
 
   ConcurrentDictionary<string, Module> name2prefab = new ();
 
+  public int Count => name2prefab.Count;
+  public int Hits => hits;
+  public int Misses => misses;
+  int hits;
+  int misses;
+
   public CachingModuleLoader(IModuleLoader loader)
   {
     this.loader = loader;
@@ -194,12 +201,15 @@ public class CachingModuleLoader : IModuleLoader
   {
     if(!name2prefab.TryGetValue(module_name, out var entry))
     {
+      Interlocked.Increment(ref misses);
       lock(loader)
       {
         entry = loader.Load(module_name, resolver);
         name2prefab[module_name] = entry;
       }
     }
+    else
+      Interlocked.Increment(ref hits);
 
     return entry.Clone();
   }

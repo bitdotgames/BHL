@@ -1745,11 +1745,100 @@ public class TestModule : BHL_TestBase
 
     var ts = new Types();
     var loader = new CachingModuleLoader(new ModuleLoader(ts, await CompileFiles(files)));
-    var vm = new VM(ts, loader);
 
-    var m1 = loader.Load("bhl1", vm);
-    var m2 = loader.Load("bhl1", vm);
-    Assert.Equal("bhl1", m1.name);
-    Assert.NotEqual(m1, m2);
+    {
+      var m1 = loader.Load("bhl1", ts);
+      var m2 = loader.Load("bhl1", ts);
+      Assert.Equal("bhl1", m1.name);
+      Assert.NotEqual(m1, m2);
+      Assert.Equal(1, loader.Hits);
+      Assert.Equal(1, loader.Misses);
+      Assert.Equal(1, loader.Count);
+    }
+
+    {
+      var m1 = loader.Load("bhl2", ts);
+      var m2 = loader.Load("bhl2", ts);
+      Assert.Equal("bhl2", m1.name);
+      Assert.NotEqual(m1, m2);
+      Assert.Equal(2, loader.Hits);
+      Assert.Equal(2, loader.Misses);
+      Assert.Equal(2, loader.Count);
+    }
+
+    {
+      var m1 = loader.Load("bhl3", ts);
+      var m2 = loader.Load("bhl3", ts);
+      Assert.Equal("bhl3", m1.name);
+      Assert.NotEqual(m1, m2);
+      Assert.Equal(3, loader.Hits);
+      Assert.Equal(3, loader.Misses);
+      Assert.Equal(3, loader.Count);
+    }
+  }
+
+  [Fact]
+  public async Task TestVMReuseUsingCachingLoader()
+  {
+    string bhl1 = @"
+    import ""bhl2""
+
+    func garbage1() { }
+
+    func float bhl1()
+    {
+      return bhl2(23)
+    }
+    ";
+
+    string bhl2 = @"
+    import ""bhl3""
+
+    func garbage2() { }
+
+    func float bhl2(float k)
+    {
+      return bhl3(k)
+    }
+    ";
+
+    string bhl3 = @"
+    int global_k = 0
+    func float bhl3(float k)
+    {
+      global_k += k
+      return global_k
+    }
+
+    func garbage3() { }
+    ";
+
+    CleanTestDir();
+    var files = new List<string>();
+    NewTestFile("bhl1.bhl", bhl1, ref files);
+    NewTestFile("bhl2.bhl", bhl2, ref files);
+    NewTestFile("bhl3.bhl", bhl3, ref files);
+
+    var ts = new Types();
+    var loader = new CachingModuleLoader(new ModuleLoader(ts, await CompileFiles(files)));
+
+    var vm = new VM(ts, loader);
+    {
+      vm.LoadModule("bhl1");
+      Assert.Equal(23, Execute(vm, "bhl1").Stack.Pop().num);
+      Assert.Equal(23+23, Execute(vm, "bhl1").Stack.Pop().num);
+      vm.UnloadModules();
+      CommonChecks(vm);
+    }
+
+    {
+      vm.LoadModule("bhl1");
+      Assert.Equal(23, Execute(vm, "bhl1").Stack.Pop().num);
+      CommonChecks(vm);
+    }
+
+    Assert.Equal(3, loader.Hits);
+    Assert.Equal(3, loader.Misses);
+    Assert.Equal(3, loader.Count);
   }
 }
