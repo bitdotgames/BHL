@@ -2351,11 +2351,11 @@ public partial class VM
           //where it will be set below
           if(frame.args_info.IsDefaultArgUsed(def_arg_idx))
           {
-            int args_num = frame.args_info.CountArgs() + frame.args_info.CountUsedDefaultArgs();
+            int total_args_num = frame.args_info.CountArgs() + frame.args_info.CountUsedDefaultArgs();
 
             //we need to move only passed arguments and move them in reverse order
             //so that they don't overlap during 'movement'
-            for(int i = args_num - arg_idx; i-- > 0;)
+            for(int i = total_args_num - arg_idx - 1/*except last one*/; i-- > 0;)
             {
               ref var tmp = ref exec.stack.vals[frame.locals_offset + arg_idx + i];
               exec.stack.vals[frame.locals_offset + arg_idx + i + 1] = tmp;
