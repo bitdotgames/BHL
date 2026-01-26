@@ -1398,7 +1398,7 @@ public class TestLambda : BHL_TestBase
   }
 
   [Fact]
-  public void TestCaptureMixCopyAndStrong()
+  public void TestCaptureMixCopyAndReference()
   {
     string bhl = @"
     func test()
@@ -1420,6 +1420,74 @@ public class TestLambda : BHL_TestBase
     var vm = MakeVM(bhl, ts_fn);
     Execute(vm, "test");
     Assert.Equal("0:0:20;1:2:20;2:4:20;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCapturedScalarReferencePassedAsCopy()
+  {
+    string bhl = @"
+    func test()
+    {
+      int v = 10
+
+      start(coro func() [v] {
+          yield()
+          yield()
+          yield()
+          trace("";1:"" + (string)v)
+        })
+      v = 100
+      start(coro func() {
+          yield()
+          yield()
+          trace("";2:"" + (string)v)
+        })
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    Assert.Equal(";2:100;1:10", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
+  public void TestCapturedObjReferencePassedAsCopyButNotACopy()
+  {
+    string bhl = @"
+    class Foo {
+      int f
+    }
+
+    func test()
+    {
+      Foo foo = {f: 42}
+
+      start(coro func() [foo] {
+          yield()
+          yield()
+          yield()
+          trace("";1:"" + (string)foo.f)
+        })
+      foo.f = 100
+      start(coro func() {
+          yield()
+          yield()
+          trace("";2:"" + (string)foo.f)
+        })
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    Assert.Equal(";2:100;1:100", log.ToString());
     CommonChecks(vm);
   }
 

@@ -694,6 +694,7 @@ public class LambdaSymbol : FuncSymbolScript
       //NOTE: if there's no capture info we consider a default value
       UpvalMode mode = UpvalMode.STRONG;
       captures.TryGetValue(src, out mode);
+      local._upvalue_mode = mode;
 
       var upval = new AST_UpVal(local, src, mode,
         //TODO: should be the line of its usage

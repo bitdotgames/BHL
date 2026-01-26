@@ -2523,8 +2523,20 @@ public partial class VM
           upval.frame_local_idx = func_ptr_local_idx;
 
           ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
-          val._refc?.Retain();
-          upval.val = val;
+
+          if(val._refc != null)
+          {
+            //TODO: it's quite a rare case so we use reflection here
+            if(mode == UpvalMode.COPY && val._refc is ValRef vr)
+              upval.val = vr.val.Clone();
+            else
+            {
+              val._refc.Retain();
+              upval.val = val;
+            }
+          }
+          else
+            upval.val = val;
         }
 #if BHL_USE_OPCODE_SWITCH
           break;
