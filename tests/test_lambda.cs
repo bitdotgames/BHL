@@ -1492,6 +1492,44 @@ public class TestLambda : BHL_TestBase
   }
 
   [Fact]
+  public void TestCapturedScalarReferencePassedAsCopyBecomesAReference()
+  {
+    string bhl = @"
+    func test()
+    {
+      int v = 10
+
+      start(coro func() [v] {
+          v = 11
+          start(coro func() {
+            v = 12
+            yield()
+            trace("";3:"" + (string)v)
+          })
+          yield()
+          yield()
+          yield()
+          trace("";1:"" + (string)v)
+        })
+      v = 100
+      start(coro func() {
+          yield()
+          yield()
+          trace("";2:"" + (string)v)
+        })
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    Assert.Equal(";3:12;2:100;1:12", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestClosure()
   {
     string bhl = @"
