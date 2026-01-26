@@ -1380,6 +1380,8 @@ public class TestLambda : BHL_TestBase
       {
         start(coro func() [foo, i] {
             yield()
+            yield()
+            yield()
             trace(foo.f + "":"" + (string)i + "";"")
           })
       }
