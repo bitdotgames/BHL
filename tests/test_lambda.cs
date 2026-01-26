@@ -1366,6 +1366,36 @@ public class TestLambda : BHL_TestBase
   }
 
   [Fact]
+  public void TestStartLambdaCaptureBug()
+  {
+    string bhl = @"
+    class Foo {
+      int f
+    }
+    func test()
+    {
+      Foo foo = {f: 42}
+
+      for(int i=0;i<3;i++)
+      {
+        start(coro func() [foo, i] {
+            yield()
+            trace(foo.f + "":"" + (string)i + "";"")
+          })
+      }
+    }
+    ";
+
+    var log = new StringBuilder();
+    var ts_fn = new Action<Types>((ts) => { BindTrace(ts, log); });
+
+    var vm = MakeVM(bhl, ts_fn);
+    Execute(vm, "test");
+    Assert.Equal("42:0;42:1;42:2;", log.ToString());
+    CommonChecks(vm);
+  }
+
+  [Fact]
   public void TestCaptureMixCopyAndStrong()
   {
     string bhl = @"

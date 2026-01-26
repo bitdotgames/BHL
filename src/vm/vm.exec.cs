@@ -1,5 +1,5 @@
 //#define ENABLE_IL2CPP
-//#define USE_OPCODE_SWITCH
+//#define BHL_USE_OPCODE_SWITCH
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -518,7 +518,7 @@ public partial class VM
 
     static unsafe void InitOpcodeHandlers()
     {
-#if !USE_OPCODE_SWITCH
+#if !BHL_USE_OPCODE_SWITCH
 #if ENABLE_IL2CPP
       op_handlers[(int)Opcodes.Add] = OpcodeAdd;
       op_handlers[(int)Opcodes.Concat] = OpcodeConcat;
@@ -806,7 +806,7 @@ public partial class VM
       {
         var bytes = frame.bytecode;
         var opcode = bytes[ip];
-#if !USE_OPCODE_SWITCH
+#if !BHL_USE_OPCODE_SWITCH
         op_handlers[opcode](vm, this, ref region,  ref frame, bytes);
         ++ip;
       }
@@ -819,7 +819,7 @@ public partial class VM
 #endif
 
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Constant:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -869,12 +869,12 @@ public partial class VM
               throw new Exception("Bad type");
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Add:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -887,11 +887,11 @@ public partial class VM
           ref Val l_operand = ref stack.vals[stack.sp - 1];
           l_operand.num += r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Sub:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -904,11 +904,11 @@ public partial class VM
           ref Val l_operand = ref stack.vals[stack.sp - 1];
           l_operand.num -= r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Div:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -921,11 +921,11 @@ public partial class VM
           ref Val l_operand = ref stack.vals[stack.sp - 1];
           l_operand.num /= r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Mul:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -938,11 +938,11 @@ public partial class VM
           ref Val l_operand = ref stack.vals[stack.sp - 1];
           l_operand.num *= r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetVar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -955,11 +955,11 @@ public partial class VM
           new_val = frame.locals.vals[frame.locals_offset + local_idx];
           new_val._refc?.Retain();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetVar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -973,11 +973,11 @@ public partial class VM
           current._refc?.Release();
           current = new_val;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetVarScalar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -992,11 +992,11 @@ public partial class VM
           new_val.type = source.type;
           new_val.num = source.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetVarScalar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1011,11 +1011,11 @@ public partial class VM
           dest.type = new_val.type;
           dest.num = new_val.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.DeclVar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1033,11 +1033,11 @@ public partial class VM
 
           InitDefaultVal(type, ref curr);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetGVar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1053,11 +1053,11 @@ public partial class VM
           val_ref.val._refc?.Release();
           val_ref.val = new_val;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetGVar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1073,11 +1073,11 @@ public partial class VM
           v = val_ref.val;
           v._refc?.Retain();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Nop:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1085,11 +1085,11 @@ public partial class VM
 #endif
         {
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Frame:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1117,11 +1117,11 @@ public partial class VM
           //temporary stack lives after local variables
           stack.sp += rest_local_vars_num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Return:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1130,11 +1130,11 @@ public partial class VM
         {
           exec.ip = EXIT_FRAME_IP - 1;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Jump:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1144,11 +1144,11 @@ public partial class VM
           short offset = (short)Bytecode.Decode16(bytes, ref exec.ip);
           exec.ip += offset;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.JumpZ:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1162,11 +1162,11 @@ public partial class VM
           if(v.num == 0)
             exec.ip += offset;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.JumpPeekZ:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1177,11 +1177,11 @@ public partial class VM
           if(exec.stack.vals[exec.stack.sp - 1].num != 1)
             exec.ip += offset;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.JumpPeekNZ:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1192,11 +1192,11 @@ public partial class VM
           if(exec.stack.vals[exec.stack.sp - 1].num == 1)
             exec.ip += offset;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Concat:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1209,11 +1209,11 @@ public partial class VM
           ref Val l_operand = ref stack.vals[stack.sp - 1];
           l_operand.obj = (string)l_operand.obj + (string)r_operand.obj;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Pop:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1229,11 +1229,11 @@ public partial class VM
 
           val.obj = null;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallLocal:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1250,11 +1250,11 @@ public partial class VM
           new_frame.InitWithOrigin(ref frame, func_ip);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallGlobNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1272,11 +1272,11 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Call:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1295,11 +1295,11 @@ public partial class VM
           new_frame.InitWithModule(func_mod, func_ip);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1321,12 +1321,12 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallMethod:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1354,11 +1354,11 @@ public partial class VM
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallMethodNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1383,11 +1383,11 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallMethodIface:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1417,11 +1417,11 @@ public partial class VM
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallMethodIfaceNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1446,11 +1446,11 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallMethodVirt:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1478,11 +1478,11 @@ public partial class VM
           new_frame.InitWithModule(func_symb._module, func_symb._ip_addr);
           CallFrame(exec, ref new_frame, new_frame_idx);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallFuncPtr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1515,11 +1515,11 @@ public partial class VM
 
           ptr.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallFuncPtrInv:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1571,11 +1571,11 @@ public partial class VM
 
           ptr.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallVarMethodNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1602,11 +1602,11 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.CallGVarMethodNative:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1633,11 +1633,11 @@ public partial class VM
             --exec.ip;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetFuncLocalPtr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1652,11 +1652,11 @@ public partial class VM
           ptr.Init(frame.module, func_symb._ip_addr);
           exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetFuncPtr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1673,11 +1673,11 @@ public partial class VM
           ptr.Init(func_mod, func_symb._ip_addr);
           exec.stack.Push(Val.NewObj(ptr, func_symb.signature));
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetFuncNativePtr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1697,11 +1697,11 @@ public partial class VM
           ptr.Init(nfunc_symb);
           exec.stack.Push(Val.NewObj(ptr, nfunc_symb.signature));
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetFuncIpPtr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1714,11 +1714,11 @@ public partial class VM
           ptr.Init(frame.module, func_ip);
           exec.stack.Push(Val.NewObj(ptr, Types.FuncPtr));
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1739,11 +1739,11 @@ public partial class VM
           //let's replace the value on the stack
           obj = res;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1762,11 +1762,11 @@ public partial class VM
           val._refc?.Release();
           obj._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetVarAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1786,11 +1786,11 @@ public partial class VM
           res._refc?.Retain();
           exec.stack.Push(res);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetVarAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1810,11 +1810,11 @@ public partial class VM
 
           val._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetAttrPeek:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1832,11 +1832,11 @@ public partial class VM
 
           val._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetRefAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1859,11 +1859,11 @@ public partial class VM
           res._refc?.Retain();
           exec.stack.Push(res);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetRefAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1886,11 +1886,11 @@ public partial class VM
 
           val._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetGVarAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1912,11 +1912,11 @@ public partial class VM
           res._refc?.Retain();
           exec.stack.Push(res);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetGVarAttr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1937,11 +1937,11 @@ public partial class VM
 
           val._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.UnaryNot:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1954,11 +1954,11 @@ public partial class VM
           //resulting operand is Bool as well, so we don't replace it
           val.num = val.num != 1 ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.UnaryNeg:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1971,11 +1971,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           val.num *= -1;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.And:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1990,11 +1990,11 @@ public partial class VM
           //resulting operand is Bool as well, so we don't replace it
           l_operand.num = l_operand.num == 1 && r_operand.num == 1 ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Or:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2009,11 +2009,11 @@ public partial class VM
           //resulting operand is Bool as well, so we don't replace it
           l_operand.num = l_operand.num == 1 || r_operand.num == 1 ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Mod:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2028,11 +2028,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           l_operand.num %= r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.BitOr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2047,11 +2047,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           l_operand.num = (int)l_operand.num | (int)r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.BitAnd:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2066,11 +2066,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           l_operand.num = (int)l_operand.num & (int)r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.EqualScalar:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2085,11 +2085,11 @@ public partial class VM
           l_operand.type = Types.Bool;
           l_operand.num = r_operand.num == l_operand.num ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.EqualString:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2105,11 +2105,11 @@ public partial class VM
           l_operand.num = (string)r_operand.obj == (string)l_operand.obj ? 1 : 0;
           l_operand.obj = null;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Equal:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2133,11 +2133,11 @@ public partial class VM
           l_operand._refc?.Release();
           l_operand = res;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.LT:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2153,11 +2153,11 @@ public partial class VM
           l_operand.type = Types.Bool;
           l_operand.num = l_operand.num < r_operand.num ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.LTE:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2173,11 +2173,11 @@ public partial class VM
           l_operand.type = Types.Bool;
           l_operand.num = l_operand.num <= r_operand.num ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GT:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2193,11 +2193,11 @@ public partial class VM
           l_operand.type = Types.Bool;
           l_operand.num = l_operand.num > r_operand.num ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GTE:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2213,11 +2213,11 @@ public partial class VM
           l_operand.type = Types.Bool;
           l_operand.num = l_operand.num >= r_operand.num ? 1 : 0;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.UnaryBitNot:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2230,11 +2230,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           val.num = ~((int)val.num);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.TypeCast:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2269,11 +2269,11 @@ public partial class VM
               val.type = cast_type;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.TypeAs:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2298,11 +2298,11 @@ public partial class VM
           }
 
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.TypeIs:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2317,11 +2317,11 @@ public partial class VM
           val = Types.Is(val, as_type);
           refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Typeof:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2333,11 +2333,11 @@ public partial class VM
 
           exec.stack.Push(Val.NewObj(type, Types.Type));
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.DefArg:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2368,11 +2368,11 @@ public partial class VM
           else
             exec.ip += jump_add;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Scope:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2383,11 +2383,11 @@ public partial class VM
 
           exec.PushRegion(region.frame_idx, exec.ip + 1, exec.ip + size);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Defer:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2405,11 +2405,11 @@ public partial class VM
           //NOTE: we need to skip the defer block
           exec.ip += size;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Paral:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2442,11 +2442,11 @@ public partial class VM
           //let's cancel ip incrementing
           --exec.ip;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.ParalAll:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2480,11 +2480,11 @@ public partial class VM
           //let's cancel ip incrementing
           --exec.ip;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.New:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2502,11 +2502,11 @@ public partial class VM
           ref var val = ref exec.stack.Push();
           cls.creator(exec, ref val, cls);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetUpval:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2523,15 +2523,14 @@ public partial class VM
           upval.frame_local_idx = func_ptr_local_idx;
 
           ref var val = ref frame.locals.vals[frame.locals_offset + frame_local_idx];
-          if(mode == UpvalMode.STRONG)
-            val._refc?.Retain();
+          val._refc?.Retain();
           upval.val = val;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Inc:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2541,11 +2540,11 @@ public partial class VM
           int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
           ++frame.locals.vals[frame.locals_offset + var_idx].num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.Dec:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2555,11 +2554,11 @@ public partial class VM
           int var_idx = Bytecode.Decode8(bytes, ref exec.ip);
           --frame.locals.vals[frame.locals_offset + var_idx].num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.ArrIdx:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2576,11 +2575,11 @@ public partial class VM
           //let's replace with the result
           arr = res;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.ArrIdxW:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2597,11 +2596,11 @@ public partial class VM
           val._refc?.Release();
           arr._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.ArrAddInplace:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2616,11 +2615,11 @@ public partial class VM
           ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
           exec.stack.Push(self);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.BitShr:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2635,11 +2634,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           l_operand.num = (int)l_operand.num >> (int)r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.BitShl:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2654,11 +2653,11 @@ public partial class VM
           //resulting operand is Int as well, so we don't replace it
           l_operand.num = (int)l_operand.num << (int)r_operand.num;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.MapIdx:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2677,11 +2676,11 @@ public partial class VM
           key._refc?.Release();
           map._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.MapIdxW:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2699,11 +2698,11 @@ public partial class VM
           val._refc?.Release();
           map._refc?.Release();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.MapAddInplace:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2718,11 +2717,11 @@ public partial class VM
           ((FuncSymbolNative)class_type._all_members[0]).cb(exec, default);
           exec.stack.Push(self);
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.MakeRef:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2747,11 +2746,11 @@ public partial class VM
             curr = vr_val;
           }
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.GetRef:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2767,11 +2766,11 @@ public partial class VM
           v = val_ref.val;
           v._refc?.Retain();
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           case Opcodes.SetRef:
 #else
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2787,11 +2786,11 @@ public partial class VM
           val_ref.val._refc?.Release();
           val_ref.val = new_val;
         }
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
           break;
 #endif
 
-#if USE_OPCODE_SWITCH
+#if BHL_USE_OPCODE_SWITCH
         }
 
         ++ip;

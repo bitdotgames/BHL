@@ -1,3 +1,4 @@
+#define BHL_STACKTRACE
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -146,7 +147,9 @@ public partial class VM : INamedResolver
       if(IsStopped())
         return false;
 
+#if BHL_STACKTRACE
       try
+#endif
       {
         exec.Execute();
 
@@ -154,6 +157,7 @@ public partial class VM : INamedResolver
         if(status != BHS.RUNNING)
           _AfterStop();
       }
+#if BHL_STACKTRACE
       catch(Exception e)
       {
         var trace = new List<VM.TraceItem>();
@@ -166,6 +170,7 @@ public partial class VM : INamedResolver
         }
         throw new Error(trace, e);
       }
+#endif
 
       return !IsStopped();
     }
