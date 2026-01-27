@@ -19,6 +19,8 @@ clean:
 	rm -rf ./src/compile/bin
 	rm -rf ./src/lsp/obj
 	rm -rf ./src/lsp/bin
+	rm -rf ./tests/build
+	rm -rf ./tests/obj
 
 .PHONY: lsp
 lsp: publish
