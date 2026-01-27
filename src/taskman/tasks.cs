@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Linq;
 using ThreadTask = System.Threading.Tasks.Task;
 
 #pragma warning disable CS8981
@@ -17,6 +18,21 @@ public static partial class Tasks
         Path.GetFullPath(
           Path.GetDirectoryName(BuildUtils.GetSelfFile()) + "/../../../../")
       );
+    }
+  }
+
+  private static string _targetFramework;
+
+  public static string TargetFramework
+  {
+    get
+    {
+      if(_targetFramework == null)
+      {
+        var doc = XDocument.Parse(File.ReadAllText(BHL_ROOT + "/Directory.Build.props"));
+        _targetFramework = doc.Root.Element("PropertyGroup").Element("TargetFramework").Value;
+      }
+      return _targetFramework;
     }
   }
 
@@ -62,8 +78,7 @@ public static partial class Tasks
     bool force,
     string[] srcs,
     string result,
-    List<string> defines,
-    string framework = "net8.0"
+    List<string> defines
   )
   {
     var files = new List<string>();
@@ -100,8 +115,7 @@ public static partial class Tasks
       files,
       deps,
       pkgs,
-      defines,
-      framework
+      defines
     );
 
     string result_dll = result + "/" + Path.GetFileName(result);
@@ -125,13 +139,13 @@ public static partial class Tasks
       {
         try
         {
-          tm.Shell("dotnet", "clean --framework " + framework + " " + csproj_file);
+          tm.Shell("dotnet", "clean --framework " + TargetFramework + " " + csproj_file);
         }
         catch(Exception)
         {}
       }
 
-      tm.Shell("dotnet", "build --framework " + framework + " " + csproj_file + " -o " + result);
+      tm.Shell("dotnet", "build --framework " + TargetFramework + " " + csproj_file + " -o " + result);
 
       //let's force file modification time since .Net may use result from the cache
       //without changing the file time
@@ -146,8 +160,7 @@ public static partial class Tasks
     List<string> files,
     List<string> deps,
     List<string> pkgs,
-    List<string> defines,
-    string framework
+    List<string> defines
   )
   {
     string csproj_header = @$"
@@ -156,7 +169,7 @@ public static partial class Tasks
   <AssemblyName>{name}</AssemblyName>
   <OutputType>Library</OutputType>
   <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  <TargetFramework>{framework}</TargetFramework>
+  <TargetFramework>{TargetFramework}</TargetFramework>
   <DefineConstants>{string.Join(';', defines)}</DefineConstants>
 </PropertyGroup>
  ";
