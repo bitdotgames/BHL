@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <OutputPath>build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <Optimize>true</Optimize>

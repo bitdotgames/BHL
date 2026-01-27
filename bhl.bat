@@ -2,7 +2,7 @@
 setlocal
 
 set DIR=%~dp0
-set BHL_DLL=%DIR%\build\Release\net8.0\bhl\net8.0\bhl.dll
+set BHL_DLL=%DIR%\build\bhl\Release\net8.0\bhl.dll
 set VERS=%DIR%\src\vm\version.cs
 
 IF DEFINED BHL_REBUILD GOTO :BUILD

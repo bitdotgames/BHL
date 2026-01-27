@@ -2,7 +2,6 @@
   <PropertyGroup>
     <AssemblyName>bhl_runtime</AssemblyName>
     <OutputType>Library</OutputType>
-    <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     <RootNamespace>bhl</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

@@ -3,7 +3,6 @@
         <RootNamespace>bhl</RootNamespace>
         <DefineConstants>BHL_FRONT</DefineConstants>
         <GenerateProgramFile>false</GenerateProgramFile>
-        <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     </PropertyGroup>
 
     <ItemGroup>

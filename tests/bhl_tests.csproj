@@ -2,7 +2,6 @@
   <PropertyGroup>
     <RootNamespace>bhl</RootNamespace>
     <DefineConstants>BHL_FRONT</DefineConstants>
-    <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     <NoWarn>VSTHRD200</NoWarn>
   </PropertyGroup>
 
