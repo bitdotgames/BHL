@@ -1,12 +1,10 @@
-NET=net8.0
-
 .PHONY: build
 build:
-	dotnet build --framework $(NET) bhl.csproj
+	dotnet build bhl.csproj
 
 .PHONY: publish
 publish:
-	dotnet publish --framework $(NET) bhl.csproj
+	dotnet publish bhl.csproj
 
 .PHONY: clean
 clean:
@@ -27,11 +25,11 @@ lsp: publish
 
 .PHONY: test
 test:
-	cd ./tests && dotnet test --framework $(NET)
+	cd ./tests && dotnet test
 
 .PHONY: bench
 bench:
-	cd ./bench && dotnet run -c Release --framework $(NET) -- --minIterationCount 9 --maxIterationCount 12 -f '*'
+	cd ./bench && dotnet run -c Release -- --minIterationCount 9 --maxIterationCount 12 -f '*'
 
 .PHONY: examples
 examples:
