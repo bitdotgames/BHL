@@ -5,8 +5,6 @@
     <RootNamespace>bhl</RootNamespace>
     <DefineConstants>BHL_FRONT</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>CS8981</NoWarn>
   </PropertyGroup>

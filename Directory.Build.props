@@ -1,7 +1,10 @@
 <Project>
   <PropertyGroup>
-    <BaseOutputPath>$(SolutionDir)build\$(MSBuildProjectName)\</BaseOutputPath>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <BaseOutputPath>$(RepoRoot)\build\$(MSBuildProjectName)\</BaseOutputPath>
     <BaseIntermediateOutputPath>$(BaseOutputPath)obj\</BaseIntermediateOutputPath>
     <TargetFramework>net8.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 </Project>

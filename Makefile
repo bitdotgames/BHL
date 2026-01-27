@@ -15,10 +15,13 @@ clean:
 	rm -rf ./tmp
 	rm -rf ./src/vm/obj
 	rm -rf ./src/vm/bin
+	rm -rf ./src/vm/build
 	rm -rf ./src/compile/obj
 	rm -rf ./src/compile/bin
+	rm -rf ./src/compile/build
 	rm -rf ./src/lsp/obj
 	rm -rf ./src/lsp/bin
+	rm -rf ./src/lsp/build
 	rm -rf ./tests/build
 	rm -rf ./tests/obj
 
