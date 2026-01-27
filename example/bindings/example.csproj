@@ -4,7 +4,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <OutputPath>build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-    <TargetFramework>net8.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>

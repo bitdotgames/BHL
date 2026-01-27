@@ -4,7 +4,6 @@
     <OutputType>Library</OutputType>
     <OutputPath>..\..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     <RootNamespace>bhl</RootNamespace>
-    <TargetFrameworks>net8.0</TargetFrameworks>
     <DefineConstants>BHL_FRONT</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

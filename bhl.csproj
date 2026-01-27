@@ -1,9 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <OutputPath>build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
-    <TargetFramework>net8.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <Optimize>true</Optimize>

@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>bhl</RootNamespace>
-    <TargetFrameworks>net8.0</TargetFrameworks>
     <DefineConstants>BHL_FRONT</DefineConstants>
     <OutputPath>..\build\$(Configuration)\$(TargetFramework)\$(MSBuildProjectName)</OutputPath>
     <NoWarn>VSTHRD200</NoWarn>
