@@ -16,10 +16,10 @@ public static partial class std
       var bind = m.ns.Nest("std").Nest("bind");
 
       var symbol_type = new ClassSymbolNative(new Origin(), "Symbol", null, null, typeof(bhl.Namespace));
-      ts.ns.Define(symbol_type);
+      bind.Define(symbol_type);
 
       var ns_type = new ClassSymbolNative(new Origin(), "Namespace", null, null, typeof(bhl.Namespace));
-      ts.ns.Define(ns_type);
+      bind.Define(ns_type);
       {
         {
           var fn = new FuncSymbolNative(new Origin(), "Define", Types.Void,
@@ -41,7 +41,7 @@ public static partial class std
       ns_type.Setup();
 
       var proxy_type = new ClassSymbolNative(new Origin(), "ProxyType", null, null, typeof(bhl.ProxyType));
-      ts.ns.Define(proxy_type);
+      bind.Define(proxy_type);
       proxy_type.Setup();
 
       {
@@ -55,7 +55,7 @@ public static partial class std
           },
           typeof(bhl.Types)
           );
-        ts.ns.Define(cl);
+        bind.Define(cl);
 
         cl.Define(new FieldSymbol(new Origin(), "ns", ns_type,
           (VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) =>
@@ -87,12 +87,12 @@ public static partial class std
         cl.Setup();
       }
 
-      var fsn_type = new ClassSymbolNative(new Origin(), "FuncSymbolNative", null, null, typeof(bhl.FuncSymbolNative));
-      ts.ns.Define(fsn_type);
+      var fsn_type = new ClassSymbolNative(new Origin(), "FuncSymbolNative", symbol_type, null, null, typeof(bhl.FuncSymbolNative));
+      bind.Define(fsn_type);
       fsn_type.Setup();
 
       var fsn_arg_type = new ClassSymbolNative(new Origin(), "FuncArgSymbol", null, null, typeof(bhl.FuncArgSymbol));
-      ts.ns.Define(fsn_arg_type);
+      bind.Define(fsn_arg_type);
       fsn_arg_type.Setup();
 
       {
@@ -121,7 +121,24 @@ public static partial class std
           new FuncArgSymbol("type", proxy_type),
           new FuncArgSymbol("args", ts.TArr(fsn_arg_type))
         );
-        ts.ns.Define(fn);
+        bind.Define(fn);
+      }
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewFuncArgSymbol", fsn_arg_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            var type_ref = (ProxyType)exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+
+            var farg = new FuncArgSymbol(name, type_ref);
+            exec.stack.Push(Val.NewObj(farg, fsn_arg_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("type", proxy_type)
+        );
+        bind.Define(fn);
       }
 
       return m;

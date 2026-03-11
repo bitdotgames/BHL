@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Options;
 using ThreadTask = System.Threading.Tasks.Task;
 
@@ -32,7 +33,7 @@ public static partial class Tasks
 
     bool force_rebuild = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BHL_REBUILD"));
 
-    var bindings_sources = proj.bindings_sources;
+    var bindings_sources = proj.bindings_sources.Where(f => f.EndsWith(".cs")).ToList();
     if(bindings_sources.Count > 0)
     {
       if(string.IsNullOrEmpty(proj.bindings_dll))

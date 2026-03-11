@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Buffers;
-using System.Collections.Concurrent;
-using System.Threading;
 
 namespace bhl
 {
@@ -17,6 +15,30 @@ public class EmptyUserBindings : IUserBindings
 {
   public void Register(Types ts)
   {
+  }
+}
+
+public class ScriptedBindings : IUserBindings
+{
+  string script_path;
+  string func_name;
+
+  public ScriptedBindings(string script_path, string func_name)
+  {
+    this.script_path = script_path;
+    this.func_name = func_name;
+  }
+
+  public void Register(Types ts)
+  {
+    var vm = CompilationExecutor.CompileAndLoadVM(
+        new List<string> { script_path }
+      ).GetAwaiter().GetResult();
+    if(vm == null)
+      throw new Exception("VM was not loaded");
+    var val = new Val();
+    val.obj = ts;
+    vm.Execute(func_name, val);
   }
 }
 

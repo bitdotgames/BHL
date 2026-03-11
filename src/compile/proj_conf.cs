@@ -50,6 +50,10 @@ public class ProjectConf
   public int max_threads = 1;
   public bool deterministic = false;
 
+  public const string DefaultBindingsScriptName = "RegisterBindings";
+
+  //NOTE: 1) if there's a .bhl script it's assumed to define a global RegisterBindings(..) function
+  //      2) if there are .cs sources they will be built into a bindings_dll
   public List<string> bindings_sources = new List<string>();
 
   //NOTE: this can be a directory path as well containing dll
@@ -106,28 +110,49 @@ public class ProjectConf
     );
   }
 
-  public IUserBindings LoadBindings()
+  bool TryGetBindingsScript(out string script, out string func_name)
   {
-    if(string.IsNullOrEmpty(bindings_dll))
-      return new EmptyUserBindings();
+    script = null;
+    func_name = null;
 
-    var userbindings_assembly = LoadAssemblyFromDirOrFile(bindings_dll);
-    var types = userbindings_assembly.GetTypes();
+    if(bindings_sources.Count == 0)
+      return false;
 
-    Type userbindings_class = null;
-    foreach(var type in types)
+    if(bindings_sources[0].EndsWith(".bhl"))
     {
-      if(typeof(IUserBindings).IsAssignableFrom(type))
-      {
-        userbindings_class = type;
-        break;
-      }
+      script = bindings_sources[0];
+      func_name = DefaultBindingsScriptName;
     }
 
-    if(userbindings_class == null)
-      throw new Exception("IUserBindings instance not found");
+    return false;
+  }
 
-    return Activator.CreateInstance(userbindings_class) as IUserBindings;
+  public IUserBindings LoadBindings()
+  {
+    if(!string.IsNullOrEmpty(bindings_dll))
+    {
+      var userbindings_assembly = LoadAssemblyFromDirOrFile(bindings_dll);
+      var types = userbindings_assembly.GetTypes();
+
+      Type userbindings_class = null;
+      foreach(var type in types)
+      {
+        if(typeof(IUserBindings).IsAssignableFrom(type))
+        {
+          userbindings_class = type;
+          break;
+        }
+      }
+
+      if(userbindings_class == null)
+        throw new Exception("IUserBindings instance not found");
+
+      return Activator.CreateInstance(userbindings_class) as IUserBindings;
+    }
+    else if(TryGetBindingsScript(out var script, out string func_name))
+      return new ScriptedBindings(script, func_name);
+    else
+      return new EmptyUserBindings();
   }
 
   public IFrontPostProcessor LoadPostprocessor()

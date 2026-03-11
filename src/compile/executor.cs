@@ -28,6 +28,51 @@ public class CompilationExecutor
   public int cache_miss { get; private set; }
   public int cache_errs { get; private set; }
 
+  //NOTE: compiles all files but loads the module from the file at index 0,
+  //      returns null in case of compilation errors
+  public static async Task<VM> CompileAndLoadVM(List<string> files)
+  {
+    string src_dir = Path.GetDirectoryName(files[0]);
+    if(string.IsNullOrEmpty(src_dir))
+      src_dir = "./";
+
+    var proj = new ProjectConf();
+    proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
+    proj.use_cache = false;
+    proj.max_threads = 1;
+    proj.src_dirs.Add(src_dir);
+    proj.result_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
+    proj.tmp_dir = Path.GetTempPath();
+    proj.verbosity = 0;
+    proj.Setup();
+
+    var conf = new CompileConf();
+    conf.logger = new Logger(1, new ConsoleLogger());
+    conf.proj = proj;
+    conf.ts = new Types();
+    conf.self_file = BuildUtils.GetSelfFile();
+    conf.files = BuildUtils.NormalizeFilePaths(files);
+    conf.bindings = new EmptyUserBindings();
+    conf.postproc = new EmptyPostProcessor();
+
+    var cmp = new CompilationExecutor();
+    var errors = await cmp.Exec(conf);
+
+    if(errors.Count > 0)
+    {
+      foreach(var err in errors)
+        ErrorUtils.OutputError(err.file, err.range.start.line, err.range.start.column, err.text);
+      return null;
+    }
+
+    var bytes = new MemoryStream(File.ReadAllBytes(conf.proj.result_file));
+    var vm = new VM(conf.ts, new ModuleLoader(conf.ts, bytes));
+
+    vm.LoadModule(Path.GetFileNameWithoutExtension(files[0]));
+
+    return vm;
+  }
+
   public async Task<CompileErrors> Exec(CompileConf conf)
   {
     var sw = Stopwatch.StartNew();
