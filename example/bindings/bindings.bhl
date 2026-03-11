@@ -1,0 +1,21 @@
+import "std/bind"
+
+
+func Register(std.bind.Types types) {
+
+    {
+      var fn = std.bind.NewFuncSymbolNative("Trace", types.T("void"),
+       [
+        std.bind.NewFuncArgSymbol("str", std.bind.T("string"))
+       ]
+      )
+      types.ns.Define(fn)
+    }
+
+    {
+      var fn = std.bind.NewFuncSymbolNative("Rand", types.T("float"),
+      []
+      )
+      types.ns.Define(fn)
+    }
+}

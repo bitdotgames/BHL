@@ -318,6 +318,11 @@ public static class ScopeExtensions
       return new TypeArg(s);
     }
 
+    public static implicit operator TypeArg(ClassSymbolNative s)
+    {
+      return new TypeArg(s);
+    }
+
     public TypeArg(string name)
     {
       this.name = name;

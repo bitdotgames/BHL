@@ -658,7 +658,7 @@ public class TestFiber : BHL_TestBase
           fb_ref.Get()?.Stop();
           return null;
         },
-        new FuncArgSymbol("fb", ts.T(Types.FiberRef))
+        new FuncArgSymbol("fb", Types.FiberRef)
       );
       ts.ns.Define(fn);
     });
@@ -741,7 +741,7 @@ public class TestFiber : BHL_TestBase
         {
           return CoroutinePool.New<YIELD_STOP>(exec.vm);
         },
-        new FuncArgSymbol("fb", ts.T(Types.FiberRef))
+        new FuncArgSymbol("fb", Types.FiberRef)
       );
       ts.ns.Define(fn);
     });

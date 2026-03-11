@@ -5,7 +5,7 @@ using System;
 namespace bhl
 {
 
-public static class std
+public static partial class std
 {
   class CoroutineNextTrue : Coroutine
   {
@@ -35,7 +35,7 @@ public static class std
     var std = m.ns.Nest("std");
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "GetType", ts.T(Types.Type),
+      var fn = new FuncSymbolNative(new Origin(), "GetType", Types.Type,
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           ref var o = ref exec.stack.Peek();
@@ -62,7 +62,7 @@ public static class std
           return null;
         },
         new FuncArgSymbol("o", ts.T("any")),
-        new FuncArgSymbol("type", ts.T(Types.Type))
+        new FuncArgSymbol("type", Types.Type)
       );
       std.Define(fn);
     }

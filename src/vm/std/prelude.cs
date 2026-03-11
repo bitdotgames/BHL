@@ -47,7 +47,7 @@ public static class Prelude
     }
 
     {
-      var fn = new FuncSymbolNative(new Origin(), "start", m.ts.T(Types.FiberRef),
+      var fn = new FuncSymbolNative(new Origin(), "start", Types.FiberRef,
         (VM.ExecState exec, FuncArgsInfo args_info) =>
         {
           var val_ptr = exec.stack.Pop();
@@ -75,7 +75,7 @@ public static class Prelude
           fb?.Stop();
           return null;
         },
-        new FuncArgSymbol("fb", m.ts.T(Types.FiberRef))
+        new FuncArgSymbol("fb", Types.FiberRef)
       );
       m.ns.Define(fn);
     }

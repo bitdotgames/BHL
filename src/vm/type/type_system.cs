@@ -227,6 +227,7 @@ public class Types : INamedResolver
 
     RegisterModule(std.MakeModule(this));
     RegisterModule(std.io.MakeModule(this));
+    RegisterModule(std.bind.MakeModule(this));
   }
 
   public bool IsImported(Module m)

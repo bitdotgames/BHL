@@ -527,6 +527,12 @@ public class ClassSymbolNative : ClassSymbol, INativeType
     this.native_comparer = native_comparer;
   }
 
+  //for convenience
+  public static implicit operator ProxyType(ClassSymbolNative s)
+  {
+    return new ProxyType(s);
+  }
+
   public System.Type GetNativeType()
   {
     return native_type;
