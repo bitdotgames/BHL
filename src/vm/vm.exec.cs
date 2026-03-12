@@ -1,3 +1,4 @@
+//#define BHL_STACKTRACE
 //#define ENABLE_IL2CPP
 //#define BHL_USE_OPCODE_SWITCH
 using System;
@@ -249,10 +250,13 @@ public partial class VM
     frame.InitWithModule(fs._module, fs._ip_addr);
     exec.PushFrameRegion(ref frame, frame_idx);
 
+#if BHL_STACKTRACE
     try
+#endif
     {
       exec.Execute();
     }
+#if BHL_STACKTRACE
     catch(Exception e)
     {
       var trace = new List<VM.TraceItem>();
@@ -265,6 +269,7 @@ public partial class VM
       }
       throw new Error(trace, e);
     }
+#endif
 
     if(exec.status == BHS.RUNNING)
       throw new Exception($"Not expected to be running: {fs}");

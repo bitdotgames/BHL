@@ -9,6 +9,8 @@ public static partial class std
 {
   public static class bind
   {
+    public static ClassSymbolNative TypesSymbol;
+
     static public Module MakeModule(Types ts)
     {
       var m = new Module(ts, "std/bind");
@@ -26,10 +28,11 @@ public static partial class std
             (VM.ExecState exec, FuncArgsInfo args_info) =>
             {
               ref var self = ref exec.GetSelfRef();
+              var ns = (Namespace)self.obj;
               var symbol = (Symbol)exec.stack.Pop().obj;
               exec.stack.Pop(); //for self
 
-              ((Namespace)self.obj).Define(symbol);
+              ns.Define(symbol);
 
               return null;
             },
@@ -72,11 +75,12 @@ public static partial class std
             (VM.ExecState exec, FuncArgsInfo args_info) =>
             {
               ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
               string type = exec.stack.Pop();
               exec.stack.Pop(); //for self
 
-              var t = new ProxyType((Namespace)self.obj, type);
-              exec.stack.Push(Val.NewObj(t, proxy_type));
+              var proxy = types.T(type);
+              exec.stack.Push(Val.NewObj(proxy, proxy_type));
               return null;
             },
             new FuncArgSymbol("type", Types.String)
@@ -85,6 +89,7 @@ public static partial class std
         }
 
         cl.Setup();
+        TypesSymbol = cl;
       }
 
       var fsn_type = new ClassSymbolNative(new Origin(), "FuncSymbolNative", symbol_type, null, null, typeof(bhl.FuncSymbolNative));

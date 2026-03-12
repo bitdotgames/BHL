@@ -36,9 +36,7 @@ public class ScriptedBindings : IUserBindings
       ).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("VM was not loaded");
-    var val = new Val();
-    val.obj = ts;
-    vm.Execute(func_name, val);
+    vm.Execute(func_name, Val.NewObj(ts, std.bind.TypesSymbol));
   }
 }
 
