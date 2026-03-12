@@ -89,6 +89,9 @@ public static partial class std
         }
 
         cl.Setup();
+        //TODO: this looks a bit dirty but 'kinda ok' for now,
+        //      maybe it makes sense to bind these symbols as static ones
+        //      and just add them to the newly registered modules?
         TypesSymbol = cl;
       }
 
@@ -108,6 +111,7 @@ public static partial class std
             List<FuncArgSymbol> func_args = new();
             foreach(var arg in args)
               func_args.Add((FuncArgSymbol)arg.obj);
+            args.Release();
 
             var type_ref = (ProxyType)exec.stack.Pop().obj;
             string name = exec.stack.Pop();

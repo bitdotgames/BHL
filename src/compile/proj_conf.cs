@@ -122,6 +122,7 @@ public class ProjectConf
     {
       script = bindings_sources[0];
       func_name = DefaultBindingsScriptName;
+      return true;
     }
 
     return false;

@@ -32,6 +32,16 @@ public class TestBindings : BHL_TestBase
 
     var vm = MakeVM(bhl);
     vm.Execute("RegisterBindings", Val.NewObj(new_types, std.bind.TypesSymbol));
+
+    var trace_fn = (FuncSymbolNative)new_types.ns.Resolve("Trace");
+    Assert.Equal("Trace", trace_fn.name);
+    Assert.Equal(Types.Void, trace_fn.GetReturnType());
+    Assert.Equal("str", trace_fn.GetArg(0).name);
+
+    var rand_fn = (FuncSymbolNative)new_types.ns.Resolve("Rand");
+    Assert.Equal("Rand", rand_fn.name);
+    Assert.Equal(Types.Float, rand_fn.GetReturnType());
+
     CommonChecks(vm);
   }
 }

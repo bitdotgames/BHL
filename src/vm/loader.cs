@@ -31,12 +31,16 @@ public class ScriptedBindings : IUserBindings
 
   public void Register(Types ts)
   {
+#if BHL_FRONT
     var vm = CompilationExecutor.CompileAndLoadVM(
         new List<string> { script_path }
       ).GetAwaiter().GetResult();
     if(vm == null)
       throw new Exception("VM was not loaded");
     vm.Execute(func_name, Val.NewObj(ts, std.bind.TypesSymbol));
+#else
+    throw new NotImplementedException();
+#endif
   }
 }
 
