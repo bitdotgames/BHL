@@ -150,6 +150,34 @@ public static partial class std
         bind.Define(fn);
       }
 
+      var cln_type = new ClassSymbolNative(new Origin(), "ClassSymbolNative", symbol_type, null, null, typeof(bhl.ClassSymbolNative));
+      bind.Define(cln_type);
+      cln_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolNative", cln_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            bool has_ctor = exec.stack.Pop();
+            var parent_type_ref_obj = exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+
+            var cl = new ClassSymbolNative(
+              new Origin(), //pass it from above?
+              name,
+              parent_type_ref_obj == null ? new ProxyType() : (ProxyType)parent_type_ref_obj,
+              has_ctor ? delegate(VM.ExecState exec, ref Val v, IType type) {} : null
+              );
+            exec.stack.Push(Val.NewObj(cl, cln_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("parent_type", proxy_type),
+          new FuncArgSymbol("has_ctor", Types.Bool)
+        );
+        bind.Define(fn);
+      }
+
       return m;
     }
   }

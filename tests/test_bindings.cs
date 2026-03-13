@@ -25,6 +25,11 @@ public class TestBindings : BHL_TestBase
         )
         types.ns.Define(fn)
       }
+
+      {
+        var cl = std.bind.NewClassSymbolNative(""Color"", null, true)
+        types.ns.Define(cl)
+      }
     }
     ";
 
@@ -41,6 +46,9 @@ public class TestBindings : BHL_TestBase
     var rand_fn = (FuncSymbolNative)new_types.ns.Resolve("Rand");
     Assert.Equal("Rand", rand_fn.name);
     Assert.Equal(Types.Float, rand_fn.GetReturnType());
+
+    var color_cl = (ClassSymbolNative)new_types.ns.Resolve("Color");
+    Assert.Equal("Color", color_cl.name);
 
     CommonChecks(vm);
   }
