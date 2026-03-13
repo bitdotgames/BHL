@@ -150,8 +150,74 @@ public static partial class std
         bind.Define(fn);
       }
 
+      var fld_type = new ClassSymbolNative(new Origin(), "FieldSymbol",symbol_type, null, null, typeof(bhl.FieldSymbol));
+      bind.Define(fld_type);
+      fld_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewFieldSymbol", fld_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            bool has_setter = exec.stack.Pop();
+            bool has_getter = exec.stack.Pop();
+            var type_ref = (ProxyType)exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+
+            var fld = new FieldSymbol(
+              new Origin(), //pass it from above?
+              name,
+              type_ref,
+              has_getter ? delegate(VM.ExecState exec, Val ctx, ref Val v, FieldSymbol fld) {} : null,
+              has_setter ? delegate(VM.ExecState exec, ref Val ctx, Val v, FieldSymbol fld) {} : null
+            );
+            exec.stack.Push(Val.NewObj(fld, fld_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("type", proxy_type),
+          new FuncArgSymbol("has_getter", Types.Bool),
+          new FuncArgSymbol("has_setter", Types.Bool)
+        );
+        bind.Define(fn);
+      }
+
       var cln_type = new ClassSymbolNative(new Origin(), "ClassSymbolNative", symbol_type, null, null, typeof(bhl.ClassSymbolNative));
       bind.Define(cln_type);
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "Define", Types.Void,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.GetSelfRef();
+            var cl = (ClassSymbolNative)self.obj;
+            var symbol = (Symbol)exec.stack.Pop().obj;
+            exec.stack.Pop(); //for self
+
+            cl.Define(symbol);
+
+            return null;
+          },
+          new FuncArgSymbol("symbol", symbol_type)
+        );
+        cln_type.Define(fn);
+      }
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "Setup", Types.Void,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.GetSelfRef();
+            var cl = (ClassSymbolNative)self.obj;
+            exec.stack.Pop(); //for self
+
+            cl.Setup();
+
+            return null;
+          }
+        );
+        cln_type.Define(fn);
+      }
+
       cln_type.Setup();
 
       {

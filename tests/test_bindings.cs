@@ -29,6 +29,10 @@ public class TestBindings : BHL_TestBase
       {
         var cl = std.bind.NewClassSymbolNative(""Color"", null, true)
         types.ns.Define(cl)
+
+        cl.Define(std.bind.NewFieldSymbol(""r"", types.T(""float""), true, true))
+
+        cl.Setup()
       }
     }
     ";
@@ -49,6 +53,9 @@ public class TestBindings : BHL_TestBase
 
     var color_cl = (ClassSymbolNative)new_types.ns.Resolve("Color");
     Assert.Equal("Color", color_cl.name);
+    var r_fld = (FieldSymbol)color_cl.Resolve("r");
+    Assert.Equal("r", r_fld.name);
+    Assert.Equal(Types.Float, r_fld.GetIType());
 
     CommonChecks(vm);
   }
