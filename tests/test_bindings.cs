@@ -31,6 +31,14 @@ public class TestBindings : BHL_TestBase
         types.ns.Define(cl)
 
         cl.Define(std.bind.NewFieldSymbol(""r"", types.T(""float""), true, true))
+        {
+          var fn = std.bind.NewFuncSymbolNative(""Add"", types.T(""Color""),
+            [
+              std.bind.NewFuncArgSymbol(""other"", types.T(""Color""))
+            ]
+          )
+          cl.Define(fn)
+        }
 
         cl.Setup()
       }
@@ -56,6 +64,8 @@ public class TestBindings : BHL_TestBase
     var r_fld = (FieldSymbol)color_cl.Resolve("r");
     Assert.Equal("r", r_fld.name);
     Assert.Equal(Types.Float, r_fld.GetIType());
+    var add_fn = (FuncSymbolNative)color_cl.Resolve("Add");
+    Assert.Equal(color_cl, add_fn.GetReturnType());
 
     CommonChecks(vm);
   }
