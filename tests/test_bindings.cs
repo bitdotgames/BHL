@@ -42,6 +42,15 @@ public class TestBindings : BHL_TestBase
 
         cl.Setup()
       }
+
+      {
+        var en = std.bind.NewEnumSymbolNative(""ModeType"")
+
+        en.DefineItem(""DEFAULT"", 0)
+        en.DefineItem(""BATTLE"", 1)
+
+        types.ns.Define(en);
+      }
     }
     ";
 
@@ -66,6 +75,15 @@ public class TestBindings : BHL_TestBase
     Assert.Equal(Types.Float, r_fld.GetIType());
     var add_fn = (FuncSymbolNative)color_cl.Resolve("Add");
     Assert.Equal(color_cl, add_fn.GetReturnType());
+
+    var mode_enum = (EnumSymbolNative)new_types.ns.Resolve("ModeType");
+    Assert.Equal("ModeType", mode_enum.name);
+    var itm1 = (EnumItemSymbol)mode_enum.Resolve("DEFAULT");
+    Assert.Equal("DEFAULT", itm1.name);
+    Assert.Equal(0, itm1.val);
+    var itm2 = (EnumItemSymbol)mode_enum.Resolve("BATTLE");
+    Assert.Equal("BATTLE", itm2.name);
+    Assert.Equal(1, itm2.val);
 
     CommonChecks(vm);
   }

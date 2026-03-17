@@ -244,6 +244,50 @@ public static partial class std
         bind.Define(fn);
       }
 
+      var enum_type = new ClassSymbolNative(new Origin(), "EnumSymbolNative", symbol_type, null, null, typeof(bhl.EnumSymbolNative));
+      bind.Define(enum_type);
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "DefineItem", Types.Void,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            ref var self = ref exec.GetSelfRef();
+            var enm = (EnumSymbolNative)self.obj;
+            int value = exec.stack.Pop();
+            string name = exec.stack.Pop();
+            exec.stack.Pop(); //for self
+
+            enm.Define(new EnumItemSymbol(new Origin(), name, value));
+
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("value", Types.Int)
+        );
+        enum_type.Define(fn);
+      }
+
+      enum_type.Setup();
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewEnumSymbolNative", enum_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            string name = exec.stack.Pop();
+
+            var enm = new EnumSymbolNative(
+              new Origin(), //pass it from above?
+              name,
+              null
+            );
+            exec.stack.Push(Val.NewObj(enm, enum_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String)
+        );
+        bind.Define(fn);
+      }
+
       return m;
     }
   }
