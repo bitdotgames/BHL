@@ -27,6 +27,16 @@ public class TestBindings : BHL_TestBase
       }
 
       {
+        var fn = std.bind.NewFuncSymbolNative(""Wait"", types.T(""void""),
+         [
+          std.bind.NewFuncArgSymbol(""sec"", types.T(""float""))
+         ],
+         is_coro: true
+        )
+        types.ns.Define(fn)
+      }
+
+      {
         var cl = std.bind.NewClassSymbolNative(""Color"", null, true)
         types.ns.Define(cl)
 
@@ -36,6 +46,13 @@ public class TestBindings : BHL_TestBase
             [
               std.bind.NewFuncArgSymbol(""other"", types.T(""Color""))
             ]
+          )
+          cl.Define(fn)
+        }
+        {
+          var fn = std.bind.NewFuncSymbolNative(""Make"", types.T(""void""),
+            [],
+            is_coro: true, is_static: true
           )
           cl.Define(fn)
         }
@@ -68,6 +85,12 @@ public class TestBindings : BHL_TestBase
     Assert.Equal("Rand", rand_fn.name);
     Assert.Equal(Types.Float, rand_fn.GetReturnType());
 
+    var wait_fn = (FuncSymbolNative)new_types.ns.Resolve("Wait");
+    Assert.Equal("Wait", wait_fn.name);
+    Assert.Equal(Types.Void, wait_fn.GetReturnType());
+    Assert.Equal("sec", wait_fn.GetArg(0).name);
+    Assert.Equal(FuncAttrib.Coro, wait_fn.attribs);
+
     var color_cl = (ClassSymbolNative)new_types.ns.Resolve("Color");
     Assert.Equal("Color", color_cl.name);
     var r_fld = (FieldSymbol)color_cl.Resolve("r");
@@ -75,6 +98,9 @@ public class TestBindings : BHL_TestBase
     Assert.Equal(Types.Float, r_fld.GetIType());
     var add_fn = (FuncSymbolNative)color_cl.Resolve("Add");
     Assert.Equal(color_cl, add_fn.GetReturnType());
+    var maker_fn = (FuncSymbolNative)color_cl.Resolve("Make");
+    Assert.Equal(FuncAttrib.Coro | FuncAttrib.Static, maker_fn.attribs);
+    Assert.Equal(Types.Void, maker_fn.GetReturnType());
 
     var mode_enum = (EnumSymbolNative)new_types.ns.Resolve("ModeType");
     Assert.Equal("ModeType", mode_enum.name);

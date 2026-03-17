@@ -104,9 +104,19 @@ public static partial class std
       fsn_arg_type.Setup();
 
       {
-        var fn = new FuncSymbolNative(new Origin(), "NewFuncSymbolNative", fsn_type,
+        var fn = new FuncSymbolNative(new Origin(), "NewFuncSymbolNative", fsn_type, 2,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
+            FuncAttrib attribs = FuncAttrib.None;
+
+            bool is_static = args_info.IsDefaultArgUsed(1) ? false : exec.stack.Pop();
+            if(is_static)
+              attribs |= FuncAttrib.Static;
+
+            bool is_coro = args_info.IsDefaultArgUsed(0) ? false : exec.stack.Pop();
+            if(is_coro)
+              attribs |= FuncAttrib.Coro;
+
             var args = (ValList)exec.stack.Pop().obj;
             List<FuncArgSymbol> func_args = new();
             foreach(var arg in args)
@@ -119,7 +129,9 @@ public static partial class std
             var fsn = new FuncSymbolNative(
               new Origin(), //pass it from above?
               name,
+              attribs,
               type_ref,
+              0,
               null,
               func_args.ToArray()
               );
@@ -128,7 +140,9 @@ public static partial class std
           },
           new FuncArgSymbol("name", Types.String),
           new FuncArgSymbol("type", proxy_type),
-          new FuncArgSymbol("args", ts.TArr(fsn_arg_type))
+          new FuncArgSymbol("args", ts.TArr(fsn_arg_type)),
+          new FuncArgSymbol("is_coro", Types.Bool),
+          new FuncArgSymbol("is_static", Types.Bool)
         );
         bind.Define(fn);
       }
