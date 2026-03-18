@@ -195,15 +195,15 @@ public static partial class std
         bind.Define(fn);
       }
 
-      var cln_type = new ClassSymbolNative(new Origin(), "ClassSymbolNative", symbol_type, null, null, typeof(bhl.ClassSymbolNative));
-      bind.Define(cln_type);
+      var cl_type = new ClassSymbolNative(new Origin(), "ClassSymbol", symbol_type, null, null, typeof(bhl.ClassSymbol));
+      bind.Define(cl_type);
 
       {
         var fn = new FuncSymbolNative(new Origin(), "Define", Types.Void,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ref var self = ref exec.GetSelfRef();
-            var cl = (ClassSymbolNative)self.obj;
+            var cl = (ClassSymbol)self.obj;
             var symbol = (Symbol)exec.stack.Pop().obj;
             exec.stack.Pop(); //for self
 
@@ -213,7 +213,7 @@ public static partial class std
           },
           new FuncArgSymbol("symbol", symbol_type)
         );
-        cln_type.Define(fn);
+        cl_type.Define(fn);
       }
 
       {
@@ -221,7 +221,7 @@ public static partial class std
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             ref var self = ref exec.GetSelfRef();
-            var cl = (ClassSymbolNative)self.obj;
+            var cl = (ClassSymbol)self.obj;
             exec.stack.Pop(); //for self
 
             cl.Setup();
@@ -229,13 +229,13 @@ public static partial class std
             return null;
           }
         );
-        cln_type.Define(fn);
+        cl_type.Define(fn);
       }
 
-      cln_type.Setup();
+      cl_type.Setup();
 
       {
-        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolNative", cln_type,
+        var fn = new FuncSymbolNative(new Origin(), "NewClassSymbolNative", cl_type,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
             bool has_ctor = exec.stack.Pop();
@@ -248,7 +248,7 @@ public static partial class std
               parent_type_ref_obj == null ? new ProxyType() : (ProxyType)parent_type_ref_obj,
               has_ctor ? delegate(VM.ExecState exec, ref Val v, IType type) {} : null
               );
-            exec.stack.Push(Val.NewObj(cl, cln_type));
+            exec.stack.Push(Val.NewObj(cl, cl_type));
             return null;
           },
           new FuncArgSymbol("name", Types.String),
@@ -298,6 +298,30 @@ public static partial class std
             return null;
           },
           new FuncArgSymbol("name", Types.String)
+        );
+        bind.Define(fn);
+      }
+
+      {
+        var fn = new FuncSymbolNative(new Origin(), "NewNativeListTypeSymbol", cl_type,
+          (VM.ExecState exec, FuncArgsInfo args_info) =>
+          {
+            var type_ref = (ProxyType)exec.stack.Pop().obj;
+            string name = exec.stack.Pop();
+
+            var cl = new NativeListTypeSymbol<object>(
+              new Origin(),
+              name,
+              (v) => null,
+              (itype, n) => null,
+              type_ref
+            );
+
+            exec.stack.Push(Val.NewObj(cl, cl_type));
+            return null;
+          },
+          new FuncArgSymbol("name", Types.String),
+          new FuncArgSymbol("type", proxy_type)
         );
         bind.Define(fn);
       }

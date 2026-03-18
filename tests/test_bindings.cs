@@ -68,6 +68,12 @@ public class TestBindings : BHL_TestBase
 
         types.ns.Define(en);
       }
+
+      {
+        var cl = std.bind.NewNativeListTypeSymbol(""List_Color"", types.T(""Color""))
+        types.ns.Define(cl)
+        cl.Setup()
+      }
     }
     ";
 
@@ -110,6 +116,9 @@ public class TestBindings : BHL_TestBase
     var itm2 = (EnumItemSymbol)mode_enum.Resolve("BATTLE");
     Assert.Equal("BATTLE", itm2.name);
     Assert.Equal(1, itm2.val);
+
+    var color_list = (NativeListTypeSymbol<object>)new_types.ns.Resolve("List_Color");
+    Assert.Equal("List_Color", color_list.name);
 
     CommonChecks(vm);
   }
