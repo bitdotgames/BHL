@@ -110,22 +110,41 @@ public class ProjectConf
     );
   }
 
-  bool TryGetBindingsScript(out string script, out string func_name)
+  bool TryGetBindingsScripts(
+      out List<string> bindings_scripts,
+      out string func_name,
+      out string bindings_bytecode_file
+      )
   {
-    script = null;
-    func_name = null;
+    //TODO: make it configurable as well?
+    func_name = DefaultBindingsScriptName;
 
-    if(bindings_sources.Count == 0)
-      return false;
+    var tmp_scripts = bindings_sources.Where(f => f.EndsWith(".bhl")).ToList();
+    bindings_scripts = new List<string>();
+    foreach(var s in tmp_scripts)
+      bindings_scripts.AddRange(Glob(s));
 
-    if(bindings_sources[0].EndsWith(".bhl"))
+    bindings_bytecode_file = bindings_sources.Where(f => f.EndsWith(".bhc")).FirstOrDefault();
+
+    return bindings_scripts.Count > 0;
+  }
+
+  static string[] Glob(string s)
+  {
+    var files = new List<string>();
+    int idx = s.IndexOf('*');
+    if(idx != -1)
     {
-      script = bindings_sources[0];
-      func_name = DefaultBindingsScriptName;
-      return true;
-    }
+      string dir = s.Substring(0, idx);
+      string mask = s.Substring(idx);
 
-    return false;
+      if(Directory.Exists(dir))
+        files.AddRange(Directory.GetFiles(dir, mask));
+    }
+    else
+      files.Add(s);
+
+    return files.ToArray();
   }
 
   public IUserBindings LoadBindings()
@@ -150,8 +169,8 @@ public class ProjectConf
 
       return Activator.CreateInstance(userbindings_class) as IUserBindings;
     }
-    else if(TryGetBindingsScript(out var script, out string func_name))
-      return new ScriptedBindings(script, func_name);
+    else if(TryGetBindingsScripts(out var bindings_scripts, out string func_name, out var bindings_bytecode_file))
+      return new ScriptedBindings(bindings_scripts, func_name, use_cache, bindings_bytecode_file);
     else
       return new EmptyUserBindings();
   }

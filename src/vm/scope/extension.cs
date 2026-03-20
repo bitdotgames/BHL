@@ -392,10 +392,15 @@ public static class ScopeExtensions
     return self.TFunc(false, ret_type, arg_types);
   }
 
-  public static ProxyType T(this INamedResolver self, TypeArg tn, params TypeArg[] types)
+  //convinience alias for TTuple
+  public static ProxyType T(this INamedResolver self, params TypeArg[] types)
+  {
+    return self.TTuple(types);
+  }
+
+  public static ProxyType TTuple(this INamedResolver self, params TypeArg[] types)
   {
     var tuple = new TupleType();
-    tuple.Add(self.T(tn));
     foreach(var type in types)
       tuple.Add(self.T(type));
     return self.T(tuple);

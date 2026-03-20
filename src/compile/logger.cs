@@ -64,7 +64,7 @@ public class FileLogger : ILogWriter
 public class Logger
 {
   ILogWriter writer;
-  int max_level;
+  int max_level; //it's a max allowed level, the lower the less verbose
 
   //NOTE: for quick debugging, only in places where
   //      logger is not passed (and not supposed to)

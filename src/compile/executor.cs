@@ -17,6 +17,7 @@ public class CompileConf
   public string self_file = "";
   public IFrontPostProcessor postproc = new EmptyPostProcessor();
   public IUserBindings bindings = new EmptyUserBindings();
+  public int max_errors_num = 100;
 }
 
 public class CompilationExecutor
@@ -28,26 +29,33 @@ public class CompilationExecutor
   public int cache_miss { get; private set; }
   public int cache_errs { get; private set; }
 
-  //NOTE: compiles all files but loads the module from the file at index 0,
+  //NOTE: compiles all files *but loads the module from the file at index 0*,
   //      returns null in case of compilation errors
-  public static async Task<VM> CompileAndLoadVM(List<string> files)
+  public static async Task<VM> CompileAndLoadVM(
+    List<string> files,
+    bool use_cache = false,
+    string bytecode_file = null
+  )
   {
-    string src_dir = Path.GetDirectoryName(files[0]);
-    if(string.IsNullOrEmpty(src_dir))
-      src_dir = "./";
+    string file0_dir = Path.GetDirectoryName(files[0]);
 
     var proj = new ProjectConf();
     proj.module_fmt = ModuleBinaryFormat.FMT_BIN;
-    proj.use_cache = false;
-    proj.max_threads = 1;
-    proj.src_dirs.Add(src_dir);
-    proj.result_file = src_dir + "/" + Path.GetFileNameWithoutExtension(files[0]) + ".bhc";
+    proj.use_cache = use_cache;
+    proj.max_threads = files.Count == 1 ? 1 : 6;
+    foreach(var file in files)
+    {
+      var dir = Path.GetDirectoryName(file);
+      if(proj.src_dirs.IndexOf(dir) == -1)
+        proj.src_dirs.Add(dir);
+    }
+    proj.result_file = bytecode_file ?? Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".bhc");
     proj.tmp_dir = Path.GetTempPath();
     proj.verbosity = 0;
     proj.Setup();
 
     var conf = new CompileConf();
-    conf.logger = new Logger(1, new ConsoleLogger());
+    conf.logger = new Logger(-1/*let's make it silent*/, new ConsoleLogger());
     conf.proj = proj;
     conf.ts = new Types();
     conf.self_file = BuildUtils.GetSelfFile();
@@ -95,11 +103,21 @@ public class CompilationExecutor
 
     if(errors.Count > 0)
     {
+      if(errors.Count > conf.max_errors_num)
+      {
+        int total_errors = errors.Count;
+        errors.RemoveRange(conf.max_errors_num, errors.Count - conf.max_errors_num);
+        errors.Add(new BuildError(errors[errors.Count - 1].file, "Too many errors (" + total_errors + "), showing only top first"));
+      }
+
       if(!string.IsNullOrEmpty(conf.proj.error_file))
       {
         string err_str = "";
-        foreach(var err in errors)
+        for(int i = 0; i < errors.Count; ++i)
+        {
+          var err = errors[i];
           err_str += ErrorUtils.ToJson(err) + "\n";
+        }
         err_str = err_str.Trim();
 
         if(conf.proj.error_file == "-")
@@ -143,9 +161,14 @@ public class CompilationExecutor
     if(conf.ts == null)
       conf.ts = new Types();
 
-    conf.bindings.Register(conf.ts);
-
     var pipeline = new Pipeline<CompileConf, List<ProcAndCompileWorker>>(conf.logger)
+        .Transform<CompileConf, CompileConf>(
+          "BHL register bindings",
+          (conf) => {
+            conf.bindings.Register(conf.ts);
+            return conf;
+          }
+        )
         .Transform<CompileConf, List<ParseWorker>>(
           "BHL parse init",
           MakeParseWorkers
@@ -173,6 +196,9 @@ public class CompilationExecutor
             //NOTE: let's add processors errors to the all errors but continue execution
             foreach(var kv in bundle.file2proc)
               errors.AddRange(kv.Value.result.errors);
+
+            if(errors.Count > conf.max_errors_num)
+              throw new TooManyErrorsException();
 
             return MakeCompilerWorkers(conf, bundle);
           }

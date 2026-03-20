@@ -261,7 +261,17 @@ public class ModuleCompiler : AST_Visitor
     //special case for tests where we
     //don't have any AST
     if(ast != null)
-      Visit(ast);
+    {
+      try
+      {
+        Visit(ast);
+      }
+      catch
+      {
+        Console.Error.WriteLine("Module '" + interim.name + "' compilation error");
+        throw;
+      }
+    }
   }
 
   public Module Compile_Finish()

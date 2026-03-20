@@ -40,6 +40,42 @@ public static partial class std
           );
           ns_type.Define(fn);
         }
+
+        {
+          var fn = new FuncSymbolNative(new Origin(), "IsDefined", Types.Bool,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var ns = (Namespace)self.obj;
+              string name = exec.stack.Pop();
+              exec.stack.Pop(); //for self
+
+              exec.stack.Push(Val.NewBool(ns.Resolve(name) != null));
+
+              return null;
+            },
+            new FuncArgSymbol("name", Types.String)
+          );
+          ns_type.Define(fn);
+        }
+
+        {
+          var fn = new FuncSymbolNative(new Origin(), "Nest", ns_type,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var ns = (Namespace)self.obj;
+              string name = exec.stack.Pop();
+              exec.stack.Pop(); //for self
+
+              exec.stack.Push(Val.NewObj(ns.Nest(name), ns_type));
+
+              return null;
+            },
+            new FuncArgSymbol("name", Types.String)
+          );
+          ns_type.Define(fn);
+        }
       }
       ns_type.Setup();
 
@@ -88,6 +124,71 @@ public static partial class std
           cl.Define(fn);
         }
 
+        {
+          var fn = new FuncSymbolNative(new Origin(), "TArr", proxy_type,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
+              var type = (ProxyType)exec.stack.Pop().obj;
+              exec.stack.Pop(); //for self
+
+              var proxy = types.TArr(type);
+              exec.stack.Push(Val.NewObj(proxy, proxy_type));
+              return null;
+            },
+            new FuncArgSymbol("type", proxy_type)
+          );
+          cl.Define(fn);
+        }
+
+        {
+          var fn = new FuncSymbolNative(new Origin(), "TTuple", FuncAttrib.VariadicArgs, proxy_type, 0,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
+              var args = new List<ScopeExtensions.TypeArg>();
+              var vargs = (ValList)exec.stack.Pop().obj;
+              foreach(var varg in vargs)
+                args.Add(new ScopeExtensions.TypeArg((ProxyType)varg.obj));
+              vargs.Release();
+              exec.stack.Pop(); //for self
+
+              var proxy = types.TTuple(args.ToArray());
+              exec.stack.Push(Val.NewObj(proxy, proxy_type));
+              return null;
+            },
+            new FuncArgSymbol("types", ts.TArr(proxy_type))
+          );
+          cl.Define(fn);
+        }
+
+        {
+          var fn = new FuncSymbolNative(new Origin(), "SetupType", Types.Void,
+            (VM.ExecState exec, FuncArgsInfo args_info) =>
+            {
+              ref var self = ref exec.GetSelfRef();
+              var types = (Types)self.obj;
+              string name = exec.stack.Pop();
+              exec.stack.Pop(); //for self
+
+              var tmp = types.T(name).Get();
+              if(tmp == null)
+                throw new System.Exception("Type '" + name + "' not resolved");
+
+              if(tmp is ClassSymbolNative csn)
+                csn.Setup();
+              else if(tmp is InterfaceSymbolNative isn)
+                isn.Setup();
+
+              return null;
+            },
+            new FuncArgSymbol("name", Types.String)
+          );
+          cl.Define(fn);
+        }
+
         cl.Setup();
         //TODO: this looks a bit dirty but 'kinda ok' for now,
         //      maybe it makes sense to bind these symbols as static ones
@@ -104,11 +205,13 @@ public static partial class std
       fsn_arg_type.Setup();
 
       {
-        var fn = new FuncSymbolNative(new Origin(), "NewFuncSymbolNative", fsn_type, 2,
+        var fn = new FuncSymbolNative(new Origin(), "NewFuncSymbolNative", fsn_type, 3,
           (VM.ExecState exec, FuncArgsInfo args_info) =>
           {
-            FuncAttrib attribs = FuncAttrib.None;
 
+            int default_args_num = args_info.IsDefaultArgUsed(2) ? 0 : exec.stack.Pop();
+
+            FuncAttrib attribs = FuncAttrib.None;
             bool is_static = args_info.IsDefaultArgUsed(1) ? false : exec.stack.Pop();
             if(is_static)
               attribs |= FuncAttrib.Static;
@@ -131,7 +234,7 @@ public static partial class std
               name,
               attribs,
               type_ref,
-              0,
+              default_args_num,
               null,
               func_args.ToArray()
               );
@@ -142,7 +245,8 @@ public static partial class std
           new FuncArgSymbol("type", proxy_type),
           new FuncArgSymbol("args", ts.TArr(fsn_arg_type)),
           new FuncArgSymbol("is_coro", Types.Bool),
-          new FuncArgSymbol("is_static", Types.Bool)
+          new FuncArgSymbol("is_static", Types.Bool),
+          new FuncArgSymbol("default_args_num", Types.Int)
         );
         bind.Define(fn);
       }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using Antlr4.Runtime.Tree;
 
@@ -50,79 +51,97 @@ public abstract class AST_Visitor
   public abstract void DoVisit(AST_JsonMapAddItem ast);
   public abstract void DoVisit(AST_JsonPair ast);
 
+  bool error_dumped = false;
+  protected bool visit_children = true;
+
   public void Visit(IAST ast)
   {
     if(ast == null)
       throw new Exception("NULL node");
 
-    if(ast is AST_Interim _1)
-      DoVisit(_1);
-    else if(ast is AST_Block _2)
-      DoVisit(_2);
-    else if(ast is AST_Literal _3)
-      DoVisit(_3);
-    else if(ast is AST_Call _4)
-      DoVisit(_4);
-    else if(ast is AST_VarDecl _5)
-      DoVisit(_5);
-    else if(ast is AST_LambdaDecl _6)
-      DoVisit(_6);
-    //NOTE: base class must be handled after AST_LambdaDecl
-    else if(ast is AST_FuncDecl _7)
-      DoVisit(_7);
-    else if(ast is AST_ClassDecl _8)
-      DoVisit(_8);
-    else if(ast is AST_TypeCast _10)
-      DoVisit(_10);
-    else if(ast is AST_Return _11)
-      DoVisit(_11);
-    else if(ast is AST_Break _12)
-      DoVisit(_12);
-    else if(ast is AST_Continue _13)
-      DoVisit(_13);
-    else if(ast is AST_PopValue _14)
-      DoVisit(_14);
-    else if(ast is AST_BinaryOpExp _15)
-      DoVisit(_15);
-    else if(ast is AST_UnaryOpExp _16)
-      DoVisit(_16);
-    else if(ast is AST_New _17)
-      DoVisit(_17);
-    else if(ast is AST_Inc _18)
-      DoVisit(_18);
-    else if(ast is AST_Dec _19)
-      DoVisit(_19);
-    else if(ast is AST_JsonObj _20)
-      DoVisit(_20);
-    else if(ast is AST_JsonArr _21)
-      DoVisit(_21);
-    else if(ast is AST_JsonArrAddItem _22)
-      DoVisit(_22);
-    else if(ast is AST_JsonPair _23)
-      DoVisit(_23);
-    else if(ast is AST_Import _24)
-      DoVisit(_24);
-    else if(ast is AST_Module _25)
-      DoVisit(_25);
-    else if(ast is AST_TypeAs _26)
-      DoVisit(_26);
-    else if(ast is AST_TypeIs _27)
-      DoVisit(_27);
-    else if(ast is AST_Typeof _28)
-      DoVisit(_28);
-    else if(ast is AST_JsonMap _29)
-      DoVisit(_29);
-    else if(ast is AST_JsonMapAddItem _30)
-      DoVisit(_30);
-    else if(ast is AST_Yield _31)
-      DoVisit(_31);
-    else
-      throw new Exception("Not known type: " + ast.GetType().Name);
+    try
+    {
+      if(ast is AST_Interim _1)
+        DoVisit(_1);
+      else if(ast is AST_Block _2)
+        DoVisit(_2);
+      else if(ast is AST_Literal _3)
+        DoVisit(_3);
+      else if(ast is AST_Call _4)
+        DoVisit(_4);
+      else if(ast is AST_VarDecl _5)
+        DoVisit(_5);
+      else if(ast is AST_LambdaDecl _6)
+        DoVisit(_6);
+      //NOTE: base class must be handled after AST_LambdaDecl
+      else if(ast is AST_FuncDecl _7)
+        DoVisit(_7);
+      else if(ast is AST_ClassDecl _8)
+        DoVisit(_8);
+      else if(ast is AST_TypeCast _10)
+        DoVisit(_10);
+      else if(ast is AST_Return _11)
+        DoVisit(_11);
+      else if(ast is AST_Break _12)
+        DoVisit(_12);
+      else if(ast is AST_Continue _13)
+        DoVisit(_13);
+      else if(ast is AST_PopValue _14)
+        DoVisit(_14);
+      else if(ast is AST_BinaryOpExp _15)
+        DoVisit(_15);
+      else if(ast is AST_UnaryOpExp _16)
+        DoVisit(_16);
+      else if(ast is AST_New _17)
+        DoVisit(_17);
+      else if(ast is AST_Inc _18)
+        DoVisit(_18);
+      else if(ast is AST_Dec _19)
+        DoVisit(_19);
+      else if(ast is AST_JsonObj _20)
+        DoVisit(_20);
+      else if(ast is AST_JsonArr _21)
+        DoVisit(_21);
+      else if(ast is AST_JsonArrAddItem _22)
+        DoVisit(_22);
+      else if(ast is AST_JsonPair _23)
+        DoVisit(_23);
+      else if(ast is AST_Import _24)
+        DoVisit(_24);
+      else if(ast is AST_Module _25)
+        DoVisit(_25);
+      else if(ast is AST_TypeAs _26)
+        DoVisit(_26);
+      else if(ast is AST_TypeIs _27)
+        DoVisit(_27);
+      else if(ast is AST_Typeof _28)
+        DoVisit(_28);
+      else if(ast is AST_JsonMap _29)
+        DoVisit(_29);
+      else if(ast is AST_JsonMapAddItem _30)
+        DoVisit(_30);
+      else if(ast is AST_Yield _31)
+        DoVisit(_31);
+      else
+        throw new Exception("Not known type: " + ast.GetType().Name);
+    }
+    catch(Exception)
+    {
+      //let's dump error only once for the concrete last AST being processed
+      //
+      if(!error_dumped)
+      {
+        Console.Error.WriteLine("Error while visiting AST:");
+        AST_Dumper.Dump(ast, visit_children: false, writer: Console.Error);
+        error_dumped = true;
+      }
+      throw;
+    }
   }
 
   public void VisitChildren(AST_Tree ast)
   {
-    if(ast == null)
+    if(ast == null || !visit_children)
       return;
     var children = ast.children;
     for(int i = 0; i < children.Count; ++i)
@@ -576,226 +595,237 @@ public class AST_PopValue : IAST
 
 public class AST_Dumper : AST_Visitor
 {
+  TextWriter writer;
+
   public override void DoVisit(AST_Interim node)
   {
-    Console.Write("(");
+    writer.Write("(");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Module node)
   {
-    Console.Write("(MODULE " + node.name);
+    writer.Write("(MODULE " + node.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Import node)
   {
-    Console.Write("(IMPORT ");
+    writer.Write("(IMPORT ");
     foreach(var m in node.module_names)
-      Console.Write("" + m);
-    Console.Write(")");
+      writer.Write("" + m);
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_FuncDecl node)
   {
-    Console.Write("(FUNC ");
-    Console.Write(node.symbol.name);
+    writer.Write("(FUNC ");
+    writer.Write(node.symbol.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_LambdaDecl node)
   {
-    Console.Write("(LMBD ");
-    Console.Write(node.symbol.name);
+    writer.Write("(LMBD ");
+    writer.Write(node.symbol.name);
     if(node.upvals.Count > 0)
-      Console.Write(" USE:");
+      writer.Write(" USE:");
     for(int i = 0; i < node.upvals.Count; ++i)
-      Console.Write(" " + node.upvals[i].name + "(" + node.upvals[i].mode + ")");
+      writer.Write(" " + node.upvals[i].name + "(" + node.upvals[i].mode + ")");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_ClassDecl node)
   {
-    Console.Write("(CLASS ");
-    Console.Write(node.symbol.name);
+    writer.Write("(CLASS ");
+    writer.Write(node.symbol.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Block node)
   {
-    Console.Write("(BLK ");
-    Console.Write(node.type + " {");
+    writer.Write("(BLK ");
+    writer.Write(node.type + " {");
     VisitChildren(node);
-    Console.Write("})");
+    writer.Write("})");
   }
 
   public override void DoVisit(AST_TypeCast node)
   {
-    Console.Write("(CAST ");
-    Console.Write(node.type.GetName() + " ");
+    writer.Write("(CAST ");
+    writer.Write(node.type.GetName() + " ");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_TypeAs node)
   {
-    Console.Write("(AS ");
-    Console.Write(node.type.GetName() + " ");
+    writer.Write("(AS ");
+    writer.Write(node.type.GetName() + " ");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_TypeIs node)
   {
-    Console.Write("(IS ");
-    Console.Write(node.type.GetName() + " ");
+    writer.Write("(IS ");
+    writer.Write(node.type.GetName() + " ");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Call node)
   {
-    Console.Write("(CALL ");
-    Console.Write(node.type + " " + node.symbol?.name);
+    writer.Write("(CALL ");
+    writer.Write(node.type + " " + node.symbol?.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Inc node)
   {
-    Console.Write("(INC ");
-    Console.Write(node.symbol.name + " " + node.symbol.scope_idx);
-    Console.Write(")");
+    writer.Write("(INC ");
+    writer.Write(node.symbol.name + " " + node.symbol.scope_idx);
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Dec node)
   {
-    Console.Write("(DEC ");
-    Console.Write(node.symbol.name + " " + node.symbol.scope_idx);
-    Console.Write(")");
+    writer.Write("(DEC ");
+    writer.Write(node.symbol.name + " " + node.symbol.scope_idx);
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Return node)
   {
-    Console.Write("(RET " + node.num);
+    writer.Write("(RET " + node.num);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_Typeof node)
   {
-    Console.Write("(TYPEOF " + node.type.GetName() + ")");
+    writer.Write("(TYPEOF " + node.type.GetName() + ")");
   }
 
   public override void DoVisit(AST_Break node)
   {
-    Console.Write("(BRK)");
+    writer.Write("(BRK)");
   }
 
   public override void DoVisit(AST_Continue node)
   {
-    Console.Write("(CONT)");
+    writer.Write("(CONT)");
   }
 
   public override void DoVisit(AST_Yield node)
   {
-    Console.Write("(YIELD)");
+    writer.Write("(YIELD)");
   }
 
   public override void DoVisit(AST_PopValue node)
   {
-    Console.Write("(POP)");
+    writer.Write("(POP)");
   }
 
   public override void DoVisit(AST_Literal node)
   {
     if(node.type == ConstType.INT)
-      Console.Write(" (INT " + node.nval + ")");
+      writer.Write(" (INT " + node.nval + ")");
     else if(node.type == ConstType.FLT)
-      Console.Write(" (FLT " + node.nval + ")");
+      writer.Write(" (FLT " + node.nval + ")");
     else if(node.type == ConstType.BOOL)
-      Console.Write(" (BOOL " + node.nval + ")");
+      writer.Write(" (BOOL " + node.nval + ")");
     else if(node.type == ConstType.STR)
-      Console.Write(" (STR '" + node.sval + "')");
+      writer.Write(" (STR '" + node.sval + "')");
     else if(node.type == ConstType.NIL)
-      Console.Write(" (NULL)");
+      writer.Write(" (NULL)");
   }
 
   public override void DoVisit(AST_BinaryOpExp node)
   {
-    Console.Write("(BOP " + node.type);
+    writer.Write("(BOP " + node.type);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_UnaryOpExp node)
   {
-    Console.Write("(UOP " + node.type);
+    writer.Write("(UOP " + node.type);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_New node)
   {
-    Console.Write("(NEW " + node.type.GetName());
+    writer.Write("(NEW " + node.type.GetName());
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_VarDecl node)
   {
-    Console.Write("(VARDECL " + node.symb.name);
+    writer.Write("(VARDECL " + node.symb.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_JsonObj node)
   {
-    Console.Write("(JOBJ " + node.type.GetName());
+    writer.Write("(JOBJ " + node.type.GetName());
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_JsonArr node)
   {
-    Console.Write("(JARR ");
+    writer.Write("(JARR ");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_JsonMap node)
   {
-    Console.Write("(JMAP ");
+    writer.Write("(JMAP ");
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_JsonPair node)
   {
-    Console.Write("(JPAIR " + node.name);
+    writer.Write("(JPAIR " + node.name);
     VisitChildren(node);
-    Console.Write(")");
+    writer.Write(")");
   }
 
   public override void DoVisit(AST_JsonArrAddItem node)
   {
-    Console.Write("(JARDD)");
+    writer.Write("(JARDD)");
   }
 
   public override void DoVisit(AST_JsonMapAddItem node)
   {
-    Console.Write("(JMADD)");
+    writer.Write("(JMADD)");
   }
 
-  public static void Dump(AST_Tree ast)
+  public static void Dump(IAST ast, bool visit_children = true, TextWriter writer = null)
   {
-    new AST_Dumper().Visit(ast);
-    Console.WriteLine("\n=============");
+    writer ??= Console.Out;
+
+    var dumper = new AST_Dumper(writer, visit_children);
+    dumper.Visit(ast);
+    writer.WriteLine("\n=============");
+  }
+
+  public AST_Dumper(TextWriter writer, bool visit_children = true)
+  {
+    this.writer = writer;
+    this.visit_children = visit_children;
   }
 }
 
